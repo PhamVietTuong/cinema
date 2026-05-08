@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/Cinema/**)",
+      "Bash(dir /s /b)",
+      "Bash(Get-ChildItem -Path \"E:\\\\metfpet\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(dotnet --version)",
+      "Bash(npm --version)",
+      "Bash(ng version *)"
+    ]
+  }
+}

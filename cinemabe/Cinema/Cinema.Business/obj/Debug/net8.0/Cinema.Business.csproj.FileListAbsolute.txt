@@ -1,0 +1,5 @@
+E:\cinema\cinemabe\Cinema\Cinema.Business\obj\Debug\net8.0\Cinema.Business.csproj.AssemblyReference.cache
+E:\cinema\cinemabe\Cinema\Cinema.Business\obj\Debug\net8.0\Cinema.Business.GeneratedMSBuildEditorConfig.editorconfig
+E:\cinema\cinemabe\Cinema\Cinema.Business\obj\Debug\net8.0\Cinema.Business.AssemblyInfoInputs.cache
+E:\cinema\cinemabe\Cinema\Cinema.Business\obj\Debug\net8.0\Cinema.Business.AssemblyInfo.cs
+E:\cinema\cinemabe\Cinema\Cinema.Business\obj\Debug\net8.0\Cinema.Business.csproj.CoreCompileInputs.cache
