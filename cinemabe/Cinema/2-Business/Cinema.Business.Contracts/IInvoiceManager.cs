@@ -1,0 +1,11 @@
+using Cinema.Business.DTO.Invoices;
+using Cinema.Business.DTO.Requests;
+using Cinema.Data.Entities;
+namespace Cinema.Business.Contracts;
+public interface IInvoiceManager
+{
+    Task<DefaultSearchResults<InvoiceDTO>> GetMyInvoicesAsync(Guid userId, PagingSearchDTO search);
+    Task<DefaultSearchResults<InvoiceDTO>> GetInvoicesAsync(PagingSearchDTO search);
+    Task<InvoiceDTO>                       GetByIdAsync(Guid id);
+    Task<decimal>                          GetTotalRevenueAsync(DateTime from, DateTime to);
+}
