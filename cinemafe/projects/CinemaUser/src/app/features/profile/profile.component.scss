@@ -1,0 +1,59 @@
+@use 'lib/theme/variables' as v;
+
+.profile-container {
+  max-width: v.$container-sm;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.profile-card {
+  margin-bottom: 1rem;
+}
+
+.avatar {
+  background: v.$bg-dark;
+  border-radius: v.$radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.5rem;
+  width: 56px;
+  height: 56px;
+}
+
+.stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: v.$spacing-xs;
+
+  i { color: v.$primary; }
+}
+
+.tab-group {
+  margin-top: 2rem;
+}
+
+.tab-content {
+  padding: 1rem;
+}
+
+.invoice-card {
+  border: 1px solid v.$border-light;
+  border-radius: v.$radius-md;
+  padding: 1rem;
+  margin-bottom: v.$spacing-sm;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}

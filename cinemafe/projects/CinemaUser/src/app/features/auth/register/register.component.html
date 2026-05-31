@@ -1,0 +1,116 @@
+<div class="auth-split">
+
+  <!-- Left: Cinematic Panel -->
+  <div class="auth-cinema">
+    <div class="cinema-glow"></div>
+    <div class="cinema-inner">
+      <div class="cinema-brand">
+        <i class="fas fa-film"></i>
+        <span>Midnight Premium</span>
+      </div>
+      <h2 class="cinema-headline">Tham Gia Cộng Đồng<br>Điện Ảnh Đẳng Cấp</h2>
+      <p class="cinema-sub">Tạo tài khoản để trải nghiệm đặt vé nhanh chóng và nhận nhiều ưu đãi hấp dẫn.</p>
+      <div class="cinema-perks">
+        <div class="perk-item"><i class="fas fa-check-circle"></i> Tích điểm mỗi lần đặt vé</div>
+        <div class="perk-item"><i class="fas fa-check-circle"></i> Nhận thông báo phim mới sớm nhất</div>
+        <div class="perk-item"><i class="fas fa-check-circle"></i> Quản lý vé & lịch sử dễ dàng</div>
+      </div>
+    </div>
+    <div class="cinema-film-strip">
+      <div *ngFor="let f of [1,2,3,4,5,6,7,8]" class="strip-frame"></div>
+    </div>
+  </div>
+
+  <!-- Right: Register Form -->
+  <div class="auth-panel">
+    <div class="auth-form-wrap">
+
+      <!-- Tab toggle -->
+      <div class="auth-tabs">
+        <a routerLink="/auth/login" class="auth-tab">Đăng Nhập</a>
+        <button class="auth-tab active">Tạo Tài Khoản</button>
+      </div>
+
+      <h3 class="form-title">Tạo Tài Khoản</h3>
+      <p class="form-sub">Điền thông tin bên dưới để bắt đầu</p>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+        <div class="field-row-2">
+          <div class="field-group">
+            <label class="field-label">Họ và Tên</label>
+            <div class="field-wrap">
+              <i class="fas fa-user field-icon"></i>
+              <input class="field-input" type="text" formControlName="name" placeholder="Nguyễn Văn A">
+            </div>
+            <div class="field-error" *ngIf="form.get('name')?.touched && form.get('name')?.hasError('required')">
+              Vui lòng nhập họ tên
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Số Điện Thoại</label>
+            <div class="field-wrap">
+              <i class="fas fa-phone field-icon"></i>
+              <input class="field-input" type="tel" formControlName="phone" placeholder="0901 234 567">
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <div class="field-wrap">
+            <i class="fas fa-envelope field-icon"></i>
+            <input class="field-input" type="email" formControlName="email" placeholder="email@example.com">
+          </div>
+          <div class="field-error" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('required')">
+            Vui lòng nhập email
+          </div>
+          <div class="field-error" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')">
+            Email không hợp lệ
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Mật Khẩu</label>
+          <div class="field-wrap">
+            <i class="fas fa-lock field-icon"></i>
+            <input class="field-input" type="password" formControlName="password" placeholder="Tối thiểu 8 ký tự">
+          </div>
+          <div class="field-error" *ngIf="form.get('password')?.touched && form.get('password')?.hasError('required')">
+            Vui lòng nhập mật khẩu
+          </div>
+          <div class="field-error" *ngIf="form.get('password')?.touched && form.get('password')?.hasError('minlength')">
+            Mật khẩu tối thiểu 8 ký tự
+          </div>
+        </div>
+
+        <div class="api-error" *ngIf="error$ | async as err">
+          <i class="fas fa-exclamation-circle"></i> {{ err }}
+        </div>
+
+        <button type="submit" class="btn-primary-cta submit-btn" [disabled]="loading$ | async">
+          <mat-spinner diameter="18" *ngIf="loading$ | async"></mat-spinner>
+          <ng-container *ngIf="!(loading$ | async)">
+            Tạo Tài Khoản <i class="fas fa-arrow-right"></i>
+          </ng-container>
+        </button>
+      </form>
+
+      <div class="divider"><span>hoặc đăng ký với</span></div>
+
+      <div class="social-row">
+        <button class="social-btn">
+          <i class="fab fa-google"></i> Google
+        </button>
+        <button class="social-btn">
+          <i class="fab fa-facebook-f"></i> Facebook
+        </button>
+      </div>
+
+      <p class="switch-link">
+        Đã có tài khoản? <a routerLink="/auth/login">Đăng Nhập</a>
+      </p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,172 @@
+$bg: #051424;
+$container: #0d1c2d;
+$hi: #1c2b3c;
+$primary: #d0bcff;
+$on-primary: #23005c;
+$text: #d4e4fa;
+$muted: rgba(212,228,250,0.6);
+$outline: rgba(255,255,255,0.07);
+
+// ── Page Header ───────────────────────────────────────────────────────────────
+.page-header {
+  background: rgba(13,28,45,0.9);
+  border-bottom: 1px solid $outline;
+  padding: 20px 0;
+}
+.page-header-inner {
+  max-width: 1280px; margin: 0 auto; padding: 0 40px;
+}
+.breadcrumb {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.8rem; color: $muted; margin-bottom: 8px;
+  a { color: $muted; transition: color 0.2s; &:hover { color: $primary; } }
+  i { font-size: 0.65rem; }
+}
+.page-title {
+  font-family: 'Montserrat', sans-serif; font-size: 1.5rem;
+  font-weight: 700; color: $text; margin: 0;
+}
+
+// ── Layout ────────────────────────────────────────────────────────────────────
+.seat-page {
+  max-width: 1280px; margin: 0 auto; padding: 40px;
+  display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start;
+}
+
+.seat-area { min-width: 0; }
+
+.spinner-wrap {
+  display: flex; justify-content: center; padding: 80px;
+  ::ng-deep circle { stroke: $primary !important; }
+}
+
+// ── Cinema Screen ─────────────────────────────────────────────────────────────
+.screen-wrap {
+  display: flex; flex-direction: column; align-items: center; margin-bottom: 32px;
+}
+.screen-arc {
+  width: 70%; max-width: 480px; height: 28px;
+  border-top: 3px solid rgba(212,228,250,0.5);
+  border-radius: 50% 50% 0 0;
+  box-shadow: 0 -6px 24px rgba(212,228,250,0.08);
+}
+.screen-label {
+  margin-top: 6px; font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.2em; color: $muted; text-transform: uppercase;
+}
+
+// ── Seat Grid ─────────────────────────────────────────────────────────────────
+.seat-grid {
+  display: grid;
+  grid-template-columns: 28px repeat(auto-fill, minmax(28px, 28px));
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.row-label {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; color: $muted;
+}
+
+.seat {
+  width: 28px; height: 28px; border-radius: 6px 6px 4px 4px;
+  cursor: pointer; border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover:not(.occupied):not(.locked) { transform: scale(1.15); }
+
+  &.available {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.18);
+    &:hover { border-color: $primary; background: rgba(208,188,255,0.12); }
+  }
+  &.selected {
+    background: $primary;
+    border-color: $primary;
+    box-shadow: 0 0 10px rgba(208,188,255,0.5);
+    cursor: pointer;
+  }
+  &.occupied {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.08);
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  &.locked {
+    background: rgba(255,152,0,0.3);
+    border-color: rgba(255,152,0,0.4);
+    cursor: not-allowed;
+  }
+  &.vip.available {
+    border-color: rgba(255,182,144,0.4);
+    background: rgba(255,182,144,0.08);
+    &:hover { border-color: #ffb690; background: rgba(255,182,144,0.16); }
+  }
+  &.vip.selected {
+    background: #ffb690;
+    border-color: #ffb690;
+    box-shadow: 0 0 10px rgba(255,182,144,0.5);
+  }
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+.legend {
+  display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+  padding: 16px; border-top: 1px solid $outline;
+}
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: $muted; }
+.legend-dot {
+  width: 18px; height: 18px; border-radius: 4px;
+  &.available { background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.18); }
+  &.selected  { background: $primary; }
+  &.occupied  { background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.08); opacity: 0.4; }
+  &.vip.available { background: rgba(255,182,144,0.08); border: 1.5px solid rgba(255,182,144,0.4); }
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+.sidebar-card {
+  background: rgba(13,28,45,0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid $outline;
+  border-radius: 16px;
+  padding: 24px;
+  position: sticky;
+  top: 80px;
+}
+.sidebar-title {
+  font-family: 'Montserrat', sans-serif; font-size: 1rem;
+  font-weight: 700; color: $text; margin: 0 0 20px;
+}
+.empty-seats {
+  text-align: center; padding: 24px 0; color: $muted;
+  i { font-size: 2rem; margin-bottom: 8px; display: block; opacity: 0.3; }
+  p { font-size: 0.85rem; margin: 0; }
+}
+.selected-list { display: flex; flex-direction: column; gap: 10px; }
+.selected-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(208,188,255,0.06); border: 1px solid rgba(208,188,255,0.1);
+  border-radius: 8px; padding: 10px 14px;
+}
+.selected-seat-name { display: flex; flex-direction: column; gap: 2px; }
+.seat-code { font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 700; color: $primary; }
+.seat-type { font-size: 0.75rem; color: $muted; }
+.seat-price { font-size: 0.9rem; font-weight: 600; color: $text; }
+
+.price-divider { border: none; border-top: 1px solid $outline; margin: 16px 0; }
+.price-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.875rem; color: $text; margin-bottom: 8px;
+  &.muted { color: $muted; font-size: 0.82rem; }
+}
+.total-row { font-weight: 600; margin-top: 4px; }
+.total-amount { font-family: 'Montserrat', sans-serif; font-size: 1.1rem; font-weight: 700; color: $primary; }
+
+.confirm-btn { width: 100%; justify-content: center; margin-top: 20px; font-size: 0.85rem; letter-spacing: 0.04em; }
+
+@media (max-width: 900px) {
+  .seat-page { grid-template-columns: 1fr; padding: 24px 20px; }
+  .sidebar-card { position: static; }
+}

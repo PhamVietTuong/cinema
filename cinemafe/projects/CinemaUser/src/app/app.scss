@@ -1,0 +1,133 @@
+:host {
+  display: block;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(5, 20, 36, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.topbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #d4e4fa;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover { text-decoration: none; }
+
+  i { color: #d0bcff; font-size: 1.25rem; }
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+
+  a {
+    color: rgba(212, 228, 250, 0.7);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 8px;
+    transition: color 0.2s ease, background 0.2s ease;
+
+    &:hover {
+      color: #d4e4fa;
+      background: rgba(208, 188, 255, 0.08);
+    }
+
+    &.active-link {
+      color: #d0bcff;
+      background: rgba(208, 188, 255, 0.1);
+    }
+  }
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nav-link-text {
+  color: rgba(212, 228, 250, 0.7);
+  text-decoration: none;
+  font-size: 0.875rem;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #d4e4fa;
+    text-decoration: none;
+  }
+}
+
+.btn-nav-primary {
+  background: #d0bcff;
+  color: #23005c;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 8px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    background: #e9ddff;
+    box-shadow: 0 0 20px rgba(208, 188, 255, 0.4);
+    text-decoration: none;
+  }
+}
+
+.nav-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(208, 188, 255, 0.08);
+  border: 1px solid rgba(208, 188, 255, 0.18);
+  color: #d4e4fa;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover { background: rgba(208, 188, 255, 0.14); }
+
+  i:first-child { color: #d0bcff; font-size: 1rem; }
+  .small-icon { font-size: 0.65rem; opacity: 0.55; }
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .topbar-inner { gap: 16px; padding: 0 20px; }
+}

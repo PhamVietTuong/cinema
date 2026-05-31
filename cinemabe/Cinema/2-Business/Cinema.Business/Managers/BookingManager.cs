@@ -193,6 +193,33 @@ public class BookingManager : IBookingManager
         return true;
     }
 
+    public IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> ReleaseConnectionLocks(string connectionId)
+    {
+        var released = new List<(Guid ShowTimeId, Guid RoomId, Guid SeatId)>();
+        foreach (var entry in _lockedSeats)
+        {
+            if (entry.Value.ConnectionId != connectionId) continue;
+            if (_lockedSeats.TryRemove(entry.Key, out _) && TryParseSeatKey(entry.Key, out var ids))
+                released.Add(ids);
+        }
+        return released;
+    }
+
     private static string SeatKey(Guid showTimeId, Guid roomId, Guid seatId) => $"{showTimeId}:{roomId}:{seatId}";
+
+    private static bool TryParseSeatKey(string key, out (Guid ShowTimeId, Guid RoomId, Guid SeatId) ids)
+    {
+        ids = default;
+        var parts = key.Split(':');
+        if (parts.Length == 3
+            && Guid.TryParse(parts[0], out var showTimeId)
+            && Guid.TryParse(parts[1], out var roomId)
+            && Guid.TryParse(parts[2], out var seatId))
+        {
+            ids = (showTimeId, roomId, seatId);
+            return true;
+        }
+        return false;
+    }
     private static string GenerateCode() => $"CIN{DateTime.UtcNow:yyyyMMddHHmmss}{Random.Shared.Next(1000, 9999)}";
 }

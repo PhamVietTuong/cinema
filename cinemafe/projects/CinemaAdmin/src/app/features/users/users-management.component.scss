@@ -1,0 +1,30 @@
+:host { display: block; }
+
+.role-filter { width: auto; min-width: 160px; }
+
+.stat-chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.stat { display: flex; align-items: center; gap: 14px;
+  div { display: flex; flex-direction: column; }
+}
+.stat-value { font-family: var(--ad-font-head); font-size: 24px; font-weight: 700; color: var(--ad-on); line-height: 1.2; }
+.stat-label { font-size: 13px; color: var(--ad-muted); }
+.stat-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; border-radius: var(--ad-r-md); flex: none;
+  mat-icon { font-size: 23px; width: 23px; height: 23px; }
+  &.i-violet { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
+  &.i-orange { background: rgba(249, 115, 22, 0.14); color: #fdba74; }
+  &.i-green  { background: var(--ad-success-soft); color: #6ee7a8; }
+}
+
+.user-cell { display: flex; align-items: center; gap: 12px;
+  .ad-avatar { width: 34px; height: 34px; font-size: 13px; } }
+
+@media (max-width: 720px) {
+  .stat-chips { grid-template-columns: 1fr; }
+}

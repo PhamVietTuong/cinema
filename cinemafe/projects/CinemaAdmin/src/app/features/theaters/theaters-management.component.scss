@@ -1,0 +1,12 @@
+:host { display: block; }
+
+.form-card { margin-bottom: 22px; }
+.theater-form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.full-span { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 12px; }
+
+.ad-table .addr { color: var(--ad-muted); max-width: 320px; }
+
+@media (max-width: 720px) {
+  .theater-form { grid-template-columns: 1fr; }
+}

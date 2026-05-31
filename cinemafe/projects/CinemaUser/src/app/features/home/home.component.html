@@ -1,0 +1,188 @@
+<!-- ── HERO ─────────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <ng-container *ngIf="featuredMovie$ | async as f; else heroDefault">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badges">
+          <span class="badge-pill badge-imax">IMAX EXCLUSIVE</span>
+          <span class="badge-pill badge-age">{{ f.ageRestrictionCode }}</span>
+        </div>
+        <h1 class="hero-title">{{ f.title }}</h1>
+        <div class="hero-meta">
+          <span class="meta-rating"><i class="fas fa-star"></i> {{ f.averageRating | number:'1.1-1' }}</span>
+          <span class="meta-dot">·</span>
+          <span class="meta-duration">{{ f.duration }} phút</span>
+          <ng-container *ngIf="f.genres?.length">
+            <span class="meta-dot">·</span>
+            <span class="meta-genres">
+              <ng-container *ngFor="let g of f.genres; let last = last">
+                {{ g }}<ng-container *ngIf="!last">, </ng-container>
+              </ng-container>
+            </span>
+          </ng-container>
+        </div>
+        <p class="hero-desc">{{ f.description }}</p>
+        <div class="hero-actions">
+          <a class="btn-primary-cta" [routerLink]="['/movies', f.id]">
+            <i class="fas fa-ticket"></i> Đặt Vé Ngay
+          </a>
+          <button class="btn-ghost-cta">
+            <i class="fas fa-play"></i> Xem Trailer
+          </button>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="poster-wrap">
+          <img [src]="f.posterUrl || 'assets/no-poster.jpg'" [alt]="f.title" class="poster-img">
+          <div class="poster-rating">
+            <i class="fas fa-star"></i>
+            <span>{{ f.averageRating | number:'1.1-1' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-template #heroDefault>
+    <div class="hero-inner hero-inner--default">
+      <div class="hero-content">
+        <div class="hero-badges">
+          <span class="badge-pill badge-imax">PREMIUM CINEMA</span>
+        </div>
+        <h1 class="hero-title">Midnight Premium</h1>
+        <p class="hero-desc">Trải nghiệm điện ảnh đẳng cấp nhất — những bộ phim bom tấn, ghế hạng nhất, âm thanh vòm sống động.</p>
+        <div class="hero-actions">
+          <a class="btn-primary-cta" routerLink="/movies">
+            <i class="fas fa-film"></i> Khám Phá Phim
+          </a>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</section>
+
+<!-- ── NOW SHOWING ─────────────────────────────────────────────────────────── -->
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">Phim Đang Chiếu</h2>
+    <a routerLink="/movies" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
+  </div>
+  <div *ngIf="loading$ | async" class="spinner-wrap">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+  <div class="scroll-row">
+    <div class="movie-card"
+         *ngFor="let movie of nowShowing$ | async"
+         [routerLink]="['/movies', movie.id]">
+      <div class="card-poster">
+        <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title">
+        <div class="card-hover-overlay">
+          <span class="btn-book-small"><i class="fas fa-ticket"></i> Đặt Vé</span>
+        </div>
+        <div class="card-rating"><i class="fas fa-star"></i> {{ movie.averageRating | number:'1.1-1' }}</div>
+        <span class="card-age">{{ movie.ageRestrictionCode }}</span>
+      </div>
+      <div class="card-info">
+        <h3 class="card-title">{{ movie.title }}</h3>
+        <div class="card-genres">
+          <span class="chip-genre" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
+        </div>
+        <p class="card-duration"><i class="fas fa-clock"></i> {{ movie.duration }} phút</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── COMING SOON ─────────────────────────────────────────────────────────── -->
+<section class="section section--dark">
+  <div class="section-header">
+    <h2 class="section-title">Phim Sắp Chiếu</h2>
+    <a routerLink="/movies" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
+  </div>
+  <div class="movie-grid">
+    <div class="movie-card coming-card" *ngFor="let movie of comingSoon$ | async">
+      <div class="card-poster">
+        <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title">
+        <div class="coming-badge">Sắp Chiếu</div>
+      </div>
+      <div class="card-info">
+        <h3 class="card-title">{{ movie.title }}</h3>
+        <div class="card-genres">
+          <span class="chip-genre" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
+        </div>
+        <p class="card-date"><i class="fas fa-calendar-days"></i> {{ movie.releaseDate | date:'dd/MM/yyyy' }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MEMBERSHIP ──────────────────────────────────────────────────────────── -->
+<section class="membership">
+  <div class="membership-inner">
+    <div class="membership-content">
+      <p class="membership-label">PREMIUM EXPERIENCE</p>
+      <h2 class="membership-title">Nâng Tầm Trải Nghiệm<br>Điện Ảnh</h2>
+      <p class="membership-desc">
+        Trở thành thành viên Midnight Premium để tận hưởng những đặc quyền độc quyền dành riêng cho bạn.
+      </p>
+      <ul class="membership-perks">
+        <li><i class="fas fa-check-circle"></i> Đặt vé ưu tiên không cần chờ đợi</li>
+        <li><i class="fas fa-check-circle"></i> Đồ ăn không giới hạn tại Gold Lounge</li>
+        <li><i class="fas fa-check-circle"></i> Truy cập buổi chiếu ra mắt độc quyền</li>
+        <li><i class="fas fa-check-circle"></i> Ghế ưu tiên tại mọi suất chiếu</li>
+      </ul>
+      <a routerLink="/auth/register" class="btn-primary-cta">
+        <i class="fas fa-crown"></i> Tham Gia Ngay
+      </a>
+    </div>
+    <div class="membership-visual">
+      <div class="glass-card-member">
+        <i class="fas fa-crown"></i>
+        <p>GOLD MEMBER</p>
+        <span>Midnight Premium</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ──────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a routerLink="/" class="footer-logo">
+        <i class="fas fa-film"></i>
+        <strong>Midnight Premium</strong>
+      </a>
+      <p>Trải nghiệm điện ảnh đẳng cấp nhất Việt Nam.</p>
+      <div class="social-row">
+        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+        <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
+        <a href="#" class="social-icon"><i class="fab fa-tiktok"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Khám Phá</h4>
+      <a routerLink="/movies">Phim Đang Chiếu</a>
+      <a href="#">Phim Sắp Chiếu</a>
+      <a href="#">Rạp Chiếu Phim</a>
+      <a href="#">Khuyến Mãi</a>
+    </div>
+    <div class="footer-col">
+      <h4>Thành Viên</h4>
+      <a href="#">Chương Trình</a>
+      <a href="#">Ưu Đãi</a>
+      <a routerLink="/auth/login">Đăng Nhập</a>
+      <a routerLink="/auth/register">Đăng Ký</a>
+    </div>
+    <div class="footer-col">
+      <h4>Hỗ Trợ</h4>
+      <a href="#">Trung Tâm Hỗ Trợ</a>
+      <a href="#">Liên Hệ</a>
+      <a href="#">Chính Sách Bảo Mật</a>
+      <a href="#">Điều Khoản Dịch Vụ</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Midnight Premium Cinema. All rights reserved.</p>
+  </div>
+</footer>

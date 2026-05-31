@@ -1,0 +1,85 @@
+// ── Brand Palette ─────────────────────────────────────────────────────────────
+$primary:       #e50914;
+$primary-dark:  #b0060f;
+$primary-light: rgba(229, 9, 20, 0.3);
+
+// Dark-navy background stack
+$bg-dark:  #1a1a2e;
+$bg-mid:   #16213e;
+$bg-blue:  #0f3460;
+
+// Light backgrounds
+$bg-light:  #f5f5f5;
+$bg-white:  #ffffff;
+
+// Text on dark
+$text-on-dark:       rgba(255, 255, 255, 0.87);
+$text-on-dark-muted: rgba(255, 255, 255, 0.65);
+$border-on-dark:     rgba(255, 255, 255, 0.12);
+
+// Text on light
+$text-primary:   rgba(0, 0, 0, 0.87);
+$text-secondary: rgba(0, 0, 0, 0.6);
+$text-hint:      rgba(0, 0, 0, 0.38);
+$border-light:   rgba(0, 0, 0, 0.12);
+
+// Semantic
+$error:   #f44336;
+$warning: #ff9800;
+$success: #4caf50;
+$info:    #2196f3;
+
+// ── Layout ────────────────────────────────────────────────────────────────────
+$container-max:  1400px;
+$container-md:   1200px;
+$container-sm:    900px;
+$sidebar-width:   240px;
+$toolbar-height:   64px;
+
+// ── Spacing ───────────────────────────────────────────────────────────────────
+$spacing-xs:  4px;
+$spacing-sm:  8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2x: 48px;
+$spacing-3x: 64px;
+
+// ── Typography ────────────────────────────────────────────────────────────────
+$font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-size-xs:   0.75rem;
+$font-size-sm:  0.875rem;
+$font-size-base: 1rem;
+$font-size-lg:  1.2rem;
+$font-size-xl:  1.5rem;
+$font-size-2x:  2rem;
+$font-size-3x:  2.5rem;
+$font-size-hero: 3rem;
+
+$line-height-base:  1.6;
+$line-height-tight: 1.35;
+
+$font-weight-regular: 400;
+$font-weight-medium:  500;
+$font-weight-bold:    700;
+
+// ── Radius / Shadow ───────────────────────────────────────────────────────────
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-full: 50%;
+
+$shadow-card:  0 2px 8px rgba(0, 0, 0, 0.12);
+$shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+// ── Animation ─────────────────────────────────────────────────────────────────
+$transition-base: 0.2s ease;
+$transition-slow: 0.35s ease;
+
+// ── Seat Colors ───────────────────────────────────────────────────────────────
+$seat-available: #4caf50;
+$seat-selected:  #2196f3;
+$seat-occupied:  #9e9e9e;
+$seat-locked:    #ff9800;
+$seat-vip:       #9c27b0;
+$seat-size:      36px;

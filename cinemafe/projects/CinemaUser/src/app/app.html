@@ -1,0 +1,37 @@
+<nav class="topbar">
+  <div class="topbar-inner">
+    <a routerLink="/" class="logo-link">
+      <i class="fas fa-film"></i>
+      <span>Midnight Premium</span>
+    </a>
+    <ul class="nav-links">
+      <li><a routerLink="/movies" routerLinkActive="active-link">Phim Đang Chiếu</a></li>
+      <li><a href="#">Rạp Chiếu</a></li>
+      <li><a href="#">Khuyến Mãi</a></li>
+      <li><a href="#">Thành Viên</a></li>
+    </ul>
+    <div class="nav-actions">
+      <ng-container *ngIf="isAuth$ | async; else guestNav">
+        <button class="nav-user-btn" [matMenuTriggerFor]="userMenu">
+          <i class="fas fa-circle-user"></i>
+          <span>{{ (user$ | async)?.name }}</span>
+          <i class="fas fa-chevron-down small-icon"></i>
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <a mat-menu-item routerLink="/profile">
+            <i class="fas fa-user menu-icon"></i> Tài Khoản
+          </a>
+          <button mat-menu-item (click)="doLogout()">
+            <i class="fas fa-right-from-bracket menu-icon"></i> Đăng Xuất
+          </button>
+        </mat-menu>
+      </ng-container>
+      <ng-template #guestNav>
+        <a routerLink="/auth/login" class="nav-link-text">Đăng Nhập</a>
+        <a routerLink="/auth/register" class="btn-nav-primary">Đăng Ký</a>
+      </ng-template>
+    </div>
+  </div>
+</nav>
+
+<router-outlet></router-outlet>

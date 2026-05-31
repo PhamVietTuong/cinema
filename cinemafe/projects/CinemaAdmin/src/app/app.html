@@ -1,0 +1,61 @@
+<ng-container *ngIf="isAuth$ | async; else loginView">
+  <div class="admin-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark"><mat-icon>movie_filter</mat-icon></span>
+        <span class="brand-text">CINEMA<strong>ADMIN</strong></span>
+      </div>
+
+      <nav class="nav">
+        <a routerLink="/dashboard" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>dashboard</mat-icon><span>Tổng Quan</span>
+        </a>
+        <a routerLink="/movies" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>movie</mat-icon><span>Quản Lý Phim</span>
+        </a>
+        <a routerLink="/showtimes" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>event</mat-icon><span>Lịch Chiếu</span>
+        </a>
+        <a routerLink="/theaters" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>theaters</mat-icon><span>Rạp Chiếu</span>
+        </a>
+        <a routerLink="/users" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>group</mat-icon><span>Người Dùng</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="profile" *ngIf="user$ | async as user">
+          <span class="ad-avatar">{{ (user.name || 'QT') | slice:0:1 }}</span>
+          <div class="profile-meta">
+            <span class="profile-name">{{ user.name || 'Quản Trị Viên' }}</span>
+            <span class="profile-mail">{{ user.email || 'admin@cinema.vn' }}</span>
+          </div>
+        </div>
+        <button type="button" class="nav-item logout" (click)="doLogout()">
+          <mat-icon>logout</mat-icon><span>Đăng Xuất</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+      <header class="topbar">
+        <h2 class="topbar-title">{{ pageTitle$ | async }}</h2>
+        <div class="topbar-right">
+          <button type="button" class="ad-icon-btn" aria-label="Thông báo"><mat-icon>notifications_none</mat-icon></button>
+          <span class="ad-avatar" *ngIf="user$ | async as user">{{ (user.name || 'QT') | slice:0:1 }}</span>
+        </div>
+      </header>
+
+      <main class="content">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #loginView>
+  <router-outlet></router-outlet>
+</ng-template>

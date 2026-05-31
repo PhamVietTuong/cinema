@@ -1,0 +1,107 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">Tổng Quan Hệ Thống</h1>
+      <p class="ad-sub">Theo dõi hoạt động kinh doanh của hệ thống rạp chiếu phim.</p>
+    </div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="kpi-grid">
+    <div class="ad-card kpi">
+      <span class="kpi-icon i-violet"><mat-icon>movie</mat-icon></span>
+      <div class="kpi-body">
+        <span class="kpi-label">Tổng Số Phim</span>
+        <span class="kpi-value">{{ stats.movies }}</span>
+      </div>
+    </div>
+    <div class="ad-card kpi">
+      <span class="kpi-icon i-blue"><mat-icon>theaters</mat-icon></span>
+      <div class="kpi-body">
+        <span class="kpi-label">Rạp Chiếu</span>
+        <span class="kpi-value">{{ stats.theaters }}</span>
+      </div>
+    </div>
+    <div class="ad-card kpi">
+      <span class="kpi-icon i-orange"><mat-icon>receipt_long</mat-icon></span>
+      <div class="kpi-body">
+        <span class="kpi-label">Đơn Hàng Hôm Nay</span>
+        <span class="kpi-value">{{ stats.invoicesToday }}</span>
+      </div>
+    </div>
+    <div class="ad-card kpi">
+      <span class="kpi-icon i-green"><mat-icon>monetization_on</mat-icon></span>
+      <div class="kpi-body">
+        <span class="kpi-label">Doanh Thu Hôm Nay</span>
+        <span class="kpi-value">{{ stats.revenueToday | currency:'VND':'symbol':'1.0-0' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="quick-actions">
+    <a class="ad-btn ad-btn--primary" routerLink="/movies"><mat-icon>movie</mat-icon> Quản Lý Phim</a>
+    <a class="ad-btn ad-btn--ghost" routerLink="/theaters"><mat-icon>theaters</mat-icon> Quản Lý Rạp</a>
+    <a class="ad-btn ad-btn--ghost" routerLink="/showtimes"><mat-icon>event</mat-icon> Quản Lý Lịch Chiếu</a>
+    <a class="ad-btn ad-btn--ghost" routerLink="/users"><mat-icon>group</mat-icon> Quản Lý Người Dùng</a>
+  </div>
+
+  <!-- Two column -->
+  <div class="two-col">
+    <div class="ad-card">
+      <h3 class="ad-card-title">Doanh Thu 7 Ngày</h3>
+      <div class="chart">
+        <div class="bar-col" *ngFor="let d of revenueTrend">
+          <div class="bar" [style.height.%]="d.value"></div>
+          <span class="bar-day">{{ d.day }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad-card">
+      <h3 class="ad-card-title">Phim Bán Chạy</h3>
+      <ul class="top-list" *ngIf="topMovies.length; else noTop">
+        <li *ngFor="let m of topMovies; let i = index">
+          <span class="rank">{{ i + 1 }}</span>
+          <span class="poster" [style.background-image]="m.posterUrl ? 'url(' + m.posterUrl + ')' : null">
+            <mat-icon *ngIf="!m.posterUrl">movie</mat-icon>
+          </span>
+          <span class="top-meta">
+            <span class="top-title">{{ m.title }}</span>
+            <span class="top-sub">{{ m.language || 'Đang chiếu' }}</span>
+          </span>
+          <span class="top-rating" *ngIf="m.averageRating">
+            <mat-icon>star</mat-icon> {{ m.averageRating | number:'1.1-1' }}
+          </span>
+        </li>
+      </ul>
+      <ng-template #noTop>
+        <div class="ad-empty"><mat-icon>movie</mat-icon><p>Chưa có dữ liệu phim.</p></div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Recent invoices -->
+  <div class="ad-card ad-card--pad-0 invoices">
+    <div class="card-head">
+      <h3 class="ad-card-title">Đơn Hàng Gần Đây</h3>
+    </div>
+    <div class="ad-table-wrap">
+      <table class="ad-table">
+        <thead>
+          <tr><th>Mã Đơn</th><th>Khách Hàng</th><th>Số Tiền</th><th>Trạng Thái</th><th>Ngày</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of invoices">
+            <td><strong>{{ i.code || '—' }}</strong></td>
+            <td>{{ i.userName || i.userEmail || '—' }}</td>
+            <td>{{ i.finalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+            <td><span class="ad-pill" [class]="'ad-pill ' + statusClass(i.status)">{{ statusLabel(i.status) }}</span></td>
+            <td>{{ i.creationTime | date:'short' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!invoices.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>Chưa có đơn hàng.</p></div>
+    </div>
+  </div>
+</div>

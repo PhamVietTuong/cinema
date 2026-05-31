@@ -1,0 +1,11 @@
+// Entry point for cinema-lib theme.
+// Apps: add this file to their styles array in angular.json
+//   OR:  @use 'lib/theme' in styles.scss (with includePaths set)
+//
+// Individual partials can be consumed from components:
+//   @use 'lib/theme/variables' as v;
+//   @use 'lib/theme/mixins' as m;
+
+@forward './variables';
+@forward './mixins';
+@use './base';

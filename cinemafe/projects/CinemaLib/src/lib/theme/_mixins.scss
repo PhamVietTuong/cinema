@@ -1,0 +1,84 @@
+@use './variables' as v;
+
+// ── Layout ────────────────────────────────────────────────────────────────────
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-gap($gap: v.$spacing-md) {
+  display: flex;
+  align-items: center;
+  gap: $gap;
+}
+
+@mixin page-container($max: v.$container-max) {
+  max-width: $max;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+@mixin page-header {
+  @include flex-between;
+  margin-bottom: 1.5rem;
+}
+
+// ── Cards ─────────────────────────────────────────────────────────────────────
+@mixin card-hover {
+  transition: transform v.$transition-base, box-shadow v.$transition-base;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: v.$shadow-hover;
+  }
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+@mixin auth-container($bg: v.$bg-light) {
+  min-height: calc(100vh - #{v.$toolbar-height});
+  background: $bg;
+  @include flex-center;
+}
+
+@mixin auth-card($width: 400px) {
+  width: $width;
+  padding: 2rem 1.75rem;
+}
+
+// ── Movie Grid ────────────────────────────────────────────────────────────────
+@mixin movie-grid($min: 220px) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax($min, 1fr));
+  gap: 1.5rem;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+@mixin tablet {
+  @media (max-width: 768px) { @content; }
+}
+
+@mixin mobile {
+  @media (max-width: 480px) { @content; }
+}
+
+// ── Typography ────────────────────────────────────────────────────────────────
+@mixin section-title {
+  font-size: v.$font-size-2x;
+  line-height: v.$line-height-tight;
+  margin-bottom: 1.5rem;
+  color: v.$bg-dark;
+}
+
+// ── Forms ─────────────────────────────────────────────────────────────────────
+@mixin full-width-field {
+  width: 100%;
+  display: block;
+}

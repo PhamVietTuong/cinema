@@ -1,0 +1,104 @@
+@use './variables' as v;
+
+// ── CSS Custom Properties (consumed by any component without @use) ─────────────
+:root {
+  --cl-primary:        #{v.$primary};
+  --cl-primary-dark:   #{v.$primary-dark};
+  --cl-primary-light:  #{v.$primary-light};
+
+  --cl-bg-dark:  #{v.$bg-dark};
+  --cl-bg-mid:   #{v.$bg-mid};
+  --cl-bg-blue:  #{v.$bg-blue};
+  --cl-bg-light: #{v.$bg-light};
+
+  --cl-error:   #{v.$error};
+  --cl-warning: #{v.$warning};
+  --cl-success: #{v.$success};
+  --cl-info:    #{v.$info};
+
+  --cl-container-max: #{v.$container-max};
+  --cl-sidebar-width: #{v.$sidebar-width};
+  --cl-toolbar-height: #{v.$toolbar-height};
+
+  --cl-seat-available: #{v.$seat-available};
+  --cl-seat-selected:  #{v.$seat-selected};
+  --cl-seat-occupied:  #{v.$seat-occupied};
+  --cl-seat-locked:    #{v.$seat-locked};
+  --cl-seat-vip:       #{v.$seat-vip};
+
+  --cl-text-primary:   #{v.$text-primary};
+  --cl-text-secondary: #{v.$text-secondary};
+  --cl-text-hint:      #{v.$text-hint};
+  --cl-border-light:   #{v.$border-light};
+
+  --cl-transition: #{v.$transition-base};
+  --cl-shadow-hover: #{v.$shadow-hover};
+}
+
+// ── Global Reset & Base ───────────────────────────────────────────────────────
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: v.$font-family;
+  font-size: v.$font-size-base;
+  line-height: v.$line-height-base;
+  color: v.$text-primary;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--cl-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ── Material overrides ────────────────────────────────────────────────────────
+.mat-mdc-card {
+  border-radius: 8px !important;
+}
+
+// ── Font Awesome icon helpers ─────────────────────────────────────────────────
+.nav-icon {
+  font-size: 0.95rem;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.menu-icon {
+  font-size: 0.9rem;
+  margin-right: 8px;
+  width: 16px;
+  text-align: center;
+  color: var(--cl-primary);
+}
+
+.stat-icon {
+  font-size: 1.1rem;
+  color: var(--cl-primary);
+}
+
+.age-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--cl-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.4;
+  vertical-align: middle;
+}

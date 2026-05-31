@@ -1,0 +1,54 @@
+﻿/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "paths": {
+      "CinemaLib": ["./dist/CinemaLib"]
+    },
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve"
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/CinemaLib/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/CinemaLib/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/CinemaAdmin/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/CinemaAdmin/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/CinemaUser/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/CinemaUser/tsconfig.spec.json"
+    }
+  ]
+}

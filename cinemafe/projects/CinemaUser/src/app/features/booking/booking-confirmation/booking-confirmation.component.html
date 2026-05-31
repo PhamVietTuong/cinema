@@ -1,0 +1,197 @@
+<!-- ── PAYMENT STEP ─────────────────────────────────────────────────────────── -->
+<ng-container *ngIf="!bookingSuccess">
+
+  <div class="page-header">
+    <div class="page-header-inner">
+      <nav class="breadcrumb">
+        <a routerLink="/">Trang Chủ</a>
+        <i class="fas fa-chevron-right"></i>
+        <a routerLink="/movies">Phim</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Thanh Toán</span>
+      </nav>
+      <h1 class="page-title">Thanh Toán</h1>
+    </div>
+  </div>
+
+  <div class="checkout-page">
+
+    <!-- Left: Payment Form -->
+    <div class="payment-form-col">
+
+      <!-- Payment Method Tabs -->
+      <div class="form-card">
+        <h3 class="card-title"><i class="fas fa-credit-card"></i> Phương Thức Thanh Toán</h3>
+        <div class="method-tabs">
+          <button class="method-tab" [class.active]="paymentMethod === 'VNPay'" (click)="paymentMethod='VNPay'">
+            <i class="fas fa-wallet"></i> VNPay
+          </button>
+          <button class="method-tab" [class.active]="paymentMethod === 'Momo'" (click)="paymentMethod='Momo'">
+            <i class="fas fa-mobile-alt"></i> MoMo
+          </button>
+          <button class="method-tab" [class.active]="paymentMethod === 'Cash'" (click)="paymentMethod='Cash'">
+            <i class="fas fa-money-bill"></i> Tại Quầy
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Details (shown for VNPay) -->
+      <div class="form-card" *ngIf="paymentMethod === 'VNPay'">
+        <h3 class="card-title">Thông Tin Thẻ</h3>
+        <div class="card-preview">
+          <div class="card-chip"><i class="fas fa-microchip"></i></div>
+          <div class="card-number-preview">**** **** **** 4242</div>
+          <div class="card-meta">
+            <span>Midnight Premium</span>
+            <span>12 / 28</span>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Số Thẻ</label>
+          <input class="field-input" placeholder="0000 0000 0000 0000" maxlength="19">
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Ngày Hết Hạn</label>
+            <input class="field-input" placeholder="MM / YY" maxlength="7">
+          </div>
+          <div class="field-group">
+            <label class="field-label">CVV</label>
+            <input class="field-input" placeholder="•••" maxlength="4" type="password">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Tên Chủ Thẻ</label>
+          <input class="field-input" placeholder="NGUYEN VAN A">
+        </div>
+      </div>
+
+      <!-- MoMo QR -->
+      <div class="form-card center" *ngIf="paymentMethod === 'Momo'">
+        <div class="qr-placeholder">
+          <i class="fas fa-qrcode"></i>
+        </div>
+        <p class="qr-note">Mở ứng dụng MoMo và quét mã QR để thanh toán</p>
+      </div>
+
+      <!-- Cash note -->
+      <div class="form-card center" *ngIf="paymentMethod === 'Cash'">
+        <i class="fas fa-store cash-icon"></i>
+        <p class="qr-note">Vui lòng đến quầy vé trước giờ chiếu 15 phút để hoàn tất thanh toán</p>
+      </div>
+
+      <div *ngIf="error" class="error-banner">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+      </div>
+    </div>
+
+    <!-- Right: Order Summary -->
+    <div class="summary-col">
+      <div class="summary-card">
+        <h3 class="summary-title">Tóm Tắt Đơn Hàng</h3>
+
+        <div class="seat-list">
+          <div class="seat-entry" *ngFor="let s of seats">
+            <div class="seat-entry-info">
+              <span class="seat-entry-code">{{ s.rowName }}{{ s.colIndex }}</span>
+              <span class="seat-entry-type">{{ s.seatTypeName }}</span>
+            </div>
+            <span class="seat-entry-price">{{ s.price | number:'1.0-0' }}đ</span>
+          </div>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <div class="summary-row">
+          <span>Tạm tính</span>
+          <span>{{ totalPrice | number:'1.0-0' }}đ</span>
+        </div>
+        <div class="summary-row muted">
+          <span>Phí đặt vé online</span>
+          <span>10.000đ</span>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <div class="summary-row total">
+          <span>Tổng Cộng</span>
+          <span class="total-amount">{{ grandTotal | number:'1.0-0' }}đ</span>
+        </div>
+
+        <button class="btn-primary-cta confirm-btn" (click)="confirmBooking()" [disabled]="loading">
+          <mat-spinner diameter="18" *ngIf="loading"></mat-spinner>
+          <ng-container *ngIf="!loading">
+            <i class="fas fa-lock"></i> XÁC NHẬN & THANH TOÁN
+          </ng-container>
+        </button>
+
+        <p class="secure-note"><i class="fas fa-shield-alt"></i> Thanh toán được bảo mật 256-bit SSL</p>
+      </div>
+    </div>
+
+  </div>
+</ng-container>
+
+<!-- ── SUCCESS STEP ────────────────────────────────────────────────────────── -->
+<ng-container *ngIf="bookingSuccess">
+  <div class="success-page">
+    <div class="success-glow"></div>
+
+    <!-- Check icon -->
+    <div class="success-icon-wrap">
+      <div class="success-icon">
+        <i class="fas fa-check"></i>
+      </div>
+    </div>
+    <h2 class="success-title">Đặt Vé Thành Công!</h2>
+    <p class="success-sub">Cảm ơn bạn đã đặt vé. Vé của bạn đã được xác nhận.</p>
+
+    <!-- Ticket Card -->
+    <div class="ticket-card">
+      <div class="ticket-top">
+        <div class="ticket-brand">
+          <i class="fas fa-film"></i>
+          <span>Midnight Premium</span>
+        </div>
+        <div class="ticket-code">{{ bookingCode }}</div>
+      </div>
+
+      <div class="ticket-body">
+        <div class="ticket-seats">
+          <div class="ticket-detail-label">Ghế</div>
+          <div class="ticket-seats-row">
+            <span class="ticket-seat-chip" *ngFor="let s of seats">{{ s.rowName }}{{ s.colIndex }}</span>
+          </div>
+        </div>
+        <div class="ticket-total-wrap">
+          <div class="ticket-detail-label">Tổng tiền</div>
+          <div class="ticket-total-val">{{ grandTotal | number:'1.0-0' }}đ</div>
+        </div>
+      </div>
+
+      <div class="ticket-perforation">
+        <div class="perf-left"></div>
+        <div class="perf-dots"><span *ngFor="let d of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]"></span></div>
+        <div class="perf-right"></div>
+      </div>
+
+      <!-- QR -->
+      <div class="ticket-qr-section">
+        <div class="qr-box">
+          <i class="fas fa-qrcode"></i>
+        </div>
+        <p class="qr-instruction">Xuất trình mã QR tại quầy hoặc cổng soát vé</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="success-actions">
+      <button class="btn-primary-cta" (click)="goProfile()">
+        <i class="fas fa-ticket-alt"></i> Xem Vé Của Tôi
+      </button>
+      <button class="btn-ghost-cta" (click)="goHome()">
+        <i class="fas fa-home"></i> Về Trang Chủ
+      </button>
+    </div>
+  </div>
+</ng-container>

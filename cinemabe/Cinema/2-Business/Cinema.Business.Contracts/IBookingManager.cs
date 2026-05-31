@@ -11,4 +11,6 @@ public interface IBookingManager
     void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
     void UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
     bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null);
+    /// <summary>Releases every seat still held by the given connection and returns the seats released.</summary>
+    IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> ReleaseConnectionLocks(string connectionId);
 }
