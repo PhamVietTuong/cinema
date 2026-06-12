@@ -1,3 +1,5 @@
+using Cinema.Data.Enums;
+
 namespace Cinema.Business.DTO;
 public class UserDTO
 {
@@ -10,4 +12,6 @@ public class UserDTO
     public string UserTypeName { get; set; } = string.Empty;
     public int Points { get; set; }
     public string? MemberShipName { get; set; }
+    public UserStatus Status { get; set; }
+    public DateTime CreationTime { get; set; }
 }

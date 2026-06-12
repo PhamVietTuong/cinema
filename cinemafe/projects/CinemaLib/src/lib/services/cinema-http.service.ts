@@ -36,6 +36,81 @@ export interface IHttpService {
     updateTheater(request: UpdateTheaterRequest): Observable<TheaterDTO>;
     deleteTheater(id?: string | undefined): Observable<void>;
     getShowTimes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeListDTO>;
+    getAgeRestrictions(search: PagingSearchDTO): Observable<DefaultSearchResultsOfAgeRestrictionDTO>;
+    getAgeRestriction(id?: string | undefined): Observable<AgeRestrictionDTO>;
+    createAgeRestriction(request: CreateAgeRestrictionRequest): Observable<AgeRestrictionDTO>;
+    updateAgeRestriction(request: UpdateAgeRestrictionRequest): Observable<AgeRestrictionDTO>;
+    deleteAgeRestriction(id?: string | undefined): Observable<void>;
+    getDiscountTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfDiscountTypeDTO>;
+    getDiscountType(id?: string | undefined): Observable<DiscountTypeDTO>;
+    createDiscountType(request: CreateDiscountTypeRequest): Observable<DiscountTypeDTO>;
+    updateDiscountType(request: UpdateDiscountTypeRequest): Observable<DiscountTypeDTO>;
+    deleteDiscountType(id?: string | undefined): Observable<void>;
+    getMovieTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieTypeDTO>;
+    getMovieType(id?: string | undefined): Observable<MovieTypeDTO>;
+    createMovieType(request: CreateMovieTypeRequest): Observable<MovieTypeDTO>;
+    updateMovieType(request: UpdateMovieTypeRequest): Observable<MovieTypeDTO>;
+    deleteMovieType(id?: string | undefined): Observable<void>;
+    getSeatTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSeatTypeDTO>;
+    getSeatType(id?: string | undefined): Observable<SeatTypeDTO>;
+    createSeatType(request: CreateSeatTypeRequest): Observable<SeatTypeDTO>;
+    updateSeatType(request: UpdateSeatTypeRequest): Observable<SeatTypeDTO>;
+    deleteSeatType(id?: string | undefined): Observable<void>;
+    getTicketTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfTicketTypeDTO>;
+    getTicketType(id?: string | undefined): Observable<TicketTypeDTO>;
+    createTicketType(request: CreateTicketTypeRequest): Observable<TicketTypeDTO>;
+    updateTicketType(request: UpdateTicketTypeRequest): Observable<TicketTypeDTO>;
+    deleteTicketType(id?: string | undefined): Observable<void>;
+    getUserTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfUserTypeDTO>;
+    getUserType(id?: string | undefined): Observable<UserTypeDTO>;
+    createUserType(request: CreateUserTypeRequest): Observable<UserTypeDTO>;
+    updateUserType(request: UpdateUserTypeRequest): Observable<UserTypeDTO>;
+    deleteUserType(id?: string | undefined): Observable<void>;
+    getMemberShips(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMemberShipDTO>;
+    getMemberShip(id?: string | undefined): Observable<MemberShipDTO>;
+    createMemberShip(request: CreateMemberShipRequest): Observable<MemberShipDTO>;
+    updateMemberShip(request: UpdateMemberShipRequest): Observable<MemberShipDTO>;
+    deleteMemberShip(id?: string | undefined): Observable<void>;
+    getHolidays(search: PagingSearchDTO): Observable<DefaultSearchResultsOfHolidayDTO>;
+    getHoliday(id?: string | undefined): Observable<HolidayDTO>;
+    createHoliday(request: CreateHolidayRequest): Observable<HolidayDTO>;
+    updateHoliday(request: UpdateHolidayRequest): Observable<HolidayDTO>;
+    deleteHoliday(id?: string | undefined): Observable<void>;
+    getNewsList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfNewsDTO>;
+    getNews(id?: string | undefined): Observable<NewsDTO>;
+    createNews(request: CreateNewsRequest): Observable<NewsDTO>;
+    updateNews(request: UpdateNewsRequest): Observable<NewsDTO>;
+    deleteNews(id?: string | undefined): Observable<void>;
+    getDiscounts(search: PagingSearchDTO): Observable<DefaultSearchResultsOfDiscountDTO>;
+    getDiscount(id?: string | undefined): Observable<DiscountDTO>;
+    createDiscount(request: CreateDiscountRequest): Observable<DiscountDTO>;
+    updateDiscount(request: UpdateDiscountRequest): Observable<DiscountDTO>;
+    deleteDiscount(id?: string | undefined): Observable<void>;
+    getFoodAndDrinks(search: PagingSearchDTO): Observable<DefaultSearchResultsOfFoodAndDrinkDTO>;
+    getFoodAndDrink(id?: string | undefined): Observable<FoodAndDrinkDTO>;
+    createFoodAndDrink(request: CreateFoodAndDrinkRequest): Observable<FoodAndDrinkDTO>;
+    updateFoodAndDrink(request: UpdateFoodAndDrinkRequest): Observable<FoodAndDrinkDTO>;
+    deleteFoodAndDrink(id?: string | undefined): Observable<void>;
+    getRooms(search: PagingSearchDTO): Observable<DefaultSearchResultsOfRoomDTO>;
+    getRoom(id?: string | undefined): Observable<RoomDTO>;
+    createRoom(request: CreateRoomRequest): Observable<RoomDTO>;
+    updateRoom(request: UpdateRoomRequest): Observable<RoomDTO>;
+    deleteRoom(id?: string | undefined): Observable<void>;
+    getShowTimeList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeDTO>;
+    getShowTime(id?: string | undefined): Observable<ShowTimeDTO>;
+    createShowTime(request: CreateShowTimeRequest): Observable<ShowTimeDTO>;
+    updateShowTime(request: UpdateShowTimeRequest): Observable<ShowTimeDTO>;
+    deleteShowTime(id?: string | undefined): Observable<void>;
+    getMovieTypeDetails(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieTypeDetailDTO>;
+    createMovieTypeDetail(request: CreateMovieTypeDetailRequest): Observable<MovieTypeDetailDTO>;
+    deleteMovieTypeDetail(movieId?: string | undefined, movieTypeId?: string | undefined): Observable<void>;
+    getSeatTypeTicketTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSeatTypeTicketTypeDTO>;
+    createSeatTypeTicketType(request: CreateSeatTypeTicketTypeRequest): Observable<SeatTypeTicketTypeDTO>;
+    updateSeatTypeTicketType(request: UpdateSeatTypeTicketTypeRequest): Observable<SeatTypeTicketTypeDTO>;
+    deleteSeatTypeTicketType(seatTypeId?: string | undefined, ticketTypeId?: string | undefined): Observable<void>;
+    getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceAdminDTO>;
+    updateInvoiceStatus(request: UpdateInvoiceStatusRequest): Observable<InvoiceAdminDTO>;
+    deleteInvoice(id?: string | undefined): Observable<void>;
 }
 
 @Injectable()
@@ -868,6 +943,3850 @@ export class HttpService implements IHttpService {
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = DefaultSearchResultsOfShowTimeListDTO.fromJS(resultData200);
             return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAgeRestrictions(search: PagingSearchDTO): Observable<DefaultSearchResultsOfAgeRestrictionDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetAgeRestrictions";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgeRestrictions(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgeRestrictions(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfAgeRestrictionDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfAgeRestrictionDTO>;
+        }));
+    }
+
+    protected processGetAgeRestrictions(response: HttpResponseBase): Observable<DefaultSearchResultsOfAgeRestrictionDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfAgeRestrictionDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAgeRestriction(id?: string | undefined): Observable<AgeRestrictionDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetAgeRestriction?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAgeRestriction(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAgeRestriction(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgeRestrictionDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgeRestrictionDTO>;
+        }));
+    }
+
+    protected processGetAgeRestriction(response: HttpResponseBase): Observable<AgeRestrictionDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AgeRestrictionDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createAgeRestriction(request: CreateAgeRestrictionRequest): Observable<AgeRestrictionDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateAgeRestriction";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateAgeRestriction(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateAgeRestriction(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgeRestrictionDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgeRestrictionDTO>;
+        }));
+    }
+
+    protected processCreateAgeRestriction(response: HttpResponseBase): Observable<AgeRestrictionDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AgeRestrictionDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateAgeRestriction(request: UpdateAgeRestrictionRequest): Observable<AgeRestrictionDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateAgeRestriction";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateAgeRestriction(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateAgeRestriction(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AgeRestrictionDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AgeRestrictionDTO>;
+        }));
+    }
+
+    protected processUpdateAgeRestriction(response: HttpResponseBase): Observable<AgeRestrictionDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AgeRestrictionDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteAgeRestriction(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteAgeRestriction?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteAgeRestriction(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteAgeRestriction(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteAgeRestriction(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDiscountTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfDiscountTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetDiscountTypes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDiscountTypes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDiscountTypes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfDiscountTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfDiscountTypeDTO>;
+        }));
+    }
+
+    protected processGetDiscountTypes(response: HttpResponseBase): Observable<DefaultSearchResultsOfDiscountTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfDiscountTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDiscountType(id?: string | undefined): Observable<DiscountTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetDiscountType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDiscountType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDiscountType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DiscountTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DiscountTypeDTO>;
+        }));
+    }
+
+    protected processGetDiscountType(response: HttpResponseBase): Observable<DiscountTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DiscountTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createDiscountType(request: CreateDiscountTypeRequest): Observable<DiscountTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateDiscountType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateDiscountType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateDiscountType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DiscountTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DiscountTypeDTO>;
+        }));
+    }
+
+    protected processCreateDiscountType(response: HttpResponseBase): Observable<DiscountTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DiscountTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateDiscountType(request: UpdateDiscountTypeRequest): Observable<DiscountTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateDiscountType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateDiscountType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateDiscountType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DiscountTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DiscountTypeDTO>;
+        }));
+    }
+
+    protected processUpdateDiscountType(response: HttpResponseBase): Observable<DiscountTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DiscountTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteDiscountType(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteDiscountType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteDiscountType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteDiscountType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteDiscountType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMovieTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMovieTypes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMovieTypes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMovieTypes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfMovieTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfMovieTypeDTO>;
+        }));
+    }
+
+    protected processGetMovieTypes(response: HttpResponseBase): Observable<DefaultSearchResultsOfMovieTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfMovieTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMovieType(id?: string | undefined): Observable<MovieTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMovieType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMovieType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMovieType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MovieTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MovieTypeDTO>;
+        }));
+    }
+
+    protected processGetMovieType(response: HttpResponseBase): Observable<MovieTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MovieTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createMovieType(request: CreateMovieTypeRequest): Observable<MovieTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateMovieType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateMovieType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateMovieType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MovieTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MovieTypeDTO>;
+        }));
+    }
+
+    protected processCreateMovieType(response: HttpResponseBase): Observable<MovieTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MovieTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateMovieType(request: UpdateMovieTypeRequest): Observable<MovieTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateMovieType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateMovieType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateMovieType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MovieTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MovieTypeDTO>;
+        }));
+    }
+
+    protected processUpdateMovieType(response: HttpResponseBase): Observable<MovieTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MovieTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteMovieType(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteMovieType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteMovieType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteMovieType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteMovieType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getSeatTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSeatTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetSeatTypes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetSeatTypes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetSeatTypes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfSeatTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfSeatTypeDTO>;
+        }));
+    }
+
+    protected processGetSeatTypes(response: HttpResponseBase): Observable<DefaultSearchResultsOfSeatTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfSeatTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getSeatType(id?: string | undefined): Observable<SeatTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetSeatType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetSeatType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetSeatType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SeatTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SeatTypeDTO>;
+        }));
+    }
+
+    protected processGetSeatType(response: HttpResponseBase): Observable<SeatTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SeatTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createSeatType(request: CreateSeatTypeRequest): Observable<SeatTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateSeatType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateSeatType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateSeatType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SeatTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SeatTypeDTO>;
+        }));
+    }
+
+    protected processCreateSeatType(response: HttpResponseBase): Observable<SeatTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SeatTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateSeatType(request: UpdateSeatTypeRequest): Observable<SeatTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateSeatType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateSeatType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateSeatType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SeatTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SeatTypeDTO>;
+        }));
+    }
+
+    protected processUpdateSeatType(response: HttpResponseBase): Observable<SeatTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SeatTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteSeatType(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteSeatType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteSeatType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteSeatType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteSeatType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getTicketTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfTicketTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetTicketTypes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetTicketTypes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetTicketTypes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfTicketTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfTicketTypeDTO>;
+        }));
+    }
+
+    protected processGetTicketTypes(response: HttpResponseBase): Observable<DefaultSearchResultsOfTicketTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfTicketTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getTicketType(id?: string | undefined): Observable<TicketTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetTicketType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetTicketType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetTicketType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TicketTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TicketTypeDTO>;
+        }));
+    }
+
+    protected processGetTicketType(response: HttpResponseBase): Observable<TicketTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TicketTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createTicketType(request: CreateTicketTypeRequest): Observable<TicketTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateTicketType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateTicketType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateTicketType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TicketTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TicketTypeDTO>;
+        }));
+    }
+
+    protected processCreateTicketType(response: HttpResponseBase): Observable<TicketTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TicketTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateTicketType(request: UpdateTicketTypeRequest): Observable<TicketTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateTicketType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateTicketType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateTicketType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TicketTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TicketTypeDTO>;
+        }));
+    }
+
+    protected processUpdateTicketType(response: HttpResponseBase): Observable<TicketTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TicketTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteTicketType(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteTicketType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteTicketType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteTicketType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteTicketType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getUserTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfUserTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetUserTypes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUserTypes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUserTypes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfUserTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfUserTypeDTO>;
+        }));
+    }
+
+    protected processGetUserTypes(response: HttpResponseBase): Observable<DefaultSearchResultsOfUserTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfUserTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getUserType(id?: string | undefined): Observable<UserTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetUserType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUserType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUserType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserTypeDTO>;
+        }));
+    }
+
+    protected processGetUserType(response: HttpResponseBase): Observable<UserTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UserTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createUserType(request: CreateUserTypeRequest): Observable<UserTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateUserType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateUserType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateUserType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserTypeDTO>;
+        }));
+    }
+
+    protected processCreateUserType(response: HttpResponseBase): Observable<UserTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UserTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateUserType(request: UpdateUserTypeRequest): Observable<UserTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateUserType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateUserType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateUserType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserTypeDTO>;
+        }));
+    }
+
+    protected processUpdateUserType(response: HttpResponseBase): Observable<UserTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UserTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteUserType(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteUserType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteUserType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteUserType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteUserType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMemberShips(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMemberShipDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMemberShips";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMemberShips(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMemberShips(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfMemberShipDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfMemberShipDTO>;
+        }));
+    }
+
+    protected processGetMemberShips(response: HttpResponseBase): Observable<DefaultSearchResultsOfMemberShipDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfMemberShipDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMemberShip(id?: string | undefined): Observable<MemberShipDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMemberShip?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMemberShip(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMemberShip(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MemberShipDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MemberShipDTO>;
+        }));
+    }
+
+    protected processGetMemberShip(response: HttpResponseBase): Observable<MemberShipDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MemberShipDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createMemberShip(request: CreateMemberShipRequest): Observable<MemberShipDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateMemberShip";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateMemberShip(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateMemberShip(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MemberShipDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MemberShipDTO>;
+        }));
+    }
+
+    protected processCreateMemberShip(response: HttpResponseBase): Observable<MemberShipDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MemberShipDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateMemberShip(request: UpdateMemberShipRequest): Observable<MemberShipDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateMemberShip";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateMemberShip(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateMemberShip(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MemberShipDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MemberShipDTO>;
+        }));
+    }
+
+    protected processUpdateMemberShip(response: HttpResponseBase): Observable<MemberShipDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MemberShipDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteMemberShip(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteMemberShip?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteMemberShip(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteMemberShip(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteMemberShip(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getHolidays(search: PagingSearchDTO): Observable<DefaultSearchResultsOfHolidayDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetHolidays";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetHolidays(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetHolidays(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfHolidayDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfHolidayDTO>;
+        }));
+    }
+
+    protected processGetHolidays(response: HttpResponseBase): Observable<DefaultSearchResultsOfHolidayDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfHolidayDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getHoliday(id?: string | undefined): Observable<HolidayDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetHoliday?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetHoliday(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetHoliday(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<HolidayDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<HolidayDTO>;
+        }));
+    }
+
+    protected processGetHoliday(response: HttpResponseBase): Observable<HolidayDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = HolidayDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createHoliday(request: CreateHolidayRequest): Observable<HolidayDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateHoliday";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateHoliday(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateHoliday(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<HolidayDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<HolidayDTO>;
+        }));
+    }
+
+    protected processCreateHoliday(response: HttpResponseBase): Observable<HolidayDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = HolidayDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateHoliday(request: UpdateHolidayRequest): Observable<HolidayDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateHoliday";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateHoliday(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateHoliday(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<HolidayDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<HolidayDTO>;
+        }));
+    }
+
+    protected processUpdateHoliday(response: HttpResponseBase): Observable<HolidayDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = HolidayDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteHoliday(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteHoliday?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteHoliday(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteHoliday(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteHoliday(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getNewsList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfNewsDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetNewsList";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetNewsList(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetNewsList(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfNewsDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfNewsDTO>;
+        }));
+    }
+
+    protected processGetNewsList(response: HttpResponseBase): Observable<DefaultSearchResultsOfNewsDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfNewsDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getNews(id?: string | undefined): Observable<NewsDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetNews?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetNews(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetNews(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<NewsDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<NewsDTO>;
+        }));
+    }
+
+    protected processGetNews(response: HttpResponseBase): Observable<NewsDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = NewsDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createNews(request: CreateNewsRequest): Observable<NewsDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateNews";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateNews(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateNews(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<NewsDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<NewsDTO>;
+        }));
+    }
+
+    protected processCreateNews(response: HttpResponseBase): Observable<NewsDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = NewsDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateNews(request: UpdateNewsRequest): Observable<NewsDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateNews";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateNews(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateNews(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<NewsDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<NewsDTO>;
+        }));
+    }
+
+    protected processUpdateNews(response: HttpResponseBase): Observable<NewsDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = NewsDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteNews(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteNews?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteNews(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteNews(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteNews(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDiscounts(search: PagingSearchDTO): Observable<DefaultSearchResultsOfDiscountDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetDiscounts";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDiscounts(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDiscounts(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfDiscountDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfDiscountDTO>;
+        }));
+    }
+
+    protected processGetDiscounts(response: HttpResponseBase): Observable<DefaultSearchResultsOfDiscountDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfDiscountDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDiscount(id?: string | undefined): Observable<DiscountDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetDiscount?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDiscount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDiscount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DiscountDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DiscountDTO>;
+        }));
+    }
+
+    protected processGetDiscount(response: HttpResponseBase): Observable<DiscountDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DiscountDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createDiscount(request: CreateDiscountRequest): Observable<DiscountDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateDiscount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateDiscount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateDiscount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DiscountDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DiscountDTO>;
+        }));
+    }
+
+    protected processCreateDiscount(response: HttpResponseBase): Observable<DiscountDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DiscountDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateDiscount(request: UpdateDiscountRequest): Observable<DiscountDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateDiscount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateDiscount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateDiscount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DiscountDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DiscountDTO>;
+        }));
+    }
+
+    protected processUpdateDiscount(response: HttpResponseBase): Observable<DiscountDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DiscountDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteDiscount(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteDiscount?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteDiscount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteDiscount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteDiscount(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getFoodAndDrinks(search: PagingSearchDTO): Observable<DefaultSearchResultsOfFoodAndDrinkDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetFoodAndDrinks";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetFoodAndDrinks(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetFoodAndDrinks(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfFoodAndDrinkDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfFoodAndDrinkDTO>;
+        }));
+    }
+
+    protected processGetFoodAndDrinks(response: HttpResponseBase): Observable<DefaultSearchResultsOfFoodAndDrinkDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfFoodAndDrinkDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getFoodAndDrink(id?: string | undefined): Observable<FoodAndDrinkDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetFoodAndDrink?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetFoodAndDrink(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetFoodAndDrink(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FoodAndDrinkDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FoodAndDrinkDTO>;
+        }));
+    }
+
+    protected processGetFoodAndDrink(response: HttpResponseBase): Observable<FoodAndDrinkDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = FoodAndDrinkDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createFoodAndDrink(request: CreateFoodAndDrinkRequest): Observable<FoodAndDrinkDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateFoodAndDrink";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateFoodAndDrink(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateFoodAndDrink(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FoodAndDrinkDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FoodAndDrinkDTO>;
+        }));
+    }
+
+    protected processCreateFoodAndDrink(response: HttpResponseBase): Observable<FoodAndDrinkDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = FoodAndDrinkDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateFoodAndDrink(request: UpdateFoodAndDrinkRequest): Observable<FoodAndDrinkDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateFoodAndDrink";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateFoodAndDrink(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateFoodAndDrink(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FoodAndDrinkDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FoodAndDrinkDTO>;
+        }));
+    }
+
+    protected processUpdateFoodAndDrink(response: HttpResponseBase): Observable<FoodAndDrinkDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = FoodAndDrinkDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteFoodAndDrink(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteFoodAndDrink?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteFoodAndDrink(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteFoodAndDrink(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteFoodAndDrink(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRooms(search: PagingSearchDTO): Observable<DefaultSearchResultsOfRoomDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetRooms";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRooms(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRooms(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfRoomDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfRoomDTO>;
+        }));
+    }
+
+    protected processGetRooms(response: HttpResponseBase): Observable<DefaultSearchResultsOfRoomDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfRoomDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRoom(id?: string | undefined): Observable<RoomDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetRoom?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRoom(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRoom(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomDTO>;
+        }));
+    }
+
+    protected processGetRoom(response: HttpResponseBase): Observable<RoomDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RoomDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createRoom(request: CreateRoomRequest): Observable<RoomDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateRoom";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateRoom(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateRoom(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomDTO>;
+        }));
+    }
+
+    protected processCreateRoom(response: HttpResponseBase): Observable<RoomDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RoomDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateRoom(request: UpdateRoomRequest): Observable<RoomDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateRoom";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateRoom(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateRoom(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomDTO>;
+        }));
+    }
+
+    protected processUpdateRoom(response: HttpResponseBase): Observable<RoomDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RoomDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteRoom(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteRoom?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteRoom(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteRoom(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteRoom(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getShowTimeList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetShowTimeList";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetShowTimeList(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetShowTimeList(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfShowTimeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfShowTimeDTO>;
+        }));
+    }
+
+    protected processGetShowTimeList(response: HttpResponseBase): Observable<DefaultSearchResultsOfShowTimeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfShowTimeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getShowTime(id?: string | undefined): Observable<ShowTimeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetShowTime?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetShowTime(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetShowTime(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ShowTimeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ShowTimeDTO>;
+        }));
+    }
+
+    protected processGetShowTime(response: HttpResponseBase): Observable<ShowTimeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ShowTimeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createShowTime(request: CreateShowTimeRequest): Observable<ShowTimeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateShowTime";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateShowTime(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateShowTime(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ShowTimeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ShowTimeDTO>;
+        }));
+    }
+
+    protected processCreateShowTime(response: HttpResponseBase): Observable<ShowTimeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ShowTimeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateShowTime(request: UpdateShowTimeRequest): Observable<ShowTimeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateShowTime";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateShowTime(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateShowTime(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ShowTimeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ShowTimeDTO>;
+        }));
+    }
+
+    protected processUpdateShowTime(response: HttpResponseBase): Observable<ShowTimeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ShowTimeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteShowTime(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteShowTime?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteShowTime(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteShowTime(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteShowTime(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMovieTypeDetails(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieTypeDetailDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMovieTypeDetails";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMovieTypeDetails(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMovieTypeDetails(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfMovieTypeDetailDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfMovieTypeDetailDTO>;
+        }));
+    }
+
+    protected processGetMovieTypeDetails(response: HttpResponseBase): Observable<DefaultSearchResultsOfMovieTypeDetailDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfMovieTypeDetailDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createMovieTypeDetail(request: CreateMovieTypeDetailRequest): Observable<MovieTypeDetailDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateMovieTypeDetail";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateMovieTypeDetail(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateMovieTypeDetail(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MovieTypeDetailDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MovieTypeDetailDTO>;
+        }));
+    }
+
+    protected processCreateMovieTypeDetail(response: HttpResponseBase): Observable<MovieTypeDetailDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MovieTypeDetailDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteMovieTypeDetail(movieId?: string | undefined, movieTypeId?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteMovieTypeDetail?";
+        if (movieId === null)
+            throw new Error("The parameter 'movieId' cannot be null.");
+        else if (movieId !== undefined)
+            url_ += "movieId=" + encodeURIComponent("" + movieId) + "&";
+        if (movieTypeId === null)
+            throw new Error("The parameter 'movieTypeId' cannot be null.");
+        else if (movieTypeId !== undefined)
+            url_ += "movieTypeId=" + encodeURIComponent("" + movieTypeId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteMovieTypeDetail(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteMovieTypeDetail(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteMovieTypeDetail(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getSeatTypeTicketTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSeatTypeTicketTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetSeatTypeTicketTypes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetSeatTypeTicketTypes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetSeatTypeTicketTypes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfSeatTypeTicketTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfSeatTypeTicketTypeDTO>;
+        }));
+    }
+
+    protected processGetSeatTypeTicketTypes(response: HttpResponseBase): Observable<DefaultSearchResultsOfSeatTypeTicketTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfSeatTypeTicketTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createSeatTypeTicketType(request: CreateSeatTypeTicketTypeRequest): Observable<SeatTypeTicketTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateSeatTypeTicketType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateSeatTypeTicketType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateSeatTypeTicketType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SeatTypeTicketTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SeatTypeTicketTypeDTO>;
+        }));
+    }
+
+    protected processCreateSeatTypeTicketType(response: HttpResponseBase): Observable<SeatTypeTicketTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SeatTypeTicketTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateSeatTypeTicketType(request: UpdateSeatTypeTicketTypeRequest): Observable<SeatTypeTicketTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateSeatTypeTicketType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateSeatTypeTicketType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateSeatTypeTicketType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SeatTypeTicketTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SeatTypeTicketTypeDTO>;
+        }));
+    }
+
+    protected processUpdateSeatTypeTicketType(response: HttpResponseBase): Observable<SeatTypeTicketTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SeatTypeTicketTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteSeatTypeTicketType(seatTypeId?: string | undefined, ticketTypeId?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteSeatTypeTicketType?";
+        if (seatTypeId === null)
+            throw new Error("The parameter 'seatTypeId' cannot be null.");
+        else if (seatTypeId !== undefined)
+            url_ += "seatTypeId=" + encodeURIComponent("" + seatTypeId) + "&";
+        if (ticketTypeId === null)
+            throw new Error("The parameter 'ticketTypeId' cannot be null.");
+        else if (ticketTypeId !== undefined)
+            url_ += "ticketTypeId=" + encodeURIComponent("" + ticketTypeId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteSeatTypeTicketType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteSeatTypeTicketType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteSeatTypeTicketType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceAdminDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetInvoices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetInvoices(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetInvoices(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfInvoiceAdminDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfInvoiceAdminDTO>;
+        }));
+    }
+
+    protected processGetInvoices(response: HttpResponseBase): Observable<DefaultSearchResultsOfInvoiceAdminDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfInvoiceAdminDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateInvoiceStatus(request: UpdateInvoiceStatusRequest): Observable<InvoiceAdminDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateInvoiceStatus";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateInvoiceStatus(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateInvoiceStatus(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<InvoiceAdminDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<InvoiceAdminDTO>;
+        }));
+    }
+
+    protected processUpdateInvoiceStatus(response: HttpResponseBase): Observable<InvoiceAdminDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = InvoiceAdminDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteInvoice(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteInvoice?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteInvoice(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteInvoice(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteInvoice(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2096,6 +6015,3619 @@ export interface IShowTimeRoomDTO {
     roomName?: string | undefined;
     theaterName?: string | undefined;
     basePrice?: number;
+}
+
+export abstract class BaseSearchResultsOfAgeRestrictionDTO implements IBaseSearchResultsOfAgeRestrictionDTO {
+    results?: AgeRestrictionDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfAgeRestrictionDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(AgeRestrictionDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfAgeRestrictionDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfAgeRestrictionDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfAgeRestrictionDTO {
+    results?: AgeRestrictionDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfAgeRestrictionDTO extends BaseSearchResultsOfAgeRestrictionDTO implements IDefaultSearchResultsOfAgeRestrictionDTO {
+
+    constructor(data?: IDefaultSearchResultsOfAgeRestrictionDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfAgeRestrictionDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfAgeRestrictionDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfAgeRestrictionDTO extends IBaseSearchResultsOfAgeRestrictionDTO {
+}
+
+export class AgeRestrictionDTO implements IAgeRestrictionDTO {
+    id?: string;
+    code?: string;
+    description?: string;
+    minAge?: number;
+
+    constructor(data?: IAgeRestrictionDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.description = _data["description"];
+            this.minAge = _data["minAge"];
+        }
+    }
+
+    static fromJS(data: any): AgeRestrictionDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new AgeRestrictionDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["description"] = this.description;
+        data["minAge"] = this.minAge;
+        return data;
+    }
+}
+
+export interface IAgeRestrictionDTO {
+    id?: string;
+    code?: string;
+    description?: string;
+    minAge?: number;
+}
+
+export class CreateAgeRestrictionRequest implements ICreateAgeRestrictionRequest {
+    code?: string;
+    description?: string;
+    minAge?: number;
+
+    constructor(data?: ICreateAgeRestrictionRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.code = _data["code"];
+            this.description = _data["description"];
+            this.minAge = _data["minAge"];
+        }
+    }
+
+    static fromJS(data: any): CreateAgeRestrictionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateAgeRestrictionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        data["description"] = this.description;
+        data["minAge"] = this.minAge;
+        return data;
+    }
+}
+
+export interface ICreateAgeRestrictionRequest {
+    code?: string;
+    description?: string;
+    minAge?: number;
+}
+
+export class UpdateAgeRestrictionRequest implements IUpdateAgeRestrictionRequest {
+    id?: string;
+    code?: string;
+    description?: string;
+    minAge?: number;
+
+    constructor(data?: IUpdateAgeRestrictionRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.description = _data["description"];
+            this.minAge = _data["minAge"];
+        }
+    }
+
+    static fromJS(data: any): UpdateAgeRestrictionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateAgeRestrictionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["description"] = this.description;
+        data["minAge"] = this.minAge;
+        return data;
+    }
+}
+
+export interface IUpdateAgeRestrictionRequest {
+    id?: string;
+    code?: string;
+    description?: string;
+    minAge?: number;
+}
+
+export abstract class BaseSearchResultsOfDiscountTypeDTO implements IBaseSearchResultsOfDiscountTypeDTO {
+    results?: DiscountTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfDiscountTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(DiscountTypeDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfDiscountTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfDiscountTypeDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfDiscountTypeDTO {
+    results?: DiscountTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfDiscountTypeDTO extends BaseSearchResultsOfDiscountTypeDTO implements IDefaultSearchResultsOfDiscountTypeDTO {
+
+    constructor(data?: IDefaultSearchResultsOfDiscountTypeDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfDiscountTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfDiscountTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfDiscountTypeDTO extends IBaseSearchResultsOfDiscountTypeDTO {
+}
+
+export class DiscountTypeDTO implements IDiscountTypeDTO {
+    id?: string;
+    name?: string;
+
+    constructor(data?: IDiscountTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): DiscountTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DiscountTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IDiscountTypeDTO {
+    id?: string;
+    name?: string;
+}
+
+export class CreateDiscountTypeRequest implements ICreateDiscountTypeRequest {
+    name?: string;
+
+    constructor(data?: ICreateDiscountTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): CreateDiscountTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateDiscountTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface ICreateDiscountTypeRequest {
+    name?: string;
+}
+
+export class UpdateDiscountTypeRequest implements IUpdateDiscountTypeRequest {
+    id?: string;
+    name?: string;
+
+    constructor(data?: IUpdateDiscountTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): UpdateDiscountTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateDiscountTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IUpdateDiscountTypeRequest {
+    id?: string;
+    name?: string;
+}
+
+export abstract class BaseSearchResultsOfMovieTypeDTO implements IBaseSearchResultsOfMovieTypeDTO {
+    results?: MovieTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfMovieTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(MovieTypeDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfMovieTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfMovieTypeDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfMovieTypeDTO {
+    results?: MovieTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfMovieTypeDTO extends BaseSearchResultsOfMovieTypeDTO implements IDefaultSearchResultsOfMovieTypeDTO {
+
+    constructor(data?: IDefaultSearchResultsOfMovieTypeDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfMovieTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfMovieTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfMovieTypeDTO extends IBaseSearchResultsOfMovieTypeDTO {
+}
+
+export class MovieTypeDTO implements IMovieTypeDTO {
+    id?: string;
+    name?: string;
+
+    constructor(data?: IMovieTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): MovieTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new MovieTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IMovieTypeDTO {
+    id?: string;
+    name?: string;
+}
+
+export class CreateMovieTypeRequest implements ICreateMovieTypeRequest {
+    name?: string;
+
+    constructor(data?: ICreateMovieTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): CreateMovieTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateMovieTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface ICreateMovieTypeRequest {
+    name?: string;
+}
+
+export class UpdateMovieTypeRequest implements IUpdateMovieTypeRequest {
+    id?: string;
+    name?: string;
+
+    constructor(data?: IUpdateMovieTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): UpdateMovieTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateMovieTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IUpdateMovieTypeRequest {
+    id?: string;
+    name?: string;
+}
+
+export abstract class BaseSearchResultsOfSeatTypeDTO implements IBaseSearchResultsOfSeatTypeDTO {
+    results?: SeatTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfSeatTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(SeatTypeDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfSeatTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfSeatTypeDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfSeatTypeDTO {
+    results?: SeatTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfSeatTypeDTO extends BaseSearchResultsOfSeatTypeDTO implements IDefaultSearchResultsOfSeatTypeDTO {
+
+    constructor(data?: IDefaultSearchResultsOfSeatTypeDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfSeatTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfSeatTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfSeatTypeDTO extends IBaseSearchResultsOfSeatTypeDTO {
+}
+
+export class SeatTypeDTO implements ISeatTypeDTO {
+    id?: string;
+    name?: string;
+    description?: string | undefined;
+    color?: string;
+
+    constructor(data?: ISeatTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+            this.color = _data["color"];
+        }
+    }
+
+    static fromJS(data: any): SeatTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new SeatTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        data["color"] = this.color;
+        return data;
+    }
+}
+
+export interface ISeatTypeDTO {
+    id?: string;
+    name?: string;
+    description?: string | undefined;
+    color?: string;
+}
+
+export class CreateSeatTypeRequest implements ICreateSeatTypeRequest {
+    name?: string;
+    description?: string | undefined;
+    color?: string;
+
+    constructor(data?: ICreateSeatTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.description = _data["description"];
+            this.color = _data["color"];
+        }
+    }
+
+    static fromJS(data: any): CreateSeatTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateSeatTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["description"] = this.description;
+        data["color"] = this.color;
+        return data;
+    }
+}
+
+export interface ICreateSeatTypeRequest {
+    name?: string;
+    description?: string | undefined;
+    color?: string;
+}
+
+export class UpdateSeatTypeRequest implements IUpdateSeatTypeRequest {
+    id?: string;
+    name?: string;
+    description?: string | undefined;
+    color?: string;
+
+    constructor(data?: IUpdateSeatTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+            this.color = _data["color"];
+        }
+    }
+
+    static fromJS(data: any): UpdateSeatTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateSeatTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        data["color"] = this.color;
+        return data;
+    }
+}
+
+export interface IUpdateSeatTypeRequest {
+    id?: string;
+    name?: string;
+    description?: string | undefined;
+    color?: string;
+}
+
+export abstract class BaseSearchResultsOfTicketTypeDTO implements IBaseSearchResultsOfTicketTypeDTO {
+    results?: TicketTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfTicketTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(TicketTypeDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfTicketTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfTicketTypeDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfTicketTypeDTO {
+    results?: TicketTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfTicketTypeDTO extends BaseSearchResultsOfTicketTypeDTO implements IDefaultSearchResultsOfTicketTypeDTO {
+
+    constructor(data?: IDefaultSearchResultsOfTicketTypeDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfTicketTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfTicketTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfTicketTypeDTO extends IBaseSearchResultsOfTicketTypeDTO {
+}
+
+export class TicketTypeDTO implements ITicketTypeDTO {
+    id?: string;
+    name?: string;
+    basePrice?: number;
+    description?: string | undefined;
+
+    constructor(data?: ITicketTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.basePrice = _data["basePrice"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): TicketTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new TicketTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["basePrice"] = this.basePrice;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface ITicketTypeDTO {
+    id?: string;
+    name?: string;
+    basePrice?: number;
+    description?: string | undefined;
+}
+
+export class CreateTicketTypeRequest implements ICreateTicketTypeRequest {
+    name?: string;
+    basePrice?: number;
+    description?: string | undefined;
+
+    constructor(data?: ICreateTicketTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.basePrice = _data["basePrice"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): CreateTicketTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateTicketTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["basePrice"] = this.basePrice;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface ICreateTicketTypeRequest {
+    name?: string;
+    basePrice?: number;
+    description?: string | undefined;
+}
+
+export class UpdateTicketTypeRequest implements IUpdateTicketTypeRequest {
+    id?: string;
+    name?: string;
+    basePrice?: number;
+    description?: string | undefined;
+
+    constructor(data?: IUpdateTicketTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.basePrice = _data["basePrice"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): UpdateTicketTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateTicketTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["basePrice"] = this.basePrice;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface IUpdateTicketTypeRequest {
+    id?: string;
+    name?: string;
+    basePrice?: number;
+    description?: string | undefined;
+}
+
+export abstract class BaseSearchResultsOfUserTypeDTO implements IBaseSearchResultsOfUserTypeDTO {
+    results?: UserTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfUserTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(UserTypeDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfUserTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfUserTypeDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfUserTypeDTO {
+    results?: UserTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfUserTypeDTO extends BaseSearchResultsOfUserTypeDTO implements IDefaultSearchResultsOfUserTypeDTO {
+
+    constructor(data?: IDefaultSearchResultsOfUserTypeDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfUserTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfUserTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfUserTypeDTO extends IBaseSearchResultsOfUserTypeDTO {
+}
+
+export class UserTypeDTO implements IUserTypeDTO {
+    id?: string;
+    name?: string;
+
+    constructor(data?: IUserTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): UserTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new UserTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IUserTypeDTO {
+    id?: string;
+    name?: string;
+}
+
+export class CreateUserTypeRequest implements ICreateUserTypeRequest {
+    name?: string;
+
+    constructor(data?: ICreateUserTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): CreateUserTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateUserTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface ICreateUserTypeRequest {
+    name?: string;
+}
+
+export class UpdateUserTypeRequest implements IUpdateUserTypeRequest {
+    id?: string;
+    name?: string;
+
+    constructor(data?: IUpdateUserTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): UpdateUserTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateUserTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IUpdateUserTypeRequest {
+    id?: string;
+    name?: string;
+}
+
+export abstract class BaseSearchResultsOfMemberShipDTO implements IBaseSearchResultsOfMemberShipDTO {
+    results?: MemberShipDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfMemberShipDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(MemberShipDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfMemberShipDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfMemberShipDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfMemberShipDTO {
+    results?: MemberShipDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfMemberShipDTO extends BaseSearchResultsOfMemberShipDTO implements IDefaultSearchResultsOfMemberShipDTO {
+
+    constructor(data?: IDefaultSearchResultsOfMemberShipDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfMemberShipDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfMemberShipDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfMemberShipDTO extends IBaseSearchResultsOfMemberShipDTO {
+}
+
+export class MemberShipDTO implements IMemberShipDTO {
+    id?: string;
+    name?: string;
+    minPoints?: number;
+    maxPoints?: number;
+    discountPercent?: number;
+
+    constructor(data?: IMemberShipDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.minPoints = _data["minPoints"];
+            this.maxPoints = _data["maxPoints"];
+            this.discountPercent = _data["discountPercent"];
+        }
+    }
+
+    static fromJS(data: any): MemberShipDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new MemberShipDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["minPoints"] = this.minPoints;
+        data["maxPoints"] = this.maxPoints;
+        data["discountPercent"] = this.discountPercent;
+        return data;
+    }
+}
+
+export interface IMemberShipDTO {
+    id?: string;
+    name?: string;
+    minPoints?: number;
+    maxPoints?: number;
+    discountPercent?: number;
+}
+
+export class CreateMemberShipRequest implements ICreateMemberShipRequest {
+    name?: string;
+    minPoints?: number;
+    maxPoints?: number;
+    discountPercent?: number;
+
+    constructor(data?: ICreateMemberShipRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.minPoints = _data["minPoints"];
+            this.maxPoints = _data["maxPoints"];
+            this.discountPercent = _data["discountPercent"];
+        }
+    }
+
+    static fromJS(data: any): CreateMemberShipRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateMemberShipRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["minPoints"] = this.minPoints;
+        data["maxPoints"] = this.maxPoints;
+        data["discountPercent"] = this.discountPercent;
+        return data;
+    }
+}
+
+export interface ICreateMemberShipRequest {
+    name?: string;
+    minPoints?: number;
+    maxPoints?: number;
+    discountPercent?: number;
+}
+
+export class UpdateMemberShipRequest implements IUpdateMemberShipRequest {
+    id?: string;
+    name?: string;
+    minPoints?: number;
+    maxPoints?: number;
+    discountPercent?: number;
+
+    constructor(data?: IUpdateMemberShipRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.minPoints = _data["minPoints"];
+            this.maxPoints = _data["maxPoints"];
+            this.discountPercent = _data["discountPercent"];
+        }
+    }
+
+    static fromJS(data: any): UpdateMemberShipRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateMemberShipRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["minPoints"] = this.minPoints;
+        data["maxPoints"] = this.maxPoints;
+        data["discountPercent"] = this.discountPercent;
+        return data;
+    }
+}
+
+export interface IUpdateMemberShipRequest {
+    id?: string;
+    name?: string;
+    minPoints?: number;
+    maxPoints?: number;
+    discountPercent?: number;
+}
+
+export abstract class BaseSearchResultsOfHolidayDTO implements IBaseSearchResultsOfHolidayDTO {
+    results?: HolidayDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfHolidayDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(HolidayDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfHolidayDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfHolidayDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfHolidayDTO {
+    results?: HolidayDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfHolidayDTO extends BaseSearchResultsOfHolidayDTO implements IDefaultSearchResultsOfHolidayDTO {
+
+    constructor(data?: IDefaultSearchResultsOfHolidayDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfHolidayDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfHolidayDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfHolidayDTO extends IBaseSearchResultsOfHolidayDTO {
+}
+
+export class HolidayDTO implements IHolidayDTO {
+    id?: string;
+    name?: string;
+    date?: Date;
+    priceMultiplier?: number;
+
+    constructor(data?: IHolidayDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
+            this.priceMultiplier = _data["priceMultiplier"];
+        }
+    }
+
+    static fromJS(data: any): HolidayDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new HolidayDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["date"] = this.date ? formatDate(this.date) : <any>undefined;
+        data["priceMultiplier"] = this.priceMultiplier;
+        return data;
+    }
+}
+
+export interface IHolidayDTO {
+    id?: string;
+    name?: string;
+    date?: Date;
+    priceMultiplier?: number;
+}
+
+export class CreateHolidayRequest implements ICreateHolidayRequest {
+    name?: string;
+    date?: Date;
+    priceMultiplier?: number;
+
+    constructor(data?: ICreateHolidayRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
+            this.priceMultiplier = _data["priceMultiplier"];
+        }
+    }
+
+    static fromJS(data: any): CreateHolidayRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateHolidayRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["date"] = this.date ? formatDate(this.date) : <any>undefined;
+        data["priceMultiplier"] = this.priceMultiplier;
+        return data;
+    }
+}
+
+export interface ICreateHolidayRequest {
+    name?: string;
+    date?: Date;
+    priceMultiplier?: number;
+}
+
+export class UpdateHolidayRequest implements IUpdateHolidayRequest {
+    id?: string;
+    name?: string;
+    date?: Date;
+    priceMultiplier?: number;
+
+    constructor(data?: IUpdateHolidayRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
+            this.priceMultiplier = _data["priceMultiplier"];
+        }
+    }
+
+    static fromJS(data: any): UpdateHolidayRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateHolidayRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["date"] = this.date ? formatDate(this.date) : <any>undefined;
+        data["priceMultiplier"] = this.priceMultiplier;
+        return data;
+    }
+}
+
+export interface IUpdateHolidayRequest {
+    id?: string;
+    name?: string;
+    date?: Date;
+    priceMultiplier?: number;
+}
+
+export abstract class BaseSearchResultsOfNewsDTO implements IBaseSearchResultsOfNewsDTO {
+    results?: NewsDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfNewsDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(NewsDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfNewsDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfNewsDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfNewsDTO {
+    results?: NewsDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfNewsDTO extends BaseSearchResultsOfNewsDTO implements IDefaultSearchResultsOfNewsDTO {
+
+    constructor(data?: IDefaultSearchResultsOfNewsDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfNewsDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfNewsDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfNewsDTO extends IBaseSearchResultsOfNewsDTO {
+}
+
+export class NewsDTO implements INewsDTO {
+    id?: string;
+    title?: string;
+    content?: string;
+    thumbnailUrl?: string | undefined;
+    author?: string | undefined;
+    isPublished?: boolean;
+    publishedAt?: Date | undefined;
+
+    constructor(data?: INewsDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.content = _data["content"];
+            this.thumbnailUrl = _data["thumbnailUrl"];
+            this.author = _data["author"];
+            this.isPublished = _data["isPublished"];
+            this.publishedAt = _data["publishedAt"] ? new Date(_data["publishedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): NewsDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new NewsDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["content"] = this.content;
+        data["thumbnailUrl"] = this.thumbnailUrl;
+        data["author"] = this.author;
+        data["isPublished"] = this.isPublished;
+        data["publishedAt"] = this.publishedAt ? this.publishedAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface INewsDTO {
+    id?: string;
+    title?: string;
+    content?: string;
+    thumbnailUrl?: string | undefined;
+    author?: string | undefined;
+    isPublished?: boolean;
+    publishedAt?: Date | undefined;
+}
+
+export class CreateNewsRequest implements ICreateNewsRequest {
+    title?: string;
+    content?: string;
+    thumbnailUrl?: string | undefined;
+    author?: string | undefined;
+    isPublished?: boolean;
+    publishedAt?: Date | undefined;
+
+    constructor(data?: ICreateNewsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.title = _data["title"];
+            this.content = _data["content"];
+            this.thumbnailUrl = _data["thumbnailUrl"];
+            this.author = _data["author"];
+            this.isPublished = _data["isPublished"];
+            this.publishedAt = _data["publishedAt"] ? new Date(_data["publishedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): CreateNewsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateNewsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["title"] = this.title;
+        data["content"] = this.content;
+        data["thumbnailUrl"] = this.thumbnailUrl;
+        data["author"] = this.author;
+        data["isPublished"] = this.isPublished;
+        data["publishedAt"] = this.publishedAt ? this.publishedAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ICreateNewsRequest {
+    title?: string;
+    content?: string;
+    thumbnailUrl?: string | undefined;
+    author?: string | undefined;
+    isPublished?: boolean;
+    publishedAt?: Date | undefined;
+}
+
+export class UpdateNewsRequest implements IUpdateNewsRequest {
+    id?: string;
+    title?: string;
+    content?: string;
+    thumbnailUrl?: string | undefined;
+    author?: string | undefined;
+    isPublished?: boolean;
+    publishedAt?: Date | undefined;
+
+    constructor(data?: IUpdateNewsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.content = _data["content"];
+            this.thumbnailUrl = _data["thumbnailUrl"];
+            this.author = _data["author"];
+            this.isPublished = _data["isPublished"];
+            this.publishedAt = _data["publishedAt"] ? new Date(_data["publishedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): UpdateNewsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateNewsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["content"] = this.content;
+        data["thumbnailUrl"] = this.thumbnailUrl;
+        data["author"] = this.author;
+        data["isPublished"] = this.isPublished;
+        data["publishedAt"] = this.publishedAt ? this.publishedAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IUpdateNewsRequest {
+    id?: string;
+    title?: string;
+    content?: string;
+    thumbnailUrl?: string | undefined;
+    author?: string | undefined;
+    isPublished?: boolean;
+    publishedAt?: Date | undefined;
+}
+
+export abstract class BaseSearchResultsOfDiscountDTO implements IBaseSearchResultsOfDiscountDTO {
+    results?: DiscountDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfDiscountDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(DiscountDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfDiscountDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfDiscountDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfDiscountDTO {
+    results?: DiscountDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfDiscountDTO extends BaseSearchResultsOfDiscountDTO implements IDefaultSearchResultsOfDiscountDTO {
+
+    constructor(data?: IDefaultSearchResultsOfDiscountDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfDiscountDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfDiscountDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfDiscountDTO extends IBaseSearchResultsOfDiscountDTO {
+}
+
+export class DiscountDTO implements IDiscountDTO {
+    id?: string;
+    code?: string;
+    description?: string | undefined;
+    percent?: number;
+    maxDiscountAmount?: number | undefined;
+    discountTypeId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    maxUsage?: number | undefined;
+    usedCount?: number;
+    isActive?: boolean;
+
+    constructor(data?: IDiscountDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.description = _data["description"];
+            this.percent = _data["percent"];
+            this.maxDiscountAmount = _data["maxDiscountAmount"];
+            this.discountTypeId = _data["discountTypeId"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.maxUsage = _data["maxUsage"];
+            this.usedCount = _data["usedCount"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): DiscountDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DiscountDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["description"] = this.description;
+        data["percent"] = this.percent;
+        data["maxDiscountAmount"] = this.maxDiscountAmount;
+        data["discountTypeId"] = this.discountTypeId;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["maxUsage"] = this.maxUsage;
+        data["usedCount"] = this.usedCount;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IDiscountDTO {
+    id?: string;
+    code?: string;
+    description?: string | undefined;
+    percent?: number;
+    maxDiscountAmount?: number | undefined;
+    discountTypeId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    maxUsage?: number | undefined;
+    usedCount?: number;
+    isActive?: boolean;
+}
+
+export class CreateDiscountRequest implements ICreateDiscountRequest {
+    code?: string;
+    description?: string | undefined;
+    percent?: number;
+    maxDiscountAmount?: number | undefined;
+    discountTypeId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    maxUsage?: number | undefined;
+    isActive?: boolean;
+
+    constructor(data?: ICreateDiscountRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.code = _data["code"];
+            this.description = _data["description"];
+            this.percent = _data["percent"];
+            this.maxDiscountAmount = _data["maxDiscountAmount"];
+            this.discountTypeId = _data["discountTypeId"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.maxUsage = _data["maxUsage"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): CreateDiscountRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateDiscountRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        data["description"] = this.description;
+        data["percent"] = this.percent;
+        data["maxDiscountAmount"] = this.maxDiscountAmount;
+        data["discountTypeId"] = this.discountTypeId;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["maxUsage"] = this.maxUsage;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface ICreateDiscountRequest {
+    code?: string;
+    description?: string | undefined;
+    percent?: number;
+    maxDiscountAmount?: number | undefined;
+    discountTypeId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    maxUsage?: number | undefined;
+    isActive?: boolean;
+}
+
+export class UpdateDiscountRequest implements IUpdateDiscountRequest {
+    id?: string;
+    code?: string;
+    description?: string | undefined;
+    percent?: number;
+    maxDiscountAmount?: number | undefined;
+    discountTypeId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    maxUsage?: number | undefined;
+    isActive?: boolean;
+
+    constructor(data?: IUpdateDiscountRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.description = _data["description"];
+            this.percent = _data["percent"];
+            this.maxDiscountAmount = _data["maxDiscountAmount"];
+            this.discountTypeId = _data["discountTypeId"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.maxUsage = _data["maxUsage"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): UpdateDiscountRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateDiscountRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["description"] = this.description;
+        data["percent"] = this.percent;
+        data["maxDiscountAmount"] = this.maxDiscountAmount;
+        data["discountTypeId"] = this.discountTypeId;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["maxUsage"] = this.maxUsage;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IUpdateDiscountRequest {
+    id?: string;
+    code?: string;
+    description?: string | undefined;
+    percent?: number;
+    maxDiscountAmount?: number | undefined;
+    discountTypeId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    maxUsage?: number | undefined;
+    isActive?: boolean;
+}
+
+export abstract class BaseSearchResultsOfFoodAndDrinkDTO implements IBaseSearchResultsOfFoodAndDrinkDTO {
+    results?: FoodAndDrinkDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfFoodAndDrinkDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(FoodAndDrinkDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfFoodAndDrinkDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfFoodAndDrinkDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfFoodAndDrinkDTO {
+    results?: FoodAndDrinkDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfFoodAndDrinkDTO extends BaseSearchResultsOfFoodAndDrinkDTO implements IDefaultSearchResultsOfFoodAndDrinkDTO {
+
+    constructor(data?: IDefaultSearchResultsOfFoodAndDrinkDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfFoodAndDrinkDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfFoodAndDrinkDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfFoodAndDrinkDTO extends IBaseSearchResultsOfFoodAndDrinkDTO {
+}
+
+export class FoodAndDrinkDTO implements IFoodAndDrinkDTO {
+    id?: string;
+    name?: string;
+    price?: number;
+    imageUrl?: string | undefined;
+    description?: string | undefined;
+    isAvailable?: boolean;
+
+    constructor(data?: IFoodAndDrinkDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.price = _data["price"];
+            this.imageUrl = _data["imageUrl"];
+            this.description = _data["description"];
+            this.isAvailable = _data["isAvailable"];
+        }
+    }
+
+    static fromJS(data: any): FoodAndDrinkDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new FoodAndDrinkDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["price"] = this.price;
+        data["imageUrl"] = this.imageUrl;
+        data["description"] = this.description;
+        data["isAvailable"] = this.isAvailable;
+        return data;
+    }
+}
+
+export interface IFoodAndDrinkDTO {
+    id?: string;
+    name?: string;
+    price?: number;
+    imageUrl?: string | undefined;
+    description?: string | undefined;
+    isAvailable?: boolean;
+}
+
+export class CreateFoodAndDrinkRequest implements ICreateFoodAndDrinkRequest {
+    name?: string;
+    price?: number;
+    imageUrl?: string | undefined;
+    description?: string | undefined;
+    isAvailable?: boolean;
+
+    constructor(data?: ICreateFoodAndDrinkRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.price = _data["price"];
+            this.imageUrl = _data["imageUrl"];
+            this.description = _data["description"];
+            this.isAvailable = _data["isAvailable"];
+        }
+    }
+
+    static fromJS(data: any): CreateFoodAndDrinkRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateFoodAndDrinkRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["price"] = this.price;
+        data["imageUrl"] = this.imageUrl;
+        data["description"] = this.description;
+        data["isAvailable"] = this.isAvailable;
+        return data;
+    }
+}
+
+export interface ICreateFoodAndDrinkRequest {
+    name?: string;
+    price?: number;
+    imageUrl?: string | undefined;
+    description?: string | undefined;
+    isAvailable?: boolean;
+}
+
+export class UpdateFoodAndDrinkRequest implements IUpdateFoodAndDrinkRequest {
+    id?: string;
+    name?: string;
+    price?: number;
+    imageUrl?: string | undefined;
+    description?: string | undefined;
+    isAvailable?: boolean;
+
+    constructor(data?: IUpdateFoodAndDrinkRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.price = _data["price"];
+            this.imageUrl = _data["imageUrl"];
+            this.description = _data["description"];
+            this.isAvailable = _data["isAvailable"];
+        }
+    }
+
+    static fromJS(data: any): UpdateFoodAndDrinkRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateFoodAndDrinkRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["price"] = this.price;
+        data["imageUrl"] = this.imageUrl;
+        data["description"] = this.description;
+        data["isAvailable"] = this.isAvailable;
+        return data;
+    }
+}
+
+export interface IUpdateFoodAndDrinkRequest {
+    id?: string;
+    name?: string;
+    price?: number;
+    imageUrl?: string | undefined;
+    description?: string | undefined;
+    isAvailable?: boolean;
+}
+
+export abstract class BaseSearchResultsOfRoomDTO implements IBaseSearchResultsOfRoomDTO {
+    results?: RoomDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfRoomDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(RoomDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfRoomDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfRoomDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfRoomDTO {
+    results?: RoomDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfRoomDTO extends BaseSearchResultsOfRoomDTO implements IDefaultSearchResultsOfRoomDTO {
+
+    constructor(data?: IDefaultSearchResultsOfRoomDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfRoomDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfRoomDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfRoomDTO extends IBaseSearchResultsOfRoomDTO {
+}
+
+export class RoomDTO implements IRoomDTO {
+    id?: string;
+    name?: string;
+    theaterId?: string;
+    totalRows?: number;
+    totalColumns?: number;
+    status?: RoomStatus;
+
+    constructor(data?: IRoomDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.theaterId = _data["theaterId"];
+            this.totalRows = _data["totalRows"];
+            this.totalColumns = _data["totalColumns"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): RoomDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new RoomDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["theaterId"] = this.theaterId;
+        data["totalRows"] = this.totalRows;
+        data["totalColumns"] = this.totalColumns;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IRoomDTO {
+    id?: string;
+    name?: string;
+    theaterId?: string;
+    totalRows?: number;
+    totalColumns?: number;
+    status?: RoomStatus;
+}
+
+export enum RoomStatus {
+    Active = 0,
+    Maintenance = 1,
+    Inactive = 2,
+}
+
+export class CreateRoomRequest implements ICreateRoomRequest {
+    name?: string;
+    theaterId?: string;
+    totalRows?: number;
+    totalColumns?: number;
+    status?: RoomStatus;
+
+    constructor(data?: ICreateRoomRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.theaterId = _data["theaterId"];
+            this.totalRows = _data["totalRows"];
+            this.totalColumns = _data["totalColumns"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): CreateRoomRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateRoomRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["theaterId"] = this.theaterId;
+        data["totalRows"] = this.totalRows;
+        data["totalColumns"] = this.totalColumns;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface ICreateRoomRequest {
+    name?: string;
+    theaterId?: string;
+    totalRows?: number;
+    totalColumns?: number;
+    status?: RoomStatus;
+}
+
+export class UpdateRoomRequest implements IUpdateRoomRequest {
+    id?: string;
+    name?: string;
+    theaterId?: string;
+    totalRows?: number;
+    totalColumns?: number;
+    status?: RoomStatus;
+
+    constructor(data?: IUpdateRoomRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.theaterId = _data["theaterId"];
+            this.totalRows = _data["totalRows"];
+            this.totalColumns = _data["totalColumns"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): UpdateRoomRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateRoomRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["theaterId"] = this.theaterId;
+        data["totalRows"] = this.totalRows;
+        data["totalColumns"] = this.totalColumns;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IUpdateRoomRequest {
+    id?: string;
+    name?: string;
+    theaterId?: string;
+    totalRows?: number;
+    totalColumns?: number;
+    status?: RoomStatus;
+}
+
+export abstract class BaseSearchResultsOfShowTimeDTO implements IBaseSearchResultsOfShowTimeDTO {
+    results?: ShowTimeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfShowTimeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(ShowTimeDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfShowTimeDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfShowTimeDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfShowTimeDTO {
+    results?: ShowTimeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfShowTimeDTO extends BaseSearchResultsOfShowTimeDTO implements IDefaultSearchResultsOfShowTimeDTO {
+
+    constructor(data?: IDefaultSearchResultsOfShowTimeDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfShowTimeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfShowTimeDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfShowTimeDTO extends IBaseSearchResultsOfShowTimeDTO {
+}
+
+export class ShowTimeDTO implements IShowTimeDTO {
+    id?: string;
+    movieId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    showTimeType?: ShowTimeType;
+    isActive?: boolean;
+
+    constructor(data?: IShowTimeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.movieId = _data["movieId"];
+            this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : <any>undefined;
+            this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : <any>undefined;
+            this.projectionForm = _data["projectionForm"];
+            this.showTimeType = _data["showTimeType"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): ShowTimeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ShowTimeDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["movieId"] = this.movieId;
+        data["startTime"] = this.startTime ? this.startTime.toISOString() : <any>undefined;
+        data["endTime"] = this.endTime ? this.endTime.toISOString() : <any>undefined;
+        data["projectionForm"] = this.projectionForm;
+        data["showTimeType"] = this.showTimeType;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IShowTimeDTO {
+    id?: string;
+    movieId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    showTimeType?: ShowTimeType;
+    isActive?: boolean;
+}
+
+export class CreateShowTimeRequest implements ICreateShowTimeRequest {
+    movieId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    showTimeType?: ShowTimeType;
+    isActive?: boolean;
+
+    constructor(data?: ICreateShowTimeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.movieId = _data["movieId"];
+            this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : <any>undefined;
+            this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : <any>undefined;
+            this.projectionForm = _data["projectionForm"];
+            this.showTimeType = _data["showTimeType"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): CreateShowTimeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateShowTimeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["movieId"] = this.movieId;
+        data["startTime"] = this.startTime ? this.startTime.toISOString() : <any>undefined;
+        data["endTime"] = this.endTime ? this.endTime.toISOString() : <any>undefined;
+        data["projectionForm"] = this.projectionForm;
+        data["showTimeType"] = this.showTimeType;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface ICreateShowTimeRequest {
+    movieId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    showTimeType?: ShowTimeType;
+    isActive?: boolean;
+}
+
+export class UpdateShowTimeRequest implements IUpdateShowTimeRequest {
+    id?: string;
+    movieId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    showTimeType?: ShowTimeType;
+    isActive?: boolean;
+
+    constructor(data?: IUpdateShowTimeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.movieId = _data["movieId"];
+            this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : <any>undefined;
+            this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : <any>undefined;
+            this.projectionForm = _data["projectionForm"];
+            this.showTimeType = _data["showTimeType"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): UpdateShowTimeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateShowTimeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["movieId"] = this.movieId;
+        data["startTime"] = this.startTime ? this.startTime.toISOString() : <any>undefined;
+        data["endTime"] = this.endTime ? this.endTime.toISOString() : <any>undefined;
+        data["projectionForm"] = this.projectionForm;
+        data["showTimeType"] = this.showTimeType;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IUpdateShowTimeRequest {
+    id?: string;
+    movieId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    showTimeType?: ShowTimeType;
+    isActive?: boolean;
+}
+
+export abstract class BaseSearchResultsOfMovieTypeDetailDTO implements IBaseSearchResultsOfMovieTypeDetailDTO {
+    results?: MovieTypeDetailDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfMovieTypeDetailDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(MovieTypeDetailDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfMovieTypeDetailDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfMovieTypeDetailDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfMovieTypeDetailDTO {
+    results?: MovieTypeDetailDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfMovieTypeDetailDTO extends BaseSearchResultsOfMovieTypeDetailDTO implements IDefaultSearchResultsOfMovieTypeDetailDTO {
+
+    constructor(data?: IDefaultSearchResultsOfMovieTypeDetailDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfMovieTypeDetailDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfMovieTypeDetailDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfMovieTypeDetailDTO extends IBaseSearchResultsOfMovieTypeDetailDTO {
+}
+
+export class MovieTypeDetailDTO implements IMovieTypeDetailDTO {
+    movieId?: string;
+    movieTypeId?: string;
+    movieTitle?: string;
+    movieTypeName?: string;
+
+    constructor(data?: IMovieTypeDetailDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.movieId = _data["movieId"];
+            this.movieTypeId = _data["movieTypeId"];
+            this.movieTitle = _data["movieTitle"];
+            this.movieTypeName = _data["movieTypeName"];
+        }
+    }
+
+    static fromJS(data: any): MovieTypeDetailDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new MovieTypeDetailDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["movieId"] = this.movieId;
+        data["movieTypeId"] = this.movieTypeId;
+        data["movieTitle"] = this.movieTitle;
+        data["movieTypeName"] = this.movieTypeName;
+        return data;
+    }
+}
+
+export interface IMovieTypeDetailDTO {
+    movieId?: string;
+    movieTypeId?: string;
+    movieTitle?: string;
+    movieTypeName?: string;
+}
+
+export class CreateMovieTypeDetailRequest implements ICreateMovieTypeDetailRequest {
+    movieId?: string;
+    movieTypeId?: string;
+
+    constructor(data?: ICreateMovieTypeDetailRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.movieId = _data["movieId"];
+            this.movieTypeId = _data["movieTypeId"];
+        }
+    }
+
+    static fromJS(data: any): CreateMovieTypeDetailRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateMovieTypeDetailRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["movieId"] = this.movieId;
+        data["movieTypeId"] = this.movieTypeId;
+        return data;
+    }
+}
+
+export interface ICreateMovieTypeDetailRequest {
+    movieId?: string;
+    movieTypeId?: string;
+}
+
+export abstract class BaseSearchResultsOfSeatTypeTicketTypeDTO implements IBaseSearchResultsOfSeatTypeTicketTypeDTO {
+    results?: SeatTypeTicketTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfSeatTypeTicketTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(SeatTypeTicketTypeDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfSeatTypeTicketTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfSeatTypeTicketTypeDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfSeatTypeTicketTypeDTO {
+    results?: SeatTypeTicketTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfSeatTypeTicketTypeDTO extends BaseSearchResultsOfSeatTypeTicketTypeDTO implements IDefaultSearchResultsOfSeatTypeTicketTypeDTO {
+
+    constructor(data?: IDefaultSearchResultsOfSeatTypeTicketTypeDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfSeatTypeTicketTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfSeatTypeTicketTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfSeatTypeTicketTypeDTO extends IBaseSearchResultsOfSeatTypeTicketTypeDTO {
+}
+
+export class SeatTypeTicketTypeDTO implements ISeatTypeTicketTypeDTO {
+    seatTypeId?: string;
+    ticketTypeId?: string;
+    priceMultiplier?: number;
+    seatTypeName?: string;
+    ticketTypeName?: string;
+
+    constructor(data?: ISeatTypeTicketTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.seatTypeId = _data["seatTypeId"];
+            this.ticketTypeId = _data["ticketTypeId"];
+            this.priceMultiplier = _data["priceMultiplier"];
+            this.seatTypeName = _data["seatTypeName"];
+            this.ticketTypeName = _data["ticketTypeName"];
+        }
+    }
+
+    static fromJS(data: any): SeatTypeTicketTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new SeatTypeTicketTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["seatTypeId"] = this.seatTypeId;
+        data["ticketTypeId"] = this.ticketTypeId;
+        data["priceMultiplier"] = this.priceMultiplier;
+        data["seatTypeName"] = this.seatTypeName;
+        data["ticketTypeName"] = this.ticketTypeName;
+        return data;
+    }
+}
+
+export interface ISeatTypeTicketTypeDTO {
+    seatTypeId?: string;
+    ticketTypeId?: string;
+    priceMultiplier?: number;
+    seatTypeName?: string;
+    ticketTypeName?: string;
+}
+
+export class CreateSeatTypeTicketTypeRequest implements ICreateSeatTypeTicketTypeRequest {
+    seatTypeId?: string;
+    ticketTypeId?: string;
+    priceMultiplier?: number;
+
+    constructor(data?: ICreateSeatTypeTicketTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.seatTypeId = _data["seatTypeId"];
+            this.ticketTypeId = _data["ticketTypeId"];
+            this.priceMultiplier = _data["priceMultiplier"];
+        }
+    }
+
+    static fromJS(data: any): CreateSeatTypeTicketTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateSeatTypeTicketTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["seatTypeId"] = this.seatTypeId;
+        data["ticketTypeId"] = this.ticketTypeId;
+        data["priceMultiplier"] = this.priceMultiplier;
+        return data;
+    }
+}
+
+export interface ICreateSeatTypeTicketTypeRequest {
+    seatTypeId?: string;
+    ticketTypeId?: string;
+    priceMultiplier?: number;
+}
+
+export class UpdateSeatTypeTicketTypeRequest implements IUpdateSeatTypeTicketTypeRequest {
+    seatTypeId?: string;
+    ticketTypeId?: string;
+    priceMultiplier?: number;
+
+    constructor(data?: IUpdateSeatTypeTicketTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.seatTypeId = _data["seatTypeId"];
+            this.ticketTypeId = _data["ticketTypeId"];
+            this.priceMultiplier = _data["priceMultiplier"];
+        }
+    }
+
+    static fromJS(data: any): UpdateSeatTypeTicketTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateSeatTypeTicketTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["seatTypeId"] = this.seatTypeId;
+        data["ticketTypeId"] = this.ticketTypeId;
+        data["priceMultiplier"] = this.priceMultiplier;
+        return data;
+    }
+}
+
+export interface IUpdateSeatTypeTicketTypeRequest {
+    seatTypeId?: string;
+    ticketTypeId?: string;
+    priceMultiplier?: number;
+}
+
+export abstract class BaseSearchResultsOfInvoiceAdminDTO implements IBaseSearchResultsOfInvoiceAdminDTO {
+    results?: InvoiceAdminDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfInvoiceAdminDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(InvoiceAdminDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfInvoiceAdminDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfInvoiceAdminDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfInvoiceAdminDTO {
+    results?: InvoiceAdminDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfInvoiceAdminDTO extends BaseSearchResultsOfInvoiceAdminDTO implements IDefaultSearchResultsOfInvoiceAdminDTO {
+
+    constructor(data?: IDefaultSearchResultsOfInvoiceAdminDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfInvoiceAdminDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfInvoiceAdminDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfInvoiceAdminDTO extends IBaseSearchResultsOfInvoiceAdminDTO {
+}
+
+export class InvoiceAdminDTO implements IInvoiceAdminDTO {
+    id?: string;
+    code?: string;
+    userId?: string;
+    userName?: string;
+    userEmail?: string;
+    totalAmount?: number;
+    discountAmount?: number;
+    finalAmount?: number;
+    status?: InvoiceStatus;
+    paymentMethod?: string | undefined;
+    paidAt?: Date | undefined;
+    creationTime?: Date;
+
+    constructor(data?: IInvoiceAdminDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.userId = _data["userId"];
+            this.userName = _data["userName"];
+            this.userEmail = _data["userEmail"];
+            this.totalAmount = _data["totalAmount"];
+            this.discountAmount = _data["discountAmount"];
+            this.finalAmount = _data["finalAmount"];
+            this.status = _data["status"];
+            this.paymentMethod = _data["paymentMethod"];
+            this.paidAt = _data["paidAt"] ? new Date(_data["paidAt"].toString()) : <any>undefined;
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): InvoiceAdminDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new InvoiceAdminDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["userId"] = this.userId;
+        data["userName"] = this.userName;
+        data["userEmail"] = this.userEmail;
+        data["totalAmount"] = this.totalAmount;
+        data["discountAmount"] = this.discountAmount;
+        data["finalAmount"] = this.finalAmount;
+        data["status"] = this.status;
+        data["paymentMethod"] = this.paymentMethod;
+        data["paidAt"] = this.paidAt ? this.paidAt.toISOString() : <any>undefined;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IInvoiceAdminDTO {
+    id?: string;
+    code?: string;
+    userId?: string;
+    userName?: string;
+    userEmail?: string;
+    totalAmount?: number;
+    discountAmount?: number;
+    finalAmount?: number;
+    status?: InvoiceStatus;
+    paymentMethod?: string | undefined;
+    paidAt?: Date | undefined;
+    creationTime?: Date;
+}
+
+export enum InvoiceStatus {
+    Pending = 0,
+    Paid = 1,
+    Cancelled = 2,
+    Failed = 3,
+}
+
+export class UpdateInvoiceStatusRequest implements IUpdateInvoiceStatusRequest {
+    id?: string;
+    status?: InvoiceStatus;
+
+    constructor(data?: IUpdateInvoiceStatusRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): UpdateInvoiceStatusRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateInvoiceStatusRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IUpdateInvoiceStatusRequest {
+    id?: string;
+    status?: InvoiceStatus;
 }
 
 function formatDate(d: Date) {

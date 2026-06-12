@@ -175,6 +175,27 @@ public class PaymentController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
         }
     }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(List<RevenueByDayDTO>), 200)]
+    public async Task<IActionResult> GetRevenueByDay([FromQuery] int days = 7)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetRevenueByDay being awakened to process request...");
+        try
+        {
+            var span = days > 0 ? days : 7;
+            var to   = DateTime.Now;
+            var from = to.Date.AddDays(-(span - 1));
+            var result = await _invoiceManager.GetRevenueByDayAsync(from, to);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenueByDay->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+        }
+    }
 }
 
 // ── Request classes ───────────────────────────────────────────────────────────

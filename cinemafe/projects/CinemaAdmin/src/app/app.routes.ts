@@ -24,6 +24,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
       {
+        path: 'profile',
+        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+      },
+      {
         path: 'movies',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/movies/movies-management.component').then(m => m.MoviesManagementComponent)
@@ -36,12 +40,89 @@ export const routes: Routes = [
       {
         path: 'showtimes',
         canActivate: [adminGuard],
-        loadComponent: () => import('./features/showtimes/showtimes-management.component').then(m => m.ShowtimesManagementComponent)
+        loadComponent: () => import('./features/catalog/show-times/show-times.component').then(m => m.ShowTimesManagementComponent)
+      },
+      {
+        path: 'rooms',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/rooms/rooms.component').then(m => m.RoomsManagementComponent)
+      },
+      {
+        path: 'discounts',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/discounts/discounts.component').then(m => m.DiscountsManagementComponent)
+      },
+      {
+        path: 'food-and-drinks',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/food-and-drinks/food-and-drinks.component').then(m => m.FoodAndDrinksManagementComponent)
+      },
+      {
+        path: 'invoices',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/invoices/invoices.component').then(m => m.InvoicesManagementComponent)
+      },
+      {
+        path: 'movie-type-details',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/movie-type-details/movie-type-details.component').then(m => m.MovieTypeDetailsManagementComponent)
+      },
+      {
+        path: 'seat-ticket-pricing',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/seat-type-ticket-types/seat-type-ticket-types.component').then(m => m.SeatTypeTicketTypesManagementComponent)
       },
       {
         path: 'users',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/users/users-management.component').then(m => m.UsersManagementComponent)
+      },
+
+      // ── Catalog (lookup) management ──────────────────────────────────────────
+      {
+        path: 'movie-types',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/movie-types/movie-types.component').then(m => m.MovieTypesManagementComponent)
+      },
+      {
+        path: 'age-restrictions',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/age-restrictions/age-restrictions.component').then(m => m.AgeRestrictionsManagementComponent)
+      },
+      {
+        path: 'seat-types',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/seat-types/seat-types.component').then(m => m.SeatTypesManagementComponent)
+      },
+      {
+        path: 'ticket-types',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/ticket-types/ticket-types.component').then(m => m.TicketTypesManagementComponent)
+      },
+      {
+        path: 'discount-types',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/discount-types/discount-types.component').then(m => m.DiscountTypesManagementComponent)
+      },
+      {
+        path: 'memberships',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/memberships/memberships.component').then(m => m.MembershipsManagementComponent)
+      },
+      {
+        path: 'user-types',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/user-types/user-types.component').then(m => m.UserTypesManagementComponent)
+      },
+      {
+        path: 'holidays',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/holidays/holidays.component').then(m => m.HolidaysManagementComponent)
+      },
+      {
+        path: 'news',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/news/news.component').then(m => m.NewsManagementComponent)
       }
     ]
   },

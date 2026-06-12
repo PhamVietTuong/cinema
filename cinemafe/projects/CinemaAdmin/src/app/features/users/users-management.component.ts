@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
-import { SharedModule } from 'CinemaLib';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { IdentityServiceAgent, SharedModule, UserRole } from 'CinemaLib';
 
 interface UserRow {
   name: string;
   email: string;
   phone: string;
-  role: 'Admin' | 'Khách Hàng';
+  role: UserRole;
   active: boolean;
   joined: string;
 }
@@ -17,27 +17,39 @@ interface UserRow {
   templateUrl: './users-management.component.html',
   styleUrl: './users-management.component.scss'
 })
-export class UsersManagementComponent {
-  // NOTE: The Identity API currently only exposes the current user's profile
-  // (no admin "list users" endpoint). These rows are placeholder/demo data so
-  // the page matches the approved design. Wire `users` to a real endpoint when
-  // it is added on the backend.
-  search = '';
-  filterRole = '';
+export class UsersManagementComponent implements OnInit {
+  private _identity = inject(IdentityServiceAgent.HttpService);
+  private _cdr = inject(ChangeDetectorRef);
 
-  users: UserRow[] = [
-    { name: 'Phạm Việt Tường', email: 'admin@cinema.vn',  phone: '0901 234 567', role: 'Admin',       active: true,  joined: '12/01/2026' },
-    { name: 'Nguyễn Văn An',   email: 'an.nguyen@gmail.com', phone: '0912 345 678', role: 'Khách Hàng', active: true,  joined: '03/02/2026' },
-    { name: 'Trần Thị Bình',   email: 'binh.tran@gmail.com', phone: '0923 456 789', role: 'Khách Hàng', active: true,  joined: '18/02/2026' },
-    { name: 'Lê Minh Châu',    email: 'chau.le@gmail.com',   phone: '0934 567 890', role: 'Khách Hàng', active: false, joined: '25/02/2026' },
-    { name: 'Hoàng Quản Trị',  email: 'manager@cinema.vn',   phone: '0945 678 901', role: 'Admin',       active: true,  joined: '01/03/2026' },
-    { name: 'Đỗ Thu Hà',       email: 'ha.do@gmail.com',     phone: '0956 789 012', role: 'Khách Hàng', active: true,  joined: '14/03/2026' },
-    { name: 'Vũ Đức Duy',      email: 'duy.vu@gmail.com',    phone: '0967 890 123', role: 'Khách Hàng', active: false, joined: '22/03/2026' },
-  ];
+  readonly UserRole = UserRole;
+  readonly roles: UserRole[] = [UserRole.Admin, UserRole.Customer];
+
+  search = '';
+  filterRole: '' | UserRole = '';
+  users: UserRow[] = [];
+
+  ngOnInit(): void {
+    this._identity.getUsers(IdentityServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
+      .subscribe({
+        next: r => { this.users = (r.results ?? []).map(u => this._toRow(u)); this._cdr.markForCheck(); },
+        error: () => { this.users = []; this._cdr.markForCheck(); },
+      });
+  }
+
+  private _toRow(u: IdentityServiceAgent.UserDTO): UserRow {
+    return {
+      name: u.name ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
+      role: u.userTypeName === 'Admin' ? UserRole.Admin : UserRole.Customer,
+      active: (u.status ?? IdentityServiceAgent.UserStatus.Active) === IdentityServiceAgent.UserStatus.Active,
+      joined: u.creationTime ? new Date(u.creationTime).toLocaleDateString('vi-VN') : '',
+    };
+  }
 
   get total(): number { return this.users.length; }
-  get adminCount(): number { return this.users.filter(u => u.role === 'Admin').length; }
-  get customerCount(): number { return this.users.filter(u => u.role === 'Khách Hàng').length; }
+  get adminCount(): number { return this.users.filter(u => u.role === UserRole.Admin).length; }
+  get customerCount(): number { return this.users.filter(u => u.role === UserRole.Customer).length; }
 
   get filtered(): UserRow[] {
     const q = this.search.trim().toLowerCase();

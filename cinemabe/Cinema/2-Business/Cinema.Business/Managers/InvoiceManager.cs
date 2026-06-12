@@ -20,7 +20,7 @@ public class InvoiceManager : IInvoiceManager
         var page     = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize  > 0 ? search.PageSize  : 10;
 
-        var (items, total) = await _uow.Invoices.GetByUserAsync(userId, page, pageSize);
+        var (items, total) = await _uow.InvoiceStore.GetByUserAsync(userId, page, pageSize);
         return new DefaultSearchResults<InvoiceDTO>
         {
             Results      = items.Select(ToInvoiceDTO),
@@ -38,7 +38,7 @@ public class InvoiceManager : IInvoiceManager
         var page     = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize  > 0 ? search.PageSize  : 20;
 
-        var (items, total) = await _uow.Invoices.GetPagedAsync(status, from, to, page, pageSize);
+        var (items, total) = await _uow.InvoiceStore.GetPagedAsync(status, from, to, page, pageSize);
         return new DefaultSearchResults<InvoiceDTO>
         {
             Results      = items.Select(ToInvoiceDTO),
@@ -50,13 +50,22 @@ public class InvoiceManager : IInvoiceManager
 
     public async Task<InvoiceDTO> GetByIdAsync(Guid id)
     {
-        var invoice = await _uow.Invoices.GetWithDetailsAsync(id)
+        var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(id)
                       ?? throw new KeyNotFoundException($"Invoice {id} not found.");
         return ToInvoiceDTO(invoice);
     }
 
     public async Task<decimal> GetTotalRevenueAsync(DateTime from, DateTime to)
-        => await _uow.Invoices.GetTotalRevenueAsync(from, to);
+        => await _uow.InvoiceStore.GetTotalRevenueAsync(from, to);
+
+    public async Task<List<RevenueByDayDTO>> GetRevenueByDayAsync(DateTime from, DateTime to)
+    {
+        var map = await _uow.InvoiceStore.GetRevenueByDayAsync(from, to);
+        var result = new List<RevenueByDayDTO>();
+        for (var day = from.Date; day <= to.Date; day = day.AddDays(1))
+            result.Add(new RevenueByDayDTO { Date = day, Total = map.TryGetValue(day, out var t) ? t : 0m });
+        return result;
+    }
 
     private static InvoiceDTO ToInvoiceDTO(Invoice invoice)
     {

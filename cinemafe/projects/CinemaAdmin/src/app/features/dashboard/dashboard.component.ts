@@ -1,5 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { SharedModule, CinemaServiceAgent, PaymentServiceAgent } from 'CinemaLib';
+import { environment } from '../../../environments/environment';
+
+/** One day of RevenueByDayDTO from GET /api/Payment/GetRevenueByDay. */
+interface RevenueDay { date?: string; total?: number; }
 
 @Component({
   selector: 'app-dashboard',
@@ -13,27 +18,26 @@ export class DashboardComponent implements OnInit {
   invoices: PaymentServiceAgent.InvoiceDTO[] = [];
   topMovies: CinemaServiceAgent.MovieDTO[] = [];
 
-  // Illustrative 7-day revenue trend (no analytics endpoint yet).
-  revenueTrend = [
-    { day: 'T2', value: 62 }, { day: 'T3', value: 48 }, { day: 'T4', value: 75 },
-    { day: 'T5', value: 56 }, { day: 'T6', value: 88 }, { day: 'T7', value: 100 },
-    { day: 'CN', value: 81 },
-  ];
+  // Revenue trend; bar height is each day's revenue as a % of the period's peak.
+  revenueDays = 7;
+  revenueTrend: { day: string; value: number }[] = [];
 
   constructor(
     private _cinema: CinemaServiceAgent.HttpService,
     private _payment: PaymentServiceAgent.HttpService,
+    private _http: HttpClient,
+    private _cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     this._cinema.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1 }))
-      .subscribe(r => this.stats.movies = r.totalCount ?? 0);
+      .subscribe(r => { this.stats.movies = r.totalCount ?? 0; this._cdr.markForCheck(); });
 
     this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1 }))
-      .subscribe(r => this.stats.theaters = r.totalCount ?? 0);
+      .subscribe(r => { this.stats.theaters = r.totalCount ?? 0; this._cdr.markForCheck(); });
 
     this._cinema.getNowShowingMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 5 }))
-      .subscribe(r => this.topMovies = r.results ?? []);
+      .subscribe(r => { this.topMovies = r.results ?? []; this._cdr.markForCheck(); });
 
     this._payment.getInvoices(PaymentServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 8 }))
       .subscribe(r => {
@@ -42,7 +46,36 @@ export class DashboardComponent implements OnInit {
         this.stats.revenueToday = this.invoices
           .filter(i => i.status === PaymentServiceAgent.InvoiceStatus.Paid)
           .reduce((sum, i) => sum + (i.finalAmount ?? 0), 0);
+        this._cdr.markForCheck();
       });
+
+    this.loadRevenue();
+  }
+
+  onPeriodChange(days: number): void {
+    this.revenueDays = +days;
+    this.loadRevenue();
+  }
+
+  private loadRevenue(): void {
+    // Direct call; typed PaymentServiceAgent.getRevenueByDay lands after NSwag regen.
+    this._http.get<RevenueDay[]>(`${environment.apiUrl}/api/Payment/GetRevenueByDay`, { params: { days: this.revenueDays } })
+      .subscribe({
+        next: days => { this.revenueTrend = this._toTrend(days ?? []); this._cdr.markForCheck(); },
+        error: () => { this.revenueTrend = []; this._cdr.markForCheck(); },
+      });
+  }
+
+  private _toTrend(days: RevenueDay[]): { day: string; value: number }[] {
+    const labels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const max = Math.max(1, ...days.map(d => d.total ?? 0));
+    return days.map(d => {
+      const dt = d.date ? new Date(d.date) : null;
+      return {
+        day: dt ? (this.revenueDays > 7 ? `${dt.getDate()}` : labels[dt.getDay()]) : '',
+        value: Math.round((d.total ?? 0) / max * 100),
+      };
+    });
   }
 
   statusLabel(s?: PaymentServiceAgent.InvoiceStatus): string {

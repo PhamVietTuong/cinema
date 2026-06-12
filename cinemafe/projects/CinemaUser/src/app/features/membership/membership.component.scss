@@ -1,0 +1,55 @@
+$bg: #051424;
+$container: #0d1c2d;
+$primary: #d0bcff;
+$text: #d4e4fa;
+$muted: rgba(212, 228, 250, 0.6);
+$outline: rgba(255, 255, 255, 0.08);
+
+.page-header { background: rgba(13, 28, 45, 0.9); border-bottom: 1px solid $outline; padding: 44px 0; text-align: center; }
+.page-header-inner { max-width: 760px; margin: 0 auto; padding: 0 40px; }
+.eyebrow { color: $primary; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.18em; margin: 0 0 8px; }
+.page-title { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 700; color: $text; margin: 0; }
+.page-sub { color: $muted; margin: 10px 0 0; }
+
+.member-page { max-width: 1140px; margin: 0 auto; padding: 48px 40px; }
+.spinner-wrap { display: flex; justify-content: center; padding: 60px; ::ng-deep circle { stroke: $primary !important; } }
+.empty { text-align: center; color: $muted; padding: 60px 0; i { font-size: 2.4rem; opacity: 0.3; display: block; margin-bottom: 10px; } }
+
+.tier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; align-items: stretch; }
+.tier-card {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  background: rgba(13, 28, 45, 0.7);
+  border: 1px solid $outline;
+  border-radius: 18px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  &:hover { transform: translateY(-4px); }
+  &.featured {
+    border-color: rgba(208, 188, 255, 0.5);
+    background: linear-gradient(160deg, rgba(208, 188, 255, 0.12), rgba(13, 28, 45, 0.85));
+    box-shadow: 0 0 40px -10px rgba(208, 188, 255, 0.4);
+  }
+}
+.tier-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: $primary; color: #23005c; font-size: 0.72rem; font-weight: 700;
+  padding: 4px 14px; border-radius: 999px;
+}
+.tier-crown { font-size: 1.8rem; color: #fbbf24; margin-bottom: 10px; }
+.tier-name { font-family: 'Montserrat', sans-serif; font-size: 1.3rem; font-weight: 700; color: $text; margin: 0 0 14px; }
+.tier-discount {
+  display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px;
+  .disc-value { font-family: 'Montserrat', sans-serif; font-size: 2.4rem; font-weight: 800; color: $primary; line-height: 1; }
+  .disc-label { font-size: 0.8rem; color: $muted; }
+}
+.tier-points { font-size: 0.85rem; color: $muted; margin: 0 0 20px; }
+.tier-perks {
+  list-style: none; margin: 0 0 24px; padding: 0; text-align: left; width: 100%;
+  display: flex; flex-direction: column; gap: 10px;
+  li { font-size: 0.85rem; color: $text; i { color: #6ee7a8; margin-right: 8px; } }
+}
+.join-btn { width: 100%; justify-content: center; margin-top: auto; }
+
+@media (max-width: 640px) { .member-page, .page-header-inner { padding-left: 20px; padding-right: 20px; } }

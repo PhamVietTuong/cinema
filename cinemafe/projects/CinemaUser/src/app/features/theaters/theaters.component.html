@@ -1,0 +1,41 @@
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1 class="page-title">Hệ Thống Rạp Chiếu</h1>
+    <p class="page-sub">Trải nghiệm điện ảnh đẳng cấp tại các cụm rạp Midnight Premium trên toàn quốc.</p>
+    <div class="filter-row" *ngIf="cities.length">
+      <select class="city-select" [(ngModel)]="city">
+        <option value="">Tất cả thành phố</option>
+        <option *ngFor="let c of cities" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="theaters-page">
+  <div *ngIf="loading" class="spinner-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+
+  <div *ngIf="!loading && !filtered.length" class="empty">
+    <i class="fas fa-film"></i>
+    <p>Chưa có rạp chiếu nào.</p>
+  </div>
+
+  <div class="theater-grid">
+    <div class="theater-card" *ngFor="let t of filtered">
+      <div class="theater-photo">
+        <img [src]="t.imageUrl || 'assets/no-poster.jpg'" [alt]="t.name">
+        <span class="city-chip" *ngIf="t.city">{{ t.city }}</span>
+      </div>
+      <div class="theater-body">
+        <h3 class="theater-name">{{ t.name }}</h3>
+        <p class="theater-addr"><i class="fas fa-location-dot"></i> {{ t.address }}</p>
+        <div class="theater-meta">
+          <span><i class="fas fa-door-open"></i> {{ t.roomCount || 0 }} phòng chiếu</span>
+          <span *ngIf="t.phone"><i class="fas fa-phone"></i> {{ t.phone }}</span>
+        </div>
+        <a class="btn-primary-cta theater-cta" routerLink="/movies">
+          <i class="fas fa-ticket"></i> Xem Lịch Chiếu
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

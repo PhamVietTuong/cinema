@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 
@@ -19,6 +19,7 @@ export class TheatersManagementComponent implements OnInit {
   constructor(
     private _cinemaService: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
+    private _cdr: ChangeDetectorRef,
   ) {
     this.form = this._fb.group({
       name: ['', Validators.required],
@@ -26,6 +27,7 @@ export class TheatersManagementComponent implements OnInit {
       address: ['', Validators.required],
       phone: [''],
       email: [''],
+      imageUrl: [''],
     });
   }
 
@@ -41,7 +43,7 @@ export class TheatersManagementComponent implements OnInit {
 
   loadTheaters(): void {
     this._cinemaService.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
-      .subscribe(t => this.theaters = t.results ?? []);
+      .subscribe(t => { this.theaters = t.results ?? []; this._cdr.markForCheck(); });
   }
 
   openCreate(): void { this.cancelEdit(); this.showForm = true; }
@@ -49,7 +51,7 @@ export class TheatersManagementComponent implements OnInit {
   editTheater(t: CinemaServiceAgent.TheaterDTO): void {
     this.editingId = t.id ?? null;
     this.showForm = true;
-    this.form.patchValue({ name: t.name, city: t.city, address: t.address, phone: t.phone });
+    this.form.patchValue({ name: t.name, city: t.city, address: t.address, phone: t.phone, imageUrl: t.imageUrl });
   }
 
   saveTheater(): void {

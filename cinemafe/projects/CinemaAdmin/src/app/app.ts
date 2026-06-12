@@ -11,6 +11,21 @@ const PAGE_TITLES: Record<string, string> = {
   theaters: 'Quản Lý Rạp Chiếu',
   showtimes: 'Quản Lý Lịch Chiếu',
   users: 'Quản Lý Người Dùng',
+  'movie-types': 'Quản Lý Thể Loại Phim',
+  'age-restrictions': 'Quản Lý Giới Hạn Độ Tuổi',
+  'seat-types': 'Quản Lý Loại Ghế',
+  'ticket-types': 'Quản Lý Loại Vé',
+  'discount-types': 'Quản Lý Loại Giảm Giá',
+  memberships: 'Quản Lý Hạng Thành Viên',
+  'user-types': 'Quản Lý Loại Người Dùng',
+  holidays: 'Quản Lý Ngày Lễ',
+  news: 'Quản Lý Tin Tức',
+  rooms: 'Quản Lý Phòng Chiếu',
+  discounts: 'Quản Lý Mã Giảm Giá',
+  'food-and-drinks': 'Quản Lý Đồ Ăn & Thức Uống',
+  invoices: 'Quản Lý Hóa Đơn',
+  'movie-type-details': 'Gán Thể Loại Cho Phim',
+  'seat-ticket-pricing': 'Bảng Giá Theo Loại Ghế & Vé',
 };
 
 @Component({

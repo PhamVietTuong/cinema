@@ -21,10 +21,10 @@ public class MovieManager : IMovieManager
         var page        = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize    = search.PageSize  > 0 ? search.PageSize  : 12;
 
-        var (items, total) = await _uow.Movies.GetPagedAsync(searchText, movieTypeId, page, pageSize);
+        var (items, total) = await _uow.MovieStore.GetPagedAsync(searchText, movieTypeId, page, pageSize);
         var dtos = items.Select(ToMovieDTO).ToList();
         foreach (var dto in dtos)
-            dto.AverageRating = await _uow.Movies.GetAverageRatingAsync(dto.Id);
+            dto.AverageRating = await _uow.MovieStore.GetAverageRatingAsync(dto.Id);
 
         return new DefaultSearchResults<MovieDTO>
         {
@@ -37,13 +37,13 @@ public class MovieManager : IMovieManager
 
     public async Task<DefaultSearchResults<MovieDTO>> GetNowShowingAsync(PagingSearchDTO search)
     {
-        var movies = (await _uow.Movies.GetNowShowingAsync()).Select(ToMovieDTO).ToList();
+        var movies = (await _uow.MovieStore.GetNowShowingAsync()).Select(ToMovieDTO).ToList();
         return Paginate(movies, search);
     }
 
     public async Task<DefaultSearchResults<MovieDTO>> GetComingSoonAsync(PagingSearchDTO search)
     {
-        var movies = (await _uow.Movies.GetComingSoonAsync()).Select(ToMovieDTO).ToList();
+        var movies = (await _uow.MovieStore.GetComingSoonAsync()).Select(ToMovieDTO).ToList();
         return Paginate(movies, search);
     }
 
@@ -53,7 +53,7 @@ public class MovieManager : IMovieManager
         var theaterId = search.Filters.GetGuid("theaterId") ?? Guid.Empty;
         var date      = search.Filters.GetDateOnly("date")  ?? DateOnly.FromDateTime(DateTime.Today);
 
-        var showTimes = await _uow.ShowTimes.GetByMovieAndDateAsync(movieId, theaterId, date);
+        var showTimes = await _uow.ShowTimeStore.GetByMovieAndDateAsync(movieId, theaterId, date);
         var dtos = showTimes.Select(s => new ShowTimeListDTO
         {
             Id             = s.Id,
@@ -81,13 +81,13 @@ public class MovieManager : IMovieManager
 
     public async Task<MovieDetailDTO> GetDetailAsync(Guid id)
     {
-        var movie = await _uow.Movies.GetDetailAsync(id)
+        var movie = await _uow.MovieStore.GetDetailAsync(id)
                     ?? throw new KeyNotFoundException($"Movie {id} not found.");
         var dto = movie.ToDTO<Movie, MovieDetailDTO>();
         ApplyMovieComputedFields(movie, dto);
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
         dto.AgeRestrictionMinAge      = movie.AgeRestriction?.MinAge ?? 0;
-        dto.AverageRating             = await _uow.Movies.GetAverageRatingAsync(id);
+        dto.AverageRating             = await _uow.MovieStore.GetAverageRatingAsync(id);
         dto.RatingCount               = movie.Evaluations.Count;
         dto.RecentComments = movie.Comments
             .Where(c => c.ParentId == null).Take(10)
@@ -105,49 +105,49 @@ public class MovieManager : IMovieManager
     {
         var movie = request.ToNewEntity<CreateMovieRequest, Movie>();
         movie.MovieTypeDetails = request.MovieTypeIds.Select(id => new MovieTypeDetail { MovieTypeId = id }).ToList();
-        await _uow.Movies.CreateAsync(movie);
+        await _uow.MovieStore.CreateAsync(movie);
         return await GetBasicDTOAsync(movie.Id);
     }
 
     public async Task<MovieDTO> UpdateAsync(UpdateMovieRequest request)
     {
-        var movie = await _uow.Movies.GetByIdAsync(request.Id)
+        var movie = await _uow.MovieStore.GetByIdAsync(request.Id)
                     ?? throw new KeyNotFoundException($"Movie {request.Id} not found.");
         movie.PatchEntity<Movie, UpdateMovieRequest>(request);
         movie.EndDate = request.EndDate;
-        await _uow.Movies.UpdateAsync(movie);
+        await _uow.MovieStore.UpdateAsync(movie);
         await _uow.SaveChangesAsync();
         return await GetBasicDTOAsync(request.Id);
     }
 
     public async Task DeleteAsync(Guid id)
     {
-        var movie = await _uow.Movies.GetByIdAsync(id)
+        var movie = await _uow.MovieStore.GetByIdAsync(id)
                     ?? throw new KeyNotFoundException($"Movie {id} not found.");
         movie.IsActive = false;
-        await _uow.Movies.UpdateAsync(movie);
+        await _uow.MovieStore.UpdateAsync(movie);
         await _uow.SaveChangesAsync();
     }
 
     public async Task<CommentDTO> AddCommentAsync(Guid movieId, Guid userId, string content, Guid? parentId)
     {
         var comment = new Comment { MovieId = movieId, UserId = userId, Content = content, ParentId = parentId };
-        await _uow.Comments.CreateAsync(comment);
+        await _uow.CommentStore.CreateAsync(comment);
         return new CommentDTO { Id = comment.Id, Content = content, CreationTime = DateTime.UtcNow };
     }
 
     public async Task<int> RateMovieAsync(Guid movieId, Guid userId, int score, string? review)
     {
-        var existing = (await _uow.Evaluations.FindAsync(e => e.MovieId == movieId && e.UserId == userId)).FirstOrDefault();
+        var existing = (await _uow.EvaluationStore.FindAsync(e => e.MovieId == movieId && e.UserId == userId)).FirstOrDefault();
         if (existing != null)
         {
             existing.Score  = score;
             existing.Review = review;
-            await _uow.Evaluations.UpdateAsync(existing);
+            await _uow.EvaluationStore.UpdateAsync(existing);
         }
         else
         {
-            await _uow.Evaluations.CreateAsync(new Evaluation { MovieId = movieId, UserId = userId, Score = score, Review = review });
+            await _uow.EvaluationStore.CreateAsync(new Evaluation { MovieId = movieId, UserId = userId, Score = score, Review = review });
         }
         await _uow.SaveChangesAsync();
         return score;
@@ -157,7 +157,7 @@ public class MovieManager : IMovieManager
 
     private async Task<MovieDTO> GetBasicDTOAsync(Guid id)
     {
-        var movie = await _uow.Movies.GetDetailAsync(id) ?? throw new KeyNotFoundException();
+        var movie = await _uow.MovieStore.GetDetailAsync(id) ?? throw new KeyNotFoundException();
         return ToMovieDTO(movie);
     }
 

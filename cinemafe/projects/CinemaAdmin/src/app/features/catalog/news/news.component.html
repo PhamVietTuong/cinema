@@ -1,0 +1,97 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">Quản Lý Tin Tức</h1>
+      <p class="ad-sub">Bài viết tin tức & khuyến mãi.</p>
+    </div>
+    <div class="ad-toolbar">
+      <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> Thêm</button>
+    </div>
+  </div>
+
+  <div class="ad-card form-card" *ngIf="showForm">
+    <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Tin' : 'Tin Mới' }}</h3>
+    <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
+      <div class="ad-field full-span">
+        <label class="ad-label">Tiêu Đề</label>
+        <input class="ad-input" formControlName="title" placeholder="Tiêu đề bài viết">
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">Tác Giả</label>
+        <input class="ad-input" formControlName="author" placeholder="VD: Ban biên tập">
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">Ngày Đăng</label>
+        <input class="ad-input" type="date" formControlName="publishedAt">
+      </div>
+      <div class="ad-field full-span">
+        <label class="ad-label">Ảnh Đại Diện (URL)</label>
+        <input class="ad-input" formControlName="thumbnailUrl" placeholder="https://...">
+      </div>
+      <div class="ad-field full-span">
+        <label class="ad-label">Nội Dung</label>
+        <textarea class="ad-input" formControlName="content" rows="5" placeholder="Nội dung bài viết..."></textarea>
+      </div>
+      <div class="ad-field full-span">
+        <label class="ad-check"><input type="checkbox" formControlName="isPublished"> Đã xuất bản</label>
+      </div>
+      <div class="form-actions full-span">
+        <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
+        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="ad-card ad-card--pad-0">
+    <div class="ad-table-wrap">
+      <table class="ad-table">
+        <thead>
+          <tr><th>Tiêu Đề</th><th>Tác Giả</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
+          <tr class="ad-filter-row">
+            <th><input class="ad-filter-input" [(ngModel)]="filters['title']" (input)="onFilterChange()" placeholder="Lọc..."></th>
+            <th><input class="ad-filter-input" [(ngModel)]="filters['author']" (input)="onFilterChange()" placeholder="Lọc..."></th>
+            <th>
+              <select class="ad-filter-input" [(ngModel)]="filters['isPublished']" (ngModelChange)="onFilterChange()">
+                <option value="">Tất cả</option>
+                <option value="True">Đã xuất bản</option>
+                <option value="False">Bản nháp</option>
+              </select>
+            </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let x of items">
+            <td><strong>{{ x.title }}</strong></td>
+            <td>{{ x.author || '—' }}</td>
+            <td>
+              <span class="ad-pill" [class.ad-pill--success]="x.isPublished" [class.ad-pill--neutral]="!x.isPublished">
+                {{ x.isPublished ? 'Đã Xuất Bản' : 'Bản Nháp' }}
+              </span>
+            </td>
+            <td class="ad-td-actions">
+              <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Sửa"><mat-icon>edit</mat-icon></button>
+              <button class="ad-icon-btn" (click)="delete(x.id)" title="Xóa"><mat-icon>delete</mat-icon></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!items.length" class="ad-empty"><mat-icon>article</mat-icon><p>Không có tin tức nào.</p></div>
+    </div>
+
+    <div class="ad-pagination" *ngIf="totalCount > 0">
+      <span class="ad-pagination-info">{{ rangeStart }}–{{ rangeEnd }} / {{ totalCount }}</span>
+      <span class="ad-pagination-size">
+        <label class="ad-label">Hiển thị</label>
+        <select class="ad-input" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
+          <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
+        </select>
+      </span>
+      <span class="ad-pagination-nav">
+        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" title="Trước"><mat-icon>chevron_left</mat-icon></button>
+        <span class="ad-pagination-page">Trang {{ pageIndex }}/{{ totalPages }}</span>
+        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" title="Sau"><mat-icon>chevron_right</mat-icon></button>
+      </span>
+    </div>
+  </div>
+</div>

@@ -5,10 +5,10 @@
       <span>Midnight Premium</span>
     </a>
     <ul class="nav-links">
-      <li><a routerLink="/movies" routerLinkActive="active-link">Phim Đang Chiếu</a></li>
-      <li><a href="#">Rạp Chiếu</a></li>
-      <li><a href="#">Khuyến Mãi</a></li>
-      <li><a href="#">Thành Viên</a></li>
+      <li><a routerLink="/movies" routerLinkActive="active-link">Phim</a></li>
+      <li><a routerLink="/theaters" routerLinkActive="active-link">Rạp Chiếu</a></li>
+      <li><a routerLink="/promotions" routerLinkActive="active-link">Khuyến Mãi</a></li>
+      <li><a routerLink="/membership" routerLinkActive="active-link">Thành Viên</a></li>
     </ul>
     <div class="nav-actions">
       <ng-container *ngIf="isAuth$ | async; else guestNav">

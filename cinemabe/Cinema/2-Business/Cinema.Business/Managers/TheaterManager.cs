@@ -16,7 +16,7 @@ public class TheaterManager : ITheaterManager
 
     public async Task<DefaultSearchResults<TheaterDTO>> GetTheatersAsync(PagingSearchDTO search)
     {
-        var theaters = (await _uow.Theaters.GetTheatersWithRoomsAsync()).Select(ToTheaterDTO).ToList();
+        var theaters = (await _uow.TheaterStore.GetTheatersWithRoomsAsync()).Select(ToTheaterDTO).ToList();
         var page     = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize  > 0 ? search.PageSize  : theaters.Count;
         var paged    = theaters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
@@ -34,7 +34,7 @@ public class TheaterManager : ITheaterManager
         var movieId = search.Filters.GetGuid("movieId") ?? Guid.Empty;
         var date    = search.Filters.GetDateTime("date") ?? DateTime.Today;
 
-        var theaters = (await _uow.Theaters.GetByMovieAsync(movieId, date)).Select(ToTheaterDTO).ToList();
+        var theaters = (await _uow.TheaterStore.GetByMovieAsync(movieId, date)).Select(ToTheaterDTO).ToList();
         return new DefaultSearchResults<TheaterDTO>
         {
             Results      = theaters,
@@ -46,7 +46,7 @@ public class TheaterManager : ITheaterManager
 
     public async Task<TheaterDTO> GetByIdAsync(Guid id)
     {
-        var theater = await _uow.Theaters.GetDetailAsync(id)
+        var theater = await _uow.TheaterStore.GetDetailAsync(id)
                       ?? throw new KeyNotFoundException($"Theater {id} not found.");
         return ToTheaterDTO(theater);
     }
@@ -54,26 +54,26 @@ public class TheaterManager : ITheaterManager
     public async Task<TheaterDTO> CreateAsync(CreateTheaterRequest request)
     {
         var theater = request.ToNewEntity<CreateTheaterRequest, Theater>();
-        await _uow.Theaters.CreateAsync(theater);
+        await _uow.TheaterStore.CreateAsync(theater);
         return ToTheaterDTO(theater);
     }
 
     public async Task<TheaterDTO> UpdateAsync(UpdateTheaterRequest request)
     {
-        var theater = await _uow.Theaters.GetByIdAsync(request.Id)
+        var theater = await _uow.TheaterStore.GetByIdAsync(request.Id)
                       ?? throw new KeyNotFoundException($"Theater {request.Id} not found.");
         theater.PatchEntity<Theater, UpdateTheaterRequest>(request);
-        await _uow.Theaters.UpdateAsync(theater);
+        await _uow.TheaterStore.UpdateAsync(theater);
         await _uow.SaveChangesAsync();
         return ToTheaterDTO(theater);
     }
 
     public async Task DeleteAsync(Guid id)
     {
-        var theater = await _uow.Theaters.GetByIdAsync(id)
+        var theater = await _uow.TheaterStore.GetByIdAsync(id)
                       ?? throw new KeyNotFoundException($"Theater {id} not found.");
         theater.IsActive = false;
-        await _uow.Theaters.UpdateAsync(theater);
+        await _uow.TheaterStore.UpdateAsync(theater);
         await _uow.SaveChangesAsync();
     }
 

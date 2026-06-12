@@ -2,16 +2,28 @@ using Cinema.Data.Entities;
 namespace Cinema.Data.Contracts;
 public interface IApplicationUnitOfWork : IDisposable
 {
-    IMovieStore Movies { get; }
-    ITheaterStore Theaters { get; }
-    IShowTimeStore ShowTimes { get; }
-    ISeatStore Seats { get; }
-    IInvoiceStore Invoices { get; }
-    IUserStore Users { get; }
-    IGenericStore<UserType> UserTypes { get; }
-    IGenericStore<Comment> Comments { get; }
-    IGenericStore<Evaluation> Evaluations { get; }
-    IGenericStore<FoodAndDrink> FoodAndDrinks { get; }
+    IMovieStore MovieStore { get; }
+    ITheaterStore TheaterStore { get; }
+    IShowTimeStore ShowTimeStore { get; }
+    ISeatStore SeatStore { get; }
+    IInvoiceStore InvoiceStore { get; }
+    IUserStore UserStore { get; }
+    IRoomStore RoomStore { get; }
+    IDiscountStore DiscountStore { get; }
+    IMovieTypeDetailStore MovieTypeDetailStore { get; }
+    ISeatTypeTicketTypeStore SeatTypeTicketTypeStore { get; }
+    IUserTypeStore UserTypeStore { get; }
+    ICommentStore CommentStore { get; }
+    IEvaluationStore EvaluationStore { get; }
+    IFoodAndDrinkStore FoodAndDrinkStore { get; }
+    IAgeRestrictionStore AgeRestrictionStore { get; }
+    IDiscountTypeStore DiscountTypeStore { get; }
+    IMovieTypeStore MovieTypeStore { get; }
+    ISeatTypeStore SeatTypeStore { get; }
+    ITicketTypeStore TicketTypeStore { get; }
+    IMemberShipStore MemberShipStore { get; }
+    IHolidayStore HolidayStore { get; }
+    INewsStore NewsStore { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

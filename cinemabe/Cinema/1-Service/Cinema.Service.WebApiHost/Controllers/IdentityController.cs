@@ -1,6 +1,8 @@
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO;
 using Cinema.Business.DTO.Auth;
+using Cinema.Business.DTO.Requests;
+using Cinema.Data.Entities;
 using Cinema.Foundation.Logging;
 using Cinema.Service.WebApiHost.Helpers;
 using Microsoft.AspNetCore.Authorization;
@@ -108,6 +110,26 @@ public class IdentityController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.ChangePassword->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+        }
+    }
+
+    // ── Admin ───────────────────────────────────────────────────────────────────
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<UserDTO>), 200)]
+    public async Task<IActionResult> GetUsers([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetUsers being awakened to process request...");
+        try
+        {
+            var result = await _authManager.GetUsersAsync(search);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetUsers->Exception: {e.GetType()}, {e.Message}");
             return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
         }
     }

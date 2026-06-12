@@ -316,6 +316,48 @@
           }
         ]
       }
+    },
+    "/api/Payment/GetRevenueByDay": {
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "Payment_GetRevenueByDay",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 7
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RevenueByDayDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -785,6 +827,20 @@
             "format": "decimal"
           },
           "totalPrice": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "RevenueByDayDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "total": {
             "type": "number",
             "format": "decimal"
           }

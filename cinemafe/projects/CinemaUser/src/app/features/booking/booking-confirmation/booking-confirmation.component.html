@@ -90,6 +90,13 @@
       <div class="summary-card">
         <h3 class="summary-title">Tóm Tắt Đơn Hàng</h3>
 
+        <div class="field-group" *ngIf="ticketTypes.length">
+          <label class="field-label">Loại Vé</label>
+          <select class="field-input" [(ngModel)]="selectedTicketTypeId">
+            <option *ngFor="let t of ticketTypes" [ngValue]="t.id">{{ t.name }} — {{ t.basePrice | number:'1.0-0' }}đ</option>
+          </select>
+        </div>
+
         <div class="seat-list">
           <div class="seat-entry" *ngFor="let s of seats">
             <div class="seat-entry-info">

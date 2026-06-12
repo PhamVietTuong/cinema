@@ -37,6 +37,13 @@
         <label class="ad-label">Email</label>
         <input class="ad-input" formControlName="email" placeholder="rap@cinema.vn">
       </div>
+      <div class="ad-field full-span">
+        <label class="ad-label">Ảnh Rạp (URL)</label>
+        <input class="ad-input" formControlName="imageUrl" placeholder="https://...">
+        <div class="img-preview" *ngIf="form.value.imageUrl">
+          <img [src]="form.value.imageUrl" alt="">
+        </div>
+      </div>
       <div class="form-actions full-span">
         <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
         <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
@@ -49,10 +56,16 @@
     <div class="ad-table-wrap">
       <table class="ad-table">
         <thead>
-          <tr><th>Tên Rạp</th><th>Thành Phố</th><th>Địa Chỉ</th><th>Số Phòng</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
+          <tr><th>Ảnh</th><th>Tên Rạp</th><th>Thành Phố</th><th>Địa Chỉ</th><th>Số Phòng</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
         </thead>
         <tbody>
           <tr *ngFor="let t of filtered">
+            <td>
+              <span class="theater-thumb">
+                <img *ngIf="t.imageUrl" [src]="t.imageUrl" [alt]="t.name">
+                <mat-icon *ngIf="!t.imageUrl">theaters</mat-icon>
+              </span>
+            </td>
             <td><strong>{{ t.name }}</strong></td>
             <td>{{ t.city || '—' }}</td>
             <td class="addr">{{ t.address || '—' }}</td>

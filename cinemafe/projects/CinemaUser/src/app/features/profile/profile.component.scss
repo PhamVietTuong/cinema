@@ -1,59 +1,145 @@
-@use 'lib/theme/variables' as v;
+$bg: #051424;
+$container: #0d1c2d;
+$hi: #1c2b3c;
+$primary: #d0bcff;
+$on-primary: #23005c;
+$text: #d4e4fa;
+$muted: rgba(212, 228, 250, 0.6);
+$outline: rgba(255, 255, 255, 0.08);
 
-.profile-container {
-  max-width: v.$container-sm;
-  margin: 2rem auto;
-  padding: 0 1rem;
+// ── Header ──────────────────────────────────────────────────────────────────
+.page-header {
+  background: rgba(13, 28, 45, 0.9);
+  border-bottom: 1px solid $outline;
+  padding: 20px 0;
+}
+.page-header-inner { max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+.page-title { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; font-weight: 700; color: $text; margin: 0; }
+
+// ── Layout ──────────────────────────────────────────────────────────────────
+.profile-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 28px;
+  align-items: start;
 }
 
-.profile-card {
-  margin-bottom: 1rem;
+// ── Identity card ───────────────────────────────────────────────────────────
+.id-card {
+  background: rgba(13, 28, 45, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid $outline;
+  border-radius: 16px;
+  padding: 28px 20px;
+  text-align: center;
+  position: sticky;
+  top: 24px;
+}
+.id-avatar {
+  width: 84px; height: 84px; margin: 0 auto 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $primary, #6d3bd7);
+  color: #fff; font-weight: 700; font-size: 1.8rem;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+.id-name { font-family: 'Montserrat', sans-serif; font-size: 1.15rem; font-weight: 700; color: $text; }
+.id-email { font-size: 0.82rem; color: $muted; margin-top: 2px; word-break: break-all; }
+
+.id-meta { margin: 20px 0; display: flex; flex-direction: column; gap: 10px; }
+.id-meta-row {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.85rem; color: $muted;
+  i { color: $primary; margin-right: 6px; }
+  strong { color: $text; font-weight: 600; }
 }
 
-.avatar {
-  background: v.$bg-dark;
-  border-radius: v.$radius-full;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 1.5rem;
-  width: 56px;
-  height: 56px;
+.id-tabs { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.id-tabs button {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 11px 14px;
+  border: none; border-radius: 10px;
+  background: transparent; color: $muted;
+  font-size: 0.9rem; font-weight: 500; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  i { width: 16px; text-align: center; }
+  &:hover { background: rgba(255, 255, 255, 0.04); color: $text; }
+  &.active { background: rgba(208, 188, 255, 0.14); color: $primary; }
 }
 
-.stats {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 1rem;
+// ── Content card ────────────────────────────────────────────────────────────
+.content-card {
+  background: rgba(13, 28, 45, 0.8);
+  border: 1px solid $outline;
+  border-radius: 16px;
+  padding: 28px;
+  min-height: 320px;
 }
+.section-title { font-family: 'Montserrat', sans-serif; font-size: 1.1rem; font-weight: 700; color: $text; margin: 0 0 22px; }
 
-.stat {
-  display: flex;
-  align-items: center;
-  gap: v.$spacing-xs;
-
-  i { color: v.$primary; }
+// ── Forms ───────────────────────────────────────────────────────────────────
+.form { display: flex; flex-direction: column; gap: 16px; max-width: 440px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 0.8rem; font-weight: 600; color: $muted; }
+.field input {
+  height: 44px; padding: 0 14px;
+  border: 1px solid $outline; border-radius: 10px;
+  background: $bg; color: $text; font-size: 0.92rem; outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  &:focus { border-color: $primary; box-shadow: 0 0 0 3px rgba(208, 188, 255, 0.18); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
 }
+.hint { font-size: 0.72rem; color: #ffb690; }
+.msg { font-size: 0.85rem; margin: 0; }
+.msg.ok { color: #6ee7a8; }
+.msg.err { color: #ffb4ab; }
+.form .btn-primary-cta { align-self: flex-start; margin-top: 4px; }
 
-.tab-group {
-  margin-top: 2rem;
+// ── Bookings ────────────────────────────────────────────────────────────────
+.empty {
+  text-align: center; padding: 48px 0; color: $muted;
+  i { font-size: 2.2rem; opacity: 0.3; display: block; margin-bottom: 10px; }
+  p { margin: 0; }
+  ::ng-deep circle { stroke: $primary !important; }
 }
-
-.tab-content {
-  padding: 1rem;
+.invoice-list { display: flex; flex-direction: column; gap: 12px; }
+.invoice { border: 1px solid $outline; border-radius: 12px; overflow: hidden; background: rgba(255, 255, 255, 0.02); }
+.invoice-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px; cursor: pointer;
+  &:hover { background: rgba(255, 255, 255, 0.03); }
 }
-
-.invoice-card {
-  border: 1px solid v.$border-light;
-  border-radius: v.$radius-md;
-  padding: 1rem;
-  margin-bottom: v.$spacing-sm;
+.invoice-main { display: flex; flex-direction: column; gap: 3px; }
+.invoice-code { font-family: 'Montserrat', sans-serif; font-weight: 700; color: $text; }
+.invoice-date { font-size: 0.78rem; color: $muted; }
+.invoice-right { display: flex; align-items: center; gap: 14px;
+  i { color: $muted; font-size: 0.8rem; } }
+.invoice-total { font-weight: 700; color: $primary; }
+.invoice-status {
+  font-size: 0.72rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  &.is-paid { background: rgba(34, 197, 94, 0.16); color: #6ee7a8; }
+  &.is-pending { background: rgba(245, 158, 11, 0.16); color: #fbbf57; }
+  &.is-cancelled { background: rgba(239, 68, 68, 0.16); color: #ffb4ab; }
 }
+.invoice-body { padding: 4px 18px 18px; border-top: 1px solid $outline; display: flex; flex-direction: column; gap: 10px; }
+.ticket {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 12px;
+}
+.ticket-movie { display: flex; flex-direction: column; gap: 2px;
+  strong { color: $text; font-size: 0.92rem; }
+  span { font-size: 0.78rem; color: $muted; } }
+.ticket-seat { display: flex; align-items: center; gap: 10px; }
+.seat-chip { font-family: 'Montserrat', sans-serif; font-weight: 700; color: $primary; background: rgba(208, 188, 255, 0.1); padding: 4px 10px; border-radius: 8px; }
+.ticket-type { font-size: 0.78rem; color: $muted; }
+.food { display: flex; justify-content: space-between; font-size: 0.84rem; color: $muted; }
+.cancel-btn { align-self: flex-start; margin-top: 6px; }
 
-.invoice-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
+@media (max-width: 860px) {
+  .profile-page { grid-template-columns: 1fr; padding: 24px 20px; }
+  .id-card { position: static; }
 }

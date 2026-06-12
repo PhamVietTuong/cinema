@@ -7,19 +7,19 @@
   gap: 18px;
   margin-bottom: 22px;
 }
-.kpi { display: flex; align-items: center; gap: 16px; }
+.kpi { display: flex; flex-direction: column; gap: 14px; }
+.kpi-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .kpi-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 50px; height: 50px; border-radius: var(--ad-r-md); flex: none;
-  mat-icon { font-size: 25px; width: 25px; height: 25px; }
+  width: 44px; height: 44px; border-radius: var(--ad-r-md); flex: none;
+  mat-icon { font-size: 23px; width: 23px; height: 23px; }
   &.i-violet { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
   &.i-blue   { background: rgba(56, 189, 248, 0.14); color: #7dd3fc; }
   &.i-orange { background: rgba(249, 115, 22, 0.14); color: #fdba74; }
   &.i-green  { background: var(--ad-success-soft); color: #6ee7a8; }
 }
-.kpi-body { display: flex; flex-direction: column; min-width: 0; }
 .kpi-label { font-size: 13px; color: var(--ad-muted); }
-.kpi-value { font-family: var(--ad-font-head); font-size: 26px; font-weight: 700; color: var(--ad-on); line-height: 1.2; }
+.kpi-value { font-family: var(--ad-font-head); font-size: 28px; font-weight: 700; color: var(--ad-on); line-height: 1.2; }
 
 // Quick actions
 .quick-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 22px;
@@ -63,8 +63,14 @@
 .top-rating { display: inline-flex; align-items: center; gap: 3px; color: #fbbf57; font-weight: 600; font-size: 13px;
   mat-icon { font-size: 16px; width: 16px; height: 16px; } }
 
+// Card header (chart + invoices): title left, control/link right
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.period-select { width: auto; height: 36px; padding: 0 32px 0 12px; font-size: 13px; }
+.see-all { font-size: 13px; font-weight: 600; color: var(--ad-primary-strong); text-decoration: none;
+  &:hover { text-decoration: underline; } }
+
 // Invoices
-.invoices .card-head { padding: 20px 24px 0; }
+.invoices .card-head { padding: 20px 24px 0; margin-bottom: 0; }
 .invoices .ad-card-title { margin-bottom: 16px; }
 
 @media (max-width: 1100px) {

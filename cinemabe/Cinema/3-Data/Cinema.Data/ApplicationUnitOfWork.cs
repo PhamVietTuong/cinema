@@ -11,30 +11,54 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     private readonly CinemaContext _db;
     private IDbContextTransaction? _transaction;
 
-    public IMovieStore Movies { get; }
-    public ITheaterStore Theaters { get; }
-    public IShowTimeStore ShowTimes { get; }
-    public ISeatStore Seats { get; }
-    public IInvoiceStore Invoices { get; }
-    public IUserStore Users { get; }
-    public IGenericStore<UserType> UserTypes { get; }
-    public IGenericStore<Comment> Comments { get; }
-    public IGenericStore<Evaluation> Evaluations { get; }
-    public IGenericStore<FoodAndDrink> FoodAndDrinks { get; }
+    public IMovieStore MovieStore { get; }
+    public ITheaterStore TheaterStore { get; }
+    public IShowTimeStore ShowTimeStore { get; }
+    public ISeatStore SeatStore { get; }
+    public IInvoiceStore InvoiceStore { get; }
+    public IUserStore UserStore { get; }
+    public IRoomStore RoomStore { get; }
+    public IDiscountStore DiscountStore { get; }
+    public IMovieTypeDetailStore MovieTypeDetailStore { get; }
+    public ISeatTypeTicketTypeStore SeatTypeTicketTypeStore { get; }
+    public IUserTypeStore UserTypeStore { get; }
+    public ICommentStore CommentStore { get; }
+    public IEvaluationStore EvaluationStore { get; }
+    public IFoodAndDrinkStore FoodAndDrinkStore { get; }
+    public IAgeRestrictionStore AgeRestrictionStore { get; }
+    public IDiscountTypeStore DiscountTypeStore { get; }
+    public IMovieTypeStore MovieTypeStore { get; }
+    public ISeatTypeStore SeatTypeStore { get; }
+    public ITicketTypeStore TicketTypeStore { get; }
+    public IMemberShipStore MemberShipStore { get; }
+    public IHolidayStore HolidayStore { get; }
+    public INewsStore NewsStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
     {
         _db = db;
-        Movies = new MovieStore(db);
-        Theaters = new TheaterStore(db);
-        ShowTimes = new ShowTimeStore(db);
-        Seats = new SeatStore(db);
-        Invoices = new InvoiceStore(db);
-        Users = new UserStore(db);
-        UserTypes = new GenericStore<UserType>(db);
-        Comments = new GenericStore<Comment>(db);
-        Evaluations = new GenericStore<Evaluation>(db);
-        FoodAndDrinks = new GenericStore<FoodAndDrink>(db);
+        MovieStore = new MovieStore(db);
+        TheaterStore = new TheaterStore(db);
+        ShowTimeStore = new ShowTimeStore(db);
+        SeatStore = new SeatStore(db);
+        InvoiceStore = new InvoiceStore(db);
+        UserStore = new UserStore(db);
+        RoomStore = new RoomStore(db);
+        DiscountStore = new DiscountStore(db);
+        MovieTypeDetailStore = new MovieTypeDetailStore(db);
+        SeatTypeTicketTypeStore = new SeatTypeTicketTypeStore(db);
+        UserTypeStore = new UserTypeStore(db);
+        CommentStore = new CommentStore(db);
+        EvaluationStore = new EvaluationStore(db);
+        FoodAndDrinkStore = new FoodAndDrinkStore(db);
+        AgeRestrictionStore = new AgeRestrictionStore(db);
+        DiscountTypeStore = new DiscountTypeStore(db);
+        MovieTypeStore = new MovieTypeStore(db);
+        SeatTypeStore = new SeatTypeStore(db);
+        TicketTypeStore = new TicketTypeStore(db);
+        MemberShipStore = new MemberShipStore(db);
+        HolidayStore = new HolidayStore(db);
+        NewsStore = new NewsStore(db);
     }
 
     public Task<int> SaveChangesAsync() => _db.SaveChangesAsync();

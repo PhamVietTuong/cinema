@@ -23,9 +23,9 @@ public class BookingManager : IBookingManager
         var showTimeId = search.Filters.GetGuid("showTimeId") ?? Guid.Empty;
         var roomId     = search.Filters.GetGuid("roomId")     ?? Guid.Empty;
 
-        var seats        = await _uow.Seats.GetByRoomAsync(roomId);
-        var bookedIds    = (await _uow.Seats.GetBookedSeatIdsAsync(showTimeId, roomId)).ToHashSet();
-        var showTimeRoom = await _uow.ShowTimes.GetShowTimeRoomAsync(showTimeId, roomId);
+        var seats        = await _uow.SeatStore.GetByRoomAsync(roomId);
+        var bookedIds    = (await _uow.SeatStore.GetBookedSeatIdsAsync(showTimeId, roomId)).ToHashSet();
+        var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId);
 
         var dtos = seats.Select(s =>
         {
@@ -60,10 +60,10 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
-            var showTimeRoom = await _uow.ShowTimes.GetShowTimeRoomAsync(request.ShowTimeId, request.RoomId)
+            var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(request.ShowTimeId, request.RoomId)
                                ?? throw new InvalidOperationException("ShowTime/Room combination not found.");
 
-            var bookedIds = (await _uow.Seats.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
+            var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
 
             decimal ticketTotal = 0;
             var tickets    = new List<InvoiceTicket>();
@@ -74,7 +74,7 @@ public class BookingManager : IBookingManager
                 if (bookedIds.Contains(seatItem.SeatId))
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is already booked.");
 
-                var seat = await _uow.Seats.GetByIdAsync(seatItem.SeatId)
+                var seat = await _uow.SeatStore.GetByIdAsync(seatItem.SeatId)
                            ?? throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
 
                 var price = (decimal)showTimeRoom.BasePrice;
@@ -100,7 +100,7 @@ public class BookingManager : IBookingManager
             var foods = new List<InvoiceFoodAndDrink>();
             foreach (var f in request.Foods)
             {
-                var food = await _uow.FoodAndDrinks.GetByIdAsync(f.FoodAndDrinkId)
+                var food = await _uow.FoodAndDrinkStore.GetByIdAsync(f.FoodAndDrinkId)
                            ?? throw new KeyNotFoundException($"Food item {f.FoodAndDrinkId} not found.");
                 foods.Add(new InvoiceFoodAndDrink
                 {
@@ -126,7 +126,7 @@ public class BookingManager : IBookingManager
                 InvoiceFoodAndDrinks = foods
             };
 
-            await _uow.Invoices.CreateAsync(invoice);
+            await _uow.InvoiceStore.CreateAsync(invoice);
             await _uow.CommitTransactionAsync();
 
             return new BookingResultDTO
@@ -149,23 +149,23 @@ public class BookingManager : IBookingManager
 
     public async Task<bool> ConfirmPaymentAsync(Guid invoiceId, string paymentReference)
     {
-        var invoice = await _uow.Invoices.GetByIdAsync(invoiceId);
+        var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
         if (invoice == null) return false;
         invoice.Status           = InvoiceStatus.Paid;
         invoice.PaymentReference = paymentReference;
         invoice.PaidAt           = DateTime.UtcNow;
-        await _uow.Invoices.UpdateAsync(invoice);
+        await _uow.InvoiceStore.UpdateAsync(invoice);
         await _uow.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> CancelBookingAsync(Guid userId, Guid invoiceId)
     {
-        var invoice = await _uow.Invoices.GetByIdAsync(invoiceId);
+        var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
         if (invoice == null || invoice.UserId != userId) return false;
         if (invoice.Status != InvoiceStatus.Pending) return false;
         invoice.Status = InvoiceStatus.Cancelled;
-        await _uow.Invoices.UpdateAsync(invoice);
+        await _uow.InvoiceStore.UpdateAsync(invoice);
         await _uow.SaveChangesAsync();
         return true;
     }

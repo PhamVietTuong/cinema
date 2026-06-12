@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "generate-icons": "svg-generator"
   },
   "private": true,
   "packageManager": "npm@10.9.0",
@@ -22,6 +23,7 @@
     "@angular/platform-browser-dynamic": "^21.2.13",
     "@angular/router": "^21.2.0",
     "@microsoft/signalr": "^10.0.0",
+    "@ngneat/svg-icon": "^8.0.0",
     "@ngrx/effects": "^21.1.0",
     "@ngrx/entity": "^21.1.0",
     "@ngrx/store": "^21.1.0",
@@ -34,9 +36,11 @@
     "@angular/build": "^21.2.0",
     "@angular/cli": "^21.2.0",
     "@angular/compiler-cli": "^21.2.0",
+    "@ngneat/svg-generator": "^7.0.3",
     "jsdom": "^28.0.0",
     "ng-packagr": "^21.2.0",
     "prettier": "^3.8.1",
+    "svgo": "^4.0.1",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

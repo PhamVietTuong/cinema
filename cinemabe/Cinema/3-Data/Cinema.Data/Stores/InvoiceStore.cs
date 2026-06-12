@@ -56,4 +56,14 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         => await DbSet
             .Where(i => i.Status == InvoiceStatus.Paid && i.PaidAt >= from && i.PaidAt <= to)
             .SumAsync(i => i.FinalAmount);
+
+    public async Task<IReadOnlyDictionary<DateTime, decimal>> GetRevenueByDayAsync(DateTime from, DateTime to)
+    {
+        var rows = await DbSet
+            .Where(i => i.Status == InvoiceStatus.Paid && i.PaidAt != null && i.PaidAt >= from && i.PaidAt <= to)
+            .GroupBy(i => i.PaidAt!.Value.Date)
+            .Select(g => new { Date = g.Key, Total = g.Sum(x => x.FinalAmount) })
+            .ToListAsync();
+        return rows.ToDictionary(r => r.Date, r => r.Total);
+    }
 }

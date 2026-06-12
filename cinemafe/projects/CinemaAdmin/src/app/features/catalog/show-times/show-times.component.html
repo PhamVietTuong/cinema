@@ -1,0 +1,137 @@
+<div class="ad-page st-page">
+  <!-- Header -->
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">Lịch Chiếu</h1>
+      <p class="ad-sub">Thời khóa biểu suất chiếu theo tuần.</p>
+    </div>
+    <div class="ad-toolbar">
+      <div class="st-week-nav">
+        <button class="ad-icon-btn" type="button" (click)="prevWeek()" title="Tuần trước"><mat-icon>chevron_left</mat-icon></button>
+        <button class="ad-btn ad-btn--ghost st-week-label" type="button" (click)="goToday()">
+          <mat-icon>calendar_today</mat-icon> {{ weekLabel }}
+        </button>
+        <button class="ad-icon-btn" type="button" (click)="nextWeek()" title="Tuần sau"><mat-icon>chevron_right</mat-icon></button>
+      </div>
+      <select class="ad-select st-movie-filter" [(ngModel)]="filterMovieId" (ngModelChange)="onFilterChange()">
+        <option value="">Tất cả phim</option>
+        <option *ngFor="let m of movies" [ngValue]="m.id">{{ m.title }}</option>
+      </select>
+      <button class="ad-btn ad-btn--primary" type="button" (click)="openCreate()"><mat-icon>add</mat-icon> Thêm Suất Chiếu</button>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="st-legend">
+    <span class="st-legend-item"><i class="st-dot st-block--normal"></i> Thường</span>
+    <span class="st-legend-item"><i class="st-dot st-block--premiere"></i> Công Chiếu</span>
+    <span class="st-legend-item"><i class="st-dot st-block--special"></i> Đặc Biệt</span>
+  </div>
+
+  <!-- Timetable -->
+  <div class="ad-card ad-card--pad-0 st-board">
+    <div class="st-grid">
+      <!-- Column headers -->
+      <div class="st-corner"></div>
+      <div class="st-dayhead" *ngFor="let d of days" [class.is-today]="d.isToday">
+        <span class="st-dow">{{ d.dow }}</span>
+        <span class="st-dom">{{ d.dom }}</span>
+      </div>
+
+      <!-- Time axis -->
+      <div class="st-axis" [style.height.px]="gridHeight">
+        <div class="st-hour" *ngFor="let h of hours" [style.height.px]="rowHeight">
+          <span>{{ h }}:00</span>
+        </div>
+      </div>
+
+      <!-- Day columns -->
+      <div class="st-col" *ngFor="let d of days" [class.is-today]="d.isToday" [style.height.px]="gridHeight">
+        <div class="st-line" *ngFor="let h of hours" [style.height.px]="rowHeight"></div>
+
+        <button
+          *ngFor="let b of d.blocks"
+          type="button"
+          class="st-block"
+          [class]="'st-block ' + b.typeClass"
+          [style.top.px]="b.top"
+          [style.height.px]="b.height"
+          (click)="edit(b.st)"
+          [title]="b.title + ' · ' + b.timeLabel">
+          <span class="st-block-title">{{ b.title }}</span>
+          <span class="st-block-time">{{ b.timeLabel }}</span>
+          <span class="st-block-form">{{ b.formLabel }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit drawer -->
+<div class="st-drawer-scrim" *ngIf="showForm" (click)="cancel()"></div>
+<aside class="st-drawer" [class.is-open]="showForm">
+  <div class="st-drawer-head">
+    <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Suất Chiếu' : 'Thêm Suất Chiếu' }}</h3>
+    <button class="ad-icon-btn" type="button" (click)="cancel()" title="Đóng"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <form class="st-drawer-body" [formGroup]="form" (ngSubmit)="save()">
+    <div class="ad-field">
+      <label class="ad-label">Phim</label>
+      <select class="ad-input" formControlName="movieId">
+        <option value="">— Chọn phim —</option>
+        <option *ngFor="let m of movies" [ngValue]="m.id">{{ m.title }}</option>
+      </select>
+      <div class="st-poster" *ngIf="moviePoster(form.value.movieId) as poster">
+        <img [src]="poster" alt="">
+      </div>
+    </div>
+
+    <div class="ad-field">
+      <label class="ad-label">Ngày Chiếu</label>
+      <input class="ad-input" type="date" formControlName="date">
+    </div>
+
+    <div class="st-row-2">
+      <div class="ad-field">
+        <label class="ad-label">Bắt Đầu</label>
+        <input class="ad-input" type="time" formControlName="start">
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">Kết Thúc</label>
+        <input class="ad-input" type="time" formControlName="end">
+      </div>
+    </div>
+
+    <div class="ad-field">
+      <label class="ad-label">Định Dạng</label>
+      <div class="st-seg">
+        <button *ngFor="let p of projectionForms" type="button"
+                class="st-seg-btn" [class.is-active]="form.value.projectionForm === p.v"
+                (click)="form.patchValue({ projectionForm: p.v })">{{ p.label }}</button>
+      </div>
+    </div>
+
+    <div class="ad-field">
+      <label class="ad-label">Loại Suất</label>
+      <div class="st-seg">
+        <button *ngFor="let t of showTimeTypes" type="button"
+                class="st-seg-btn" [class.is-active]="form.value.showTimeType === t.v"
+                (click)="form.patchValue({ showTimeType: t.v })">{{ t.label }}</button>
+      </div>
+    </div>
+
+    <label class="st-toggle">
+      <input type="checkbox" formControlName="isActive">
+      <span class="st-toggle-track"></span>
+      <span>Mở bán</span>
+    </label>
+
+    <div class="st-drawer-actions">
+      <button class="ad-btn ad-btn--danger" type="button" *ngIf="editingId" (click)="deleteCurrent()"><mat-icon>delete</mat-icon> Xóa</button>
+      <span class="st-spacer"></span>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancel()">Hủy</button>
+      <button class="ad-btn ad-btn--primary" type="submit">Lưu Suất Chiếu</button>
+    </div>
+  </form>
+</aside>

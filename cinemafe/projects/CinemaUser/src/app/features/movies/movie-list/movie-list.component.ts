@@ -1,10 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
+import { ActivatedRoute } from '@angular/router';
 import { FormControl } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { SharedModule, loadMovies, selectPagedMovies, selectMoviesLoading } from 'CinemaLib';
+import {
+  SharedModule, loadMovies, loadNowShowing, loadComingSoon,
+  selectPagedMovies, selectNowShowing, selectComingSoon, selectMoviesLoading,
+} from 'CinemaLib';
+
+type Mode = 'all' | 'now' | 'coming';
 
 @Component({
   selector: 'app-movie-list',
@@ -14,23 +20,42 @@ import { SharedModule, loadMovies, selectPagedMovies, selectMoviesLoading } from
   styleUrl: './movie-list.component.scss',
 })
 export class MovieListComponent implements OnInit {
-  pagedMovies$: Observable<any>;
-  loading$: Observable<boolean>;
+  private _store = inject(Store);
+  private _route = inject(ActivatedRoute);
 
-  constructor(private _store: Store) {
-    this.pagedMovies$ = this._store.select(selectPagedMovies);
-    this.loading$ = this._store.select(selectMoviesLoading);
-  }
+  mode: Mode = 'all';
+  movies$!: Observable<any[]>;
+  pagedMovies$ = this._store.select(selectPagedMovies);
+  loading$ = this._store.select(selectMoviesLoading);
   searchCtrl = new FormControl('');
   page = 1;
   pageSize = 12;
 
+  get title(): string {
+    return this.mode === 'now' ? 'Phim Đang Chiếu'
+      : this.mode === 'coming' ? 'Phim Sắp Chiếu'
+      : 'Tất Cả Phim';
+  }
+  get isPaged(): boolean { return this.mode === 'all'; }
+
   ngOnInit(): void {
-    this.loadMovies();
-    this.searchCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
-      this.page = 1;
+    const showing = this._route.snapshot.queryParamMap.get('showing');
+    this.mode = showing === 'now' ? 'now' : showing === 'coming' ? 'coming' : 'all';
+
+    if (this.mode === 'now') {
+      this._store.dispatch(loadNowShowing());
+      this.movies$ = this._store.select(selectNowShowing);
+    } else if (this.mode === 'coming') {
+      this._store.dispatch(loadComingSoon());
+      this.movies$ = this._store.select(selectComingSoon);
+    } else {
+      this.movies$ = this.pagedMovies$.pipe(map((p: any) => p?.items ?? []));
       this.loadMovies();
-    });
+      this.searchCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
+        this.page = 1;
+        this.loadMovies();
+      });
+    }
   }
 
   loadMovies(): void {

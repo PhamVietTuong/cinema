@@ -34,6 +34,18 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'theaters',
+    loadComponent: () => import('./features/theaters/theaters.component').then(m => m.TheatersComponent)
+  },
+  {
+    path: 'promotions',
+    loadComponent: () => import('./features/promotions/promotions.component').then(m => m.PromotionsComponent)
+  },
+  {
+    path: 'membership',
+    loadComponent: () => import('./features/membership/membership.component').then(m => m.MembershipComponent)
+  },
+  {
     path: 'booking',
     canActivate: [authGuard],
     children: [

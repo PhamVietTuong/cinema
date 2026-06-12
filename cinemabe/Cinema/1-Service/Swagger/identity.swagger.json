@@ -164,6 +164,45 @@
           }
         ]
       }
+    },
+    "/api/Identity/GetUsers": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_GetUsers",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfUserDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -219,8 +258,29 @@
           "memberShipName": {
             "type": "string",
             "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
           }
         }
+      },
+      "UserStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Active",
+          "Inactive",
+          "Banned"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
       },
       "LoginRequest": {
         "type": "object",
@@ -283,6 +343,83 @@
           },
           "confirmNewPassword": {
             "type": "string"
+          }
+        }
+      },
+      "DefaultSearchResultsOfUserDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfUserDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfUserDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagingSearchDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "pageIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "filters": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "sort": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortDTO"
+              }
+            ]
+          }
+        }
+      },
+      "SortDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "ascending": {
+            "type": "boolean"
           }
         }
       }

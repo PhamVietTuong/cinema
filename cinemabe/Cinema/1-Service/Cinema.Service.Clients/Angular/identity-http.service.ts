@@ -25,6 +25,7 @@ export interface IHttpService {
     getProfile(): Observable<UserDTO>;
     updateProfile(request: UpdateProfileRequest): Observable<void>;
     changePassword(request: ChangePasswordRequest): Observable<void>;
+    getUsers(search: PagingSearchDTO): Observable<DefaultSearchResultsOfUserDTO>;
 }
 
 @Injectable()
@@ -285,6 +286,58 @@ export class HttpService implements IHttpService {
         }
         return _observableOf(null as any);
     }
+
+    getUsers(search: PagingSearchDTO): Observable<DefaultSearchResultsOfUserDTO> {
+        let url_ = this.baseUrl + "/api/Identity/GetUsers";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUsers(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUsers(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfUserDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfUserDTO>;
+        }));
+    }
+
+    protected processGetUsers(response: HttpResponseBase): Observable<DefaultSearchResultsOfUserDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfUserDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export class AuthResponse implements IAuthResponse {
@@ -341,6 +394,8 @@ export class UserDTO implements IUserDTO {
     userTypeName?: string;
     points?: number;
     memberShipName?: string | undefined;
+    status?: UserStatus;
+    creationTime?: Date;
 
     constructor(data?: IUserDTO) {
         if (data) {
@@ -362,6 +417,8 @@ export class UserDTO implements IUserDTO {
             this.userTypeName = _data["userTypeName"];
             this.points = _data["points"];
             this.memberShipName = _data["memberShipName"];
+            this.status = _data["status"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
         }
     }
 
@@ -383,6 +440,8 @@ export class UserDTO implements IUserDTO {
         data["userTypeName"] = this.userTypeName;
         data["points"] = this.points;
         data["memberShipName"] = this.memberShipName;
+        data["status"] = this.status;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
         return data;
     }
 }
@@ -397,6 +456,14 @@ export interface IUserDTO {
     userTypeName?: string;
     points?: number;
     memberShipName?: string | undefined;
+    status?: UserStatus;
+    creationTime?: Date;
+}
+
+export enum UserStatus {
+    Active = 0,
+    Inactive = 1,
+    Banned = 2,
 }
 
 export class LoginRequest implements ILoginRequest {
@@ -577,6 +644,187 @@ export interface IChangePasswordRequest {
     currentPassword?: string;
     newPassword?: string;
     confirmNewPassword?: string;
+}
+
+export abstract class BaseSearchResultsOfUserDTO implements IBaseSearchResultsOfUserDTO {
+    results?: UserDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfUserDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(UserDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfUserDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfUserDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfUserDTO {
+    results?: UserDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfUserDTO extends BaseSearchResultsOfUserDTO implements IDefaultSearchResultsOfUserDTO {
+
+    constructor(data?: IDefaultSearchResultsOfUserDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfUserDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfUserDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfUserDTO extends IBaseSearchResultsOfUserDTO {
+}
+
+export class PagingSearchDTO implements IPagingSearchDTO {
+    pageIndex?: number;
+    pageSize?: number;
+    filters?: { [key: string]: string; } | undefined;
+    sort?: SortDTO | undefined;
+
+    constructor(data?: IPagingSearchDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.pageIndex = _data["pageIndex"];
+            this.pageSize = _data["pageSize"];
+            if (_data["filters"]) {
+                this.filters = {} as any;
+                for (let key in _data["filters"]) {
+                    if (_data["filters"].hasOwnProperty(key))
+                        (<any>this.filters)![key] = _data["filters"][key];
+                }
+            }
+            this.sort = _data["sort"] ? SortDTO.fromJS(_data["sort"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): PagingSearchDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PagingSearchDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["pageIndex"] = this.pageIndex;
+        data["pageSize"] = this.pageSize;
+        if (this.filters) {
+            data["filters"] = {};
+            for (let key in this.filters) {
+                if (this.filters.hasOwnProperty(key))
+                    (<any>data["filters"])[key] = (<any>this.filters)[key];
+            }
+        }
+        data["sort"] = this.sort ? this.sort.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IPagingSearchDTO {
+    pageIndex?: number;
+    pageSize?: number;
+    filters?: { [key: string]: string; } | undefined;
+    sort?: SortDTO | undefined;
+}
+
+export class SortDTO implements ISortDTO {
+    field?: string;
+    ascending?: boolean;
+
+    constructor(data?: ISortDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.field = _data["field"];
+            this.ascending = _data["ascending"];
+        }
+    }
+
+    static fromJS(data: any): SortDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new SortDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["field"] = this.field;
+        data["ascending"] = this.ascending;
+        return data;
+    }
+}
+
+export interface ISortDTO {
+    field?: string;
+    ascending?: boolean;
 }
 
 export class ApiException extends Error {

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.Managers;
@@ -35,7 +36,7 @@ public class AuthServiceTests
             UserType = new UserType { Name = "User" }
         };
 
-        _uowMock.Setup(u => u.Users.GetByEmailAsync("test@test.com")).ReturnsAsync(user);
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("test@test.com")).ReturnsAsync(user);
         _tokenMock.Setup(t => t.GenerateToken(user)).Returns("jwt-token");
         _tokenMock.Setup(t => t.GetTokenExpiry()).Returns(DateTime.UtcNow.AddHours(24));
 
@@ -56,8 +57,8 @@ public class AuthServiceTests
             PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes("CorrectPassword@1"))
         };
 
-        _uowMock.Setup(u => u.Users.GetByEmailAsync("test@test.com")).ReturnsAsync(user);
-        _uowMock.Setup(u => u.Users.GetByPhoneAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("test@test.com")).ReturnsAsync(user);
+        _uowMock.Setup(u => u.UserStore.GetByPhoneAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
 
         await _sut.Invoking(s => s.LoginAsync(new LoginRequest { EmailOrPhone = "test@test.com", Password = "WrongPassword@1" }))
             .Should().ThrowAsync<UnauthorizedAccessException>();
@@ -66,8 +67,8 @@ public class AuthServiceTests
     [Fact]
     public async Task Login_UserNotFound_ThrowsUnauthorized()
     {
-        _uowMock.Setup(u => u.Users.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
-        _uowMock.Setup(u => u.Users.GetByPhoneAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
+        _uowMock.Setup(u => u.UserStore.GetByPhoneAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
 
         await _sut.Invoking(s => s.LoginAsync(new LoginRequest { EmailOrPhone = "nobody@test.com", Password = "Pass@1" }))
             .Should().ThrowAsync<UnauthorizedAccessException>();
@@ -77,9 +78,11 @@ public class AuthServiceTests
     public async Task Register_NewEmail_CreatesUserAndReturnsToken()
     {
         var createdUser = new User { Email = "new@test.com", Name = "New User", UserType = new UserType { Name = "User" } };
-        _uowMock.Setup(u => u.Users.GetByEmailAsync("new@test.com")).ReturnsAsync((User?)null);
-        _uowMock.Setup(u => u.Users.GetByPhoneAsync("0900000000")).ReturnsAsync((User?)null);
-        _uowMock.Setup(u => u.Users.CreateAsync(It.IsAny<User>())).ReturnsAsync(createdUser);
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("new@test.com")).ReturnsAsync((User?)null);
+        _uowMock.Setup(u => u.UserStore.GetByPhoneAsync("0900000000")).ReturnsAsync((User?)null);
+        _uowMock.Setup(u => u.UserStore.CreateAsync(It.IsAny<User>())).ReturnsAsync(createdUser);
+        _uowMock.Setup(u => u.UserTypeStore.FindSingleAsync(It.IsAny<Expression<Func<UserType, bool>>>()))
+            .ReturnsAsync(new UserType { Id = Guid.NewGuid(), Name = "Customer" });
         _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _tokenMock.Setup(t => t.GenerateToken(It.IsAny<User>())).Returns("jwt-token");
         _tokenMock.Setup(t => t.GetTokenExpiry()).Returns(DateTime.UtcNow.AddHours(24));
@@ -94,13 +97,13 @@ public class AuthServiceTests
 
         result.Should().NotBeNull();
         result.Token.Should().Be("jwt-token");
-        _uowMock.Verify(u => u.Users.CreateAsync(It.IsAny<User>()), Times.Once);
+        _uowMock.Verify(u => u.UserStore.CreateAsync(It.IsAny<User>()), Times.Once);
     }
 
     [Fact]
     public async Task Register_DuplicateEmail_ThrowsInvalidOperation()
     {
-        _uowMock.Setup(u => u.Users.GetByEmailAsync("dup@test.com"))
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("dup@test.com"))
             .ReturnsAsync(new User { Email = "dup@test.com" });
 
         await _sut.Invoking(s => s.RegisterAsync(new RegisterRequest
@@ -118,7 +121,7 @@ public class AuthServiceTests
     {
         var userId = Guid.NewGuid();
         var user = new User { Id = userId, Email = "u@test.com", Name = "User", UserType = new UserType { Name = "User" } };
-        _uowMock.Setup(u => u.Users.GetByIdAsync(userId)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(user);
 
         var result = await _sut.GetProfileAsync(userId);
 
@@ -129,7 +132,7 @@ public class AuthServiceTests
     [Fact]
     public async Task GetProfile_NotFound_ThrowsKeyNotFound()
     {
-        _uowMock.Setup(u => u.Users.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
 
         await _sut.Invoking(s => s.GetProfileAsync(Guid.NewGuid()))
             .Should().ThrowAsync<KeyNotFoundException>();

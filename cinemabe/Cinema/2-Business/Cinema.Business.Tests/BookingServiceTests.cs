@@ -44,9 +44,9 @@ public class BookingServiceTests
     public async Task GetSeatsAsync_ReturnsAvailableStatus_WhenNotBookedOrLocked()
     {
         var seats = new List<Seat> { new() { Id = SeatId1, RowName = "A", ColIndex = 1, SeatTypeId = SeatTypeId1 } };
-        _uowMock.Setup(u => u.Seats.GetByRoomAsync(RoomId1)).ReturnsAsync(seats);
-        _uowMock.Setup(u => u.Seats.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
-        _uowMock.Setup(u => u.ShowTimes.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
             .ReturnsAsync(new ShowTimeRoom { BasePrice = 100 });
 
         var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
@@ -59,9 +59,9 @@ public class BookingServiceTests
     public async Task GetSeatsAsync_ReturnsOccupied_WhenSeatIsBooked()
     {
         var seats = new List<Seat> { new() { Id = SeatId5, RowName = "B", ColIndex = 2, SeatTypeId = SeatTypeId1 } };
-        _uowMock.Setup(u => u.Seats.GetByRoomAsync(RoomId2)).ReturnsAsync(seats);
-        _uowMock.Setup(u => u.Seats.GetBookedSeatIdsAsync(ShowTimeId1, RoomId2)).ReturnsAsync(new List<Guid> { SeatId5 });
-        _uowMock.Setup(u => u.ShowTimes.GetShowTimeRoomAsync(ShowTimeId1, RoomId2))
+        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId2)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId2)).ReturnsAsync(new List<Guid> { SeatId5 });
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId2))
             .ReturnsAsync(new ShowTimeRoom { BasePrice = 120 });
 
         var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId2));
@@ -112,7 +112,7 @@ public class BookingServiceTests
             Status = InvoiceStatus.Pending
         };
         var otherUserId = Guid.NewGuid();
-        _uowMock.Setup(u => u.Invoices.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
 
         var result = await _sut.CancelBookingAsync(otherUserId, invoice.Id);
 
@@ -129,7 +129,7 @@ public class BookingServiceTests
             UserId = userId,
             Status = InvoiceStatus.Paid
         };
-        _uowMock.Setup(u => u.Invoices.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
 
         var result = await _sut.CancelBookingAsync(userId, invoice.Id);
 
@@ -146,8 +146,8 @@ public class BookingServiceTests
             UserId = userId,
             Status = InvoiceStatus.Pending
         };
-        _uowMock.Setup(u => u.Invoices.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.Invoices.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
         _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         var result = await _sut.CancelBookingAsync(userId, invoice.Id);

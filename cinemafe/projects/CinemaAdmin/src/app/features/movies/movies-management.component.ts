@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 
@@ -19,6 +19,7 @@ export class MoviesManagementComponent implements OnInit {
   constructor(
     private _cinemaService: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
+    private _cdr: ChangeDetectorRef,
   ) {
     this.form = this._fb.group({
       title: ['', Validators.required],
@@ -43,7 +44,7 @@ export class MoviesManagementComponent implements OnInit {
 
   loadMovies(): void {
     this._cinemaService.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
-      .subscribe(r => this.movies = r.results ?? []);
+      .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });
   }
 
   openCreate(): void { this.cancelEdit(); this.showForm = true; }
@@ -51,7 +52,15 @@ export class MoviesManagementComponent implements OnInit {
   editMovie(movie: CinemaServiceAgent.MovieDTO): void {
     this.editingId = movie.id ?? null;
     this.showForm = true;
-    this.form.patchValue({ ...movie, releaseDate: movie.releaseDate?.toString().split('T')[0] } as any);
+    this.form.patchValue({ ...movie, releaseDate: this._toDateInput(movie.releaseDate) } as any);
+  }
+
+  /** Formats a Date to the `yyyy-MM-dd` value an <input type="date"> requires. */
+  private _toDateInput(d?: Date): string {
+    if (!d) { return ''; }
+    const dt = new Date(d);
+    const pad = (n: number) => `${n}`.padStart(2, '0');
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
   }
 
   saveMovie(): void {

@@ -82,9 +82,9 @@
       </section>
 
       <!-- Showtimes -->
-      <section class="ds" id="showtimes" *ngIf="movie.showTimes?.length">
+      <section class="ds" id="showtimes">
         <h2 class="ds-title">Lịch Chiếu</h2>
-        <div class="showtime-list">
+        <div class="showtime-list" *ngIf="movie.showTimes?.length; else noShowtimes">
           <div class="showtime-row" *ngFor="let st of movie.showTimes">
             <div class="st-time">{{ st.startTime | date:'HH:mm' }}</div>
             <div class="st-info">
@@ -99,6 +99,9 @@
             </a>
           </div>
         </div>
+        <ng-template #noShowtimes>
+          <p class="ds-text">Hiện chưa có lịch chiếu cho phim này. Vui lòng quay lại sau.</p>
+        </ng-template>
       </section>
 
     </div>

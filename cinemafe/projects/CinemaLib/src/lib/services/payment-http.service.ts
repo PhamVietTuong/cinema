@@ -28,6 +28,7 @@ export interface IHttpService {
     getInvoice(id?: string | undefined): Observable<InvoiceDTO>;
     getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceDTO>;
     getRevenue(from?: Date | undefined, to?: Date | undefined): Observable<any>;
+    getRevenueByDay(days?: number | undefined): Observable<RevenueByDayDTO[]>;
 }
 
 @Injectable()
@@ -458,6 +459,65 @@ export class HttpService implements IHttpService {
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
                 result200 = resultData200 !== undefined ? resultData200 : <any>null;
     
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRevenueByDay(days?: number | undefined): Observable<RevenueByDayDTO[]> {
+        let url_ = this.baseUrl + "/api/Payment/GetRevenueByDay?";
+        if (days === null)
+            throw new Error("The parameter 'days' cannot be null.");
+        else if (days !== undefined)
+            url_ += "days=" + encodeURIComponent("" + days) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRevenueByDay(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRevenueByDay(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RevenueByDayDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RevenueByDayDTO[]>;
+        }));
+    }
+
+    protected processGetRevenueByDay(response: HttpResponseBase): Observable<RevenueByDayDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(RevenueByDayDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -1442,6 +1502,46 @@ export interface IInvoiceFoodDTO {
     quantity?: number;
     unitPrice?: number;
     totalPrice?: number;
+}
+
+export class RevenueByDayDTO implements IRevenueByDayDTO {
+    date?: Date;
+    total?: number;
+
+    constructor(data?: IRevenueByDayDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
+            this.total = _data["total"];
+        }
+    }
+
+    static fromJS(data: any): RevenueByDayDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new RevenueByDayDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["date"] = this.date ? this.date.toISOString() : <any>undefined;
+        data["total"] = this.total;
+        return data;
+    }
+}
+
+export interface IRevenueByDayDTO {
+    date?: Date;
+    total?: number;
 }
 
 export class ApiException extends Error {

@@ -46,7 +46,7 @@ export class MoviesEffects {
           CinemaServiceAgent.PagingSearchDTO.fromJS({
             pageIndex: page,
             pageSize,
-            filters: search ? { keyword: search } : undefined,
+            filters: search ? { search } : undefined,
           })
         ).pipe(
           map(r => MoviesActions.loadMoviesSuccess({

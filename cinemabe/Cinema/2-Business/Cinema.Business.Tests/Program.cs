@@ -61,7 +61,7 @@ static async Task CreateAccount(
         var db  = scope.ServiceProvider.GetRequiredService<CinemaContext>();
 
         // Skip if already exists
-        if (await uow.Users.GetByEmailAsync(email) != null)
+        if (await uow.UserStore.GetByEmailAsync(email) != null)
         {
             Console.WriteLine($"[{label}] already exists — skipped.");
             return;
@@ -87,7 +87,7 @@ static async Task CreateAccount(
             UserTypeId   = userType.Id,
         };
 
-        await uow.Users.CreateAsync(user);
+        await uow.UserStore.CreateAsync(user);
         await uow.SaveChangesAsync();
 
         Console.WriteLine($"[{label}] created successfully!");

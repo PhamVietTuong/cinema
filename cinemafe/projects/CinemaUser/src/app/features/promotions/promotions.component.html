@@ -1,0 +1,34 @@
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1 class="page-title">Khuyến Mãi</h1>
+    <p class="page-sub">Ưu đãi và mã giảm giá độc quyền dành cho thành viên Midnight Premium.</p>
+  </div>
+</div>
+
+<div class="promo-page">
+  <div *ngIf="loading" class="spinner-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+
+  <div *ngIf="!loading && !promos.length" class="empty">
+    <i class="fas fa-tags"></i>
+    <p>Hiện chưa có chương trình khuyến mãi nào.</p>
+  </div>
+
+  <div class="promo-grid">
+    <div class="promo-card" *ngFor="let p of promos">
+      <div class="promo-left">
+        <span class="promo-percent">-{{ p.percent }}%</span>
+        <span class="promo-label">GIẢM GIÁ</span>
+      </div>
+      <div class="promo-perf"></div>
+      <div class="promo-right">
+        <h3 class="promo-desc">{{ p.description || 'Ưu đãi đặc biệt' }}</h3>
+        <p class="promo-detail" *ngIf="p.maxDiscountAmount">Giảm tối đa {{ p.maxDiscountAmount | number:'1.0-0' }}đ</p>
+        <p class="promo-validity"><i class="fas fa-calendar-days"></i> HSD: {{ p.endDate | date:'dd/MM/yyyy' }}</p>
+        <div class="promo-code">
+          <span class="code-label">Mã</span>
+          <span class="code-val">{{ p.code }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

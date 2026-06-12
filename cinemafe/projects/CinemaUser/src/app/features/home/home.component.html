@@ -64,7 +64,7 @@
 <section class="section">
   <div class="section-header">
     <h2 class="section-title">Phim Đang Chiếu</h2>
-    <a routerLink="/movies" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
+    <a routerLink="/movies" [queryParams]="{ showing: 'now' }" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
   </div>
   <div *ngIf="loading$ | async" class="spinner-wrap">
     <mat-spinner diameter="36"></mat-spinner>
@@ -96,7 +96,7 @@
 <section class="section section--dark">
   <div class="section-header">
     <h2 class="section-title">Phim Sắp Chiếu</h2>
-    <a routerLink="/movies" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
+    <a routerLink="/movies" [queryParams]="{ showing: 'coming' }" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
   </div>
   <div class="movie-grid">
     <div class="movie-card coming-card" *ngFor="let movie of comingSoon$ | async">
@@ -136,9 +136,7 @@
     </div>
     <div class="membership-visual">
       <div class="glass-card-member">
-        <i class="fas fa-crown"></i>
-        <p>GOLD MEMBER</p>
-        <span>Midnight Premium</span>
+        <img class="member-card-img" src="assets/gold-member.png" alt="GOLD MEMBER — Midnight Premium">
       </div>
     </div>
   </div>

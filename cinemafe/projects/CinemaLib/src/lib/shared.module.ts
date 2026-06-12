@@ -25,6 +25,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
+import { SvgIconComponent } from '@ngneat/svg-icon';
 
 const SHARED = [
   CommonModule,
@@ -54,6 +55,7 @@ const SHARED = [
   MatSnackBarModule,
   MatTooltipModule,
   MatBadgeModule,
+  SvgIconComponent,
 ];
 
 @NgModule({

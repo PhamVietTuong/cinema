@@ -1,43 +1,46 @@
-<div class="page-container">
-  <div class="search-bar">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Tìm kiếm phim...</mat-label>
-      <mat-icon matPrefix>search</mat-icon>
-      <input matInput [formControl]="searchCtrl" placeholder="Tên phim, đạo diễn, diễn viên...">
-    </mat-form-field>
-  </div>
-
-  <div *ngIf="loading$ | async" class="spinner-wrap">
-    <mat-spinner></mat-spinner>
-  </div>
-
-  <ng-container *ngIf="pagedMovies$ | async as paged">
-    <div class="movie-grid">
-      <mat-card *ngFor="let movie of paged.items" class="movie-card" [routerLink]="['/movies', movie.id]">
-        <img mat-card-image [src]="movie.posterUrl || '/assets/no-poster.jpg'" [alt]="movie.title">
-        <mat-card-content>
-          <h3>{{ movie.title }}</h3>
-          <div class="genre-chips">
-            <mat-chip *ngFor="let g of movie.genres" size="small">{{ g }}</mat-chip>
-          </div>
-          <p class="movie-meta">
-            <span><i class="fas fa-clock"></i> {{ movie.duration }}min</span>
-            <span class="age-badge">{{ movie.ageRestrictionCode }}</span>
-            <span><i class="fas fa-star"></i> {{ movie.averageRating | number:'1.1-1' }}</span>
-          </p>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-flat-button color="primary" class="full-width" [routerLink]="['/movies', movie.id]">
-            <i class="fas fa-ticket"></i> Đặt Vé
-          </button>
-        </mat-card-actions>
-      </mat-card>
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1 class="page-title">{{ title }}</h1>
+    <div class="search-row" *ngIf="isPaged">
+      <span class="search-box">
+        <i class="fas fa-magnifying-glass"></i>
+        <input [formControl]="searchCtrl" placeholder="Tìm phim, đạo diễn, diễn viên...">
+      </span>
     </div>
-    <mat-paginator
-      [length]="paged.total"
-      [pageSize]="pageSize"
-      (page)="onPageChange($event)"
-      showFirstLastButtons>
-    </mat-paginator>
-  </ng-container>
+  </div>
+</div>
+
+<div class="movies-page">
+  <div *ngIf="loading$ | async" class="spinner-wrap">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div class="movie-grid">
+    <div class="movie-card" *ngFor="let movie of movies$ | async" [routerLink]="['/movies', movie.id]">
+      <div class="card-poster">
+        <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title">
+        <div class="card-hover-overlay">
+          <span class="btn-book-small"><i class="fas fa-ticket"></i> Đặt Vé</span>
+        </div>
+        <div class="card-rating" *ngIf="movie.averageRating"><i class="fas fa-star"></i> {{ movie.averageRating | number:'1.1-1' }}</div>
+        <span class="card-age" *ngIf="movie.ageRestrictionCode">{{ movie.ageRestrictionCode }}</span>
+      </div>
+      <div class="card-info">
+        <h3 class="card-title">{{ movie.title }}</h3>
+        <div class="card-genres">
+          <span class="chip-genre" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
+        </div>
+        <p class="card-duration"><i class="fas fa-clock"></i> {{ movie.duration }} phút</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="(movies$ | async)?.length === 0 && !(loading$ | async)" class="empty">
+    <i class="fas fa-film"></i>
+    <p>Không có phim nào.</p>
+  </div>
+
+  <div class="pager" *ngIf="isPaged && (pagedMovies$ | async) as paged">
+    <mat-paginator [length]="paged.total" [pageSize]="pageSize" (page)="onPageChange($event)" showFirstLastButtons></mat-paginator>
+  </div>
 </div>

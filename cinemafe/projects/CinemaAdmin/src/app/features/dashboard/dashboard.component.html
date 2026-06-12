@@ -9,32 +9,32 @@
   <!-- KPI cards -->
   <div class="kpi-grid">
     <div class="ad-card kpi">
-      <span class="kpi-icon i-violet"><mat-icon>movie</mat-icon></span>
-      <div class="kpi-body">
+      <div class="kpi-head">
         <span class="kpi-label">Tổng Số Phim</span>
-        <span class="kpi-value">{{ stats.movies }}</span>
+        <span class="kpi-icon i-violet"><mat-icon>movie</mat-icon></span>
       </div>
+      <span class="kpi-value">{{ stats.movies }}</span>
     </div>
     <div class="ad-card kpi">
-      <span class="kpi-icon i-blue"><mat-icon>theaters</mat-icon></span>
-      <div class="kpi-body">
+      <div class="kpi-head">
         <span class="kpi-label">Rạp Chiếu</span>
-        <span class="kpi-value">{{ stats.theaters }}</span>
+        <span class="kpi-icon i-blue"><mat-icon>theaters</mat-icon></span>
       </div>
+      <span class="kpi-value">{{ stats.theaters }}</span>
     </div>
     <div class="ad-card kpi">
-      <span class="kpi-icon i-orange"><mat-icon>receipt_long</mat-icon></span>
-      <div class="kpi-body">
+      <div class="kpi-head">
         <span class="kpi-label">Đơn Hàng Hôm Nay</span>
-        <span class="kpi-value">{{ stats.invoicesToday }}</span>
+        <span class="kpi-icon i-orange"><mat-icon>receipt_long</mat-icon></span>
       </div>
+      <span class="kpi-value">{{ stats.invoicesToday }}</span>
     </div>
     <div class="ad-card kpi">
-      <span class="kpi-icon i-green"><mat-icon>monetization_on</mat-icon></span>
-      <div class="kpi-body">
+      <div class="kpi-head">
         <span class="kpi-label">Doanh Thu Hôm Nay</span>
-        <span class="kpi-value">{{ stats.revenueToday | currency:'VND':'symbol':'1.0-0' }}</span>
+        <span class="kpi-icon i-green"><mat-icon>monetization_on</mat-icon></span>
       </div>
+      <span class="kpi-value">{{ stats.revenueToday | currency:'VND':'symbol':'1.0-0' }}</span>
     </div>
   </div>
 
@@ -49,13 +49,22 @@
   <!-- Two column -->
   <div class="two-col">
     <div class="ad-card">
-      <h3 class="ad-card-title">Doanh Thu 7 Ngày</h3>
-      <div class="chart">
+      <div class="card-head">
+        <h3 class="ad-card-title">Doanh Thu {{ revenueDays }} Ngày</h3>
+        <select class="ad-input period-select" [ngModel]="revenueDays" (ngModelChange)="onPeriodChange($event)">
+          <option [ngValue]="7">Tuần này</option>
+          <option [ngValue]="30">30 ngày</option>
+        </select>
+      </div>
+      <div class="chart" *ngIf="revenueTrend.length; else noRevenue">
         <div class="bar-col" *ngFor="let d of revenueTrend">
           <div class="bar" [style.height.%]="d.value"></div>
           <span class="bar-day">{{ d.day }}</span>
         </div>
       </div>
+      <ng-template #noRevenue>
+        <div class="ad-empty"><mat-icon>bar_chart</mat-icon><p>Chưa có dữ liệu doanh thu.</p></div>
+      </ng-template>
     </div>
 
     <div class="ad-card">
@@ -85,6 +94,7 @@
   <div class="ad-card ad-card--pad-0 invoices">
     <div class="card-head">
       <h3 class="ad-card-title">Đơn Hàng Gần Đây</h3>
+      <a class="see-all" routerLink="/invoices">Xem tất cả</a>
     </div>
     <div class="ad-table-wrap">
       <table class="ad-table">

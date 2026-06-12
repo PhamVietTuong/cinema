@@ -10,9 +10,8 @@
         <input class="ad-input" [(ngModel)]="search" placeholder="Tìm người dùng...">
       </span>
       <select class="ad-select role-filter" [(ngModel)]="filterRole">
-        <option value="">Tất cả vai trò</option>
-        <option value="Admin">Admin</option>
-        <option value="Khách Hàng">Khách Hàng</option>
+        <option [ngValue]="''">Tất cả vai trò</option>
+        <option *ngFor="let r of roles" [ngValue]="r">{{ r }}</option>
       </select>
       <button class="ad-btn ad-btn--primary"><mat-icon>person_add</mat-icon> Thêm Người Dùng</button>
     </div>
@@ -51,7 +50,7 @@
             </td>
             <td>{{ u.email }}</td>
             <td>{{ u.phone }}</td>
-            <td><span class="ad-pill no-dot" [class.ad-pill--violet]="u.role === 'Admin'" [class.ad-pill--neutral]="u.role !== 'Admin'">{{ u.role }}</span></td>
+            <td><span class="ad-pill no-dot" [class.ad-pill--violet]="u.role === UserRole.Admin" [class.ad-pill--neutral]="u.role !== UserRole.Admin">{{ u.role }}</span></td>
             <td><span class="ad-pill" [class.ad-pill--success]="u.active" [class.ad-pill--danger]="!u.active">{{ u.active ? 'Hoạt Động' : 'Khóa' }}</span></td>
             <td>{{ u.joined }}</td>
             <td class="ad-td-actions">

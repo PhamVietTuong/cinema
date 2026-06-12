@@ -23,8 +23,8 @@ public class MovieServiceTests
     {
         var movieId = Guid.NewGuid();
         var movies  = new List<Movie> { new() { Id = movieId, Title = "Movie A" } };
-        _uowMock.Setup(u => u.Movies.GetPagedAsync(null, (Guid?)null, 1, 12)).ReturnsAsync((movies, 1));
-        _uowMock.Setup(u => u.Movies.GetAverageRatingAsync(movieId)).ReturnsAsync(4.5);
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(null, (Guid?)null, 1, 12)).ReturnsAsync((movies, 1));
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(4.5);
 
         var result = await _sut.GetMoviesAsync(new PagingSearchDTO { PageIndex = 1, PageSize = 12 });
 
@@ -43,8 +43,8 @@ public class MovieServiceTests
             Evaluations = new List<Evaluation>(),
             Comments    = new List<Comment>()
         };
-        _uowMock.Setup(u => u.Movies.GetDetailAsync(movieId)).ReturnsAsync(movie);
-        _uowMock.Setup(u => u.Movies.GetAverageRatingAsync(movieId)).ReturnsAsync(4.0);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(4.0);
 
         var result = await _sut.GetDetailAsync(movieId);
 
@@ -57,7 +57,7 @@ public class MovieServiceTests
     public async Task GetDetailAsync_NotFound_Throws()
     {
         var missingId = Guid.NewGuid();
-        _uowMock.Setup(u => u.Movies.GetDetailAsync(missingId)).ReturnsAsync((Movie?)null);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(missingId)).ReturnsAsync((Movie?)null);
 
         await _sut.Invoking(s => s.GetDetailAsync(missingId))
             .Should().ThrowAsync<KeyNotFoundException>();
@@ -67,7 +67,7 @@ public class MovieServiceTests
     public async Task GetNowShowingAsync_ReturnsMappedList()
     {
         var movies = new List<Movie> { new() { Id = Guid.NewGuid(), Title = "Now Showing" } };
-        _uowMock.Setup(u => u.Movies.GetNowShowingAsync()).ReturnsAsync(movies);
+        _uowMock.Setup(u => u.MovieStore.GetNowShowingAsync()).ReturnsAsync(movies);
 
         var result = await _sut.GetNowShowingAsync(new PagingSearchDTO());
 
@@ -79,21 +79,21 @@ public class MovieServiceTests
     {
         var movieId = Guid.NewGuid();
         var movie   = new Movie { Id = movieId, Title = "To Delete", IsActive = true };
-        _uowMock.Setup(u => u.Movies.GetByIdAsync(movieId)).ReturnsAsync(movie);
-        _uowMock.Setup(u => u.Movies.UpdateAsync(movie)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetByIdAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.UpdateAsync(movie)).ReturnsAsync(movie);
         _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         await _sut.DeleteAsync(movieId);
 
         movie.IsActive.Should().BeFalse();
-        _uowMock.Verify(u => u.Movies.UpdateAsync(movie), Times.Once);
+        _uowMock.Verify(u => u.MovieStore.UpdateAsync(movie), Times.Once);
     }
 
     [Fact]
     public async Task DeleteAsync_NotFound_Throws()
     {
         var missingId = Guid.NewGuid();
-        _uowMock.Setup(u => u.Movies.GetByIdAsync(missingId)).ReturnsAsync((Movie?)null);
+        _uowMock.Setup(u => u.MovieStore.GetByIdAsync(missingId)).ReturnsAsync((Movie?)null);
 
         await _sut.Invoking(s => s.DeleteAsync(missingId))
             .Should().ThrowAsync<KeyNotFoundException>();

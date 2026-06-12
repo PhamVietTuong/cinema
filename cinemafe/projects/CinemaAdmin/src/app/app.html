@@ -23,16 +23,65 @@
         <a routerLink="/users" routerLinkActive="is-active" class="nav-item">
           <mat-icon>group</mat-icon><span>Người Dùng</span>
         </a>
+
+        <span class="nav-section">Danh Mục</span>
+        <a routerLink="/movie-types" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>category</mat-icon><span>Thể Loại Phim</span>
+        </a>
+        <a routerLink="/age-restrictions" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>shield</mat-icon><span>Giới Hạn Độ Tuổi</span>
+        </a>
+        <a routerLink="/seat-types" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>event_seat</mat-icon><span>Loại Ghế</span>
+        </a>
+        <a routerLink="/ticket-types" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>confirmation_number</mat-icon><span>Loại Vé</span>
+        </a>
+        <a routerLink="/discount-types" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>sell</mat-icon><span>Loại Giảm Giá</span>
+        </a>
+        <a routerLink="/memberships" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>card_membership</mat-icon><span>Hạng Thành Viên</span>
+        </a>
+        <a routerLink="/user-types" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>badge</mat-icon><span>Loại Người Dùng</span>
+        </a>
+        <a routerLink="/holidays" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>celebration</mat-icon><span>Ngày Lễ</span>
+        </a>
+        <a routerLink="/news" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>article</mat-icon><span>Tin Tức</span>
+        </a>
+
+        <span class="nav-section">Vận Hành</span>
+        <a routerLink="/rooms" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>meeting_room</mat-icon><span>Phòng Chiếu</span>
+        </a>
+        <a routerLink="/discounts" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>local_offer</mat-icon><span>Mã Giảm Giá</span>
+        </a>
+        <a routerLink="/food-and-drinks" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>fastfood</mat-icon><span>Đồ Ăn & Nước</span>
+        </a>
+        <a routerLink="/invoices" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>receipt_long</mat-icon><span>Hóa Đơn</span>
+        </a>
+        <a routerLink="/seat-ticket-pricing" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>price_change</mat-icon><span>Bảng Giá Ghế/Vé</span>
+        </a>
+        <a routerLink="/movie-type-details" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>theaters</mat-icon><span>Gán Thể Loại Phim</span>
+        </a>
       </nav>
 
       <div class="sidebar-footer">
-        <div class="profile" *ngIf="user$ | async as user">
+        <a class="profile" routerLink="/profile" *ngIf="user$ | async as user" title="Hồ sơ của tôi">
           <span class="ad-avatar">{{ (user.name || 'QT') | slice:0:1 }}</span>
           <div class="profile-meta">
             <span class="profile-name">{{ user.name || 'Quản Trị Viên' }}</span>
             <span class="profile-mail">{{ user.email || 'admin@cinema.vn' }}</span>
           </div>
-        </div>
+        </a>
         <button type="button" class="nav-item logout" (click)="doLogout()">
           <mat-icon>logout</mat-icon><span>Đăng Xuất</span>
         </button>
