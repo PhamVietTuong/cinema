@@ -152,22 +152,18 @@ public class ShowTimeManager(IApplicationUnitOfWork uow)
     public override async Task<DefaultSearchResults<ShowTimeDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
-        var all = (await Uow.ShowTimeStore.GetAllWithRoomsAsync()).ToList();
-
-        var movieId = search.Filters.GetGuid("movieId");
-        if (movieId.HasValue) { all = all.Where(s => s.MovieId == movieId.Value).ToList(); }
-
-        var roomId = search.Filters.GetGuid("roomId");
-        if (roomId.HasValue) { all = all.Where(s => s.ShowTimeRooms.Any(sr => sr.RoomId == roomId.Value)).ToList(); }
-
         var page = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize > 0 ? search.PageSize : 20;
-        var total = all.Count;
-        var paged = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToShowTimeDTO).ToList();
+
+        var (items, total) = await Uow.ShowTimeStore.SearchAsync(
+            search.Filters.GetGuid("movieId"),
+            search.Filters.GetGuid("roomId"),
+            search.Filters.GetBool("isActive"),
+            page, pageSize);
 
         return new DefaultSearchResults<ShowTimeDTO>
         {
-            Results = paged,
+            Results = items.Select(ToShowTimeDTO).ToList(),
             TotalCount = total,
             CountPerPage = pageSize,
             Page = page
@@ -184,19 +180,41 @@ public class ShowTimeManager(IApplicationUnitOfWork uow)
     public override async Task<ShowTimeDTO> CreateAsync(CreateShowTimeRequest request)
     {
         var entity = request.ToNewEntity<CreateShowTimeRequest, ShowTime>();
+        if (request.RoomId != Guid.Empty)
+        {
+            entity.ShowTimeRooms.Add(new ShowTimeRoom { RoomId = request.RoomId, BasePrice = request.BasePrice });
+        }
+        // Single SaveChanges inserts the showtime and its room together (atomic).
         await Uow.ShowTimeStore.CreateAsync(entity);
-        await Uow.ShowTimeStore.SetRoomAsync(entity.Id, request.RoomId, request.BasePrice);
         return ToShowTimeDTO(await Uow.ShowTimeStore.GetByIdWithRoomsAsync(entity.Id) ?? entity);
     }
 
     public override async Task<ShowTimeDTO> UpdateAsync(UpdateShowTimeRequest request)
     {
-        var entity = await Uow.ShowTimeStore.GetByIdAsync(request.Id)
+        var entity = await Uow.ShowTimeStore.GetByIdWithRoomsAsync(request.Id)
                      ?? throw new KeyNotFoundException($"ShowTime {request.Id} not found.");
         entity.PatchEntity<ShowTime, UpdateShowTimeRequest>(request);
-        await Uow.ShowTimeStore.UpdateAsync(entity);
-        await Uow.ShowTimeStore.SetRoomAsync(request.Id, request.RoomId, request.BasePrice);
+        entity.LastUpdatedTime = DateTime.UtcNow;
+        ApplyRoom(entity, request.RoomId, request.BasePrice);
+        // The showtime patch and room change are saved in one transaction on the tracked graph.
+        await Uow.SaveChangesAsync();
         return ToShowTimeDTO(await Uow.ShowTimeStore.GetByIdWithRoomsAsync(request.Id) ?? entity);
+    }
+
+    /// <summary>
+    /// Reconciles a showtime's single room assignment. No-ops when nothing changed so that
+    /// editing an already-booked showtime (whose room is referenced by invoices) doesn't
+    /// attempt a restricted delete.
+    /// </summary>
+    private static void ApplyRoom(ShowTime entity, Guid roomId, int basePrice)
+    {
+        if (roomId == Guid.Empty) { return; }
+
+        var current = entity.ShowTimeRooms.FirstOrDefault();
+        if (current != null && current.RoomId == roomId && current.BasePrice == basePrice) { return; }
+
+        entity.ShowTimeRooms.Clear();
+        entity.ShowTimeRooms.Add(new ShowTimeRoom { ShowTimeId = entity.Id, RoomId = roomId, BasePrice = basePrice });
     }
 
     private static ShowTimeDTO ToShowTimeDTO(ShowTime s)

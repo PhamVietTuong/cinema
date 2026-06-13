@@ -5310,6 +5310,19 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "roomName": {
+            "type": "string",
+            "nullable": true
+          },
+          "basePrice": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -5337,6 +5350,14 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "basePrice": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -5368,6 +5389,14 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "basePrice": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

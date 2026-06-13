@@ -121,6 +121,20 @@
       </div>
     </div>
 
+    <div class="st-row-2">
+      <div class="ad-field">
+        <label class="ad-label">Phòng Chiếu</label>
+        <select class="ad-input" formControlName="roomId">
+          <option value="">— Chọn phòng —</option>
+          <option *ngFor="let r of rooms" [ngValue]="r.id">{{ roomLabel(r) }}</option>
+        </select>
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">Giá Vé Cơ Bản (đ)</label>
+        <input class="ad-input" type="number" min="0" step="1000" formControlName="basePrice">
+      </div>
+    </div>
+
     <label class="st-toggle">
       <input type="checkbox" formControlName="isActive">
       <span class="st-toggle-track"></span>

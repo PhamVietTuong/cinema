@@ -46,6 +46,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
 
   // ── Lookups ─────────────────────────────────────────────────────────────────
   movies: CinemaServiceAgent.MovieDTO[] = [];
+  rooms: CinemaServiceAgent.RoomDTO[] = [];
+  theaters: CinemaServiceAgent.TheaterDTO[] = [];
   readonly projectionForms = [
     { v: CinemaServiceAgent.ProjectionForm.TwoD, label: '2D' },
     { v: CinemaServiceAgent.ProjectionForm.ThreeD, label: '3D' },
@@ -74,14 +76,20 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
     end: ['', Validators.required],
     projectionForm: [CinemaServiceAgent.ProjectionForm.TwoD, Validators.required],
     showTimeType: [CinemaServiceAgent.ShowTimeType.Normal, Validators.required],
+    roomId: ['', Validators.required],
+    basePrice: [75000, [Validators.required, Validators.min(0)]],
     isActive: [true],
   });
 
   ngOnInit(): void {
     this.weekStart = this._mondayOf(new Date());
-    this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 }))
-      .pipe(takeUntil(this._destroy$))
+    const wide = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 });
+    this._svc.getMovies(wide).pipe(takeUntil(this._destroy$))
       .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });
+    this._svc.getTheaters(wide).pipe(takeUntil(this._destroy$))
+      .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
+    this._svc.getRooms(wide).pipe(takeUntil(this._destroy$))
+      .subscribe(r => { this.rooms = r.results ?? []; this._cdr.markForCheck(); });
     this.load();
   }
 
@@ -166,6 +174,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       end: '',
       projectionForm: CinemaServiceAgent.ProjectionForm.TwoD,
       showTimeType: CinemaServiceAgent.ShowTimeType.Normal,
+      roomId: '',
+      basePrice: 75000,
       isActive: true,
     });
     this.showForm = true;
@@ -183,6 +193,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       end: this._hm(end),
       projectionForm: st.projectionForm ?? CinemaServiceAgent.ProjectionForm.TwoD,
       showTimeType: st.showTimeType ?? CinemaServiceAgent.ShowTimeType.Normal,
+      roomId: st.roomId ?? '',
+      basePrice: st.basePrice ?? 75000,
       isActive: st.isActive ?? true,
     });
     this.showForm = true;
@@ -197,6 +209,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       endTime: `${v.date}T${v.end}`,
       projectionForm: v.projectionForm,
       showTimeType: v.showTimeType,
+      roomId: v.roomId,
+      basePrice: Number(v.basePrice),
       isActive: v.isActive,
     };
     const obs = this.editingId
@@ -221,6 +235,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   movieTitle(id?: string): string { return this.movies.find(m => m.id === id)?.title ?? '—'; }
   moviePoster(id?: string): string | undefined { return this.movies.find(m => m.id === id)?.posterUrl; }
   formLabel(v?: CinemaServiceAgent.ProjectionForm): string { return this.projectionForms.find(x => x.v === v)?.label ?? '—'; }
+  theaterName(id?: string): string { return this.theaters.find(t => t.id === id)?.name ?? '—'; }
+  roomLabel(r: CinemaServiceAgent.RoomDTO): string { return `${this.theaterName(r.theaterId)} · ${r.name}`; }
 
   // ── Date helpers ──────────────────────────────────────────────────────────────
   private _pad(n: number): string { return `${n}`.padStart(2, '0'); }

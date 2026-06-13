@@ -16,4 +16,7 @@ internal static class FilterExtensions
 
     public static TEnum? GetEnum<TEnum>(this Dictionary<string, string>? filters, string key) where TEnum : struct, Enum
         => filters != null && filters.TryGetValue(key, out var v) && Enum.TryParse<TEnum>(v, out var e) ? e : null;
+
+    public static bool? GetBool(this Dictionary<string, string>? filters, string key)
+        => filters != null && filters.TryGetValue(key, out var v) && bool.TryParse(v, out var b) ? b : null;
 }

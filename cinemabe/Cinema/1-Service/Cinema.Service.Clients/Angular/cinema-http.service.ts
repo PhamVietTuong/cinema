@@ -8864,6 +8864,9 @@ export class ShowTimeDTO implements IShowTimeDTO {
     projectionForm?: ProjectionForm;
     showTimeType?: ShowTimeType;
     isActive?: boolean;
+    roomId?: string | undefined;
+    roomName?: string | undefined;
+    basePrice?: number;
 
     constructor(data?: IShowTimeDTO) {
         if (data) {
@@ -8883,6 +8886,9 @@ export class ShowTimeDTO implements IShowTimeDTO {
             this.projectionForm = _data["projectionForm"];
             this.showTimeType = _data["showTimeType"];
             this.isActive = _data["isActive"];
+            this.roomId = _data["roomId"];
+            this.roomName = _data["roomName"];
+            this.basePrice = _data["basePrice"];
         }
     }
 
@@ -8902,6 +8908,9 @@ export class ShowTimeDTO implements IShowTimeDTO {
         data["projectionForm"] = this.projectionForm;
         data["showTimeType"] = this.showTimeType;
         data["isActive"] = this.isActive;
+        data["roomId"] = this.roomId;
+        data["roomName"] = this.roomName;
+        data["basePrice"] = this.basePrice;
         return data;
     }
 }
@@ -8914,6 +8923,9 @@ export interface IShowTimeDTO {
     projectionForm?: ProjectionForm;
     showTimeType?: ShowTimeType;
     isActive?: boolean;
+    roomId?: string | undefined;
+    roomName?: string | undefined;
+    basePrice?: number;
 }
 
 export class CreateShowTimeRequest implements ICreateShowTimeRequest {
@@ -8923,6 +8935,8 @@ export class CreateShowTimeRequest implements ICreateShowTimeRequest {
     projectionForm?: ProjectionForm;
     showTimeType?: ShowTimeType;
     isActive?: boolean;
+    roomId?: string;
+    basePrice?: number;
 
     constructor(data?: ICreateShowTimeRequest) {
         if (data) {
@@ -8941,6 +8955,8 @@ export class CreateShowTimeRequest implements ICreateShowTimeRequest {
             this.projectionForm = _data["projectionForm"];
             this.showTimeType = _data["showTimeType"];
             this.isActive = _data["isActive"];
+            this.roomId = _data["roomId"];
+            this.basePrice = _data["basePrice"];
         }
     }
 
@@ -8959,6 +8975,8 @@ export class CreateShowTimeRequest implements ICreateShowTimeRequest {
         data["projectionForm"] = this.projectionForm;
         data["showTimeType"] = this.showTimeType;
         data["isActive"] = this.isActive;
+        data["roomId"] = this.roomId;
+        data["basePrice"] = this.basePrice;
         return data;
     }
 }
@@ -8970,6 +8988,8 @@ export interface ICreateShowTimeRequest {
     projectionForm?: ProjectionForm;
     showTimeType?: ShowTimeType;
     isActive?: boolean;
+    roomId?: string;
+    basePrice?: number;
 }
 
 export class UpdateShowTimeRequest implements IUpdateShowTimeRequest {
@@ -8980,6 +9000,8 @@ export class UpdateShowTimeRequest implements IUpdateShowTimeRequest {
     projectionForm?: ProjectionForm;
     showTimeType?: ShowTimeType;
     isActive?: boolean;
+    roomId?: string;
+    basePrice?: number;
 
     constructor(data?: IUpdateShowTimeRequest) {
         if (data) {
@@ -8999,6 +9021,8 @@ export class UpdateShowTimeRequest implements IUpdateShowTimeRequest {
             this.projectionForm = _data["projectionForm"];
             this.showTimeType = _data["showTimeType"];
             this.isActive = _data["isActive"];
+            this.roomId = _data["roomId"];
+            this.basePrice = _data["basePrice"];
         }
     }
 
@@ -9018,6 +9042,8 @@ export class UpdateShowTimeRequest implements IUpdateShowTimeRequest {
         data["projectionForm"] = this.projectionForm;
         data["showTimeType"] = this.showTimeType;
         data["isActive"] = this.isActive;
+        data["roomId"] = this.roomId;
+        data["basePrice"] = this.basePrice;
         return data;
     }
 }
@@ -9030,6 +9056,8 @@ export interface IUpdateShowTimeRequest {
     projectionForm?: ProjectionForm;
     showTimeType?: ShowTimeType;
     isActive?: boolean;
+    roomId?: string;
+    basePrice?: number;
 }
 
 export abstract class BaseSearchResultsOfMovieTypeDetailDTO implements IBaseSearchResultsOfMovieTypeDetailDTO {

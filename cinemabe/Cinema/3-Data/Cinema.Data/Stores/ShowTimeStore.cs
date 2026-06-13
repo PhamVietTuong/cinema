@@ -26,32 +26,29 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
             .Include(sr => sr.Room).ThenInclude(r => r.Theater)
             .FirstOrDefaultAsync(sr => sr.ShowTimeId == showTimeId && sr.RoomId == roomId);
 
-    public async Task<IEnumerable<ShowTime>> GetAllWithRoomsAsync()
-        => await DbSet
+    public async Task<(IReadOnlyList<ShowTime> Items, int Total)> SearchAsync(
+        Guid? movieId, Guid? roomId, bool? isActive, int page, int pageSize)
+    {
+        var query = DbSet
             .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room)
+            .AsQueryable();
+
+        if (movieId.HasValue) { query = query.Where(s => s.MovieId == movieId.Value); }
+        if (roomId.HasValue) { query = query.Where(s => s.ShowTimeRooms.Any(sr => sr.RoomId == roomId.Value)); }
+        if (isActive.HasValue) { query = query.Where(s => s.IsActive == isActive.Value); }
+
+        var total = await query.CountAsync();
+        var items = await query
             .OrderBy(s => s.StartTime)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, total);
+    }
 
     public async Task<ShowTime?> GetByIdWithRoomsAsync(Guid id)
         => await DbSet
             .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room)
             .FirstOrDefaultAsync(s => s.Id == id);
-
-    public async Task SetRoomAsync(Guid showTimeId, Guid roomId, int basePrice)
-    {
-        var existing = await Context.ShowTimeRoom
-            .Where(sr => sr.ShowTimeId == showTimeId)
-            .ToListAsync();
-        if (existing.Count > 0)
-        {
-            Context.ShowTimeRoom.RemoveRange(existing);
-        }
-        await Context.ShowTimeRoom.AddAsync(new ShowTimeRoom
-        {
-            ShowTimeId = showTimeId,
-            RoomId = roomId,
-            BasePrice = basePrice,
-        });
-        await Context.SaveChangesAsync();
-    }
 }
