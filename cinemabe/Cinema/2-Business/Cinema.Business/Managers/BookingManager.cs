@@ -65,7 +65,7 @@ public class BookingManager : IBookingManager
 
             var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
 
-            decimal ticketTotal = 0;
+            double ticketTotal = 0;
             var tickets    = new List<InvoiceTicket>();
             var ticketItems = new List<TicketItemDTO>();
 
@@ -77,7 +77,7 @@ public class BookingManager : IBookingManager
                 var seat = await _uow.SeatStore.GetByIdAsync(seatItem.SeatId)
                            ?? throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
 
-                var price = (decimal)showTimeRoom.BasePrice;
+                var price = (double)showTimeRoom.BasePrice;
                 ticketTotal += price;
 
                 tickets.Add(new InvoiceTicket
@@ -96,7 +96,7 @@ public class BookingManager : IBookingManager
                 });
             }
 
-            decimal foodTotal = 0;
+            double foodTotal = 0;
             var foods = new List<InvoiceFoodAndDrink>();
             foreach (var f in request.Foods)
             {

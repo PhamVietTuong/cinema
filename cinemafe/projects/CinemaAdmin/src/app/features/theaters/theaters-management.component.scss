@@ -7,12 +7,6 @@
 
 .ad-table .addr { color: var(--ad-muted); max-width: 320px; }
 
-// Form image preview
-.img-preview {
-  margin-top: 10px;
-  img { width: 160px; height: 90px; object-fit: cover; border-radius: var(--ad-r-sm); border: 1px solid var(--ad-glass-border); display: block; }
-}
-
 // Table thumbnail
 .theater-thumb {
   display: inline-flex;

@@ -6,7 +6,7 @@ public class InvoiceTicket
     public Guid RoomId { get; set; }
     public Guid SeatId { get; set; }
     public Guid TicketTypeId { get; set; }
-    public decimal Price { get; set; }
+    public double Price { get; set; }
     public string? QrCode { get; set; }
     public bool IsUsed { get; set; } = false;
     public Invoice Invoice { get; set; } = null!;

@@ -6,9 +6,9 @@ public class InvoiceDTO
     public string Code { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
-    public decimal TotalAmount { get; set; }
-    public decimal DiscountAmount { get; set; }
-    public decimal FinalAmount { get; set; }
+    public double TotalAmount { get; set; }
+    public double DiscountAmount { get; set; }
+    public double FinalAmount { get; set; }
     public InvoiceStatus Status { get; set; }
     public string? PaymentMethod { get; set; }
     public DateTime? PaidAt { get; set; }
@@ -25,7 +25,7 @@ public class InvoiceTicketDTO
     public DateTime ShowTime { get; set; }
     public string SeatLabel { get; set; } = string.Empty;
     public string TicketType { get; set; } = string.Empty;
-    public decimal Price { get; set; }
+    public double Price { get; set; }
     public string? QrCode { get; set; }
     public bool IsUsed { get; set; }
 }
@@ -34,6 +34,6 @@ public class InvoiceFoodDTO
 {
     public string FoodName { get; set; } = string.Empty;
     public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    public decimal TotalPrice { get; set; }
+    public double UnitPrice { get; set; }
+    public double TotalPrice { get; set; }
 }

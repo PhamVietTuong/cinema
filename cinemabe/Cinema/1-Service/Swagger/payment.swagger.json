@@ -428,7 +428,7 @@
           },
           "price": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "isLocked": {
             "type": "boolean"
@@ -503,15 +503,15 @@
           },
           "totalAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "discountAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "finalAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "status": {
             "$ref": "#/components/schemas/InvoiceStatus"
@@ -559,7 +559,7 @@
           },
           "price": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "qrCode": {
             "type": "string",
@@ -735,15 +735,15 @@
           },
           "totalAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "discountAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "finalAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "status": {
             "$ref": "#/components/schemas/InvoiceStatus"
@@ -800,7 +800,7 @@
           },
           "price": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "qrCode": {
             "type": "string",
@@ -824,11 +824,11 @@
           },
           "unitPrice": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "totalPrice": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -842,7 +842,7 @@
           },
           "total": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       }

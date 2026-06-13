@@ -55,7 +55,7 @@ public class InvoiceManager : IInvoiceManager
         return ToInvoiceDTO(invoice);
     }
 
-    public async Task<decimal> GetTotalRevenueAsync(DateTime from, DateTime to)
+    public async Task<double> GetTotalRevenueAsync(DateTime from, DateTime to)
         => await _uow.InvoiceStore.GetTotalRevenueAsync(from, to);
 
     public async Task<List<RevenueByDayDTO>> GetRevenueByDayAsync(DateTime from, DateTime to)
@@ -63,7 +63,7 @@ public class InvoiceManager : IInvoiceManager
         var map = await _uow.InvoiceStore.GetRevenueByDayAsync(from, to);
         var result = new List<RevenueByDayDTO>();
         for (var day = from.Date; day <= to.Date; day = day.AddDays(1))
-            result.Add(new RevenueByDayDTO { Date = day, Total = map.TryGetValue(day, out var t) ? t : 0m });
+            result.Add(new RevenueByDayDTO { Date = day, Total = map.TryGetValue(day, out var t) ? t : 0 });
         return result;
     }
 

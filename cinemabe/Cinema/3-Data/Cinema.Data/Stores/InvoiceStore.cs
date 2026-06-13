@@ -52,12 +52,12 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         return (items, total);
     }
 
-    public async Task<decimal> GetTotalRevenueAsync(DateTime from, DateTime to)
+    public async Task<double> GetTotalRevenueAsync(DateTime from, DateTime to)
         => await DbSet
             .Where(i => i.Status == InvoiceStatus.Paid && i.PaidAt >= from && i.PaidAt <= to)
             .SumAsync(i => i.FinalAmount);
 
-    public async Task<IReadOnlyDictionary<DateTime, decimal>> GetRevenueByDayAsync(DateTime from, DateTime to)
+    public async Task<IReadOnlyDictionary<DateTime, double>> GetRevenueByDayAsync(DateTime from, DateTime to)
     {
         var rows = await DbSet
             .Where(i => i.Status == InvoiceStatus.Paid && i.PaidAt != null && i.PaidAt >= from && i.PaidAt <= to)

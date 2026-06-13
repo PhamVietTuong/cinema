@@ -7,8 +7,8 @@ public class DiscountDTO
     public Guid Id { get; set; }
     public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public decimal Percent { get; set; }
-    public decimal? MaxDiscountAmount { get; set; }
+    public double Percent { get; set; }
+    public double? MaxDiscountAmount { get; set; }
     public Guid DiscountTypeId { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
@@ -21,8 +21,8 @@ public class CreateDiscountRequest
 {
     public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public decimal Percent { get; set; }
-    public decimal? MaxDiscountAmount { get; set; }
+    public double Percent { get; set; }
+    public double? MaxDiscountAmount { get; set; }
     public Guid DiscountTypeId { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
@@ -35,8 +35,8 @@ public class UpdateDiscountRequest : IHasId
     public Guid Id { get; set; }
     public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public decimal Percent { get; set; }
-    public decimal? MaxDiscountAmount { get; set; }
+    public double Percent { get; set; }
+    public double? MaxDiscountAmount { get; set; }
     public Guid DiscountTypeId { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }

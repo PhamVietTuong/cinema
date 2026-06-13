@@ -38,8 +38,16 @@
         <input class="ad-input" formControlName="email" placeholder="rap@cinema.vn">
       </div>
       <div class="ad-field full-span">
-        <label class="ad-label">Ảnh Rạp (URL)</label>
-        <input class="ad-input" formControlName="imageUrl" placeholder="https://...">
+        <label class="ad-label">Ảnh Rạp</label>
+        <input class="ad-input" formControlName="imageUrl" placeholder="Dán URL hoặc tải ảnh lên">
+        <div class="img-upload-row">
+          <label class="ad-btn ad-btn--ghost">
+            <mat-icon>upload</mat-icon> Tải Ảnh Lên
+            <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
+          </label>
+          <span class="img-upload-status" *ngIf="uploading">Đang tải...</span>
+          <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
+        </div>
         <div class="img-preview" *ngIf="form.value.imageUrl">
           <img [src]="form.value.imageUrl" alt="">
         </div>

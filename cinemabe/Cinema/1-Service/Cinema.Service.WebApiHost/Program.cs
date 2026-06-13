@@ -7,6 +7,7 @@ using Cinema.Foundation.Logging;
 using Cinema.Service.WebApiHost.Hubs;
 using Cinema.Service.WebApiHost.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using NSwag.AspNetCore;
 
@@ -135,6 +136,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFrontend");
+// Serve uploaded images at /uploads/* from the on-disk uploads folder.
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "uploads");
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 app.UseAuthentication();

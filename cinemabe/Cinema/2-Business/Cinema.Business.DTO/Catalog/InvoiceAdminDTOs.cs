@@ -9,9 +9,9 @@ public class InvoiceAdminDTO
     public Guid UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
-    public decimal TotalAmount { get; set; }
-    public decimal DiscountAmount { get; set; }
-    public decimal FinalAmount { get; set; }
+    public double TotalAmount { get; set; }
+    public double DiscountAmount { get; set; }
+    public double FinalAmount { get; set; }
     public InvoiceStatus Status { get; set; }
     public string? PaymentMethod { get; set; }
     public DateTime? PaidAt { get; set; }

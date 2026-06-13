@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Directive, OnInit, OnDestroy, inject } from '@angula
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
+import { ImageUploadService } from '../../shared/image-upload.service';
 
 /** Shape of the paged result returned by every catalog list endpoint. */
 export interface CatalogPage<T> {
@@ -19,6 +20,10 @@ export interface CatalogPage<T> {
 export abstract class CatalogCrudBase<T extends { id?: string }> implements OnInit, OnDestroy {
   protected _fb = inject(FormBuilder);
   protected readonly _cdr = inject(ChangeDetectorRef);
+  private readonly _upload = inject(ImageUploadService);
+
+  uploading = false;
+  uploadError = '';
 
   items: T[] = [];
   totalCount = 0;
@@ -150,6 +155,29 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
     this.showForm = false;
     this.editingId = null;
     this.form.reset();
+    this.uploadError = '';
+  }
+
+  /** Uploads the picked image and writes its URL into the given form control. */
+  onPickImage(event: Event, controlName: string): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) {
+      return;
+    }
+    this.uploading = true;
+    this.uploadError = '';
+    this._upload.upload(file).subscribe({
+      next: url => {
+        this.form.patchValue({ [controlName]: url });
+        this.uploading = false;
+        this._cdr.markForCheck();
+      },
+      error: () => {
+        this.uploadError = 'Tải ảnh thất bại.';
+        this.uploading = false;
+        this._cdr.markForCheck();
+      },
+    });
   }
 
   /** Drops empty filter values so only active filters reach the server. */

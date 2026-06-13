@@ -5,9 +5,9 @@ public class Invoice : BaseEntity
     public new Guid Id { get; set; } = Guid.NewGuid();
     public string Code { get; set; } = string.Empty;
     public Guid UserId { get; set; }
-    public decimal TotalAmount { get; set; }
-    public decimal DiscountAmount { get; set; } = 0;
-    public decimal FinalAmount { get; set; }
+    public double TotalAmount { get; set; }
+    public double DiscountAmount { get; set; } = 0;
+    public double FinalAmount { get; set; }
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Pending;
     public string? PaymentMethod { get; set; }
     public string? PaymentReference { get; set; }

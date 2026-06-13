@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { ImageUploadService } from '../../shared/image-upload.service';
 
 @Component({
   selector: 'app-theaters-management',
@@ -14,12 +15,15 @@ export class TheatersManagementComponent implements OnInit {
   search = '';
   showForm = false;
   editingId: string | null = null;
+  uploading = false;
+  uploadError = '';
   form: FormGroup;
 
   constructor(
     private _cinemaService: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
     private _cdr: ChangeDetectorRef,
+    private _upload: ImageUploadService,
   ) {
     this.form = this._fb.group({
       name: ['', Validators.required],
@@ -52,6 +56,16 @@ export class TheatersManagementComponent implements OnInit {
     this.editingId = t.id ?? null;
     this.showForm = true;
     this.form.patchValue({ name: t.name, city: t.city, address: t.address, phone: t.phone, imageUrl: t.imageUrl });
+  }
+
+  onPickImage(e: Event): void {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) { return; }
+    this.uploading = true; this.uploadError = '';
+    this._upload.upload(file).subscribe({
+      next: url => { this.form.patchValue({ imageUrl: url }); this.uploading = false; this._cdr.markForCheck(); },
+      error: () => { this.uploadError = 'Tải ảnh thất bại.'; this.uploading = false; this._cdr.markForCheck(); },
+    });
   }
 
   saveTheater(): void {

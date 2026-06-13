@@ -36,6 +36,7 @@ public class CinemaController : ControllerBase
     private readonly IMovieTypeDetailManager     _movieTypeDetails;
     private readonly ISeatTypeTicketTypeManager  _seatTypeTicketTypes;
     private readonly IInvoiceAdminManager        _invoices;
+    private readonly IWebHostEnvironment         _env;
 
     public CinemaController(
         IMovieManager movieManager,
@@ -55,7 +56,8 @@ public class CinemaController : ControllerBase
         IShowTimeManager showTimes,
         IMovieTypeDetailManager movieTypeDetails,
         ISeatTypeTicketTypeManager seatTypeTicketTypes,
-        IInvoiceAdminManager invoices)
+        IInvoiceAdminManager invoices,
+        IWebHostEnvironment env)
     {
         _movieManager    = movieManager;
         _theaterManager  = theaterManager;
@@ -75,6 +77,50 @@ public class CinemaController : ControllerBase
         _movieTypeDetails    = movieTypeDetails;
         _seatTypeTicketTypes = seatTypeTicketTypes;
         _invoices            = invoices;
+        _env                 = env;
+    }
+
+    // ── Uploads ─────────────────────────────────────────────────────────────────
+
+    private static readonly HashSet<string> _allowedImageExtensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+    private const long _maxImageBytes = 5 * 1024 * 1024; // 5 MB
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(UploadResultDTO), 200)]
+    public async Task<IActionResult> UploadImage(IFormFile file)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.UploadImage being awakened to process request...");
+        try
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+            if (file.Length > _maxImageBytes)
+                return BadRequest("File exceeds the 5 MB limit.");
+
+            var ext = Path.GetExtension(file.FileName);
+            if (!_allowedImageExtensions.Contains(ext) || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Only image files (jpg, png, webp, gif) are allowed.");
+
+            var uploadsDir = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
+            Directory.CreateDirectory(uploadsDir);
+
+            var fileName = $"{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
+            var fullPath = Path.Combine(uploadsDir, fileName);
+            await using (var stream = System.IO.File.Create(fullPath))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var url = $"{Request.Scheme}://{Request.Host}/uploads/{fileName}";
+            return Ok(new UploadResultDTO { Url = url });
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.UploadImage->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+        }
     }
 
     // ── Movies ────────────────────────────────────────────────────────────────

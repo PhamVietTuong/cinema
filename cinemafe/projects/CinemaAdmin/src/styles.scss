@@ -434,3 +434,30 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
 
   .ad-pagination-page { min-width: 96px; text-align: center; color: var(--ad-on); }
 }
+
+// ── Image upload (admin forms) ───────────────────────────────────────────────
+.img-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+
+  label { cursor: pointer; }
+}
+.img-upload-status {
+  font-size: 13px;
+  color: var(--ad-muted);
+
+  &.err { color: var(--ad-danger); }
+}
+.img-preview {
+  margin-top: 10px;
+
+  img {
+    max-width: 160px;
+    max-height: 140px;
+    border-radius: var(--ad-r-sm);
+    border: 1px solid var(--ad-glass-border);
+    display: block;
+  }
+}

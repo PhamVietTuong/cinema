@@ -25,8 +25,19 @@
         <input class="ad-input" type="date" formControlName="publishedAt">
       </div>
       <div class="ad-field full-span">
-        <label class="ad-label">Ảnh Đại Diện (URL)</label>
-        <input class="ad-input" formControlName="thumbnailUrl" placeholder="https://...">
+        <label class="ad-label">Ảnh Đại Diện</label>
+        <input class="ad-input" formControlName="thumbnailUrl" placeholder="Dán URL hoặc tải ảnh lên">
+        <div class="img-upload-row">
+          <label class="ad-btn ad-btn--ghost">
+            <mat-icon>upload</mat-icon> Tải Ảnh Lên
+            <input type="file" accept="image/*" hidden (change)="onPickImage($event, 'thumbnailUrl')">
+          </label>
+          <span class="img-upload-status" *ngIf="uploading">Đang tải...</span>
+          <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
+        </div>
+        <div class="img-preview" *ngIf="form.value.thumbnailUrl">
+          <img [src]="form.value.thumbnailUrl" alt="">
+        </div>
       </div>
       <div class="ad-field full-span">
         <label class="ad-label">Nội Dung</label>

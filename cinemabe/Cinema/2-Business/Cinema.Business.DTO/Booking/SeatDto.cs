@@ -9,6 +9,6 @@ public class SeatDTO
     public string SeatTypeName { get; set; } = string.Empty;
     public string SeatTypeColor { get; set; } = string.Empty;
     public SeatStatus Status { get; set; }
-    public decimal Price { get; set; }
+    public double Price { get; set; }
     public bool IsLocked { get; set; }
 }

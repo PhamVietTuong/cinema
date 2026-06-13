@@ -20,6 +20,7 @@ export namespace CinemaServiceAgent {
 export const CINEMA_BASE_URL = new InjectionToken<string>('CINEMA_BASE_URL');
 
 export interface IHttpService {
+    uploadImage(file?: FileParameter | null | undefined): Observable<UploadResultDTO>;
     getMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO>;
     getNowShowingMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO>;
     getComingSoonMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO>;
@@ -122,6 +123,59 @@ export class HttpService implements IHttpService {
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(CINEMA_BASE_URL) baseUrl?: string) {
         this.http = http;
         this.baseUrl = baseUrl ?? "localhost:5102";
+    }
+
+    uploadImage(file?: FileParameter | null | undefined): Observable<UploadResultDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UploadImage";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file !== null && file !== undefined)
+            content_.append("file", file.data, file.fileName ? file.fileName : "file");
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUploadImage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUploadImage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UploadResultDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UploadResultDTO>;
+        }));
+    }
+
+    protected processUploadImage(response: HttpResponseBase): Observable<UploadResultDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UploadResultDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
     }
 
     getMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO> {
@@ -4795,6 +4849,42 @@ export class HttpService implements IHttpService {
         }
         return _observableOf(null as any);
     }
+}
+
+export class UploadResultDTO implements IUploadResultDTO {
+    url?: string;
+
+    constructor(data?: IUploadResultDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.url = _data["url"];
+        }
+    }
+
+    static fromJS(data: any): UploadResultDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new UploadResultDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["url"] = this.url;
+        return data;
+    }
+}
+
+export interface IUploadResultDTO {
+    url?: string;
 }
 
 export abstract class BaseSearchResultsOfMovieDTO implements IBaseSearchResultsOfMovieDTO {
@@ -9662,6 +9752,11 @@ function formatDate(d: Date) {
     return d.getFullYear() + '-' + 
         (d.getMonth() < 9 ? ('0' + (d.getMonth()+1)) : (d.getMonth()+1)) + '-' +
         (d.getDate() < 10 ? ('0' + d.getDate()) : d.getDate());
+}
+
+export interface FileParameter {
+    data: any;
+    fileName: string;
 }
 
 export class ApiException extends Error {

@@ -20,7 +20,7 @@ public class SeatTypeTicketTypeDTO
 {
     public Guid SeatTypeId { get; set; }
     public Guid TicketTypeId { get; set; }
-    public decimal PriceMultiplier { get; set; }
+    public double PriceMultiplier { get; set; }
     public string SeatTypeName { get; set; } = string.Empty;
     public string TicketTypeName { get; set; } = string.Empty;
 }
@@ -29,12 +29,12 @@ public class CreateSeatTypeTicketTypeRequest
 {
     public Guid SeatTypeId { get; set; }
     public Guid TicketTypeId { get; set; }
-    public decimal PriceMultiplier { get; set; } = 1;
+    public double PriceMultiplier { get; set; } = 1;
 }
 
 public class UpdateSeatTypeTicketTypeRequest
 {
     public Guid SeatTypeId { get; set; }
     public Guid TicketTypeId { get; set; }
-    public decimal PriceMultiplier { get; set; } = 1;
+    public double PriceMultiplier { get; set; } = 1;
 }

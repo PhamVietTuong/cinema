@@ -4,5 +4,5 @@ namespace Cinema.Business.DTO.Invoices;
 public class RevenueByDayDTO
 {
     public DateTime Date { get; set; }
-    public decimal Total { get; set; }
+    public double Total { get; set; }
 }

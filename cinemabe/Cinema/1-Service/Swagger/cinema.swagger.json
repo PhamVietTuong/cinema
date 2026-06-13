@@ -6,6 +6,49 @@
     "version": "v1"
   },
   "paths": {
+    "/api/Cinema/UploadImage": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UploadImage",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetMovies": {
       "post": {
         "tags": [
@@ -3354,6 +3397,15 @@
   },
   "components": {
     "schemas": {
+      "UploadResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
       "DefaultSearchResultsOfMovieDTO": {
         "allOf": [
           {
@@ -4000,7 +4052,7 @@
           },
           "basePrice": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -4379,7 +4431,7 @@
           },
           "basePrice": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "description": {
             "type": "string",
@@ -4396,7 +4448,7 @@
           },
           "basePrice": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "description": {
             "type": "string",
@@ -4417,7 +4469,7 @@
           },
           "basePrice": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "description": {
             "type": "string",
@@ -4553,7 +4605,7 @@
           },
           "discountPercent": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -4574,7 +4626,7 @@
           },
           "discountPercent": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -4599,7 +4651,7 @@
           },
           "discountPercent": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -4656,7 +4708,7 @@
           },
           "priceMultiplier": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -4673,7 +4725,7 @@
           },
           "priceMultiplier": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -4694,7 +4746,7 @@
           },
           "priceMultiplier": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -4879,11 +4931,11 @@
           },
           "percent": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "maxDiscountAmount": {
             "type": "number",
-            "format": "decimal",
+            "format": "double",
             "nullable": true
           },
           "discountTypeId": {
@@ -4925,11 +4977,11 @@
           },
           "percent": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "maxDiscountAmount": {
             "type": "number",
-            "format": "decimal",
+            "format": "double",
             "nullable": true
           },
           "discountTypeId": {
@@ -4971,11 +5023,11 @@
           },
           "percent": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "maxDiscountAmount": {
             "type": "number",
-            "format": "decimal",
+            "format": "double",
             "nullable": true
           },
           "discountTypeId": {
@@ -5049,7 +5101,7 @@
           },
           "price": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "imageUrl": {
             "type": "string",
@@ -5073,7 +5125,7 @@
           },
           "price": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "imageUrl": {
             "type": "string",
@@ -5101,7 +5153,7 @@
           },
           "price": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "imageUrl": {
             "type": "string",
@@ -5520,7 +5572,7 @@
           },
           "priceMultiplier": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "seatTypeName": {
             "type": "string"
@@ -5544,7 +5596,7 @@
           },
           "priceMultiplier": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -5562,7 +5614,7 @@
           },
           "priceMultiplier": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           }
         }
       },
@@ -5625,15 +5677,15 @@
           },
           "totalAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "discountAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "finalAmount": {
             "type": "number",
-            "format": "decimal"
+            "format": "double"
           },
           "status": {
             "$ref": "#/components/schemas/InvoiceStatus"

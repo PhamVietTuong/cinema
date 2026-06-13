@@ -29,6 +29,10 @@ namespace Cinema.Service.Clients.Cinema
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <exception cref="CinemaSwaggerException">A server side error occurred.</exception>
+        System.Threading.Tasks.Task<UploadResultDTO> UploadImageAsync(FileParameter file = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <exception cref="CinemaSwaggerException">A server side error occurred.</exception>
         System.Threading.Tasks.Task<DefaultSearchResultsOfMovieDTO> GetMoviesAsync(PagingSearchDTO search, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -440,6 +444,89 @@ namespace Cinema.Service.Clients.Cinema
         partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
         partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
         partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
+
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <exception cref="CinemaSwaggerException">A server side error occurred.</exception>
+        public virtual async System.Threading.Tasks.Task<UploadResultDTO> UploadImageAsync(FileParameter file = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        {
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+                    var boundary_ = System.Guid.NewGuid().ToString();
+                    var content_ = new System.Net.Http.MultipartFormDataContent(boundary_);
+                    content_.Headers.Remove("Content-Type");
+                    content_.Headers.TryAddWithoutValidation("Content-Type", "multipart/form-data; boundary=" + boundary_);
+
+                    if (file != null)
+                    {
+                        var content_file_ = new System.Net.Http.StreamContent(file.Data);
+                        if (!string.IsNullOrEmpty(file.ContentType))
+                            content_file_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(file.ContentType);
+                        content_.Add(content_file_, "file", file.FileName ?? "file");
+                    }
+                    request_.Content = content_;
+                    request_.Method = new System.Net.Http.HttpMethod("POST");
+                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    // Operation Path: "api/Cinema/UploadImage"
+                    urlBuilder_.Append("api/Cinema/UploadImage");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<UploadResultDTO>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new CinemaSwaggerException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            return objectResponse_.Object;
+                        }
+                        else
+                        {
+                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            throw new CinemaSwaggerException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
+        }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <exception cref="CinemaSwaggerException">A server side error occurred.</exception>
@@ -7434,6 +7521,14 @@ namespace Cinema.Service.Clients.Cinema
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class UploadResultDTO
+    {
+        [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Url { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class DefaultSearchResultsOfMovieDTO : BaseSearchResultsOfMovieDTO
     {
 
@@ -7918,7 +8013,7 @@ namespace Cinema.Service.Clients.Cinema
         public string TheaterName { get; set; }
 
         [Newtonsoft.Json.JsonProperty("basePrice", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal BasePrice { get; set; }
+        public double BasePrice { get; set; }
 
     }
 
@@ -8203,7 +8298,7 @@ namespace Cinema.Service.Clients.Cinema
         public string Name { get; set; }
 
         [Newtonsoft.Json.JsonProperty("basePrice", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal BasePrice { get; set; }
+        public double BasePrice { get; set; }
 
         [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Description { get; set; }
@@ -8217,7 +8312,7 @@ namespace Cinema.Service.Clients.Cinema
         public string Name { get; set; }
 
         [Newtonsoft.Json.JsonProperty("basePrice", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal BasePrice { get; set; }
+        public double BasePrice { get; set; }
 
         [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Description { get; set; }
@@ -8234,7 +8329,7 @@ namespace Cinema.Service.Clients.Cinema
         public string Name { get; set; }
 
         [Newtonsoft.Json.JsonProperty("basePrice", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal BasePrice { get; set; }
+        public double BasePrice { get; set; }
 
         [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Description { get; set; }
@@ -8333,7 +8428,7 @@ namespace Cinema.Service.Clients.Cinema
         public int MaxPoints { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal DiscountPercent { get; set; }
+        public double DiscountPercent { get; set; }
 
     }
 
@@ -8350,7 +8445,7 @@ namespace Cinema.Service.Clients.Cinema
         public int MaxPoints { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal DiscountPercent { get; set; }
+        public double DiscountPercent { get; set; }
 
     }
 
@@ -8370,7 +8465,7 @@ namespace Cinema.Service.Clients.Cinema
         public int MaxPoints { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal DiscountPercent { get; set; }
+        public double DiscountPercent { get; set; }
 
     }
 
@@ -8411,7 +8506,7 @@ namespace Cinema.Service.Clients.Cinema
         public System.DateTime Date { get; set; }
 
         [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal PriceMultiplier { get; set; }
+        public double PriceMultiplier { get; set; }
 
     }
 
@@ -8426,7 +8521,7 @@ namespace Cinema.Service.Clients.Cinema
         public System.DateTime Date { get; set; }
 
         [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal PriceMultiplier { get; set; }
+        public double PriceMultiplier { get; set; }
 
     }
 
@@ -8444,7 +8539,7 @@ namespace Cinema.Service.Clients.Cinema
         public System.DateTime Date { get; set; }
 
         [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal PriceMultiplier { get; set; }
+        public double PriceMultiplier { get; set; }
 
     }
 
@@ -8582,10 +8677,10 @@ namespace Cinema.Service.Clients.Cinema
         public string Description { get; set; }
 
         [Newtonsoft.Json.JsonProperty("percent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Percent { get; set; }
+        public double Percent { get; set; }
 
         [Newtonsoft.Json.JsonProperty("maxDiscountAmount", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal? MaxDiscountAmount { get; set; }
+        public double? MaxDiscountAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountTypeId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid DiscountTypeId { get; set; }
@@ -8617,10 +8712,10 @@ namespace Cinema.Service.Clients.Cinema
         public string Description { get; set; }
 
         [Newtonsoft.Json.JsonProperty("percent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Percent { get; set; }
+        public double Percent { get; set; }
 
         [Newtonsoft.Json.JsonProperty("maxDiscountAmount", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal? MaxDiscountAmount { get; set; }
+        public double? MaxDiscountAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountTypeId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid DiscountTypeId { get; set; }
@@ -8652,10 +8747,10 @@ namespace Cinema.Service.Clients.Cinema
         public string Description { get; set; }
 
         [Newtonsoft.Json.JsonProperty("percent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Percent { get; set; }
+        public double Percent { get; set; }
 
         [Newtonsoft.Json.JsonProperty("maxDiscountAmount", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal? MaxDiscountAmount { get; set; }
+        public double? MaxDiscountAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountTypeId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid DiscountTypeId { get; set; }
@@ -8707,7 +8802,7 @@ namespace Cinema.Service.Clients.Cinema
         public string Name { get; set; }
 
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Price { get; set; }
+        public double Price { get; set; }
 
         [Newtonsoft.Json.JsonProperty("imageUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string ImageUrl { get; set; }
@@ -8727,7 +8822,7 @@ namespace Cinema.Service.Clients.Cinema
         public string Name { get; set; }
 
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Price { get; set; }
+        public double Price { get; set; }
 
         [Newtonsoft.Json.JsonProperty("imageUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string ImageUrl { get; set; }
@@ -8750,7 +8845,7 @@ namespace Cinema.Service.Clients.Cinema
         public string Name { get; set; }
 
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Price { get; set; }
+        public double Price { get; set; }
 
         [Newtonsoft.Json.JsonProperty("imageUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string ImageUrl { get; set; }
@@ -9067,7 +9162,7 @@ namespace Cinema.Service.Clients.Cinema
         public System.Guid TicketTypeId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal PriceMultiplier { get; set; }
+        public double PriceMultiplier { get; set; }
 
         [Newtonsoft.Json.JsonProperty("seatTypeName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string SeatTypeName { get; set; }
@@ -9087,7 +9182,7 @@ namespace Cinema.Service.Clients.Cinema
         public System.Guid TicketTypeId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal PriceMultiplier { get; set; }
+        public double PriceMultiplier { get; set; }
 
     }
 
@@ -9101,7 +9196,7 @@ namespace Cinema.Service.Clients.Cinema
         public System.Guid TicketTypeId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal PriceMultiplier { get; set; }
+        public double PriceMultiplier { get; set; }
 
     }
 
@@ -9147,13 +9242,13 @@ namespace Cinema.Service.Clients.Cinema
         public string UserEmail { get; set; }
 
         [Newtonsoft.Json.JsonProperty("totalAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal TotalAmount { get; set; }
+        public double TotalAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal DiscountAmount { get; set; }
+        public double DiscountAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("finalAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal FinalAmount { get; set; }
+        public double FinalAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public InvoiceStatus Status { get; set; }
@@ -9201,6 +9296,33 @@ namespace Cinema.Service.Clients.Cinema
         {
             DateTimeFormat = "yyyy-MM-dd";
         }
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class FileParameter
+    {
+        public FileParameter(System.IO.Stream data)
+            : this (data, null, null)
+        {
+        }
+
+        public FileParameter(System.IO.Stream data, string fileName)
+            : this (data, fileName, null)
+        {
+        }
+
+        public FileParameter(System.IO.Stream data, string fileName, string contentType)
+        {
+            Data = data;
+            FileName = fileName;
+            ContentType = contentType;
+        }
+
+        public System.IO.Stream Data { get; private set; }
+
+        public string FileName { get; private set; }
+
+        public string ContentType { get; private set; }
     }
 
 

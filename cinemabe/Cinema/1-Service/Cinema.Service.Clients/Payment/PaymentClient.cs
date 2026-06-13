@@ -975,7 +975,7 @@ namespace Cinema.Service.Clients.Payment
         public SeatStatus Status { get; set; }
 
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Price { get; set; }
+        public double Price { get; set; }
 
         [Newtonsoft.Json.JsonProperty("isLocked", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsLocked { get; set; }
@@ -1032,13 +1032,13 @@ namespace Cinema.Service.Clients.Payment
         public string InvoiceCode { get; set; }
 
         [Newtonsoft.Json.JsonProperty("totalAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal TotalAmount { get; set; }
+        public double TotalAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal DiscountAmount { get; set; }
+        public double DiscountAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("finalAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal FinalAmount { get; set; }
+        public double FinalAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public InvoiceStatus Status { get; set; }
@@ -1078,7 +1078,7 @@ namespace Cinema.Service.Clients.Payment
         public string TicketType { get; set; }
 
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Price { get; set; }
+        public double Price { get; set; }
 
         [Newtonsoft.Json.JsonProperty("qrCode", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string QrCode { get; set; }
@@ -1217,13 +1217,13 @@ namespace Cinema.Service.Clients.Payment
         public string UserEmail { get; set; }
 
         [Newtonsoft.Json.JsonProperty("totalAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal TotalAmount { get; set; }
+        public double TotalAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal DiscountAmount { get; set; }
+        public double DiscountAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("finalAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal FinalAmount { get; set; }
+        public double FinalAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public InvoiceStatus Status { get; set; }
@@ -1267,7 +1267,7 @@ namespace Cinema.Service.Clients.Payment
         public string TicketType { get; set; }
 
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Price { get; set; }
+        public double Price { get; set; }
 
         [Newtonsoft.Json.JsonProperty("qrCode", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string QrCode { get; set; }
@@ -1287,10 +1287,10 @@ namespace Cinema.Service.Clients.Payment
         public int Quantity { get; set; }
 
         [Newtonsoft.Json.JsonProperty("unitPrice", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal UnitPrice { get; set; }
+        public double UnitPrice { get; set; }
 
         [Newtonsoft.Json.JsonProperty("totalPrice", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal TotalPrice { get; set; }
+        public double TotalPrice { get; set; }
 
     }
 
@@ -1301,7 +1301,7 @@ namespace Cinema.Service.Clients.Payment
         public System.DateTime Date { get; set; }
 
         [Newtonsoft.Json.JsonProperty("total", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public decimal Total { get; set; }
+        public double Total { get; set; }
 
     }
 

@@ -7,6 +7,6 @@ public interface IInvoiceManager
     Task<DefaultSearchResults<InvoiceDTO>> GetMyInvoicesAsync(Guid userId, PagingSearchDTO search);
     Task<DefaultSearchResults<InvoiceDTO>> GetInvoicesAsync(PagingSearchDTO search);
     Task<InvoiceDTO>                       GetByIdAsync(Guid id);
-    Task<decimal>                          GetTotalRevenueAsync(DateTime from, DateTime to);
+    Task<double>                          GetTotalRevenueAsync(DateTime from, DateTime to);
     Task<List<RevenueByDayDTO>>            GetRevenueByDayAsync(DateTime from, DateTime to);
 }
