@@ -16,7 +16,16 @@ export class ProfileComponent implements OnInit {
   private _cdr = inject(ChangeDetectorRef);
 
   readonly InvoiceStatus = PaymentServiceAgent.InvoiceStatus;
-  tab: 'info' | 'password' | 'bookings' = 'info';
+  tab: 'overview' | 'bookings' | 'settings' = 'overview';
+
+  /** Static (non-persisted) notification preferences for the settings UI. */
+  notif = { trailers: true, reminders: true, promos: false };
+
+  readonly perks = [
+    { icon: 'fa-ticket', text: 'Giảm 10% cho tất cả các vé' },
+    { icon: 'fa-bowl-food', text: 'Bắp rang miễn phí hàng tháng' },
+    { icon: 'fa-star', text: 'Tích điểm thưởng cho mỗi lần đặt vé' },
+  ];
 
   user: IdentityServiceAgent.UserDTO | null = null;
   invoices: PaymentServiceAgent.InvoiceDTO[] = [];
@@ -82,6 +91,42 @@ export class ProfileComponent implements OnInit {
         next: () => { this.passwordMsg = 'Đổi mật khẩu thành công.'; this.passwordForm.reset(); this._cdr.markForCheck(); },
         error: e => { this.passwordErr = this._err(e, 'Đổi mật khẩu thất bại.'); this._cdr.markForCheck(); },
       });
+  }
+
+  get bookingCount(): number { return this.invoices.length; }
+  get ticketCount(): number { return this.invoices.reduce((n, i) => n + (i.tickets?.length ?? 0), 0); }
+
+  /** Top recent bookings flattened for the dashboard table. */
+  get recentBookings(): { movie: string; date?: Date; seats: string; status?: PaymentServiceAgent.InvoiceStatus }[] {
+    return this.invoices.slice(0, 5).map(inv => ({
+      movie: inv.tickets?.[0]?.movieTitle ?? '—',
+      date: inv.tickets?.[0]?.showTime,
+      seats: (inv.tickets ?? []).map(t => t.seatLabel).filter(Boolean).join(', ') || '—',
+      status: inv.status,
+    }));
+  }
+
+  get totalSpent(): number {
+    return this.invoices.filter(i => i.status === this.InvoiceStatus.Paid).reduce((s, i) => s + (i.finalAmount ?? 0), 0);
+  }
+  get upcomingCount(): number {
+    const now = Date.now();
+    return this.invoices.filter(i => (i.tickets ?? []).some(t => t.showTime && new Date(t.showTime).getTime() > now)).length;
+  }
+  /** All bookings flattened into table rows. */
+  get bookingRows(): { id?: string; movie: string; date?: Date; seats: string; total?: number; status?: PaymentServiceAgent.InvoiceStatus }[] {
+    return this.invoices.map(inv => ({
+      id: inv.id,
+      movie: inv.tickets?.[0]?.movieTitle ?? '—',
+      date: inv.tickets?.[0]?.showTime,
+      seats: (inv.tickets ?? []).map(t => t.seatLabel).filter(Boolean).join(', ') || '—',
+      total: inv.finalAmount,
+      status: inv.status,
+    }));
+  }
+  cancelById(id?: string): void {
+    const inv = this.invoices.find(i => i.id === id);
+    if (inv) { this.cancelBooking(inv); }
   }
 
   toggleInvoice(id?: string): void { this.expandedId = this.expandedId === id ? null : (id ?? null); }

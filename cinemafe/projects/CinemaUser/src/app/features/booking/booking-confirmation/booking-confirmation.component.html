@@ -19,33 +19,28 @@
     <!-- Left: Payment Form -->
     <div class="payment-form-col">
 
-      <!-- Payment Method Tabs -->
+      <!-- Payment Methods -->
       <div class="form-card">
         <h3 class="card-title"><i class="fas fa-credit-card"></i> Phương Thức Thanh Toán</h3>
-        <div class="method-tabs">
-          <button class="method-tab" [class.active]="paymentMethod === 'VNPay'" (click)="paymentMethod='VNPay'">
-            <i class="fas fa-wallet"></i> VNPay
+        <div class="method-grid">
+          <button class="method-card" [class.active]="paymentMethod === 'ApplePay'" (click)="paymentMethod='ApplePay'">
+            <i class="fab fa-apple"></i> Apple Pay
           </button>
-          <button class="method-tab" [class.active]="paymentMethod === 'Momo'" (click)="paymentMethod='Momo'">
-            <i class="fas fa-mobile-alt"></i> MoMo
+          <button class="method-card" [class.active]="paymentMethod === 'GooglePay'" (click)="paymentMethod='GooglePay'">
+            <i class="fab fa-google"></i> Google Pay
           </button>
-          <button class="method-tab" [class.active]="paymentMethod === 'Cash'" (click)="paymentMethod='Cash'">
-            <i class="fas fa-money-bill"></i> Tại Quầy
+          <button class="method-card momo" [class.active]="paymentMethod === 'Momo'" (click)="paymentMethod='Momo'">
+            <i class="fas fa-wallet"></i> Ví MoMo
+          </button>
+          <button class="method-card" [class.active]="paymentMethod === 'Card'" (click)="paymentMethod='Card'">
+            <i class="fas fa-credit-card"></i> Thẻ ATM nội địa
           </button>
         </div>
       </div>
 
-      <!-- Card Details (shown for VNPay) -->
-      <div class="form-card" *ngIf="paymentMethod === 'VNPay'">
-        <h3 class="card-title">Thông Tin Thẻ</h3>
-        <div class="card-preview">
-          <div class="card-chip"><i class="fas fa-microchip"></i></div>
-          <div class="card-number-preview">**** **** **** 4242</div>
-          <div class="card-meta">
-            <span>Midnight Premium</span>
-            <span>12 / 28</span>
-          </div>
-        </div>
+      <!-- Card form (shown for card) -->
+      <div class="form-card" *ngIf="paymentMethod === 'Card'">
+        <h3 class="card-title">Thẻ Tín Dụng / Ghi Nợ</h3>
         <div class="field-group">
           <label class="field-label">Số Thẻ</label>
           <input class="field-input" placeholder="0000 0000 0000 0000" maxlength="19">
@@ -61,23 +56,15 @@
           </div>
         </div>
         <div class="field-group">
-          <label class="field-label">Tên Chủ Thẻ</label>
+          <label class="field-label">Tên Trên Thẻ</label>
           <input class="field-input" placeholder="NGUYEN VAN A">
         </div>
       </div>
 
-      <!-- MoMo QR -->
-      <div class="form-card center" *ngIf="paymentMethod === 'Momo'">
-        <div class="qr-placeholder">
-          <i class="fas fa-qrcode"></i>
-        </div>
-        <p class="qr-note">Mở ứng dụng MoMo và quét mã QR để thanh toán</p>
-      </div>
-
-      <!-- Cash note -->
-      <div class="form-card center" *ngIf="paymentMethod === 'Cash'">
-        <i class="fas fa-store cash-icon"></i>
-        <p class="qr-note">Vui lòng đến quầy vé trước giờ chiếu 15 phút để hoàn tất thanh toán</p>
+      <!-- E-wallet note -->
+      <div class="form-card center" *ngIf="paymentMethod !== 'Card'">
+        <div class="qr-placeholder"><i class="fas fa-qrcode"></i></div>
+        <p class="qr-note">Quét mã QR bằng ứng dụng {{ paymentMethod === 'Momo' ? 'MoMo' : paymentMethod === 'ApplePay' ? 'Apple Pay' : 'Google Pay' }} để hoàn tất thanh toán.</p>
       </div>
 
       <div *ngIf="error" class="error-banner">

@@ -6,20 +6,19 @@
 
   <!-- ── HERO ──────────────────────────────────────────────────────────────── -->
   <section class="hero">
-    <div class="hero-inner">
-      <div class="poster-col">
-        <div class="poster-wrap">
-          <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" class="poster-img">
-        </div>
-      </div>
+    <div class="hero-backdrop" [style.background-image]="'url(' + (movie.posterUrl || 'assets/no-poster.jpg') + ')'"></div>
+    <div class="hero-scrim"></div>
 
-      <div class="hero-content">
+    <div class="hero-inner">
+      <div class="hero-main">
         <div class="hero-tags">
-          <span class="tag-imax">IMAX</span>
-          <span class="tag-genre" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
-          <span class="tag-age">{{ movie.ageRestrictionCode }}</span>
+          <span class="tag-format" *ngFor="let g of groupByFormat(movie.showTimes)">{{ g.label }}</span>
+          <span class="tag-genre" *ngFor="let g of movie.genres | slice:0:3">{{ g }}</span>
+          <span class="tag-age" *ngIf="movie.ageRestrictionCode">{{ movie.ageRestrictionCode }}</span>
         </div>
+
         <h1 class="hero-title">{{ movie.title }}</h1>
+
         <div class="hero-meta">
           <span class="meta-star"><i class="fas fa-star"></i> {{ movie.averageRating | number:'1.1-1' }}</span>
           <span class="sep">·</span>
@@ -31,108 +30,96 @@
             <span>{{ movie.language }}</span>
           </ng-container>
         </div>
-        <p class="hero-desc">{{ movie.description }}</p>
+
         <div class="hero-actions">
-          <button class="btn-primary-cta" (click)="scrollToShowtimes()">
-            <i class="fas fa-ticket"></i> Đặt Vé Ngay
-          </button>
-          <a class="btn-ghost-cta" *ngIf="movie.trailerUrl" [href]="movie.trailerUrl" target="_blank">
-            <i class="fas fa-play"></i> Xem Trailer
-          </a>
-          <button class="btn-ghost-cta" *ngIf="!movie.trailerUrl">
-            <i class="fas fa-play"></i> Xem Trailer
-          </button>
+          <button class="btn-primary-cta" (click)="scrollToShowtimes()"><i class="fas fa-ticket"></i> Đặt Vé Ngay</button>
+          <a class="btn-ghost-cta" *ngIf="movie.trailerUrl" [href]="movie.trailerUrl" target="_blank"><i class="fas fa-play"></i> Xem Trailer</a>
         </div>
       </div>
 
-      <div class="rating-col">
-        <div class="rating-circle">
-          <span class="pct">{{ (movie.averageRating * 10) | number:'1.0-0' }}%</span>
-          <span class="pct-label">Khán giả</span>
+      <div class="hero-score">
+        <div class="score-ring">
+          <span class="score-pct">{{ (movie.averageRating * 10) | number:'1.0-0' }}%</span>
+          <span class="score-label">Audience<br>Score</span>
         </div>
-        <div class="star-row">
-          <i *ngFor="let i of [1,2,3,4,5]"
-             class="fas fa-star"
-             [class.lit]="i <= (movie.averageRating / 2)"></i>
+        <div class="score-stars">
+          <i *ngFor="let i of [1,2,3,4,5]" class="fas fa-star" [class.lit]="i <= (movie.averageRating / 2)"></i>
         </div>
-        <span class="review-count">{{ movie.ratingCount | number }} đánh giá</span>
+        <span class="score-count">{{ movie.ratingCount | number }} đánh giá</span>
       </div>
     </div>
   </section>
 
   <!-- ── BODY ──────────────────────────────────────────────────────────────── -->
-  <div class="body-layout">
-    <div class="body-main">
+  <div class="md-body">
 
-      <!-- Description -->
-      <section class="ds">
-        <h2 class="ds-title">Nội Dung Phim</h2>
-        <p class="ds-text">{{ movie.description }}</p>
-      </section>
+    <!-- Synopsis -->
+    <section class="md-section">
+      <h2 class="md-title">Tóm Tắt Nội Dung</h2>
+      <p class="md-text">{{ movie.description }}</p>
+      <div class="md-facts">
+        <span><b>Đạo diễn:</b> {{ movie.director || '—' }}</span>
+        <span><b>Khởi chiếu:</b> {{ movie.releaseDate | date:'dd/MM/yyyy' }}</span>
+        <span><b>Ngôn ngữ:</b> {{ movie.language || '—' }}</span>
+      </div>
+    </section>
 
-      <!-- Cast -->
-      <section class="ds" *ngIf="getCastMembers(movie.cast).length">
-        <h2 class="ds-title">Diễn Viên</h2>
-        <div class="cast-row">
-          <div class="cast-item" *ngFor="let name of getCastMembers(movie.cast)">
-            <div class="cast-avatar">{{ getInitials(name) }}</div>
-            <p class="cast-name">{{ name }}</p>
+    <!-- Showtimes -->
+    <section class="md-section" id="showtimes">
+      <h2 class="md-title">Lịch Chiếu & Suất Diễn</h2>
+
+      <div class="format-list" *ngIf="movie.showTimes?.length; else noShowtimes">
+        <div class="format-card" *ngFor="let group of groupByFormat(movie.showTimes)">
+          <div class="format-head">
+            <span class="format-badge">{{ group.label }}</span>
           </div>
-        </div>
-      </section>
-
-      <!-- Showtimes -->
-      <section class="ds" id="showtimes">
-        <h2 class="ds-title">Lịch Chiếu</h2>
-        <div class="showtime-list" *ngIf="movie.showTimes?.length; else noShowtimes">
-          <div class="showtime-row" *ngFor="let st of movie.showTimes">
-            <div class="st-time">{{ st.startTime | date:'HH:mm' }}</div>
-            <div class="st-info">
-              <span class="st-theater"><i class="fas fa-location-dot"></i> {{ st.theaterName }}</span>
-              <span class="st-room">{{ st.roomName }}</span>
-            </div>
-            <div class="st-seats"><i class="fas fa-chair"></i> {{ st.availableSeats }} ghế trống</div>
-            <a class="btn-st-book"
+          <div class="slot-row">
+            <a class="time-slot" *ngFor="let st of group.items"
                routerLink="/booking/seats"
-               [queryParams]="{showTimeId: st.id, roomId: st.roomId}">
-              <i class="fas fa-ticket"></i> Chọn Ghế
+               [queryParams]="{ showTimeId: st.id, roomId: st.roomId }"
+               [title]="st.theaterName + ' · ' + st.roomName">
+              <span class="slot-time">{{ st.startTime | date:'HH:mm' }}</span>
+              <span class="slot-seats">{{ st.availableSeats }} ghế</span>
             </a>
           </div>
         </div>
-        <ng-template #noShowtimes>
-          <p class="ds-text">Hiện chưa có lịch chiếu cho phim này. Vui lòng quay lại sau.</p>
-        </ng-template>
-      </section>
+      </div>
+      <ng-template #noShowtimes>
+        <p class="md-text">Hiện chưa có lịch chiếu cho phim này. Vui lòng quay lại sau.</p>
+      </ng-template>
+    </section>
 
-    </div>
-
-    <div class="body-side">
-      <div class="side-card">
-        <div class="side-row">
-          <span class="side-label">Đạo Diễn</span>
-          <span class="side-value">{{ movie.director || '—' }}</span>
-        </div>
-        <div class="side-row">
-          <span class="side-label">Khởi Chiếu</span>
-          <span class="side-value">{{ movie.releaseDate | date:'dd/MM/yyyy' }}</span>
-        </div>
-        <div class="side-row">
-          <span class="side-label">Thời Lượng</span>
-          <span class="side-value">{{ movie.duration }} phút</span>
-        </div>
-        <div class="side-row">
-          <span class="side-label">Ngôn Ngữ</span>
-          <span class="side-value">{{ movie.language || '—' }}</span>
-        </div>
-        <div class="side-row">
-          <span class="side-label">Độ Tuổi</span>
-          <span class="side-value"><span class="age-badge">{{ movie.ageRestrictionCode }}</span></span>
-        </div>
-        <div class="side-genres">
-          <span class="genre-chip" *ngFor="let g of movie.genres">{{ g }}</span>
+    <!-- Cast -->
+    <section class="md-section" *ngIf="getCastMembers(movie.cast).length">
+      <h2 class="md-title">Diễn Viên & Đoàn Phim</h2>
+      <div class="cast-row">
+        <div class="cast-item" *ngFor="let name of getCastMembers(movie.cast)">
+          <div class="cast-avatar">{{ getInitials(name) }}</div>
+          <p class="cast-name">{{ name }}</p>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Reviews -->
+    <section class="md-section" *ngIf="movie.recentComments?.length">
+      <h2 class="md-title">Đánh Giá Tiêu Biểu</h2>
+      <div class="review-grid">
+        <div class="review-card" *ngFor="let c of movie.recentComments">
+          <div class="review-head">
+            <span class="review-avatar">
+              <img *ngIf="c.userAvatar" [src]="c.userAvatar" alt="">
+              <span *ngIf="!c.userAvatar">{{ getInitials(c.userName || 'U') }}</span>
+            </span>
+            <div>
+              <div class="review-name">{{ c.userName }}</div>
+              <div class="review-date">{{ c.creationTime | date:'dd/MM/yyyy' }}</div>
+            </div>
+          </div>
+          <p class="review-text">{{ c.content }}</p>
+        </div>
+      </div>
+    </section>
+
   </div>
 
 </ng-container>

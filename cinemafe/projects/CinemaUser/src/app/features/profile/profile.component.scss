@@ -139,7 +139,111 @@ $outline: rgba(255, 255, 255, 0.08);
 .food { display: flex; justify-content: space-between; font-size: 0.84rem; color: $muted; }
 .cancel-btn { align-self: flex-start; margin-top: 6px; }
 
+// ── Overview / dashboard ──────────────────────────────────────────────────────
+.ov-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  padding-bottom: 22px; margin-bottom: 22px; border-bottom: 1px solid $outline;
+}
+.ov-head-left { display: flex; align-items: center; gap: 16px; }
+.ov-avatar {
+  width: 64px; height: 64px; border-radius: 50%; overflow: hidden; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, $primary, #6d3bd7); color: #fff; font-weight: 700; font-size: 1.4rem;
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+.ov-name { font-family: 'Montserrat', sans-serif; font-size: 1.4rem; font-weight: 700; color: $text; margin: 0; }
+.ov-sub { color: $muted; margin: 2px 0 0; font-size: 0.85rem; }
+.ov-points {
+  display: flex; flex-direction: column; align-items: flex-end;
+  background: rgba(208, 188, 255, 0.1); border: 1px solid rgba(208, 188, 255, 0.25);
+  border-radius: 12px; padding: 12px 18px;
+  .ov-points-label { font-size: 0.66rem; color: $muted; letter-spacing: 0.08em; }
+  .ov-points-val { font-family: 'Montserrat', sans-serif; font-size: 1.6rem; font-weight: 800; color: $primary; line-height: 1.1; }
+}
+
+.ov-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+.ov-stat {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid $outline; border-radius: 12px; padding: 18px;
+  i { color: $primary; font-size: 1.2rem; margin-bottom: 4px; }
+  .ov-stat-val { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; font-weight: 800; color: $text; }
+  .ov-stat-label { font-size: 0.78rem; color: $muted; }
+}
+
+.ov-perks {
+  background: linear-gradient(135deg, rgba(208, 188, 255, 0.08), rgba(13, 28, 45, 0.6));
+  border: 1px solid rgba(208, 188, 255, 0.2); border-radius: 14px; padding: 18px 20px; margin-bottom: 28px;
+  .ov-perks-title { font-family: 'Montserrat', sans-serif; font-size: 1rem; font-weight: 700; color: $text; margin: 0 0 12px; i { color: #fbbf24; margin-right: 8px; } }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  li { font-size: 0.88rem; color: $text; i { color: #6ee7a8; margin-right: 10px; } }
+}
+
+.ov-section-title { font-family: 'Montserrat', sans-serif; font-size: 1.05rem; font-weight: 700; color: $text; margin: 0 0 14px; }
+.ov-table { display: flex; flex-direction: column; border: 1px solid $outline; border-radius: 12px; overflow: hidden; }
+.ov-row {
+  display: grid; grid-template-columns: 2fr 1.4fr 1fr 1fr; gap: 12px; align-items: center;
+  padding: 14px 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.85rem; color: $text;
+  &:last-child { border-bottom: none; }
+}
+.ov-row-head { background: rgba(255, 255, 255, 0.03); color: $muted; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.ov-movie { font-weight: 600; color: $text; }
+
+// ── Booking history (table) ───────────────────────────────────────────────────
+.bk-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+.bk-stat {
+  display: flex; flex-direction: column; gap: 4px; align-items: center;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid $outline; border-radius: 12px; padding: 16px;
+  .bk-stat-val { font-family: 'Montserrat', sans-serif; font-size: 1.3rem; font-weight: 800; color: $primary; }
+  .bk-stat-label { font-size: 0.74rem; color: $muted; text-align: center; }
+}
+.ov-row.bk-cols { grid-template-columns: 2fr 1.4fr 1.2fr 1fr 1.1fr 0.5fr; }
+.bk-cancel {
+  border: none; cursor: pointer; background: rgba(239, 68, 68, 0.15); color: #ffb4ab;
+  width: 30px; height: 30px; border-radius: 8px;
+  &:hover { background: rgba(239, 68, 68, 0.28); }
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+.set-card {
+  background: rgba(255, 255, 255, 0.03); border: 1px solid $outline; border-radius: 14px;
+  padding: 22px 24px; margin-bottom: 20px;
+}
+.set-title { font-family: 'Montserrat', sans-serif; font-size: 1rem; font-weight: 700; color: $text; margin: 0 0 18px;
+  i { color: $primary; margin-right: 8px; } }
+.set-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.set-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.set-card .form { gap: 16px; max-width: none; }
+
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid $outline; color: $text; font-size: 0.9rem; cursor: pointer;
+  &:last-child { border-bottom: none; }
+}
+.switch {
+  position: relative; width: 42px; height: 24px; flex: none;
+  input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .track {
+    position: absolute; inset: 0; border-radius: 999px; background: $hi; transition: background 0.18s ease;
+    &::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.18s ease; }
+  }
+  input:checked + .track { background: $primary; }
+  input:checked + .track::after { transform: translateX(18px); }
+}
+
+.set-card.danger { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
+.danger-title { color: #ffb4ab; i { color: #ffb4ab; } }
+.set-desc { color: $muted; font-size: 0.85rem; margin: 0 0 16px; }
+.danger-btn {
+  border: none; cursor: pointer; background: rgba(239, 68, 68, 0.2); color: #ffb4ab;
+  font-weight: 700; font-size: 0.85rem; padding: 10px 20px; border-radius: 10px;
+  &:hover { background: rgba(239, 68, 68, 0.32); }
+}
+
 @media (max-width: 860px) {
   .profile-page { grid-template-columns: 1fr; padding: 24px 20px; }
   .id-card { position: static; }
+  .ov-grid { grid-template-columns: 1fr; }
+  .ov-row { grid-template-columns: 1fr 1fr; }
+  .bk-stats { grid-template-columns: 1fr 1fr; }
+  .set-row-2, .set-row-3 { grid-template-columns: 1fr; }
 }

@@ -1,11 +1,24 @@
 <div class="page-header">
   <div class="page-header-inner">
-    <h1 class="page-title">{{ title }}</h1>
-    <div class="search-row" *ngIf="isPaged">
+    <div class="header-top">
+      <div>
+        <h1 class="page-title">{{ title }}</h1>
+        <p class="page-sub">Khám phá những siêu phẩm điện ảnh mới nhất với chất lượng âm thanh và hình ảnh đỉnh cao.</p>
+      </div>
       <span class="search-box">
         <i class="fas fa-magnifying-glass"></i>
-        <input [formControl]="searchCtrl" placeholder="Tìm phim, đạo diễn, diễn viên...">
+        <input [formControl]="searchCtrl" placeholder="Tìm phim, đạo diễn...">
       </span>
+    </div>
+
+    <div class="filter-row">
+      <div class="tabs">
+        <button *ngFor="let t of tabs" class="tab" [class.active]="mode === t.mode" (click)="setMode(t.mode)">{{ t.label }}</button>
+      </div>
+      <select class="genre-select" [(ngModel)]="selectedGenre" *ngIf="!isPaged && genres.length">
+        <option value="">Thể loại</option>
+        <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
+      </select>
     </div>
   </div>
 </div>
@@ -16,7 +29,7 @@
   </div>
 
   <div class="movie-grid">
-    <div class="movie-card" *ngFor="let movie of movies$ | async" [routerLink]="['/movies', movie.id]">
+    <div class="movie-card" *ngFor="let movie of displayed" [routerLink]="['/movies', movie.id]">
       <div class="card-poster">
         <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title">
         <div class="card-hover-overlay">
@@ -35,12 +48,36 @@
     </div>
   </div>
 
-  <div *ngIf="(movies$ | async)?.length === 0 && !(loading$ | async)" class="empty">
+  <div *ngIf="displayed.length === 0 && !(loading$ | async)" class="empty">
     <i class="fas fa-film"></i>
     <p>Không có phim nào.</p>
   </div>
 
-  <div class="pager" *ngIf="isPaged && (pagedMovies$ | async) as paged">
-    <mat-paginator [length]="paged.total" [pageSize]="pageSize" (page)="onPageChange($event)" showFirstLastButtons></mat-paginator>
+  <div class="pager" *ngIf="isPaged && total > pageSize">
+    <mat-paginator [length]="total" [pageSize]="pageSize" (page)="onPageChange($event)" showFirstLastButtons></mat-paginator>
   </div>
 </div>
+
+<!-- Footer -->
+<footer class="ml-footer">
+  <div class="ml-footer-inner">
+    <div class="foot-brand">
+      <a class="foot-logo"><i class="fas fa-film"></i> <strong>Midnight Premium</strong></a>
+      <p>Trải nghiệm điện ảnh đẳng cấp nhất Việt Nam.</p>
+    </div>
+    <div class="foot-col">
+      <h4>Liên Kết</h4>
+      <a routerLink="/movies">Phim</a>
+      <a routerLink="/theaters">Rạp Chiếu</a>
+      <a routerLink="/promotions">Khuyến Mãi</a>
+      <a routerLink="/membership">Thành Viên</a>
+    </div>
+    <div class="foot-col">
+      <h4>Hỗ Trợ</h4>
+      <a href="#">Điều Khoản</a>
+      <a href="#">Bảo Mật</a>
+      <a href="#">Liên Hệ</a>
+    </div>
+  </div>
+  <p class="foot-copy">© 2026 Midnight Premium Cinema. All rights reserved.</p>
+</footer>

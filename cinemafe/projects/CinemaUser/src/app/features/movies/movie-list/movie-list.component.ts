@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { ActivatedRoute } from '@angular/router';
 import { FormControl } from '@angular/forms';
@@ -19,52 +19,74 @@ type Mode = 'all' | 'now' | 'coming';
   templateUrl: './movie-list.component.html',
   styleUrl: './movie-list.component.scss',
 })
-export class MovieListComponent implements OnInit {
+export class MovieListComponent implements OnInit, OnDestroy {
   private _store = inject(Store);
   private _route = inject(ActivatedRoute);
+  private _cdr = inject(ChangeDetectorRef);
+  private _destroy$ = new Subject<void>();
+
+  readonly tabs: { mode: Mode; label: string }[] = [
+    { mode: 'all', label: 'Tất Cả' },
+    { mode: 'now', label: 'Đang Chiếu' },
+    { mode: 'coming', label: 'Sắp Chiếu' },
+  ];
 
   mode: Mode = 'all';
-  movies$!: Observable<any[]>;
-  pagedMovies$ = this._store.select(selectPagedMovies);
-  loading$ = this._store.select(selectMoviesLoading);
+  selectedGenre = '';
   searchCtrl = new FormControl('');
   page = 1;
   pageSize = 12;
+  total = 0;
 
-  get title(): string {
-    return this.mode === 'now' ? 'Phim Đang Chiếu'
-      : this.mode === 'coming' ? 'Phim Sắp Chiếu'
-      : 'Tất Cả Phim';
-  }
+  loading$ = this._store.select(selectMoviesLoading);
+
+  private _now: any[] = [];
+  private _coming: any[] = [];
+  private _paged: any[] = [];
+
   get isPaged(): boolean { return this.mode === 'all'; }
+  get title(): string {
+    return this.mode === 'now' ? 'Phim Đang Chiếu' : this.mode === 'coming' ? 'Phim Sắp Chiếu' : 'Danh Sách Phim';
+  }
+  private get _source(): any[] {
+    return this.mode === 'now' ? this._now : this.mode === 'coming' ? this._coming : this._paged;
+  }
+  get genres(): string[] {
+    return [...new Set(this._source.flatMap(m => m.genres ?? []))].sort();
+  }
+  get displayed(): any[] {
+    return this.selectedGenre ? this._source.filter(m => (m.genres ?? []).includes(this.selectedGenre)) : this._source;
+  }
 
   ngOnInit(): void {
-    const showing = this._route.snapshot.queryParamMap.get('showing');
-    this.mode = showing === 'now' ? 'now' : showing === 'coming' ? 'coming' : 'all';
+    this._store.select(selectNowShowing).pipe(takeUntil(this._destroy$)).subscribe(l => { this._now = l ?? []; this._cdr.markForCheck(); });
+    this._store.select(selectComingSoon).pipe(takeUntil(this._destroy$)).subscribe(l => { this._coming = l ?? []; this._cdr.markForCheck(); });
+    this._store.select(selectPagedMovies).pipe(takeUntil(this._destroy$)).subscribe((p: any) => { this._paged = p?.items ?? []; this.total = p?.total ?? 0; this._cdr.markForCheck(); });
 
-    if (this.mode === 'now') {
-      this._store.dispatch(loadNowShowing());
-      this.movies$ = this._store.select(selectNowShowing);
-    } else if (this.mode === 'coming') {
-      this._store.dispatch(loadComingSoon());
-      this.movies$ = this._store.select(selectComingSoon);
-    } else {
-      this.movies$ = this.pagedMovies$.pipe(map((p: any) => p?.items ?? []));
-      this.loadMovies();
-      this.searchCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
-        this.page = 1;
-        this.loadMovies();
-      });
-    }
+    const showing = this._route.snapshot.queryParamMap.get('showing');
+    this.setMode(showing === 'now' ? 'now' : showing === 'coming' ? 'coming' : 'all');
+
+    this.searchCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this._destroy$))
+      .subscribe(() => { if (this.mode === 'all') { this.page = 1; this._loadPaged(); } });
   }
 
-  loadMovies(): void {
+  ngOnDestroy(): void { this._destroy$.next(); this._destroy$.complete(); }
+
+  setMode(m: Mode): void {
+    this.mode = m;
+    this.selectedGenre = '';
+    if (m === 'now') { this._store.dispatch(loadNowShowing()); }
+    else if (m === 'coming') { this._store.dispatch(loadComingSoon()); }
+    else { this.page = 1; this._loadPaged(); }
+  }
+
+  private _loadPaged(): void {
     this._store.dispatch(loadMovies({ search: this.searchCtrl.value ?? undefined, page: this.page, pageSize: this.pageSize }));
   }
 
   onPageChange(e: PageEvent): void {
     this.page = e.pageIndex + 1;
     this.pageSize = e.pageSize;
-    this.loadMovies();
+    this._loadPaged();
   }
 }

@@ -50,18 +50,25 @@ $outline: rgba(255,255,255,0.07);
 }
 
 // ── Method Tabs ───────────────────────────────────────────────────────────────
-.method-tabs { display: flex; gap: 10px; }
-.method-tab {
-  flex: 1; padding: 10px; border-radius: 10px;
+.method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.method-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 18px; border-radius: 12px;
   background: rgba(255,255,255,0.04); border: 1.5px solid $outline;
-  color: $muted; font-size: 0.85rem; font-weight: 500; cursor: pointer;
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
-  i { margin-right: 6px; }
+  color: $text; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+  i { font-size: 1.2rem; color: $muted; }
+  &:hover:not(.active) { border-color: rgba(212,228,250,0.25); }
   &.active {
-    background: rgba(208,188,255,0.1); border-color: $primary;
-    color: $primary;
+    background: rgba(208,188,255,0.12); border-color: $primary;
+    box-shadow: 0 0 0 2px rgba(208,188,255,0.2);
+    i { color: $primary; }
   }
-  &:hover:not(.active) { border-color: rgba(212,228,250,0.25); color: $text; }
+  &.momo.active {
+    background: rgba(216,27,150,0.18); border-color: #d81b96;
+    box-shadow: 0 0 0 2px rgba(216,27,150,0.25);
+    i { color: #ff5cb8; }
+  }
 }
 
 // ── Card Preview ──────────────────────────────────────────────────────────────

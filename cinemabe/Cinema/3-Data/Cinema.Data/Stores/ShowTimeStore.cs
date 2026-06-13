@@ -25,4 +25,33 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
             .Include(sr => sr.ShowTime).ThenInclude(s => s.Movie)
             .Include(sr => sr.Room).ThenInclude(r => r.Theater)
             .FirstOrDefaultAsync(sr => sr.ShowTimeId == showTimeId && sr.RoomId == roomId);
+
+    public async Task<IEnumerable<ShowTime>> GetAllWithRoomsAsync()
+        => await DbSet
+            .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room)
+            .OrderBy(s => s.StartTime)
+            .ToListAsync();
+
+    public async Task<ShowTime?> GetByIdWithRoomsAsync(Guid id)
+        => await DbSet
+            .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+    public async Task SetRoomAsync(Guid showTimeId, Guid roomId, int basePrice)
+    {
+        var existing = await Context.ShowTimeRoom
+            .Where(sr => sr.ShowTimeId == showTimeId)
+            .ToListAsync();
+        if (existing.Count > 0)
+        {
+            Context.ShowTimeRoom.RemoveRange(existing);
+        }
+        await Context.ShowTimeRoom.AddAsync(new ShowTimeRoom
+        {
+            ShowTimeId = showTimeId,
+            RoomId = roomId,
+            BasePrice = basePrice,
+        });
+        await Context.SaveChangesAsync();
+    }
 }

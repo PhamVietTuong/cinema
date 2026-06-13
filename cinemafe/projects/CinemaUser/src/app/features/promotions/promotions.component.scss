@@ -2,14 +2,15 @@ $bg: #051424;
 $container: #0d1c2d;
 $primary: #d0bcff;
 $secondary: #ffb690;
+$orange: #f97316;
 $text: #d4e4fa;
 $muted: rgba(212, 228, 250, 0.6);
 $outline: rgba(255, 255, 255, 0.08);
 
-.page-header { background: rgba(13, 28, 45, 0.9); border-bottom: 1px solid $outline; padding: 36px 0; }
-.page-header-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
-.page-title { font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 700; color: $text; margin: 0; }
-.page-sub { color: $muted; margin: 8px 0 0; max-width: 640px; }
+.page-header { background: rgba(13, 28, 45, 0.9); border-bottom: 1px solid $outline; padding: 40px 0; }
+.ph-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+.page-title { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 700; color: $text; margin: 0; }
+.page-sub { color: $muted; margin: 10px 0 0; max-width: 680px; }
 
 .promo-page { max-width: 1200px; margin: 0 auto; padding: 40px; }
 .spinner-wrap { display: flex; justify-content: center; padding: 60px; ::ng-deep circle { stroke: $primary !important; } }
@@ -32,20 +33,52 @@ $outline: rgba(255, 255, 255, 0.08);
   .promo-percent { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 800; }
   .promo-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; }
 }
-.promo-perf {
-  flex: 0 0 0;
-  border-left: 2px dashed rgba(255, 255, 255, 0.25);
-  position: relative;
-}
-.promo-right { flex: 1; padding: 18px 22px; }
+.promo-perf { flex: 0 0 0; border-left: 2px dashed rgba(255, 255, 255, 0.25); }
+.promo-right { flex: 1; padding: 18px 22px; display: flex; flex-direction: column; }
 .promo-desc { font-family: 'Montserrat', sans-serif; font-size: 1.05rem; font-weight: 700; color: $text; margin: 0 0 6px; }
 .promo-detail { font-size: 0.85rem; color: $secondary; margin: 0 0 6px; }
 .promo-validity { font-size: 0.8rem; color: $muted; margin: 0 0 14px; i { margin-right: 6px; } }
+.promo-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
 .promo-code {
   display: inline-flex; align-items: center; gap: 10px;
   border: 1px dashed rgba(208, 188, 255, 0.4); border-radius: 8px; padding: 6px 14px;
   .code-label { font-size: 0.72rem; color: $muted; text-transform: uppercase; letter-spacing: 0.08em; }
   .code-val { font-family: 'Montserrat', sans-serif; font-weight: 700; color: $primary; letter-spacing: 0.06em; }
 }
+.dungngay-btn {
+  border: none; cursor: pointer;
+  background: $orange; color: #fff;
+  font-size: 0.82rem; font-weight: 700; padding: 9px 18px; border-radius: 8px;
+  transition: background 0.15s ease, box-shadow 0.2s ease;
+  &:hover { background: #fb8c3c; box-shadow: 0 6px 18px -6px rgba(249, 115, 22, 0.6); }
+}
 
-@media (max-width: 760px) { .promo-grid { grid-template-columns: 1fr; } .promo-page, .page-header-inner { padding-left: 20px; padding-right: 20px; } }
+// ── Feature banner ────────────────────────────────────────────────────────────
+.feature-banner {
+  position: relative;
+  margin-top: 32px;
+  min-height: 220px;
+  display: flex; align-items: center;
+  border-radius: 18px; overflow: hidden;
+  border: 1px solid $outline;
+}
+.feature-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.feature-scrim {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(5, 20, 36, 0.92) 0%, rgba(5, 20, 36, 0.7) 45%, rgba(5, 20, 36, 0.2) 100%);
+}
+.feature-content { position: relative; z-index: 1; padding: 32px 40px; max-width: 560px; }
+.feature-badge {
+  display: inline-block; background: $orange; color: #fff;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 4px 12px; border-radius: 6px; margin-bottom: 12px;
+}
+.feature-title { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0 0 10px; }
+.feature-desc { color: rgba(212, 228, 250, 0.85); margin: 0 0 18px; }
+.feature-btn { background: #fff; color: #23005c; }
+
+@media (max-width: 760px) {
+  .promo-grid { grid-template-columns: 1fr; }
+  .promo-page, .ph-inner { padding-left: 20px; padding-right: 20px; }
+  .feature-content { padding: 24px 22px; }
+}

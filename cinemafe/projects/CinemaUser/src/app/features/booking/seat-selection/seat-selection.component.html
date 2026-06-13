@@ -39,8 +39,7 @@
                  'locked':    seat.isLocked || seat.status === SeatStatus.Reserved,
                  'vip':       seat.seatTypeName === 'VIP'
                }"
-               (click)="toggleSeat(seat)">
-          </div>
+               (click)="toggleSeat(seat)">{{ seat.rowName }}{{ seat.colIndex }}</div>
         </ng-container>
       </div>
 

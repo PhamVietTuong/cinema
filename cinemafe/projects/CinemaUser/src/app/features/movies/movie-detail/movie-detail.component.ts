@@ -36,4 +36,24 @@ export class MovieDetailComponent implements OnInit {
   scrollToShowtimes(): void {
     document.getElementById('showtimes')?.scrollIntoView({ behavior: 'smooth' });
   }
+
+  formatLabel(f?: number): string {
+    return f === 3 ? 'IMAX' : f === 2 ? '3D' : '2D';
+  }
+
+  /** Groups a movie's showtimes by projection format for the "Lịch Chiếu" section. */
+  groupByFormat(showTimes: any[] | undefined): { label: string; items: any[] }[] {
+    const map = new Map<number, any[]>();
+    for (const st of showTimes ?? []) {
+      const f = st.projectionForm ?? 1;
+      if (!map.has(f)) { map.set(f, []); }
+      map.get(f)!.push(st);
+    }
+    return [...map.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([f, items]) => ({
+        label: this.formatLabel(f),
+        items: items.sort((x, y) => new Date(x.startTime).getTime() - new Date(y.startTime).getTime()),
+      }));
+  }
 }

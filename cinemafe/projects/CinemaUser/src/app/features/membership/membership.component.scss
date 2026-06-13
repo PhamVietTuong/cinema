@@ -5,11 +5,28 @@ $text: #d4e4fa;
 $muted: rgba(212, 228, 250, 0.6);
 $outline: rgba(255, 255, 255, 0.08);
 
-.page-header { background: rgba(13, 28, 45, 0.9); border-bottom: 1px solid $outline; padding: 44px 0; text-align: center; }
-.page-header-inner { max-width: 760px; margin: 0 auto; padding: 0 40px; }
+.mem-banner {
+  background: rgba(13, 28, 45, 0.9);
+  border-bottom: 1px solid $outline;
+  padding: 44px 40px;
+  display: flex; align-items: center; justify-content: space-between; gap: 40px;
+  max-width: 1140px; margin: 0 auto;
+}
+.mem-banner-text { max-width: 600px; }
+.mem-banner-img {
+  width: 240px; flex: none;
+  border-radius: 16px;
+  border: 1px solid rgba(208, 188, 255, 0.25);
+  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.6);
+}
 .eyebrow { color: $primary; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.18em; margin: 0 0 8px; }
 .page-title { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 700; color: $text; margin: 0; }
 .page-sub { color: $muted; margin: 10px 0 0; }
+
+@media (max-width: 720px) {
+  .mem-banner { flex-direction: column-reverse; text-align: center; padding: 32px 20px; }
+  .mem-banner-img { width: 180px; }
+}
 
 .member-page { max-width: 1140px; margin: 0 auto; padding: 48px 40px; }
 .spinner-wrap { display: flex; justify-content: center; padding: 60px; ::ng-deep circle { stroke: $primary !important; } }

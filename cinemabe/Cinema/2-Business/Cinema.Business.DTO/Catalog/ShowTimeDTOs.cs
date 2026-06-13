@@ -12,6 +12,9 @@ public class ShowTimeDTO
     public ProjectionForm ProjectionForm { get; set; }
     public ShowTimeType ShowTimeType { get; set; }
     public bool IsActive { get; set; }
+    public Guid? RoomId { get; set; }
+    public string? RoomName { get; set; }
+    public int BasePrice { get; set; }
 }
 
 public class CreateShowTimeRequest
@@ -22,6 +25,8 @@ public class CreateShowTimeRequest
     public ProjectionForm ProjectionForm { get; set; } = ProjectionForm.TwoD;
     public ShowTimeType ShowTimeType { get; set; } = ShowTimeType.Normal;
     public bool IsActive { get; set; } = true;
+    public Guid RoomId { get; set; }
+    public int BasePrice { get; set; }
 }
 
 public class UpdateShowTimeRequest : IHasId
@@ -33,4 +38,6 @@ public class UpdateShowTimeRequest : IHasId
     public ProjectionForm ProjectionForm { get; set; } = ProjectionForm.TwoD;
     public ShowTimeType ShowTimeType { get; set; } = ShowTimeType.Normal;
     public bool IsActive { get; set; } = true;
+    public Guid RoomId { get; set; }
+    public int BasePrice { get; set; }
 }

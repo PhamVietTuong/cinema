@@ -59,3 +59,31 @@ a { color: inherit; text-decoration: none; &:hover { text-decoration: none; } }
   font-size: 0.7rem;
   font-weight: 700;
 }
+
+// ── Material menu (navbar user dropdown) — dark "Midnight Premium" theme ───────
+.mat-mdc-menu-panel {
+  --mat-menu-container-color: #0d1c2d;
+  background: #0d1c2d !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.65) !important;
+}
+.mat-mdc-menu-content {
+  padding: 6px !important;
+  background: transparent;
+}
+.mat-mdc-menu-item {
+  --mat-menu-item-label-text-color: #d4e4fa;
+  color: #d4e4fa !important;
+  min-height: 42px;
+  border-radius: 8px;
+
+  .mdc-list-item__primary-text { color: #d4e4fa !important; }
+  .menu-icon { color: #d0bcff; margin-right: 10px; width: 16px; text-align: center; }
+
+  &:hover:not([disabled]),
+  &.cdk-program-focused:not([disabled]),
+  &.cdk-keyboard-focused:not([disabled]) {
+    background: rgba(208, 188, 255, 0.12) !important;
+  }
+}

@@ -15,7 +15,7 @@ export class BookingConfirmationComponent implements OnInit {
   seats: SelectableSeat[] = [];
   showTimeId = '';
   roomId = '';
-  paymentMethod = 'VNPay';
+  paymentMethod = 'Card';
   loading = false;
   error = '';
   bookingSuccess = false;

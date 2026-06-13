@@ -26,114 +26,143 @@
     </div>
 
     <nav class="id-tabs">
-      <button [class.active]="tab === 'info'" (click)="tab = 'info'"><i class="fas fa-user"></i> Thông Tin</button>
-      <button [class.active]="tab === 'password'" (click)="tab = 'password'"><i class="fas fa-lock"></i> Đổi Mật Khẩu</button>
-      <button [class.active]="tab === 'bookings'" (click)="tab = 'bookings'"><i class="fas fa-ticket"></i> Vé Của Tôi</button>
+      <button [class.active]="tab === 'overview'" (click)="tab = 'overview'"><i class="fas fa-gauge"></i> Bảng Điều Khiển</button>
+      <button [class.active]="tab === 'bookings'" (click)="tab = 'bookings'"><i class="fas fa-ticket"></i> Lịch Sử Đặt Vé</button>
+      <button [class.active]="tab === 'settings'" (click)="tab = 'settings'"><i class="fas fa-gear"></i> Cài Đặt</button>
     </nav>
   </aside>
 
   <!-- Right: content -->
   <section class="content-card">
-    <!-- Info / edit -->
-    <ng-container *ngIf="tab === 'info'">
-      <h2 class="section-title">Thông Tin Cá Nhân</h2>
-      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form">
-        <label class="field">
-          <span class="field-label">Họ và tên</span>
-          <input type="text" formControlName="name" placeholder="Nguyễn Văn A">
-        </label>
-        <label class="field">
-          <span class="field-label">Email</span>
-          <input type="text" [value]="user?.email || ''" disabled>
-        </label>
-        <label class="field">
-          <span class="field-label">Số điện thoại</span>
-          <input type="text" formControlName="phone" placeholder="0901234567">
-        </label>
-        <label class="field">
-          <span class="field-label">Ảnh đại diện (URL)</span>
-          <input type="text" formControlName="avatar" placeholder="https://...">
-        </label>
+    <!-- Overview / dashboard -->
+    <ng-container *ngIf="tab === 'overview'">
+      <div class="ov-head">
+        <div class="ov-head-left">
+          <span class="ov-avatar">
+            <img *ngIf="user?.avatar" [src]="user!.avatar" alt="">
+            <span *ngIf="!user?.avatar">{{ initials(user?.name) }}</span>
+          </span>
+          <div>
+            <h2 class="ov-name">{{ user?.name || '—' }}</h2>
+            <p class="ov-sub">Thành viên {{ user?.memberShipName || user?.userTypeName || 'Midnight Premium' }}</p>
+          </div>
+        </div>
+        <div class="ov-points">
+          <span class="ov-points-label">ĐIỂM THƯỞNG</span>
+          <span class="ov-points-val">{{ user?.points ?? 0 | number }}</span>
+        </div>
+      </div>
 
-        <p class="msg ok" *ngIf="profileMsg">{{ profileMsg }}</p>
-        <p class="msg err" *ngIf="profileErr">{{ profileErr }}</p>
+      <div class="ov-grid">
+        <div class="ov-stat"><i class="fas fa-ticket"></i><span class="ov-stat-val">{{ ticketCount }}</span><span class="ov-stat-label">Vé Đã Đặt</span></div>
+        <div class="ov-stat"><i class="fas fa-receipt"></i><span class="ov-stat-val">{{ bookingCount }}</span><span class="ov-stat-label">Đơn Hàng</span></div>
+        <div class="ov-stat"><i class="fas fa-star"></i><span class="ov-stat-val">{{ user?.points ?? 0 | number }}</span><span class="ov-stat-label">Điểm Thưởng</span></div>
+      </div>
 
-        <button type="submit" class="btn-primary-cta" [disabled]="profileForm.invalid">Lưu Thay Đổi</button>
-      </form>
+      <div class="ov-perks">
+        <h3 class="ov-perks-title"><i class="fas fa-crown"></i> Đặc Quyền Thành Viên</h3>
+        <ul>
+          <li *ngFor="let p of perks"><i class="fas" [ngClass]="p.icon"></i> {{ p.text }}</li>
+        </ul>
+      </div>
+
+      <h3 class="ov-section-title">Lịch Sử Đặt Vé Gần Đây</h3>
+      <div class="ov-table" *ngIf="recentBookings.length; else noOv">
+        <div class="ov-row ov-row-head">
+          <span>Phim</span><span>Ngày Chiếu</span><span>Ghế</span><span>Trạng Thái</span>
+        </div>
+        <div class="ov-row" *ngFor="let r of recentBookings">
+          <span class="ov-movie">{{ r.movie }}</span>
+          <span>{{ r.date | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span>{{ r.seats }}</span>
+          <span><span class="invoice-status" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></span>
+        </div>
+      </div>
+      <ng-template #noOv>
+        <div class="empty"><i class="fas fa-ticket"></i><p>Bạn chưa có vé nào.</p></div>
+      </ng-template>
     </ng-container>
 
-    <!-- Change password -->
-    <ng-container *ngIf="tab === 'password'">
-      <h2 class="section-title">Đổi Mật Khẩu</h2>
-      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="form">
-        <label class="field">
-          <span class="field-label">Mật khẩu hiện tại</span>
-          <input type="password" formControlName="currentPassword" autocomplete="current-password">
-        </label>
-        <label class="field">
-          <span class="field-label">Mật khẩu mới</span>
-          <input type="password" formControlName="newPassword" autocomplete="new-password">
-          <small class="hint" *ngIf="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.invalid">Tối thiểu 6 ký tự.</small>
-        </label>
-        <label class="field">
-          <span class="field-label">Xác nhận mật khẩu mới</span>
-          <input type="password" formControlName="confirmNewPassword" autocomplete="new-password">
-        </label>
-
-        <p class="msg ok" *ngIf="passwordMsg">{{ passwordMsg }}</p>
-        <p class="msg err" *ngIf="passwordErr">{{ passwordErr }}</p>
-
-        <button type="submit" class="btn-primary-cta" [disabled]="passwordForm.invalid">Cập Nhật Mật Khẩu</button>
-      </form>
-    </ng-container>
-
-    <!-- My bookings -->
+    <!-- Booking history (table) -->
     <ng-container *ngIf="tab === 'bookings'">
-      <h2 class="section-title">Vé Của Tôi</h2>
+      <h2 class="section-title">Lịch Sử Đặt Vé</h2>
 
       <div *ngIf="invoicesLoading" class="empty"><mat-spinner diameter="34"></mat-spinner></div>
 
-      <div *ngIf="!invoicesLoading && !invoices.length" class="empty">
-        <i class="fas fa-ticket"></i>
-        <p>Bạn chưa có vé nào.</p>
-      </div>
+      <ng-container *ngIf="!invoicesLoading">
+        <div class="bk-stats">
+          <div class="bk-stat"><span class="bk-stat-val">{{ ticketCount }}</span><span class="bk-stat-label">Tổng vé đã mua</span></div>
+          <div class="bk-stat"><span class="bk-stat-val">{{ upcomingCount }}</span><span class="bk-stat-label">Sắp tới</span></div>
+          <div class="bk-stat"><span class="bk-stat-val">{{ totalSpent | number:'1.0-0' }}đ</span><span class="bk-stat-label">Tổng chi tiêu</span></div>
+          <div class="bk-stat"><span class="bk-stat-val">{{ user?.points ?? 0 | number }}</span><span class="bk-stat-label">Điểm tích lũy</span></div>
+        </div>
 
-      <div class="invoice-list" *ngIf="!invoicesLoading">
-        <div class="invoice" *ngFor="let inv of invoices">
-          <div class="invoice-head" (click)="toggleInvoice(inv.id)">
-            <div class="invoice-main">
-              <span class="invoice-code">{{ inv.code || '—' }}</span>
-              <span class="invoice-date">{{ inv.creationTime | date:'dd/MM/yyyy HH:mm' }}</span>
-            </div>
-            <div class="invoice-right">
-              <span class="invoice-total">{{ inv.finalAmount | number:'1.0-0' }}đ</span>
-              <span class="invoice-status" [class]="statusClass(inv.status)">{{ statusLabel(inv.status) }}</span>
-              <i class="fas" [class.fa-chevron-down]="expandedId !== inv.id" [class.fa-chevron-up]="expandedId === inv.id"></i>
-            </div>
+        <div class="ov-table" *ngIf="bookingRows.length; else noBk">
+          <div class="ov-row ov-row-head bk-cols">
+            <span>Tên Phim</span><span>Suất Chiếu</span><span>Ghế</span><span>Tổng Tiền</span><span>Trạng Thái</span><span></span>
           </div>
-
-          <div class="invoice-body" *ngIf="expandedId === inv.id">
-            <div class="ticket" *ngFor="let t of inv.tickets">
-              <div class="ticket-movie">
-                <strong>{{ t.movieTitle }}</strong>
-                <span>{{ t.theaterName }} · {{ t.roomName }} · {{ t.showTime | date:'dd/MM HH:mm' }}</span>
-              </div>
-              <div class="ticket-seat">
-                <span class="seat-chip">{{ t.seatLabel }}</span>
-                <span class="ticket-type">{{ t.ticketType }}</span>
-              </div>
-            </div>
-
-            <div class="food" *ngFor="let f of inv.foods">
-              <span>{{ f.foodName }} × {{ f.quantity }}</span>
-              <span>{{ f.totalPrice | number:'1.0-0' }}đ</span>
-            </div>
-
-            <button *ngIf="inv.status === InvoiceStatus.Pending" class="btn-ghost-cta cancel-btn" (click)="cancelBooking(inv)">
-              <i class="fas fa-xmark"></i> Hủy đặt vé
-            </button>
+          <div class="ov-row bk-cols" *ngFor="let r of bookingRows">
+            <span class="ov-movie">{{ r.movie }}</span>
+            <span>{{ r.date | date:'dd/MM/yy HH:mm' }}</span>
+            <span>{{ r.seats }}</span>
+            <span>{{ r.total | number:'1.0-0' }}đ</span>
+            <span><span class="invoice-status" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></span>
+            <span><button *ngIf="r.status === InvoiceStatus.Pending" class="bk-cancel" (click)="cancelById(r.id)" title="Hủy đặt vé"><i class="fas fa-xmark"></i></button></span>
           </div>
         </div>
+        <ng-template #noBk><div class="empty"><i class="fas fa-ticket"></i><p>Bạn chưa có vé nào.</p></div></ng-template>
+      </ng-container>
+    </ng-container>
+
+    <!-- Settings -->
+    <ng-container *ngIf="tab === 'settings'">
+      <h2 class="section-title">Cài Đặt Tài Khoản</h2>
+
+      <div class="set-card">
+        <h3 class="set-title"><i class="fas fa-user"></i> Thông Tin Cá Nhân</h3>
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form">
+          <div class="set-row-2">
+            <label class="field"><span class="field-label">Họ và tên</span><input type="text" formControlName="name" placeholder="Nguyễn Văn A"></label>
+            <label class="field"><span class="field-label">Email</span><input type="text" [value]="user?.email || ''" disabled></label>
+          </div>
+          <div class="set-row-2">
+            <label class="field"><span class="field-label">Số điện thoại</span><input type="text" formControlName="phone" placeholder="0901234567"></label>
+            <label class="field"><span class="field-label">Ảnh đại diện (URL)</span><input type="text" formControlName="avatar" placeholder="https://..."></label>
+          </div>
+          <p class="msg ok" *ngIf="profileMsg">{{ profileMsg }}</p>
+          <p class="msg err" *ngIf="profileErr">{{ profileErr }}</p>
+          <button type="submit" class="btn-primary-cta" [disabled]="profileForm.invalid">Lưu Thay Đổi</button>
+        </form>
+      </div>
+
+      <div class="set-card">
+        <h3 class="set-title"><i class="fas fa-lock"></i> Mật Khẩu & Bảo Mật</h3>
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="form">
+          <div class="set-row-3">
+            <label class="field"><span class="field-label">Mật khẩu hiện tại</span><input type="password" formControlName="currentPassword" autocomplete="current-password"></label>
+            <label class="field"><span class="field-label">Mật khẩu mới</span><input type="password" formControlName="newPassword" autocomplete="new-password"></label>
+            <label class="field"><span class="field-label">Xác nhận</span><input type="password" formControlName="confirmNewPassword" autocomplete="new-password"></label>
+          </div>
+          <p class="msg ok" *ngIf="passwordMsg">{{ passwordMsg }}</p>
+          <p class="msg err" *ngIf="passwordErr">{{ passwordErr }}</p>
+          <button type="submit" class="btn-primary-cta" [disabled]="passwordForm.invalid">Cập Nhật Mật Khẩu</button>
+        </form>
+      </div>
+
+      <div class="set-card">
+        <h3 class="set-title"><i class="fas fa-bell"></i> Cấu Hình Thông Báo</h3>
+        <label class="toggle-row"><span>Phim mới & Trailer</span>
+          <span class="switch"><input type="checkbox" [(ngModel)]="notif.trailers"><span class="track"></span></span></label>
+        <label class="toggle-row"><span>Nhắc nhở lịch chiếu đã đặt</span>
+          <span class="switch"><input type="checkbox" [(ngModel)]="notif.reminders"><span class="track"></span></span></label>
+        <label class="toggle-row"><span>Chương trình khuyến mãi & Ưu đãi</span>
+          <span class="switch"><input type="checkbox" [(ngModel)]="notif.promos"><span class="track"></span></span></label>
+      </div>
+
+      <div class="set-card danger">
+        <h3 class="set-title danger-title"><i class="fas fa-triangle-exclamation"></i> Xóa Tài Khoản</h3>
+        <p class="set-desc">Hành động này không thể hoàn tác. Toàn bộ dữ liệu xem phim và vé đã đặt của bạn sẽ bị xóa vĩnh viễn.</p>
+        <button class="danger-btn" type="button">Xóa Vĩnh Viễn</button>
       </div>
     </ng-container>
   </section>
