@@ -11,7 +11,6 @@ public interface IApplicationUnitOfWork : IDisposable
     IRoomStore RoomStore { get; }
     IDiscountStore DiscountStore { get; }
     IMovieTypeDetailStore MovieTypeDetailStore { get; }
-    ISeatTypeTicketTypeStore SeatTypeTicketTypeStore { get; }
     IUserTypeStore UserTypeStore { get; }
     ICommentStore CommentStore { get; }
     IEvaluationStore EvaluationStore { get; }
@@ -20,7 +19,6 @@ public interface IApplicationUnitOfWork : IDisposable
     IDiscountTypeStore DiscountTypeStore { get; }
     IMovieTypeStore MovieTypeStore { get; }
     ISeatTypeStore SeatTypeStore { get; }
-    ITicketTypeStore TicketTypeStore { get; }
     IMemberShipStore MemberShipStore { get; }
     IHolidayStore HolidayStore { get; }
     INewsStore NewsStore { get; }

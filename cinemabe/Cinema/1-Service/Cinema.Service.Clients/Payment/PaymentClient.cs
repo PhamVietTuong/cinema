@@ -980,6 +980,9 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("isLocked", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsLocked { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("seatGroupId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Guid? SeatGroupId { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1074,9 +1077,6 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("seatType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string SeatType { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("ticketType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string TicketType { get; set; }
-
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double Price { get; set; }
 
@@ -1113,9 +1113,6 @@ namespace Cinema.Service.Clients.Payment
     {
         [Newtonsoft.Json.JsonProperty("seatId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid SeatId { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("ticketTypeId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Guid TicketTypeId { get; set; }
 
     }
 
@@ -1263,8 +1260,8 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("seatLabel", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string SeatLabel { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("ticketType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string TicketType { get; set; }
+        [Newtonsoft.Json.JsonProperty("seatType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string SeatType { get; set; }
 
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double Price { get; set; }

@@ -1,6 +1,9 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { SharedModule, IdentityServiceAgent, PaymentServiceAgent } from 'CinemaLib';
+import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent } from 'CinemaLib';
+
+/** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
+const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
 
 @Component({
   selector: 'app-profile',
@@ -12,8 +15,12 @@ import { SharedModule, IdentityServiceAgent, PaymentServiceAgent } from 'CinemaL
 export class ProfileComponent implements OnInit {
   private _identity = inject(IdentityServiceAgent.HttpService);
   private _payment = inject(PaymentServiceAgent.HttpService);
+  private _cinema = inject(CinemaServiceAgent.HttpService);
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
+
+  avatarUploading = false;
+  avatarErr = '';
 
   readonly InvoiceStatus = PaymentServiceAgent.InvoiceStatus;
   tab: 'overview' | 'bookings' | 'settings' = 'overview';
@@ -34,7 +41,7 @@ export class ProfileComponent implements OnInit {
 
   profileForm: FormGroup = this._fb.group({
     name: ['', Validators.required],
-    phone: [''],
+    phone: ['', Validators.pattern(PHONE_PATTERN)],
     avatar: [''],
   });
   passwordForm: FormGroup = this._fb.group({
@@ -79,6 +86,16 @@ export class ProfileComponent implements OnInit {
         },
         error: e => { this.profileErr = this._err(e, 'Cập nhật thất bại.'); this._cdr.markForCheck(); },
       });
+  }
+
+  onPickAvatar(e: Event): void {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) { return; }
+    this.avatarUploading = true; this.avatarErr = '';
+    this._cinema.uploadImage({ data: file, fileName: file.name }).subscribe({
+      next: r => { this.profileForm.patchValue({ avatar: r.url ?? '' }); this.avatarUploading = false; this._cdr.markForCheck(); },
+      error: () => { this.avatarErr = 'Tải ảnh thất bại.'; this.avatarUploading = false; this._cdr.markForCheck(); },
+    });
   }
 
   changePassword(): void {

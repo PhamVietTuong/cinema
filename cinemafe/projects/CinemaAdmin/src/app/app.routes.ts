@@ -63,16 +63,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/catalog/invoices/invoices.component').then(m => m.InvoicesManagementComponent)
       },
       {
-        path: 'movie-type-details',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/movie-type-details/movie-type-details.component').then(m => m.MovieTypeDetailsManagementComponent)
-      },
-      {
-        path: 'seat-ticket-pricing',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/seat-type-ticket-types/seat-type-ticket-types.component').then(m => m.SeatTypeTicketTypesManagementComponent)
-      },
-      {
         path: 'users',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/users/users-management.component').then(m => m.UsersManagementComponent)
@@ -93,11 +83,6 @@ export const routes: Routes = [
         path: 'seat-types',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/catalog/seat-types/seat-types.component').then(m => m.SeatTypesManagementComponent)
-      },
-      {
-        path: 'ticket-types',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/ticket-types/ticket-types.component').then(m => m.TicketTypesManagementComponent)
       },
       {
         path: 'discount-types',

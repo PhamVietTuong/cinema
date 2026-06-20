@@ -39,6 +39,11 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .Include(m => m.Evaluations)
             .FirstOrDefaultAsync(m => m.Id == id);
 
+    public async Task<Movie?> GetForUpdateAsync(Guid id)
+        => await DbSet
+            .Include(m => m.MovieTypeDetails)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
     public async Task<IEnumerable<Movie>> GetNowShowingAsync()
     {
         var today = DateOnly.FromDateTime(DateTime.Today);

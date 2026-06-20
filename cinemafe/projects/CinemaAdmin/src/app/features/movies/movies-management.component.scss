@@ -1,23 +1,9 @@
 :host { display: block; }
 
-.form-card { margin-bottom: 22px; }
-
-.movie-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-.full-span { grid-column: 1 / -1; }
-.form-actions { display: flex; gap: 12px; }
-
 .movie-cell { display: flex; align-items: center; gap: 12px; }
 .movie-cell .poster {
   width: 36px; height: 50px; border-radius: 6px; flex: none;
   background: var(--ad-surface-3) center/cover no-repeat;
   display: inline-flex; align-items: center; justify-content: center;
   mat-icon { color: var(--ad-faint); font-size: 19px; width: 19px; height: 19px; }
-}
-
-@media (max-width: 720px) {
-  .movie-form { grid-template-columns: 1fr; }
 }

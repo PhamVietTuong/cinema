@@ -1378,188 +1378,6 @@
         ]
       }
     },
-    "/api/Cinema/GetTicketTypes": {
-      "post": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_GetTicketTypes",
-        "requestBody": {
-          "x-name": "search",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PagingSearchDTO"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DefaultSearchResultsOfTicketTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/GetTicketType": {
-      "get": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_GetTicketType",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/CreateTicketType": {
-      "post": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_CreateTicketType",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTicketTypeRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/UpdateTicketType": {
-      "put": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_UpdateTicketType",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTicketTypeRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/DeleteTicketType": {
-      "delete": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_DeleteTicketType",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
     "/api/Cinema/GetUserTypes": {
       "post": {
         "tags": [
@@ -3132,147 +2950,65 @@
         ]
       }
     },
-    "/api/Cinema/GetSeatTypeTicketTypes": {
-      "post": {
+    "/api/Cinema/GetRoomSeatMap": {
+      "get": {
         "tags": [
           "Cinema"
         ],
-        "operationId": "Cinema_GetSeatTypeTicketTypes",
-        "requestBody": {
-          "x-name": "search",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PagingSearchDTO"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DefaultSearchResultsOfSeatTypeTicketTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/CreateSeatTypeTicketType": {
-      "post": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_CreateSeatTypeTicketType",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSeatTypeTicketTypeRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeatTypeTicketTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/UpdateSeatTypeTicketType": {
-      "put": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_UpdateSeatTypeTicketType",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSeatTypeTicketTypeRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeatTypeTicketTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/DeleteSeatTypeTicketType": {
-      "delete": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_DeleteSeatTypeTicketType",
+        "operationId": "Cinema_GetRoomSeatMap",
         "parameters": [
           {
-            "name": "seatTypeId",
+            "name": "roomId",
             "in": "query",
             "schema": {
               "type": "string",
               "format": "guid"
             },
             "x-position": 1
-          },
-          {
-            "name": "ticketTypeId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 2
           }
         ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoomSeatDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/SaveRoomSeatMap": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_SaveRoomSeatMap",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSeatMapRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
         "responses": {
           "204": {
             "description": ""
@@ -3485,12 +3221,27 @@
             "type": "string",
             "nullable": true
           },
+          "subtitle": {
+            "type": "string",
+            "nullable": true
+          },
           "language": {
             "type": "string",
             "nullable": true
           },
+          "ageRestrictionId": {
+            "type": "string",
+            "format": "guid"
+          },
           "ageRestrictionCode": {
             "type": "string"
+          },
+          "movieTypeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
           },
           "genres": {
             "type": "array",
@@ -4343,6 +4094,10 @@
           },
           "color": {
             "type": "string"
+          },
+          "priceMultiplier": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -4359,6 +4114,10 @@
           },
           "color": {
             "type": "string"
+          },
+          "priceMultiplier": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -4379,101 +4138,10 @@
           },
           "color": {
             "type": "string"
-          }
-        }
-      },
-      "DefaultSearchResultsOfTicketTypeDTO": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/BaseSearchResultsOfTicketTypeDTO"
           },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "BaseSearchResultsOfTicketTypeDTO": {
-        "type": "object",
-        "x-abstract": true,
-        "additionalProperties": false,
-        "properties": {
-          "results": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketTypeDTO"
-            }
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "countPerPage": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "TicketTypeDTO": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "basePrice": {
+          "priceMultiplier": {
             "type": "number",
             "format": "double"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "CreateTicketTypeRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "basePrice": {
-            "type": "number",
-            "format": "double"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "UpdateTicketTypeRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "basePrice": {
-            "type": "number",
-            "format": "double"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
@@ -5522,99 +5190,80 @@
           }
         }
       },
-      "DefaultSearchResultsOfSeatTypeTicketTypeDTO": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/BaseSearchResultsOfSeatTypeTicketTypeDTO"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "BaseSearchResultsOfSeatTypeTicketTypeDTO": {
-        "type": "object",
-        "x-abstract": true,
-        "additionalProperties": false,
-        "properties": {
-          "results": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SeatTypeTicketTypeDTO"
-            }
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "countPerPage": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "SeatTypeTicketTypeDTO": {
+      "RoomSeatDTO": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "rowName": {
+            "type": "string"
+          },
+          "colIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
           "seatTypeId": {
             "type": "string",
             "format": "guid"
-          },
-          "ticketTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "priceMultiplier": {
-            "type": "number",
-            "format": "double"
           },
           "seatTypeName": {
             "type": "string"
           },
-          "ticketTypeName": {
+          "seatTypeColor": {
             "type": "string"
-          }
-        }
-      },
-      "CreateSeatTypeTicketTypeRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "seatTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "ticketTypeId": {
-            "type": "string",
-            "format": "guid"
           },
           "priceMultiplier": {
             "type": "number",
             "format": "double"
+          },
+          "seatGroupId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
           }
         }
       },
-      "UpdateSeatTypeTicketTypeRequest": {
+      "SaveSeatMapRequest": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeatAssignmentItem"
+            }
+          }
+        }
+      },
+      "SeatAssignmentItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "seatId": {
+            "type": "string",
+            "format": "guid"
+          },
           "seatTypeId": {
             "type": "string",
             "format": "guid"
           },
-          "ticketTypeId": {
+          "seatGroupId": {
             "type": "string",
-            "format": "guid"
+            "format": "guid",
+            "nullable": true
           },
-          "priceMultiplier": {
-            "type": "number",
-            "format": "double"
+          "isActive": {
+            "type": "boolean"
           }
         }
       },

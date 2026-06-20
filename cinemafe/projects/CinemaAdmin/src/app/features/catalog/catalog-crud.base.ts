@@ -38,6 +38,10 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
   editingId: string | null = null;
   form: FormGroup = this.buildForm();
 
+  /** Delete-confirmation modal state. */
+  confirmOpen = false;
+  private _pendingDeleteId: string | null = null;
+
   private readonly _filter$ = new Subject<void>();
   private readonly _destroy$ = new Subject<void>();
 
@@ -118,15 +122,18 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
 
   // ── Create / edit / delete ────────────────────────────────────────────────────
   openCreate(): void {
-    this.cancelEdit();
+    this.editingId = null;
+    this.form.reset();
+    this.uploadError = '';
     this.showForm = true;
   }
 
   edit(item: T): void {
     this.editingId = item.id ?? null;
-    this.showForm = true;
     this.form.reset();
     this.form.patchValue(this.toFormValue(item));
+    this.uploadError = '';
+    this.showForm = true;
   }
 
   save(): void {
@@ -146,7 +153,18 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
   }
 
   delete(id?: string): void {
-    if (id && confirm('Bạn có chắc muốn xóa mục này?')) {
+    if (!id) {
+      return;
+    }
+    this._pendingDeleteId = id;
+    this.confirmOpen = true;
+  }
+
+  confirmDelete(): void {
+    const id = this._pendingDeleteId;
+    this.confirmOpen = false;
+    this._pendingDeleteId = null;
+    if (id) {
       this.remove(id).subscribe({ next: () => this.load() });
     }
   }

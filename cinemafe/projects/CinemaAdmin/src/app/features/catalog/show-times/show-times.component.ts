@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
 
 type Dto = CinemaServiceAgent.ShowTimeDTO;
 
@@ -27,7 +28,7 @@ interface DayColumn {
 @Component({
   selector: 'app-show-times',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, ConfirmModalComponent],
   templateUrl: './show-times.component.html',
   styleUrl: './show-times.component.scss',
 })
@@ -36,6 +37,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
   private _destroy$ = new Subject<void>();
+
+  confirmOpen = false;
 
   // ── Grid geometry ───────────────────────────────────────────────────────────
   readonly startHour = 8;          // first row label
@@ -205,8 +208,11 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
     const v = this.form.value;
     const payload = {
       movieId: v.movieId,
-      startTime: `${v.date}T${v.start}`,
-      endTime: `${v.date}T${v.end}`,
+      // Append 'Z' so the picked wall-clock time is preserved end-to-end: the generated
+      // DTO serialises Date via toISOString(), so without this the value is shifted by the
+      // browser's UTC offset on save and again on read (e.g. 16:00 → 09:00).
+      startTime: `${v.date}T${v.start}:00Z`,
+      endTime: `${v.date}T${v.end}:00Z`,
       projectionForm: v.projectionForm,
       showTimeType: v.showTimeType,
       roomId: v.roomId,
@@ -220,8 +226,14 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   }
 
   deleteCurrent(): void {
+    if (!this.editingId) { return; }
+    this.confirmOpen = true;
+  }
+
+  confirmDelete(): void {
     const id = this.editingId;
-    if (id && confirm('Bạn có chắc muốn xóa suất chiếu này?')) {
+    this.confirmOpen = false;
+    if (id) {
       this._svc.deleteShowTime(id).pipe(takeUntil(this._destroy$)).subscribe(() => { this.cancel(); this.load(); });
     }
   }

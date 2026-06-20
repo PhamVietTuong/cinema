@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent } from 'CinemaLib';
 
 type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean };
 
@@ -21,13 +21,9 @@ export class BookingConfirmationComponent implements OnInit {
   bookingSuccess = false;
   bookingCode = '';
 
-  ticketTypes: CinemaServiceAgent.TicketTypeDTO[] = [];
-  selectedTicketTypeId = '';
-
   constructor(
     private _router: Router,
     private _paymentService: PaymentServiceAgent.HttpService,
-    private _cinemaService: CinemaServiceAgent.HttpService,
     private _cdr: ChangeDetectorRef,
   ) {}
 
@@ -46,22 +42,16 @@ export class BookingConfirmationComponent implements OnInit {
       this.showTimeId = state.showTimeId;
       this.roomId = state.roomId;
     }
-    // Ticket types supply the (Guid) ticketTypeId required by CreateBooking.
-    this._cinemaService.getTicketTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
-      .subscribe({
-        next: r => { this.ticketTypes = r.results ?? []; this.selectedTicketTypeId = this.ticketTypes[0]?.id ?? ''; this._cdr.markForCheck(); },
-        error: () => this._cdr.markForCheck(),
-      });
   }
 
   confirmBooking(): void {
-    if (!this.selectedTicketTypeId) { this.error = 'Không tải được loại vé. Vui lòng thử lại.'; return; }
     this.loading = true;
     this.error = '';
     const request = PaymentServiceAgent.CreateBookingRequest.fromJS({
       showTimeId: this.showTimeId,
       roomId: this.roomId,
-      seats: this.seats.map(s => PaymentServiceAgent.BookingSeatItem.fromJS({ seatId: s.id, ticketTypeId: this.selectedTicketTypeId })),
+      // Price is derived server-side from each seat's type multiplier — no ticket type needed.
+      seats: this.seats.map(s => PaymentServiceAgent.BookingSeatItem.fromJS({ seatId: s.id })),
       foods: [],
       paymentMethod: this.paymentMethod,
     });

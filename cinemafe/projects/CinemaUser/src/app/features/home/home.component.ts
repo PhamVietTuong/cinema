@@ -32,4 +32,12 @@ export class HomeComponent implements OnInit {
     this._store.dispatch(loadNowShowing());
     this._store.dispatch(loadComingSoon());
   }
+
+  /** Falls back to the bundled placeholder when a poster URL fails to load. */
+  onImgError(e: Event): void {
+    const img = e.target as HTMLImageElement;
+    if (!img.src.endsWith('assets/no-poster.jpg')) {
+      img.src = 'assets/no-poster.jpg';
+    }
+  }
 }

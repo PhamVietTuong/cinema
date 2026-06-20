@@ -98,7 +98,6 @@ h1, h2, h3, h4 { font-family: var(--ad-font-head); }
 // ── Layout helpers ──────────────────────────────────────────────────────────
 .ad-page {
   padding: 28px 32px 48px;
-  max-width: 1400px;
 }
 
 .ad-page-header {
@@ -226,8 +225,16 @@ h1, h2, h3, h4 { font-family: var(--ad-font-head); }
     border-color: var(--ad-primary);
     box-shadow: 0 0 0 3px var(--ad-primary-soft);
   }
+  // Highlight required/invalid fields once the user has interacted or attempted to save.
+  &.ng-invalid.ng-touched {
+    border-color: var(--ad-danger);
+    box-shadow: 0 0 0 3px var(--ad-danger-soft);
+  }
 }
 textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: vertical; }
+
+// Inline validation message shown under an invalid field.
+.ad-field-err { display: block; margin-top: 6px; font-size: 12px; color: var(--ad-danger); }
 .ad-select { appearance: none; cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238fa3bf' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -353,6 +360,54 @@ textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: 
 }
 .form-card { margin-bottom: 22px; }
 
+// ── Admin modal popups (scrim + centered card, same pattern as the seat map) ──
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 8, 18, 0.6);
+  backdrop-filter: blur(3px);
+  z-index: 50;
+}
+.modal-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, 94vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ad-surface-1);
+  border: 1px solid var(--ad-glass-border-strong);
+  border-radius: var(--ad-r-lg);
+  box-shadow: 0 30px 80px -24px rgba(0, 0, 0, 0.75);
+  z-index: 51;
+}
+.modal-card--wide { width: min(720px, 94vw); }
+.modal-card--sm { width: min(420px, 94vw); }
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--ad-glass-border);
+
+  .ad-card-title { margin: 0; display: flex; align-items: center; gap: 8px; }
+  .ad-card-title mat-icon.is-danger { color: var(--ad-danger); }
+}
+.modal-body { padding: 22px; overflow-y: auto; }
+.modal-msg { margin: 0 0 20px; color: var(--ad-on); line-height: 1.5; }
+// Forms hosted inside a modal drop their own card chrome — the modal supplies it.
+.modal-card .ad-card {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  margin: 0;
+  padding: 0;
+}
+
 // Colour swatch used in the seat-type list
 .color-dot {
   display: inline-block;
@@ -460,4 +515,19 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
     border: 1px solid var(--ad-glass-border);
     display: block;
   }
+}
+
+// ── Responsive (phones & small tablets) ───────────────────────────────────────
+@media (max-width: 768px) {
+  .ad-page { padding: 18px 16px 36px; }
+  .ad-h1 { font-size: 22px; }
+  .ad-page-header { align-items: stretch; }
+  .ad-toolbar { width: 100%; }
+  // Search grows to fill the row instead of forcing a fixed 240px width.
+  .ad-search { flex: 1 1 auto; }
+  .ad-search .ad-input { min-width: 0; width: 100%; }
+  // Catalog create/edit forms collapse to a single column inside the modal.
+  .catalog-form { grid-template-columns: 1fr; }
+  // Pagination wraps neatly on narrow screens.
+  .ad-pagination { flex-wrap: wrap; gap: 12px; }
 }

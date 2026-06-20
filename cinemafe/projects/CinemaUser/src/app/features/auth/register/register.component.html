@@ -51,7 +51,13 @@
             <label class="field-label">Số Điện Thoại</label>
             <div class="field-wrap">
               <i class="fas fa-phone field-icon"></i>
-              <input class="field-input" type="tel" formControlName="phone" placeholder="0901 234 567">
+              <input class="field-input" type="tel" formControlName="phone" placeholder="0901234567">
+            </div>
+            <div class="field-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('required')">
+              Vui lòng nhập số điện thoại
+            </div>
+            <div class="field-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('pattern')">
+              Số điện thoại không hợp lệ
             </div>
           </div>
         </div>

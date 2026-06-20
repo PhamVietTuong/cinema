@@ -18,8 +18,7 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
                 .ThenInclude(it => it.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
             .Include(i => i.InvoiceTickets)
                 .ThenInclude(it => it.ShowTimeRoom).ThenInclude(sr => sr.Room).ThenInclude(r => r.Theater)
-            .Include(i => i.InvoiceTickets).ThenInclude(it => it.Seat)
-            .Include(i => i.InvoiceTickets).ThenInclude(it => it.TicketType)
+            .Include(i => i.InvoiceTickets).ThenInclude(it => it.Seat).ThenInclude(s => s.SeatType)
             .Include(i => i.InvoiceFoodAndDrinks).ThenInclude(f => f.FoodAndDrink)
             .FirstOrDefaultAsync(i => i.Id == id);
 

@@ -31,3 +31,31 @@ public class UpdateRoomRequest : IHasId
     public int TotalColumns { get; set; }
     public RoomStatus Status { get; set; } = RoomStatus.Active;
 }
+
+// ── Seat-map editor (assign seat types + group double seats) ───────────────────
+public class RoomSeatDTO
+{
+    public Guid Id { get; set; }
+    public string RowName { get; set; } = string.Empty;
+    public int ColIndex { get; set; }
+    public Guid SeatTypeId { get; set; }
+    public string SeatTypeName { get; set; } = string.Empty;
+    public string SeatTypeColor { get; set; } = "#808080";
+    public double PriceMultiplier { get; set; } = 1;
+    public Guid? SeatGroupId { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class SaveSeatMapRequest
+{
+    public Guid RoomId { get; set; }
+    public List<SeatAssignmentItem> Seats { get; set; } = new();
+}
+
+public class SeatAssignmentItem
+{
+    public Guid SeatId { get; set; }
+    public Guid SeatTypeId { get; set; }
+    public Guid? SeatGroupId { get; set; }
+    public bool IsActive { get; set; } = true;
+}

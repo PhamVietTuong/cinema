@@ -14,27 +14,3 @@ public class CreateMovieTypeDetailRequest
     public Guid MovieId { get; set; }
     public Guid MovieTypeId { get; set; }
 }
-
-// ── SeatTypeTicketType (SeatType ↔ TicketType price matrix) ────────────────────
-public class SeatTypeTicketTypeDTO
-{
-    public Guid SeatTypeId { get; set; }
-    public Guid TicketTypeId { get; set; }
-    public double PriceMultiplier { get; set; }
-    public string SeatTypeName { get; set; } = string.Empty;
-    public string TicketTypeName { get; set; } = string.Empty;
-}
-
-public class CreateSeatTypeTicketTypeRequest
-{
-    public Guid SeatTypeId { get; set; }
-    public Guid TicketTypeId { get; set; }
-    public double PriceMultiplier { get; set; } = 1;
-}
-
-public class UpdateSeatTypeTicketTypeRequest
-{
-    public Guid SeatTypeId { get; set; }
-    public Guid TicketTypeId { get; set; }
-    public double PriceMultiplier { get; set; } = 1;
-}

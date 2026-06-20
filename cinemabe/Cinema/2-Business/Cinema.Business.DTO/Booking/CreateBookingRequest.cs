@@ -12,7 +12,6 @@ public class CreateBookingRequest
 public class BookingSeatItem
 {
     public Guid SeatId { get; set; }
-    public Guid TicketTypeId { get; set; }
 }
 
 public class BookingFoodItem

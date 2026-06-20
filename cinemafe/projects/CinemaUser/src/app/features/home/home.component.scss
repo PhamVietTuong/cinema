@@ -652,7 +652,10 @@ $radius-pill:     9999px;
 
 @media (max-width: 768px) {
   .hero-title { font-size: 2rem; }
-  .hero-inner { padding: 48px 20px; }
+  .hero-inner { padding: 48px 20px; flex-direction: column; gap: 32px; text-align: center; }
+  .hero-content { max-width: 100%; }
+  .hero-actions { justify-content: center; }
+  .hero-meta, .hero-badges { justify-content: center; }
   .section { padding: 40px 20px; }
   .section--dark { .section-header, .movie-grid { padding-left: 20px; padding-right: 20px; } }
   .membership-inner { flex-direction: column; gap: 40px; }

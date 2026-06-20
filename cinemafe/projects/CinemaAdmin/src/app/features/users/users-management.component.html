@@ -13,7 +13,7 @@
         <option [ngValue]="''">Tất cả vai trò</option>
         <option *ngFor="let r of roles" [ngValue]="r">{{ r }}</option>
       </select>
-      <button class="ad-btn ad-btn--primary"><mat-icon>person_add</mat-icon> Thêm Người Dùng</button>
+      <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>person_add</mat-icon> Thêm Người Dùng</button>
     </div>
   </div>
 
@@ -54,8 +54,8 @@
             <td><span class="ad-pill" [class.ad-pill--success]="u.active" [class.ad-pill--danger]="!u.active">{{ u.active ? 'Hoạt Động' : 'Khóa' }}</span></td>
             <td>{{ u.joined }}</td>
             <td class="ad-td-actions">
-              <button class="ad-icon-btn is-primary" title="Sửa"><mat-icon>edit</mat-icon></button>
-              <button class="ad-icon-btn is-danger" title="Xóa"><mat-icon>delete</mat-icon></button>
+              <button class="ad-icon-btn is-primary" (click)="editUser(u)" title="Sửa"><mat-icon>edit</mat-icon></button>
+              <button class="ad-icon-btn is-danger" (click)="delete(u.id)" title="Khóa tài khoản"><mat-icon>delete</mat-icon></button>
             </td>
           </tr>
         </tbody>
@@ -64,3 +64,6 @@
     </div>
   </div>
 </div>
+
+<app-user-form [open]="showForm" [user]="editing" (saved)="onSaved()" (closed)="showForm = false"></app-user-form>
+<app-confirm-modal [open]="confirmOpen" title="Khóa tài khoản" message="Khóa (vô hiệu hóa) tài khoản người dùng này?" confirmText="Khóa" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>

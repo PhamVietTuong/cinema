@@ -1,0 +1,77 @@
+<app-modal [open]="open" [wide]="true" [title]="editingId ? 'Chỉnh Sửa Phim' : 'Phim Mới'" (closed)="cancel()">
+  <form [formGroup]="form" (ngSubmit)="save()" class="movie-form">
+    <div class="ad-field">
+      <label class="ad-label">Tên Phim</label>
+      <input class="ad-input" formControlName="title" placeholder="Nhập tên phim">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Đạo Diễn</label>
+      <input class="ad-input" formControlName="director" placeholder="Tên đạo diễn">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Diễn Viên</label>
+      <input class="ad-input" formControlName="cast" placeholder="Danh sách diễn viên">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Thời Lượng (phút)</label>
+      <input class="ad-input" type="number" formControlName="duration">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Ngôn Ngữ</label>
+      <input class="ad-input" formControlName="language" placeholder="VD: Tiếng Anh">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Phụ Đề</label>
+      <input class="ad-input" formControlName="subtitle" placeholder="VD: Tiếng Việt">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Ngày Khởi Chiếu</label>
+      <input class="ad-input" type="date" formControlName="releaseDate">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Ngày Kết Thúc</label>
+      <input class="ad-input" type="date" formControlName="endDate">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Giới Hạn Độ Tuổi</label>
+      <select class="ad-input" formControlName="ageRestrictionId">
+        <option value="">— Chọn —</option>
+        <option *ngFor="let a of ageRestrictions" [value]="a.id">{{ a.code }} — {{ a.description }}</option>
+      </select>
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Trailer (URL)</label>
+      <input class="ad-input" formControlName="trailerUrl" placeholder="https://...">
+    </div>
+    <div class="ad-field full-span">
+      <label class="ad-label">Thể Loại</label>
+      <select class="ad-input" multiple size="4" formControlName="movieTypeIds">
+        <option *ngFor="let t of movieTypes" [value]="t.id">{{ t.name }}</option>
+      </select>
+      <span class="ad-hint">Giữ Ctrl (Cmd) để chọn nhiều thể loại.</span>
+    </div>
+    <div class="ad-field full-span">
+      <label class="ad-label">Poster</label>
+      <input class="ad-input" formControlName="posterUrl" placeholder="Dán URL hoặc tải ảnh lên">
+      <div class="img-upload-row">
+        <label class="ad-btn ad-btn--ghost">
+          <mat-icon>upload</mat-icon> Tải Ảnh Lên
+          <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
+        </label>
+        <span class="img-upload-status" *ngIf="uploading">Đang tải...</span>
+        <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
+      </div>
+      <div class="img-preview" *ngIf="form.value.posterUrl">
+        <img [src]="form.value.posterUrl" alt="">
+      </div>
+    </div>
+    <div class="ad-field full-span">
+      <label class="ad-label">Mô Tả</label>
+      <textarea class="ad-input" rows="3" formControlName="description" placeholder="Nội dung phim..."></textarea>
+    </div>
+    <div class="form-actions full-span">
+      <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancel()">Hủy</button>
+    </div>
+  </form>
+</app-modal>

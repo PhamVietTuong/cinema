@@ -149,3 +149,5 @@
     </div>
   </form>
 </aside>
+
+<app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa suất chiếu này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>

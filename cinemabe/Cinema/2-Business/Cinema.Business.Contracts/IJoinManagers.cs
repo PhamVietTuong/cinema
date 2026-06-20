@@ -12,15 +12,6 @@ public interface IMovieTypeDetailManager
     Task DeleteAsync(Guid movieId, Guid movieTypeId);
 }
 
-/// <summary>CRUD for the SeatType ↔ TicketType price matrix (composite key).</summary>
-public interface ISeatTypeTicketTypeManager
-{
-    Task<DefaultSearchResults<SeatTypeTicketTypeDTO>> GetAsync(PagingSearchDTO search);
-    Task<SeatTypeTicketTypeDTO> CreateAsync(CreateSeatTypeTicketTypeRequest request);
-    Task<SeatTypeTicketTypeDTO> UpdateAsync(UpdateSeatTypeTicketTypeRequest request);
-    Task DeleteAsync(Guid seatTypeId, Guid ticketTypeId);
-}
-
 /// <summary>Admin view over invoices: list, change status, delete. Invoices are created by booking.</summary>
 public interface IInvoiceAdminManager
 {

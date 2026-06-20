@@ -87,6 +87,22 @@ public class MovieManager : IMovieManager
         ApplyMovieComputedFields(movie, dto);
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
         dto.AgeRestrictionMinAge      = movie.AgeRestriction?.MinAge ?? 0;
+        // Flatten each showtime's rooms into the summary list the detail page renders.
+        dto.ShowTimes = movie.ShowTimes
+            .Where(s => s.IsActive)
+            .SelectMany(s => s.ShowTimeRooms.DefaultIfEmpty(), (s, sr) => new ShowTimeSummaryDTO
+            {
+                Id             = s.Id,
+                StartTime      = s.StartTime,
+                EndTime        = s.EndTime,
+                ProjectionForm = s.ProjectionForm,
+                RoomId         = sr?.RoomId ?? Guid.Empty,
+                RoomName       = sr?.Room?.Name ?? string.Empty,
+                TheaterName    = sr?.Room?.Theater?.Name ?? string.Empty,
+                AvailableSeats = (sr?.Room?.TotalRows ?? 0) * (sr?.Room?.TotalColumns ?? 0),
+            })
+            .OrderBy(x => x.StartTime)
+            .ToList();
         dto.AverageRating             = await _uow.MovieStore.GetAverageRatingAsync(id);
         dto.RatingCount               = movie.Evaluations.Count;
         dto.RecentComments = movie.Comments
@@ -111,11 +127,17 @@ public class MovieManager : IMovieManager
 
     public async Task<MovieDTO> UpdateAsync(UpdateMovieRequest request)
     {
-        var movie = await _uow.MovieStore.GetByIdAsync(request.Id)
+        var movie = await _uow.MovieStore.GetForUpdateAsync(request.Id)
                     ?? throw new KeyNotFoundException($"Movie {request.Id} not found.");
         movie.PatchEntity<Movie, UpdateMovieRequest>(request);
         movie.EndDate = request.EndDate;
-        await _uow.MovieStore.UpdateAsync(movie);
+
+        // Reconcile genre links against the requested set on the tracked collection.
+        movie.MovieTypeDetails.Clear();
+        foreach (var typeId in request.MovieTypeIds.Distinct())
+            movie.MovieTypeDetails.Add(new MovieTypeDetail { MovieId = movie.Id, MovieTypeId = typeId });
+
+        movie.LastUpdatedTime = DateTime.UtcNow;
         await _uow.SaveChangesAsync();
         return await GetBasicDTOAsync(request.Id);
     }
@@ -172,6 +194,7 @@ public class MovieManager : IMovieManager
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         dto.AgeRestrictionCode = movie.AgeRestriction?.Code ?? string.Empty;
+        dto.MovieTypeIds       = movie.MovieTypeDetails?.Select(mt => mt.MovieTypeId).ToList() ?? [];
         dto.Genres             = movie.MovieTypeDetails?.Select(mt => mt.MovieType?.Name ?? string.Empty).ToList() ?? [];
         dto.IsNowShowing       = movie.ReleaseDate <= today && (movie.EndDate == null || movie.EndDate >= today);
         dto.IsComingSoon       = movie.ReleaseDate > today;

@@ -55,17 +55,6 @@ public class SeatTypeManager(IApplicationUnitOfWork uow)
     }
 }
 
-public class TicketTypeManager(IApplicationUnitOfWork uow)
-    : CatalogManager<TicketType, TicketTypeDTO, CreateTicketTypeRequest, UpdateTicketTypeRequest>(uow), ITicketTypeManager
-{
-    protected override IGenericStore<TicketType> Store => Uow.TicketTypeStore;
-
-    protected override bool Match(TicketType e, string kw)
-    {
-        return e.Name.Contains(kw, StringComparison.OrdinalIgnoreCase);
-    }
-}
-
 public class UserTypeManager(IApplicationUnitOfWork uow)
     : CatalogManager<UserType, UserTypeDTO, CreateUserTypeRequest, UpdateUserTypeRequest>(uow), IUserTypeManager
 {
@@ -141,6 +130,117 @@ public class RoomManager(IApplicationUnitOfWork uow)
     protected override bool Match(Room e, string kw)
     {
         return e.Name.Contains(kw, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public override async Task<RoomDTO> CreateAsync(CreateRoomRequest request)
+    {
+        var entity = request.ToNewEntity<CreateRoomRequest, Room>();
+        await Uow.RoomStore.CreateAsync(entity);
+        await GenerateSeatsAsync(entity.Id, entity.TotalRows, entity.TotalColumns);
+        return entity.ToDTO<Room, RoomDTO>();
+    }
+
+    public override async Task<RoomDTO> UpdateAsync(UpdateRoomRequest request)
+    {
+        var entity = await Uow.RoomStore.GetByIdAsync(request.Id)
+                     ?? throw new KeyNotFoundException($"Room {request.Id} not found.");
+        var dimensionsChanged = entity.TotalRows != request.TotalRows || entity.TotalColumns != request.TotalColumns;
+        entity.PatchEntity<Room, UpdateRoomRequest>(request);
+        await Uow.RoomStore.UpdateAsync(entity);
+
+        // Rebuild the seat map only when the grid size actually changes.
+        if (dimensionsChanged)
+        {
+            var existing = await Uow.SeatStore.FindAsync(s => s.RoomId == entity.Id);
+            foreach (var seat in existing)
+                await Uow.SeatStore.DeleteAsync(seat.Id);
+            await GenerateSeatsAsync(entity.Id, request.TotalRows, request.TotalColumns);
+        }
+        return entity.ToDTO<Room, RoomDTO>();
+    }
+
+    /// <summary>Creates a seat for every cell of the room's row × column grid.</summary>
+    private async Task GenerateSeatsAsync(Guid roomId, int rows, int columns)
+    {
+        if (rows <= 0 || columns <= 0)
+            return;
+
+        var seatTypeId = (await Uow.SeatTypeStore.GetAllAsync()).FirstOrDefault()?.Id ?? Guid.Empty;
+        if (seatTypeId == Guid.Empty)
+            return; // No seat types defined yet — nothing valid to attach seats to.
+
+        var seats = new List<Seat>();
+        for (var r = 0; r < rows; r++)
+        {
+            var rowName = ToRowName(r);
+            for (var c = 1; c <= columns; c++)
+            {
+                seats.Add(new Seat
+                {
+                    RoomId     = roomId,
+                    RowName    = rowName,
+                    ColIndex   = c,
+                    SeatTypeId = seatTypeId,
+                    IsActive   = true,
+                });
+            }
+        }
+        await Uow.SeatStore.CreateRangeAsync(seats);
+    }
+
+    /// <summary>0 → "A", 25 → "Z", 26 → "AA", …</summary>
+    private static string ToRowName(int index)
+    {
+        var name = string.Empty;
+        index++;
+        while (index > 0)
+        {
+            index--;
+            name = (char)('A' + index % 26) + name;
+            index /= 26;
+        }
+        return name;
+    }
+
+    public async Task<List<RoomSeatDTO>> GetSeatMapAsync(Guid roomId)
+    {
+        var seats = await Uow.SeatStore.FindAsync(s => s.RoomId == roomId);
+        var types = (await Uow.SeatTypeStore.GetAllAsync()).ToDictionary(t => t.Id);
+        return seats
+            .OrderBy(s => s.RowName).ThenBy(s => s.ColIndex)
+            .Select(s =>
+            {
+                types.TryGetValue(s.SeatTypeId, out var t);
+                return new RoomSeatDTO
+                {
+                    Id            = s.Id,
+                    RowName       = s.RowName,
+                    ColIndex      = s.ColIndex,
+                    SeatTypeId    = s.SeatTypeId,
+                    SeatTypeName  = t?.Name ?? string.Empty,
+                    SeatTypeColor = t?.Color ?? "#808080",
+                    PriceMultiplier = t?.PriceMultiplier ?? 1,
+                    SeatGroupId   = s.SeatGroupId,
+                    IsActive      = s.IsActive,
+                };
+            })
+            .ToList();
+    }
+
+    public async Task SaveSeatMapAsync(SaveSeatMapRequest request)
+    {
+        // FindAsync returns tracked entities on the shared context, so mutating them
+        // and saving once persists every assignment in a single round-trip.
+        var seats = (await Uow.SeatStore.FindAsync(s => s.RoomId == request.RoomId))
+            .ToDictionary(s => s.Id);
+        foreach (var item in request.Seats)
+        {
+            if (!seats.TryGetValue(item.SeatId, out var seat)) continue;
+            seat.SeatTypeId  = item.SeatTypeId;
+            seat.SeatGroupId = item.SeatGroupId;
+            seat.IsActive    = item.IsActive;
+        }
+        await Uow.SaveChangesAsync();
     }
 }
 

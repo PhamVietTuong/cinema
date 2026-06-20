@@ -1,0 +1,14 @@
+Admin page:
+- Required fields that need to be displayed when saving; these fields need to be entered.
+- Bug: Selecting a start time of 4:00 PM and an end time of 5:00 PM results in 9:00 AM and 10:00 AM.
+- The current users page cannot perform CRUD operations.
+- Bug: Creating a room allows selecting rows and columns, but the seating chart cannot be viewed.
+- Remove the movie-type-details page.
+User page:
+- When viewing movie details, the user page does not display the showtime.
+- The "Elevate Your Cinema Experience" homepage is missing images. https://lh3.googleusercontent.com/aida-public/AB6AXuD71gJiLpCIr8T6dnRi91EHqrJHu0GDgUUeklUBHvrqOl_zeGYcnKCLGIlQBG_T96Ub5jNefUr-MfWvrw_-rkoD6pza-L89msMATKARzAm9a1mb9z1K2ov8Fh7IKvgecQ_Z5CQdAHerqj5MXyFRTPYWNgLvGmTRai1BZt0aXZv-jUY5tDV6cXBCYMHvMfzY2RpoDhoYBkKVpubRxFNI7qEE-HjwDzWso7lyQqtqYnPkPq49MVfIWZSJHgZsZQidgEBXPSfylOgKnA
+-profile upload allowed Avatar
+-When you click "View All" for the currently playing movie, it should show both the currently playing movie and upcoming movies.
+General:
+-The fields for entering phone number and email address need to be in the correct format.
+-Can you test the features on the website so I don't need to test them manually?

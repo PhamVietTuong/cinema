@@ -14,7 +14,6 @@ const PAGE_TITLES: Record<string, string> = {
   'movie-types': 'Quản Lý Thể Loại Phim',
   'age-restrictions': 'Quản Lý Giới Hạn Độ Tuổi',
   'seat-types': 'Quản Lý Loại Ghế',
-  'ticket-types': 'Quản Lý Loại Vé',
   'discount-types': 'Quản Lý Loại Giảm Giá',
   memberships: 'Quản Lý Hạng Thành Viên',
   'user-types': 'Quản Lý Loại Người Dùng',
@@ -24,8 +23,6 @@ const PAGE_TITLES: Record<string, string> = {
   discounts: 'Quản Lý Mã Giảm Giá',
   'food-and-drinks': 'Quản Lý Đồ Ăn & Thức Uống',
   invoices: 'Quản Lý Hóa Đơn',
-  'movie-type-details': 'Gán Thể Loại Cho Phim',
-  'seat-ticket-pricing': 'Bảng Giá Theo Loại Ghế & Vé',
 };
 
 @Component({
@@ -39,15 +36,23 @@ export class App implements OnInit {
   user$: Observable<any>;
   pageTitle$: Observable<string>;
 
+  /** Mobile sidebar drawer open state (ignored on desktop where the rail is static). */
+  menuOpen = false;
+
   constructor(private _store: Store, private _router: Router) {
     this.isAuth$ = this._store.select(selectIsAuthenticated);
     this.user$ = this._store.select(selectCurrentUser);
-    this.pageTitle$ = this._router.events.pipe(
-      filter(e => e instanceof NavigationEnd),
+    const nav$ = this._router.events.pipe(filter(e => e instanceof NavigationEnd));
+    // Close the mobile drawer whenever navigation completes.
+    nav$.subscribe(() => { this.menuOpen = false; });
+    this.pageTitle$ = nav$.pipe(
       map(() => this._titleFromUrl(this._router.url)),
       startWith(this._titleFromUrl(this._router.url)),
     );
   }
+
+  toggleMenu(): void { this.menuOpen = !this.menuOpen; }
+  closeMenu(): void { this.menuOpen = false; }
 
   ngOnInit(): void {
     this._store.dispatch(loadUserFromStorage());

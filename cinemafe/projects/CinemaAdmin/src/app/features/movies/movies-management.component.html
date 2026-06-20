@@ -13,56 +13,6 @@
     </div>
   </div>
 
-  <!-- Form -->
-  <div class="ad-card form-card" *ngIf="showForm">
-    <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Phim' : 'Phim Mới' }}</h3>
-    <form [formGroup]="form" (ngSubmit)="saveMovie()" class="movie-form">
-      <div class="ad-field">
-        <label class="ad-label">Tên Phim</label>
-        <input class="ad-input" formControlName="title" placeholder="Nhập tên phim">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Đạo Diễn</label>
-        <input class="ad-input" formControlName="director" placeholder="Tên đạo diễn">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Thời Lượng (phút)</label>
-        <input class="ad-input" type="number" formControlName="duration">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Ngôn Ngữ</label>
-        <input class="ad-input" formControlName="language" placeholder="VD: Tiếng Anh">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Ngày Khởi Chiếu</label>
-        <input class="ad-input" type="date" formControlName="releaseDate">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Poster</label>
-        <input class="ad-input" formControlName="posterUrl" placeholder="Dán URL hoặc tải ảnh lên">
-        <div class="img-upload-row">
-          <label class="ad-btn ad-btn--ghost">
-            <mat-icon>upload</mat-icon> Tải Ảnh Lên
-            <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
-          </label>
-          <span class="img-upload-status" *ngIf="uploading">Đang tải...</span>
-          <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
-        </div>
-        <div class="img-preview" *ngIf="form.value.posterUrl">
-          <img [src]="form.value.posterUrl" alt="">
-        </div>
-      </div>
-      <div class="ad-field full-span">
-        <label class="ad-label">Mô Tả</label>
-        <textarea class="ad-input" rows="3" formControlName="description" placeholder="Nội dung phim..."></textarea>
-      </div>
-      <div class="form-actions full-span">
-        <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
-      </div>
-    </form>
-  </div>
-
   <!-- Table -->
   <div class="ad-card ad-card--pad-0">
     <div class="ad-table-wrap">
@@ -95,3 +45,7 @@
     </div>
   </div>
 </div>
+
+<!-- Create / edit form (separate component) + delete confirmation, shown as popups -->
+<app-movie-form [open]="showForm" [movie]="editing" (saved)="onSaved()" (closed)="showForm = false"></app-movie-form>
+<app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa phim này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>

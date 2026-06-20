@@ -62,37 +62,11 @@ DECLARE @STStandard uniqueidentifier = NEWID();
 DECLARE @STVIP      uniqueidentifier = NEWID();
 DECLARE @STCouple   uniqueidentifier = NEWID();
 
-INSERT INTO [SeatType] ([Id], [Name], [Description], [Color], [CreationTime]) VALUES
-(@STStandard, N'Standard', N'Regular cinema seat',        N'#3B82F6', GETUTCDATE()),
-(@STVIP,      N'VIP',      N'Extra wide, reclining seat', N'#F59E0B', GETUTCDATE()),
-(@STCouple,   N'Couple',   N'Double-width loveseat',      N'#EC4899', GETUTCDATE());
-
--- ── Ticket Types ─────────────────────────────────────────────────────────────
-DECLARE @TTNormal  uniqueidentifier = NEWID();
-DECLARE @TTStudent uniqueidentifier = NEWID();
-DECLARE @TTChild   uniqueidentifier = NEWID();
-DECLARE @TTSenior  uniqueidentifier = NEWID();
-
-INSERT INTO [TicketType] ([Id], [Name], [BasePrice], [Description], [CreationTime]) VALUES
-(@TTNormal,  N'Normal',  80000, N'Regular adult ticket',    GETUTCDATE()),
-(@TTStudent, N'Student', 60000, N'Student (with valid ID)', GETUTCDATE()),
-(@TTChild,   N'Child',   50000, N'Under 12 years old',      GETUTCDATE()),
-(@TTSenior,  N'Senior',  60000, N'65 years or older',       GETUTCDATE());
-
--- ── Seat × Ticket price multipliers ──────────────────────────────────────────
-INSERT INTO [SeatTypeTicketType] ([SeatTypeId], [TicketTypeId], [PriceMultiplier]) VALUES
-(@STStandard, @TTNormal,  1.0),
-(@STStandard, @TTStudent, 1.0),
-(@STStandard, @TTChild,   1.0),
-(@STStandard, @TTSenior,  1.0),
-(@STVIP,      @TTNormal,  1.5),
-(@STVIP,      @TTStudent, 1.5),
-(@STVIP,      @TTChild,   1.5),
-(@STVIP,      @TTSenior,  1.5),
-(@STCouple,   @TTNormal,  2.0),
-(@STCouple,   @TTStudent, 2.0),
-(@STCouple,   @TTChild,   2.0),
-(@STCouple,   @TTSenior,  2.0);
+-- Price is now driven by SeatType.PriceMultiplier × ShowTimeRoom.BasePrice (no ticket types).
+INSERT INTO [SeatType] ([Id], [Name], [Description], [Color], [PriceMultiplier], [CreationTime]) VALUES
+(@STStandard, N'Standard', N'Regular cinema seat',        N'#3B82F6', 1.0, GETUTCDATE()),
+(@STVIP,      N'VIP',      N'Extra wide, reclining seat', N'#F59E0B', 1.5, GETUTCDATE()),
+(@STCouple,   N'Couple',   N'Double-width loveseat (booked as a linked pair)', N'#EC4899', 2.0, GETUTCDATE());
 
 -- ── Discount Types ────────────────────────────────────────────────────────────
 DECLARE @DTPromotional uniqueidentifier = NEWID();

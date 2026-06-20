@@ -1,7 +1,11 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { IdentityServiceAgent, SharedModule, UserRole } from 'CinemaLib';
+import { UserFormComponent } from './user-form.component';
+import { ConfirmModalComponent } from '../../shared/confirm-modal.component';
 
 interface UserRow {
+  id?: string;
+  dto: IdentityServiceAgent.UserDTO;
   name: string;
   email: string;
   phone: string;
@@ -13,7 +17,7 @@ interface UserRow {
 @Component({
   selector: 'app-users-management',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, UserFormComponent, ConfirmModalComponent],
   templateUrl: './users-management.component.html',
   styleUrl: './users-management.component.scss'
 })
@@ -28,7 +32,14 @@ export class UsersManagementComponent implements OnInit {
   filterRole: '' | UserRole = '';
   users: UserRow[] = [];
 
-  ngOnInit(): void {
+  showForm = false;
+  editing: IdentityServiceAgent.UserDTO | null = null;
+  confirmOpen = false;
+  private _pendingDeleteId: string | null = null;
+
+  ngOnInit(): void { this.load(); }
+
+  load(): void {
     this._identity.getUsers(IdentityServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
       .subscribe({
         next: r => { this.users = (r.results ?? []).map(u => this._toRow(u)); this._cdr.markForCheck(); },
@@ -38,6 +49,8 @@ export class UsersManagementComponent implements OnInit {
 
   private _toRow(u: IdentityServiceAgent.UserDTO): UserRow {
     return {
+      id: u.id,
+      dto: u,
       name: u.name ?? '',
       email: u.email ?? '',
       phone: u.phone ?? '',
@@ -56,6 +69,23 @@ export class UsersManagementComponent implements OnInit {
     return this.users.filter(u =>
       (!this.filterRole || u.role === this.filterRole) &&
       (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+  }
+
+  openCreate(): void { this.editing = null; this.showForm = true; }
+  editUser(row: UserRow): void { this.editing = row.dto; this.showForm = true; }
+  onSaved(): void { this.load(); }
+
+  delete(id?: string): void {
+    if (!id) { return; }
+    this._pendingDeleteId = id;
+    this.confirmOpen = true;
+  }
+
+  confirmDelete(): void {
+    const id = this._pendingDeleteId;
+    this.confirmOpen = false;
+    this._pendingDeleteId = null;
+    if (id) { this._identity.deleteUser(id).subscribe(() => this.load()); }
   }
 
   initials(name: string): string {

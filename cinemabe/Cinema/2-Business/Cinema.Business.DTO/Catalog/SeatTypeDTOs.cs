@@ -8,6 +8,7 @@ public class SeatTypeDTO
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Color { get; set; } = "#808080";
+    public double PriceMultiplier { get; set; } = 1;
 }
 
 public class CreateSeatTypeRequest
@@ -15,6 +16,7 @@ public class CreateSeatTypeRequest
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Color { get; set; } = "#808080";
+    public double PriceMultiplier { get; set; } = 1;
 }
 
 public class UpdateSeatTypeRequest : IHasId
@@ -23,4 +25,5 @@ public class UpdateSeatTypeRequest : IHasId
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Color { get; set; } = "#808080";
+    public double PriceMultiplier { get; set; } = 1;
 }

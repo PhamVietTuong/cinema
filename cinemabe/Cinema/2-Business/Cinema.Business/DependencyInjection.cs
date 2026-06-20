@@ -19,7 +19,6 @@ public static class DependencyInjection
         services.AddScoped<IDiscountTypeManager, DiscountTypeManager>();
         services.AddScoped<IMovieTypeManager, MovieTypeManager>();
         services.AddScoped<ISeatTypeManager, SeatTypeManager>();
-        services.AddScoped<ITicketTypeManager, TicketTypeManager>();
         services.AddScoped<IUserTypeManager, UserTypeManager>();
         services.AddScoped<IMemberShipManager, MemberShipManager>();
         services.AddScoped<IHolidayManager, HolidayManager>();
@@ -29,7 +28,6 @@ public static class DependencyInjection
         services.AddScoped<IRoomManager, RoomManager>();
         services.AddScoped<IShowTimeManager, ShowTimeManager>();
         services.AddScoped<IMovieTypeDetailManager, MovieTypeDetailManager>();
-        services.AddScoped<ISeatTypeTicketTypeManager, SeatTypeTicketTypeManager>();
         services.AddScoped<IInvoiceAdminManager, InvoiceAdminManager>();
         return services;
     }

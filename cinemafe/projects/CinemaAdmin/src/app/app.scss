@@ -125,11 +125,46 @@
 
 .content { flex: 1; min-width: 0; }
 
+// Hamburger + drawer scrim are desktop-hidden; revealed at the mobile breakpoint.
+.menu-toggle { display: none; margin-right: 12px; }
+.sidebar-scrim { display: none; }
+
 // ── Responsive ──────────────────────────────────────────────────────────────
-@media (max-width: 900px) {
+// Tablet: collapse the sidebar to an icon rail.
+@media (max-width: 1024px) and (min-width: 769px) {
   .sidebar { width: 76px; padding: 18px 10px; }
-  .brand-text, .nav-item span, .profile-meta { display: none; }
+  .brand-text, .nav-item span, .profile-meta, .nav-section { display: none; }
   .brand { justify-content: center; padding: 4px 0 18px; }
   .nav-item { justify-content: center; }
   .profile { justify-content: center; }
+}
+
+// Mobile: sidebar becomes an off-canvas drawer toggled by the hamburger.
+@media (max-width: 768px) {
+  .menu-toggle { display: inline-flex; }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: min(280px, 84vw);
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+  }
+  .sidebar.is-open { transform: translateX(0); }
+
+  .admin-shell.menu-open .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(1, 10, 22, 0.6);
+    backdrop-filter: blur(2px);
+  }
+
+  .topbar { padding: 0 16px; }
+  .topbar-title { font-size: 16px; }
 }

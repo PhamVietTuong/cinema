@@ -26,6 +26,9 @@ export interface IHttpService {
     updateProfile(request: UpdateProfileRequest): Observable<void>;
     changePassword(request: ChangePasswordRequest): Observable<void>;
     getUsers(search: PagingSearchDTO): Observable<DefaultSearchResultsOfUserDTO>;
+    createUser(request: CreateUserRequest): Observable<UserDTO>;
+    updateUser(request: UpdateUserRequest): Observable<UserDTO>;
+    deleteUser(id?: string | undefined): Observable<void>;
 }
 
 @Injectable()
@@ -330,6 +333,158 @@ export class HttpService implements IHttpService {
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = DefaultSearchResultsOfUserDTO.fromJS(resultData200);
             return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createUser(request: CreateUserRequest): Observable<UserDTO> {
+        let url_ = this.baseUrl + "/api/Identity/CreateUser";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateUser(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateUser(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDTO>;
+        }));
+    }
+
+    protected processCreateUser(response: HttpResponseBase): Observable<UserDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UserDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateUser(request: UpdateUserRequest): Observable<UserDTO> {
+        let url_ = this.baseUrl + "/api/Identity/UpdateUser";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateUser(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateUser(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserDTO>;
+        }));
+    }
+
+    protected processUpdateUser(response: HttpResponseBase): Observable<UserDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UserDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteUser(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Identity/DeleteUser?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteUser(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteUser(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteUser(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -825,6 +980,118 @@ export class SortDTO implements ISortDTO {
 export interface ISortDTO {
     field?: string;
     ascending?: boolean;
+}
+
+export class CreateUserRequest implements ICreateUserRequest {
+    name?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+    userTypeId?: string;
+    status?: UserStatus;
+
+    constructor(data?: ICreateUserRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.email = _data["email"];
+            this.phone = _data["phone"];
+            this.password = _data["password"];
+            this.userTypeId = _data["userTypeId"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): CreateUserRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateUserRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["email"] = this.email;
+        data["phone"] = this.phone;
+        data["password"] = this.password;
+        data["userTypeId"] = this.userTypeId;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface ICreateUserRequest {
+    name?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+    userTypeId?: string;
+    status?: UserStatus;
+}
+
+export class UpdateUserRequest implements IUpdateUserRequest {
+    id?: string;
+    name?: string;
+    phone?: string;
+    avatar?: string | undefined;
+    userTypeId?: string;
+    status?: UserStatus;
+
+    constructor(data?: IUpdateUserRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.phone = _data["phone"];
+            this.avatar = _data["avatar"];
+            this.userTypeId = _data["userTypeId"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): UpdateUserRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateUserRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["phone"] = this.phone;
+        data["avatar"] = this.avatar;
+        data["userTypeId"] = this.userTypeId;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IUpdateUserRequest {
+    id?: string;
+    name?: string;
+    phone?: string;
+    avatar?: string | undefined;
+    userTypeId?: string;
+    status?: UserStatus;
 }
 
 export class ApiException extends Error {

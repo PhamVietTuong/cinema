@@ -77,9 +77,10 @@ CREATE TABLE [News] (
 
 CREATE TABLE [SeatType] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [Name] nvarchar(max) NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
     [Description] nvarchar(max) NULL,
     [Color] nvarchar(max) NOT NULL,
+    [PriceMultiplier] float NOT NULL DEFAULT 1,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_SeatType] PRIMARY KEY ([Id])
@@ -97,16 +98,6 @@ CREATE TABLE [Theater] (
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Theater] PRIMARY KEY ([Id])
-);
-
-CREATE TABLE [TicketType] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [Name] nvarchar(max) NOT NULL,
-    [BasePrice] float NOT NULL,
-    [Description] nvarchar(max) NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_TicketType] PRIMARY KEY ([Id])
 );
 
 CREATE TABLE [UserType] (
@@ -178,15 +169,6 @@ CREATE TABLE [Room] (
     CONSTRAINT [FK_Room_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
 );
 
-CREATE TABLE [SeatTypeTicketType] (
-    [SeatTypeId] uniqueidentifier NOT NULL,
-    [TicketTypeId] uniqueidentifier NOT NULL,
-    [PriceMultiplier] float NOT NULL,
-    CONSTRAINT [PK_SeatTypeTicketType] PRIMARY KEY ([SeatTypeId], [TicketTypeId]),
-    CONSTRAINT [FK_SeatTypeTicketType_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE CASCADE,
-    CONSTRAINT [FK_SeatTypeTicketType_TicketType_TicketTypeId] FOREIGN KEY ([TicketTypeId]) REFERENCES [TicketType] ([Id]) ON DELETE CASCADE
-);
-
 CREATE TABLE [User] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [Phone] nvarchar(20) NOT NULL,
@@ -235,6 +217,7 @@ CREATE TABLE [Seat] (
     [ColIndex] int NOT NULL,
     [SeatTypeId] uniqueidentifier NOT NULL,
     [IsActive] bit NOT NULL,
+    [SeatGroupId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Seat] PRIMARY KEY ([Id]),
@@ -314,15 +297,13 @@ CREATE TABLE [InvoiceTicket] (
     [ShowTimeId] uniqueidentifier NOT NULL,
     [RoomId] uniqueidentifier NOT NULL,
     [SeatId] uniqueidentifier NOT NULL,
-    [TicketTypeId] uniqueidentifier NOT NULL,
     [Price] float NOT NULL,
     [QrCode] nvarchar(max) NULL,
     [IsUsed] bit NOT NULL,
     CONSTRAINT [PK_InvoiceTicket] PRIMARY KEY ([InvoiceId], [ShowTimeId], [RoomId], [SeatId]),
     CONSTRAINT [FK_InvoiceTicket_Invoice_InvoiceId] FOREIGN KEY ([InvoiceId]) REFERENCES [Invoice] ([Id]) ON DELETE CASCADE,
     CONSTRAINT [FK_InvoiceTicket_Seat_SeatId] FOREIGN KEY ([SeatId]) REFERENCES [Seat] ([Id]) ON DELETE NO ACTION,
-    CONSTRAINT [FK_InvoiceTicket_ShowTimeRoom_ShowTimeId_RoomId] FOREIGN KEY ([ShowTimeId], [RoomId]) REFERENCES [ShowTimeRoom] ([ShowTimeId], [RoomId]) ON DELETE NO ACTION,
-    CONSTRAINT [FK_InvoiceTicket_TicketType_TicketTypeId] FOREIGN KEY ([TicketTypeId]) REFERENCES [TicketType] ([Id]) ON DELETE NO ACTION
+    CONSTRAINT [FK_InvoiceTicket_ShowTimeRoom_ShowTimeId_RoomId] FOREIGN KEY ([ShowTimeId], [RoomId]) REFERENCES [ShowTimeRoom] ([ShowTimeId], [RoomId]) ON DELETE NO ACTION
 );
 
 -- Indexes
@@ -340,13 +321,12 @@ CREATE INDEX [IX_Invoice_DiscountId] ON [Invoice] ([DiscountId]);
 CREATE INDEX [IX_Invoice_UserId] ON [Invoice] ([UserId]);
 CREATE INDEX [IX_InvoiceTicket_SeatId] ON [InvoiceTicket] ([SeatId]);
 CREATE INDEX [IX_InvoiceTicket_ShowTimeId_RoomId] ON [InvoiceTicket] ([ShowTimeId], [RoomId]);
-CREATE INDEX [IX_InvoiceTicket_TicketTypeId] ON [InvoiceTicket] ([TicketTypeId]);
 CREATE INDEX [IX_Movie_AgeRestrictionId] ON [Movie] ([AgeRestrictionId]);
 CREATE INDEX [IX_MovieTypeDetail_MovieTypeId] ON [MovieTypeDetail] ([MovieTypeId]);
 CREATE INDEX [IX_Room_TheaterId] ON [Room] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_Seat_RoomId_RowName_ColIndex] ON [Seat] ([RoomId], [RowName], [ColIndex]);
 CREATE INDEX [IX_Seat_SeatTypeId] ON [Seat] ([SeatTypeId]);
-CREATE INDEX [IX_SeatTypeTicketType_TicketTypeId] ON [SeatTypeTicketType] ([TicketTypeId]);
+CREATE INDEX [IX_Seat_SeatGroupId] ON [Seat] ([SeatGroupId]);
 CREATE INDEX [IX_ShowTimeRoom_RoomId] ON [ShowTimeRoom] ([RoomId]);
 CREATE INDEX [IX_ShowTime_MovieId] ON [ShowTime] ([MovieId]);
 CREATE UNIQUE INDEX [IX_User_Email] ON [User] ([Email]);

@@ -31,7 +31,30 @@
         <a routerLink="/auth/register" class="btn-nav-primary">Đăng Ký</a>
       </ng-template>
     </div>
+
+    <!-- Mobile hamburger -->
+    <button class="nav-burger" type="button" (click)="toggleMenu()" aria-label="Menu">
+      <i class="fas" [class.fa-bars]="!menuOpen" [class.fa-xmark]="menuOpen"></i>
+    </button>
+  </div>
+
+  <!-- Mobile menu panel -->
+  <div class="mobile-menu" [class.is-open]="menuOpen">
+    <a routerLink="/movies" routerLinkActive="active-link" (click)="closeMenu()">Phim</a>
+    <a routerLink="/theaters" routerLinkActive="active-link" (click)="closeMenu()">Rạp Chiếu</a>
+    <a routerLink="/promotions" routerLinkActive="active-link" (click)="closeMenu()">Khuyến Mãi</a>
+    <a routerLink="/membership" routerLinkActive="active-link" (click)="closeMenu()">Thành Viên</a>
+    <div class="mobile-menu-divider"></div>
+    <ng-container *ngIf="isAuth$ | async; else guestMobile">
+      <a routerLink="/profile" (click)="closeMenu()">Tài Khoản</a>
+      <button type="button" (click)="doLogout()">Đăng Xuất</button>
+    </ng-container>
+    <ng-template #guestMobile>
+      <a routerLink="/auth/login" (click)="closeMenu()">Đăng Nhập</a>
+      <a routerLink="/auth/register" (click)="closeMenu()">Đăng Ký</a>
+    </ng-template>
   </div>
 </nav>
+<div class="mobile-menu-scrim" *ngIf="menuOpen" (click)="closeMenu()"></div>
 
 <router-outlet></router-outlet>

@@ -13,52 +13,6 @@
     </div>
   </div>
 
-  <!-- Form -->
-  <div class="ad-card form-card" *ngIf="showForm">
-    <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Rạp' : 'Rạp Mới' }}</h3>
-    <form [formGroup]="form" (ngSubmit)="saveTheater()" class="theater-form">
-      <div class="ad-field">
-        <label class="ad-label">Tên Rạp</label>
-        <input class="ad-input" formControlName="name" placeholder="VD: CGV Vincom">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Thành Phố</label>
-        <input class="ad-input" formControlName="city" placeholder="VD: Hà Nội">
-      </div>
-      <div class="ad-field full-span">
-        <label class="ad-label">Địa Chỉ</label>
-        <input class="ad-input" formControlName="address" placeholder="Số nhà, đường, quận...">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Số Điện Thoại</label>
-        <input class="ad-input" formControlName="phone" placeholder="0123 456 789">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Email</label>
-        <input class="ad-input" formControlName="email" placeholder="rap@cinema.vn">
-      </div>
-      <div class="ad-field full-span">
-        <label class="ad-label">Ảnh Rạp</label>
-        <input class="ad-input" formControlName="imageUrl" placeholder="Dán URL hoặc tải ảnh lên">
-        <div class="img-upload-row">
-          <label class="ad-btn ad-btn--ghost">
-            <mat-icon>upload</mat-icon> Tải Ảnh Lên
-            <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
-          </label>
-          <span class="img-upload-status" *ngIf="uploading">Đang tải...</span>
-          <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
-        </div>
-        <div class="img-preview" *ngIf="form.value.imageUrl">
-          <img [src]="form.value.imageUrl" alt="">
-        </div>
-      </div>
-      <div class="form-actions full-span">
-        <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
-      </div>
-    </form>
-  </div>
-
   <!-- Table -->
   <div class="ad-card ad-card--pad-0">
     <div class="ad-table-wrap">
@@ -93,3 +47,6 @@
     </div>
   </div>
 </div>
+
+<!-- Create / edit form (separate component), shown as a popup -->
+<app-theater-form [open]="showForm" [theater]="editing" (saved)="onSaved()" (closed)="showForm = false"></app-theater-form>

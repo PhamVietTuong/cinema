@@ -5,6 +5,43 @@
 -- Each change should be guarded with IF NOT EXISTS checks.
 -- ============================================================
 
+-- ── v1.x → seat-type pricing model (remove ticket types) ────────────────────
+-- Price is now SeatType.PriceMultiplier × ShowTimeRoom.BasePrice; double seats
+-- are two Seat rows sharing a SeatGroupId. TicketType + SeatTypeTicketType go away.
+PRINT 'upgrade: applying seat-type pricing model...';
+
+-- 1) SeatType.PriceMultiplier (default 1.0 keeps existing seats priced as before)
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+               WHERE TABLE_NAME = 'SeatType' AND COLUMN_NAME = 'PriceMultiplier')
+BEGIN
+    ALTER TABLE [SeatType] ADD [PriceMultiplier] float NOT NULL CONSTRAINT [DF_SeatType_PriceMultiplier] DEFAULT 1;
+END
+
+-- 2) Seat.SeatGroupId (links the two halves of a double seat)
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+               WHERE TABLE_NAME = 'Seat' AND COLUMN_NAME = 'SeatGroupId')
+BEGIN
+    ALTER TABLE [Seat] ADD [SeatGroupId] uniqueidentifier NULL;
+END
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Seat_SeatGroupId' AND object_id = OBJECT_ID('Seat'))
+    CREATE INDEX [IX_Seat_SeatGroupId] ON [Seat] ([SeatGroupId]);
+
+-- 3) Drop InvoiceTicket → TicketType FK + column (seed multipliers onto SeatType first if needed)
+IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_InvoiceTicket_TicketType_TicketTypeId')
+    ALTER TABLE [InvoiceTicket] DROP CONSTRAINT [FK_InvoiceTicket_TicketType_TicketTypeId];
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_InvoiceTicket_TicketTypeId' AND object_id = OBJECT_ID('InvoiceTicket'))
+    DROP INDEX [IX_InvoiceTicket_TicketTypeId] ON [InvoiceTicket];
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+           WHERE TABLE_NAME = 'InvoiceTicket' AND COLUMN_NAME = 'TicketTypeId')
+    ALTER TABLE [InvoiceTicket] DROP COLUMN [TicketTypeId];
+
+-- 4) Drop the SeatTypeTicketType price matrix, then the TicketType table
+IF OBJECT_ID('SeatTypeTicketType', 'U') IS NOT NULL DROP TABLE [SeatTypeTicketType];
+IF OBJECT_ID('TicketType', 'U') IS NOT NULL DROP TABLE [TicketType];
+
+PRINT 'upgrade: seat-type pricing model applied.';
+
+
 -- ── v1.0 → v1.1 template (remove and fill in real changes) ──
 
 -- Example: add a new column to an existing table

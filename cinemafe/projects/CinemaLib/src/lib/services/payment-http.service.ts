@@ -620,6 +620,7 @@ export class SeatDTO implements ISeatDTO {
     status?: SeatStatus;
     price?: number;
     isLocked?: boolean;
+    seatGroupId?: string | undefined;
 
     constructor(data?: ISeatDTO) {
         if (data) {
@@ -641,6 +642,7 @@ export class SeatDTO implements ISeatDTO {
             this.status = _data["status"];
             this.price = _data["price"];
             this.isLocked = _data["isLocked"];
+            this.seatGroupId = _data["seatGroupId"];
         }
     }
 
@@ -662,6 +664,7 @@ export class SeatDTO implements ISeatDTO {
         data["status"] = this.status;
         data["price"] = this.price;
         data["isLocked"] = this.isLocked;
+        data["seatGroupId"] = this.seatGroupId;
         return data;
     }
 }
@@ -676,6 +679,7 @@ export interface ISeatDTO {
     status?: SeatStatus;
     price?: number;
     isLocked?: boolean;
+    seatGroupId?: string | undefined;
 }
 
 export enum SeatStatus {
@@ -866,7 +870,6 @@ export enum InvoiceStatus {
 export class TicketItemDTO implements ITicketItemDTO {
     seatLabel?: string;
     seatType?: string;
-    ticketType?: string;
     price?: number;
     qrCode?: string | undefined;
 
@@ -883,7 +886,6 @@ export class TicketItemDTO implements ITicketItemDTO {
         if (_data) {
             this.seatLabel = _data["seatLabel"];
             this.seatType = _data["seatType"];
-            this.ticketType = _data["ticketType"];
             this.price = _data["price"];
             this.qrCode = _data["qrCode"];
         }
@@ -900,7 +902,6 @@ export class TicketItemDTO implements ITicketItemDTO {
         data = typeof data === 'object' ? data : {};
         data["seatLabel"] = this.seatLabel;
         data["seatType"] = this.seatType;
-        data["ticketType"] = this.ticketType;
         data["price"] = this.price;
         data["qrCode"] = this.qrCode;
         return data;
@@ -910,7 +911,6 @@ export class TicketItemDTO implements ITicketItemDTO {
 export interface ITicketItemDTO {
     seatLabel?: string;
     seatType?: string;
-    ticketType?: string;
     price?: number;
     qrCode?: string | undefined;
 }
@@ -989,7 +989,6 @@ export interface ICreateBookingRequest {
 
 export class BookingSeatItem implements IBookingSeatItem {
     seatId?: string;
-    ticketTypeId?: string;
 
     constructor(data?: IBookingSeatItem) {
         if (data) {
@@ -1003,7 +1002,6 @@ export class BookingSeatItem implements IBookingSeatItem {
     init(_data?: any) {
         if (_data) {
             this.seatId = _data["seatId"];
-            this.ticketTypeId = _data["ticketTypeId"];
         }
     }
 
@@ -1017,14 +1015,12 @@ export class BookingSeatItem implements IBookingSeatItem {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["seatId"] = this.seatId;
-        data["ticketTypeId"] = this.ticketTypeId;
         return data;
     }
 }
 
 export interface IBookingSeatItem {
     seatId?: string;
-    ticketTypeId?: string;
 }
 
 export class BookingFoodItem implements IBookingFoodItem {
@@ -1394,7 +1390,7 @@ export class InvoiceTicketDTO implements IInvoiceTicketDTO {
     roomName?: string;
     showTime?: Date;
     seatLabel?: string;
-    ticketType?: string;
+    seatType?: string;
     price?: number;
     qrCode?: string | undefined;
     isUsed?: boolean;
@@ -1415,7 +1411,7 @@ export class InvoiceTicketDTO implements IInvoiceTicketDTO {
             this.roomName = _data["roomName"];
             this.showTime = _data["showTime"] ? new Date(_data["showTime"].toString()) : <any>undefined;
             this.seatLabel = _data["seatLabel"];
-            this.ticketType = _data["ticketType"];
+            this.seatType = _data["seatType"];
             this.price = _data["price"];
             this.qrCode = _data["qrCode"];
             this.isUsed = _data["isUsed"];
@@ -1436,7 +1432,7 @@ export class InvoiceTicketDTO implements IInvoiceTicketDTO {
         data["roomName"] = this.roomName;
         data["showTime"] = this.showTime ? this.showTime.toISOString() : <any>undefined;
         data["seatLabel"] = this.seatLabel;
-        data["ticketType"] = this.ticketType;
+        data["seatType"] = this.seatType;
         data["price"] = this.price;
         data["qrCode"] = this.qrCode;
         data["isUsed"] = this.isUsed;
@@ -1450,7 +1446,7 @@ export interface IInvoiceTicketDTO {
     roomName?: string;
     showTime?: Date;
     seatLabel?: string;
-    ticketType?: string;
+    seatType?: string;
     price?: number;
     qrCode?: string | undefined;
     isUsed?: boolean;

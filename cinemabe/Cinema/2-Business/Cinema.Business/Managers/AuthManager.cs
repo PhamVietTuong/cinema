@@ -7,6 +7,7 @@ using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 
 namespace Cinema.Business.Managers;
 
@@ -107,6 +108,57 @@ public class AuthManager : IAuthManager
             CountPerPage = pageSize,
             Page         = page
         };
+    }
+
+    public async Task<UserDTO> CreateUserAsync(CreateUserRequest request)
+    {
+        if (await _uow.UserStore.GetByEmailAsync(request.Email) != null)
+            throw new InvalidOperationException("Email already in use.");
+        if (await _uow.UserStore.GetByPhoneAsync(request.Phone) != null)
+            throw new InvalidOperationException("Phone already in use.");
+
+        var userTypeId = request.UserTypeId != Guid.Empty
+            ? request.UserTypeId
+            : (await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer")
+               ?? throw new InvalidOperationException("Customer user type not found.")).Id;
+
+        CreatePasswordHash(request.Password, out var hash, out var salt);
+        var user = new User
+        {
+            Name         = request.Name,
+            Email        = request.Email,
+            Phone        = request.Phone,
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            UserTypeId   = userTypeId,
+            Status       = request.Status,
+        };
+        await _uow.UserStore.CreateAsync(user);
+        return ToUserDTO(await _uow.UserStore.GetByIdAsync(user.Id) ?? user);
+    }
+
+    public async Task<UserDTO> UpdateUserAsync(UpdateUserRequest request)
+    {
+        var user = await _uow.UserStore.GetByIdAsync(request.Id)
+                   ?? throw new KeyNotFoundException("User not found.");
+        user.Name   = request.Name;
+        user.Phone  = request.Phone;
+        user.Status = request.Status;
+        if (request.Avatar != null) user.Avatar = request.Avatar;
+        if (request.UserTypeId != Guid.Empty) user.UserTypeId = request.UserTypeId;
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
+        return ToUserDTO(await _uow.UserStore.GetByIdAsync(request.Id) ?? user);
+    }
+
+    public async Task DeleteUserAsync(Guid id)
+    {
+        var user = await _uow.UserStore.GetByIdAsync(id)
+                   ?? throw new KeyNotFoundException("User not found.");
+        // Soft-delete: deactivating preserves the user's invoices/comments history.
+        user.Status = UserStatus.Inactive;
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
     }
 
     private AuthResponse BuildAuthResponse(User user) => new()

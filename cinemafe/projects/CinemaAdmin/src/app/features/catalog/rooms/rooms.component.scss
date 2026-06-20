@@ -60,6 +60,7 @@
   color: var(--ad-muted);
 }
 .seat {
+  position: relative;
   width: 28px;
   height: 28px;
   display: flex;
@@ -74,7 +75,34 @@
 
   &:hover { transform: scale(1.12); }
   &.occupied { opacity: 0.35; }
+  &.editable { cursor: pointer; }
+  &.paired { border-style: dashed; border-color: var(--ad-primary); }
+  &.pending { outline: 2px solid var(--ad-primary); outline-offset: 1px; }
+
+  .pair-badge {
+    position: absolute;
+    top: -7px; right: -7px;
+    font-size: 12px; width: 12px; height: 12px;
+    color: var(--ad-primary);
+  }
 }
+
+// ── Seat-map editor toolbar ─────────────────────────────────────────────────────
+.seatmap-toolbar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
+.mode-tabs { display: flex; gap: 10px; }
+.palette { display: flex; flex-wrap: wrap; gap: 8px; }
+.palette-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  font-size: 13px; color: var(--ad-on);
+  background: var(--ad-surface-2);
+  border: 1.5px solid var(--ad-glass-border);
+
+  small { color: var(--ad-muted); }
+  .palette-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--sc); }
+  &.is-active { border-color: var(--sc); box-shadow: 0 0 0 2px color-mix(in srgb, var(--sc) 40%, transparent); }
+}
+.seatmap-body .form-actions { display: flex; gap: 12px; justify-content: flex-end; padding-top: 18px; }
 
 // ── Legend ────────────────────────────────────────────────────────────────────
 .legend { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding-top: 18px; border-top: 1px solid var(--ad-glass-border); }

@@ -126,8 +126,24 @@
             <label class="field"><span class="field-label">Email</span><input type="text" [value]="user?.email || ''" disabled></label>
           </div>
           <div class="set-row-2">
-            <label class="field"><span class="field-label">Số điện thoại</span><input type="text" formControlName="phone" placeholder="0901234567"></label>
-            <label class="field"><span class="field-label">Ảnh đại diện (URL)</span><input type="text" formControlName="avatar" placeholder="https://..."></label>
+            <label class="field">
+              <span class="field-label">Số điện thoại</span>
+              <input type="text" formControlName="phone" placeholder="0901234567">
+              <span class="msg err" *ngIf="profileForm.get('phone')?.touched && profileForm.get('phone')?.hasError('pattern')">Số điện thoại không hợp lệ.</span>
+            </label>
+            <label class="field">
+              <span class="field-label">Ảnh đại diện</span>
+              <input type="text" formControlName="avatar" placeholder="Dán URL hoặc tải ảnh lên">
+              <span class="avatar-upload">
+                <label class="btn-upload">
+                  <i class="fas fa-upload"></i> Tải ảnh lên
+                  <input type="file" accept="image/*" hidden (change)="onPickAvatar($event)">
+                </label>
+                <img class="avatar-preview" *ngIf="profileForm.value.avatar" [src]="profileForm.value.avatar" alt="">
+                <span class="msg" *ngIf="avatarUploading">Đang tải...</span>
+                <span class="msg err" *ngIf="avatarErr">{{ avatarErr }}</span>
+              </span>
+            </label>
           </div>
           <p class="msg ok" *ngIf="profileMsg">{{ profileMsg }}</p>
           <p class="msg err" *ngIf="profileErr">{{ profileErr }}</p>

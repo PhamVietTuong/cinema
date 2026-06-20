@@ -133,4 +133,58 @@ public class IdentityController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
         }
     }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(UserDTO), 200)]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.CreateUser being awakened to process request...");
+        try
+        {
+            var result = await _authManager.CreateUserAsync(request);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.CreateUser->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+        }
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(UserDTO), 200)]
+    public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.UpdateUser being awakened to process request...");
+        try
+        {
+            var result = await _authManager.UpdateUserAsync(request);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.UpdateUser->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+        }
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeleteUser([FromQuery] Guid id)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.DeleteUser being awakened to process request...");
+        try
+        {
+            await _authManager.DeleteUserAsync(id);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.DeleteUser->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+        }
+    }
 }

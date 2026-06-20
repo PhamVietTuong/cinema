@@ -9,7 +9,8 @@
     </div>
   </div>
 
-  <div class="ad-card form-card" *ngIf="showForm">
+  <app-modal [open]="showForm" (closed)="cancelEdit()">
+  <div class="ad-card form-card">
     <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Giới Hạn' : 'Giới Hạn Mới' }}</h3>
     <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
       <div class="ad-field">
@@ -30,6 +31,8 @@
       </div>
     </form>
   </div>
+  </app-modal>
+  <app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
 
   <div class="ad-card ad-card--pad-0">
     <div class="ad-table-wrap">

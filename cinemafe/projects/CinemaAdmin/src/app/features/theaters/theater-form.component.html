@@ -1,0 +1,45 @@
+<app-modal [open]="open" [title]="editingId ? 'Chỉnh Sửa Rạp' : 'Rạp Mới'" (closed)="cancel()">
+  <form [formGroup]="form" (ngSubmit)="save()" class="theater-form">
+    <div class="ad-field">
+      <label class="ad-label">Tên Rạp</label>
+      <input class="ad-input" formControlName="name" placeholder="VD: CGV Vincom">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Thành Phố</label>
+      <input class="ad-input" formControlName="city" placeholder="VD: Hà Nội">
+    </div>
+    <div class="ad-field full-span">
+      <label class="ad-label">Địa Chỉ</label>
+      <input class="ad-input" formControlName="address" placeholder="Số nhà, đường, quận...">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Số Điện Thoại</label>
+      <input class="ad-input" formControlName="phone" placeholder="0123456789">
+      <span class="ad-field-err" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('pattern')">Số điện thoại không hợp lệ.</span>
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Email</label>
+      <input class="ad-input" formControlName="email" placeholder="rap@cinema.vn">
+      <span class="ad-field-err" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')">Email không hợp lệ.</span>
+    </div>
+    <div class="ad-field full-span">
+      <label class="ad-label">Ảnh Rạp</label>
+      <input class="ad-input" formControlName="imageUrl" placeholder="Dán URL hoặc tải ảnh lên">
+      <div class="img-upload-row">
+        <label class="ad-btn ad-btn--ghost">
+          <mat-icon>upload</mat-icon> Tải Ảnh Lên
+          <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
+        </label>
+        <span class="img-upload-status" *ngIf="uploading">Đang tải...</span>
+        <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
+      </div>
+      <div class="img-preview" *ngIf="form.value.imageUrl">
+        <img [src]="form.value.imageUrl" alt="">
+      </div>
+    </div>
+    <div class="form-actions full-span">
+      <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancel()">Hủy</button>
+    </div>
+  </form>
+</app-modal>

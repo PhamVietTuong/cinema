@@ -432,6 +432,11 @@
           },
           "isLocked": {
             "type": "boolean"
+          },
+          "seatGroupId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           }
         }
       },
@@ -554,9 +559,6 @@
           "seatType": {
             "type": "string"
           },
-          "ticketType": {
-            "type": "string"
-          },
           "price": {
             "type": "number",
             "format": "double"
@@ -605,10 +607,6 @@
         "additionalProperties": false,
         "properties": {
           "seatId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "ticketTypeId": {
             "type": "string",
             "format": "guid"
           }
@@ -795,7 +793,7 @@
           "seatLabel": {
             "type": "string"
           },
-          "ticketType": {
+          "seatType": {
             "type": "string"
           },
           "price": {

@@ -28,7 +28,6 @@ public class InvoiceTicketConfiguration : IEntityTypeConfiguration<InvoiceTicket
         b.HasOne(it => it.Invoice).WithMany(i => i.InvoiceTickets).HasForeignKey(it => it.InvoiceId).OnDelete(DeleteBehavior.Cascade);
         b.HasOne(it => it.ShowTimeRoom).WithMany(sr => sr.InvoiceTickets).HasForeignKey(it => new { it.ShowTimeId, it.RoomId }).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(it => it.Seat).WithMany().HasForeignKey(it => it.SeatId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(it => it.TicketType).WithMany(tt => tt.InvoiceTickets).HasForeignKey(it => it.TicketTypeId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 

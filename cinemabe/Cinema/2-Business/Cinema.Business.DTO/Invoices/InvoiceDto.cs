@@ -24,7 +24,7 @@ public class InvoiceTicketDTO
     public string RoomName { get; set; } = string.Empty;
     public DateTime ShowTime { get; set; }
     public string SeatLabel { get; set; } = string.Empty;
-    public string TicketType { get; set; } = string.Empty;
+    public string SeatType { get; set; } = string.Empty;
     public double Price { get; set; }
     public string? QrCode { get; set; }
     public bool IsUsed { get; set; }

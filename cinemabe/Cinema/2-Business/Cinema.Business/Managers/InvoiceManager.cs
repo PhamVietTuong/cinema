@@ -85,7 +85,7 @@ public class InvoiceManager : IInvoiceManager
         dto.RoomName    = ticket.ShowTimeRoom?.Room?.Name             ?? string.Empty;
         dto.ShowTime    = ticket.ShowTimeRoom?.ShowTime?.StartTime    ?? default;
         dto.SeatLabel   = ticket.Seat != null ? $"{ticket.Seat.RowName}{ticket.Seat.ColIndex}" : string.Empty;
-        dto.TicketType  = ticket.TicketType?.Name ?? string.Empty;
+        dto.SeatType    = ticket.Seat?.SeatType?.Name ?? string.Empty;
         return dto;
     }
 

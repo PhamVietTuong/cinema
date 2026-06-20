@@ -20,7 +20,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IRoomStore RoomStore { get; }
     public IDiscountStore DiscountStore { get; }
     public IMovieTypeDetailStore MovieTypeDetailStore { get; }
-    public ISeatTypeTicketTypeStore SeatTypeTicketTypeStore { get; }
     public IUserTypeStore UserTypeStore { get; }
     public ICommentStore CommentStore { get; }
     public IEvaluationStore EvaluationStore { get; }
@@ -29,7 +28,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IDiscountTypeStore DiscountTypeStore { get; }
     public IMovieTypeStore MovieTypeStore { get; }
     public ISeatTypeStore SeatTypeStore { get; }
-    public ITicketTypeStore TicketTypeStore { get; }
     public IMemberShipStore MemberShipStore { get; }
     public IHolidayStore HolidayStore { get; }
     public INewsStore NewsStore { get; }
@@ -46,7 +44,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         RoomStore = new RoomStore(db);
         DiscountStore = new DiscountStore(db);
         MovieTypeDetailStore = new MovieTypeDetailStore(db);
-        SeatTypeTicketTypeStore = new SeatTypeTicketTypeStore(db);
         UserTypeStore = new UserTypeStore(db);
         CommentStore = new CommentStore(db);
         EvaluationStore = new EvaluationStore(db);
@@ -55,7 +52,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         DiscountTypeStore = new DiscountTypeStore(db);
         MovieTypeStore = new MovieTypeStore(db);
         SeatTypeStore = new SeatTypeStore(db);
-        TicketTypeStore = new TicketTypeStore(db);
         MemberShipStore = new MemberShipStore(db);
         HolidayStore = new HolidayStore(db);
         NewsStore = new NewsStore(db);

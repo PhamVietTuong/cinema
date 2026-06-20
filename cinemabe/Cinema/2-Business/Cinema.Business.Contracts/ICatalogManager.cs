@@ -19,12 +19,17 @@ public interface IAgeRestrictionManager : ICatalogManager<AgeRestrictionDTO, Cre
 public interface IDiscountTypeManager   : ICatalogManager<DiscountTypeDTO,   CreateDiscountTypeRequest,   UpdateDiscountTypeRequest> { }
 public interface IMovieTypeManager      : ICatalogManager<MovieTypeDTO,      CreateMovieTypeRequest,      UpdateMovieTypeRequest> { }
 public interface ISeatTypeManager       : ICatalogManager<SeatTypeDTO,       CreateSeatTypeRequest,       UpdateSeatTypeRequest> { }
-public interface ITicketTypeManager     : ICatalogManager<TicketTypeDTO,     CreateTicketTypeRequest,     UpdateTicketTypeRequest> { }
 public interface IUserTypeManager       : ICatalogManager<UserTypeDTO,       CreateUserTypeRequest,       UpdateUserTypeRequest> { }
 public interface IMemberShipManager     : ICatalogManager<MemberShipDTO,     CreateMemberShipRequest,     UpdateMemberShipRequest> { }
 public interface IHolidayManager        : ICatalogManager<HolidayDTO,        CreateHolidayRequest,        UpdateHolidayRequest> { }
 public interface INewsManager           : ICatalogManager<NewsDTO,           CreateNewsRequest,           UpdateNewsRequest> { }
 public interface IDiscountManager       : ICatalogManager<DiscountDTO,       CreateDiscountRequest,       UpdateDiscountRequest> { }
 public interface IFoodAndDrinkManager   : ICatalogManager<FoodAndDrinkDTO,   CreateFoodAndDrinkRequest,   UpdateFoodAndDrinkRequest> { }
-public interface IRoomManager           : ICatalogManager<RoomDTO,           CreateRoomRequest,           UpdateRoomRequest> { }
+public interface IRoomManager           : ICatalogManager<RoomDTO,           CreateRoomRequest,           UpdateRoomRequest>
+{
+    /// <summary>Returns every seat of a room with its current type + grouping, for the seat-map editor.</summary>
+    Task<List<RoomSeatDTO>> GetSeatMapAsync(Guid roomId);
+    /// <summary>Persists seat-type and double-seat grouping changes for a room's existing seats.</summary>
+    Task SaveSeatMapAsync(SaveSeatMapRequest request);
+}
 public interface IShowTimeManager       : ICatalogManager<ShowTimeDTO,       CreateShowTimeRequest,       UpdateShowTimeRequest> { }

@@ -1,7 +1,9 @@
 <ng-container *ngIf="isAuth$ | async; else loginView">
-  <div class="admin-shell">
+  <div class="admin-shell" [class.menu-open]="menuOpen">
+    <!-- Mobile drawer scrim -->
+    <div class="sidebar-scrim" (click)="closeMenu()"></div>
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" [class.is-open]="menuOpen">
       <div class="brand">
         <span class="brand-mark"><mat-icon>movie_filter</mat-icon></span>
         <span class="brand-text">CINEMA<strong>ADMIN</strong></span>
@@ -34,9 +36,6 @@
         <a routerLink="/seat-types" routerLinkActive="is-active" class="nav-item">
           <mat-icon>event_seat</mat-icon><span>Loại Ghế</span>
         </a>
-        <a routerLink="/ticket-types" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>confirmation_number</mat-icon><span>Loại Vé</span>
-        </a>
         <a routerLink="/discount-types" routerLinkActive="is-active" class="nav-item">
           <mat-icon>sell</mat-icon><span>Loại Giảm Giá</span>
         </a>
@@ -66,12 +65,6 @@
         <a routerLink="/invoices" routerLinkActive="is-active" class="nav-item">
           <mat-icon>receipt_long</mat-icon><span>Hóa Đơn</span>
         </a>
-        <a routerLink="/seat-ticket-pricing" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>price_change</mat-icon><span>Bảng Giá Ghế/Vé</span>
-        </a>
-        <a routerLink="/movie-type-details" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>theaters</mat-icon><span>Gán Thể Loại Phim</span>
-        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -91,6 +84,9 @@
     <!-- Main -->
     <div class="main">
       <header class="topbar">
+        <button type="button" class="menu-toggle ad-icon-btn" (click)="toggleMenu()" aria-label="Menu">
+          <mat-icon>menu</mat-icon>
+        </button>
         <h2 class="topbar-title">{{ pageTitle$ | async }}</h2>
         <div class="topbar-right">
           <button type="button" class="ad-icon-btn" aria-label="Thông báo"><mat-icon>notifications_none</mat-icon></button>

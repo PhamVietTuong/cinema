@@ -9,7 +9,8 @@
     </div>
   </div>
 
-  <div class="ad-card form-card" *ngIf="showForm">
+  <app-modal [open]="showForm" (closed)="cancelEdit()">
+  <div class="ad-card form-card">
     <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Phòng' : 'Phòng Mới' }}</h3>
     <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
       <div class="ad-field">
@@ -43,6 +44,8 @@
       </div>
     </form>
   </div>
+  </app-modal>
+  <app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
 
   <div class="ad-card ad-card--pad-0">
     <div class="ad-table-wrap">
@@ -64,7 +67,7 @@
             <td>{{ x.totalRows }} × {{ x.totalColumns }} = {{ (x.totalRows ?? 0) * (x.totalColumns ?? 0) }} ghế</td>
             <td>{{ statusLabel(x.status) }}</td>
             <td class="ad-td-actions">
-              <button class="ad-icon-btn" type="button" (click)="viewSeats(x)" title="Xem sơ đồ ghế"><mat-icon>event_seat</mat-icon></button>
+              <button class="ad-icon-btn" type="button" (click)="editSeats(x)" title="Sơ đồ ghế"><mat-icon>event_seat</mat-icon></button>
               <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Sửa"><mat-icon>edit</mat-icon></button>
               <button class="ad-icon-btn" (click)="delete(x.id)" title="Xóa"><mat-icon>delete</mat-icon></button>
             </td>
@@ -91,7 +94,7 @@
   </div>
 </div>
 
-<!-- Seating-chart popup -->
+<!-- Seat-map editor popup -->
 <div class="seatmap-scrim" *ngIf="viewingRoom" (click)="closeSeats()"></div>
 <div class="seatmap-modal" *ngIf="viewingRoom">
   <div class="seatmap-head">
@@ -106,6 +109,27 @@
     <div *ngIf="seatsLoading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>Đang tải sơ đồ ghế…</p></div>
 
     <ng-container *ngIf="!seatsLoading">
+      <!-- Toolbar: choose mode + (in paint mode) the seat type to apply -->
+      <div class="seatmap-toolbar">
+        <div class="mode-tabs">
+          <button type="button" class="ad-btn" [class.ad-btn--primary]="mode === 'paint'" [class.ad-btn--ghost]="mode !== 'paint'" (click)="setMode('paint')">
+            <mat-icon>format_paint</mat-icon> Gán Loại Ghế
+          </button>
+          <button type="button" class="ad-btn" [class.ad-btn--primary]="mode === 'pair'" [class.ad-btn--ghost]="mode !== 'pair'" (click)="setMode('pair')">
+            <mat-icon>link</mat-icon> Ghế Đôi
+          </button>
+        </div>
+
+        <div class="palette" *ngIf="mode === 'paint'">
+          <button type="button" class="palette-chip" *ngFor="let t of allSeatTypes"
+                  [class.is-active]="t.id === activeSeatTypeId"
+                  [style.--sc]="t.color" (click)="activeSeatTypeId = t.id!">
+            <span class="palette-dot"></span>{{ t.name }} <small>×{{ t.priceMultiplier | number:'1.0-2' }}</small>
+          </button>
+        </div>
+        <p class="ad-sub" *ngIf="mode === 'pair'">Chọn 2 ghế cạnh nhau để ghép thành ghế đôi. Bấm vào ghế đã ghép để hủy.</p>
+      </div>
+
       <div class="screen-wrap">
         <div class="screen-arc"></div>
         <span class="screen-label">MÀN HÌNH</span>
@@ -115,20 +139,29 @@
         <div class="seat-row" *ngFor="let row of seatRows">
           <div class="row-label">{{ row }}</div>
           <div *ngFor="let s of seatsInRow(row)"
-               class="seat"
+               class="seat editable"
                [style.--sc]="s.seatTypeColor || '#8fa3bf'"
-               [class.occupied]="s.status === SeatStatus.Occupied"
-               [title]="row + s.colIndex + ' · ' + s.seatTypeName">{{ s.colIndex }}</div>
+               [class.paired]="s.seatGroupId"
+               [class.pending]="isPairPending(s)"
+               (click)="onSeatClick(s)"
+               [title]="row + s.colIndex + ' · ' + s.seatTypeName + (s.seatGroupId ? ' · ghế đôi' : '')">{{ s.colIndex }}<mat-icon *ngIf="s.seatGroupId" class="pair-badge">link</mat-icon></div>
         </div>
       </div>
       <ng-template #noSeats>
-        <div class="ad-empty"><mat-icon>event_seat</mat-icon><p>Phòng này chưa có ghế nào.</p></div>
+        <div class="ad-empty"><mat-icon>event_seat</mat-icon><p>Phòng này chưa có ghế nào. Hãy kiểm tra đã có loại ghế trước khi tạo phòng.</p></div>
       </ng-template>
 
-      <div class="legend" *ngIf="seatTypes.length">
-        <span class="legend-item" *ngFor="let t of seatTypes">
+      <div class="legend" *ngIf="allSeatTypes.length">
+        <span class="legend-item" *ngFor="let t of allSeatTypes">
           <span class="legend-dot" [style.background]="t.color"></span> {{ t.name }}
         </span>
+      </div>
+
+      <div class="form-actions">
+        <button class="ad-btn ad-btn--primary" type="button" [disabled]="saving || !seats.length" (click)="saveSeatMap()">
+          {{ saving ? 'Đang lưu…' : 'Lưu Sơ Đồ' }}
+        </button>
+        <button class="ad-btn ad-btn--ghost" type="button" (click)="closeSeats()">Đóng</button>
       </div>
     </ng-container>
   </div>

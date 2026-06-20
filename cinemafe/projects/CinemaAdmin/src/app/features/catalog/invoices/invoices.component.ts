@@ -3,13 +3,15 @@ import { Validators } from '@angular/forms';
 import { EMPTY, Observable } from 'rxjs';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 import { CatalogCrudBase } from '../catalog-crud.base';
+import { ModalComponent } from '../../../shared/modal.component';
+import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
 
 type Dto = CinemaServiceAgent.InvoiceAdminDTO;
 
 @Component({
   selector: 'app-invoices',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, ModalComponent, ConfirmModalComponent],
   templateUrl: './invoices.component.html',
 })
 export class InvoicesManagementComponent extends CatalogCrudBase<Dto> {

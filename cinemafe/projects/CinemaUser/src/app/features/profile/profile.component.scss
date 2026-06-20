@@ -99,6 +99,16 @@ $outline: rgba(255, 255, 255, 0.08);
 .msg.err { color: #ffb4ab; }
 .form .btn-primary-cta { align-self: flex-start; margin-top: 4px; }
 
+.avatar-upload { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.btn-upload {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: 0.8rem; padding: 7px 12px; border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16); color: #e7eefb;
+  background: rgba(255, 255, 255, 0.05);
+}
+.btn-upload:hover { background: rgba(255, 255, 255, 0.1); }
+.avatar-preview { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+
 // ── Bookings ────────────────────────────────────────────────────────────────
 .empty {
   text-align: center; padding: 48px 0; color: $muted;

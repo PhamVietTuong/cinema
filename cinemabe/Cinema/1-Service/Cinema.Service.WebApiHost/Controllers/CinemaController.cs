@@ -24,7 +24,6 @@ public class CinemaController : ControllerBase
     private readonly IDiscountTypeManager   _discountTypes;
     private readonly IMovieTypeManager      _movieTypes;
     private readonly ISeatTypeManager       _seatTypes;
-    private readonly ITicketTypeManager     _ticketTypes;
     private readonly IUserTypeManager       _userTypes;
     private readonly IMemberShipManager     _memberShips;
     private readonly IHolidayManager        _holidays;
@@ -34,7 +33,6 @@ public class CinemaController : ControllerBase
     private readonly IRoomManager           _rooms;
     private readonly IShowTimeManager       _showTimes;
     private readonly IMovieTypeDetailManager     _movieTypeDetails;
-    private readonly ISeatTypeTicketTypeManager  _seatTypeTicketTypes;
     private readonly IInvoiceAdminManager        _invoices;
     private readonly IWebHostEnvironment         _env;
 
@@ -45,7 +43,6 @@ public class CinemaController : ControllerBase
         IDiscountTypeManager discountTypes,
         IMovieTypeManager movieTypes,
         ISeatTypeManager seatTypes,
-        ITicketTypeManager ticketTypes,
         IUserTypeManager userTypes,
         IMemberShipManager memberShips,
         IHolidayManager holidays,
@@ -55,7 +52,6 @@ public class CinemaController : ControllerBase
         IRoomManager rooms,
         IShowTimeManager showTimes,
         IMovieTypeDetailManager movieTypeDetails,
-        ISeatTypeTicketTypeManager seatTypeTicketTypes,
         IInvoiceAdminManager invoices,
         IWebHostEnvironment env)
     {
@@ -65,7 +61,6 @@ public class CinemaController : ControllerBase
         _discountTypes   = discountTypes;
         _movieTypes      = movieTypes;
         _seatTypes       = seatTypes;
-        _ticketTypes     = ticketTypes;
         _userTypes       = userTypes;
         _memberShips     = memberShips;
         _holidays        = holidays;
@@ -75,7 +70,6 @@ public class CinemaController : ControllerBase
         _rooms           = rooms;
         _showTimes       = showTimes;
         _movieTypeDetails    = movieTypeDetails;
-        _seatTypeTicketTypes = seatTypeTicketTypes;
         _invoices            = invoices;
         _env                 = env;
     }
@@ -573,45 +567,6 @@ public class CinemaController : ControllerBase
     }
     #endregion
 
-    #region TicketType
-    [HttpPost]
-    [ProducesResponseType(typeof(DefaultSearchResults<TicketTypeDTO>), 200)]
-    public Task<IActionResult> GetTicketTypes([FromBody] PagingSearchDTO search)
-    {
-        return Run(nameof(GetTicketTypes), () => _ticketTypes.GetAsync(search));
-    }
-
-    [HttpGet]
-    [ProducesResponseType(typeof(TicketTypeDTO), 200)]
-    public Task<IActionResult> GetTicketType([FromQuery] Guid id)
-    {
-        return Run(nameof(GetTicketType), () => _ticketTypes.GetByIdAsync(id));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(typeof(TicketTypeDTO), 200)]
-    public Task<IActionResult> CreateTicketType([FromBody] CreateTicketTypeRequest request)
-    {
-        return Run(nameof(CreateTicketType), () => _ticketTypes.CreateAsync(request));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPut]
-    [ProducesResponseType(typeof(TicketTypeDTO), 200)]
-    public Task<IActionResult> UpdateTicketType([FromBody] UpdateTicketTypeRequest request)
-    {
-        return Run(nameof(UpdateTicketType), () => _ticketTypes.UpdateAsync(request));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpDelete]
-    [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteTicketType([FromQuery] Guid id)
-    {
-        return RunNoContent(nameof(DeleteTicketType), () => _ticketTypes.DeleteAsync(id));
-    }
-    #endregion
 
     #region UserType
     [HttpPost]
@@ -958,36 +913,21 @@ public class CinemaController : ControllerBase
     }
     #endregion
 
-    #region SeatTypeTicketType (price matrix)
-    [HttpPost]
-    [ProducesResponseType(typeof(DefaultSearchResults<SeatTypeTicketTypeDTO>), 200)]
-    public Task<IActionResult> GetSeatTypeTicketTypes([FromBody] PagingSearchDTO search)
+    #region Room seat map (seat-type assignment + double-seat grouping)
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(List<RoomSeatDTO>), 200)]
+    public Task<IActionResult> GetRoomSeatMap([FromQuery] Guid roomId)
     {
-        return Run(nameof(GetSeatTypeTicketTypes), () => _seatTypeTicketTypes.GetAsync(search));
+        return Run(nameof(GetRoomSeatMap), () => _rooms.GetSeatMapAsync(roomId));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpPost]
-    [ProducesResponseType(typeof(SeatTypeTicketTypeDTO), 200)]
-    public Task<IActionResult> CreateSeatTypeTicketType([FromBody] CreateSeatTypeTicketTypeRequest request)
-    {
-        return Run(nameof(CreateSeatTypeTicketType), () => _seatTypeTicketTypes.CreateAsync(request));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPut]
-    [ProducesResponseType(typeof(SeatTypeTicketTypeDTO), 200)]
-    public Task<IActionResult> UpdateSeatTypeTicketType([FromBody] UpdateSeatTypeTicketTypeRequest request)
-    {
-        return Run(nameof(UpdateSeatTypeTicketType), () => _seatTypeTicketTypes.UpdateAsync(request));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteSeatTypeTicketType([FromQuery] Guid seatTypeId, [FromQuery] Guid ticketTypeId)
+    public Task<IActionResult> SaveRoomSeatMap([FromBody] SaveSeatMapRequest request)
     {
-        return RunNoContent(nameof(DeleteSeatTypeTicketType), () => _seatTypeTicketTypes.DeleteAsync(seatTypeId, ticketTypeId));
+        return RunNoContent(nameof(SaveRoomSeatMap), () => _rooms.SaveSeatMapAsync(request));
     }
     #endregion
 

@@ -33,7 +33,7 @@
       </div>
       <div class="hero-visual">
         <div class="poster-wrap">
-          <img [src]="f.posterUrl || 'assets/no-poster.jpg'" [alt]="f.title" class="poster-img">
+          <img [src]="f.posterUrl || 'assets/no-poster.jpg'" [alt]="f.title" class="poster-img" (error)="onImgError($event)">
           <div class="poster-rating">
             <i class="fas fa-star"></i>
             <span>{{ f.averageRating | number:'1.1-1' }}</span>
@@ -74,7 +74,7 @@
          *ngFor="let movie of nowShowing$ | async"
          [routerLink]="['/movies', movie.id]">
       <div class="card-poster">
-        <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title">
+        <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
         <div class="card-hover-overlay">
           <span class="btn-book-small"><i class="fas fa-ticket"></i> Đặt Vé</span>
         </div>
@@ -101,7 +101,7 @@
   <div class="movie-grid">
     <div class="movie-card coming-card" *ngFor="let movie of comingSoon$ | async">
       <div class="card-poster">
-        <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title">
+        <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
         <div class="coming-badge">Sắp Chiếu</div>
       </div>
       <div class="card-info">

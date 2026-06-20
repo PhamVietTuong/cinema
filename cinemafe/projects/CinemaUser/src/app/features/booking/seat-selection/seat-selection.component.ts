@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgFor, NgIf, NgClass, CurrencyPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -32,6 +32,7 @@ export class SeatSelectionComponent implements OnInit, OnDestroy {
     private _router: Router,
     private _paymentService: PaymentServiceAgent.HttpService,
     private _hub: BookingHubService,
+    private _cdr: ChangeDetectorRef,
   ) {}
 
   get rows(): string[] {
@@ -52,8 +53,9 @@ export class SeatSelectionComponent implements OnInit, OnDestroy {
     this._paymentService.getSeats(
       PaymentServiceAgent.PagingSearchDTO.fromJS({ filters: { showTimeId: this.showTimeId, roomId: this.roomId } })
     ).subscribe({
-      next: r => { this.seats = r.results ?? []; this.loading = false; },
-      error: () => { this.loading = false; }
+      // Zoneless app: notify change detection so the seat grid renders.
+      next: r => { this.seats = r.results ?? []; this.loading = false; this._cdr.markForCheck(); },
+      error: () => { this.loading = false; this._cdr.markForCheck(); }
     });
 
     // Live seat locking: another viewer locking a seat disables it here in real time.
@@ -69,15 +71,27 @@ export class SeatSelectionComponent implements OnInit, OnDestroy {
   }
 
   toggleSeat(seat: SelectableSeat): void {
-    if (seat.status === PaymentServiceAgent.SeatStatus.Occupied || seat.isLocked) return;
-    seat.isSelected = !seat.isSelected;
-    if (seat.isSelected) {
-      this.selectedSeats.push(seat);
-      this._hub.lockSeat(this.showTimeId, this.roomId, seat.id!).catch(() => { /* see seatLockFailed$ */ });
-    } else {
-      this.selectedSeats = this.selectedSeats.filter(s => s.id !== seat.id);
-      this._hub.unlockSeat(this.showTimeId, this.roomId, seat.id!).catch(() => {});
+    // Double seats are two linked seats sharing a group id — select/lock them together.
+    const group = this._groupOf(seat);
+    if (group.some(s => s.status === PaymentServiceAgent.SeatStatus.Occupied || s.isLocked)) return;
+
+    const select = !seat.isSelected;
+    for (const s of group) {
+      s.isSelected = select;
+      if (select) {
+        if (!this.selectedSeats.includes(s)) this.selectedSeats.push(s);
+        this._hub.lockSeat(this.showTimeId, this.roomId, s.id!).catch(() => { /* see seatLockFailed$ */ });
+      } else {
+        this.selectedSeats = this.selectedSeats.filter(x => x.id !== s.id);
+        this._hub.unlockSeat(this.showTimeId, this.roomId, s.id!).catch(() => {});
+      }
     }
+  }
+
+  /** The seat plus any others sharing its group id (a double seat); just the seat itself otherwise. */
+  private _groupOf(seat: SelectableSeat): SelectableSeat[] {
+    if (!seat.seatGroupId) return [seat];
+    return this.seats.filter(s => s.seatGroupId === seat.seatGroupId);
   }
 
   /** Apply a lock/unlock event to the matching seat, deselecting it if we held it. */
@@ -89,6 +103,8 @@ export class SeatSelectionComponent implements OnInit, OnDestroy {
       seat.isSelected = false;
       this.selectedSeats = this.selectedSeats.filter(s => s.id !== seatId);
     }
+    // SignalR event fires outside Angular — re-render the affected seat.
+    this._cdr.markForCheck();
   }
 
   proceedToCheckout(): void {

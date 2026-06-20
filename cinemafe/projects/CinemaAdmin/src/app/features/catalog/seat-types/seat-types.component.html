@@ -9,7 +9,8 @@
     </div>
   </div>
 
-  <div class="ad-card form-card" *ngIf="showForm">
+  <app-modal [open]="showForm" (closed)="cancelEdit()">
+  <div class="ad-card form-card">
     <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Loại Ghế' : 'Loại Ghế Mới' }}</h3>
     <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
       <div class="ad-field">
@@ -19,6 +20,11 @@
       <div class="ad-field">
         <label class="ad-label">Màu Hiển Thị</label>
         <input class="ad-input" type="color" formControlName="color">
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">Hệ Số Giá</label>
+        <input class="ad-input" type="number" step="0.1" min="0.1" formControlName="priceMultiplier" placeholder="1.0">
+        <span class="ad-hint">Giá ghế = giá gốc suất chiếu × hệ số (1 = thường, 1.5 = VIP, 2 = ghế đôi).</span>
       </div>
       <div class="ad-field full-span">
         <label class="ad-label">Mô Tả</label>
@@ -30,15 +36,18 @@
       </div>
     </form>
   </div>
+  </app-modal>
+  <app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
 
   <div class="ad-card ad-card--pad-0">
     <div class="ad-table-wrap">
       <table class="ad-table">
         <thead>
-          <tr><th>Màu</th><th>Tên Loại Ghế</th><th>Mô Tả</th><th class="ad-td-actions">Thao Tác</th></tr>
+          <tr><th>Màu</th><th>Tên Loại Ghế</th><th>Hệ Số Giá</th><th>Mô Tả</th><th class="ad-td-actions">Thao Tác</th></tr>
           <tr class="ad-filter-row">
             <th><input class="ad-filter-input" [(ngModel)]="filters['color']" (input)="onFilterChange()" placeholder="#..."></th>
             <th><input class="ad-filter-input" [(ngModel)]="filters['name']" (input)="onFilterChange()" placeholder="Lọc..."></th>
+            <th></th>
             <th><input class="ad-filter-input" [(ngModel)]="filters['description']" (input)="onFilterChange()" placeholder="Lọc..."></th>
             <th></th>
           </tr>
@@ -47,6 +56,7 @@
           <tr *ngFor="let x of items">
             <td><span class="color-dot" [style.background]="x.color"></span></td>
             <td><strong>{{ x.name }}</strong></td>
+            <td>×{{ x.priceMultiplier | number:'1.0-2' }}</td>
             <td>{{ x.description || '—' }}</td>
             <td class="ad-td-actions">
               <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Sửa"><mat-icon>edit</mat-icon></button>

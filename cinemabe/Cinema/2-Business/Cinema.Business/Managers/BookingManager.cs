@@ -41,8 +41,9 @@ public class BookingManager : IBookingManager
                 SeatTypeName  = s.SeatType?.Name ?? "",
                 SeatTypeColor = s.SeatType?.Color ?? "#808080",
                 Status        = isBooked ? SeatStatus.Occupied : isLocked ? SeatStatus.Reserved : SeatStatus.Available,
-                Price         = showTimeRoom?.BasePrice ?? 0,
-                IsLocked      = isLocked && !isBooked
+                Price         = (showTimeRoom?.BasePrice ?? 0) * (s.SeatType?.PriceMultiplier ?? 1),
+                IsLocked      = isLocked && !isBooked,
+                SeatGroupId   = s.SeatGroupId
             };
         }).ToList();
 
@@ -77,7 +78,10 @@ public class BookingManager : IBookingManager
                 var seat = await _uow.SeatStore.GetByIdAsync(seatItem.SeatId)
                            ?? throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
 
-                var price = (double)showTimeRoom.BasePrice;
+                // Price = showtime base price scaled by the seat type's multiplier.
+                var seatType   = await _uow.SeatTypeStore.GetByIdAsync(seat.SeatTypeId);
+                var multiplier = seatType?.PriceMultiplier ?? 1;
+                var price      = showTimeRoom.BasePrice * multiplier;
                 ticketTotal += price;
 
                 tickets.Add(new InvoiceTicket
@@ -85,13 +89,13 @@ public class BookingManager : IBookingManager
                     ShowTimeId   = request.ShowTimeId,
                     RoomId       = request.RoomId,
                     SeatId       = seatItem.SeatId,
-                    TicketTypeId = seatItem.TicketTypeId,
                     Price        = price,
                 });
 
                 ticketItems.Add(new TicketItemDTO
                 {
                     SeatLabel = $"{seat.RowName}{seat.ColIndex}",
+                    SeatType  = seatType?.Name ?? string.Empty,
                     Price     = price
                 });
             }

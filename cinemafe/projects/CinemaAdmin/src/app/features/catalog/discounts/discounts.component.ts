@@ -2,13 +2,15 @@ import { Component, inject } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 import { CatalogCrudBase } from '../catalog-crud.base';
+import { ModalComponent } from '../../../shared/modal.component';
+import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
 
 type Dto = CinemaServiceAgent.DiscountDTO;
 
 @Component({
   selector: 'app-discounts',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, ModalComponent, ConfirmModalComponent],
   templateUrl: './discounts.component.html',
 })
 export class DiscountsManagementComponent extends CatalogCrudBase<Dto> {
