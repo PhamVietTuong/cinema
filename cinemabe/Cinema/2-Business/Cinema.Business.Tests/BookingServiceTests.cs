@@ -1,6 +1,7 @@
 using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Managers;
+using Cinema.Business.Payments;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
@@ -28,7 +29,7 @@ public class BookingServiceTests
 
     public BookingServiceTests()
     {
-        _sut = new BookingManager(_uowMock.Object);
+        _sut = new BookingManager(_uowMock.Object, new SandboxPaymentGateway());
     }
 
     private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId) => new()

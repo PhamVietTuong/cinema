@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Payments;
 using Cinema.Business.DTO;
 using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.Requests;
@@ -23,7 +24,13 @@ public class BookingManager : IBookingManager
     private static SemaphoreSlim BookingGate(Guid showTimeId, Guid roomId)
         => _bookingGates.GetOrAdd($"{showTimeId}:{roomId}", _ => new SemaphoreSlim(1, 1));
 
-    public BookingManager(IApplicationUnitOfWork uow) => _uow = uow;
+    private readonly IPaymentGateway _paymentGateway;
+
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGateway paymentGateway)
+    {
+        _uow = uow;
+        _paymentGateway = paymentGateway;
+    }
 
     public async Task<DefaultSearchResults<SeatDTO>> GetSeatsAsync(PagingSearchDTO search)
     {
@@ -178,9 +185,11 @@ public class BookingManager : IBookingManager
         if (invoice.UserId != userId) return false;
         // Only a Pending invoice can transition to Paid (prevents re-confirming / double-charge state churn).
         if (invoice.Status != InvoiceStatus.Pending) return false;
-        // NOTE: This still trusts the client-supplied paymentReference. A real deployment MUST verify
-        // the payment out-of-band against the gateway (server->gateway lookup or a signature-validated
-        // webhook) and confirm the captured amount equals invoice.FinalAmount before marking Paid.
+        // Verify the payment with the gateway (must succeed and the captured amount must match FinalAmount)
+        // before marking Paid. The sandbox approves dev flows; a real provider plugs in behind IPaymentGateway.
+        var verification = await _paymentGateway.VerifyPaymentAsync(paymentReference, invoice.FinalAmount);
+        if (!verification.Success) return false;
+
         invoice.Status           = InvoiceStatus.Paid;
         invoice.PaymentReference = paymentReference;
         invoice.PaidAt           = DateTime.UtcNow;
