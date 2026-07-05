@@ -127,14 +127,18 @@ public class BookingManager : IBookingManager
                 foodTotal += food.Price * f.Quantity;
             }
 
-            var total   = ticketTotal + foodTotal;
+            var total = ticketTotal + foodTotal;
+            var (discountAmount, finalAmount, discountId) =
+                await ComputePricingAsync(userId, total, request.DiscountCode);
+
             var invoice = new Invoice
             {
                 Code                = GenerateCode(),
                 UserId              = userId,
                 TotalAmount         = total,
-                DiscountAmount      = 0,
-                FinalAmount         = total,
+                DiscountAmount      = discountAmount,
+                FinalAmount         = finalAmount,
+                DiscountId          = discountId,
                 Status              = InvoiceStatus.Pending,
                 PaymentMethod       = request.PaymentMethod,
                 InvoiceTickets      = tickets,
@@ -149,8 +153,8 @@ public class BookingManager : IBookingManager
                 InvoiceId      = invoice.Id,
                 InvoiceCode    = invoice.Code,
                 TotalAmount    = total,
-                DiscountAmount = 0,
-                FinalAmount    = total,
+                DiscountAmount = discountAmount,
+                FinalAmount    = finalAmount,
                 Status         = InvoiceStatus.Pending,
                 Tickets        = ticketItems
             };
@@ -181,8 +185,72 @@ public class BookingManager : IBookingManager
         invoice.PaymentReference = paymentReference;
         invoice.PaidAt           = DateTime.UtcNow;
         await _uow.InvoiceStore.UpdateAsync(invoice);
+
+        // Loyalty: accrue points on the paid amount and re-evaluate the membership tier.
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user is not null)
+        {
+            user.Points += (int)(invoice.FinalAmount / _pointsPerUnit);
+            var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
+            var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
+            if (tier is not null) user.MemberShipId = tier.Id;
+            await _uow.UserStore.UpdateAsync(user);
+        }
+
+        // Mark the promo code (if any) as consumed.
+        if (invoice.DiscountId is Guid usedDiscountId)
+        {
+            var discount = await _uow.DiscountStore.GetByIdAsync(usedDiscountId);
+            if (discount is not null)
+            {
+                discount.UsedCount += 1;
+                await _uow.DiscountStore.UpdateAsync(discount);
+            }
+        }
+
         await _uow.SaveChangesAsync();
         return true;
+    }
+
+    // 1 loyalty point per 10,000 VND of the paid amount.
+    private const int _pointsPerUnit = 10000;
+
+    // Pricing: apply the member's tier discount first, then a valid promo code on the remainder
+    // (capped by the code's MaxDiscountAmount). A provided-but-invalid code is rejected so the
+    // customer is never silently charged full price. Returns (discountAmount, finalAmount, discountId).
+    private async Task<(double DiscountAmount, double FinalAmount, Guid? DiscountId)> ComputePricingAsync(
+        Guid userId, double total, string? discountCode)
+    {
+        var running = total;
+
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user?.MemberShipId is Guid membershipId)
+        {
+            var membership = await _uow.MemberShipStore.GetByIdAsync(membershipId);
+            if (membership is { DiscountPercent: > 0 })
+                running -= running * (membership.DiscountPercent / 100.0);
+        }
+
+        Guid? discountId = null;
+        if (!string.IsNullOrWhiteSpace(discountCode))
+        {
+            var now  = DateTime.UtcNow;
+            var code = discountCode.Trim();
+            var discount = await _uow.DiscountStore.FindSingleAsync(d => d.Code == code);
+            if (discount is null
+                || !discount.IsActive
+                || discount.StartDate > now || now > discount.EndDate
+                || (discount.MaxUsage != null && discount.UsedCount >= discount.MaxUsage))
+                throw new InvalidOperationException("Discount code is invalid or no longer available.");
+
+            var promo = running * (discount.Percent / 100.0);
+            if (discount.MaxDiscountAmount is double cap && promo > cap) promo = cap;
+            running -= promo;
+            discountId = discount.Id;
+        }
+
+        if (running < 0) running = 0;
+        return (Math.Round(total - running, 2), Math.Round(running, 2), discountId);
     }
 
     public async Task<bool> CancelBookingAsync(Guid userId, Guid invoiceId)
