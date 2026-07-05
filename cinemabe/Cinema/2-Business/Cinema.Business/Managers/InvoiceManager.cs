@@ -48,10 +48,13 @@ public class InvoiceManager : IInvoiceManager
         };
     }
 
-    public async Task<InvoiceDTO> GetByIdAsync(Guid id)
+    public async Task<InvoiceDTO> GetByIdAsync(Guid id, Guid requestingUserId, bool isAdmin)
     {
         var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(id)
                       ?? throw new KeyNotFoundException($"Invoice {id} not found.");
+        // Object-level authorization: only the owner (or an admin) may read an invoice.
+        if (!isAdmin && invoice.UserId != requestingUserId)
+            throw new UnauthorizedAccessException("You are not allowed to access this invoice.");
         return ToInvoiceDTO(invoice);
     }
 

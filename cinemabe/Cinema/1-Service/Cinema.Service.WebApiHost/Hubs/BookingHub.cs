@@ -1,8 +1,10 @@
 using Cinema.Business.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Cinema.Service.WebApiHost.Hubs;
 
+[Authorize]
 public class BookingHub : Hub
 {
     private readonly IBookingManager _bookingManager;

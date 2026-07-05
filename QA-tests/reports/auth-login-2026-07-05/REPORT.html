@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Test — auth-login — 2026-07-05</title>
+<style>
+  :root { --pass:#1a7f37; --fail:#cf222e; --skip:#6e7781; --p0:#cf222e; --p1:#9a6700; --bg:#f6f8fa; --card:#fff; --border:#d0d7de; --text:#1f2328; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
+  .wrap { max-width:1000px; margin:0 auto; padding:24px 16px 64px; }
+  .banner { border-radius:10px; padding:20px 24px; color:#fff; margin-bottom:24px; }
+  .banner.ok { background:linear-gradient(135deg,#1a7f37,#2da44e); }
+  .banner h1 { margin:0 0 6px; font-size:22px; }
+  .banner p { margin:0; opacity:.95; font-size:14px; }
+  .meta { display:flex; flex-wrap:wrap; gap:16px; margin-bottom:24px; font-size:13px; color:#57606a; }
+  .meta div { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px 12px; }
+  h2 { font-size:16px; border-bottom:1px solid var(--border); padding-bottom:6px; margin:28px 0 12px; }
+  .tblwrap { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; background:var(--card); border:1px solid var(--border); border-radius:8px; overflow:hidden; font-size:13px; }
+  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { background:#f6f8fa; font-weight:600; }
+  tr:last-child td { border-bottom:none; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700; color:#fff; white-space:nowrap; }
+  .b-pass { background:var(--pass); } .b-fail { background:var(--fail); } .b-skip { background:var(--skip); }
+  .b-p0 { background:var(--p0); } .b-p1 { background:var(--p1); }
+  .b-nt { background:#57606a; }
+  code { background:#eff1f3; padding:1px 5px; border-radius:4px; font-size:12px; }
+  .note { background:#fff8c5; border:1px solid #d4a72c66; border-radius:8px; padding:12px 16px; font-size:13px; margin:16px 0; }
+  .scenario { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px 16px; margin-bottom:12px; font-size:13px; }
+  .scenario h3 { margin:0 0 8px; font-size:14px; }
+  .scenario ol { margin:6px 0 0; padding-left:20px; }
+  footer { margin-top:40px; font-size:12px; color:#8b949e; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner ok">
+    <h1>PASS — auth-login flow regression</h1>
+    <p>5/5 static checks PASS · 2/2 build checks PASS (1 skipped) · 0/4 regression indicators triggered</p>
+  </div>
+
+  <div class="meta">
+    <div><strong>Flow</strong><br>Authentication — login, register, JWT, role gating</div>
+    <div><strong>Layers</strong><br>business · service · frontend</div>
+    <div><strong>Run</strong><br>2026-07-05 18:37</div>
+    <div><strong>Trigger</strong><br>Security review (PBKDF2 migration)</div>
+  </div>
+
+  <p style="font-size:13px;color:#57606a;"><strong>Changed scope:</strong> <code>AuthManager.cs</code> (in-scope), plus BookingManager, InvoiceManager, PaymentController, CinemaController, Hubs/BookingHub, IBookingManager, IInvoiceManager, Program.cs, appsettings*.json, csproj, Tests/*. No <code>projects/CinemaLib/**</code> (FE) changes.</p>
+
+  <h2>&sect;1 Static checks — 5/5 PASS</h2>
+  <div class="tblwrap">
+  <table>
+    <tr><th>Check</th><th>Severity</th><th>Status</th><th>Detail</th></tr>
+    <tr><td>SC-AUTH-01</td><td><span class="badge b-p0">P0</span></td><td><span class="badge b-pass">PASS</span></td><td><code>LoginAsync</code> throws <code>UnauthorizedAccessException</code> for unknown user &amp; bad password.</td></tr>
+    <tr><td>SC-AUTH-02</td><td><span class="badge b-p0">P0</span></td><td><span class="badge b-pass">PASS</span></td><td><code>RegisterAsync</code> refuses duplicate email (&ldquo;Email already in use.&rdquo;) before create.</td></tr>
+    <tr><td>SC-AUTH-03</td><td><span class="badge b-p0">P0</span></td><td><span class="badge b-pass">PASS</span></td><td><code>GenerateToken</code> embeds <code>ClaimTypes.Role</code>. File at <code>Cinema.Data/Services/JwtTokenService.cs</code> (spec path stale).</td></tr>
+    <tr><td>SC-AUTH-04</td><td><span class="badge b-p0">P0</span></td><td><span class="badge b-pass">PASS</span></td><td>GetUsers/CreateUser/UpdateUser/DeleteUser gated by <code>[Authorize(Roles = _adminRole)]</code>.</td></tr>
+    <tr><td>SC-AUTH-05</td><td><span class="badge b-p1">P1</span></td><td><span class="badge b-pass">PASS</span></td><td><code>auth.effects.ts</code> stores JWT under <code>cinema_token</code>; removed on logout.</td></tr>
+  </table>
+  </div>
+
+  <h2>&sect;2 Build + test checks — 2/2 PASS, 1 SKIP</h2>
+  <div class="tblwrap">
+  <table>
+    <tr><th>Check</th><th>Status</th><th>Output</th></tr>
+    <tr><td>BC-AUTH-BUILD</td><td><span class="badge b-pass">PASS</span></td><td>Build succeeded, 0 Warning(s), 0 Error(s). Exit 0.</td></tr>
+    <tr><td>BC-AUTH-TEST</td><td><span class="badge b-pass">PASS</span></td><td>AuthServiceTests: Passed 7, Failed 0, Total 7. Exit 0. (NU1603 restore warnings only.)</td></tr>
+    <tr><td>BC-AUTH-FE</td><td><span class="badge b-skip">SKIP</span></td><td><code>skip_if_unchanged: projects/CinemaLib/**</code> — no CinemaLib changes in working tree.</td></tr>
+  </table>
+  </div>
+
+  <h2>&sect;3 Regression indicators — 0/4 triggered</h2>
+  <div class="tblwrap">
+  <table>
+    <tr><th>ID</th><th>Severity</th><th>Status</th><th>Source</th></tr>
+    <tr><td>RI-AUTH-01</td><td><span class="badge b-p0">P0</span></td><td><span class="badge b-nt">NOT TRIGGERED</span></td><td>SC-AUTH-01 PASS · PB-AUTH-02.1 verify manually</td></tr>
+    <tr><td>RI-AUTH-02</td><td><span class="badge b-p0">P0</span></td><td><span class="badge b-nt">NOT TRIGGERED</span></td><td>SC-AUTH-02 PASS · PB-AUTH-02.2 verify manually</td></tr>
+    <tr><td>RI-AUTH-03</td><td><span class="badge b-p0">P0</span></td><td><span class="badge b-nt">NOT TRIGGERED</span></td><td>SC-AUTH-03 + SC-AUTH-04 PASS · PB-AUTH-03 verify manually</td></tr>
+    <tr><td>RI-AUTH-04</td><td><span class="badge b-p1">P1</span></td><td><span class="badge b-nt">NOT TRIGGERED</span></td><td>SC-AUTH-05 PASS</td></tr>
+  </table>
+  </div>
+
+  <div class="note">
+    <strong>Security-change assessment:</strong> The switch to PBKDF2-SHA256 (with legacy HMAC-SHA512 verification fallback + auto-rehash on successful login) preserves every auth invariant: Unauthorized on bad credentials, duplicate-email refusal, the Role claim, admin role gating, and the <code>cinema_token</code> FE key are all unchanged. No regression detected.
+  </div>
+
+  <h2>&sect;4 Playbook to run manually</h2>
+  <p style="font-size:13px;color:#57606a;">Prerequisites: backend on <code>http://localhost:5102</code> with seed accounts (<code>admin@cinema.vn / Admin@123</code>, <code>user@cinema.vn / User@123</code>); FE <code>ng serve CinemaUser</code> (4202) / <code>CinemaAdmin</code> (4201).</p>
+
+  <div class="scenario">
+    <h3>PB-AUTH-01 — Login success + role routing <span class="badge b-p0">P0</span></h3>
+    <ol>
+      <li>POST /api/Identity/Login <code>{admin@cinema.vn / Admin@123}</code> → 200 with JWT; decoded token has <code>role = Admin</code>.</li>
+      <li>Login as admin in CinemaAdmin UI → localStorage <code>cinema_token</code> set; reaches <code>/dashboard</code>.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h3>PB-AUTH-02 — Bad credentials + duplicate register <span class="badge b-p0">P0</span></h3>
+    <ol>
+      <li>POST /api/Identity/Login with wrong password → 401 Unauthorized (NOT 200, NOT 500).</li>
+      <li>POST /api/Identity/Register with an existing email → 4xx duplicate-email message; no second user created.</li>
+    </ol>
+  </div>
+  <div class="scenario">
+    <h3>PB-AUTH-03 — Role gate enforced <span class="badge b-p0">P0</span></h3>
+    <ol>
+      <li>Call Admin-only endpoint (e.g. GetUsers) with a standard user's token → 403 Forbidden.</li>
+    </ol>
+  </div>
+  <div class="note">
+    <strong>Extra check for this run:</strong> exercise a legacy-hashed (pre-migration) account — first successful login should return 200 and transparently rehash to PBKDF2; a second login with the same password should also succeed.
+  </div>
+
+  <h2>&sect;5 Notes</h2>
+  <ul style="font-size:13px;">
+    <li>No bug files generated — no real defects.</li>
+    <li>Spec hygiene: SC-AUTH-03 <code>file</code> path is stale (<code>Cinema.Data/JwtTokenService.cs</code> → actual <code>Cinema.Data/Services/JwtTokenService.cs</code>). Reconcile the YAML; not a code defect.</li>
+    <li>Action expected: none blocking. Safe to push after manual E2E playbook.</li>
+  </ul>
+
+  <footer>Generated by the cinema business-regression test agent · auth-login · 2026-07-05 18:37</footer>
+</div>
+</body>
+</html>

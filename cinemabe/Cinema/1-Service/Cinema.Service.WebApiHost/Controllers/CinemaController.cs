@@ -113,7 +113,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.UploadImage->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -132,7 +132,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetMovies->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -149,7 +149,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetNowShowingMovies->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -166,7 +166,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetComingSoonMovies->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -183,7 +183,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetMovie->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -201,7 +201,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.CreateMovie->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -219,7 +219,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.UpdateMovie->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -237,7 +237,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.DeleteMovie->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -255,7 +255,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.AddComment->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -273,7 +273,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.RateMovie->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -292,7 +292,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetTheaters->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -309,7 +309,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetTheater->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -326,7 +326,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetTheatersByMovie->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -344,7 +344,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.CreateTheater->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -362,7 +362,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.UpdateTheater->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -380,7 +380,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.DeleteTheater->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -399,7 +399,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetShowTimes->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -932,6 +932,7 @@ public class CinemaController : ControllerBase
     #endregion
 
     #region Invoice (admin: list / status / delete)
+    [Authorize(Roles = _adminRole)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<InvoiceAdminDTO>), 200)]
     public Task<IActionResult> GetInvoices([FromBody] PagingSearchDTO search)
@@ -967,7 +968,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.{action}->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -982,7 +983,7 @@ public class CinemaController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.{action}->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
     #endregion

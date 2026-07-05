@@ -23,7 +23,7 @@ trigger_paths:
   - "Cinema/2-Business/Cinema.Business/Managers/AuthManager.cs"
   - "Cinema/2-Business/Cinema.Business.DTO/Auth/"
   - "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/IdentityController.cs"
-  - "Cinema/3-Data/Cinema.Data/JwtTokenService.cs"
+  - "Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs"
   - "Cinema/3-Data/Cinema.Data.Entities/Enums/UserStatus.cs"
   - "Cinema/2-Business/Cinema.Business.Tests/AuthServiceTests.cs"
   - "projects/CinemaLib/src/lib/store/auth/"

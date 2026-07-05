@@ -39,7 +39,14 @@ builder.Services.AddCors(options =>
 });
 
 // JWT Authentication
-var jwtSecret = builder.Configuration["JWT:Secret"]!;
+var jwtSecret = builder.Configuration["JWT:Secret"];
+// Fail fast if the signing key is missing or is the old committed default. Provide it out-of-band via
+// user-secrets (dev) or the JWT__Secret environment variable (prod) — never commit it to source.
+const string insecureDefaultJwtSecret = "CinemaSecretKey2024!SuperSecureAndLongEnoughForHS256Algorithm";
+if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret == insecureDefaultJwtSecret)
+    throw new InvalidOperationException(
+        "JWT:Secret is not configured, or is the insecure built-in default. Set a strong random value via " +
+        "`dotnet user-secrets set \"JWT:Secret\" \"<value>\"` (Development) or the JWT__Secret environment variable.");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

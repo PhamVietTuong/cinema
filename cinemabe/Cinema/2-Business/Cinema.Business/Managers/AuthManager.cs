@@ -31,6 +31,16 @@ public class AuthManager : IAuthManager
         if (!VerifyPassword(request.Password, user.PasswordHash, user.PasswordSalt))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
+        // Transparently migrate legacy (single-round HMAC) hashes to PBKDF2 on successful login.
+        if (IsLegacyHash(user.PasswordSalt))
+        {
+            CreatePasswordHash(request.Password, out var hash, out var salt);
+            user.PasswordHash = hash;
+            user.PasswordSalt = salt;
+            await _uow.UserStore.UpdateAsync(user);
+            await _uow.SaveChangesAsync();
+        }
+
         return BuildAuthResponse(user);
     }
 
@@ -176,17 +186,34 @@ public class AuthManager : IAuthManager
         return dto;
     }
 
+    // PBKDF2 (SHA-256) key-stretching parameters.
+    private const int    _pbkdf2SaltSize   = 16;
+    private const int    _pbkdf2KeySize    = 32;
+    private const int    _pbkdf2Iterations = 100_000;
+    private static readonly HashAlgorithmName _pbkdf2Algorithm = HashAlgorithmName.SHA256;
+
     private static void CreatePasswordHash(string password, out byte[] hash, out byte[] salt)
     {
-        using var hmac = new HMACSHA512();
-        salt = hmac.Key;
-        hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+        salt = RandomNumberGenerator.GetBytes(_pbkdf2SaltSize);
+        hash = Rfc2898DeriveBytes.Pbkdf2(
+            Encoding.UTF8.GetBytes(password), salt, _pbkdf2Iterations, _pbkdf2Algorithm, _pbkdf2KeySize);
     }
 
     private static bool VerifyPassword(string password, byte[] hash, byte[] salt)
     {
-        using var hmac = new HMACSHA512(salt);
-        var computed = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return computed.SequenceEqual(hash);
+        if (IsLegacyHash(salt))
+        {
+            // Legacy scheme: single-round HMAC-SHA512 keyed by the stored salt.
+            using var hmac = new HMACSHA512(salt);
+            var legacy = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return CryptographicOperations.FixedTimeEquals(legacy, hash);
+        }
+
+        var computed = Rfc2898DeriveBytes.Pbkdf2(
+            Encoding.UTF8.GetBytes(password), salt, _pbkdf2Iterations, _pbkdf2Algorithm, _pbkdf2KeySize);
+        return CryptographicOperations.FixedTimeEquals(computed, hash);
     }
+
+    // New PBKDF2 salts are exactly _pbkdf2SaltSize bytes; the old HMAC-SHA512 key salts are 128 bytes.
+    private static bool IsLegacyHash(byte[] salt) => salt.Length != _pbkdf2SaltSize;
 }

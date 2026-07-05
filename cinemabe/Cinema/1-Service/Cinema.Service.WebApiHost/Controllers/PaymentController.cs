@@ -43,7 +43,7 @@ public class PaymentController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetSeats->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -60,7 +60,7 @@ public class PaymentController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.CreateBooking->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -72,7 +72,7 @@ public class PaymentController : ControllerBase
         LogProvider.Current.Information($"{GetType().Name}.ConfirmPayment being awakened to process request...");
         try
         {
-            var success = await _bookingManager.ConfirmPaymentAsync(request.InvoiceId, request.PaymentReference);
+            var success = await _bookingManager.ConfirmPaymentAsync(User.GetUserId(), request.InvoiceId, request.PaymentReference);
             return success
                 ? Ok(new { message = "Payment confirmed." })
                 : BadRequest(new { error = "Failed to confirm payment." });
@@ -80,7 +80,7 @@ public class PaymentController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.ConfirmPayment->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -100,7 +100,7 @@ public class PaymentController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.CancelBooking->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -119,7 +119,7 @@ public class PaymentController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetMyInvoices->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -130,13 +130,17 @@ public class PaymentController : ControllerBase
         LogProvider.Current.Information($"{GetType().Name}.GetInvoice being awakened to process request...");
         try
         {
-            var result = await _invoiceManager.GetByIdAsync(id);
+            var result = await _invoiceManager.GetByIdAsync(id, User.GetUserId(), User.IsInRole(_adminRole));
             return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
         }
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetInvoice->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -154,7 +158,7 @@ public class PaymentController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetInvoices->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -172,7 +176,7 @@ public class PaymentController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenue->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 
@@ -193,7 +197,7 @@ public class PaymentController : ControllerBase
         catch (Exception e)
         {
             LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenueByDay->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
 }

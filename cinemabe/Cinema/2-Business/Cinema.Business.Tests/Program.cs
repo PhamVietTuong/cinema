@@ -104,7 +104,7 @@ static async Task CreateAccount(
 
 static void CreatePasswordHash(string password, out byte[] hash, out byte[] salt)
 {
-    using var hmac = new HMACSHA512();
-    salt = hmac.Key;
-    hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+    // Must match AuthManager's PBKDF2 parameters so seeded accounts use the strong scheme.
+    salt = RandomNumberGenerator.GetBytes(16);
+    hash = Rfc2898DeriveBytes.Pbkdf2(Encoding.UTF8.GetBytes(password), salt, 100_000, HashAlgorithmName.SHA256, 32);
 }

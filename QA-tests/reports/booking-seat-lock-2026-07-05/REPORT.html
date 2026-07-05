@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Test — booking-seat-lock — 2026-07-05</title>
+<style>
+  :root { --green:#1a7f37; --red:#cf222e; --amber:#9a6700; --bg:#f6f8fa; --card:#fff; --border:#d0d7de; --text:#1f2328; --muted:#656d76; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
+  .wrap { max-width:1000px; margin:0 auto; padding:24px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:16px; margin:28px 0 10px; border-bottom:1px solid var(--border); padding-bottom:6px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .banner { border-radius:8px; padding:16px 20px; font-size:18px; font-weight:600; color:#fff; margin:16px 0; }
+  .banner.green { background:var(--green); }
+  .banner.red { background:var(--red); }
+  .cards { display:flex; gap:12px; flex-wrap:wrap; margin:16px 0; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 18px; flex:1; min-width:150px; }
+  .card .num { font-size:26px; font-weight:700; }
+  .card .lbl { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .tablewrap { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; background:var(--card); border:1px solid var(--border); border-radius:8px; overflow:hidden; font-size:13px; }
+  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { background:var(--bg); font-weight:600; }
+  tr:last-child td { border-bottom:none; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+  .pass { background:#dafbe1; color:var(--green); }
+  .fail { background:#ffebe9; color:var(--red); }
+  .skip { background:#fff3d6; color:var(--amber); }
+  .sev { font-weight:700; font-size:11px; color:var(--muted); }
+  code { background:var(--bg); padding:1px 5px; border-radius:4px; font-size:12px; }
+  .foot { color:var(--muted); font-size:12px; margin-top:30px; }
+  .note { background:#fff8e6; border:1px solid #f0dca0; border-radius:8px; padding:12px 16px; font-size:13px; margin:12px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Flow Test Report — booking-seat-lock</h1>
+  <div class="sub">Seat locking + booking → Invoice lifecycle · Layers: business, data, service, frontend · 2026-07-05 18:36</div>
+
+  <div class="banner green">🟢 ALL GREEN — 0 P0 regressions · 9/9 static PASS · 2/2 build PASS (1 skip)</div>
+
+  <div class="cards">
+    <div class="card"><div class="num" style="color:var(--green)">9/9</div><div class="lbl">Static PASS</div></div>
+    <div class="card"><div class="num" style="color:var(--green)">2/2</div><div class="lbl">Build/Test PASS</div></div>
+    <div class="card"><div class="num" style="color:var(--amber)">1</div><div class="lbl">Build SKIP</div></div>
+    <div class="card"><div class="num" style="color:var(--green)">0/7</div><div class="lbl">Indicators triggered</div></div>
+  </div>
+
+  <h2>§1 Static checks</h2>
+  <div class="tablewrap">
+  <table>
+    <tr><th>Check</th><th>Sev</th><th>Status</th><th>Detail</th></tr>
+    <tr><td>SC-BOOK-01</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>_lockedSeats</code> is <code>static readonly ConcurrentDictionary</code> (line 17); all 3 patterns present.</td></tr>
+    <tr><td>SC-BOOK-02</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>IsSeatLocked</code> uses <code>TimeSpan.FromMinutes(5)</code> expiry (line 214).</td></tr>
+    <tr><td>SC-BOOK-03</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>UnlockSeat</code> compares <code>info.ConnectionId == connectionId</code> (line 205) — owner-scoped.</td></tr>
+    <tr><td>SC-BOOK-04</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>CreateBookingAsync</code> sets <code>InvoiceStatus.Pending</code> inside Begin/Commit/Rollback transaction.</td></tr>
+    <tr><td>SC-BOOK-05</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>CancelBookingAsync</code> guards <code>UserId != userId</code> and <code>Status != Pending</code> (lines 191-192).</td></tr>
+    <tr><td>SC-BOOK-06</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td>No hardcoded status magic numbers; forbidden regex has 0 matches in both managers.</td></tr>
+    <tr><td>SC-BOOK-07</td><td class="sev">P1</td><td><span class="pill pass">PASS</span></td><td><code>InvoiceStatus</code> = Pending, Paid, Cancelled, Failed.</td></tr>
+    <tr><td>SC-BOOK-08</td><td class="sev">P1</td><td><span class="pill pass">PASS</span></td><td><code>SeatStatus</code> = Available, Reserved, Occupied.</td></tr>
+    <tr><td>SC-BOOK-09</td><td class="sev">P1</td><td><span class="pill pass">PASS</span></td><td>seat-selection.component.html renders available / occupied / locked (+ selected).</td></tr>
+  </table>
+  </div>
+
+  <h2>§2 Build + test checks</h2>
+  <div class="tablewrap">
+  <table>
+    <tr><th>Check</th><th>Status</th><th>Output</th></tr>
+    <tr><td>BC-BOOK-BUILD</td><td><span class="pill pass">PASS</span></td><td>Build succeeded — 0 Warning(s), 0 Error(s), exit 0.</td></tr>
+    <tr><td>BC-BOOK-TEST</td><td><span class="pill pass">PASS</span></td><td>Passed! Failed: 0, Passed: 9, Skipped: 0, exit 0.</td></tr>
+    <tr><td>BC-BOOK-FE</td><td><span class="pill skip">SKIP</span></td><td>skip_if_unchanged matched — no changes under <code>booking/**</code> or <code>CinemaLib/**</code> (all changes backend).</td></tr>
+  </table>
+  </div>
+
+  <h2>§4 Regression indicators</h2>
+  <div class="tablewrap">
+  <table>
+    <tr><th>ID</th><th>Sev</th><th>Status</th><th>Source</th></tr>
+    <tr><td>RI-BOOK-01</td><td class="sev">P0</td><td><span class="pill pass">NOT TRIGGERED</span></td><td>SC-BOOK-01 PASS</td></tr>
+    <tr><td>RI-BOOK-02</td><td class="sev">P0</td><td><span class="pill pass">NOT TRIGGERED</span></td><td>SC-BOOK-02 PASS · verify PB-BOOK-02 step 3 manually</td></tr>
+    <tr><td>RI-BOOK-03</td><td class="sev">P0</td><td><span class="pill pass">NOT TRIGGERED</span></td><td>SC-BOOK-03 PASS · verify PB-BOOK-02 step 2 manually</td></tr>
+    <tr><td>RI-BOOK-04</td><td class="sev">P0</td><td><span class="pill pass">NOT TRIGGERED</span></td><td>SC-BOOK-04 PASS · verify PB-BOOK-01 step 2 manually</td></tr>
+    <tr><td>RI-BOOK-05</td><td class="sev">P0</td><td><span class="pill pass">NOT TRIGGERED</span></td><td>SC-BOOK-05 PASS · verify PB-BOOK-03 steps 2-3 manually</td></tr>
+    <tr><td>RI-BOOK-06</td><td class="sev">P0</td><td><span class="pill pass">NOT TRIGGERED</span></td><td>SC-BOOK-06 PASS</td></tr>
+    <tr><td>RI-BOOK-07</td><td class="sev">P1</td><td><span class="pill pass">NOT TRIGGERED</span></td><td>SC-BOOK-09 PASS · verify PB-BOOK-01 step 1 manually</td></tr>
+  </table>
+  </div>
+
+  <h2>§5 Summary</h2>
+  <ul>
+    <li><strong>0 of 7</strong> regression indicators triggered.</li>
+    <li>Build/tests: <strong>OK</strong> — Cinema.Business builds clean, 9/9 BookingServiceTests pass. FE build skipped (no booking/lib FE changes).</li>
+    <li>Security fixes validated: new <code>ConfirmPaymentAsync(userId, invoiceId, paymentReference)</code> owner + Pending-only signature and the per-<code>{showTimeId}:{roomId}</code> SemaphoreSlim booking gate are consistent with all static invariants; <code>_lockedSeats</code> dictionary, expiry and owner-scoped unlock unchanged.</li>
+    <li>No bug files written — no real defects detected.</li>
+  </ul>
+
+  <div class="note">
+    <strong>Spec hygiene note (not a code defect):</strong> <code>trigger_paths</code> lists
+    <code>Cinema/1-Service/Cinema.Service.WebApiHost/BookingHub.cs</code> but the file actually lives at
+    <code>Hubs/BookingHub.cs</code>. Stale path in the YAML — reconcile the spec.
+  </div>
+
+  <div class="foot">Generated by the cinema business-regression test agent · flow booking-seat-lock · rolling log: QA-tests/FLOW-TEST-RESULTS.md</div>
+</div>
+</body>
+</html>

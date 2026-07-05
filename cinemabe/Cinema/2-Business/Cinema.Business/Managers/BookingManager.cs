@@ -15,6 +15,13 @@ public class BookingManager : IBookingManager
     private readonly IApplicationUnitOfWork _uow;
     // connectionId -> (connectionId, lockedAt)
     private static readonly ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)> _lockedSeats = new();
+    // Process-local booking gate keyed by {showTimeId}:{roomId}. Serializes the read-booked-then-insert
+    // sequence so two concurrent requests can't both pass the "seat free" check and double-sell a seat.
+    // Consistent with the process-local lock design above; a multi-instance deployment must additionally
+    // enforce this at the DB (e.g. a unique constraint on active (ShowTimeId, RoomId, SeatId)).
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> _bookingGates = new();
+    private static SemaphoreSlim BookingGate(Guid showTimeId, Guid roomId)
+        => _bookingGates.GetOrAdd($"{showTimeId}:{roomId}", _ => new SemaphoreSlim(1, 1));
 
     public BookingManager(IApplicationUnitOfWork uow) => _uow = uow;
 
@@ -58,6 +65,10 @@ public class BookingManager : IBookingManager
 
     public async Task<BookingResultDTO> CreateBookingAsync(Guid userId, CreateBookingRequest request)
     {
+        // Serialize concurrent bookings for the same showtime+room so the "seat already booked" check
+        // and the ticket insert happen atomically (prevents the check-then-insert double-booking race).
+        var gate = BookingGate(request.ShowTimeId, request.RoomId);
+        await gate.WaitAsync();
         await _uow.BeginTransactionAsync();
         try
         {
@@ -149,12 +160,23 @@ public class BookingManager : IBookingManager
             await _uow.RollbackTransactionAsync();
             throw;
         }
+        finally
+        {
+            gate.Release();
+        }
     }
 
-    public async Task<bool> ConfirmPaymentAsync(Guid invoiceId, string paymentReference)
+    public async Task<bool> ConfirmPaymentAsync(Guid userId, Guid invoiceId, string paymentReference)
     {
         var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
         if (invoice == null) return false;
+        // Object-level authorization: only the invoice owner may confirm its payment.
+        if (invoice.UserId != userId) return false;
+        // Only a Pending invoice can transition to Paid (prevents re-confirming / double-charge state churn).
+        if (invoice.Status != InvoiceStatus.Pending) return false;
+        // NOTE: This still trusts the client-supplied paymentReference. A real deployment MUST verify
+        // the payment out-of-band against the gateway (server->gateway lookup or a signature-validated
+        // webhook) and confirm the captured amount equals invoice.FinalAmount before marking Paid.
         invoice.Status           = InvoiceStatus.Paid;
         invoice.PaymentReference = paymentReference;
         invoice.PaidAt           = DateTime.UtcNow;

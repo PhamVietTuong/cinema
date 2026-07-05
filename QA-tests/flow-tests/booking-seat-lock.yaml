@@ -32,7 +32,7 @@ trigger_paths:
   - "Cinema/2-Business/Cinema.Business.DTO/Booking/SeatDTO.cs"
   # BE — Service
   - "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/PaymentController.cs"
-  - "Cinema/1-Service/Cinema.Service.WebApiHost/BookingHub.cs"
+  - "Cinema/1-Service/Cinema.Service.WebApiHost/Hubs/BookingHub.cs"
   # BE — Data / entities / enums
   - "Cinema/3-Data/Cinema.Data.Entities/Entities/Invoice.cs"
   - "Cinema/3-Data/Cinema.Data.Entities/Entities/InvoiceTicket.cs"

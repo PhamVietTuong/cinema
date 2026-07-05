@@ -453,3 +453,127 @@ Re-run triggered by fix: `IdentityController` now extends `ApiControllerBase` (n
   1. **SC-AUTH-03 `file` path** (and the matching `trigger_paths` entry) point at `Cinema/3-Data/Cinema.Data/JwtTokenService.cs`, but the file lives at `Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs`. Update the path so the check resolves without a fallback search.
   2. Spec `last_updated: 2026-06-20` / `version: 1.0` predates both the file move and the HandleException refactor — bump when reconciling the path above. Optionally add `Controllers/ApiControllerBase.cs` to `trigger_paths` since it now owns the auth status-code mapping.
 - **Action expected: None.** No real code defects.
+
+---
+
+# Flow Test Result — booking-seat-lock — 2026-07-05 18:36
+**Flow**: Seat locking + booking → Invoice lifecycle (Business + Data + Service + FE)   **Layers**: business, data, service, frontend
+**Changed scope detected**: BookingManager.cs, InvoiceManager.cs, PaymentController.cs, CinemaController.cs, Hubs/BookingHub.cs, AuthManager.cs, IBookingManager.cs, IInvoiceManager.cs, appsettings*.json, Program.cs, WebApiHost.csproj, Tests/Program.cs, Tests/appsettings.json (uncommitted security fixes)
+
+## §1 Static checks (9/9 PASS)
+| Check | Severity | Status | Detail |
+|---|---|---|---|
+| SC-BOOK-01 | P0 | PASS | `_lockedSeats` is `static readonly ConcurrentDictionary` (line 17); all 3 patterns (static, ConcurrentDictionary, _lockedSeats) present. |
+| SC-BOOK-02 | P0 | PASS | `IsSeatLocked` contains `TimeSpan.FromMinutes(5)` expiry window (line 214). |
+| SC-BOOK-03 | P0 | PASS | `UnlockSeat` compares `info.ConnectionId == connectionId` before removal (line 205) — owner-scoped. |
+| SC-BOOK-04 | P0 | PASS | `CreateBookingAsync` sets `Status = InvoiceStatus.Pending` (line 138) inside Begin/Commit/RollbackTransaction wrapper. |
+| SC-BOOK-05 | P0 | PASS | `CancelBookingAsync` guards `invoice.UserId != userId` and `Status != InvoiceStatus.Pending` (lines 191-192). |
+| SC-BOOK-06 | P0 | PASS | No hardcoded status magic numbers in BookingManager.cs / InvoiceManager.cs; forbidden regex has 0 matches. |
+| SC-BOOK-07 | P1 | PASS | `InvoiceStatus` enum carries Pending, Paid, Cancelled, Failed. |
+| SC-BOOK-08 | P1 | PASS | `SeatStatus` enum carries Available, Reserved, Occupied. |
+| SC-BOOK-09 | P1 | PASS | seat-selection.component.html renders available / occupied / locked (+ selected) states. |
+
+## §2 Build + test checks (2/2 PASS, 1 SKIP)
+| Check | Status | Output (excerpt if fail) |
+|---|---|---|
+| BC-BOOK-BUILD | PASS | `dotnet build Cinema.Business.csproj` → Build succeeded, 0 Warning(s), 0 Error(s), exit 0. |
+| BC-BOOK-TEST | PASS | `dotnet test --filter ~BookingServiceTests` → Passed! Failed: 0, Passed: 9, Skipped: 0, exit 0. |
+| BC-BOOK-FE | SKIP | skip_if_unchanged matched: no changes under `projects/CinemaUser/src/app/features/booking/**` or `projects/CinemaLib/**` (all changes are backend). |
+
+## §3 Playbook to run manually
+
+### Prerequisites
+- Backend running: `dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost` (http://localhost:5102)
+- Seed accounts: `dotnet run --project Cinema/2-Business/Cinema.Business.Tests` (admin@cinema.vn / user@cinema.vn)
+- DB seeded with ≥1 Movie, ≥1 Theater/Room with a seat map, ≥1 ShowTime
+- FE: `ng serve CinemaUser` (http://localhost:4202)
+
+### PB-BOOK-01 — Happy path: pick seats → create booking → confirm payment (P0)
+1. Login as user@cinema.vn, open a movie's showtime → `/booking/seats?showTimeId=...&roomId=...` → **Expect**: Seat grid renders; available seats clickable, occupied not.
+2. Select 2 available seats → click "XÁC NHẬN ĐẶT VÉ" → **Expect**: navigates to `/booking/confirmation`; DB Invoice created Status=Pending(0), Code `CIN{yyyyMMddHHmmss}{NNNN}`; 2 InvoiceTicket rows linked.
+3. Choose a payment method → "XÁC NHẬN & THANH TOÁN" → **Expect**: success page shows ticket-code; DB Invoice.Status=Paid(1).
+   - NOTE (security change): `ConfirmPaymentAsync(userId, invoiceId, paymentReference)` now enforces owner + Pending-only; verify a confirm request from a different user or on a non-Pending invoice returns false/4xx.
+
+### PB-BOOK-02 — Concurrent lock: two clients cannot book the same seat (P0)
+1. Client A selects seat R5 (SignalR LockSeat) → **Expect**: Client B's grid shows R5 as "locked" within ~1s.
+2. Client B tries to select R5 → **Expect**: selection rejected (locked by A).
+3. Client A abandons page; wait 5 minutes → **Expect**: R5 auto-expires (IsSeatLocked 5-min window) and becomes available to B.
+
+### PB-BOOK-03 — Cancel guards (P0)
+1. User cancels own Pending booking → **Expect**: DB Invoice.Status=Cancelled(2); seats freed.
+2. User attempts to cancel a booking they do not own (different userId) → **Expect**: rejected (false/4xx), invoice unchanged.
+3. User attempts to cancel an already-Paid invoice → **Expect**: rejected, status stays Paid.
+
+## §4 Regression indicators
+| ID | Severity | Status | Source |
+|---|---|---|---|
+| RI-BOOK-01 | P0 | NOT triggered | SC-BOOK-01 PASS |
+| RI-BOOK-02 | P0 | NOT triggered (verify PB-BOOK-02 step 3 manually) | SC-BOOK-02 PASS |
+| RI-BOOK-03 | P0 | NOT triggered (verify PB-BOOK-02 step 2 manually) | SC-BOOK-03 PASS |
+| RI-BOOK-04 | P0 | NOT triggered (verify PB-BOOK-01 step 2 manually) | SC-BOOK-04 PASS |
+| RI-BOOK-05 | P0 | NOT triggered (verify PB-BOOK-03 steps 2-3 manually) | SC-BOOK-05 PASS |
+| RI-BOOK-06 | P0 | NOT triggered | SC-BOOK-06 PASS |
+| RI-BOOK-07 | P1 | NOT triggered (verify PB-BOOK-01 step 1 manually) | SC-BOOK-09 PASS |
+
+## §5 Summary
+- 0 of 7 regression indicators triggered.
+- Build/tests: OK (Cinema.Business builds clean; 9/9 BookingServiceTests pass). FE build skipped (no booking/lib FE changes).
+- Security fixes validated against spec: `ConfirmPaymentAsync` new 3-arg owner+Pending-only signature and the per-`{showTimeId}:{roomId}` SemaphoreSlim booking gate are consistent with all static invariants; `_lockedSeats` dictionary + expiry + owner-scoped unlock unchanged.
+- Spec hygiene note: `trigger_paths` lists `Cinema/1-Service/Cinema.Service.WebApiHost/BookingHub.cs` but the file actually lives at `Hubs/BookingHub.cs`. Stale path in the YAML, not a code defect — reconcile the spec.
+- Action expected: none blocking. Safe to push after running the manual E2E playbook (§3).
+
+---
+
+# Flow Test Result — auth-login — 2026-07-05 18:37
+**Flow**: Authentication — login, register, JWT issuance, role-based gating   **Layers**: business, service, frontend
+**Changed scope detected**: AuthManager.cs (business), plus BookingManager.cs, InvoiceManager.cs, PaymentController.cs, CinemaController.cs, Hubs/BookingHub.cs, IBookingManager.cs, IInvoiceManager.cs, Program.cs, appsettings*.json, csproj, Tests/Program.cs, Tests/appsettings.json. No `projects/CinemaLib/**` (FE) changes.
+
+## §1 Static checks (5/5 PASS)
+| Check | Severity | Status | Detail |
+|---|---|---|---|
+| SC-AUTH-01 | P0 | PASS | `LoginAsync` throws `UnauthorizedAccessException("Invalid credentials.")` for unknown user (l.29) and bad password (l.32). "Unauthorized" present. |
+| SC-AUTH-02 | P0 | PASS | `RegisterAsync` checks `GetByEmailAsync` and throws `"Email already in use."` before creating (l.49-50). "Email" present. |
+| SC-AUTH-03 | P0 | PASS | `JwtTokenService.GenerateToken` embeds `new Claim(ClaimTypes.Role, user.UserType?.Name ?? "Customer")` (l.27). Note: file lives at `Cinema.Data/Services/JwtTokenService.cs`, spec path `Cinema.Data/JwtTokenService.cs` is stale. |
+| SC-AUTH-04 | P0 | PASS | `IdentityController` gates GetUsers/CreateUser/UpdateUser/DeleteUser with `[Authorize(Roles = _adminRole)]` (l.114,131,148,165). |
+| SC-AUTH-05 | P1 | PASS | `auth.effects.ts` persists JWT via `localStorage.setItem('cinema_token', ...)` (l.43) and removes it on logout (l.54). |
+
+## §2 Build + test checks (2/2 PASS, 1 SKIP)
+| Check | Status | Output (excerpt if fail) |
+|---|---|---|
+| BC-AUTH-BUILD | PASS | `dotnet build Cinema.Business.csproj` → Build succeeded, 0 Warning(s), 0 Error(s). Exit 0. |
+| BC-AUTH-TEST | PASS | `dotnet test --filter FullyQualifiedName~AuthServiceTests` → Passed! Failed: 0, Passed: 7, Total: 7. Exit 0. (NU1603 restore warnings only, non-fatal.) |
+| BC-AUTH-FE | SKIP | `skip_if_unchanged: projects/CinemaLib/**` — no CinemaLib changes in working tree, so CinemaLib build skipped. |
+
+## §3 Playbook to run manually
+
+**Prerequisites**
+- Backend on http://localhost:5102, seed accounts created (`admin@cinema.vn / Admin@123`, `user@cinema.vn / User@123`).
+- FE: `ng serve CinemaUser` (4202) and/or `ng serve CinemaAdmin` (4201).
+
+**PB-AUTH-01 — Login success + role routing** (P0)
+1. POST /api/Identity/Login `{email: admin@cinema.vn, password: Admin@123}` → expect 200 with a JWT; decoded token contains `role = Admin`.
+2. Login as admin in CinemaAdmin UI → expect localStorage `cinema_token` set; reaches `/dashboard`.
+
+**PB-AUTH-02 — Bad credentials + duplicate register** (P0)
+1. POST /api/Identity/Login with a wrong password → expect 401 Unauthorized (NOT 200, NOT 500).
+2. POST /api/Identity/Register with an already-existing email → expect 4xx with duplicate-email message; no second user created.
+
+**PB-AUTH-03 — Role gate enforced** (P0)
+1. Call an Admin-only endpoint (e.g. GetUsers) with a standard user's token → expect 403 Forbidden.
+
+> Extra manual note for this run: the security change made login auto-rehash legacy HMAC hashes to PBKDF2 on success. When exercising PB-AUTH-01/02 against a DB seeded before the change, verify the first successful login of a legacy account still returns 200 and that a second login with the same password also succeeds (hash migrated in place).
+
+## §4 Regression indicators
+| ID | Severity | Status | Source |
+|---|---|---|---|
+| RI-AUTH-01 | P0 | NOT TRIGGERED | static SC-AUTH-01 PASS (login still throws Unauthorized on bad creds). PB-AUTH-02 step 1 = verify manually. |
+| RI-AUTH-02 | P0 | NOT TRIGGERED | static SC-AUTH-02 PASS (duplicate email refused). PB-AUTH-02 step 2 = verify manually. |
+| RI-AUTH-03 | P0 | NOT TRIGGERED | static SC-AUTH-03 + SC-AUTH-04 both PASS (Role claim present, admin gates intact). PB-AUTH-03 = verify manually. |
+| RI-AUTH-04 | P1 | NOT TRIGGERED | static SC-AUTH-05 PASS (`cinema_token` key unchanged). |
+
+## §5 Summary
+- 0 of 4 regression indicators triggered.
+- Build/tests: OK (Cinema.Business builds clean; 7/7 AuthServiceTests pass). FE build skipped (no CinemaLib changes).
+- Security fixes validated against spec: PBKDF2-SHA256 hashing with legacy-HMAC verification fallback + auto-rehash on login does NOT alter any auth invariant — LoginAsync still throws `UnauthorizedAccessException` on bad creds, RegisterAsync still refuses duplicate email, Role claim and `[Authorize(Roles=_adminRole)]` gates unchanged, `cinema_token` FE key unchanged.
+- Spec hygiene note: SC-AUTH-03 `file` path `Cinema/3-Data/Cinema.Data/JwtTokenService.cs` is stale — actual file is at `Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs`. Check still resolved correctly; reconcile the YAML path. No code defect.
+- Action expected: none blocking. Safe to push after running the manual E2E playbook (§3), paying attention to the legacy-hash migration note.
