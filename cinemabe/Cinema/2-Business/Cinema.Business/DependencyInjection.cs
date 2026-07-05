@@ -1,6 +1,7 @@
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Payments;
 using Cinema.Business.Managers;
+using Cinema.Business.Notifications;
 using Cinema.Business.Payments;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,7 @@ public static class DependencyInjection
     public static IServiceCollection AddBusiness(this IServiceCollection services)
     {
         services.AddScoped<IAuthManager, AuthManager>();
+        services.AddSingleton<INotificationService, DevLogNotificationService>();
         services.AddScoped<IMovieManager, MovieManager>();
         services.AddScoped<IBookingManager, BookingManager>();
         // Payment provider — swap SandboxPaymentGateway for a real provider (VNPay/MoMo/Stripe).

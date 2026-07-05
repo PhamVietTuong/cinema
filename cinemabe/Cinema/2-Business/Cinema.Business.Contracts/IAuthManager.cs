@@ -10,6 +10,8 @@ public interface IAuthManager
     Task<UserDTO> GetProfileAsync(Guid userId);
     Task UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
     Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
+    Task RequestPasswordResetAsync(ForgotPasswordRequest request);
+    Task ResetPasswordAsync(ResetPasswordRequest request);
     Task<DefaultSearchResults<UserDTO>> GetUsersAsync(PagingSearchDTO search);
     Task<UserDTO> CreateUserAsync(CreateUserRequest request);
     Task<UserDTO> UpdateUserAsync(UpdateUserRequest request);

@@ -56,6 +56,38 @@ public class IdentityController : ApiControllerBase
         }
     }
 
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ForgotPassword being awakened to process request...");
+        try
+        {
+            await _authManager.RequestPasswordResetAsync(request);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ForgotPassword));
+        }
+    }
+
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ResetPassword being awakened to process request...");
+        try
+        {
+            await _authManager.ResetPasswordAsync(request);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ResetPassword));
+        }
+    }
+
     // ── Profile ───────────────────────────────────────────────────────────────
 
     [Authorize]

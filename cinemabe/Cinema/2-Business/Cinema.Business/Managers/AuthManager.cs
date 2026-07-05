@@ -15,11 +15,13 @@ public class AuthManager : IAuthManager
 {
     private readonly IApplicationUnitOfWork _uow;
     private readonly ITokenService _tokenService;
+    private readonly INotificationService _notifications;
 
-    public AuthManager(IApplicationUnitOfWork uow, ITokenService tokenService)
+    public AuthManager(IApplicationUnitOfWork uow, ITokenService tokenService, INotificationService notifications)
     {
         _uow = uow;
         _tokenService = tokenService;
+        _notifications = notifications;
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -103,6 +105,49 @@ public class AuthManager : IAuthManager
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
     }
+
+    public async Task RequestPasswordResetAsync(ForgotPasswordRequest request)
+    {
+        var user = await _uow.UserStore.GetByEmailAsync(request.Email);
+        // Do not reveal whether the email exists — return silently if there's no such account.
+        if (user == null) return;
+
+        var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.PasswordResetTokenHash = HashToken(rawToken);
+        user.PasswordResetExpiresAt = DateTime.UtcNow.AddHours(1);
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
+
+        await _notifications.SendAsync(
+            user.Email,
+            "Reset your Cinema password",
+            $"Use this link to reset your password (valid 1 hour): " +
+            $"/auth/reset-password?email={Uri.EscapeDataString(user.Email)}&token={rawToken}");
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var user = await _uow.UserStore.GetByEmailAsync(request.Email);
+        if (user == null
+            || string.IsNullOrEmpty(user.PasswordResetTokenHash)
+            || user.PasswordResetExpiresAt == null
+            || user.PasswordResetExpiresAt < DateTime.UtcNow
+            || !CryptographicOperations.FixedTimeEquals(
+                   Convert.FromHexString(user.PasswordResetTokenHash),
+                   Convert.FromHexString(HashToken(request.Token))))
+            throw new InvalidOperationException("Invalid or expired reset token.");
+
+        CreatePasswordHash(request.NewPassword, out var hash, out var salt);
+        user.PasswordHash            = hash;
+        user.PasswordSalt            = salt;
+        user.PasswordResetTokenHash  = null;
+        user.PasswordResetExpiresAt  = null;
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
+    }
+
+    private static string HashToken(string token)
+        => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 
     public async Task<DefaultSearchResults<UserDTO>> GetUsersAsync(PagingSearchDTO search)
     {

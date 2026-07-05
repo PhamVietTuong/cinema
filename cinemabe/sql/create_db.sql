@@ -181,6 +181,8 @@ CREATE TABLE [User] (
     [UserTypeId] uniqueidentifier NOT NULL,
     [MemberShipId] uniqueidentifier NULL,
     [Points] int NOT NULL,
+    [PasswordResetTokenHash] nvarchar(max) NULL,
+    [PasswordResetExpiresAt] datetime NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_User] PRIMARY KEY ([Id]),

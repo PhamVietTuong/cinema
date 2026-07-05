@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.Managers;
+using Cinema.Business.Notifications;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using FluentAssertions;
@@ -17,7 +18,7 @@ public class AuthServiceTests
 
     public AuthServiceTests()
     {
-        _sut = new AuthManager(_uowMock.Object, _tokenMock.Object);
+        _sut = new AuthManager(_uowMock.Object, _tokenMock.Object, new DevLogNotificationService());
     }
 
     [Fact]

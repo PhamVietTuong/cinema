@@ -112,4 +112,16 @@ BEGIN
     PRINT 'Money columns already float — nothing to convert.';
 END
 
+-- Password reset support on [User] (added for the forgot-password flow).
+IF COL_LENGTH('[User]', 'PasswordResetTokenHash') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [PasswordResetTokenHash] nvarchar(max) NULL;
+    PRINT 'Added [User].[PasswordResetTokenHash].';
+END
+IF COL_LENGTH('[User]', 'PasswordResetExpiresAt') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [PasswordResetExpiresAt] datetime NULL;
+    PRINT 'Added [User].[PasswordResetExpiresAt].';
+END
+
 PRINT 'upgrade_db.sql: completed.';
