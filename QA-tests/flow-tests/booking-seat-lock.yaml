@@ -1,0 +1,319 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Cinema — Flow regression test
+# Flow : Seat locking + booking → invoice lifecycle
+# Invoked by : /test-flow booking-seat-lock
+# ─────────────────────────────────────────────────────────────────────────────
+
+flow_id: booking-seat-lock
+name: "Seat locking + booking → Invoice lifecycle (Business + Data + Service + FE)"
+description: >
+  Verifies that a change touching the booking flow does not break:
+  (1) the static _lockedSeats ConcurrentDictionary contract (key format, owner-scoped release),
+  (2) the 5-minute lock expiry,
+  (3) CreateBookingAsync creating an Invoice with Status=Pending inside a transaction,
+  (4) ConfirmPaymentAsync moving Pending→Paid and CancelBookingAsync guards (wrong user / already paid),
+  (5) no hardcoded status integers instead of the InvoiceStatus / SeatStatus enums,
+  (6) the FE seat-selection contract (seat states available/selected/occupied/locked).
+
+layers: [business, data, service, frontend]
+version: 1.0
+last_updated: 2026-06-20
+maintained_by: "Cinema QA"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §1 — Files that trigger this test when modified
+# ─────────────────────────────────────────────────────────────────────────────
+trigger_paths:
+  # BE — Business
+  - "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/InvoiceManager.cs"
+  - "Cinema/2-Business/Cinema.Business.DTO/Booking/CreateBookingRequest.cs"
+  - "Cinema/2-Business/Cinema.Business.DTO/Booking/BookingResultDTO.cs"
+  - "Cinema/2-Business/Cinema.Business.DTO/Booking/SeatDTO.cs"
+  # BE — Service
+  - "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/PaymentController.cs"
+  - "Cinema/1-Service/Cinema.Service.WebApiHost/BookingHub.cs"
+  # BE — Data / entities / enums
+  - "Cinema/3-Data/Cinema.Data.Entities/Entities/Invoice.cs"
+  - "Cinema/3-Data/Cinema.Data.Entities/Entities/InvoiceTicket.cs"
+  - "Cinema/3-Data/Cinema.Data.Entities/Entities/Seat.cs"
+  - "Cinema/3-Data/Cinema.Data.Entities/Enums/InvoiceStatus.cs"
+  - "Cinema/3-Data/Cinema.Data.Entities/Enums/SeatStatus.cs"
+  # BE — Tests
+  - "Cinema/2-Business/Cinema.Business.Tests/BookingServiceTests.cs"
+  # FE — booking
+  - "projects/CinemaUser/src/app/features/booking/seat-selection/"
+  - "projects/CinemaUser/src/app/features/booking/booking-confirmation/"
+
+trigger_keywords:
+  - "_lockedSeats"
+  - "LockSeat"
+  - "UnlockSeat"
+  - "IsSeatLocked"
+  - "ReleaseConnectionLocks"
+  - "CreateBookingAsync"
+  - "ConfirmPaymentAsync"
+  - "CancelBookingAsync"
+  - "BookingResultDTO"
+  - "CreateBookingRequest"
+  - "InvoiceStatus"
+  - "SeatStatus"
+  - "BookingHub"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §2 — Static analysis checks
+# ─────────────────────────────────────────────────────────────────────────────
+static_checks:
+
+  - id: SC-BOOK-01
+    severity: P0
+    description: >
+      The seat-lock store stays a process-local static ConcurrentDictionary
+      keyed by "{showTimeId}:{roomId}:{seatId}". Changing the key shape silently
+      breaks lock collision detection across the three coordinates.
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    must_contain:
+      - pattern: "static"
+        rationale: "Lock state is process-local static (documented in CLAUDE.md)"
+      - pattern: "ConcurrentDictionary"
+        rationale: "Thread-safe store for concurrent seat locks"
+      - pattern: "_lockedSeats"
+        rationale: "The canonical lock dictionary field name"
+
+  - id: SC-BOOK-02
+    severity: P0
+    description: >
+      IsSeatLocked auto-expires locks older than 5 minutes. Without expiry a
+      crashed/abandoned client holds a seat forever (seat leak).
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    method: "IsSeatLocked"
+    must_contain:
+      - pattern: "TimeSpan.FromMinutes(5)"
+        rationale: "5-minute lock expiry window"
+
+  - id: SC-BOOK-03
+    severity: P0
+    description: >
+      UnlockSeat / lock release must be owner-scoped: a seat can only be unlocked
+      by the connection that locked it (compare ConnectionId). Otherwise client B
+      can steal/release client A's held seat.
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    method: "UnlockSeat"
+    must_contain:
+      - pattern: "ConnectionId"
+        rationale: "Release is scoped to the owning connection"
+
+  - id: SC-BOOK-04
+    severity: P0
+    description: >
+      CreateBookingAsync creates the Invoice with Status = InvoiceStatus.Pending
+      (not paid on creation) and runs inside a transaction so a partial booking
+      never persists orphan tickets.
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    method: "CreateBookingAsync"
+    must_contain:
+      - pattern: "InvoiceStatus.Pending"
+        rationale: "A freshly created booking is unpaid (Pending), payment confirmed separately"
+      - pattern: "Transaction"
+        rationale: "Booking + invoice + tickets persisted atomically"
+
+  - id: SC-BOOK-05
+    severity: P0
+    description: >
+      CancelBookingAsync only allows cancellation from the Pending state (which
+      implicitly refuses Paid / Cancelled / Failed invoices) and only by the user
+      who owns the invoice. The guard is expressed as `Status != InvoiceStatus.Pending
+      → return false`, so we assert the Pending gate rather than a literal Paid check.
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    method: "CancelBookingAsync"
+    must_contain:
+      - pattern: "InvoiceStatus.Pending"
+        rationale: "Cancel allowed only from Pending — implicitly blocks Paid/Cancelled/Failed"
+      - pattern: "userId"
+        rationale: "Ownership check — only the booking owner may cancel"
+
+  - id: SC-BOOK-06
+    severity: P0
+    description: >
+      No invoice/seat status compared or assigned as a magic integer/string —
+      always via the InvoiceStatus / SeatStatus enums. A renumbered enum would
+      silently corrupt status logic if integers are hardcoded.
+    files:
+      - "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/InvoiceManager.cs"
+    forbidden_patterns:
+      - regex: '(InvoiceStatus|SeatStatus)\s*[:=]=?\s*[''"]?[0-9]+[''"]?'
+        rationale: "Hardcoded status value instead of the named enum member"
+
+  - id: SC-BOOK-07
+    severity: P1
+    description: >
+      Invoice status enum still carries the four expected members.
+    file: "Cinema/3-Data/Cinema.Data.Entities/Enums/InvoiceStatus.cs"
+    must_use_enum:
+      - enum_name: "InvoiceStatus"
+        values_expected: ["Pending", "Paid", "Cancelled", "Failed"]
+        rationale: "Booking lifecycle depends on these four states"
+
+  - id: SC-BOOK-08
+    severity: P1
+    description: >
+      Seat status enum still carries the three expected members.
+    file: "Cinema/3-Data/Cinema.Data.Entities/Enums/SeatStatus.cs"
+    must_use_enum:
+      - enum_name: "SeatStatus"
+        values_expected: ["Available", "Reserved", "Occupied"]
+        rationale: "Seat availability rendering + booking validation depend on these"
+
+  - id: SC-BOOK-09
+    severity: P1
+    description: >
+      The FE seat-selection template still renders the four seat visual states so
+      a BE seat-status change is reflected, not silently dropped.
+    file: "projects/CinemaUser/src/app/features/booking/seat-selection/seat-selection.component.html"
+    must_contain:
+      - pattern: "available"
+        rationale: "Selectable seat state"
+      - pattern: "occupied"
+        rationale: "Already-booked seat state"
+      - pattern: "locked"
+        rationale: "Seat held by another client (SignalR lock)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §3 — Build + unit-test verification
+# ─────────────────────────────────────────────────────────────────────────────
+build_checks:
+  - id: BC-BOOK-BUILD
+    description: "Cinema.Business builds clean"
+    cwd: "E:/cinema/cinemabe"
+    command: 'dotnet build "Cinema/2-Business/Cinema.Business/Cinema.Business.csproj" --nologo -v minimal'
+    expected_exit_code: 0
+    timeout_seconds: 240
+
+  - id: BC-BOOK-TEST
+    description: "Real xUnit booking tests pass (LockSeat/UnlockSeat/IsSeatLocked/CancelBooking guards)"
+    cwd: "E:/cinema/cinemabe"
+    command: 'dotnet test "Cinema/2-Business/Cinema.Business.Tests/Cinema.Business.Tests.csproj" --filter "FullyQualifiedName~BookingServiceTests" --nologo -v minimal'
+    expected_exit_code: 0
+    timeout_seconds: 300
+
+  - id: BC-BOOK-FE
+    description: "CinemaUser builds (seat-selection + booking-confirmation)"
+    cwd: "E:/cinema/cinemafe"
+    command: "npx ng build CinemaUser --configuration development"
+    expected_exit_code: 0
+    timeout_seconds: 600
+    skip_if_unchanged:
+      - "projects/CinemaUser/src/app/features/booking/**"
+      - "projects/CinemaLib/**"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §4 — E2E playbook (manual)
+# ─────────────────────────────────────────────────────────────────────────────
+playbook:
+  prerequisites:
+    - "Backend running: dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost (http://localhost:5102)"
+    - "Seed accounts: dotnet run --project Cinema/2-Business/Cinema.Business.Tests (admin@cinema.vn / user@cinema.vn)"
+    - "DB seeded with ≥1 Movie, ≥1 Theater/Room with a seat map, ≥1 ShowTime"
+    - "FE: ng serve CinemaUser (http://localhost:4202)"
+
+  scenarios:
+    - id: PB-BOOK-01
+      title: "Happy path — pick seats → create booking → confirm payment"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Login as user@cinema.vn, open a movie's showtime → /booking/seats?showTimeId=...&roomId=..."
+          expected:
+            - "Seat grid renders; available seats clickable, occupied seats not"
+        - step: 2
+          action: "Select 2 available seats → click 'XÁC NHẬN ĐẶT VÉ'"
+          expected:
+            - "Navigates to /booking/confirmation"
+            - "DB: Invoice created with Status = Pending (0), Code matching CIN{yyyyMMddHHmmss}{NNNN}"
+            - "DB: 2 InvoiceTicket rows linked to the invoice"
+        - step: 3
+          action: "Choose a payment method → 'XÁC NHẬN & THANH TOÁN'"
+          expected:
+            - "Success page shows a ticket-code"
+            - "DB: Invoice.Status = Paid (1)"
+
+    - id: PB-BOOK-02
+      title: "Concurrent lock — two clients cannot book the same seat"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Client A opens the seat grid and selects seat R5 (SignalR LockSeat fires)"
+          expected:
+            - "Client B's grid shows R5 as 'locked' within ~1s"
+        - step: 2
+          action: "Client B tries to select R5"
+          expected:
+            - "Selection rejected (seat is locked by A)"
+        - step: 3
+          action: "Client A abandons the page without booking; wait 5 minutes"
+          expected:
+            - "R5 auto-expires (IsSeatLocked 5-min window) and becomes available to B again"
+
+    - id: PB-BOOK-03
+      title: "Cancel guards"
+      severity: P0
+      steps:
+        - step: 1
+          action: "User cancels their own Pending booking"
+          expected:
+            - "DB: Invoice.Status = Cancelled (2); seats freed"
+        - step: 2
+          action: "User attempts to cancel a booking they do not own (different userId)"
+          expected:
+            - "Rejected (returns false / 4xx), invoice unchanged"
+        - step: 3
+          action: "User attempts to cancel an already-Paid invoice"
+          expected:
+            - "Rejected, status stays Paid"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §5 — Regression indicators
+# ─────────────────────────────────────────────────────────────────────────────
+regression_indicators:
+  - id: RI-BOOK-01
+    description: "Lock store no longer static/ConcurrentDictionary → locks not shared across requests"
+    severity: P0
+    detection: "static SC-BOOK-01"
+  - id: RI-BOOK-02
+    description: "Lock expiry removed → abandoned seats held forever (seat leak)"
+    severity: P0
+    detection: "static SC-BOOK-02 OR playbook PB-BOOK-02 step 3"
+  - id: RI-BOOK-03
+    description: "Unlock not owner-scoped → a client can release another client's held seat"
+    severity: P0
+    detection: "static SC-BOOK-03 OR playbook PB-BOOK-02 step 2"
+  - id: RI-BOOK-04
+    description: "Booking created as Paid or without transaction → free tickets / orphan rows"
+    severity: P0
+    detection: "static SC-BOOK-04 OR playbook PB-BOOK-01 step 2"
+  - id: RI-BOOK-05
+    description: "Cancel guards broken → paid invoice cancellable or cross-user cancellation"
+    severity: P0
+    detection: "static SC-BOOK-05 OR playbook PB-BOOK-03 steps 2-3"
+  - id: RI-BOOK-06
+    description: "Status compared as magic number → silent corruption if enum renumbered"
+    severity: P0
+    detection: "static SC-BOOK-06"
+  - id: RI-BOOK-07
+    description: "FE seat states drift from BE → seat shown available when occupied/locked"
+    severity: P1
+    detection: "static SC-BOOK-09 OR playbook PB-BOOK-01 step 1"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §6 — Reporting
+# ─────────────────────────────────────────────────────────────────────────────
+reporting:
+  output_path: "QA-tests/FLOW-TEST-RESULTS.md"
+  alert_on_p0: true
+  format: "markdown"
+  include_in_report:
+    - static_check_results
+    - build_check_results
+    - playbook_to_run_manually
+    - regression_indicators_status

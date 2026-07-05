@@ -1,0 +1,347 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "E:\\cinema\\QA-tests\\playwright\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--list"
+    ],
+    "configFile": "E:\\cinema\\QA-tests\\playwright\\playwright.config.ts",
+    "rootDir": "E:/cinema/QA-tests/playwright/specs",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "E:/cinema/QA-tests/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "cinema-user-chromium",
+        "name": "cinema-user-chromium",
+        "testDir": "E:/cinema/QA-tests/playwright/specs",
+        "testIgnore": [
+          "/.*\\/admin\\/.*\\.spec\\.ts/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "E:/cinema/QA-tests/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "cinema-admin-chromium",
+        "name": "cinema-admin-chromium",
+        "testDir": "E:/cinema/QA-tests/playwright/specs",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\/admin\\/.*\\.spec\\.ts/"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        {
+          "open": "never"
+        }
+      ],
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "booking\\golden-path.spec.ts",
+      "file": "booking/golden-path.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Booking — golden path",
+          "file": "booking/golden-path.spec.ts",
+          "line": 18,
+          "column": 6,
+          "specs": [
+            {
+              "title": "B01 — user reaches the seat grid for a showtime",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-user-chromium",
+                  "projectName": "cinema-user-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1761bb7b0bc1aad0f9eb-414186f7b40b2cf52970",
+              "file": "booking/golden-path.spec.ts",
+              "line": 20,
+              "column": 7
+            },
+            {
+              "title": "B02 — select available seats and reach confirmation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-user-chromium",
+                  "projectName": "cinema-user-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1761bb7b0bc1aad0f9eb-bda7feff7c57e6645e70",
+              "file": "booking/golden-path.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "B03 — occupied seats are not selectable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-user-chromium",
+                  "projectName": "cinema-user-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1761bb7b0bc1aad0f9eb-8160ecc6cde5dd4e8007",
+              "file": "booking/golden-path.spec.ts",
+              "line": 47,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "smoke\\01-login-navigation.spec.ts",
+      "file": "smoke/01-login-navigation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Smoke — CinemaUser login + navigation",
+          "file": "smoke/01-login-navigation.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "S01.1 — User logs in and lands on an authenticated route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-user-chromium",
+                  "projectName": "cinema-user-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "56199fb174994d8f74cf-1187194c78c81dc3c62c",
+              "file": "smoke/01-login-navigation.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "S01.2 — Public movie list loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-user-chromium",
+                  "projectName": "cinema-user-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "56199fb174994d8f74cf-58e42784ef51fd3f7778",
+              "file": "smoke/01-login-navigation.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "S01.3 — Protected booking route requires auth",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-user-chromium",
+                  "projectName": "cinema-user-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "56199fb174994d8f74cf-381a007b0b761b4c0adc",
+              "file": "smoke/01-login-navigation.spec.ts",
+              "line": 27,
+              "column": 7
+            },
+            {
+              "title": "S01.4 — Logout clears the JWT",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-user-chromium",
+                  "projectName": "cinema-user-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "56199fb174994d8f74cf-b5723cb6521db55b3c8a",
+              "file": "smoke/01-login-navigation.spec.ts",
+              "line": 33,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "admin\\01-admin-login.spec.ts",
+      "file": "admin/01-admin-login.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Smoke — CinemaAdmin login + guarded routes",
+          "file": "admin/01-admin-login.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "A01.1 — Admin logs in and reaches the dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-admin-chromium",
+                  "projectName": "cinema-admin-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7a0f81577275d162b6a5-fac3e50ca61a32037038",
+              "file": "admin/01-admin-login.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "A01.2 — Standard user is blocked from admin area (adminGuard)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-admin-chromium",
+                  "projectName": "cinema-admin-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7a0f81577275d162b6a5-4c075076bf8d7df1b79e",
+              "file": "admin/01-admin-login.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "A01.3 — Movies management list renders for admin",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "cinema-admin-chromium",
+                  "projectName": "cinema-admin-chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7a0f81577275d162b6a5-51abbcfdd920198c844f",
+              "file": "admin/01-admin-login.spec.ts",
+              "line": 24,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-06-20T11:59:36.763Z",
+    "duration": 181.09799999999996,
+    "expected": 0,
+    "skipped": 10,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

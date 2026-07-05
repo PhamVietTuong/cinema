@@ -1,0 +1,19 @@
+{
+  "name": "cinema-playwright-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright E2E tests for the Cinema app (CinemaUser :4200 + CinemaAdmin :4201). Ported from the SIH QA harness. HTML report via `npm run report`.",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test specs/smoke",
+    "test:booking": "playwright test specs/booking",
+    "test:admin": "playwright test specs/admin",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "typescript": "^5.6.0"
+  }
+}

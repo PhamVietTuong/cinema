@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Test Report — movie-admin — 2026-06-21</title>
+<style>
+  :root { --green:#1b873f; --red:#cf222e; --amber:#9a6700; --bg:#f6f8fa; --card:#fff; --border:#d0d7de; --txt:#1f2328; --muted:#656d76; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; background:var(--bg); color:var(--txt); line-height:1.5; }
+  .wrap { max-width:1000px; margin:0 auto; padding:24px 20px 64px; }
+  h1 { font-size:24px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 20px; font-size:14px; }
+  .banner { border-radius:10px; padding:18px 22px; font-size:20px; font-weight:700; color:#fff; margin:0 0 24px; }
+  .banner.green { background:var(--green); }
+  .banner.red { background:var(--red); }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 20px; margin:0 0 20px; }
+  h2 { font-size:16px; margin:0 0 12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  table { width:100%; border-collapse:collapse; font-size:14px; display:block; overflow-x:auto; }
+  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  .pill { display:inline-block; padding:1px 9px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; }
+  .pill.pass { background:var(--green); }
+  .pill.fail { background:var(--red); }
+  .pill.skip { background:var(--muted); }
+  .pill.p0 { background:var(--red); }
+  .pill.p1 { background:var(--amber); }
+  code { background:var(--bg); padding:1px 5px; border-radius:5px; font-size:12.5px; }
+  ol { margin:6px 0 14px; padding-left:20px; }
+  .scn { font-weight:600; margin:14px 0 2px; }
+  .muted { color:var(--muted); font-size:13px; }
+</style>
+</head>
+<div class="wrap">
+  <h1>Flow Test Report — movie-admin</h1>
+  <p class="sub">Admin movie &amp; catalog management — CRUD, Admin gating, soft delete · Layers: business, service, frontend · 2026-06-21 13:55</p>
+
+  <div class="banner green">🟢 All green — 4/4 static · 3/3 build &amp; test · 0 regression indicators triggered</div>
+
+  <div class="card">
+    <h2>Changed scope</h2>
+    <p class="muted">Clean working tree vs HEAD (only untracked <code>QA-tests/</code> and <code>.claude/</code>). All checks executed regardless of <code>skip_if_unchanged</code> for full coverage.</p>
+  </div>
+
+  <div class="card">
+    <h2>§1 Static checks (4/4 PASS)</h2>
+    <table>
+      <tr><th>Check</th><th>Sev</th><th>Status</th><th>Detail</th></tr>
+      <tr><td>SC-MADM-01</td><td><span class="pill p0">P0</span></td><td><span class="pill pass">PASS</span></td><td><code>Authorize(Roles = _adminRole)</code> on CreateMovie/UpdateMovie/DeleteMovie + all catalog writes; <code>_adminRole = "Admin"</code></td></tr>
+      <tr><td>SC-MADM-02</td><td><span class="pill p0">P0</span></td><td><span class="pill pass">PASS</span></td><td>DeleteAsync sets <code>movie.IsActive = false</code> then UpdateAsync+SaveChanges; no <code>Store.Delete</code> — soft delete</td></tr>
+      <tr><td>SC-MADM-03</td><td><span class="pill p1">P1</span></td><td><span class="pill pass">PASS</span></td><td>GetMoviesAsync takes <code>PagingSearchDTO</code>, returns <code>DefaultSearchResults&lt;MovieDTO&gt;</code></td></tr>
+      <tr><td>SC-MADM-04</td><td><span class="pill p1">P1</span></td><td><span class="pill pass">PASS</span></td><td><code>adminGuard</code> exported; redirects non-Admin (<code>userTypeName === 'Admin'</code>) to <code>/</code></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>§2 Build + test checks (3/3 PASS)</h2>
+    <table>
+      <tr><th>Check</th><th>Status</th><th>Output</th></tr>
+      <tr><td>BC-MADM-BUILD</td><td><span class="pill pass">PASS</span></td><td>Build succeeded — 0 Warning(s), 0 Error(s)</td></tr>
+      <tr><td>BC-MADM-TEST</td><td><span class="pill pass">PASS</span></td><td>Passed! Failed: 0, Passed: 6, Total: 6 (MovieServiceTests incl. soft-delete assertion)</td></tr>
+      <tr><td>BC-MADM-FE</td><td><span class="pill pass">PASS</span></td><td>CinemaAdmin dev bundle generated (130s); movies-management-component chunk emitted</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>§3 Playbook (manual)</h2>
+    <p class="muted"><b>Prerequisites:</b> Backend on http://localhost:5102 with seed accounts (admin@cinema.vn / Admin@123, user@cinema.vn / User@123); <code>ng serve CinemaAdmin</code> (http://localhost:4201).</p>
+    <div class="scn">PB-MADM-01 — Admin CRUD a movie <span class="pill p0">P0</span></div>
+    <ol>
+      <li>Login as admin → /movies (admin) → create a movie → <i>expect: movie appears in the list</i></li>
+      <li>Edit then delete → <i>expect: list no longer shows it; DB row still present with IsActive = false (soft delete)</i></li>
+    </ol>
+    <div class="scn">PB-MADM-02 — Non-admin blocked <span class="pill p0">P0</span></div>
+    <ol>
+      <li>Login as user@cinema.vn, navigate to an admin route → <i>expect: adminGuard redirects away; no admin UI</i></li>
+      <li>Call CreateMovie API with a standard user's token → <i>expect: 403 Forbidden</i></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>§4 Regression indicators</h2>
+    <table>
+      <tr><th>ID</th><th>Sev</th><th>Status</th><th>Source</th></tr>
+      <tr><td>RI-MADM-01</td><td><span class="pill p0">P0</span></td><td><span class="pill pass">NOT triggered</span></td><td>SC-MADM-01 PASS · PB-MADM-02 step 2 verify manually</td></tr>
+      <tr><td>RI-MADM-02</td><td><span class="pill p0">P0</span></td><td><span class="pill pass">NOT triggered</span></td><td>SC-MADM-02 PASS · PB-MADM-01 step 2 verify manually</td></tr>
+      <tr><td>RI-MADM-03</td><td><span class="pill p1">P1</span></td><td><span class="pill pass">NOT triggered</span></td><td>SC-MADM-03 PASS</td></tr>
+      <tr><td>RI-MADM-04</td><td><span class="pill p0">P0</span></td><td><span class="pill pass">NOT triggered</span></td><td>SC-MADM-04 PASS · PB-MADM-02 step 1 verify manually</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>§5 Summary</h2>
+    <ul>
+      <li>0 of 4 regression indicators triggered</li>
+      <li>Build/tests: <b>OK</b> — 3/3 build checks pass, 6/6 unit tests pass</li>
+      <li>No bug files written. No YAML check reconciliation needed — all spec patterns matched current code.</li>
+      <li>Action expected: none. Manual playbook (§3) remains for runtime verification of role gating and soft-delete DB state.</li>
+    </ul>
+  </div>
+</div>
+</html>

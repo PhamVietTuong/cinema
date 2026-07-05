@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Test — booking-seat-lock — 2026-06-21</title>
+<style>
+  :root { --green:#1f8a4c; --greenbg:#e6f5ec; --red:#c62828; --redbg:#fdecea; --amber:#b26a00; --amberbg:#fff4e0; --ink:#1d2129; --muted:#5c6670; --line:#e2e6ea; --card:#fff; --bg:#f5f7f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); line-height:1.5; }
+  .wrap { max-width:1000px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:14px; margin-bottom:20px; }
+  .banner { border-radius:10px; padding:18px 22px; font-size:18px; font-weight:700; margin-bottom:24px; }
+  .banner.green { background:var(--greenbg); color:var(--green); border:1px solid #b7e0c6; }
+  .banner.red { background:var(--redbg); color:var(--red); border:1px solid #f2b8b2; }
+  .meta { display:flex; flex-wrap:wrap; gap:10px 26px; font-size:13px; color:var(--muted); margin-bottom:26px; }
+  .meta b { color:var(--ink); }
+  h2 { font-size:16px; margin:30px 0 12px; padding-bottom:6px; border-bottom:2px solid var(--line); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .tablescroll { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; }
+  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { background:#fafbfc; font-weight:600; color:var(--muted); white-space:nowrap; }
+  tr:last-child td { border-bottom:none; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:700; }
+  .pass { background:var(--greenbg); color:var(--green); }
+  .fail { background:var(--redbg); color:var(--red); }
+  .skip { background:#eceff1; color:var(--muted); }
+  .clear { background:var(--greenbg); color:var(--green); }
+  .sev { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; color:var(--muted); }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; background:#f0f2f4; padding:1px 5px; border-radius:4px; }
+  .pb { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 20px; margin-bottom:14px; }
+  .pb h3 { margin:0 0 8px; font-size:14.5px; }
+  .pb ol { margin:0; padding-left:20px; }
+  .pb li { margin-bottom:8px; }
+  .pb .exp { color:var(--muted); font-size:12.5px; display:block; margin-top:2px; }
+  .note { font-size:13px; color:var(--muted); background:#fafbfc; border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Flow Test — booking-seat-lock</h1>
+  <div class="sub">Seat locking + booking → Invoice lifecycle &middot; 2026-06-21 13:48</div>
+
+  <div class="banner green">🟢 All green — 9/9 static PASS, 2/2 build/test PASS (1 skip), 0 of 7 regression indicators triggered</div>
+
+  <div class="meta">
+    <span><b>Flow:</b> Seat locking + booking → Invoice lifecycle</span>
+    <span><b>Layers:</b> business, data, service, frontend</span>
+    <span><b>Changed scope:</b> no booking source changed vs HEAD (QA-tests/ + .claude/ only)</span>
+  </div>
+
+  <h2>§1 Static checks — 9/9 PASS</h2>
+  <div class="card tablescroll">
+    <table>
+      <thead><tr><th>Check</th><th>Sev</th><th>Status</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>SC-BOOK-01</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>static</code>, <code>ConcurrentDictionary</code>, <code>_lockedSeats</code> present (BookingManager.cs:17)</td></tr>
+        <tr><td>SC-BOOK-02</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>TimeSpan.FromMinutes(5)</code> in <code>IsSeatLocked</code> (l.192)</td></tr>
+        <tr><td>SC-BOOK-03</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>UnlockSeat</code> owner-scoped via <code>info.ConnectionId == connectionId</code> (l.183)</td></tr>
+        <tr><td>SC-BOOK-04</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td><code>InvoiceStatus.Pending</code> (l.127,143) inside Begin/Commit Transaction (l.61,134)</td></tr>
+        <tr><td>SC-BOOK-05</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td>Gate <code>Status != InvoiceStatus.Pending</code> (l.170) + <code>UserId != userId</code> (l.169)</td></tr>
+        <tr><td>SC-BOOK-06</td><td class="sev">P0</td><td><span class="pill pass">PASS</span></td><td>No hardcoded status integers (regex no-match across both managers)</td></tr>
+        <tr><td>SC-BOOK-07</td><td class="sev">P1</td><td><span class="pill pass">PASS</span></td><td>InvoiceStatus = {Pending, Paid, Cancelled, Failed}</td></tr>
+        <tr><td>SC-BOOK-08</td><td class="sev">P1</td><td><span class="pill pass">PASS</span></td><td>SeatStatus = {Available, Reserved, Occupied}</td></tr>
+        <tr><td>SC-BOOK-09</td><td class="sev">P1</td><td><span class="pill pass">PASS</span></td><td>Template renders <code>available</code> / <code>occupied</code> / <code>locked</code> states</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>§2 Build + test checks — 2/2 PASS, 1 SKIP</h2>
+  <div class="card tablescroll">
+    <table>
+      <thead><tr><th>Check</th><th>Status</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td>BC-BOOK-BUILD</td><td><span class="pill pass">PASS</span></td><td>dotnet build Cinema.Business → Build succeeded, 0 Warning, 0 Error (exit 0)</td></tr>
+        <tr><td>BC-BOOK-TEST</td><td><span class="pill pass">PASS</span></td><td>BookingServiceTests → Passed! Failed: 0, Passed: 9, Total: 9 (exit 0)</td></tr>
+        <tr><td>BC-BOOK-FE</td><td><span class="pill skip">SKIP</span></td><td>skip_if_unchanged matched — booking/** and CinemaLib/** unchanged vs HEAD</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>§3 Playbook (run manually)</h2>
+  <div class="pb">
+    <h3>PB-BOOK-01 — Happy path: pick seats → create booking → confirm payment (P0)</h3>
+    <ol>
+      <li>Login as user@cinema.vn, open a showtime → <code>/booking/seats?showTimeId=...&roomId=...</code><span class="exp">Expected: grid renders; available clickable, occupied not.</span></li>
+      <li>Select 2 available seats → 'XÁC NHẬN ĐẶT VÉ'<span class="exp">Expected: navigate to /booking/confirmation; Invoice Status=Pending(0), Code CIN{yyyyMMddHHmmss}{NNNN}; 2 InvoiceTicket rows.</span></li>
+      <li>Choose payment → 'XÁC NHẬN & THANH TOÁN'<span class="exp">Expected: success page shows ticket-code; Invoice.Status = Paid(1).</span></li>
+    </ol>
+  </div>
+  <div class="pb">
+    <h3>PB-BOOK-02 — Concurrent lock: two clients cannot book the same seat (P0)</h3>
+    <ol>
+      <li>Client A selects seat R5 (SignalR LockSeat fires)<span class="exp">Expected: Client B sees R5 'locked' within ~1s.</span></li>
+      <li>Client B tries to select R5<span class="exp">Expected: rejected (locked by A).</span></li>
+      <li>Client A abandons page; wait 5 minutes<span class="exp">Expected: R5 auto-expires (5-min window) and becomes available to B.</span></li>
+    </ol>
+  </div>
+  <div class="pb">
+    <h3>PB-BOOK-03 — Cancel guards (P0)</h3>
+    <ol>
+      <li>User cancels own Pending booking<span class="exp">Expected: Invoice.Status = Cancelled(2); seats freed.</span></li>
+      <li>User cancels a booking they do not own<span class="exp">Expected: rejected (false / 4xx), invoice unchanged.</span></li>
+      <li>User cancels an already-Paid invoice<span class="exp">Expected: rejected, status stays Paid.</span></li>
+    </ol>
+  </div>
+
+  <h2>§4 Regression indicators — 0/7 triggered</h2>
+  <div class="card tablescroll">
+    <table>
+      <thead><tr><th>ID</th><th>Sev</th><th>Status</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>RI-BOOK-01</td><td class="sev">P0</td><td><span class="pill clear">CLEAR</span></td><td>SC-BOOK-01 PASS</td></tr>
+        <tr><td>RI-BOOK-02</td><td class="sev">P0</td><td><span class="pill clear">CLEAR</span></td><td>SC-BOOK-02 PASS (verify PB-BOOK-02 step 3 manually)</td></tr>
+        <tr><td>RI-BOOK-03</td><td class="sev">P0</td><td><span class="pill clear">CLEAR</span></td><td>SC-BOOK-03 PASS (verify PB-BOOK-02 step 2 manually)</td></tr>
+        <tr><td>RI-BOOK-04</td><td class="sev">P0</td><td><span class="pill clear">CLEAR</span></td><td>SC-BOOK-04 PASS (verify PB-BOOK-01 step 2 manually)</td></tr>
+        <tr><td>RI-BOOK-05</td><td class="sev">P0</td><td><span class="pill clear">CLEAR</span></td><td>SC-BOOK-05 PASS (verify PB-BOOK-03 steps 2-3 manually)</td></tr>
+        <tr><td>RI-BOOK-06</td><td class="sev">P0</td><td><span class="pill clear">CLEAR</span></td><td>SC-BOOK-06 PASS</td></tr>
+        <tr><td>RI-BOOK-07</td><td class="sev">P1</td><td><span class="pill clear">CLEAR</span></td><td>SC-BOOK-09 PASS (verify PB-BOOK-01 step 1 manually)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Summary.</b> 0 of 7 regression indicators triggered. Business builds clean; 9/9 xUnit BookingServiceTests pass; FE build skipped (unchanged). No bug files written (no real defects). The prior run's SC-BOOK-05 FAIL is resolved — the YAML check now asserts the Pending gate (matching the actual <code>CancelBookingAsync</code> guard). The three P0 playbook scenarios still require a manual E2E run for full sign-off.
+  </div>
+</div>
+</body>
+</html>

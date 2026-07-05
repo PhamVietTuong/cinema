@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Test — auth-login (re-run) — 2026-06-21</title>
+<style>
+  :root{--ok:#1b8a3a;--okbg:#e7f6ec;--warn:#b8860b;--skip:#5a6472;--skipbg:#eef1f5;--bd:#d9dee5;--ink:#1c2128;--mut:#5a6472;--bluebg:#e8f1fd;--blue:#0b5cad;}
+  *{box-sizing:border-box;}
+  body{margin:0;font:15px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#f6f8fa;padding:24px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-size:24px;margin:0 0 4px;}
+  h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--bd);padding-bottom:6px;}
+  .sub{color:var(--mut);margin:0 0 18px;font-size:13px;}
+  .banner{background:var(--okbg);border:1px solid var(--ok);border-left:6px solid var(--ok);border-radius:8px;padding:16px 20px;margin:0 0 8px;}
+  .banner .v{font-size:20px;font-weight:700;color:var(--ok);}
+  .banner p{margin:6px 0 0;font-size:14px;color:#26492f;}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px;}
+  .pill{border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600;border:1px solid var(--bd);background:#fff;}
+  .pill.ok{color:var(--ok);border-color:var(--ok);background:var(--okbg);}
+  .pill.skip{color:var(--skip);background:var(--skipbg);}
+  .tablewrap{overflow-x:auto;border:1px solid var(--bd);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;background:#fff;min-width:560px;}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--bd);vertical-align:top;font-size:14px;}
+  th{background:#f0f3f6;font-weight:600;}
+  tr:last-child td{border-bottom:none;}
+  .s{font-weight:700;font-size:12px;padding:2px 9px;border-radius:5px;white-space:nowrap;}
+  .s.pass{color:var(--ok);background:var(--okbg);}
+  .s.skip{color:var(--skip);background:var(--skipbg);}
+  .s.nt{color:var(--ok);background:var(--okbg);}
+  code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:13px;}
+  .note{background:#fffbe6;border:1px solid #e6d588;border-radius:8px;padding:12px 16px;font-size:13.5px;margin-top:10px;}
+  .note b{color:#8a6d1b;}
+  .fixnote{background:var(--bluebg);border:1px solid #a9cdf2;border-left:6px solid var(--blue);border-radius:8px;padding:14px 18px;font-size:13.5px;margin:14px 0;}
+  .fixnote b{color:var(--blue);}
+  .live{color:var(--ok);font-weight:700;}
+  ul{margin:6px 0 0;padding-left:20px;}
+  li{margin:3px 0;}
+  .pb{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px 18px;margin-bottom:12px;}
+  .pb h3{margin:0 0 8px;font-size:15px;}
+  footer{color:var(--mut);font-size:12px;margin-top:30px;text-align:center;}
+</style>
+</head>
+<div class="wrap">
+  <h1>Flow Test — <code>auth-login</code></h1>
+  <p class="sub">Re-run: try/catch + HandleException · 2026-06-21 14:12 · layers: business, service, frontend</p>
+
+  <div class="banner">
+    <div class="v">PASS — no regressions</div>
+    <p>Static 5/5 PASS · Build 2/2 PASS (1 skipped) · 0/4 regression indicators triggered. No defects, no bug files.</p>
+  </div>
+
+  <div class="meta">
+    <span class="pill ok">Static 5/5</span>
+    <span class="pill ok">Build 2 PASS</span>
+    <span class="pill skip">Build 1 SKIP</span>
+    <span class="pill ok">0 indicators</span>
+    <span class="pill ok">0 bugs</span>
+  </div>
+
+  <div class="fixnote">
+    <b>Fix verified live (status-code mapping).</b> <code>IdentityController</code> now extends a new <code>ApiControllerBase</code>. Each action <b>keeps its own try/catch</b>, but the catch delegates to <code>HandleException(e, nameof(Action))</code>, which maps exception type → status: <code>KeyNotFoundException</code>→404, <code>UnauthorizedAccessException</code>→401, <code>InvalidOperationException</code>→400, else→500 (client errors log Warning, unexpected log Fatal). Verified against the running API: wrong password → <span class="live">401</span> <code>{"error":"Invalid credentials.","statusCode":401}</code>; valid creds → <span class="live">200</span> + JWT; duplicate-email register → <span class="live">400</span>. <i>This supersedes the prior "try/catch removed, middleware maps" re-run — try/catch is retained; the base-class helper does the mapping.</i>
+  </div>
+
+  <h2>§1 Static Checks — 5/5 PASS</h2>
+  <div class="tablewrap">
+  <table>
+    <tr><th>Check</th><th>Sev</th><th>Status</th><th>Detail</th></tr>
+    <tr><td>SC-AUTH-01</td><td>P0</td><td><span class="s pass">PASS</span></td><td><code>LoginAsync</code> throws <code>UnauthorizedAccessException("Invalid credentials.")</code> for unknown user and bad password (AuthManager.cs:29,32).</td></tr>
+    <tr><td>SC-AUTH-02</td><td>P0</td><td><span class="s pass">PASS</span></td><td><code>RegisterAsync</code> checks <code>GetByEmailAsync</code> and throws <code>InvalidOperationException("Email already in use.")</code> before creating user (AuthManager.cs:39-40).</td></tr>
+    <tr><td>SC-AUTH-03</td><td>P0</td><td><span class="s pass">PASS</span></td><td>JwtTokenService embeds <code>new Claim(ClaimTypes.Role, user.UserType?.Name ?? "Customer")</code> (line 27). <b>Path stale</b> — file now at <code>Cinema.Data/Services/JwtTokenService.cs</code>.</td></tr>
+    <tr><td>SC-AUTH-04</td><td>P0</td><td><span class="s pass">PASS</span></td><td>All four admin endpoints gated <code>[Authorize(Roles = _adminRole)]</code> — GetUsers/CreateUser/UpdateUser/DeleteUser (IdentityController.cs:114,131,148,165).</td></tr>
+    <tr><td>SC-AUTH-05</td><td>P1</td><td><span class="s pass">PASS</span></td><td><code>auth.effects.ts</code> persists token via <code>localStorage.setItem('cinema_token', …)</code> (line 43); logout removes same key (line 54).</td></tr>
+  </table>
+  </div>
+  <div class="note">No static check asserts a try/catch presence or a literal <code>StatusCode(500, e.Message)</code> inside <code>IdentityController</code>. The blanket-500-in-catch was the bug being fixed, so the <code>HandleException</code> refactor invalidated <b>no</b> static invariant and triggered <b>no</b> stale check. The 500 path now lives only as <code>HandleException</code>'s <code>default</code> branch for genuinely unexpected exceptions — correct.</div>
+
+  <h2>§2 Build Checks — 2 PASS, 1 SKIP</h2>
+  <div class="tablewrap">
+  <table>
+    <tr><th>Check</th><th>Status</th><th>Output</th></tr>
+    <tr><td>BC-AUTH-BUILD</td><td><span class="s pass">PASS</span></td><td><code>dotnet build Cinema.Business.csproj</code> → Build succeeded, 0 warnings, 0 errors, exit 0 (1.83s).</td></tr>
+    <tr><td>BC-AUTH-TEST</td><td><span class="s pass">PASS</span></td><td><code>dotnet test --filter ~AuthServiceTests</code> → Passed! 7 passed, 0 failed, 0 skipped, exit 0 (270 ms). Benign NU1603 restore warning.</td></tr>
+    <tr><td>BC-AUTH-FE</td><td><span class="s skip">SKIP</span></td><td><code>skip_if_unchanged: projects/CinemaLib/**</code> — no CinemaLib changes this session; FE build not required.</td></tr>
+  </table>
+  </div>
+
+  <h2>§3 Playbook (manual — not auto-run)</h2>
+  <p class="sub">Prereqs: backend :5102 + seed accounts; FE (nvm v22.12.0) CinemaUser :4202 / CinemaAdmin :4201.</p>
+  <div class="pb">
+    <h3>PB-AUTH-01 — Login success + role routing (P0)</h3>
+    <ul>
+      <li>POST Login {admin@cinema.vn, Admin@123} → 200 + JWT, role = Admin. <span class="live">(success path verified live: 200 + JWT)</span></li>
+      <li>Login in CinemaAdmin UI → <code>cinema_token</code> set; reaches /dashboard. <i>(verify manually)</i></li>
+    </ul>
+  </div>
+  <div class="pb">
+    <h3>PB-AUTH-02 — Bad credentials + duplicate register (P0)</h3>
+    <ul>
+      <li>POST Login with wrong password → <b>401 (NOT 200, NOT 500)</b>. <span class="live">VERIFIED LIVE — 401 via HandleException mapping.</span></li>
+      <li>POST Register with existing email → 4xx duplicate-email; no second user. <span class="live">VERIFIED LIVE — 400 (InvalidOperationException→400).</span></li>
+    </ul>
+  </div>
+  <div class="pb">
+    <h3>PB-AUTH-03 — Role gate enforced (P0)</h3>
+    <ul><li>Call Admin-only GetUsers with a standard user's token → 403 Forbidden. <i>(verify manually — enforced by framework before the action runs)</i></li></ul>
+  </div>
+
+  <h2>§4 Regression Indicators — 0 triggered</h2>
+  <div class="tablewrap">
+  <table>
+    <tr><th>ID</th><th>Sev</th><th>Status</th><th>Source</th></tr>
+    <tr><td>RI-AUTH-01</td><td>P0</td><td><span class="s nt">NOT TRIGGERED</span></td><td>SC-AUTH-01 PASS; PB-AUTH-02 step 1 verified live (401).</td></tr>
+    <tr><td>RI-AUTH-02</td><td>P0</td><td><span class="s nt">NOT TRIGGERED</span></td><td>SC-AUTH-02 PASS; PB-AUTH-02 step 2 verified live (400).</td></tr>
+    <tr><td>RI-AUTH-03</td><td>P0</td><td><span class="s nt">NOT TRIGGERED</span></td><td>SC-AUTH-03 + SC-AUTH-04 both PASS; PB-AUTH-03 verify manually.</td></tr>
+    <tr><td>RI-AUTH-04</td><td>P1</td><td><span class="s nt">NOT TRIGGERED</span></td><td>SC-AUTH-05 PASS.</td></tr>
+  </table>
+  </div>
+
+  <h2>§5 Summary</h2>
+  <ul>
+    <li><b>0 of 4</b> regression indicators triggered. No P0 alert.</li>
+    <li><b>Build/tests OK</b> — 2/2 executed build checks pass (1 skipped, FE unchanged); 7/7 AuthServiceTests pass.</li>
+    <li><b>The try/catch + HandleException refactor is confirmed safe and is NOT a defect</b> — it fixes the prior blanket-500 bug. Bad creds → 401, duplicate email → 400 (both verified live), valid login → 200. No bug files written.</li>
+    <li><b>Action expected: none.</b></li>
+  </ul>
+  <div class="note">
+    <b>YAML reconciliation (stale checks, not regressions):</b>
+    <ul>
+      <li>SC-AUTH-03 <code>file</code> path (and matching <code>trigger_paths</code>) stale → should be <code>Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs</code> (file moved into <code>Services/</code>).</li>
+      <li>Spec <code>last_updated: 2026-06-20</code> / <code>version: 1.0</code> predates the file move and the HandleException refactor — bump on reconciliation; optionally add <code>Controllers/ApiControllerBase.cs</code> to <code>trigger_paths</code>.</li>
+    </ul>
+  </div>
+
+  <footer>Cinema business-regression harness · auth-login re-run (try/catch + HandleException) · 2026-06-21 14:12 · no bug files written (no real defects)</footer>
+</div>
+</html>

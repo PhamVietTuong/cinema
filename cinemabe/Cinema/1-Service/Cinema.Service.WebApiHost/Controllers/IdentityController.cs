@@ -13,7 +13,7 @@ namespace Cinema.Service.WebApiHost.Controllers;
 [ApiController]
 [Route("api/[controller]/[action]")]
 [ApiExplorerSettings(GroupName = "identity")]
-public class IdentityController : ControllerBase
+public class IdentityController : ApiControllerBase
 {
     private const string _adminRole = "Admin";
     private const string _userRole  = "User";
@@ -36,8 +36,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.Login->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(Login));
         }
     }
 
@@ -53,8 +52,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.Register->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(Register));
         }
     }
 
@@ -73,8 +71,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetProfile->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(GetProfile));
         }
     }
 
@@ -91,8 +88,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.UpdateProfile->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(UpdateProfile));
         }
     }
 
@@ -109,8 +105,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.ChangePassword->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(ChangePassword));
         }
     }
 
@@ -129,8 +124,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetUsers->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(GetUsers));
         }
     }
 
@@ -147,8 +141,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.CreateUser->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(CreateUser));
         }
     }
 
@@ -165,8 +158,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.UpdateUser->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(UpdateUser));
         }
     }
 
@@ -183,8 +175,7 @@ public class IdentityController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.DeleteUser->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            return HandleException(e, nameof(DeleteUser));
         }
     }
 }

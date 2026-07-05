@@ -1,0 +1,179 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Cinema — Flow regression test
+# Flow : Authentication (login / register / JWT / role gating)
+# Invoked by : /test-flow auth-login
+# ─────────────────────────────────────────────────────────────────────────────
+
+flow_id: auth-login
+name: "Authentication — login, register, JWT issuance, role-based gating"
+description: >
+  Verifies that a change touching auth does not break:
+  (1) login rejecting bad credentials with Unauthorized (not 500/200),
+  (2) register refusing a duplicate email,
+  (3) the JWT carrying the role claim that drives [Authorize(Roles=\"Admin\")],
+  (4) admin-only endpoints staying gated behind the Admin role,
+  (5) the FE storing the token under the 'cinema_token' localStorage key.
+
+layers: [business, service, frontend]
+version: 1.0
+last_updated: 2026-06-20
+maintained_by: "Cinema QA"
+
+trigger_paths:
+  - "Cinema/2-Business/Cinema.Business/Managers/AuthManager.cs"
+  - "Cinema/2-Business/Cinema.Business.DTO/Auth/"
+  - "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/IdentityController.cs"
+  - "Cinema/3-Data/Cinema.Data/JwtTokenService.cs"
+  - "Cinema/3-Data/Cinema.Data.Entities/Enums/UserStatus.cs"
+  - "Cinema/2-Business/Cinema.Business.Tests/AuthServiceTests.cs"
+  - "projects/CinemaLib/src/lib/store/auth/"
+  - "projects/CinemaUser/src/app/features/auth/"
+  - "projects/CinemaAdmin/src/app/features/auth/"
+
+trigger_keywords:
+  - "LoginAsync"
+  - "RegisterAsync"
+  - "AuthResponse"
+  - "LoginRequest"
+  - "JwtTokenService"
+  - "GetUserId"
+  - "Authorize"
+  - "cinema_token"
+  - "auth.effects"
+
+static_checks:
+
+  - id: SC-AUTH-01
+    severity: P0
+    description: >
+      LoginAsync rejects invalid credentials with an Unauthorized-type exception
+      (never returns a token for a wrong password or unknown user).
+    file: "Cinema/2-Business/Cinema.Business/Managers/AuthManager.cs"
+    method: "LoginAsync"
+    must_contain:
+      - pattern: "Unauthorized"
+        rationale: "Bad credentials → Unauthorized, asserted by AuthServiceTests"
+
+  - id: SC-AUTH-02
+    severity: P0
+    description: >
+      RegisterAsync refuses a duplicate email rather than creating a second user.
+    file: "Cinema/2-Business/Cinema.Business/Managers/AuthManager.cs"
+    method: "RegisterAsync"
+    must_contain:
+      - pattern: "Email"
+        rationale: "Duplicate-email check before creating the user"
+
+  - id: SC-AUTH-03
+    severity: P0
+    description: >
+      The token service embeds a Role claim — this is what [Authorize(Roles=...)]
+      reads. Drop it and every role gate silently opens or closes wrongly.
+    file: "Cinema/3-Data/Cinema.Data/JwtTokenService.cs"
+    must_contain:
+      - pattern: "Role"
+        rationale: "Role claim drives authorization on Admin endpoints"
+
+  - id: SC-AUTH-04
+    severity: P0
+    description: >
+      Admin-only Identity endpoints stay gated by the Admin role.
+    file: "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/IdentityController.cs"
+    must_contain:
+      - pattern: "Authorize(Roles = _adminRole)"
+        rationale: "User management (GetUsers/CreateUser/UpdateUser/DeleteUser) is Admin-only (gated via the _adminRole constant)"
+
+  - id: SC-AUTH-05
+    severity: P1
+    description: >
+      The FE auth effect persists the JWT under the agreed localStorage key.
+      Renaming it without updating the interceptor logs everyone out.
+    file: "projects/CinemaLib/src/lib/store/auth/auth.effects.ts"
+    must_contain:
+      - pattern: "cinema_token"
+        rationale: "JWT storage key read by authInterceptor + Playwright login helper"
+
+build_checks:
+  - id: BC-AUTH-BUILD
+    description: "Cinema.Business builds clean"
+    cwd: "E:/cinema/cinemabe"
+    command: 'dotnet build "Cinema/2-Business/Cinema.Business/Cinema.Business.csproj" --nologo -v minimal'
+    expected_exit_code: 0
+    timeout_seconds: 240
+
+  - id: BC-AUTH-TEST
+    description: "Real xUnit auth tests pass"
+    cwd: "E:/cinema/cinemabe"
+    command: 'dotnet test "Cinema/2-Business/Cinema.Business.Tests/Cinema.Business.Tests.csproj" --filter "FullyQualifiedName~AuthServiceTests" --nologo -v minimal'
+    expected_exit_code: 0
+    timeout_seconds: 300
+
+  - id: BC-AUTH-FE
+    description: "CinemaLib builds (auth store + interceptors)"
+    cwd: "E:/cinema/cinemafe"
+    command: "npx ng build CinemaLib"
+    expected_exit_code: 0
+    timeout_seconds: 300
+    skip_if_unchanged:
+      - "projects/CinemaLib/**"
+
+playbook:
+  prerequisites:
+    - "Backend on http://localhost:5102, seed accounts created"
+    - "FE: ng serve CinemaUser (4202) and/or CinemaAdmin (4201)"
+  scenarios:
+    - id: PB-AUTH-01
+      title: "Login success + role routing"
+      severity: P0
+      steps:
+        - step: 1
+          action: "POST /api/Identity/Login {email: admin@cinema.vn, password: Admin@123}"
+          expected:
+            - "200 with a JWT; decoded token contains role = Admin"
+        - step: 2
+          action: "Login as admin in CinemaAdmin UI"
+          expected:
+            - "localStorage 'cinema_token' set; reaches /dashboard"
+    - id: PB-AUTH-02
+      title: "Bad credentials + duplicate register"
+      severity: P0
+      steps:
+        - step: 1
+          action: "POST /api/Identity/Login with a wrong password"
+          expected:
+            - "401 Unauthorized (NOT 200, NOT 500)"
+        - step: 2
+          action: "POST /api/Identity/Register with an email that already exists"
+          expected:
+            - "4xx with a duplicate-email message; no second user created"
+    - id: PB-AUTH-03
+      title: "Role gate enforced"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Call an Admin-only endpoint (e.g. GetUsers) with a standard user's token"
+          expected:
+            - "403 Forbidden"
+
+regression_indicators:
+  - id: RI-AUTH-01
+    description: "Login returns a token for bad credentials → account takeover"
+    severity: P0
+    detection: "static SC-AUTH-01 OR playbook PB-AUTH-02 step 1"
+  - id: RI-AUTH-02
+    description: "Duplicate email accepted → ambiguous identity"
+    severity: P0
+    detection: "static SC-AUTH-02 OR playbook PB-AUTH-02 step 2"
+  - id: RI-AUTH-03
+    description: "Role claim missing or admin gate dropped → privilege escalation"
+    severity: P0
+    detection: "static SC-AUTH-03 + SC-AUTH-04 OR playbook PB-AUTH-03"
+  - id: RI-AUTH-04
+    description: "JWT storage key renamed without updating interceptor → users logged out"
+    severity: P1
+    detection: "static SC-AUTH-05"
+
+reporting:
+  output_path: "QA-tests/FLOW-TEST-RESULTS.md"
+  alert_on_p0: true
+  format: "markdown"

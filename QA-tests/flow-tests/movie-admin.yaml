@@ -1,0 +1,164 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Cinema — Flow regression test
+# Flow : Admin movie / catalog management (CRUD + role gating + soft delete)
+# Invoked by : /test-flow movie-admin
+# ─────────────────────────────────────────────────────────────────────────────
+
+flow_id: movie-admin
+name: "Admin movie & catalog management — CRUD, Admin gating, soft delete"
+description: >
+  Verifies that a change touching admin catalog management does not break:
+  (1) write endpoints (Create/Update/Delete movie + catalog) staying Admin-only,
+  (2) DeleteAsync being a SOFT delete (IsActive = false), not a hard row delete,
+  (3) list endpoints honoring the PagingSearchDTO + DefaultSearchResults<T> contract,
+  (4) the FE admin routes staying behind adminGuard.
+
+layers: [business, service, frontend]
+version: 1.0
+last_updated: 2026-06-20
+maintained_by: "Cinema QA"
+
+trigger_paths:
+  - "Cinema/2-Business/Cinema.Business/Managers/MovieManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/TheaterManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/Catalog/CatalogManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/Catalog/CatalogManagers.cs"
+  - "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs"
+  - "Cinema/2-Business/Cinema.Business.Tests/MovieServiceTests.cs"
+  - "projects/CinemaAdmin/src/app/features/movies/"
+  - "projects/CinemaLib/src/lib/guards/"
+
+trigger_keywords:
+  - "CreateAsync"
+  - "UpdateAsync"
+  - "DeleteAsync"
+  - "CreateMovieRequest"
+  - "UpdateMovieRequest"
+  - "PagingSearchDTO"
+  - "DefaultSearchResults"
+  - "adminGuard"
+  - "IsActive"
+
+static_checks:
+
+  - id: SC-MADM-01
+    severity: P0
+    description: >
+      Movie write endpoints stay Admin-gated in the controller.
+    file: "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs"
+    must_contain:
+      - pattern: "Authorize(Roles = _adminRole)"
+        rationale: "CreateMovie/UpdateMovie/DeleteMovie and catalog writes are Admin-only (gated via the _adminRole constant)"
+
+  - id: SC-MADM-02
+    severity: P0
+    description: >
+      MovieManager.DeleteAsync performs a SOFT delete (flips IsActive to false),
+      never a physical removal — asserted by MovieServiceTests
+      DeleteAsync_ExistingMovie_SetsIsActiveFalse.
+    file: "Cinema/2-Business/Cinema.Business/Managers/MovieManager.cs"
+    method: "DeleteAsync"
+    must_contain:
+      - pattern: "IsActive"
+        rationale: "Soft delete = IsActive false, preserves history & FKs"
+    must_not_contain:
+      - pattern: "Store.Delete"
+        rationale: "No hard delete of movies"
+
+  - id: SC-MADM-03
+    severity: P1
+    description: >
+      Movie list endpoints keep the standard paging contract
+      (PagingSearchDTO in, DefaultSearchResults<MovieDTO> out).
+    file: "Cinema/2-Business/Cinema.Business/Managers/MovieManager.cs"
+    method: "GetMoviesAsync"
+    must_contain:
+      - pattern: "PagingSearchDTO"
+        rationale: "Standard list request contract"
+      - pattern: "DefaultSearchResults"
+        rationale: "Standard list response contract"
+
+  - id: SC-MADM-04
+    severity: P1
+    description: >
+      Admin FE routes are protected by adminGuard.
+    file: "projects/CinemaLib/src/lib/guards"
+    must_contain:
+      - pattern: "adminGuard"
+        rationale: "Admin area routes require the adminGuard"
+
+build_checks:
+  - id: BC-MADM-BUILD
+    description: "Cinema.Business builds clean"
+    cwd: "E:/cinema/cinemabe"
+    command: 'dotnet build "Cinema/2-Business/Cinema.Business/Cinema.Business.csproj" --nologo -v minimal'
+    expected_exit_code: 0
+    timeout_seconds: 240
+
+  - id: BC-MADM-TEST
+    description: "Real xUnit movie tests pass (incl. soft-delete assertion)"
+    cwd: "E:/cinema/cinemabe"
+    command: 'dotnet test "Cinema/2-Business/Cinema.Business.Tests/Cinema.Business.Tests.csproj" --filter "FullyQualifiedName~MovieServiceTests" --nologo -v minimal'
+    expected_exit_code: 0
+    timeout_seconds: 300
+
+  - id: BC-MADM-FE
+    description: "CinemaAdmin builds (movies management)"
+    cwd: "E:/cinema/cinemafe"
+    command: "npx ng build CinemaAdmin --configuration development"
+    expected_exit_code: 0
+    timeout_seconds: 600
+    skip_if_unchanged:
+      - "projects/CinemaAdmin/**"
+      - "projects/CinemaLib/**"
+
+playbook:
+  prerequisites:
+    - "Backend on http://localhost:5102, seed accounts created"
+    - "FE: ng serve CinemaAdmin (http://localhost:4201)"
+  scenarios:
+    - id: PB-MADM-01
+      title: "Admin CRUD a movie"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Login as admin → /movies (admin) → create a movie"
+          expected: ["Movie appears in the list"]
+        - step: 2
+          action: "Edit then delete the movie"
+          expected:
+            - "List no longer shows it"
+            - "DB: row still present with IsActive = false (soft delete)"
+    - id: PB-MADM-02
+      title: "Non-admin blocked"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Login as user@cinema.vn, navigate to an admin route"
+          expected: ["adminGuard redirects away; no admin UI shown"]
+        - step: 2
+          action: "Call CreateMovie API with a standard user's token"
+          expected: ["403 Forbidden"]
+
+regression_indicators:
+  - id: RI-MADM-01
+    description: "Admin write endpoint loses its role gate → any user edits the catalog"
+    severity: P0
+    detection: "static SC-MADM-01 OR playbook PB-MADM-02 step 2"
+  - id: RI-MADM-02
+    description: "DeleteAsync becomes a hard delete → loss of history / FK breakage"
+    severity: P0
+    detection: "static SC-MADM-02 OR playbook PB-MADM-01 step 2"
+  - id: RI-MADM-03
+    description: "List contract drifts from PagingSearchDTO/DefaultSearchResults → FE grids break"
+    severity: P1
+    detection: "static SC-MADM-03"
+  - id: RI-MADM-04
+    description: "Admin FE routes lose adminGuard → back-office reachable by anyone logged in"
+    severity: P0
+    detection: "static SC-MADM-04 OR playbook PB-MADM-02 step 1"
+
+reporting:
+  output_path: "QA-tests/FLOW-TEST-RESULTS.md"
+  alert_on_p0: true
+  format: "markdown"
