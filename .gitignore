@@ -1,5 +1,14 @@
+# Build artifacts
 **/.vs/**
 **/obj/**
 **/bin/**
-CLAUDE.md
-cinemabe/
+
+# Node
+**/node_modules/
+**/.angular/
+
+# Runtime-uploaded user content (served from wwwroot/uploads)
+cinemabe/**/wwwroot/uploads/
+
+# Stray accidental nested duplicate of entity files — safe to delete
+cinemabe/Cinema/cinemabe/

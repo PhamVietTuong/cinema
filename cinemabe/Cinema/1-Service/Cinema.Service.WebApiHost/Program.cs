@@ -76,6 +76,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// Health checks — liveness at /health, readiness (incl. DB) at /health/ready
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<CinemaContext>("database", tags: new[] { "ready" });
+
 // NSwag — one OpenAPI document per controller group
 static void ConfigureSecurity(NSwag.Generation.AspNetCore.AspNetCoreOpenApiDocumentGeneratorSettings cfg)
 {
@@ -158,5 +162,10 @@ app.UseAuthorization();
 app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllers();
 app.MapHub<BookingHub>("/hubs/booking");
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 
 app.Run();
