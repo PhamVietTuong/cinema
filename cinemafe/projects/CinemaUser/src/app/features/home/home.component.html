@@ -63,7 +63,10 @@
 <!-- ── NOW SHOWING ─────────────────────────────────────────────────────────── -->
 <section class="section">
   <div class="section-header">
-    <h2 class="section-title">Phim Đang Chiếu</h2>
+    <div class="section-titlewrap">
+      <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
+      <h2 class="section-title">Phim Đang Chiếu</h2>
+    </div>
     <a routerLink="/movies" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
   </div>
   <div *ngIf="loading$ | async" class="spinner-wrap">
@@ -95,7 +98,10 @@
 <!-- ── COMING SOON ─────────────────────────────────────────────────────────── -->
 <section class="section section--dark">
   <div class="section-header">
-    <h2 class="section-title">Phim Sắp Chiếu</h2>
+    <div class="section-titlewrap">
+      <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
+      <h2 class="section-title">Phim Sắp Chiếu</h2>
+    </div>
     <a routerLink="/movies" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
   </div>
   <div class="movie-grid">

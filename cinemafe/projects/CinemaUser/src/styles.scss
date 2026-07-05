@@ -1,89 +1,178 @@
 @use 'lib/theme/base';
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  CinemaUser — global theme: "Marquee" (premium cinema, gone daylight)      ║
+// ║  Light cool-paper ground · white cards · ink type · brass-gold accent ·    ║
+// ║  ticket-red reserved for the booking action.                               ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+:root {
+  // Surfaces
+  --mp-paper:      #edeef1;   // page ground (cool light)
+  --mp-paper-2:    #f7f8fa;   // alternate section
+  --mp-card:       #ffffff;
+
+  // Ink / text
+  --mp-ink:        #15171d;   // headings, primary text, ink buttons
+  --mp-ink-2:      #3a3f4a;   // body copy
+  --mp-muted:      #6b7280;   // secondary text
+  --mp-faint:      #9aa1ad;   // hints, disabled
+
+  // Lines
+  --mp-line:       rgba(21, 23, 29, 0.10);
+  --mp-line-2:     rgba(21, 23, 29, 0.06);
+
+  // Brand — ticket red (action) + marquee gold (premium)
+  --mp-red:        #e11d34;
+  --mp-red-strong: #c0142a;
+  --mp-red-soft:   rgba(225, 29, 52, 0.10);
+  --mp-gold:       #b9861f;
+  --mp-gold-deep:  #9a6f16;
+  --mp-gold-soft:  #f4e9cf;
+
+  // Status
+  --mp-success:    #16a34a;
+  --mp-warn:       #d97706;
+  --mp-danger:     #dc2626;
+
+  // Elevation
+  --mp-shadow-sm:  0 1px 2px rgba(20, 25, 45, 0.06), 0 2px 6px rgba(20, 25, 45, 0.05);
+  --mp-shadow-md:  0 12px 30px -14px rgba(20, 25, 45, 0.28);
+  --mp-shadow-lg:  0 30px 60px -24px rgba(20, 25, 45, 0.32);
+
+  // Radius
+  --mp-r-sm: 10px;
+  --mp-r-md: 12px;
+  --mp-r-lg: 16px;
+  --mp-r-xl: 22px;
+
+  // Type
+  --mp-font-display: 'Bricolage Grotesque', 'Montserrat', system-ui, sans-serif;
+  --mp-font-body:    'Inter', system-ui, -apple-system, sans-serif;
+}
 
 body {
-  background-color: #051424;
-  color: #d4e4fa;
-  font-family: 'Inter', sans-serif;
+  background-color: var(--mp-paper);
+  color: var(--mp-ink);
+  font-family: var(--mp-font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--mp-font-display);
+  letter-spacing: -0.02em;
 }
 
 a { color: inherit; text-decoration: none; &:hover { text-decoration: none; } }
+
+// ── Marquee bulb rule — the signature ─────────────────────────────────────────
+.marquee-rule {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+
+  .bulb {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--mp-gold);
+    box-shadow: 0 0 0 2px rgba(185, 134, 31, 0.14), 0 0 8px rgba(185, 134, 31, 0.5);
+
+    &:nth-child(even) { opacity: 0.45; }
+  }
+  &.marquee-rule--sm .bulb { width: 5px; height: 5px; }
+}
 
 // ── Shared buttons (used across all pages) ─────────────────────────────────────
 .btn-primary-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #d0bcff;
-  color: #23005c;
-  font-family: 'Inter', sans-serif;
+  background: var(--mp-red);
+  color: #fff;
+  font-family: var(--mp-font-body);
   font-size: 0.95rem;
   font-weight: 600;
-  padding: 12px 28px;
-  border-radius: 10px;
+  padding: 12px 26px;
+  border-radius: var(--mp-r-md);
   border: none;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.2s ease, box-shadow 0.25s ease;
+  box-shadow: 0 8px 22px -8px rgba(225, 29, 52, 0.55);
+  transition: background 0.2s ease, box-shadow 0.25s ease, transform 0.16s ease;
 
-  &:hover { background: #e9ddff; box-shadow: 0 0 28px rgba(208,188,255,0.5); text-decoration: none; color: #23005c; }
-  &:disabled, &[disabled] { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+  &:hover {
+    background: var(--mp-red-strong);
+    box-shadow: 0 14px 30px -10px rgba(225, 29, 52, 0.55);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: #fff;
+  }
+  &:disabled, &[disabled] { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; }
 }
 
 .btn-ghost-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255,255,255,0.06);
-  color: #d4e4fa;
-  font-family: 'Inter', sans-serif;
+  background: var(--mp-card);
+  color: var(--mp-ink);
+  font-family: var(--mp-font-body);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   padding: 12px 24px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--mp-r-md);
+  border: 1px solid var(--mp-line);
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  transition: background 0.2s ease;
+  box-shadow: var(--mp-shadow-sm);
+  transition: border-color 0.2s ease, transform 0.16s ease, box-shadow 0.2s ease;
   text-decoration: none;
 
-  &:hover { background: rgba(255,255,255,0.1); text-decoration: none; color: #d4e4fa; }
+  &:hover {
+    border-color: rgba(21, 23, 29, 0.2);
+    transform: translateY(-2px);
+    box-shadow: var(--mp-shadow-md);
+    text-decoration: none;
+    color: var(--mp-ink);
+  }
 }
 
 .age-badge {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  background: #e50914;
+  background: var(--mp-red);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
 }
 
-// ── Material menu (navbar user dropdown) — dark "Midnight Premium" theme ───────
+// ── Material menu (navbar user dropdown) — light "Marquee" theme ───────────────
 .mat-mdc-menu-panel {
-  --mat-menu-container-color: #0d1c2d;
-  background: #0d1c2d !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px !important;
-  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.65) !important;
+  --mat-menu-container-color: var(--mp-card);
+  background: var(--mp-card) !important;
+  border: 1px solid var(--mp-line);
+  border-radius: var(--mp-r-md) !important;
+  box-shadow: var(--mp-shadow-md) !important;
 }
 .mat-mdc-menu-content {
   padding: 6px !important;
   background: transparent;
 }
 .mat-mdc-menu-item {
-  --mat-menu-item-label-text-color: #d4e4fa;
-  color: #d4e4fa !important;
+  --mat-menu-item-label-text-color: var(--mp-ink);
+  color: var(--mp-ink) !important;
   min-height: 42px;
   border-radius: 8px;
 
-  .mdc-list-item__primary-text { color: #d4e4fa !important; }
-  .menu-icon { color: #d0bcff; margin-right: 10px; width: 16px; text-align: center; }
+  .mdc-list-item__primary-text { color: var(--mp-ink) !important; }
+  .menu-icon { color: var(--mp-red); margin-right: 10px; width: 16px; text-align: center; }
 
   &:hover:not([disabled]),
   &.cdk-program-focused:not([disabled]),
   &.cdk-keyboard-focused:not([disabled]) {
-    background: rgba(208, 188, 255, 0.12) !important;
+    background: var(--mp-red-soft) !important;
   }
 }

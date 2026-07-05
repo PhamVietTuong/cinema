@@ -18,8 +18,8 @@
   width: 46px; height: 46px; border-radius: var(--ad-r-md); flex: none;
   mat-icon { font-size: 23px; width: 23px; height: 23px; }
   &.i-violet { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
-  &.i-orange { background: rgba(249, 115, 22, 0.14); color: #fdba74; }
-  &.i-green  { background: var(--ad-success-soft); color: #6ee7a8; }
+  &.i-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+  &.i-green  { background: var(--ad-success-soft); color: #15803d; }
 }
 
 .user-cell { display: flex; align-items: center; gap: 12px;

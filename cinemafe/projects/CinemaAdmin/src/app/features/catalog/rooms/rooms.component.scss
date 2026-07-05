@@ -2,7 +2,7 @@
 .seatmap-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(2, 8, 18, 0.6);
+  background: rgba(21, 23, 29, 0.4);
   backdrop-filter: blur(3px);
   z-index: 50;
 }
@@ -107,4 +107,4 @@
 // ── Legend ────────────────────────────────────────────────────────────────────
 .legend { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding-top: 18px; border-top: 1px solid var(--ad-glass-border); }
 .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ad-muted); }
-.legend-dot { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.2); }
+.legend-dot { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(21, 23, 29, 0.2); }

@@ -1,51 +1,49 @@
-$bg: #051424;
-$container: #0d1c2d;
-$primary: #d0bcff;
-$text: #d4e4fa;
-$muted: rgba(212, 228, 250, 0.6);
-$outline: rgba(255, 255, 255, 0.08);
+// "Marquee" — Theaters Page (light premium cinema)
+// Tokens (from styles.scss): paper #edeef1 · card #fff · ink #15171d · red #e11d34 · gold #b9861f
 
-.page-header { background: rgba(13, 28, 45, 0.9); border-bottom: 1px solid $outline; padding: 36px 0; }
+.page-header { background: var(--mp-paper-2); border-bottom: 1px solid var(--mp-line-2); padding: 36px 0; }
 .page-header-inner { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
-.page-title { font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 700; color: $text; margin: 0; }
-.page-sub { color: $muted; margin: 8px 0 0; max-width: 640px; }
+.page-title { font-family: var(--mp-font-display); font-size: 2rem; font-weight: 700; color: var(--mp-ink); margin: 0; }
+.page-sub { color: var(--mp-muted); margin: 8px 0 0; max-width: 640px; }
 .filter-row { margin-top: 18px; }
 .city-select {
   height: 44px; padding: 0 16px; border-radius: 10px;
-  background: $bg; color: $text; border: 1px solid $outline; min-width: 220px; cursor: pointer;
-  &:focus { outline: none; border-color: $primary; }
-  option { background: $container; }
+  background: var(--mp-card); color: var(--mp-ink); border: 1px solid var(--mp-line); min-width: 220px; cursor: pointer;
+  &:focus { outline: none; border-color: var(--mp-red); box-shadow: 0 0 0 3px var(--mp-red-soft); }
+  option { background: var(--mp-card); }
 }
 
 .theaters-page { max-width: 1280px; margin: 0 auto; padding: 40px; }
-.spinner-wrap { display: flex; justify-content: center; padding: 60px; ::ng-deep circle { stroke: $primary !important; } }
-.empty { text-align: center; color: $muted; padding: 60px 0; i { font-size: 2.4rem; opacity: 0.3; display: block; margin-bottom: 10px; } }
+.spinner-wrap { display: flex; justify-content: center; padding: 60px; ::ng-deep circle { stroke: var(--mp-red) !important; } }
+.empty { text-align: center; color: var(--mp-muted); padding: 60px 0; i { font-size: 2.4rem; opacity: 0.3; display: block; margin-bottom: 10px; } }
 
 .theater-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .theater-card {
-  background: rgba(13, 28, 45, 0.7);
-  border: 1px solid $outline;
+  background: var(--mp-card);
+  border: 1px solid var(--mp-line-2);
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: var(--mp-shadow-sm);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
-  &:hover { transform: translateY(-4px); box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.6); }
+  &:hover { transform: translateY(-4px); box-shadow: var(--mp-shadow-md); }
 }
 .theater-photo {
-  position: relative; height: 170px; background: $container;
+  position: relative; height: 170px; background: var(--mp-paper-2);
   img { width: 100%; height: 100%; object-fit: cover; }
   .city-chip {
     position: absolute; top: 12px; left: 12px;
-    background: rgba(5, 20, 36, 0.8); backdrop-filter: blur(6px);
-    color: $primary; font-size: 0.75rem; font-weight: 600;
-    padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(208, 188, 255, 0.25);
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--mp-red); font-size: 0.75rem; font-weight: 600;
+    padding: 4px 12px; border-radius: 999px; border: 1px solid var(--mp-line);
+    box-shadow: var(--mp-shadow-sm);
   }
 }
 .theater-body { padding: 18px 20px 22px; }
-.theater-name { font-family: 'Montserrat', sans-serif; font-size: 1.1rem; font-weight: 700; color: $text; margin: 0 0 8px; }
-.theater-addr { font-size: 0.88rem; color: $muted; margin: 0 0 12px; i { color: $primary; margin-right: 6px; } }
+.theater-name { font-family: var(--mp-font-display); font-size: 1.1rem; font-weight: 700; color: var(--mp-ink); margin: 0 0 8px; }
+.theater-addr { font-size: 0.88rem; color: var(--mp-muted); margin: 0 0 12px; i { color: var(--mp-red); margin-right: 6px; } }
 .theater-meta {
-  display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.82rem; color: $muted; margin-bottom: 16px;
-  i { margin-right: 5px; opacity: 0.8; }
+  display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.82rem; color: var(--mp-muted); margin-bottom: 16px;
+  i { margin-right: 5px; color: var(--mp-faint); }
 }
 .theater-cta { width: 100%; justify-content: center; }
 

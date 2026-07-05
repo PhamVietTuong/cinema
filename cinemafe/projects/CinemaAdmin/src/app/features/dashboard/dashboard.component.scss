@@ -14,9 +14,9 @@
   width: 44px; height: 44px; border-radius: var(--ad-r-md); flex: none;
   mat-icon { font-size: 23px; width: 23px; height: 23px; }
   &.i-violet { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
-  &.i-blue   { background: rgba(56, 189, 248, 0.14); color: #7dd3fc; }
-  &.i-orange { background: rgba(249, 115, 22, 0.14); color: #fdba74; }
-  &.i-green  { background: var(--ad-success-soft); color: #6ee7a8; }
+  &.i-blue   { background: rgba(14, 165, 233, 0.12); color: #0369a1; }
+  &.i-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+  &.i-green  { background: var(--ad-success-soft); color: #15803d; }
 }
 .kpi-label { font-size: 13px; color: var(--ad-muted); }
 .kpi-value { font-family: var(--ad-font-head); font-size: 28px; font-weight: 700; color: var(--ad-on); line-height: 1.2; }
@@ -40,7 +40,7 @@
   width: 100%;
   max-width: 38px;
   border-radius: 8px 8px 4px 4px;
-  background: linear-gradient(180deg, var(--ad-primary-strong), rgba(139, 92, 246, 0.25));
+  background: linear-gradient(180deg, var(--ad-primary-strong), rgba(225, 29, 52, 0.25));
   box-shadow: 0 -2px 16px -4px var(--ad-primary-glow);
   transition: height 0.4s ease;
 }
@@ -60,7 +60,7 @@
 .top-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .top-title { font-weight: 600; font-size: 14px; color: var(--ad-on); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .top-sub { font-size: 12.5px; color: var(--ad-muted); }
-.top-rating { display: inline-flex; align-items: center; gap: 3px; color: #fbbf57; font-weight: 600; font-size: 13px;
+.top-rating { display: inline-flex; align-items: center; gap: 3px; color: #b9861f; font-weight: 600; font-size: 13px;
   mat-icon { font-size: 16px; width: 16px; height: 16px; } }
 
 // Card header (chart + invoices): title left, control/link right

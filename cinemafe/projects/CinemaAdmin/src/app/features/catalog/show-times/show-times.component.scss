@@ -84,9 +84,9 @@
   position: relative;
   border-right: 1px solid var(--ad-glass-border);
 
-  &.is-today { background: rgba(139, 92, 246, 0.04); }
+  &.is-today { background: rgba(225, 29, 52, 0.05); }
 }
-.st-line { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.st-line { border-bottom: 1px solid rgba(21, 23, 29, 0.06); }
 
 // Event blocks
 .st-block {
@@ -130,7 +130,7 @@
 .st-drawer-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(2, 8, 18, 0.55);
+  background: rgba(21, 23, 29, 0.4);
   backdrop-filter: blur(2px);
   z-index: 40;
 }

@@ -1,56 +1,52 @@
-$bg: #051424;
-$container: #0d1c2d;
-$primary: #d0bcff;
-$secondary: #ffb690;
-$orange: #f97316;
-$text: #d4e4fa;
-$muted: rgba(212, 228, 250, 0.6);
-$outline: rgba(255, 255, 255, 0.08);
+// "Marquee" — Promotions Page (light premium cinema)
+// Tokens (from styles.scss): paper #edeef1 · card #fff · ink #15171d · red #e11d34 · gold #b9861f
 
-.page-header { background: rgba(13, 28, 45, 0.9); border-bottom: 1px solid $outline; padding: 40px 0; }
+.page-header { background: var(--mp-paper-2); border-bottom: 1px solid var(--mp-line-2); padding: 40px 0; }
 .ph-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
-.page-title { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 700; color: $text; margin: 0; }
-.page-sub { color: $muted; margin: 10px 0 0; max-width: 680px; }
+.page-title { font-family: var(--mp-font-display); font-size: 2.2rem; font-weight: 700; color: var(--mp-ink); margin: 0; }
+.page-sub { color: var(--mp-muted); margin: 10px 0 0; max-width: 680px; }
 
 .promo-page { max-width: 1200px; margin: 0 auto; padding: 40px; }
-.spinner-wrap { display: flex; justify-content: center; padding: 60px; ::ng-deep circle { stroke: $primary !important; } }
-.empty { text-align: center; color: $muted; padding: 60px 0; i { font-size: 2.4rem; opacity: 0.3; display: block; margin-bottom: 10px; } }
+.spinner-wrap { display: flex; justify-content: center; padding: 60px; ::ng-deep circle { stroke: var(--mp-red) !important; } }
+.empty { text-align: center; color: var(--mp-muted); padding: 60px 0; i { font-size: 2.4rem; opacity: 0.3; display: block; margin-bottom: 10px; } }
 
 .promo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
 .promo-card {
   display: flex;
   align-items: stretch;
-  background: linear-gradient(135deg, rgba(208, 188, 255, 0.08), rgba(13, 28, 45, 0.8));
-  border: 1px solid rgba(208, 188, 255, 0.18);
+  background: var(--mp-card);
+  border: 1px solid var(--mp-line-2);
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: var(--mp-shadow-sm);
 }
 .promo-left {
   flex: 0 0 120px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: linear-gradient(160deg, $primary, #6d3bd7);
-  color: #23005c;
-  .promo-percent { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 800; }
+  background: linear-gradient(160deg, var(--mp-red) 0%, var(--mp-red-strong) 100%);
+  color: #fff;
+  .promo-percent { font-family: var(--mp-font-display); font-size: 1.8rem; font-weight: 800; }
   .promo-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; }
 }
-.promo-perf { flex: 0 0 0; border-left: 2px dashed rgba(255, 255, 255, 0.25); }
+.promo-perf { flex: 0 0 0; border-left: 2px dashed var(--mp-line); }
 .promo-right { flex: 1; padding: 18px 22px; display: flex; flex-direction: column; }
-.promo-desc { font-family: 'Montserrat', sans-serif; font-size: 1.05rem; font-weight: 700; color: $text; margin: 0 0 6px; }
-.promo-detail { font-size: 0.85rem; color: $secondary; margin: 0 0 6px; }
-.promo-validity { font-size: 0.8rem; color: $muted; margin: 0 0 14px; i { margin-right: 6px; } }
+.promo-desc { font-family: var(--mp-font-display); font-size: 1.05rem; font-weight: 700; color: var(--mp-ink); margin: 0 0 6px; }
+.promo-detail { font-size: 0.85rem; color: var(--mp-gold-deep); margin: 0 0 6px; }
+.promo-validity { font-size: 0.8rem; color: var(--mp-muted); margin: 0 0 14px; i { margin-right: 6px; } }
 .promo-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
 .promo-code {
   display: inline-flex; align-items: center; gap: 10px;
-  border: 1px dashed rgba(208, 188, 255, 0.4); border-radius: 8px; padding: 6px 14px;
-  .code-label { font-size: 0.72rem; color: $muted; text-transform: uppercase; letter-spacing: 0.08em; }
-  .code-val { font-family: 'Montserrat', sans-serif; font-weight: 700; color: $primary; letter-spacing: 0.06em; }
+  border: 1px dashed rgba(225, 29, 52, 0.4); border-radius: 8px; padding: 6px 14px;
+  .code-label { font-size: 0.72rem; color: var(--mp-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .code-val { font-family: var(--mp-font-display); font-weight: 700; color: var(--mp-red); letter-spacing: 0.06em; }
 }
 .dungngay-btn {
   border: none; cursor: pointer;
-  background: $orange; color: #fff;
+  background: var(--mp-red); color: #fff;
   font-size: 0.82rem; font-weight: 700; padding: 9px 18px; border-radius: 8px;
-  transition: background 0.15s ease, box-shadow 0.2s ease;
-  &:hover { background: #fb8c3c; box-shadow: 0 6px 18px -6px rgba(249, 115, 22, 0.6); }
+  box-shadow: 0 8px 22px -8px rgba(225, 29, 52, 0.55);
+  transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.16s ease;
+  &:hover { background: var(--mp-red-strong); box-shadow: 0 14px 30px -10px rgba(225, 29, 52, 0.55); transform: translateY(-2px); }
 }
 
 // ── Feature banner ────────────────────────────────────────────────────────────
@@ -60,22 +56,23 @@ $outline: rgba(255, 255, 255, 0.08);
   min-height: 220px;
   display: flex; align-items: center;
   border-radius: 18px; overflow: hidden;
-  border: 1px solid $outline;
+  border: 1px solid var(--mp-line-2);
+  box-shadow: var(--mp-shadow-md);
 }
 .feature-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 .feature-scrim {
   position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(90deg, rgba(5, 20, 36, 0.92) 0%, rgba(5, 20, 36, 0.7) 45%, rgba(5, 20, 36, 0.2) 100%);
+  background: linear-gradient(90deg, rgba(20, 22, 28, 0.92) 0%, rgba(20, 22, 28, 0.7) 45%, rgba(20, 22, 28, 0.2) 100%);
 }
 .feature-content { position: relative; z-index: 1; padding: 32px 40px; max-width: 560px; }
 .feature-badge {
-  display: inline-block; background: $orange; color: #fff;
+  display: inline-block; background: var(--mp-gold); color: #fff;
   font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
   padding: 4px 12px; border-radius: 6px; margin-bottom: 12px;
 }
-.feature-title { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0 0 10px; }
-.feature-desc { color: rgba(212, 228, 250, 0.85); margin: 0 0 18px; }
-.feature-btn { background: #fff; color: #23005c; }
+.feature-title { font-family: var(--mp-font-display); font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0 0 10px; }
+.feature-desc { color: rgba(255, 255, 255, 0.85); margin: 0 0 18px; }
+.feature-btn { background: #fff; color: var(--mp-ink); }
 
 @media (max-width: 760px) {
   .promo-grid { grid-template-columns: 1fr; }
