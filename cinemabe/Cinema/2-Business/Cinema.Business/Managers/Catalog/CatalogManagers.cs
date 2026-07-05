@@ -282,6 +282,8 @@ public class ShowTimeManager(IApplicationUnitOfWork uow)
         var entity = request.ToNewEntity<CreateShowTimeRequest, ShowTime>();
         if (request.RoomId != Guid.Empty)
         {
+            if (await Uow.ShowTimeStore.HasRoomOverlapAsync(request.RoomId, entity.StartTime, entity.EndTime, null))
+                throw new InvalidOperationException("This room already has a showtime overlapping that time window.");
             entity.ShowTimeRooms.Add(new ShowTimeRoom { RoomId = request.RoomId, BasePrice = request.BasePrice });
         }
         // Single SaveChanges inserts the showtime and its room together (atomic).
@@ -295,6 +297,9 @@ public class ShowTimeManager(IApplicationUnitOfWork uow)
                      ?? throw new KeyNotFoundException($"ShowTime {request.Id} not found.");
         entity.PatchEntity<ShowTime, UpdateShowTimeRequest>(request);
         entity.LastUpdatedTime = DateTime.UtcNow;
+        if (request.RoomId != Guid.Empty &&
+            await Uow.ShowTimeStore.HasRoomOverlapAsync(request.RoomId, entity.StartTime, entity.EndTime, entity.Id))
+            throw new InvalidOperationException("This room already has a showtime overlapping that time window.");
         ApplyRoom(entity, request.RoomId, request.BasePrice);
         // The showtime patch and room change are saved in one transaction on the tracked graph.
         await Uow.SaveChangesAsync();

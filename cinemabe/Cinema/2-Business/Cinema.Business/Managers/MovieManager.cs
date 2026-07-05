@@ -88,21 +88,28 @@ public class MovieManager : IMovieManager
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
         dto.AgeRestrictionMinAge      = movie.AgeRestriction?.MinAge ?? 0;
         // Flatten each showtime's rooms into the summary list the detail page renders.
-        dto.ShowTimes = movie.ShowTimes
-            .Where(s => s.IsActive)
-            .SelectMany(s => s.ShowTimeRooms.DefaultIfEmpty(), (s, sr) => new ShowTimeSummaryDTO
+        // AvailableSeats = room capacity minus seats already booked (Pending/Paid) for that showtime.
+        var summaries = new List<ShowTimeSummaryDTO>();
+        foreach (var s in movie.ShowTimes.Where(s => s.IsActive))
+        {
+            foreach (var sr in s.ShowTimeRooms.DefaultIfEmpty())
             {
-                Id             = s.Id,
-                StartTime      = s.StartTime,
-                EndTime        = s.EndTime,
-                ProjectionForm = s.ProjectionForm,
-                RoomId         = sr?.RoomId ?? Guid.Empty,
-                RoomName       = sr?.Room?.Name ?? string.Empty,
-                TheaterName    = sr?.Room?.Theater?.Name ?? string.Empty,
-                AvailableSeats = (sr?.Room?.TotalRows ?? 0) * (sr?.Room?.TotalColumns ?? 0),
-            })
-            .OrderBy(x => x.StartTime)
-            .ToList();
+                var capacity = (sr?.Room?.TotalRows ?? 0) * (sr?.Room?.TotalColumns ?? 0);
+                var booked   = sr == null ? 0 : (await _uow.SeatStore.GetBookedSeatIdsAsync(s.Id, sr.RoomId)).Count();
+                summaries.Add(new ShowTimeSummaryDTO
+                {
+                    Id             = s.Id,
+                    StartTime      = s.StartTime,
+                    EndTime        = s.EndTime,
+                    ProjectionForm = s.ProjectionForm,
+                    RoomId         = sr?.RoomId ?? Guid.Empty,
+                    RoomName       = sr?.Room?.Name ?? string.Empty,
+                    TheaterName    = sr?.Room?.Theater?.Name ?? string.Empty,
+                    AvailableSeats = Math.Max(0, capacity - booked),
+                });
+            }
+        }
+        dto.ShowTimes = summaries.OrderBy(x => x.StartTime).ToList();
         dto.AverageRating             = await _uow.MovieStore.GetAverageRatingAsync(id);
         dto.RatingCount               = movie.Evaluations.Count;
         dto.RecentComments = movie.Comments

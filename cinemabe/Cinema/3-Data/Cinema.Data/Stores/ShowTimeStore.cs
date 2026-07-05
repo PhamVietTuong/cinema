@@ -51,4 +51,12 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
         => await DbSet
             .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room)
             .FirstOrDefaultAsync(s => s.Id == id);
+
+    public async Task<bool> HasRoomOverlapAsync(Guid roomId, DateTime startTime, DateTime endTime, Guid? excludeShowTimeId)
+        // Two intervals overlap iff each starts before the other ends.
+        => await DbSet.AnyAsync(s =>
+            s.IsActive &&
+            (excludeShowTimeId == null || s.Id != excludeShowTimeId) &&
+            s.ShowTimeRooms.Any(sr => sr.RoomId == roomId) &&
+            s.StartTime < endTime && startTime < s.EndTime);
 }

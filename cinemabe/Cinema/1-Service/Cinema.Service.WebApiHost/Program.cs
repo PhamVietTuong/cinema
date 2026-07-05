@@ -25,6 +25,9 @@ builder.Services.AddControllers();
 // SignalR
 builder.Services.AddSignalR();
 
+// Background job: expire abandoned unpaid bookings and free their seats
+builder.Services.AddHostedService<Cinema.Service.WebApiHost.Services.PendingBookingReaper>();
+
 // CORS
 builder.Services.AddCors(options =>
 {

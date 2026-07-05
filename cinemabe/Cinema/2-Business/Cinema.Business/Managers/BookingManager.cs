@@ -264,6 +264,21 @@ public class BookingManager : IBookingManager
         return true;
     }
 
+    public async Task<int> ExpireStalePendingBookingsAsync(TimeSpan age)
+    {
+        var cutoff = DateTime.UtcNow - age;
+        var stale  = await _uow.InvoiceStore.GetStalePendingAsync(cutoff);
+        if (stale.Count == 0) return 0;
+        foreach (var invoice in stale)
+        {
+            // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
+            invoice.Status = InvoiceStatus.Cancelled;
+            await _uow.InvoiceStore.UpdateAsync(invoice);
+        }
+        await _uow.SaveChangesAsync();
+        return stale.Count;
+    }
+
     public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
         => _lockedSeats[SeatKey(showTimeId, roomId, seatId)] = (connectionId, DateTime.UtcNow);
 

@@ -65,4 +65,9 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             .ToListAsync();
         return rows.ToDictionary(r => r.Date, r => r.Total);
     }
+
+    public async Task<IReadOnlyList<Invoice>> GetStalePendingAsync(DateTime olderThan)
+        => await DbSet
+            .Where(i => i.Status == InvoiceStatus.Pending && i.CreationTime < olderThan)
+            .ToListAsync();
 }

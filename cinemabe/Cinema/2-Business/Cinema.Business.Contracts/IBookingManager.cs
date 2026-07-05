@@ -8,6 +8,8 @@ public interface IBookingManager
     Task<BookingResultDTO>              CreateBookingAsync(Guid userId, CreateBookingRequest request);
     Task<bool>                          ConfirmPaymentAsync(Guid userId, Guid invoiceId, string paymentReference);
     Task<bool>                          CancelBookingAsync(Guid userId, Guid invoiceId);
+    /// <summary>Cancels Pending invoices older than <paramref name="age"/> (frees their held seats). Returns the count expired.</summary>
+    Task<int>                           ExpireStalePendingBookingsAsync(TimeSpan age);
     void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
     void UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
     bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null);

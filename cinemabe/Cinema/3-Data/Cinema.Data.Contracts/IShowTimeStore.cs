@@ -10,4 +10,7 @@ public interface IShowTimeStore : IGenericStore<ShowTime>
     Task<(IReadOnlyList<ShowTime> Items, int Total)> SearchAsync(
         Guid? movieId, Guid? roomId, bool? isActive, int page, int pageSize);
     Task<ShowTime?> GetByIdWithRoomsAsync(Guid id);
+    /// <summary>True if an active showtime already occupies <paramref name="roomId"/> for any part of
+    /// [startTime, endTime]. Pass an id in <paramref name="excludeShowTimeId"/> to ignore the row being edited.</summary>
+    Task<bool> HasRoomOverlapAsync(Guid roomId, DateTime startTime, DateTime endTime, Guid? excludeShowTimeId);
 }
