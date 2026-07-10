@@ -12,3 +12,7 @@ cinemabe/**/wwwroot/uploads/
 
 # Stray accidental nested duplicate of entity files — safe to delete
 cinemabe/Cinema/cinemabe/
+
+# Environment-specific secrets — connection strings, etc. (never commit)
+**/appsettings.Development.json
+**/appsettings.Production.json
