@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  backend:
+    name: Backend (build + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cinemabe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - run: dotnet restore Cinema.sln
+      - run: dotnet build Cinema.sln --no-restore -c Release
+      # xUnit tests use Moq — no database required.
+      - run: dotnet test Cinema/2-Business/Cinema.Business.Tests --no-build -c Release --verbosity normal
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cinemafe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: 'npm'
+          cache-dependency-path: cinemafe/package-lock.json
+      # --legacy-peer-deps: the workspace has a known Angular peer-version skew.
+      - run: npm ci --legacy-peer-deps
+      - run: npx ng build CinemaLib
+      - run: npx ng build CinemaUser --configuration production
+      - run: npx ng build CinemaAdmin --configuration production

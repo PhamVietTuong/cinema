@@ -1,0 +1,35 @@
+# One-command backend stack: SQL Server + Cinema Web API.
+#
+# First-time setup (schema is not managed by EF migrations in this repo):
+#   1. docker compose up -d db
+#   2. Apply cinemabe/sql/create_db.sql then insert_db.sql against localhost:1433 (sa / the password below).
+#   3. docker compose up -d api
+#
+# The frontend apps are run separately with `ng serve` (see README).
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Cinema_Dev_Pwd_123!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - cinema-mssql:/var/opt/mssql
+
+  api:
+    build: ./cinemabe
+    depends_on:
+      - db
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ConnectionStrings__CinemaDatabase: "Server=db;Database=Cinema;User ID=sa;Password=Cinema_Dev_Pwd_123!;TrustServerCertificate=True;MultipleActiveResultSets=true"
+      # Dev-only signing key for local compose; override for any real deployment.
+      JWT__Secret: "compose-dev-signing-key-not-for-production-change-me-1234567890"
+      AllowedOrigins__0: "http://localhost:4200"
+      AllowedOrigins__1: "http://localhost:4201"
+    ports:
+      - "5102:8080"
+
+volumes:
+  cinema-mssql:
