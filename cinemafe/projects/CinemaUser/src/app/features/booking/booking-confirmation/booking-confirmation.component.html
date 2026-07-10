@@ -165,7 +165,8 @@
       <!-- QR -->
       <div class="ticket-qr-section">
         <div class="qr-box">
-          <i class="fas fa-qrcode"></i>
+          <img *ngIf="qrDataUrl" [src]="qrDataUrl" alt="E-ticket QR" width="160" height="160">
+          <i *ngIf="!qrDataUrl" class="fas fa-qrcode"></i>
         </div>
         <p class="qr-instruction">Xuất trình mã QR tại quầy hoặc cổng soát vé</p>
       </div>

@@ -6,6 +6,7 @@
 # Node
 **/node_modules/
 **/.angular/
+**/dist/
 
 # Runtime-uploaded user content (served from wwwroot/uploads)
 cinemabe/**/wwwroot/uploads/

@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SharedModule, PaymentServiceAgent } from 'CinemaLib';
+import * as QRCode from 'qrcode';
 
 type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean };
 
@@ -20,6 +21,7 @@ export class BookingConfirmationComponent implements OnInit {
   error = '';
   bookingSuccess = false;
   bookingCode = '';
+  qrDataUrl = '';
 
   constructor(
     private _router: Router,
@@ -61,6 +63,12 @@ export class BookingConfirmationComponent implements OnInit {
         this.bookingSuccess = true;
         this.loading = false;
         this._cdr.markForCheck();
+        // Render a real, scannable QR of the booking reference for the e-ticket.
+        if (this.bookingCode) {
+          QRCode.toDataURL(this.bookingCode, { margin: 1, width: 200 })
+            .then(url => { this.qrDataUrl = url; this._cdr.markForCheck(); })
+            .catch(() => { /* keep the icon fallback */ });
+        }
       },
       error: err => { this.error = this._err(err, 'Đặt vé thất bại. Vui lòng thử lại.'); this.loading = false; this._cdr.markForCheck(); },
     });
