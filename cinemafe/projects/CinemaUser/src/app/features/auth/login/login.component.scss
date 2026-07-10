@@ -126,6 +126,13 @@
   i { margin-right: 6px; }
 }
 
+.api-success {
+  background: rgba(22, 163, 74, 0.08); border: 1px solid rgba(22, 163, 74, 0.28);
+  border-radius: 8px; padding: 10px 14px; color: #15803d;
+  font-size: 0.8rem; margin-bottom: 16px;
+  i { margin-right: 6px; }
+}
+
 // ── Submit ────────────────────────────────────────────────────────────────────
 .submit-btn {
   width: 100%; justify-content: center;

@@ -1,8 +1,15 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { SharedModule, register, selectAuthLoading, selectAuthError } from 'CinemaLib';
+
+/** Group validator: password and confirmPassword must match. */
+function passwordsMatch(group: AbstractControl): ValidationErrors | null {
+  const p = group.get('password')?.value;
+  const c = group.get('confirmPassword')?.value;
+  return p && c && p !== c ? { passwordMismatch: true } : null;
+}
 
 @Component({
   selector: 'app-register',
@@ -27,13 +34,16 @@ export class RegisterComponent {
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.required, Validators.pattern(/^(?:\+84|0)\d{9,10}$/)]],
       password: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: [''],
-    });
+      confirmPassword: ['', Validators.required],
+    }, { validators: passwordsMatch });
   }
 
   onSubmit(): void {
     if (this.form.valid) {
-      this._store.dispatch(register({ request: this.form.value as any }));
+      const { confirmPassword, ...request } = this.form.value;
+      this._store.dispatch(register({ request: request as any }));
+    } else {
+      this.form.markAllAsTouched();
     }
   }
 }
