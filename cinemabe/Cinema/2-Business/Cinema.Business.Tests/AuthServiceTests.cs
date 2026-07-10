@@ -34,7 +34,8 @@ public class AuthServiceTests
             PasswordSalt = hmac.Key,
             PasswordHash = hmac.ComputeHash(passwordBytes),
             UserTypeId = Guid.NewGuid(),
-            UserType = new UserType { Name = "User" }
+            UserType = new UserType { Name = "User" },
+            EmailConfirmed = true
         };
 
         _uowMock.Setup(u => u.UserStore.GetByEmailAsync("test@test.com")).ReturnsAsync(user);
@@ -45,6 +46,36 @@ public class AuthServiceTests
 
         result.Should().NotBeNull();
         result.Token.Should().Be("jwt-token");
+    }
+
+    [Fact]
+    public async Task Login_UnverifiedEmail_ThrowsUnauthorized()
+    {
+        using var hmac = new System.Security.Cryptography.HMACSHA512();
+        var user = new User
+        {
+            Email = "unverified@test.com",
+            PasswordSalt = hmac.Key,
+            PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes("Password@1")),
+            UserType = new UserType { Name = "User" },
+            EmailConfirmed = false
+        };
+
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("unverified@test.com")).ReturnsAsync(user);
+        _tokenMock.Setup(t => t.GenerateToken(It.IsAny<User>())).Returns("jwt-token");
+
+        await _sut.Invoking(s => s.LoginAsync(new LoginRequest { EmailOrPhone = "unverified@test.com", Password = "Password@1" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("*verify*");
+    }
+
+    [Fact]
+    public async Task ConfirmEmail_InvalidToken_ThrowsInvalidOperation()
+    {
+        var user = new User { Email = "u@test.com", EmailConfirmed = false, EmailVerificationTokenHash = null };
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("u@test.com")).ReturnsAsync(user);
+
+        await _sut.Invoking(s => s.ConfirmEmailAsync(new ConfirmEmailRequest { Email = "u@test.com", Token = "bogus" }))
+            .Should().ThrowAsync<InvalidOperationException>();
     }
 
     [Fact]

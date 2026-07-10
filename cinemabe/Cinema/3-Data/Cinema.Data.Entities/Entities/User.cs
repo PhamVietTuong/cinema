@@ -19,6 +19,10 @@ public class User : BaseEntity
     // Account lockout: consecutive failed-login counter and the UTC time until which login is blocked.
     public int FailedLoginCount { get; set; } = 0;
     public DateTime? LockoutEndUtc { get; set; }
+    // Email verification: false until the user confirms via the emailed link.
+    public bool EmailConfirmed { get; set; } = false;
+    public string? EmailVerificationTokenHash { get; set; }
+    public DateTime? EmailVerificationExpiresAt { get; set; }
     public UserType UserType { get; set; } = null!;
     public MemberShip? MemberShip { get; set; }
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();

@@ -48,6 +48,10 @@ public class AuthManager : IAuthManager
             throw new UnauthorizedAccessException("Invalid credentials.");
         }
 
+        // Email must be confirmed before a password login is allowed.
+        if (!user.EmailConfirmed)
+            throw new UnauthorizedAccessException("Please verify your email address before signing in.");
+
         // A successful login clears any accumulated failures / lockout.
         if (user.FailedLoginCount != 0 || user.LockoutEndUtc != null)
         {
@@ -96,6 +100,7 @@ public class AuthManager : IAuthManager
         var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer")
             ?? throw new InvalidOperationException("Customer user type not found.");
 
+        var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         var user = new User
         {
             Name = request.Name,
@@ -104,12 +109,57 @@ public class AuthManager : IAuthManager
             PasswordHash = hash,
             PasswordSalt = salt,
             UserTypeId = customerType.Id,
+            EmailConfirmed = false,
+            EmailVerificationTokenHash = HashToken(rawToken),
+            EmailVerificationExpiresAt = DateTime.UtcNow.AddDays(1),
         };
 
         await _uow.UserStore.CreateAsync(user);
+        await SendVerificationEmailAsync(user, rawToken);
 
         user = await _uow.UserStore.GetByEmailAsync(request.Email) ?? user;
         return BuildAuthResponse(user);
+    }
+
+    private Task SendVerificationEmailAsync(User user, string rawToken) =>
+        _notifications.SendAsync(
+            user.Email,
+            "Verify your Cinema email",
+            "Confirm your email address (valid 24 hours): " +
+            $"/auth/verify-email?email={Uri.EscapeDataString(user.Email)}&token={rawToken}");
+
+    public async Task ConfirmEmailAsync(ConfirmEmailRequest request)
+    {
+        var user = await _uow.UserStore.GetByEmailAsync(request.Email);
+        if (user == null
+            || string.IsNullOrEmpty(user.EmailVerificationTokenHash)
+            || user.EmailVerificationExpiresAt == null
+            || user.EmailVerificationExpiresAt < DateTime.UtcNow
+            || !CryptographicOperations.FixedTimeEquals(
+                   Convert.FromHexString(user.EmailVerificationTokenHash),
+                   Convert.FromHexString(HashToken(request.Token))))
+            throw new InvalidOperationException("Invalid or expired verification token.");
+
+        user.EmailConfirmed = true;
+        user.EmailVerificationTokenHash = null;
+        user.EmailVerificationExpiresAt = null;
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
+    }
+
+    public async Task ResendVerificationAsync(ResendVerificationRequest request)
+    {
+        var user = await _uow.UserStore.GetByEmailAsync(request.Email);
+        // Silent if unknown (no enumeration) or already confirmed (nothing to do).
+        if (user == null || user.EmailConfirmed) return;
+
+        var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.EmailVerificationTokenHash = HashToken(rawToken);
+        user.EmailVerificationExpiresAt = DateTime.UtcNow.AddDays(1);
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
+
+        await SendVerificationEmailAsync(user, rawToken);
     }
 
     public async Task<UserDTO> GetProfileAsync(Guid userId)

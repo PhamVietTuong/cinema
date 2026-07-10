@@ -80,12 +80,13 @@ static async Task CreateAccount(
 
         var user = new User
         {
-            Name         = name,
-            Email        = email,
-            Phone        = phone,
-            PasswordHash = hash,
-            PasswordSalt = salt,
-            UserTypeId   = userType.Id,
+            Name           = name,
+            Email          = email,
+            Phone          = phone,
+            PasswordHash   = hash,
+            PasswordSalt   = salt,
+            UserTypeId     = userType.Id,
+            EmailConfirmed = true, // seeded accounts are pre-verified
         };
 
         await uow.UserStore.CreateAsync(user);

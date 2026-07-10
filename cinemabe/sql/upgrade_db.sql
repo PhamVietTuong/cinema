@@ -136,4 +136,23 @@ BEGIN
     PRINT 'Added [User].[LockoutEndUtc].';
 END
 
+-- Email verification support on [User] (Batch E).
+IF COL_LENGTH('[User]', 'EmailConfirmed') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [EmailConfirmed] bit NOT NULL DEFAULT 0;
+    -- Grandfather in all pre-existing accounts so they aren't locked out by the new gate.
+    EXEC('UPDATE [User] SET [EmailConfirmed] = 1');
+    PRINT 'Added [User].[EmailConfirmed] (existing users grandfathered as confirmed).';
+END
+IF COL_LENGTH('[User]', 'EmailVerificationTokenHash') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [EmailVerificationTokenHash] nvarchar(max) NULL;
+    PRINT 'Added [User].[EmailVerificationTokenHash].';
+END
+IF COL_LENGTH('[User]', 'EmailVerificationExpiresAt') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [EmailVerificationExpiresAt] datetime NULL;
+    PRINT 'Added [User].[EmailVerificationExpiresAt].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

@@ -88,6 +88,38 @@ public class IdentityController : ApiControllerBase
         }
     }
 
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ConfirmEmail being awakened to process request...");
+        try
+        {
+            await _authManager.ConfirmEmailAsync(request);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ConfirmEmail));
+        }
+    }
+
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ResendVerification being awakened to process request...");
+        try
+        {
+            await _authManager.ResendVerificationAsync(request);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ResendVerification));
+        }
+    }
+
     // ── Profile ───────────────────────────────────────────────────────────────
 
     [Authorize]
