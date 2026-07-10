@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 var config = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+    .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
     .Build();
 
 // ─── DI ───────────────────────────────────────────────────────────────────────
