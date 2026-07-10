@@ -16,6 +16,9 @@ public class User : BaseEntity
     // Password reset: SHA-256 hash of the emailed token + its expiry (both null when no reset is pending).
     public string? PasswordResetTokenHash { get; set; }
     public DateTime? PasswordResetExpiresAt { get; set; }
+    // Account lockout: consecutive failed-login counter and the UTC time until which login is blocked.
+    public int FailedLoginCount { get; set; } = 0;
+    public DateTime? LockoutEndUtc { get; set; }
     public UserType UserType { get; set; } = null!;
     public MemberShip? MemberShip { get; set; }
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();

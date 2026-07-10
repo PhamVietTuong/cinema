@@ -124,4 +124,16 @@ BEGIN
     PRINT 'Added [User].[PasswordResetExpiresAt].';
 END
 
+-- Account lockout support on [User] (Batch B).
+IF COL_LENGTH('[User]', 'FailedLoginCount') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [FailedLoginCount] int NOT NULL DEFAULT 0;
+    PRINT 'Added [User].[FailedLoginCount].';
+END
+IF COL_LENGTH('[User]', 'LockoutEndUtc') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [LockoutEndUtc] datetime NULL;
+    PRINT 'Added [User].[LockoutEndUtc].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

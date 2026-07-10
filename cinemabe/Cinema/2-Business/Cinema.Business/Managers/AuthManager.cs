@@ -24,14 +24,38 @@ public class AuthManager : IAuthManager
         _notifications = notifications;
     }
 
+    // Account-lockout policy: lock after this many consecutive failures, for this long.
+    private const int _maxFailedLogins = 5;
+    private static readonly TimeSpan _lockoutDuration = TimeSpan.FromMinutes(15);
+
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
         var user = await _uow.UserStore.GetByEmailAsync(request.EmailOrPhone)
                    ?? await _uow.UserStore.GetByPhoneAsync(request.EmailOrPhone)
                    ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
+        // Reject while a lockout window is still active.
+        if (user.LockoutEndUtc is { } lockoutEnd && lockoutEnd > DateTime.UtcNow)
+        {
+            var minutes = (int)Math.Ceiling((lockoutEnd - DateTime.UtcNow).TotalMinutes);
+            throw new UnauthorizedAccessException(
+                $"Account locked due to too many failed attempts. Try again in {minutes} minute(s).");
+        }
+
         if (!VerifyPassword(request.Password, user.PasswordHash, user.PasswordSalt))
+        {
+            await RegisterFailedLoginAsync(user);
             throw new UnauthorizedAccessException("Invalid credentials.");
+        }
+
+        // A successful login clears any accumulated failures / lockout.
+        if (user.FailedLoginCount != 0 || user.LockoutEndUtc != null)
+        {
+            user.FailedLoginCount = 0;
+            user.LockoutEndUtc = null;
+            await _uow.UserStore.UpdateAsync(user);
+            await _uow.SaveChangesAsync();
+        }
 
         // Transparently migrate legacy (single-round HMAC) hashes to PBKDF2 on successful login.
         if (IsLegacyHash(user.PasswordSalt))
@@ -44,6 +68,19 @@ public class AuthManager : IAuthManager
         }
 
         return BuildAuthResponse(user);
+    }
+
+    // Increment the failure counter; once it hits the threshold, start a lockout window.
+    private async Task RegisterFailedLoginAsync(User user)
+    {
+        user.FailedLoginCount++;
+        if (user.FailedLoginCount >= _maxFailedLogins)
+        {
+            user.LockoutEndUtc = DateTime.UtcNow.Add(_lockoutDuration);
+            user.FailedLoginCount = 0; // the lockout window now governs access
+        }
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)

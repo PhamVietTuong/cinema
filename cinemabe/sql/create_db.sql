@@ -183,6 +183,8 @@ CREATE TABLE [User] (
     [Points] int NOT NULL,
     [PasswordResetTokenHash] nvarchar(max) NULL,
     [PasswordResetExpiresAt] datetime NULL,
+    [FailedLoginCount] int NOT NULL DEFAULT 0,
+    [LockoutEndUtc] datetime NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_User] PRIMARY KEY ([Id]),
