@@ -25,11 +25,13 @@ public class BookingManager : IBookingManager
         => _bookingGates.GetOrAdd($"{showTimeId}:{roomId}", _ => new SemaphoreSlim(1, 1));
 
     private readonly IPaymentGateway _paymentGateway;
+    private readonly INotificationService _notifications;
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGateway paymentGateway)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGateway paymentGateway, INotificationService notifications)
     {
         _uow = uow;
         _paymentGateway = paymentGateway;
+        _notifications = notifications;
     }
 
     public async Task<DefaultSearchResults<SeatDTO>> GetSeatsAsync(PagingSearchDTO search)
@@ -108,6 +110,8 @@ public class BookingManager : IBookingManager
                     RoomId       = request.RoomId,
                     SeatId       = seatItem.SeatId,
                     Price        = price,
+                    // Unguessable per-ticket token; encoded as the e-ticket QR and checked at the gate.
+                    QrCode       = Guid.NewGuid().ToString("N"),
                 });
 
                 ticketItems.Add(new TicketItemDTO
@@ -218,7 +222,40 @@ public class BookingManager : IBookingManager
         }
 
         await _uow.SaveChangesAsync();
+
+        // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
+        if (user is not null)
+            await _notifications.SendAsync(
+                user.Email,
+                $"Booking confirmed — {invoice.Code}",
+                $"Your payment was received. Booking code: {invoice.Code}. " +
+                $"Total paid: {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
+
         return true;
+    }
+
+    public async Task<TicketValidationDTO> ValidateTicketAsync(string qrCode)
+    {
+        var ticket = await _uow.InvoiceStore.GetTicketByQrAsync(qrCode)
+                     ?? throw new KeyNotFoundException("Ticket not found.");
+        if (ticket.Invoice.Status != InvoiceStatus.Paid)
+            throw new InvalidOperationException("Ticket has not been paid.");
+        if (ticket.IsUsed)
+            throw new InvalidOperationException("Ticket has already been used.");
+
+        ticket.IsUsed = true;
+        await _uow.SaveChangesAsync();
+
+        return new TicketValidationDTO
+        {
+            Valid       = true,
+            InvoiceCode = ticket.Invoice.Code,
+            SeatLabel   = ticket.Seat != null ? $"{ticket.Seat.RowName}{ticket.Seat.ColIndex}" : string.Empty,
+            MovieTitle  = ticket.ShowTimeRoom?.ShowTime?.Movie?.Title ?? string.Empty,
+            RoomName    = ticket.ShowTimeRoom?.Room?.Name ?? string.Empty,
+            ShowTime    = ticket.ShowTimeRoom?.ShowTime?.StartTime ?? default,
+            Message     = "Ticket valid — checked in."
+        };
     }
 
     // 1 loyalty point per 10,000 VND of the paid amount.

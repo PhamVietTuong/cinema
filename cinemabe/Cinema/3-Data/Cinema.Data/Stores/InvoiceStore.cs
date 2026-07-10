@@ -70,4 +70,12 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         => await DbSet
             .Where(i => i.Status == InvoiceStatus.Pending && i.CreationTime < olderThan)
             .ToListAsync();
+
+    public async Task<InvoiceTicket?> GetTicketByQrAsync(string qrCode)
+        => await Context.InvoiceTicket
+            .Include(t => t.Invoice)
+            .Include(t => t.Seat)
+            .Include(t => t.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
+            .Include(t => t.ShowTimeRoom).ThenInclude(sr => sr.Room)
+            .FirstOrDefaultAsync(t => t.QrCode == qrCode);
 }

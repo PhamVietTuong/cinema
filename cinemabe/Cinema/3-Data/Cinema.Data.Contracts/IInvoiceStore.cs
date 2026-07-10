@@ -13,4 +13,6 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     Task<IReadOnlyDictionary<DateTime, double>> GetRevenueByDayAsync(DateTime from, DateTime to);
     /// <summary>Pending invoices created before <paramref name="olderThan"/> (abandoned/unpaid holds).</summary>
     Task<IReadOnlyList<Invoice>> GetStalePendingAsync(DateTime olderThan);
+    /// <summary>Loads a ticket by its QR token, with invoice + seat + showtime/room details, for gate check-in.</summary>
+    Task<InvoiceTicket?> GetTicketByQrAsync(string qrCode);
 }

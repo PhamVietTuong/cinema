@@ -104,6 +104,24 @@ public class PaymentController : ControllerBase
         }
     }
 
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(TicketValidationDTO), 200)]
+    public async Task<IActionResult> ValidateTicket([FromBody] ValidateTicketRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ValidateTicket being awakened to process request...");
+        try
+        {
+            var result = await _bookingManager.ValidateTicketAsync(request.QrCode);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.ValidateTicket->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
     // ── Invoices ──────────────────────────────────────────────────────────────
 
     [HttpPost]
@@ -205,4 +223,5 @@ public class PaymentController : ControllerBase
 // ── Request classes ───────────────────────────────────────────────────────────
 
 public record ConfirmPaymentRequest(Guid InvoiceId, string PaymentReference);
+public record ValidateTicketRequest(string QrCode);
 public record CancelBookingRequest(Guid InvoiceId);

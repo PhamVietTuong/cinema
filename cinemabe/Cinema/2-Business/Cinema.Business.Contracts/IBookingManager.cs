@@ -7,6 +7,8 @@ public interface IBookingManager
     Task<DefaultSearchResults<SeatDTO>> GetSeatsAsync(PagingSearchDTO search);
     Task<BookingResultDTO>              CreateBookingAsync(Guid userId, CreateBookingRequest request);
     Task<bool>                          ConfirmPaymentAsync(Guid userId, Guid invoiceId, string paymentReference);
+    /// <summary>Gate check-in: validates a ticket QR, marks it used (once), returns its details.</summary>
+    Task<TicketValidationDTO>           ValidateTicketAsync(string qrCode);
     Task<bool>                          CancelBookingAsync(Guid userId, Guid invoiceId);
     /// <summary>Cancels Pending invoices older than <paramref name="age"/> (frees their held seats). Returns the count expired.</summary>
     Task<int>                           ExpireStalePendingBookingsAsync(TimeSpan age);
