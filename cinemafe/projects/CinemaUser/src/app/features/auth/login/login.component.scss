@@ -117,6 +117,18 @@
   &:hover { color: var(--mp-ink); }
 }
 .field-error { font-size: 0.75rem; color: var(--mp-danger); margin-top: 6px; }
+.caps-warning {
+  font-size: 0.75rem; color: var(--mp-gold); margin-top: 6px;
+  i { margin-right: 4px; }
+}
+
+// ── Remember me ───────────────────────────────────────────────────────────────
+.remember-row { margin: 2px 0 18px; }
+.remember-label {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 0.8rem; color: var(--mp-ink-2); user-select: none;
+  input { accent-color: var(--mp-red); width: 15px; height: 15px; cursor: pointer; }
+}
 
 // ── API Error ─────────────────────────────────────────────────────────────────
 .api-error {

@@ -1,5 +1,6 @@
 ﻿import { createReducer, on } from '@ngrx/store';
 import { initialAuthState } from './auth.state';
+import { TokenStorage } from './token-storage';
 import * as AuthActions from './auth.actions';
 
 export const authReducer = createReducer(
@@ -13,8 +14,8 @@ export const authReducer = createReducer(
   })),
   on(AuthActions.logout, () => ({ ...initialAuthState })),
   on(AuthActions.loadUserFromStorage, state => {
-    const token = localStorage.getItem('cinema_token');
-    const userStr = localStorage.getItem('cinema_user');
+    const token = TokenStorage.getToken();
+    const userStr = TokenStorage.getUser();
     if (token && userStr) {
       try {
         return { ...state, token, user: JSON.parse(userStr) };

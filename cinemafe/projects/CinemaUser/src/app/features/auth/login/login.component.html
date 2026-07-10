@@ -48,6 +48,9 @@
           <div class="field-error" *ngIf="form.get('emailOrPhone')?.touched && form.get('emailOrPhone')?.hasError('required')">
             Vui lòng nhập email hoặc số điện thoại
           </div>
+          <div class="field-error" *ngIf="form.get('emailOrPhone')?.touched && form.get('emailOrPhone')?.hasError('emailOrPhone')">
+            Email hoặc số điện thoại không hợp lệ
+          </div>
         </div>
 
         <div class="field-group">
@@ -60,21 +63,33 @@
             <input class="field-input"
                    [type]="hidePass ? 'password' : 'text'"
                    formControlName="password"
-                   placeholder="••••••••">
+                   placeholder="••••••••"
+                   (keyup)="onPasswordKey($event)"
+                   (keydown)="onPasswordKey($event)">
             <button type="button" class="toggle-pass" (click)="hidePass = !hidePass">
               <i class="fas" [class.fa-eye]="hidePass" [class.fa-eye-slash]="!hidePass"></i>
             </button>
+          </div>
+          <div class="caps-warning" *ngIf="capsLockOn">
+            <i class="fas fa-exclamation-triangle"></i> Phím Caps Lock đang bật
           </div>
           <div class="field-error" *ngIf="form.get('password')?.touched && form.get('password')?.hasError('required')">
             Vui lòng nhập mật khẩu
           </div>
         </div>
 
+        <div class="remember-row">
+          <label class="remember-label">
+            <input type="checkbox" formControlName="rememberMe">
+            Ghi nhớ đăng nhập
+          </label>
+        </div>
+
         <div class="api-error" *ngIf="error$ | async as err">
           <i class="fas fa-exclamation-circle"></i> {{ err }}
         </div>
 
-        <button type="submit" class="btn-primary-cta submit-btn" [disabled]="loading$ | async">
+        <button type="submit" class="btn-primary-cta submit-btn" [disabled]="(loading$ | async) || form.invalid">
           <mat-spinner diameter="18" *ngIf="loading$ | async"></mat-spinner>
           <ng-container *ngIf="!(loading$ | async)">
             Đăng Nhập <i class="fas fa-arrow-right"></i>

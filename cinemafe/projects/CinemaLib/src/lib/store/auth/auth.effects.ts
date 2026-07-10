@@ -4,6 +4,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { IdentityServiceAgent } from '../../services/identity-http.service';
+import { TokenStorage } from './token-storage';
 import * as AuthActions from './auth.actions';
 
 @Injectable()
@@ -15,9 +16,9 @@ export class AuthEffects {
   login$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.login),
-      switchMap(({ request }) =>
+      switchMap(({ request, rememberMe }) =>
         this._identityService.login(IdentityServiceAgent.LoginRequest.fromJS(request)).pipe(
-          map(response => AuthActions.loginSuccess({ response: response as any })),
+          map(response => AuthActions.loginSuccess({ response: response as any, rememberMe })),
           catchError(err => of(AuthActions.loginFailure({ error: err.error?.error ?? 'Login failed' })))
         )
       )
@@ -39,10 +40,12 @@ export class AuthEffects {
   loginSuccess$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.loginSuccess, AuthActions.registerSuccess),
-      tap(({ response }) => {
-        localStorage.setItem('cinema_token', (response as any).token);
-        localStorage.setItem('cinema_user', JSON.stringify((response as any).user));
-        this._router.navigate(['/']);
+      tap(action => {
+        const response = (action as any).response;
+        // Register (and a login without an explicit choice) defaults to persisting.
+        const remember = 'rememberMe' in action ? (action as any).rememberMe !== false : true;
+        TokenStorage.save(response.token, response.user, remember);
+        this._router.navigateByUrl(this._resolveReturnUrl());
       })
     ), { dispatch: false }
   );
@@ -51,10 +54,19 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.logout),
       tap(() => {
-        localStorage.removeItem('cinema_token');
-        localStorage.removeItem('cinema_user');
+        TokenStorage.clear();
         this._router.navigate(['/auth/login']);
       })
     ), { dispatch: false }
   );
+
+  // Read ?returnUrl= off the current URL (set by authGuard). Only accept an
+  // internal path to avoid open-redirects; default to home.
+  private _resolveReturnUrl(): string {
+    const target = this._router.parseUrl(this._router.url).queryParams['returnUrl'];
+    if (target && target.startsWith('/') && !target.startsWith('//')) {
+      return target;
+    }
+    return '/';
+  }
 }
