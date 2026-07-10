@@ -16,12 +16,18 @@ public class AuthManager : IAuthManager
     private readonly IApplicationUnitOfWork _uow;
     private readonly ITokenService _tokenService;
     private readonly INotificationService _notifications;
+    private readonly IGoogleTokenValidator _googleValidator;
 
-    public AuthManager(IApplicationUnitOfWork uow, ITokenService tokenService, INotificationService notifications)
+    public AuthManager(
+        IApplicationUnitOfWork uow,
+        ITokenService tokenService,
+        INotificationService notifications,
+        IGoogleTokenValidator googleValidator)
     {
         _uow = uow;
         _tokenService = tokenService;
         _notifications = notifications;
+        _googleValidator = googleValidator;
     }
 
     // Account-lockout policy: lock after this many consecutive failures, for this long.
@@ -220,6 +226,48 @@ public class AuthManager : IAuthManager
         }
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
+    }
+
+    public async Task<AuthResponse> LoginWithGoogleAsync(GoogleLoginRequest request)
+    {
+        var info = await _googleValidator.ValidateAsync(request.IdToken)
+                   ?? throw new UnauthorizedAccessException("Invalid Google token.");
+
+        if (!info.EmailVerified)
+            throw new UnauthorizedAccessException("Google account email is not verified.");
+
+        var user = await _uow.UserStore.GetByEmailAsync(info.Email);
+        if (user == null)
+        {
+            var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer")
+                ?? throw new InvalidOperationException("Customer user type not found.");
+
+            // The account authenticates via Google, so give it a random unusable password.
+            CreatePasswordHash(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), out var hash, out var salt);
+            user = new User
+            {
+                Name = info.Name,
+                Email = info.Email,
+                // Phone is unique + required; Google gives us none, so store a unique placeholder.
+                Phone = "g" + Guid.NewGuid().ToString("N")[..15],
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                UserTypeId = customerType.Id,
+                EmailConfirmed = true, // Google already verified the address
+            };
+            await _uow.UserStore.CreateAsync(user);
+            user = await _uow.UserStore.GetByEmailAsync(info.Email) ?? user;
+        }
+        else if (!user.EmailConfirmed)
+        {
+            // Signing in with Google proves ownership — confirm the existing account.
+            user.EmailConfirmed = true;
+            await _uow.UserStore.UpdateAsync(user);
+            await _uow.SaveChangesAsync();
+        }
+
+        // Google logins bypass the app's own 2FA (Google enforces its own).
+        return BuildAuthResponse(user);
     }
 
     public async Task<UserDTO> GetProfileAsync(Guid userId)

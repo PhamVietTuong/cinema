@@ -13,6 +13,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IAuthManager, AuthManager>();
         services.AddSingleton<INotificationService, DevLogNotificationService>();
+        services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddScoped<IMovieManager, MovieManager>();
         services.AddScoped<IBookingManager, BookingManager>();
         // Payment provider — swap SandboxPaymentGateway for a real provider (VNPay/MoMo/Stripe).

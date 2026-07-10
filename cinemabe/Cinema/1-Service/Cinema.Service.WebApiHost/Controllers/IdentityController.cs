@@ -122,6 +122,22 @@ public class IdentityController : ApiControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(AuthResponse), 200)]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GoogleLogin being awakened to process request...");
+        try
+        {
+            var result = await _authManager.LoginWithGoogleAsync(request);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GoogleLogin));
+        }
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(AuthResponse), 200)]
     public async Task<IActionResult> VerifyTwoFactor([FromBody] VerifyTwoFactorRequest request)
     {
         LogProvider.Current.Information($"{GetType().Name}.VerifyTwoFactor being awakened to process request...");

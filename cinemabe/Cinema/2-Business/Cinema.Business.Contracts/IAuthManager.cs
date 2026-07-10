@@ -16,6 +16,7 @@ public interface IAuthManager
     Task ResendVerificationAsync(ResendVerificationRequest request);
     Task<AuthResponse> VerifyTwoFactorAsync(VerifyTwoFactorRequest request);
     Task SetTwoFactorAsync(Guid userId, bool enabled);
+    Task<AuthResponse> LoginWithGoogleAsync(GoogleLoginRequest request);
     Task<DefaultSearchResults<UserDTO>> GetUsersAsync(PagingSearchDTO search);
     Task<UserDTO> CreateUserAsync(CreateUserRequest request);
     Task<UserDTO> UpdateUserAsync(UpdateUserRequest request);

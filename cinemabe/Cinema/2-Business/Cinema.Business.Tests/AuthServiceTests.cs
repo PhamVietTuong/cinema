@@ -14,11 +14,12 @@ public class AuthServiceTests
 {
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();
     private readonly Mock<ITokenService> _tokenMock = new();
+    private readonly Mock<IGoogleTokenValidator> _googleMock = new();
     private readonly AuthManager _sut;
 
     public AuthServiceTests()
     {
-        _sut = new AuthManager(_uowMock.Object, _tokenMock.Object, new DevLogNotificationService());
+        _sut = new AuthManager(_uowMock.Object, _tokenMock.Object, new DevLogNotificationService(), _googleMock.Object);
     }
 
     [Fact]
@@ -107,6 +108,35 @@ public class AuthServiceTests
         _uowMock.Setup(u => u.UserStore.GetByPhoneAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
 
         await _sut.Invoking(s => s.VerifyTwoFactorAsync(new VerifyTwoFactorRequest { EmailOrPhone = "2fa@test.com", Code = "000000" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task GoogleLogin_NewUser_CreatesConfirmedUserAndReturnsToken()
+    {
+        _googleMock.Setup(g => g.ValidateAsync("valid-id-token")).ReturnsAsync(new GoogleUserInfo
+        {
+            Email = "gmailuser@gmail.com", Name = "Gmail User", EmailVerified = true, Subject = "google-123"
+        });
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("gmailuser@gmail.com")).ReturnsAsync((User?)null);
+        _uowMock.Setup(u => u.UserTypeStore.FindSingleAsync(It.IsAny<Expression<Func<UserType, bool>>>()))
+            .ReturnsAsync(new UserType { Id = Guid.NewGuid(), Name = "Customer" });
+        _uowMock.Setup(u => u.UserStore.CreateAsync(It.IsAny<User>())).ReturnsAsync((User u) => u);
+        _tokenMock.Setup(t => t.GenerateToken(It.IsAny<User>())).Returns("jwt-token");
+        _tokenMock.Setup(t => t.GetTokenExpiry()).Returns(DateTime.UtcNow.AddHours(24));
+
+        var result = await _sut.LoginWithGoogleAsync(new GoogleLoginRequest { IdToken = "valid-id-token" });
+
+        result.Token.Should().Be("jwt-token");
+        _uowMock.Verify(u => u.UserStore.CreateAsync(It.Is<User>(x => x.EmailConfirmed && x.Email == "gmailuser@gmail.com")), Times.Once);
+    }
+
+    [Fact]
+    public async Task GoogleLogin_InvalidToken_ThrowsUnauthorized()
+    {
+        _googleMock.Setup(g => g.ValidateAsync(It.IsAny<string>())).ReturnsAsync((GoogleUserInfo?)null);
+
+        await _sut.Invoking(s => s.LoginWithGoogleAsync(new GoogleLoginRequest { IdToken = "bad" }))
             .Should().ThrowAsync<UnauthorizedAccessException>();
     }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
@@ -8,6 +8,9 @@ import {
   selectAuthLoading, selectAuthError, selectAwaitingTwoFactor,
 } from 'CinemaLib';
 import { environment } from '../../../../environments/environment';
+
+// Provided by the Google Identity Services script loaded in index.html.
+declare const google: any;
 
 // Accepts either an email or a phone number (the backend logs in with either).
 function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | null {
@@ -25,16 +28,20 @@ function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | nul
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit {
   private _store = inject(Store);
   private _fb = inject(FormBuilder);
   private _http = inject(HttpClient);
   private _cdr = inject(ChangeDetectorRef);
 
+  @ViewChild('googleBtn') googleBtn?: ElementRef<HTMLElement>;
+
   hidePass = true;
   capsLockOn = false;
   verifying = false;
   otpError: string | null = null;
+  googleError: string | null = null;
+  googleEnabled = !!environment.googleClientId;
 
   loading$: Observable<boolean> = this._store.select(selectAuthLoading);
   error$: Observable<string | null> = this._store.select(selectAuthError);
@@ -83,5 +90,35 @@ export class LoginComponent {
 
   onPasswordKey(event: KeyboardEvent): void {
     this.capsLockOn = event.getModifierState?.('CapsLock') ?? false;
+  }
+
+  ngAfterViewInit(): void {
+    if (this.googleEnabled) this._initGoogle();
+  }
+
+  // The GIS script may not be ready yet; retry briefly until `google.accounts.id` exists.
+  private _initGoogle(retries = 20): void {
+    if (typeof google === 'undefined' || !google.accounts?.id) {
+      if (retries > 0) setTimeout(() => this._initGoogle(retries - 1), 150);
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: environment.googleClientId,
+      callback: (resp: { credential: string }) => this._onGoogleCredential(resp),
+    });
+    if (this.googleBtn) {
+      google.accounts.id.renderButton(this.googleBtn.nativeElement, { theme: 'outline', size: 'large', width: 360 });
+    }
+  }
+
+  private _onGoogleCredential(resp: { credential: string }): void {
+    this.googleError = null;
+    this._http.post(`${environment.apiUrl}/api/Identity/GoogleLogin`, { idToken: resp.credential }).subscribe({
+      next: (response: any) => this._store.dispatch(loginSuccess({ response, rememberMe: this.form.value.rememberMe })),
+      error: () => {
+        this.googleError = 'Đăng nhập bằng Google thất bại. Vui lòng thử lại.';
+        this._cdr.markForCheck();
+      },
+    });
   }
 }

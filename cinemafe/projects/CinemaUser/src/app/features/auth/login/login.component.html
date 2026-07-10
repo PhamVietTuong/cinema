@@ -97,6 +97,15 @@
         </button>
       </form>
 
+      <!-- Sign in with Google (shown only when a client id is configured) -->
+      <ng-container *ngIf="googleEnabled && !(awaitingTwoFactor$ | async)">
+        <div class="divider"><span>hoặc</span></div>
+        <div #googleBtn class="google-btn-wrap"></div>
+        <div class="api-error" *ngIf="googleError">
+          <i class="fas fa-exclamation-circle"></i> {{ googleError }}
+        </div>
+      </ng-container>
+
       <!-- Two-factor step: enter the emailed 6-digit code -->
       <form *ngIf="awaitingTwoFactor$ | async" [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
         <p class="form-sub">Chúng tôi đã gửi mã xác thực gồm 6 chữ số tới email của bạn.</p>
