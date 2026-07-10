@@ -14,6 +14,8 @@ public interface IAuthManager
     Task ResetPasswordAsync(ResetPasswordRequest request);
     Task ConfirmEmailAsync(ConfirmEmailRequest request);
     Task ResendVerificationAsync(ResendVerificationRequest request);
+    Task<AuthResponse> VerifyTwoFactorAsync(VerifyTwoFactorRequest request);
+    Task SetTwoFactorAsync(Guid userId, bool enabled);
     Task<DefaultSearchResults<UserDTO>> GetUsersAsync(PagingSearchDTO search);
     Task<UserDTO> CreateUserAsync(CreateUserRequest request);
     Task<UserDTO> UpdateUserAsync(UpdateUserRequest request);

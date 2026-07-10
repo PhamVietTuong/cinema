@@ -1,8 +1,13 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { SharedModule, login, selectAuthLoading, selectAuthError } from 'CinemaLib';
+import {
+  SharedModule, login, loginSuccess,
+  selectAuthLoading, selectAuthError, selectAwaitingTwoFactor,
+} from 'CinemaLib';
+import { environment } from '../../../../environments/environment';
 
 // Accepts either an email or a phone number (the backend logs in with either).
 function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | null {
@@ -21,24 +26,29 @@ function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | nul
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
+  private _store = inject(Store);
+  private _fb = inject(FormBuilder);
+  private _http = inject(HttpClient);
+  private _cdr = inject(ChangeDetectorRef);
+
   hidePass = true;
   capsLockOn = false;
-  loading$: Observable<boolean>;
-  error$: Observable<string | null>;
-  form: FormGroup;
+  verifying = false;
+  otpError: string | null = null;
 
-  constructor(
-    private _store: Store,
-    private _fb: FormBuilder,
-  ) {
-    this.loading$ = this._store.select(selectAuthLoading);
-    this.error$ = this._store.select(selectAuthError);
-    this.form = this._fb.group({
-      emailOrPhone: ['', [Validators.required, emailOrPhoneValidator]],
-      password: ['', [Validators.required]],
-      rememberMe: [false],
-    });
-  }
+  loading$: Observable<boolean> = this._store.select(selectAuthLoading);
+  error$: Observable<string | null> = this._store.select(selectAuthError);
+  awaitingTwoFactor$: Observable<boolean> = this._store.select(selectAwaitingTwoFactor);
+
+  form: FormGroup = this._fb.group({
+    emailOrPhone: ['', [Validators.required, emailOrPhoneValidator]],
+    password: ['', [Validators.required]],
+    rememberMe: [false],
+  });
+
+  otpForm: FormGroup = this._fb.group({
+    code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+  });
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -47,6 +57,28 @@ export class LoginComponent {
     }
     const { emailOrPhone, password, rememberMe } = this.form.value;
     this._store.dispatch(login({ request: { emailOrPhone, password } as any, rememberMe }));
+  }
+
+  // Second step: exchange the emailed 6-digit code for a token.
+  verifyOtp(): void {
+    if (this.otpForm.invalid) {
+      this.otpForm.markAllAsTouched();
+      return;
+    }
+    this.verifying = true;
+    this.otpError = null;
+    this._http.post(`${environment.apiUrl}/api/Identity/VerifyTwoFactor`, {
+      emailOrPhone: this.form.value.emailOrPhone,
+      code: this.otpForm.value.code,
+    }).subscribe({
+      next: (response: any) =>
+        this._store.dispatch(loginSuccess({ response, rememberMe: this.form.value.rememberMe })),
+      error: () => {
+        this.verifying = false;
+        this.otpError = 'Mã không hợp lệ hoặc đã hết hạn.';
+        this._cdr.markForCheck();
+      },
+    });
   }
 
   onPasswordKey(event: KeyboardEvent): void {

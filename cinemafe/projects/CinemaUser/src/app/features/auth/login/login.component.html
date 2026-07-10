@@ -34,7 +34,7 @@
       <h3 class="form-title">Chào Mừng Trở Lại</h3>
       <p class="form-sub">Đăng nhập để tiếp tục đặt vé</p>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form *ngIf="!(awaitingTwoFactor$ | async)" [formGroup]="form" (ngSubmit)="onSubmit()">
 
         <div class="field-group">
           <label class="field-label">Email hoặc Số Điện Thoại</label>
@@ -94,6 +94,31 @@
           <ng-container *ngIf="!(loading$ | async)">
             Đăng Nhập <i class="fas fa-arrow-right"></i>
           </ng-container>
+        </button>
+      </form>
+
+      <!-- Two-factor step: enter the emailed 6-digit code -->
+      <form *ngIf="awaitingTwoFactor$ | async" [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
+        <p class="form-sub">Chúng tôi đã gửi mã xác thực gồm 6 chữ số tới email của bạn.</p>
+        <div class="field-group">
+          <label class="field-label">Mã Xác Thực</label>
+          <div class="field-wrap">
+            <i class="fas fa-key field-icon"></i>
+            <input class="field-input" type="text" inputmode="numeric" maxlength="6"
+                   formControlName="code" placeholder="6 chữ số">
+          </div>
+          <div class="field-error" *ngIf="otpForm.get('code')?.touched && otpForm.get('code')?.invalid">
+            Mã gồm 6 chữ số
+          </div>
+        </div>
+
+        <div class="api-error" *ngIf="otpError">
+          <i class="fas fa-exclamation-circle"></i> {{ otpError }}
+        </div>
+
+        <button type="submit" class="btn-primary-cta submit-btn" [disabled]="verifying">
+          <mat-spinner diameter="18" *ngIf="verifying"></mat-spinner>
+          <ng-container *ngIf="!verifying">Xác Nhận <i class="fas fa-arrow-right"></i></ng-container>
         </button>
       </form>
 

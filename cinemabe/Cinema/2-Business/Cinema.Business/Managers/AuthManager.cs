@@ -71,6 +71,13 @@ public class AuthManager : IAuthManager
             await _uow.SaveChangesAsync();
         }
 
+        // Two-factor: password is valid, but issue an emailed code and defer the token.
+        if (user.TwoFactorEnabled)
+        {
+            await IssueTwoFactorCodeAsync(user);
+            return new AuthResponse { RequiresTwoFactor = true };
+        }
+
         return BuildAuthResponse(user);
     }
 
@@ -160,6 +167,59 @@ public class AuthManager : IAuthManager
         await _uow.SaveChangesAsync();
 
         await SendVerificationEmailAsync(user, rawToken);
+    }
+
+    // Generate a 6-digit code, store its hash (5-min expiry) and email it to the user.
+    private async Task IssueTwoFactorCodeAsync(User user)
+    {
+        var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+        user.TwoFactorCodeHash = HashToken(code);
+        user.TwoFactorCodeExpiresAt = DateTime.UtcNow.AddMinutes(5);
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
+
+        await _notifications.SendAsync(
+            user.Email,
+            "Your Cinema login code",
+            $"Your verification code is {code} (valid 5 minutes).");
+    }
+
+    public async Task<AuthResponse> VerifyTwoFactorAsync(VerifyTwoFactorRequest request)
+    {
+        var user = await _uow.UserStore.GetByEmailAsync(request.EmailOrPhone)
+                   ?? await _uow.UserStore.GetByPhoneAsync(request.EmailOrPhone)
+                   ?? throw new UnauthorizedAccessException("Invalid or expired code.");
+
+        if (!user.TwoFactorEnabled
+            || string.IsNullOrEmpty(user.TwoFactorCodeHash)
+            || user.TwoFactorCodeExpiresAt == null
+            || user.TwoFactorCodeExpiresAt < DateTime.UtcNow
+            || !CryptographicOperations.FixedTimeEquals(
+                   Convert.FromHexString(user.TwoFactorCodeHash),
+                   Convert.FromHexString(HashToken(request.Code))))
+            throw new UnauthorizedAccessException("Invalid or expired code.");
+
+        // Consume the code so it can't be replayed.
+        user.TwoFactorCodeHash = null;
+        user.TwoFactorCodeExpiresAt = null;
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
+
+        return BuildAuthResponse(user);
+    }
+
+    public async Task SetTwoFactorAsync(Guid userId, bool enabled)
+    {
+        var user = await _uow.UserStore.GetByIdAsync(userId)
+                   ?? throw new KeyNotFoundException("User not found.");
+        user.TwoFactorEnabled = enabled;
+        if (!enabled)
+        {
+            user.TwoFactorCodeHash = null;
+            user.TwoFactorCodeExpiresAt = null;
+        }
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
     }
 
     public async Task<UserDTO> GetProfileAsync(Guid userId)

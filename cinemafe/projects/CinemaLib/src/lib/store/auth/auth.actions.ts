@@ -9,5 +9,7 @@ export const register = createAction('[Auth] Register', props<{ request: Registe
 export const registerSuccess = createAction('[Auth] Register Success', props<{ response: AuthResponse }>());
 export const registerFailure = createAction('[Auth] Register Failure', props<{ error: string }>());
 
+export const twoFactorRequired = createAction('[Auth] Two Factor Required');
+
 export const logout = createAction('[Auth] Logout');
 export const loadUserFromStorage = createAction('[Auth] Load User From Storage');

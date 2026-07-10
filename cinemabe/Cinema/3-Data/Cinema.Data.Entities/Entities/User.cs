@@ -23,6 +23,10 @@ public class User : BaseEntity
     public bool EmailConfirmed { get; set; } = false;
     public string? EmailVerificationTokenHash { get; set; }
     public DateTime? EmailVerificationExpiresAt { get; set; }
+    // Two-factor auth: when enabled, a one-time code (hash + expiry) is emailed at each login.
+    public bool TwoFactorEnabled { get; set; } = false;
+    public string? TwoFactorCodeHash { get; set; }
+    public DateTime? TwoFactorCodeExpiresAt { get; set; }
     public UserType UserType { get; set; } = null!;
     public MemberShip? MemberShip { get; set; }
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();

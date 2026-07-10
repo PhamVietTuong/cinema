@@ -18,7 +18,10 @@ export class AuthEffects {
       ofType(AuthActions.login),
       switchMap(({ request, rememberMe }) =>
         this._identityService.login(IdentityServiceAgent.LoginRequest.fromJS(request)).pipe(
-          map(response => AuthActions.loginSuccess({ response: response as any, rememberMe })),
+          // An empty token means the password was accepted but a 2FA code is required.
+          map(response => (response as any)?.token
+            ? AuthActions.loginSuccess({ response: response as any, rememberMe })
+            : AuthActions.twoFactorRequired()),
           catchError(err => of(AuthActions.loginFailure({ error: err.error?.error ?? 'Login failed' })))
         )
       )

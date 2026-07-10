@@ -69,6 +69,48 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task Login_TwoFactorEnabled_ReturnsRequiresTwoFactorWithoutToken()
+    {
+        using var hmac = new System.Security.Cryptography.HMACSHA512();
+        var user = new User
+        {
+            Email = "2fa@test.com",
+            PasswordSalt = hmac.Key,
+            PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes("Password@1")),
+            UserType = new UserType { Name = "User" },
+            EmailConfirmed = true,
+            TwoFactorEnabled = true
+        };
+
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("2fa@test.com")).ReturnsAsync(user);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        var result = await _sut.LoginAsync(new LoginRequest { EmailOrPhone = "2fa@test.com", Password = "Password@1" });
+
+        result.RequiresTwoFactor.Should().BeTrue();
+        result.Token.Should().BeNullOrEmpty();
+        user.TwoFactorCodeHash.Should().NotBeNullOrEmpty(); // a code was issued
+    }
+
+    [Fact]
+    public async Task VerifyTwoFactor_WrongCode_ThrowsUnauthorized()
+    {
+        var user = new User
+        {
+            Email = "2fa@test.com",
+            TwoFactorEnabled = true,
+            TwoFactorCodeHash = "deadbeef",
+            TwoFactorCodeExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            UserType = new UserType { Name = "User" }
+        };
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("2fa@test.com")).ReturnsAsync(user);
+        _uowMock.Setup(u => u.UserStore.GetByPhoneAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
+
+        await _sut.Invoking(s => s.VerifyTwoFactorAsync(new VerifyTwoFactorRequest { EmailOrPhone = "2fa@test.com", Code = "000000" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
     public async Task ConfirmEmail_InvalidToken_ThrowsInvalidOperation()
     {
         var user = new User { Email = "u@test.com", EmailConfirmed = false, EmailVerificationTokenHash = null };

@@ -5,6 +5,7 @@ export interface AuthState {
   token: string | null;
   loading: boolean;
   error: string | null;
+  awaitingTwoFactor: boolean;
 }
 
 export const initialAuthState: AuthState = {
@@ -12,4 +13,5 @@ export const initialAuthState: AuthState = {
   token: null,
   loading: false,
   error: null,
+  awaitingTwoFactor: false,
 };

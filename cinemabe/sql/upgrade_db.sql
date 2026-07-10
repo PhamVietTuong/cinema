@@ -155,4 +155,21 @@ BEGIN
     PRINT 'Added [User].[EmailVerificationExpiresAt].';
 END
 
+-- Two-factor authentication support on [User] (Batch D).
+IF COL_LENGTH('[User]', 'TwoFactorEnabled') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [TwoFactorEnabled] bit NOT NULL DEFAULT 0;
+    PRINT 'Added [User].[TwoFactorEnabled].';
+END
+IF COL_LENGTH('[User]', 'TwoFactorCodeHash') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [TwoFactorCodeHash] nvarchar(max) NULL;
+    PRINT 'Added [User].[TwoFactorCodeHash].';
+END
+IF COL_LENGTH('[User]', 'TwoFactorCodeExpiresAt') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [TwoFactorCodeExpiresAt] datetime NULL;
+    PRINT 'Added [User].[TwoFactorCodeExpiresAt].';
+END
+
 PRINT 'upgrade_db.sql: completed.';
