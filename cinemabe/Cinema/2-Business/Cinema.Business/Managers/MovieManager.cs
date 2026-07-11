@@ -114,13 +114,7 @@ public class MovieManager : IMovieManager
         dto.RatingCount               = movie.Evaluations.Count;
         dto.RecentComments = movie.Comments
             .Where(c => c.ParentId == null).Take(10)
-            .Select(c =>
-            {
-                var cd = c.ToDTO<Comment, CommentDTO>();
-                cd.UserName   = c.User?.Name ?? string.Empty;
-                cd.UserAvatar = c.User?.Avatar;
-                return cd;
-            }).ToList();
+            .Select(ToCommentDTO).ToList();
         return dto;
     }
 
@@ -183,6 +177,20 @@ public class MovieManager : IMovieManager
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>Maps a comment (and its approved replies, recursively) to a DTO.</summary>
+    private static CommentDTO ToCommentDTO(Comment c)
+    {
+        var cd = c.ToDTO<Comment, CommentDTO>();
+        cd.UserName   = c.User?.Name ?? string.Empty;
+        cd.UserAvatar = c.User?.Avatar;
+        cd.Replies = (c.Replies ?? new List<Comment>())
+            .Where(r => r.IsApproved)
+            .OrderBy(r => r.CreationTime)
+            .Select(ToCommentDTO)
+            .ToList();
+        return cd;
+    }
 
     private async Task<MovieDTO> GetBasicDTOAsync(Guid id)
     {

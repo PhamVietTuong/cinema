@@ -107,3 +107,46 @@
   .hero-title { font-size: 2.1rem; }
   .hero-inner, .md-body { padding-left: 20px; padding-right: 20px; }
 }
+
+/* ── Review / comment submission ─────────────────────────────────────────── */
+.rate-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  max-width: 640px;
+}
+.rate-stars { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.rate-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.25);
+  transition: color 0.12s ease, transform 0.12s ease;
+  padding: 0 1px;
+  &:hover { transform: scale(1.15); }
+  &.on { color: #f5c518; }
+}
+.rate-score { margin-left: 8px; font-weight: 700; color: #f5c518; }
+.rate-input {
+  width: 100%;
+  resize: vertical;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  padding: 10px 12px;
+  font: inherit;
+}
+.review-replies {
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.review-reply { font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); }

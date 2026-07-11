@@ -116,8 +116,39 @@
             </div>
           </div>
           <p class="review-text">{{ c.content }}</p>
+          <div class="review-replies" *ngIf="c.replies?.length">
+            <div class="review-reply" *ngFor="let r of c.replies">
+              <strong>{{ r.userName }}:</strong> {{ r.content }}
+            </div>
+          </div>
         </div>
       </div>
+    </section>
+
+    <!-- Write a review / comment -->
+    <section class="md-section">
+      <h2 class="md-title">Viết Đánh Giá</h2>
+
+      <ng-container *ngIf="(isAuthenticated$ | async); else loginToReview">
+        <div class="rate-box">
+          <div class="rate-stars">
+            <button type="button" class="rate-star" *ngFor="let s of stars"
+                    [class.on]="s <= myScore" (click)="setScore(s)" [title]="s + '/10'">★</button>
+            <span class="rate-score" *ngIf="myScore">{{ myScore }}/10</span>
+          </div>
+          <textarea class="rate-input" [(ngModel)]="myReview" rows="2" placeholder="Cảm nhận của bạn về phim (không bắt buộc)..."></textarea>
+          <button class="btn-primary-cta" type="button" [disabled]="myScore < 1" (click)="submitRating()">Gửi Đánh Giá</button>
+        </div>
+
+        <div class="rate-box">
+          <textarea class="rate-input" [(ngModel)]="newComment" rows="2" placeholder="Viết bình luận..."></textarea>
+          <button class="btn-primary-cta" type="button" [disabled]="!newComment.trim()" (click)="submitComment()">Gửi Bình Luận</button>
+        </div>
+      </ng-container>
+
+      <ng-template #loginToReview>
+        <p class="md-text">Vui lòng <a routerLink="/auth/login">đăng nhập</a> để đánh giá và bình luận.</p>
+      </ng-template>
     </section>
 
   </div>

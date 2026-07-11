@@ -77,4 +77,28 @@ export class MoviesEffects {
       )
     )
   );
+
+  rateMovie$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(MoviesActions.rateMovie),
+      switchMap(({ movieId, score, review }) =>
+        this._cinemaService.rateMovie(CinemaServiceAgent.RateMovieRequest.fromJS({ score, review }), movieId).pipe(
+          map(() => MoviesActions.loadMovieDetail({ id: movieId })),
+          catchError(err => of(MoviesActions.rateMovieFailure({ error: err.message })))
+        )
+      )
+    )
+  );
+
+  addComment$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(MoviesActions.addComment),
+      switchMap(({ movieId, content, parentId }) =>
+        this._cinemaService.addComment(CinemaServiceAgent.AddCommentRequest.fromJS({ content, parentId }), movieId).pipe(
+          map(() => MoviesActions.loadMovieDetail({ id: movieId })),
+          catchError(err => of(MoviesActions.addCommentFailure({ error: err.message })))
+        )
+      )
+    )
+  );
 }

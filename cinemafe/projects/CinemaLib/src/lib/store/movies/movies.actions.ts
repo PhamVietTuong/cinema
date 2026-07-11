@@ -15,3 +15,10 @@ export const loadMoviesFailure = createAction('[Movies] Load Movies Failure', pr
 export const loadMovieDetail = createAction('[Movies] Load Movie Detail', props<{ id: string }>());
 export const loadMovieDetailSuccess = createAction('[Movies] Load Movie Detail Success', props<{ movie: MovieDetail }>());
 export const loadMovieDetailFailure = createAction('[Movies] Load Movie Detail Failure', props<{ error: string }>());
+
+// Reviews & comments (re-load the detail on success to refresh the list)
+export const rateMovie = createAction('[Movies] Rate Movie', props<{ movieId: string; score: number; review?: string }>());
+export const rateMovieFailure = createAction('[Movies] Rate Movie Failure', props<{ error: string }>());
+
+export const addComment = createAction('[Movies] Add Comment', props<{ movieId: string; content: string; parentId?: string }>());
+export const addCommentFailure = createAction('[Movies] Add Comment Failure', props<{ error: string }>());
