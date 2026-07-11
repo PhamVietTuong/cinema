@@ -185,3 +185,23 @@
   .auth-cinema { display: none; }
   .auth-panel { min-height: 100vh; padding: 40px 24px; }
 }
+
+/* Continue with Facebook */
+.fb-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #1877f2;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.fb-btn:hover { background: #166fe0; }
+.fb-btn i { font-size: 1.05rem; }

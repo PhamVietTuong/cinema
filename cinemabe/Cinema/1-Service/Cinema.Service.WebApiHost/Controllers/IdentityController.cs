@@ -138,6 +138,22 @@ public class IdentityController : ApiControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(AuthResponse), 200)]
+    public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.FacebookLogin being awakened to process request...");
+        try
+        {
+            var result = await _authManager.LoginWithFacebookAsync(request);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(FacebookLogin));
+        }
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(AuthResponse), 200)]
     public async Task<IActionResult> VerifyTwoFactor([FromBody] VerifyTwoFactorRequest request)
     {
         LogProvider.Current.Information($"{GetType().Name}.VerifyTwoFactor being awakened to process request...");

@@ -42,6 +42,9 @@ export class LoginComponent implements AfterViewInit {
   otpError: string | null = null;
   googleError: string | null = null;
   googleEnabled = !!environment.googleClientId;
+  facebookError: string | null = null;
+  facebookEnabled = !!environment.facebookAppId;
+  private _fbReady?: Promise<void>;
 
   loading$: Observable<boolean> = this._store.select(selectAuthLoading);
   error$: Observable<string | null> = this._store.select(selectAuthError);
@@ -109,6 +112,42 @@ export class LoginComponent implements AfterViewInit {
     if (this.googleBtn) {
       google.accounts.id.renderButton(this.googleBtn.nativeElement, { theme: 'outline', size: 'large', width: 360 });
     }
+  }
+
+  // Lazily loads the Facebook JS SDK and initialises it with the configured app id.
+  private _ensureFbSdk(): Promise<void> {
+    if (this._fbReady) { return this._fbReady; }
+    this._fbReady = new Promise<void>((resolve) => {
+      const w = window as any;
+      if (w.FB) { resolve(); return; }
+      w.fbAsyncInit = () => {
+        w.FB.init({ appId: environment.facebookAppId, cookie: true, xfbml: false, version: 'v19.0' });
+        resolve();
+      };
+      const s = document.createElement('script');
+      s.src = 'https://connect.facebook.net/en_US/sdk.js';
+      s.async = true;
+      s.defer = true;
+      document.body.appendChild(s);
+    });
+    return this._fbReady;
+  }
+
+  loginWithFacebook(): void {
+    this.facebookError = null;
+    this._ensureFbSdk().then(() => {
+      (window as any).FB.login((resp: any) => {
+        const token = resp?.authResponse?.accessToken;
+        if (!token) { return; } // user cancelled
+        this._http.post(`${environment.apiUrl}/api/Identity/FacebookLogin`, { accessToken: token }).subscribe({
+          next: (response: any) => this._store.dispatch(loginSuccess({ response, rememberMe: this.form.value.rememberMe })),
+          error: () => {
+            this.facebookError = 'Đăng nhập bằng Facebook thất bại. Vui lòng thử lại.';
+            this._cdr.markForCheck();
+          },
+        });
+      }, { scope: 'public_profile,email' });
+    });
   }
 
   private _onGoogleCredential(resp: { credential: string }): void {

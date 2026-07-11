@@ -17,17 +17,20 @@ public class AuthManager : IAuthManager
     private readonly ITokenService _tokenService;
     private readonly INotificationService _notifications;
     private readonly IGoogleTokenValidator _googleValidator;
+    private readonly IFacebookTokenValidator _facebookValidator;
 
     public AuthManager(
         IApplicationUnitOfWork uow,
         ITokenService tokenService,
         INotificationService notifications,
-        IGoogleTokenValidator googleValidator)
+        IGoogleTokenValidator googleValidator,
+        IFacebookTokenValidator facebookValidator)
     {
         _uow = uow;
         _tokenService = tokenService;
         _notifications = notifications;
         _googleValidator = googleValidator;
+        _facebookValidator = facebookValidator;
     }
 
     // Account-lockout policy: lock after this many consecutive failures, for this long.
@@ -267,6 +270,43 @@ public class AuthManager : IAuthManager
         }
 
         // Google logins bypass the app's own 2FA (Google enforces its own).
+        return BuildAuthResponse(user);
+    }
+
+    public async Task<AuthResponse> LoginWithFacebookAsync(FacebookLoginRequest request)
+    {
+        var info = await _facebookValidator.ValidateAsync(request.AccessToken)
+                   ?? throw new UnauthorizedAccessException("Invalid Facebook token.");
+
+        var user = await _uow.UserStore.GetByEmailAsync(info.Email);
+        if (user == null)
+        {
+            var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer")
+                ?? throw new InvalidOperationException("Customer user type not found.");
+
+            // The account authenticates via Facebook, so give it a random unusable password.
+            CreatePasswordHash(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), out var hash, out var salt);
+            user = new User
+            {
+                Name = info.Name,
+                Email = info.Email,
+                // Phone is unique + required; Facebook gives us none, so store a unique placeholder.
+                Phone = "f" + Guid.NewGuid().ToString("N")[..15],
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                UserTypeId = customerType.Id,
+                EmailConfirmed = true, // Facebook already verified the address
+            };
+            await _uow.UserStore.CreateAsync(user);
+            user = await _uow.UserStore.GetByEmailAsync(info.Email) ?? user;
+        }
+        else if (!user.EmailConfirmed)
+        {
+            user.EmailConfirmed = true;
+            await _uow.UserStore.UpdateAsync(user);
+            await _uow.SaveChangesAsync();
+        }
+
         return BuildAuthResponse(user);
     }
 

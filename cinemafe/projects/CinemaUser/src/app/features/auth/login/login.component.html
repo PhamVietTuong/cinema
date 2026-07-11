@@ -106,6 +106,17 @@
         </div>
       </ng-container>
 
+      <!-- Continue with Facebook (shown only when an app id is configured) -->
+      <ng-container *ngIf="facebookEnabled && !(awaitingTwoFactor$ | async)">
+        <div class="divider" *ngIf="!googleEnabled"><span>hoặc</span></div>
+        <button type="button" class="fb-btn" (click)="loginWithFacebook()">
+          <i class="fab fa-facebook-f"></i> Tiếp tục với Facebook
+        </button>
+        <div class="api-error" *ngIf="facebookError">
+          <i class="fas fa-exclamation-circle"></i> {{ facebookError }}
+        </div>
+      </ng-container>
+
       <!-- Two-factor step: enter the emailed 6-digit code -->
       <form *ngIf="awaitingTwoFactor$ | async" [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
         <p class="form-sub">Chúng tôi đã gửi mã xác thực gồm 6 chữ số tới email của bạn.</p>
