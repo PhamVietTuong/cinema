@@ -54,11 +54,31 @@
     </form>
   </div>
 
-  <!-- Tabs below the information — rooms now, food & drinks later -->
+  <!-- Per-theater management tabs -->
   <mat-tab-group class="detail-tabs" animationDuration="150ms">
     <mat-tab label="Phòng Chiếu">
       <div class="tab-body">
         <app-theater-rooms [theaterId]="theaterId"></app-theater-rooms>
+      </div>
+    </mat-tab>
+    <mat-tab label="Loại Ghế">
+      <div class="tab-body">
+        <app-theater-seat-types [theaterId]="theaterId"></app-theater-seat-types>
+      </div>
+    </mat-tab>
+    <mat-tab label="Đồ Ăn & Thức Uống">
+      <div class="tab-body">
+        <app-theater-food [theaterId]="theaterId"></app-theater-food>
+      </div>
+    </mat-tab>
+    <mat-tab label="Khung Giờ">
+      <div class="tab-body">
+        <app-theater-time-slots [theaterId]="theaterId"></app-theater-time-slots>
+      </div>
+    </mat-tab>
+    <mat-tab label="Giá Vé">
+      <div class="tab-body">
+        <app-theater-ticket-prices [theaterId]="theaterId"></app-theater-ticket-prices>
       </div>
     </mat-tab>
   </mat-tab-group>

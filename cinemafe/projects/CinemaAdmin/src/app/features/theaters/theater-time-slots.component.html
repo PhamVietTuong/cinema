@@ -1,0 +1,51 @@
+<div class="tab-toolbar">
+  <p class="ad-sub">Khung giờ chiếu dùng để tính giá vé (theo giờ bắt đầu suất chiếu).</p>
+  <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> Thêm Khung Giờ</button>
+</div>
+
+<app-modal [open]="showForm" (closed)="cancelEdit()">
+<div class="ad-card form-card">
+  <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Khung Giờ' : 'Khung Giờ Mới' }}</h3>
+  <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
+    <div class="ad-field full-span">
+      <label class="ad-label">Tên Khung Giờ</label>
+      <input class="ad-input" formControlName="name" placeholder="VD: Sáng / Chiều / Tối">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Giờ Bắt Đầu</label>
+      <input class="ad-input" type="time" formControlName="startTime">
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Giờ Kết Thúc</label>
+      <input class="ad-input" type="time" formControlName="endTime">
+    </div>
+    <div class="form-actions full-span">
+      <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
+    </div>
+  </form>
+</div>
+</app-modal>
+<app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+
+<div class="ad-card ad-card--pad-0">
+  <div class="ad-table-wrap">
+    <table class="ad-table">
+      <thead>
+        <tr><th>Tên Khung Giờ</th><th>Bắt Đầu</th><th>Kết Thúc</th><th class="ad-td-actions">Thao Tác</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let x of items">
+          <td><strong>{{ x.name }}</strong></td>
+          <td>{{ x.startTime }}</td>
+          <td>{{ x.endTime }}</td>
+          <td class="ad-td-actions">
+            <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Sửa"><mat-icon>edit</mat-icon></button>
+            <button class="ad-icon-btn" (click)="delete(x.id)" title="Xóa"><mat-icon>delete</mat-icon></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="!items.length" class="ad-empty"><mat-icon>schedule</mat-icon><p>Rạp này chưa có khung giờ nào.</p></div>
+  </div>
+</div>

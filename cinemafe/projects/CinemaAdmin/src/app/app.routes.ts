@@ -53,11 +53,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/catalog/discounts/discounts.component').then(m => m.DiscountsManagementComponent)
       },
       {
-        path: 'food-and-drinks',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/food-and-drinks/food-and-drinks.component').then(m => m.FoodAndDrinksManagementComponent)
-      },
-      {
         path: 'invoices',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/catalog/invoices/invoices.component').then(m => m.InvoicesManagementComponent)
@@ -78,11 +73,6 @@ export const routes: Routes = [
         path: 'age-restrictions',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/catalog/age-restrictions/age-restrictions.component').then(m => m.AgeRestrictionsManagementComponent)
-      },
-      {
-        path: 'seat-types',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/seat-types/seat-types.component').then(m => m.SeatTypesManagementComponent)
       },
       {
         path: 'discount-types',

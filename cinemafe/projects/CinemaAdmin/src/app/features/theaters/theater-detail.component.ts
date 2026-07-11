@@ -4,12 +4,23 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 import { ImageUploadService } from '../../shared/image-upload.service';
 import { TheaterRoomsComponent } from './theater-rooms.component';
+import { TheaterSeatTypesComponent } from './theater-seat-types.component';
+import { TheaterFoodComponent } from './theater-food.component';
+import { TheaterTimeSlotsComponent } from './theater-time-slots.component';
+import { TheaterTicketPricesComponent } from './theater-ticket-prices.component';
 
-/** Theater detail page: tabbed — theater info, its rooms (and later, food & drinks). */
+/** Theater detail page: info on top, per-theater management tabs below. */
 @Component({
   selector: 'app-theater-detail',
   standalone: true,
-  imports: [SharedModule, TheaterRoomsComponent],
+  imports: [
+    SharedModule,
+    TheaterRoomsComponent,
+    TheaterSeatTypesComponent,
+    TheaterFoodComponent,
+    TheaterTimeSlotsComponent,
+    TheaterTicketPricesComponent,
+  ],
   templateUrl: './theater-detail.component.html',
   styleUrl: './theater-detail.component.scss',
 })

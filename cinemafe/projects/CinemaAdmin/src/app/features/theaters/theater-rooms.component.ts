@@ -68,7 +68,7 @@ export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
     this.mode = 'paint';
     this._pairFirst = null;
     this.seatsLoading = true;
-    this._svc.getSeatTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 }))
+    this._svc.getSeatTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500, filters: { theaterId: this.theaterId } }))
       .subscribe(r => {
         this.allSeatTypes = r.results ?? [];
         this.activeSeatTypeId = this.allSeatTypes[0]?.id ?? '';

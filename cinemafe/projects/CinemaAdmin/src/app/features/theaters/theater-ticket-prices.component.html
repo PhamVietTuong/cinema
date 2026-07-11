@@ -1,0 +1,71 @@
+<div class="tab-toolbar">
+  <p class="ad-sub">Giá vé theo loại ghế × khung giờ × ngày lễ.</p>
+  <button class="ad-btn ad-btn--primary" (click)="openCreate()" [disabled]="!seatTypes.length || !timeSlots.length">
+    <mat-icon>add</mat-icon> Thêm Giá Vé
+  </button>
+</div>
+
+<p class="ad-sub" *ngIf="!seatTypes.length || !timeSlots.length">
+  Cần có ít nhất một loại ghế và một khung giờ trước khi thêm giá vé.
+</p>
+
+<app-modal [open]="showForm" (closed)="cancelEdit()">
+<div class="ad-card form-card">
+  <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Giá Vé' : 'Giá Vé Mới' }}</h3>
+  <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
+    <div class="ad-field">
+      <label class="ad-label">Loại Ghế</label>
+      <select class="ad-input" formControlName="seatTypeId">
+        <option value="">— Chọn loại ghế —</option>
+        <option *ngFor="let s of seatTypes" [ngValue]="s.id">{{ s.name }}</option>
+      </select>
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Khung Giờ</label>
+      <select class="ad-input" formControlName="timeSlotId">
+        <option value="">— Chọn khung giờ —</option>
+        <option *ngFor="let t of timeSlots" [ngValue]="t.id">{{ t.name }} ({{ t.startTime }}–{{ t.endTime }})</option>
+      </select>
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">Giá (đ)</label>
+      <input class="ad-input" type="number" formControlName="price" placeholder="70000">
+    </div>
+    <div class="ad-field">
+      <label class="ad-check"><input type="checkbox" formControlName="isHoliday"> Áp dụng ngày lễ</label>
+    </div>
+    <div class="form-actions full-span">
+      <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
+    </div>
+  </form>
+</div>
+</app-modal>
+<app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+
+<div class="ad-card ad-card--pad-0">
+  <div class="ad-table-wrap">
+    <table class="ad-table">
+      <thead>
+        <tr><th>Loại Ghế</th><th>Khung Giờ</th><th>Ngày</th><th>Giá</th><th class="ad-td-actions">Thao Tác</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let x of items">
+          <td><strong>{{ seatTypeName(x.seatTypeId) }}</strong></td>
+          <td>{{ timeSlotName(x.timeSlotId) }}</td>
+          <td>
+            <span class="ad-pill" [class.ad-pill--warn]="x.isHoliday" [class.ad-pill--neutral]="!x.isHoliday">
+              {{ x.isHoliday ? 'Ngày Lễ' : 'Ngày Thường' }}
+            </span>
+          </td>
+          <td>{{ x.price | number:'1.0-0' }}đ</td>
+          <td class="ad-td-actions">
+            <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Sửa"><mat-icon>edit</mat-icon></button>
+            <button class="ad-icon-btn" (click)="delete(x.id)" title="Xóa"><mat-icon>delete</mat-icon></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="!items.length" class="ad-empty"><mat-icon>sell</mat-icon><p>Rạp này chưa có bảng giá vé.</p></div>
+  </div>
+</div>
