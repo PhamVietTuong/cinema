@@ -154,10 +154,12 @@ CREATE TABLE [Discount] (
     [MaxUsage] int NULL,
     [UsedCount] int NOT NULL,
     [IsActive] bit NOT NULL,
+    [TheaterId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Discount] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Discount_DiscountType_DiscountTypeId] FOREIGN KEY ([DiscountTypeId]) REFERENCES [DiscountType] ([Id]) ON DELETE NO ACTION
+    CONSTRAINT [FK_Discount_DiscountType_DiscountTypeId] FOREIGN KEY ([DiscountTypeId]) REFERENCES [DiscountType] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Discount_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE SET NULL
 );
 
 CREATE TABLE [Room] (
@@ -362,6 +364,7 @@ CREATE INDEX [IX_Comment_ParentId] ON [Comment] ([ParentId]);
 CREATE INDEX [IX_Comment_UserId] ON [Comment] ([UserId]);
 CREATE UNIQUE INDEX [IX_Discount_Code] ON [Discount] ([Code]);
 CREATE INDEX [IX_Discount_DiscountTypeId] ON [Discount] ([DiscountTypeId]);
+CREATE INDEX [IX_Discount_TheaterId] ON [Discount] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_Evaluation_MovieId_UserId] ON [Evaluation] ([MovieId], [UserId]);
 CREATE INDEX [IX_Evaluation_UserId] ON [Evaluation] ([UserId]);
 CREATE INDEX [IX_FoodAndDrink_TheaterId] ON [FoodAndDrink] ([TheaterId]);

@@ -8957,6 +8957,7 @@ export class DiscountDTO implements IDiscountDTO {
     maxUsage?: number | undefined;
     usedCount?: number;
     isActive?: boolean;
+    theaterId?: string | undefined;
 
     constructor(data?: IDiscountDTO) {
         if (data) {
@@ -8980,6 +8981,7 @@ export class DiscountDTO implements IDiscountDTO {
             this.maxUsage = _data["maxUsage"];
             this.usedCount = _data["usedCount"];
             this.isActive = _data["isActive"];
+            this.theaterId = _data["theaterId"];
         }
     }
 
@@ -9003,6 +9005,7 @@ export class DiscountDTO implements IDiscountDTO {
         data["maxUsage"] = this.maxUsage;
         data["usedCount"] = this.usedCount;
         data["isActive"] = this.isActive;
+        data["theaterId"] = this.theaterId;
         return data;
     }
 }
@@ -9019,6 +9022,7 @@ export interface IDiscountDTO {
     maxUsage?: number | undefined;
     usedCount?: number;
     isActive?: boolean;
+    theaterId?: string | undefined;
 }
 
 export class CreateDiscountRequest implements ICreateDiscountRequest {
@@ -9031,6 +9035,7 @@ export class CreateDiscountRequest implements ICreateDiscountRequest {
     endDate?: Date;
     maxUsage?: number | undefined;
     isActive?: boolean;
+    theaterId?: string | undefined;
 
     constructor(data?: ICreateDiscountRequest) {
         if (data) {
@@ -9052,6 +9057,7 @@ export class CreateDiscountRequest implements ICreateDiscountRequest {
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.maxUsage = _data["maxUsage"];
             this.isActive = _data["isActive"];
+            this.theaterId = _data["theaterId"];
         }
     }
 
@@ -9073,6 +9079,7 @@ export class CreateDiscountRequest implements ICreateDiscountRequest {
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["maxUsage"] = this.maxUsage;
         data["isActive"] = this.isActive;
+        data["theaterId"] = this.theaterId;
         return data;
     }
 }
@@ -9087,6 +9094,7 @@ export interface ICreateDiscountRequest {
     endDate?: Date;
     maxUsage?: number | undefined;
     isActive?: boolean;
+    theaterId?: string | undefined;
 }
 
 export class UpdateDiscountRequest implements IUpdateDiscountRequest {
@@ -9100,6 +9108,7 @@ export class UpdateDiscountRequest implements IUpdateDiscountRequest {
     endDate?: Date;
     maxUsage?: number | undefined;
     isActive?: boolean;
+    theaterId?: string | undefined;
 
     constructor(data?: IUpdateDiscountRequest) {
         if (data) {
@@ -9122,6 +9131,7 @@ export class UpdateDiscountRequest implements IUpdateDiscountRequest {
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.maxUsage = _data["maxUsage"];
             this.isActive = _data["isActive"];
+            this.theaterId = _data["theaterId"];
         }
     }
 
@@ -9144,6 +9154,7 @@ export class UpdateDiscountRequest implements IUpdateDiscountRequest {
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["maxUsage"] = this.maxUsage;
         data["isActive"] = this.isActive;
+        data["theaterId"] = this.theaterId;
         return data;
     }
 }
@@ -9159,6 +9170,7 @@ export interface IUpdateDiscountRequest {
     endDate?: Date;
     maxUsage?: number | undefined;
     isActive?: boolean;
+    theaterId?: string | undefined;
 }
 
 export abstract class BaseSearchResultsOfFoodAndDrinkDTO implements IBaseSearchResultsOfFoodAndDrinkDTO {

@@ -237,6 +237,43 @@
         ]
       }
     },
+    "/api/Identity/FacebookLogin": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_FacebookLogin",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FacebookLoginRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Identity/VerifyTwoFactor": {
       "post": {
         "tags": [
@@ -701,6 +738,15 @@
         "additionalProperties": false,
         "properties": {
           "idToken": {
+            "type": "string"
+          }
+        }
+      },
+      "FacebookLoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accessToken": {
             "type": "string"
           }
         }

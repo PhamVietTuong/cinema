@@ -304,4 +304,13 @@ END
 
 PRINT 'upgrade: screening room types applied.';
 
+-- ── promotions scope (global vs per-theater) ───────────────────────────────────
+IF COL_LENGTH('[Discount]', 'TheaterId') IS NULL
+BEGIN
+    ALTER TABLE [Discount] ADD [TheaterId] uniqueidentifier NULL;
+    ALTER TABLE [Discount] ADD CONSTRAINT [FK_Discount_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE SET NULL;
+    CREATE INDEX [IX_Discount_TheaterId] ON [Discount] ([TheaterId]);
+    PRINT 'Added [Discount].[TheaterId] (null = system-wide).';
+END
+
 PRINT 'upgrade_db.sql: completed.';

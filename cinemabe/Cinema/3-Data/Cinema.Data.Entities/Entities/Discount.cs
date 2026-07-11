@@ -11,5 +11,8 @@ public class Discount : BaseEntity
     public int? MaxUsage { get; set; }
     public int UsedCount { get; set; } = 0;
     public bool IsActive { get; set; } = true;
+    /// <summary>Theater this code is limited to; null = applies system-wide.</summary>
+    public Guid? TheaterId { get; set; }
     public DiscountType DiscountType { get; set; } = null!;
+    public Theater? Theater { get; set; }
 }

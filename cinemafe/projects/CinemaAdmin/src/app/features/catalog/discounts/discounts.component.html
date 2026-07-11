@@ -44,6 +44,13 @@
         <label class="ad-label">Số Lần Tối Đa</label>
         <input class="ad-input" type="number" formControlName="maxUsage" placeholder="100">
       </div>
+      <div class="ad-field">
+        <label class="ad-label">Phạm Vi Áp Dụng</label>
+        <select class="ad-input" formControlName="theaterId">
+          <option [ngValue]="null">Toàn hệ thống</option>
+          <option *ngFor="let t of theaters" [ngValue]="t.id">{{ t.name }}</option>
+        </select>
+      </div>
       <div class="ad-field full-span">
         <label class="ad-label">Mô Tả</label>
         <input class="ad-input" formControlName="description" placeholder="Mô tả ngắn...">
@@ -64,9 +71,10 @@
     <div class="ad-table-wrap">
       <table class="ad-table">
         <thead>
-          <tr><th>Mã</th><th>Loại</th><th>Giảm</th><th>Hiệu Lực</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
+          <tr><th>Mã</th><th>Loại</th><th>Phạm Vi</th><th>Giảm</th><th>Hiệu Lực</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
           <tr class="ad-filter-row">
             <th><input class="ad-filter-input" [(ngModel)]="filters['code']" (input)="onFilterChange()" placeholder="Lọc..."></th>
+            <th></th>
             <th></th>
             <th><input class="ad-filter-input" [(ngModel)]="filters['percent']" (input)="onFilterChange()" placeholder="Lọc..."></th>
             <th></th>
@@ -78,6 +86,7 @@
           <tr *ngFor="let x of items">
             <td><strong>{{ x.code }}</strong></td>
             <td>{{ typeName(x.discountTypeId) }}</td>
+            <td>{{ theaterScope(x.theaterId) }}</td>
             <td>{{ x.percent }}%</td>
             <td>{{ (x.startDate | date:'dd/MM/yy') }} – {{ (x.endDate | date:'dd/MM/yy') }}</td>
             <td>

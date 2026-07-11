@@ -17,11 +17,14 @@ export class DiscountsManagementComponent extends CatalogCrudBase<Dto> {
   private _svc = inject(CinemaServiceAgent.HttpService);
 
   discountTypes: CinemaServiceAgent.DiscountTypeDTO[] = [];
+  theaters: CinemaServiceAgent.TheaterDTO[] = [];
 
   override ngOnInit(): void {
     super.ngOnInit();
     this._svc.getDiscountTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 }))
       .subscribe(r => { this.discountTypes = r.results ?? []; this._cdr.markForCheck(); });
+    this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 }))
+      .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
   }
 
   buildForm() {
@@ -35,6 +38,8 @@ export class DiscountsManagementComponent extends CatalogCrudBase<Dto> {
       endDate: ['', Validators.required],
       maxUsage: [null],
       isActive: [true],
+      // null = system-wide; otherwise limited to the chosen theater.
+      theaterId: [null],
     });
   }
   fetch(pageIndex: number, pageSize: number, filters: Record<string, string>) {
@@ -54,5 +59,9 @@ export class DiscountsManagementComponent extends CatalogCrudBase<Dto> {
 
   typeName(id?: string): string {
     return this.discountTypes.find(t => t.id === id)?.name ?? '—';
+  }
+
+  theaterScope(id?: string): string {
+    return id ? (this.theaters.find(t => t.id === id)?.name ?? '—') : 'Toàn hệ thống';
   }
 }

@@ -15,6 +15,7 @@ public class DiscountDTO
     public int? MaxUsage { get; set; }
     public int UsedCount { get; set; }
     public bool IsActive { get; set; }
+    public Guid? TheaterId { get; set; }
 }
 
 public class CreateDiscountRequest
@@ -28,6 +29,7 @@ public class CreateDiscountRequest
     public DateTime EndDate { get; set; }
     public int? MaxUsage { get; set; }
     public bool IsActive { get; set; } = true;
+    public Guid? TheaterId { get; set; }
 }
 
 public class UpdateDiscountRequest : IHasId
@@ -42,4 +44,5 @@ public class UpdateDiscountRequest : IHasId
     public DateTime EndDate { get; set; }
     public int? MaxUsage { get; set; }
     public bool IsActive { get; set; } = true;
+    public Guid? TheaterId { get; set; }
 }

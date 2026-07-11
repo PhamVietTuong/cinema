@@ -140,7 +140,7 @@ public class BookingManager : IBookingManager
 
             var total = ticketTotal + foodTotal;
             var (discountAmount, finalAmount, discountId) =
-                await ComputePricingAsync(userId, total, request.DiscountCode);
+                await ComputePricingAsync(userId, total, request.DiscountCode, request.RoomId);
 
             var invoice = new Invoice
             {
@@ -265,7 +265,7 @@ public class BookingManager : IBookingManager
     // (capped by the code's MaxDiscountAmount). A provided-but-invalid code is rejected so the
     // customer is never silently charged full price. Returns (discountAmount, finalAmount, discountId).
     private async Task<(double DiscountAmount, double FinalAmount, Guid? DiscountId)> ComputePricingAsync(
-        Guid userId, double total, string? discountCode)
+        Guid userId, double total, string? discountCode, Guid roomId)
     {
         var running = total;
 
@@ -283,10 +283,13 @@ public class BookingManager : IBookingManager
             var now  = DateTime.UtcNow;
             var code = discountCode.Trim();
             var discount = await _uow.DiscountStore.FindSingleAsync(d => d.Code == code);
+            // A theater-scoped code only applies to bookings at that theater; null = system-wide.
+            var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
             if (discount is null
                 || !discount.IsActive
                 || discount.StartDate > now || now > discount.EndDate
-                || (discount.MaxUsage != null && discount.UsedCount >= discount.MaxUsage))
+                || (discount.MaxUsage != null && discount.UsedCount >= discount.MaxUsage)
+                || (discount.TheaterId != null && discount.TheaterId != bookingTheaterId))
                 throw new InvalidOperationException("Discount code is invalid or no longer available.");
 
             var promo = running * (discount.Percent / 100.0);

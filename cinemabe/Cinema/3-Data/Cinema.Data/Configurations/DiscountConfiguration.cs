@@ -14,5 +14,7 @@ public class DiscountConfiguration : IEntityTypeConfiguration<Discount>
         b.Property(d => d.Percent).HasColumnType("float");
         b.Property(d => d.MaxDiscountAmount).HasColumnType("float");
         b.HasOne(d => d.DiscountType).WithMany(dt => dt.Discounts).HasForeignKey(d => d.DiscountTypeId).OnDelete(DeleteBehavior.Restrict);
+        // Optional theater scope: null = global. Deleting the theater reverts the code to global.
+        b.HasOne(d => d.Theater).WithMany().HasForeignKey(d => d.TheaterId).OnDelete(DeleteBehavior.SetNull);
     }
 }

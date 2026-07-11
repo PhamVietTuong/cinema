@@ -5463,6 +5463,11 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           }
         }
       },
@@ -5505,6 +5510,11 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           }
         }
       },
@@ -5551,6 +5561,11 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           }
         }
       },
