@@ -9,4 +9,6 @@ public class UpdateTheaterRequest
     public string? Phone { get; set; }
     public string? Email { get; set; }
     public string? ImageUrl { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }

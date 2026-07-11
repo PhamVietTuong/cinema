@@ -6236,6 +6236,8 @@ export class TheaterDTO implements ITheaterDTO {
     imageUrl?: string | undefined;
     roomCount?: number;
     isActive?: boolean;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 
     constructor(data?: ITheaterDTO) {
         if (data) {
@@ -6256,6 +6258,8 @@ export class TheaterDTO implements ITheaterDTO {
             this.imageUrl = _data["imageUrl"];
             this.roomCount = _data["roomCount"];
             this.isActive = _data["isActive"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
         }
     }
 
@@ -6276,6 +6280,8 @@ export class TheaterDTO implements ITheaterDTO {
         data["imageUrl"] = this.imageUrl;
         data["roomCount"] = this.roomCount;
         data["isActive"] = this.isActive;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
         return data;
     }
 }
@@ -6289,6 +6295,8 @@ export interface ITheaterDTO {
     imageUrl?: string | undefined;
     roomCount?: number;
     isActive?: boolean;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 }
 
 export class CreateTheaterRequest implements ICreateTheaterRequest {
@@ -6298,6 +6306,8 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
     phone?: string | undefined;
     email?: string | undefined;
     imageUrl?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 
     constructor(data?: ICreateTheaterRequest) {
         if (data) {
@@ -6316,6 +6326,8 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
             this.phone = _data["phone"];
             this.email = _data["email"];
             this.imageUrl = _data["imageUrl"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
         }
     }
 
@@ -6334,6 +6346,8 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
         data["phone"] = this.phone;
         data["email"] = this.email;
         data["imageUrl"] = this.imageUrl;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
         return data;
     }
 }
@@ -6345,6 +6359,8 @@ export interface ICreateTheaterRequest {
     phone?: string | undefined;
     email?: string | undefined;
     imageUrl?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 }
 
 export class UpdateTheaterRequest implements IUpdateTheaterRequest {
@@ -6355,6 +6371,8 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
     phone?: string | undefined;
     email?: string | undefined;
     imageUrl?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 
     constructor(data?: IUpdateTheaterRequest) {
         if (data) {
@@ -6374,6 +6392,8 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
             this.phone = _data["phone"];
             this.email = _data["email"];
             this.imageUrl = _data["imageUrl"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
         }
     }
 
@@ -6393,6 +6413,8 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
         data["phone"] = this.phone;
         data["email"] = this.email;
         data["imageUrl"] = this.imageUrl;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
         return data;
     }
 }
@@ -6405,6 +6427,8 @@ export interface IUpdateTheaterRequest {
     phone?: string | undefined;
     email?: string | undefined;
     imageUrl?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
 }
 
 export abstract class BaseSearchResultsOfShowTimeListDTO implements IBaseSearchResultsOfShowTimeListDTO {

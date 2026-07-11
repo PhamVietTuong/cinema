@@ -33,6 +33,14 @@
         <input class="ad-input" formControlName="email" placeholder="rap@cinema.vn">
         <span class="ad-field-err" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')">Email không hợp lệ.</span>
       </div>
+      <div class="ad-field">
+        <label class="ad-label">Vĩ Độ (Latitude)</label>
+        <input class="ad-input" type="number" step="0.0001" formControlName="latitude" placeholder="10.7743">
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">Kinh Độ (Longitude)</label>
+        <input class="ad-input" type="number" step="0.0001" formControlName="longitude" placeholder="106.7038">
+      </div>
       <div class="ad-field full-span">
         <label class="ad-label">Ảnh Rạp</label>
         <input class="ad-input" formControlName="imageUrl" placeholder="Dán URL hoặc tải ảnh lên">

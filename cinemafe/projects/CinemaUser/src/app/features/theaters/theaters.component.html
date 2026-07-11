@@ -7,7 +7,12 @@
         <option value="">Tất cả thành phố</option>
         <option *ngFor="let c of cities" [value]="c">{{ c }}</option>
       </select>
+      <button type="button" class="near-btn" (click)="findNearest()" [disabled]="locating">
+        <i class="fas fa-location-crosshairs"></i>
+        {{ locating ? 'Đang định vị...' : (hasLocation ? 'Sắp xếp theo khoảng cách' : 'Tìm rạp gần nhất') }}
+      </button>
     </div>
+    <p class="geo-error" *ngIf="geoError"><i class="fas fa-triangle-exclamation"></i> {{ geoError }}</p>
   </div>
 </div>
 
@@ -24,6 +29,7 @@
       <div class="theater-photo">
         <img [src]="t.imageUrl || 'assets/no-poster.jpg'" [alt]="t.name">
         <span class="city-chip" *ngIf="t.city">{{ t.city }}</span>
+        <span class="dist-chip" *ngIf="distanceKm(t) as d"><i class="fas fa-location-arrow"></i> {{ d | number:'1.0-1' }} km</span>
       </div>
       <div class="theater-body">
         <h3 class="theater-name">{{ t.name }}</h3>

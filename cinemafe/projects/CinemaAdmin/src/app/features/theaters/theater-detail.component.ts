@@ -48,6 +48,8 @@ export class TheaterDetailComponent implements OnInit {
       phone: ['', Validators.pattern(/^(?:\+84|0)\d{9,10}$/)],
       email: ['', Validators.email],
       imageUrl: [''],
+      latitude: [null],
+      longitude: [null],
     });
   }
 
@@ -60,6 +62,7 @@ export class TheaterDetailComponent implements OnInit {
     this._cinemaService.getTheater(this.theaterId).subscribe(t => {
       this.form.patchValue({
         name: t.name, city: t.city, address: t.address, phone: t.phone, imageUrl: t.imageUrl,
+        latitude: t.latitude, longitude: t.longitude,
       });
       this._cdr.markForCheck();
     });

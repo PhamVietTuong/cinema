@@ -313,4 +313,11 @@ BEGIN
     PRINT 'Added [Discount].[TheaterId] (null = system-wide).';
 END
 
+-- ── theater geo-coordinates (nearest-theater search) ───────────────────────────
+IF COL_LENGTH('[Theater]', 'Latitude') IS NULL
+BEGIN
+    ALTER TABLE [Theater] ADD [Latitude] float NULL, [Longitude] float NULL;
+    PRINT 'Added [Theater].[Latitude]/[Longitude].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

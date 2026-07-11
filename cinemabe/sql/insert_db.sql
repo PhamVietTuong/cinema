@@ -100,10 +100,10 @@ DECLARE @Theater1 uniqueidentifier = NEWID();
 DECLARE @Theater2 uniqueidentifier = NEWID();
 DECLARE @Theater3 uniqueidentifier = NEWID();
 
-INSERT INTO [Theater] ([Id], [Name], [Address], [City], [Phone], [Email], [IsActive], [CreationTime]) VALUES
-(@Theater1, N'Cinema Grand Central',    N'123 Nguyen Hue Boulevard, District 1',          N'Ho Chi Minh City', N'028-3821-1234', N'grandcentral@cinema.vn',    1, GETUTCDATE()),
-(@Theater2, N'Cinema Landmark 81',      N'461A Dien Bien Phu Street, Binh Thanh District', N'Ho Chi Minh City', N'028-3512-5678', N'landmark81@cinema.vn',      1, GETUTCDATE()),
-(@Theater3, N'Cinema Vincom Royal City',N'72A Nguyen Trai Street, Thanh Xuan District',   N'Hanoi',            N'024-3795-9101', N'royalcity@cinema.vn',        1, GETUTCDATE());
+INSERT INTO [Theater] ([Id], [Name], [Address], [City], [Phone], [Email], [IsActive], [Latitude], [Longitude], [CreationTime]) VALUES
+(@Theater1, N'Cinema Grand Central',    N'123 Nguyen Hue Boulevard, District 1',          N'Ho Chi Minh City', N'028-3821-1234', N'grandcentral@cinema.vn',    1, 10.7743, 106.7038, GETUTCDATE()),
+(@Theater2, N'Cinema Landmark 81',      N'461A Dien Bien Phu Street, Binh Thanh District', N'Ho Chi Minh City', N'028-3512-5678', N'landmark81@cinema.vn',      1, 10.7951, 106.7218, GETUTCDATE()),
+(@Theater3, N'Cinema Vincom Royal City',N'72A Nguyen Trai Street, Thanh Xuan District',   N'Hanoi',            N'024-3795-9101', N'royalcity@cinema.vn',        1, 21.0016, 105.8126, GETUTCDATE());
 
 -- ── Room types (per theater) ──────────────────────────────────────────────────
 INSERT INTO [RoomType] ([Id], [TheaterId], [Name], [Description], [CreationTime])

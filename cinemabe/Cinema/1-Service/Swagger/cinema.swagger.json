@@ -4234,6 +4234,16 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
@@ -4260,6 +4270,16 @@
           },
           "imageUrl": {
             "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
             "nullable": true
           }
         }
@@ -4291,6 +4311,16 @@
           },
           "imageUrl": {
             "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
             "nullable": true
           }
         }
