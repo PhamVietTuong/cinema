@@ -36,6 +36,9 @@ export class App implements OnInit {
   /** Mobile sidebar drawer open state (ignored on desktop where the rail is static). */
   menuOpen = false;
 
+  /** Dark-theme state, persisted to localStorage and applied to <html data-theme>. */
+  isDark = false;
+
   constructor(private _store: Store, private _router: Router) {
     this.isAuth$ = this._store.select(selectIsAuthenticated);
     this.user$ = this._store.select(selectCurrentUser);
@@ -53,6 +56,18 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this._store.dispatch(loadUserFromStorage());
+    this.isDark = localStorage.getItem('ad_theme') === 'dark';
+    this._applyTheme();
+  }
+
+  toggleTheme(): void {
+    this.isDark = !this.isDark;
+    localStorage.setItem('ad_theme', this.isDark ? 'dark' : 'light');
+    this._applyTheme();
+  }
+
+  private _applyTheme(): void {
+    document.documentElement.setAttribute('data-theme', this.isDark ? 'dark' : 'light');
   }
 
   doLogout(): void {

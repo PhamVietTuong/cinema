@@ -62,6 +62,35 @@
   --ad-font-body: 'Inter', 'Segoe UI', sans-serif;
 }
 
+// ── Dark theme (toggled via [data-theme="dark"] on <html>) ──────────────────
+:root[data-theme="dark"] {
+  --ad-surface:        #0f1116;
+  --ad-surface-0:      #14171e;
+  --ad-surface-1:      #1b1e26;
+  --ad-surface-2:      #21252e;
+  --ad-surface-3:      #262b35;
+  --ad-surface-4:      #39404d;
+
+  --ad-glass:          #1b1e26;
+  --ad-glass-strong:   #21252e;
+  --ad-glass-border:   rgba(255, 255, 255, 0.10);
+  --ad-glass-border-strong: rgba(255, 255, 255, 0.18);
+
+  --ad-on:             #e7e9ee;
+  --ad-muted:          #9aa1ad;
+  --ad-faint:          #6b7280;
+
+  --ad-primary-soft:   rgba(225, 29, 52, 0.16);
+  --ad-outline:        rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] body {
+  background-image:
+    radial-gradient(1200px 600px at 78% -10%, rgba(185, 134, 31, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 0% 110%, rgba(225, 29, 52, 0.10), transparent 55%);
+}
+:root[data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background: #47505f; }
+
 // ── Reset / base ────────────────────────────────────────────────────────────
 *, *::before, *::after { box-sizing: border-box; }
 
