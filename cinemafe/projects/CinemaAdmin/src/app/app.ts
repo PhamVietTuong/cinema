@@ -19,7 +19,6 @@ const PAGE_TITLES: Record<string, string> = {
   'user-types': 'Quản Lý Loại Người Dùng',
   holidays: 'Quản Lý Ngày Lễ',
   news: 'Quản Lý Tin Tức',
-  rooms: 'Quản Lý Phòng Chiếu',
   discounts: 'Quản Lý Mã Giảm Giá',
   'food-and-drinks': 'Quản Lý Đồ Ăn & Thức Uống',
   invoices: 'Quản Lý Hóa Đơn',

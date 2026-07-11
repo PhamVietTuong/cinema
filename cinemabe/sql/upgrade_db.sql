@@ -172,4 +172,85 @@ BEGIN
     PRINT 'Added [User].[TwoFactorCodeExpiresAt].';
 END
 
+-- ── per-theater catalog + ticket pricing ───────────────────────────────────────
+-- Seat types & food/drinks become per-theater (add TheaterId); the old
+-- FoodAndDrinkTheater availability join is removed; TimeSlot + TicketPrice added.
+-- NOTE: for an existing DB, this assigns all current seat types / food to the FIRST
+-- theater as a backfill. A clean per-theater split is best done by reseeding.
+PRINT 'upgrade: applying per-theater catalog + ticket pricing...';
+
+DECLARE @FirstTheater uniqueidentifier = (SELECT TOP 1 [Id] FROM [Theater] ORDER BY [CreationTime]);
+
+-- 1) SeatType.TheaterId
+IF COL_LENGTH('[SeatType]', 'TheaterId') IS NULL
+BEGIN
+    ALTER TABLE [SeatType] ADD [TheaterId] uniqueidentifier NULL;
+    EXEC('UPDATE [SeatType] SET [TheaterId] = ' + '(SELECT TOP 1 [Id] FROM [Theater] ORDER BY [CreationTime]) WHERE [TheaterId] IS NULL');
+    ALTER TABLE [SeatType] ALTER COLUMN [TheaterId] uniqueidentifier NOT NULL;
+    ALTER TABLE [SeatType] ADD CONSTRAINT [FK_SeatType_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
+    CREATE INDEX [IX_SeatType_TheaterId] ON [SeatType] ([TheaterId]);
+    PRINT 'Added [SeatType].[TheaterId].';
+END
+
+-- 2) FoodAndDrink.TheaterId
+IF COL_LENGTH('[FoodAndDrink]', 'TheaterId') IS NULL
+BEGIN
+    ALTER TABLE [FoodAndDrink] ADD [TheaterId] uniqueidentifier NULL;
+    EXEC('UPDATE [FoodAndDrink] SET [TheaterId] = ' + '(SELECT TOP 1 [Id] FROM [Theater] ORDER BY [CreationTime]) WHERE [TheaterId] IS NULL');
+    ALTER TABLE [FoodAndDrink] ALTER COLUMN [TheaterId] uniqueidentifier NOT NULL;
+    ALTER TABLE [FoodAndDrink] ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
+    CREATE INDEX [IX_FoodAndDrink_TheaterId] ON [FoodAndDrink] ([TheaterId]);
+    PRINT 'Added [FoodAndDrink].[TheaterId].';
+END
+
+-- 3) Drop the old FoodAndDrinkTheater availability join
+IF OBJECT_ID('FoodAndDrinkTheater', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE [FoodAndDrinkTheater];
+    PRINT 'Dropped [FoodAndDrinkTheater].';
+END
+
+-- 4) TimeSlot
+IF OBJECT_ID('TimeSlot', 'U') IS NULL
+BEGIN
+    CREATE TABLE [TimeSlot] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [Name] nvarchar(100) NOT NULL,
+        [StartTime] nvarchar(5) NOT NULL,
+        [EndTime] nvarchar(5) NOT NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_TimeSlot] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_TimeSlot_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_TimeSlot_TheaterId] ON [TimeSlot] ([TheaterId]);
+    PRINT 'Created [TimeSlot].';
+END
+
+-- 5) TicketPrice
+IF OBJECT_ID('TicketPrice', 'U') IS NULL
+BEGIN
+    CREATE TABLE [TicketPrice] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [SeatTypeId] uniqueidentifier NOT NULL,
+        [TimeSlotId] uniqueidentifier NOT NULL,
+        [IsHoliday] bit NOT NULL,
+        [Price] float NOT NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_TicketPrice] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_TicketPrice_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_TicketPrice_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_TicketPrice_TimeSlot_TimeSlotId] FOREIGN KEY ([TimeSlotId]) REFERENCES [TimeSlot] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_TicketPrice_SeatTypeId] ON [TicketPrice] ([SeatTypeId]);
+    CREATE INDEX [IX_TicketPrice_TimeSlotId] ON [TicketPrice] ([TimeSlotId]);
+    CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_SeatTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [SeatTypeId], [TimeSlotId], [IsHoliday]);
+    PRINT 'Created [TicketPrice].';
+END
+
+PRINT 'upgrade: per-theater catalog + ticket pricing applied.';
+
 PRINT 'upgrade_db.sql: completed.';

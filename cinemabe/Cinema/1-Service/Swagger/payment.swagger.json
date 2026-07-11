@@ -160,6 +160,45 @@
         ]
       }
     },
+    "/api/Payment/ValidateTicket": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "Payment_ValidateTicket",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateTicketRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketValidationDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Payment/GetMyInvoices": {
       "post": {
         "tags": [
@@ -675,6 +714,43 @@
           "invoiceId": {
             "type": "string",
             "format": "guid"
+          }
+        }
+      },
+      "TicketValidationDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "invoiceCode": {
+            "type": "string"
+          },
+          "seatLabel": {
+            "type": "string"
+          },
+          "movieTitle": {
+            "type": "string"
+          },
+          "roomName": {
+            "type": "string"
+          },
+          "showTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ValidateTicketRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "qrCode": {
+            "type": "string"
           }
         }
       },

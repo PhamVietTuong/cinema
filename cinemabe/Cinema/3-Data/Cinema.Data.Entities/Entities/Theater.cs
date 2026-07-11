@@ -9,5 +9,4 @@ public class Theater : BaseEntity
     public string? ImageUrl { get; set; }
     public bool IsActive { get; set; } = true;
     public ICollection<Room> Rooms { get; set; } = new List<Room>();
-    public ICollection<FoodAndDrinkTheater> FoodAndDrinkTheaters { get; set; } = new List<FoodAndDrinkTheater>();
 }

@@ -1,12 +1,7 @@
-<div class="ad-page">
-  <div class="ad-page-header">
-    <div>
-      <h1 class="ad-h1">Quản Lý Phòng Chiếu</h1>
-      <p class="ad-sub">Phòng chiếu và sơ đồ ghế (số hàng × số cột).</p>
-    </div>
-    <div class="ad-toolbar">
-      <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> Thêm</button>
-    </div>
+<div class="rooms-tab">
+  <div class="rooms-toolbar">
+    <p class="ad-sub">Phòng chiếu và sơ đồ ghế (số hàng × số cột).</p>
+    <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> Thêm Phòng</button>
   </div>
 
   <app-modal [open]="showForm" (closed)="cancelEdit()">
@@ -16,13 +11,6 @@
       <div class="ad-field">
         <label class="ad-label">Tên Phòng</label>
         <input class="ad-input" formControlName="name" placeholder="VD: Phòng 1">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">Rạp</label>
-        <select class="ad-input" formControlName="theaterId">
-          <option value="">— Chọn rạp —</option>
-          <option *ngFor="let t of theaters" [ngValue]="t.id">{{ t.name }}</option>
-        </select>
       </div>
       <div class="ad-field">
         <label class="ad-label">Số Hàng</label>
@@ -51,10 +39,9 @@
     <div class="ad-table-wrap">
       <table class="ad-table">
         <thead>
-          <tr><th>Tên Phòng</th><th>Rạp</th><th>Sức Chứa</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
+          <tr><th>Tên Phòng</th><th>Sức Chứa</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
           <tr class="ad-filter-row">
             <th><input class="ad-filter-input" [(ngModel)]="filters['name']" (input)="onFilterChange()" placeholder="Lọc..."></th>
-            <th></th>
             <th></th>
             <th></th>
             <th></th>
@@ -63,7 +50,6 @@
         <tbody>
           <tr *ngFor="let x of items">
             <td><strong>{{ x.name }}</strong></td>
-            <td>{{ theaterName(x.theaterId) }}</td>
             <td>{{ x.totalRows }} × {{ x.totalColumns }} = {{ (x.totalRows ?? 0) * (x.totalColumns ?? 0) }} ghế</td>
             <td>{{ statusLabel(x.status) }}</td>
             <td class="ad-td-actions">
@@ -74,7 +60,7 @@
           </tr>
         </tbody>
       </table>
-      <div *ngIf="!items.length" class="ad-empty"><mat-icon>meeting_room</mat-icon><p>Không có phòng nào.</p></div>
+      <div *ngIf="!items.length" class="ad-empty"><mat-icon>meeting_room</mat-icon><p>Rạp này chưa có phòng nào.</p></div>
     </div>
 
     <div class="ad-pagination" *ngIf="totalCount > 0">
@@ -100,7 +86,7 @@
   <div class="seatmap-head">
     <div>
       <h3 class="ad-card-title">Sơ Đồ Ghế · {{ viewingRoom.name }}</h3>
-      <p class="ad-sub">{{ theaterName(viewingRoom.theaterId) }} · {{ viewingRoom.totalRows }} × {{ viewingRoom.totalColumns }} = {{ (viewingRoom.totalRows ?? 0) * (viewingRoom.totalColumns ?? 0) }} ghế</p>
+      <p class="ad-sub">{{ viewingRoom.totalRows }} × {{ viewingRoom.totalColumns }} = {{ (viewingRoom.totalRows ?? 0) * (viewingRoom.totalColumns ?? 0) }} ghế</p>
     </div>
     <button class="ad-icon-btn" type="button" (click)="closeSeats()" title="Đóng"><mat-icon>close</mat-icon></button>
   </div>
@@ -109,6 +95,17 @@
     <div *ngIf="seatsLoading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>Đang tải sơ đồ ghế…</p></div>
 
     <ng-container *ngIf="!seatsLoading">
+      <!-- Grid size: add / remove rows and columns (existing seats are preserved) -->
+      <div class="grid-resize">
+        <span class="ad-sub">Lưới ghế: {{ viewingRoom.totalRows }} hàng × {{ viewingRoom.totalColumns }} cột</span>
+        <div class="grid-resize-btns">
+          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing" (click)="addRow()"><mat-icon>add</mat-icon> Hàng</button>
+          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing || (viewingRoom.totalRows ?? 0) <= 1" (click)="removeRow()"><mat-icon>remove</mat-icon> Hàng</button>
+          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing" (click)="addColumn()"><mat-icon>add</mat-icon> Cột</button>
+          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing || (viewingRoom.totalColumns ?? 0) <= 1" (click)="removeColumn()"><mat-icon>remove</mat-icon> Cột</button>
+        </div>
+      </div>
+
       <!-- Toolbar: choose mode + (in paint mode) the seat type to apply -->
       <div class="seatmap-toolbar">
         <div class="mode-tabs">

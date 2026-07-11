@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 import { TheaterFormComponent } from './theater-form.component';
 
@@ -18,6 +19,7 @@ export class TheatersManagementComponent implements OnInit {
   constructor(
     private _cinemaService: CinemaServiceAgent.HttpService,
     private _cdr: ChangeDetectorRef,
+    private _router: Router,
   ) {}
 
   ngOnInit(): void { this.loadTheaters(); }
@@ -37,7 +39,7 @@ export class TheatersManagementComponent implements OnInit {
 
   openCreate(): void { this.editing = null; this.showForm = true; }
 
-  editTheater(t: CinemaServiceAgent.TheaterDTO): void { this.editing = t; this.showForm = true; }
+  openDetail(t: CinemaServiceAgent.TheaterDTO): void { this._router.navigate(['/theaters', t.id]); }
 
   onSaved(): void { this.loadTheaters(); }
 }

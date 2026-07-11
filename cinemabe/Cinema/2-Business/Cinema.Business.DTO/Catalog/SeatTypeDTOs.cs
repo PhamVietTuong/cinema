@@ -5,6 +5,7 @@ namespace Cinema.Business.DTO.Catalog;
 public class SeatTypeDTO
 {
     public Guid Id { get; set; }
+    public Guid TheaterId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Color { get; set; } = "#808080";
@@ -13,6 +14,7 @@ public class SeatTypeDTO
 
 public class CreateSeatTypeRequest
 {
+    public Guid TheaterId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Color { get; set; } = "#808080";
@@ -22,6 +24,7 @@ public class CreateSeatTypeRequest
 public class UpdateSeatTypeRequest : IHasId
 {
     public Guid Id { get; set; }
+    public Guid TheaterId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Color { get; set; } = "#808080";

@@ -24,6 +24,7 @@ export interface IHttpService {
     createBooking(request: CreateBookingRequest): Observable<BookingResultDTO>;
     confirmPayment(request: ConfirmPaymentRequest): Observable<void>;
     cancelBooking(request: CancelBookingRequest): Observable<void>;
+    validateTicket(request: ValidateTicketRequest): Observable<TicketValidationDTO>;
     getMyInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceDTO>;
     getInvoice(id?: string | undefined): Observable<InvoiceDTO>;
     getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceDTO>;
@@ -247,6 +248,58 @@ export class HttpService implements IHttpService {
             let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result400 = ProblemDetails.fromJS(resultData400);
             return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    validateTicket(request: ValidateTicketRequest): Observable<TicketValidationDTO> {
+        let url_ = this.baseUrl + "/api/Payment/ValidateTicket";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processValidateTicket(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processValidateTicket(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TicketValidationDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TicketValidationDTO>;
+        }));
+    }
+
+    protected processValidateTicket(response: HttpResponseBase): Observable<TicketValidationDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TicketValidationDTO.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -1201,6 +1254,102 @@ export class CancelBookingRequest implements ICancelBookingRequest {
 
 export interface ICancelBookingRequest {
     invoiceId?: string;
+}
+
+export class TicketValidationDTO implements ITicketValidationDTO {
+    valid?: boolean;
+    invoiceCode?: string;
+    seatLabel?: string;
+    movieTitle?: string;
+    roomName?: string;
+    showTime?: Date;
+    message?: string;
+
+    constructor(data?: ITicketValidationDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.valid = _data["valid"];
+            this.invoiceCode = _data["invoiceCode"];
+            this.seatLabel = _data["seatLabel"];
+            this.movieTitle = _data["movieTitle"];
+            this.roomName = _data["roomName"];
+            this.showTime = _data["showTime"] ? new Date(_data["showTime"].toString()) : <any>undefined;
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): TicketValidationDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new TicketValidationDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["valid"] = this.valid;
+        data["invoiceCode"] = this.invoiceCode;
+        data["seatLabel"] = this.seatLabel;
+        data["movieTitle"] = this.movieTitle;
+        data["roomName"] = this.roomName;
+        data["showTime"] = this.showTime ? this.showTime.toISOString() : <any>undefined;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface ITicketValidationDTO {
+    valid?: boolean;
+    invoiceCode?: string;
+    seatLabel?: string;
+    movieTitle?: string;
+    roomName?: string;
+    showTime?: Date;
+    message?: string;
+}
+
+export class ValidateTicketRequest implements IValidateTicketRequest {
+    qrCode?: string;
+
+    constructor(data?: IValidateTicketRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.qrCode = _data["qrCode"];
+        }
+    }
+
+    static fromJS(data: any): ValidateTicketRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ValidateTicketRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["qrCode"] = this.qrCode;
+        return data;
+    }
+}
+
+export interface IValidateTicketRequest {
+    qrCode?: string;
 }
 
 export abstract class BaseSearchResultsOfInvoiceDTO implements IBaseSearchResultsOfInvoiceDTO {

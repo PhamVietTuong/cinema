@@ -1,23 +1,26 @@
-import { Component, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
-import { CatalogCrudBase } from '../catalog-crud.base';
-import { ModalComponent } from '../../../shared/modal.component';
-import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
+import { CatalogCrudBase } from '../catalog/catalog-crud.base';
+import { ModalComponent } from '../../shared/modal.component';
+import { ConfirmModalComponent } from '../../shared/confirm-modal.component';
 
 type Dto = CinemaServiceAgent.RoomDTO;
 
+/** Room management scoped to a single theater: list, create/update, and seat-map editor. */
 @Component({
-  selector: 'app-rooms',
+  selector: 'app-theater-rooms',
   standalone: true,
   imports: [SharedModule, ModalComponent, ConfirmModalComponent],
-  templateUrl: './rooms.component.html',
-  styleUrl: './rooms.component.scss',
+  templateUrl: './theater-rooms.component.html',
+  styleUrl: './theater-rooms.component.scss',
 })
-export class RoomsManagementComponent extends CatalogCrudBase<Dto> {
+export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
+  /** The theater whose rooms this list manages. */
+  @Input({ required: true }) theaterId!: string;
+
   private _svc = inject(CinemaServiceAgent.HttpService);
 
-  theaters: CinemaServiceAgent.TheaterDTO[] = [];
   readonly statuses = [
     { v: CinemaServiceAgent.RoomStatus.Active, label: 'Hoạt Động' },
     { v: CinemaServiceAgent.RoomStatus.Maintenance, label: 'Bảo Trì' },
@@ -30,37 +33,29 @@ export class RoomsManagementComponent extends CatalogCrudBase<Dto> {
   allSeatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
   seatsLoading = false;
   saving = false;
+  resizing = false;
   /** Editor mode: paint a seat type onto seats, or pair/unpair double seats. */
   mode: 'paint' | 'pair' = 'paint';
   activeSeatTypeId = '';
   /** First seat picked while pairing; the next click completes the pair. */
   private _pairFirst: CinemaServiceAgent.RoomSeatDTO | null = null;
 
-  override ngOnInit(): void {
-    super.ngOnInit();
-    this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 }))
-      .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
-  }
-
   buildForm() {
     return this._fb.group({
       name: ['', Validators.required],
-      theaterId: ['', Validators.required],
       totalRows: [1, [Validators.required, Validators.min(1)]],
       totalColumns: [1, [Validators.required, Validators.min(1)]],
       status: [CinemaServiceAgent.RoomStatus.Active, Validators.required],
     });
   }
   fetch(pageIndex: number, pageSize: number, filters: Record<string, string>) {
-    return this._svc.getRooms(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize, filters }));
+    return this._svc.getRooms(CinemaServiceAgent.PagingSearchDTO.fromJS(
+      { pageIndex, pageSize, filters: { ...filters, theaterId: this.theaterId } }));
   }
-  create(v: any) { return this._svc.createRoom(CinemaServiceAgent.CreateRoomRequest.fromJS(v)); }
-  update(v: any, id: string) { return this._svc.updateRoom(CinemaServiceAgent.UpdateRoomRequest.fromJS({ ...v, id })); }
+  create(v: any) { return this._svc.createRoom(CinemaServiceAgent.CreateRoomRequest.fromJS({ ...v, theaterId: this.theaterId })); }
+  update(v: any, id: string) { return this._svc.updateRoom(CinemaServiceAgent.UpdateRoomRequest.fromJS({ ...v, id, theaterId: this.theaterId })); }
   remove(id: string) { return this._svc.deleteRoom(id); }
 
-  theaterName(id?: string): string {
-    return this.theaters.find(t => t.id === id)?.name ?? '—';
-  }
   statusLabel(s?: CinemaServiceAgent.RoomStatus): string {
     return this.statuses.find(x => x.v === s)?.label ?? '—';
   }
@@ -92,6 +87,34 @@ export class RoomsManagementComponent extends CatalogCrudBase<Dto> {
   }
 
   setMode(m: 'paint' | 'pair'): void { this.mode = m; this._pairFirst = null; }
+
+  // ── Grid resize: add/remove rows or columns, preserving existing seats ──────────
+  addRow(): void { this.resizeGrid(1, 0); }
+  removeRow(): void { this.resizeGrid(-1, 0); }
+  addColumn(): void { this.resizeGrid(0, 1); }
+  removeColumn(): void { this.resizeGrid(0, -1); }
+
+  private resizeGrid(rowDelta: number, colDelta: number): void {
+    if (!this.viewingRoom || this.resizing) { return; }
+    const totalRows = (this.viewingRoom.totalRows ?? 0) + rowDelta;
+    const totalColumns = (this.viewingRoom.totalColumns ?? 0) + colDelta;
+    if (totalRows < 1 || totalColumns < 1) { return; }
+
+    this.resizing = true;
+    this._pairFirst = null;
+    this._svc.resizeRoomSeatGrid(CinemaServiceAgent.ResizeSeatGridRequest.fromJS(
+      { roomId: this.viewingRoom.id, totalRows, totalColumns }))
+      .subscribe({
+        next: seats => {
+          this.seats = seats ?? [];
+          this.viewingRoom!.totalRows = totalRows;
+          this.viewingRoom!.totalColumns = totalColumns;
+          this.resizing = false;
+          this._cdr.markForCheck();
+        },
+        error: () => { this.resizing = false; this._cdr.markForCheck(); },
+      });
+  }
 
   /** Click handler: paint the active seat type, or pair/unpair two seats. */
   onSeatClick(seat: CinemaServiceAgent.RoomSeatDTO): void {

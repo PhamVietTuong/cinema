@@ -80,6 +80,200 @@
         ]
       }
     },
+    "/api/Identity/ForgotPassword": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_ForgotPassword",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Identity/ResetPassword": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_ResetPassword",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Identity/ConfirmEmail": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_ConfirmEmail",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmEmailRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Identity/ResendVerification": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_ResendVerification",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Identity/GoogleLogin": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_GoogleLogin",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Identity/VerifyTwoFactor": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_VerifyTwoFactor",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTwoFactorRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Identity/GetProfile": {
       "get": {
         "tags": [
@@ -147,6 +341,36 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Identity/SetTwoFactor": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_SetTwoFactor",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTwoFactorRequest"
               }
             }
           },
@@ -329,6 +553,9 @@
           },
           "user": {
             "$ref": "#/components/schemas/UserDTO"
+          },
+          "requiresTwoFactor": {
+            "type": "boolean"
           }
         }
       },
@@ -424,6 +651,72 @@
           }
         }
       },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfirmEmailRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "ResendVerificationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "GoogleLoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "idToken": {
+            "type": "string"
+          }
+        }
+      },
+      "VerifyTwoFactorRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "emailOrPhone": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
       "UpdateProfileRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -452,6 +745,15 @@
           },
           "confirmNewPassword": {
             "type": "string"
+          }
+        }
+      },
+      "SetTwoFactorRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
           }
         }
       },

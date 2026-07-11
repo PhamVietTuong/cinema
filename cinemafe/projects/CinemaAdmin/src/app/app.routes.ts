@@ -38,14 +38,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/theaters/theaters-management.component').then(m => m.TheatersManagementComponent)
       },
       {
+        path: 'theaters/:id',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/theaters/theater-detail.component').then(m => m.TheaterDetailComponent)
+      },
+      {
         path: 'showtimes',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/catalog/show-times/show-times.component').then(m => m.ShowTimesManagementComponent)
-      },
-      {
-        path: 'rooms',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/rooms/rooms.component').then(m => m.RoomsManagementComponent)
       },
       {
         path: 'discounts',

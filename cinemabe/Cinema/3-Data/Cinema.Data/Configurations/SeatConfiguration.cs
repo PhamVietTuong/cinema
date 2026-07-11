@@ -24,5 +24,6 @@ public class SeatTypeConfiguration : IEntityTypeConfiguration<SeatType>
         b.HasKey(s => s.Id);
         b.Property(s => s.Name).IsRequired().HasMaxLength(100);
         b.Property(s => s.PriceMultiplier).HasColumnType("float");
+        b.HasOne(s => s.Theater).WithMany().HasForeignKey(s => s.TheaterId).OnDelete(DeleteBehavior.Cascade);
     }
 }

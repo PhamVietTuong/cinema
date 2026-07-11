@@ -122,6 +122,26 @@ public class FoodAndDrinkManager(IApplicationUnitOfWork uow)
     }
 }
 
+public class TimeSlotManager(IApplicationUnitOfWork uow)
+    : CatalogManager<TimeSlot, TimeSlotDTO, CreateTimeSlotRequest, UpdateTimeSlotRequest>(uow), ITimeSlotManager
+{
+    protected override IGenericStore<TimeSlot> Store => Uow.TimeSlotStore;
+
+    protected override bool Match(TimeSlot e, string kw)
+    {
+        return e.Name.Contains(kw, StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+public class TicketPriceManager(IApplicationUnitOfWork uow)
+    : CatalogManager<TicketPrice, TicketPriceDTO, CreateTicketPriceRequest, UpdateTicketPriceRequest>(uow), ITicketPriceManager
+{
+    protected override IGenericStore<TicketPrice> Store => Uow.TicketPriceStore;
+
+    // No free-text field to search; keyword search is a no-op (per-column filters still apply).
+    protected override bool Match(TicketPrice e, string kw) => true;
+}
+
 public class RoomManager(IApplicationUnitOfWork uow)
     : CatalogManager<Room, RoomDTO, CreateRoomRequest, UpdateRoomRequest>(uow), IRoomManager
 {
@@ -136,7 +156,7 @@ public class RoomManager(IApplicationUnitOfWork uow)
     {
         var entity = request.ToNewEntity<CreateRoomRequest, Room>();
         await Uow.RoomStore.CreateAsync(entity);
-        await GenerateSeatsAsync(entity.Id, entity.TotalRows, entity.TotalColumns);
+        await GenerateSeatsAsync(entity.Id, entity.TheaterId, entity.TotalRows, entity.TotalColumns);
         return entity.ToDTO<Room, RoomDTO>();
     }
 
@@ -154,20 +174,20 @@ public class RoomManager(IApplicationUnitOfWork uow)
             var existing = await Uow.SeatStore.FindAsync(s => s.RoomId == entity.Id);
             foreach (var seat in existing)
                 await Uow.SeatStore.DeleteAsync(seat.Id);
-            await GenerateSeatsAsync(entity.Id, request.TotalRows, request.TotalColumns);
+            await GenerateSeatsAsync(entity.Id, entity.TheaterId, request.TotalRows, request.TotalColumns);
         }
         return entity.ToDTO<Room, RoomDTO>();
     }
 
     /// <summary>Creates a seat for every cell of the room's row × column grid.</summary>
-    private async Task GenerateSeatsAsync(Guid roomId, int rows, int columns)
+    private async Task GenerateSeatsAsync(Guid roomId, Guid theaterId, int rows, int columns)
     {
         if (rows <= 0 || columns <= 0)
             return;
 
-        var seatTypeId = (await Uow.SeatTypeStore.GetAllAsync()).FirstOrDefault()?.Id ?? Guid.Empty;
+        var seatTypeId = (await Uow.SeatTypeStore.FindAsync(st => st.TheaterId == theaterId)).FirstOrDefault()?.Id ?? Guid.Empty;
         if (seatTypeId == Guid.Empty)
-            return; // No seat types defined yet — nothing valid to attach seats to.
+            return; // No seat types for this theater yet — nothing valid to attach seats to.
 
         var seats = new List<Seat>();
         for (var r = 0; r < rows; r++)
@@ -241,6 +261,57 @@ public class RoomManager(IApplicationUnitOfWork uow)
             seat.IsActive    = item.IsActive;
         }
         await Uow.SaveChangesAsync();
+    }
+
+    public async Task<List<RoomSeatDTO>> ResizeSeatGridAsync(ResizeSeatGridRequest request)
+    {
+        var room = await Uow.RoomStore.GetByIdAsync(request.RoomId)
+                   ?? throw new KeyNotFoundException($"Room {request.RoomId} not found.");
+
+        var rows = Math.Max(0, request.TotalRows);
+        var columns = Math.Max(0, request.TotalColumns);
+
+        // Cells the grid should contain after the resize.
+        var desired = new HashSet<(string Row, int Col)>();
+        for (var r = 0; r < rows; r++)
+        {
+            var rowName = ToRowName(r);
+            for (var c = 1; c <= columns; c++)
+                desired.Add((rowName, c));
+        }
+
+        var existing = (await Uow.SeatStore.FindAsync(s => s.RoomId == room.Id)).ToList();
+
+        // Drop seats that fall outside the new grid (trimmed rows/columns).
+        foreach (var seat in existing.Where(s => !desired.Contains((s.RowName, s.ColIndex))))
+            await Uow.SeatStore.DeleteAsync(seat.Id);
+
+        // Create seats for the appended cells; seats that stay keep their type + grouping.
+        var present = existing.Select(s => (s.RowName, s.ColIndex)).ToHashSet();
+        var seatTypeId = (await Uow.SeatTypeStore.FindAsync(st => st.TheaterId == room.TheaterId)).FirstOrDefault()?.Id ?? Guid.Empty;
+        if (seatTypeId != Guid.Empty)
+        {
+            var toAdd = desired
+                .Where(cell => !present.Contains(cell))
+                .Select(cell => new Seat
+                {
+                    RoomId     = room.Id,
+                    RowName    = cell.Row,
+                    ColIndex   = cell.Col,
+                    SeatTypeId = seatTypeId,
+                    IsActive   = true,
+                })
+                .ToList();
+            if (toAdd.Count > 0)
+                await Uow.SeatStore.CreateRangeAsync(toAdd);
+        }
+
+        // Keep the room's stored dimensions in step with its seat grid.
+        room.TotalRows = rows;
+        room.TotalColumns = columns;
+        await Uow.RoomStore.UpdateAsync(room);
+
+        return await GetSeatMapAsync(room.Id);
     }
 }
 

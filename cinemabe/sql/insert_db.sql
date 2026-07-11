@@ -62,11 +62,9 @@ DECLARE @STStandard uniqueidentifier = NEWID();
 DECLARE @STVIP      uniqueidentifier = NEWID();
 DECLARE @STCouple   uniqueidentifier = NEWID();
 
--- Price is now driven by SeatType.PriceMultiplier × ShowTimeRoom.BasePrice (no ticket types).
-INSERT INTO [SeatType] ([Id], [Name], [Description], [Color], [PriceMultiplier], [CreationTime]) VALUES
-(@STStandard, N'Standard', N'Regular cinema seat',        N'#3B82F6', 1.0, GETUTCDATE()),
-(@STVIP,      N'VIP',      N'Extra wide, reclining seat', N'#F59E0B', 1.5, GETUTCDATE()),
-(@STCouple,   N'Couple',   N'Double-width loveseat (booked as a linked pair)', N'#EC4899', 2.0, GETUTCDATE());
+-- Seat types are per-theater now; they are seeded after the theaters exist (below).
+-- @STStandard/@STVIP/@STCouple are reused as scratch vars, reassigned per theater
+-- right before that theater's seats are generated.
 
 -- ── Discount Types ────────────────────────────────────────────────────────────
 DECLARE @DTPromotional uniqueidentifier = NEWID();
@@ -95,25 +93,7 @@ INSERT INTO [Holiday] ([Id], [Name], [Date], [PriceMultiplier], [CreationTime]) 
 (NEWID(), N'National Day',          '2026-09-02', 1.3, GETUTCDATE()),
 (NEWID(), N'Christmas',             '2026-12-25', 1.2, GETUTCDATE());
 
--- ── Food & Drinks ─────────────────────────────────────────────────────────────
-DECLARE @Food1 uniqueidentifier = NEWID();
-DECLARE @Food2 uniqueidentifier = NEWID();
-DECLARE @Food3 uniqueidentifier = NEWID();
-DECLARE @Food4 uniqueidentifier = NEWID();
-DECLARE @Food5 uniqueidentifier = NEWID();
-DECLARE @Food6 uniqueidentifier = NEWID();
-DECLARE @Food7 uniqueidentifier = NEWID();
-DECLARE @Food8 uniqueidentifier = NEWID();
-
-INSERT INTO [FoodAndDrink] ([Id], [Name], [Price], [Description], [IsAvailable], [CreationTime]) VALUES
-(@Food1, N'Popcorn (Regular)',      35000, N'Salted or sweet popcorn 500ml',          1, GETUTCDATE()),
-(@Food2, N'Popcorn (Large)',        55000, N'Salted or sweet popcorn 1000ml',         1, GETUTCDATE()),
-(@Food3, N'Coca-Cola',              30000, N'Cold Coca-Cola 500ml',                   1, GETUTCDATE()),
-(@Food4, N'Pepsi',                  30000, N'Cold Pepsi 500ml',                       1, GETUTCDATE()),
-(@Food5, N'Combo (Popcorn+Drink)',  75000, N'Regular popcorn + any 500ml drink',      1, GETUTCDATE()),
-(@Food6, N'Nachos',                 45000, N'Nachos with cheese dip 200g',            1, GETUTCDATE()),
-(@Food7, N'Hot Dog',                40000, N'Classic hot dog with mustard & ketchup', 1, GETUTCDATE()),
-(@Food8, N'Caramel Popcorn',        45000, N'Sweet caramel popcorn 500ml',            1, GETUTCDATE());
+-- Food & drinks are per-theater now; they are seeded after the theaters exist (below).
 
 -- ── Theaters ──────────────────────────────────────────────────────────────────
 DECLARE @Theater1 uniqueidentifier = NEWID();
@@ -125,14 +105,53 @@ INSERT INTO [Theater] ([Id], [Name], [Address], [City], [Phone], [Email], [IsAct
 (@Theater2, N'Cinema Landmark 81',      N'461A Dien Bien Phu Street, Binh Thanh District', N'Ho Chi Minh City', N'028-3512-5678', N'landmark81@cinema.vn',      1, GETUTCDATE()),
 (@Theater3, N'Cinema Vincom Royal City',N'72A Nguyen Trai Street, Thanh Xuan District',   N'Hanoi',            N'024-3795-9101', N'royalcity@cinema.vn',        1, GETUTCDATE());
 
--- ── Food available at each theater ───────────────────────────────────────────
-INSERT INTO [FoodAndDrinkTheater] ([FoodAndDrinkId], [TheaterId], [IsAvailable]) VALUES
-(@Food1, @Theater1, 1), (@Food2, @Theater1, 1), (@Food3, @Theater1, 1), (@Food4, @Theater1, 1),
-(@Food5, @Theater1, 1), (@Food6, @Theater1, 1), (@Food7, @Theater1, 1), (@Food8, @Theater1, 1),
-(@Food1, @Theater2, 1), (@Food2, @Theater2, 1), (@Food3, @Theater2, 1), (@Food4, @Theater2, 1),
-(@Food5, @Theater2, 1), (@Food6, @Theater2, 1), (@Food7, @Theater2, 0), (@Food8, @Theater2, 1),
-(@Food1, @Theater3, 1), (@Food2, @Theater3, 1), (@Food3, @Theater3, 1), (@Food4, @Theater3, 1),
-(@Food5, @Theater3, 1), (@Food6, @Theater3, 0), (@Food7, @Theater3, 1), (@Food8, @Theater3, 1);
+-- ── Seat types (3 per theater) ────────────────────────────────────────────────
+INSERT INTO [SeatType] ([Id], [TheaterId], [Name], [Description], [Color], [PriceMultiplier], [CreationTime])
+SELECT NEWID(), t.Id, s.Name, s.Description, s.Color, s.PriceMultiplier, GETUTCDATE()
+FROM [Theater] t
+CROSS JOIN (VALUES
+    (N'Standard', N'Regular cinema seat',        N'#3B82F6', 1.0),
+    (N'VIP',      N'Extra wide, reclining seat', N'#F59E0B', 1.5),
+    (N'Couple',   N'Double-width loveseat (booked as a linked pair)', N'#EC4899', 2.0)
+) AS s(Name, Description, Color, PriceMultiplier);
+
+-- ── Food & drinks (per theater) ───────────────────────────────────────────────
+INSERT INTO [FoodAndDrink] ([Id], [TheaterId], [Name], [Price], [Description], [IsAvailable], [CreationTime])
+SELECT NEWID(), t.Id, f.Name, f.Price, f.Description, f.IsAvailable, GETUTCDATE()
+FROM [Theater] t
+CROSS JOIN (VALUES
+    (N'Popcorn (Regular)',     35000, N'Salted or sweet popcorn 500ml',          1),
+    (N'Popcorn (Large)',       55000, N'Salted or sweet popcorn 1000ml',         1),
+    (N'Coca-Cola',             30000, N'Cold Coca-Cola 500ml',                   1),
+    (N'Pepsi',                 30000, N'Cold Pepsi 500ml',                       1),
+    (N'Combo (Popcorn+Drink)', 75000, N'Regular popcorn + any 500ml drink',      1),
+    (N'Nachos',                45000, N'Nachos with cheese dip 200g',            1),
+    (N'Hot Dog',               40000, N'Classic hot dog with mustard & ketchup', 1),
+    (N'Caramel Popcorn',       45000, N'Sweet caramel popcorn 500ml',            1)
+) AS f(Name, Price, Description, IsAvailable);
+
+-- ── Time slots (per theater) ──────────────────────────────────────────────────
+INSERT INTO [TimeSlot] ([Id], [TheaterId], [Name], [StartTime], [EndTime], [CreationTime])
+SELECT NEWID(), t.Id, s.Name, s.StartTime, s.EndTime, GETUTCDATE()
+FROM [Theater] t
+CROSS JOIN (VALUES
+    (N'Sáng',  N'08:00', N'12:00'),
+    (N'Chiều', N'12:00', N'17:00'),
+    (N'Tối',   N'17:00', N'23:00')
+) AS s(Name, StartTime, EndTime);
+
+-- ── Ticket prices (seat type × time slot × holiday, per theater) ──────────────
+-- Explicit price = base 70,000đ × seat multiplier × time-slot factor × holiday factor,
+-- rounded to the nearest 1,000đ.
+INSERT INTO [TicketPrice] ([Id], [TheaterId], [SeatTypeId], [TimeSlotId], [IsHoliday], [Price], [CreationTime])
+SELECT NEWID(), st.TheaterId, st.Id, ts.Id, h.IsHoliday,
+       CAST(ROUND(70000 * st.PriceMultiplier
+            * CASE ts.Name WHEN N'Tối' THEN 1.2 WHEN N'Sáng' THEN 0.9 ELSE 1.0 END
+            * CASE WHEN h.IsHoliday = 1 THEN 1.2 ELSE 1.0 END, -3) AS float),
+       GETUTCDATE()
+FROM [SeatType] st
+JOIN [TimeSlot] ts ON ts.TheaterId = st.TheaterId
+CROSS JOIN (VALUES (CAST(0 AS bit)), (CAST(1 AS bit))) AS h(IsHoliday);
 
 -- ── Rooms ─────────────────────────────────────────────────────────────────────
 -- Theater 1: 4 rooms (incl. IMAX)
@@ -165,6 +184,11 @@ INSERT INTO [Room] ([Id], [Name], [TheaterId], [TotalRows], [TotalColumns], [Sta
 
 -- ── Seats (cross-join approach — no cursor) ───────────────────────────────────
 
+-- Point the scratch seat-type vars at Theater 1's own seat types.
+SET @STStandard = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater1 AND Name = N'Standard');
+SET @STVIP      = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater1 AND Name = N'VIP');
+SET @STCouple   = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater1 AND Name = N'Couple');
+
 -- Theater 1 – Room 1  (8 rows × 12 cols, rows A-B = VIP)
 INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
 SELECT NEWID(), @T1R1, r.RowLetter, c.ColNum,
@@ -195,6 +219,11 @@ SELECT NEWID(), @T1R4, r.RowLetter, c.ColNum,
 FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6),('G',7),('H',8),('I',9),('J',10)) AS r(RowLetter, RowNum)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14)) AS c(ColNum);
 
+-- Point the scratch seat-type vars at Theater 2's own seat types.
+SET @STStandard = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater2 AND Name = N'Standard');
+SET @STVIP      = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater2 AND Name = N'VIP');
+SET @STCouple   = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater2 AND Name = N'Couple');
+
 -- Theater 2 – Room 1  (8 rows × 12 cols, rows A-B = VIP)
 INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
 SELECT NEWID(), @T2R1, r.RowLetter, c.ColNum,
@@ -215,6 +244,11 @@ SELECT NEWID(), @T2R3, r.RowLetter, c.ColNum,
        CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
 FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6)) AS r(RowLetter, RowNum)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS c(ColNum);
+
+-- Point the scratch seat-type vars at Theater 3's own seat types.
+SET @STStandard = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater3 AND Name = N'Standard');
+SET @STVIP      = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater3 AND Name = N'VIP');
+SET @STCouple   = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater3 AND Name = N'Couple');
 
 -- Theater 3 – Room 1  (8 rows × 12 cols, rows A-B = VIP)
 INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])

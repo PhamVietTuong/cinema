@@ -1,6 +1,10 @@
 namespace Cinema.Data.Entities;
 public class SeatType : BaseEntity
 {
+    /// <summary>The theater this seat type belongs to (seat types are per-theater).</summary>
+    public Guid TheaterId { get; set; }
+    public Theater Theater { get; set; } = null!;
+
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Color { get; set; } = "#808080";

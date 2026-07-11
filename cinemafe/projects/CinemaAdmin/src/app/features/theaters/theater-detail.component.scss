@@ -1,0 +1,13 @@
+:host { display: block; }
+
+.ad-page > .ad-card { margin-bottom: 20px; }
+.detail-tabs { margin-top: 8px; }
+.tab-body { padding-top: 20px; }
+
+.theater-form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.full-span { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 12px; }
+
+@media (max-width: 720px) {
+  .theater-form { grid-template-columns: 1fr; }
+}

@@ -23,6 +23,7 @@ CREATE TABLE [DiscountType] (
 
 CREATE TABLE [FoodAndDrink] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
     [Name] nvarchar(200) NOT NULL,
     [Price] float NOT NULL,
     [ImageUrl] nvarchar(max) NULL,
@@ -77,6 +78,7 @@ CREATE TABLE [News] (
 
 CREATE TABLE [SeatType] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
     [Name] nvarchar(100) NOT NULL,
     [Description] nvarchar(max) NULL,
     [Color] nvarchar(max) NOT NULL,
@@ -145,15 +147,6 @@ CREATE TABLE [Discount] (
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Discount] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_Discount_DiscountType_DiscountTypeId] FOREIGN KEY ([DiscountTypeId]) REFERENCES [DiscountType] ([Id]) ON DELETE NO ACTION
-);
-
-CREATE TABLE [FoodAndDrinkTheater] (
-    [FoodAndDrinkId] uniqueidentifier NOT NULL,
-    [TheaterId] uniqueidentifier NOT NULL,
-    [IsAvailable] bit NOT NULL,
-    CONSTRAINT [PK_FoodAndDrinkTheater] PRIMARY KEY ([FoodAndDrinkId], [TheaterId]),
-    CONSTRAINT [FK_FoodAndDrinkTheater_FoodAndDrink_FoodAndDrinkId] FOREIGN KEY ([FoodAndDrinkId]) REFERENCES [FoodAndDrink] ([Id]) ON DELETE CASCADE,
-    CONSTRAINT [FK_FoodAndDrinkTheater_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
 );
 
 CREATE TABLE [Room] (
@@ -316,6 +309,38 @@ CREATE TABLE [InvoiceTicket] (
     CONSTRAINT [FK_InvoiceTicket_ShowTimeRoom_ShowTimeId_RoomId] FOREIGN KEY ([ShowTimeId], [RoomId]) REFERENCES [ShowTimeRoom] ([ShowTimeId], [RoomId]) ON DELETE NO ACTION
 );
 
+CREATE TABLE [TimeSlot] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [StartTime] nvarchar(5) NOT NULL,
+    [EndTime] nvarchar(5) NOT NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_TimeSlot] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_TimeSlot_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
+);
+
+CREATE TABLE [TicketPrice] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [SeatTypeId] uniqueidentifier NOT NULL,
+    [TimeSlotId] uniqueidentifier NOT NULL,
+    [IsHoliday] bit NOT NULL,
+    [Price] float NOT NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_TicketPrice] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_TicketPrice_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_TicketPrice_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_TicketPrice_TimeSlot_TimeSlotId] FOREIGN KEY ([TimeSlotId]) REFERENCES [TimeSlot] ([Id]) ON DELETE NO ACTION
+);
+
+-- Deferred FKs: SeatType and FoodAndDrink are created before Theater, so their
+-- theater FK is added here once both tables exist.
+ALTER TABLE [SeatType]     ADD CONSTRAINT [FK_SeatType_Theater_TheaterId]     FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
+ALTER TABLE [FoodAndDrink] ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
+
 -- Indexes
 CREATE INDEX [IX_Comment_MovieId] ON [Comment] ([MovieId]);
 CREATE INDEX [IX_Comment_ParentId] ON [Comment] ([ParentId]);
@@ -324,7 +349,7 @@ CREATE UNIQUE INDEX [IX_Discount_Code] ON [Discount] ([Code]);
 CREATE INDEX [IX_Discount_DiscountTypeId] ON [Discount] ([DiscountTypeId]);
 CREATE UNIQUE INDEX [IX_Evaluation_MovieId_UserId] ON [Evaluation] ([MovieId], [UserId]);
 CREATE INDEX [IX_Evaluation_UserId] ON [Evaluation] ([UserId]);
-CREATE INDEX [IX_FoodAndDrinkTheater_TheaterId] ON [FoodAndDrinkTheater] ([TheaterId]);
+CREATE INDEX [IX_FoodAndDrink_TheaterId] ON [FoodAndDrink] ([TheaterId]);
 CREATE INDEX [IX_InvoiceFoodAndDrink_FoodAndDrinkId] ON [InvoiceFoodAndDrink] ([FoodAndDrinkId]);
 CREATE UNIQUE INDEX [IX_Invoice_Code] ON [Invoice] ([Code]);
 CREATE INDEX [IX_Invoice_DiscountId] ON [Invoice] ([DiscountId]);
@@ -337,6 +362,11 @@ CREATE INDEX [IX_Room_TheaterId] ON [Room] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_Seat_RoomId_RowName_ColIndex] ON [Seat] ([RoomId], [RowName], [ColIndex]);
 CREATE INDEX [IX_Seat_SeatTypeId] ON [Seat] ([SeatTypeId]);
 CREATE INDEX [IX_Seat_SeatGroupId] ON [Seat] ([SeatGroupId]);
+CREATE INDEX [IX_SeatType_TheaterId] ON [SeatType] ([TheaterId]);
+CREATE INDEX [IX_TimeSlot_TheaterId] ON [TimeSlot] ([TheaterId]);
+CREATE INDEX [IX_TicketPrice_SeatTypeId] ON [TicketPrice] ([SeatTypeId]);
+CREATE INDEX [IX_TicketPrice_TimeSlotId] ON [TicketPrice] ([TimeSlotId]);
+CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_SeatTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [SeatTypeId], [TimeSlotId], [IsHoliday]);
 CREATE INDEX [IX_ShowTimeRoom_RoomId] ON [ShowTimeRoom] ([RoomId]);
 CREATE INDEX [IX_ShowTime_MovieId] ON [ShowTime] ([MovieId]);
 CREATE UNIQUE INDEX [IX_User_Email] ON [User] ([Email]);

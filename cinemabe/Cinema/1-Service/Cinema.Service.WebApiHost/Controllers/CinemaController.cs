@@ -34,6 +34,8 @@ public class CinemaController : ControllerBase
     private readonly IShowTimeManager       _showTimes;
     private readonly IMovieTypeDetailManager     _movieTypeDetails;
     private readonly IInvoiceAdminManager        _invoices;
+    private readonly ITimeSlotManager            _timeSlots;
+    private readonly ITicketPriceManager         _ticketPrices;
     private readonly IWebHostEnvironment         _env;
 
     public CinemaController(
@@ -53,6 +55,8 @@ public class CinemaController : ControllerBase
         IShowTimeManager showTimes,
         IMovieTypeDetailManager movieTypeDetails,
         IInvoiceAdminManager invoices,
+        ITimeSlotManager timeSlots,
+        ITicketPriceManager ticketPrices,
         IWebHostEnvironment env)
     {
         _movieManager    = movieManager;
@@ -71,6 +75,8 @@ public class CinemaController : ControllerBase
         _showTimes       = showTimes;
         _movieTypeDetails    = movieTypeDetails;
         _invoices            = invoices;
+        _timeSlots           = timeSlots;
+        _ticketPrices        = ticketPrices;
         _env                 = env;
     }
 
@@ -567,6 +573,86 @@ public class CinemaController : ControllerBase
     }
     #endregion
 
+    #region TimeSlot
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<TimeSlotDTO>), 200)]
+    public Task<IActionResult> GetTimeSlots([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetTimeSlots), () => _timeSlots.GetAsync(search));
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(TimeSlotDTO), 200)]
+    public Task<IActionResult> GetTimeSlot([FromQuery] Guid id)
+    {
+        return Run(nameof(GetTimeSlot), () => _timeSlots.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(TimeSlotDTO), 200)]
+    public Task<IActionResult> CreateTimeSlot([FromBody] CreateTimeSlotRequest request)
+    {
+        return Run(nameof(CreateTimeSlot), () => _timeSlots.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(TimeSlotDTO), 200)]
+    public Task<IActionResult> UpdateTimeSlot([FromBody] UpdateTimeSlotRequest request)
+    {
+        return Run(nameof(UpdateTimeSlot), () => _timeSlots.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public Task<IActionResult> DeleteTimeSlot([FromQuery] Guid id)
+    {
+        return RunNoContent(nameof(DeleteTimeSlot), () => _timeSlots.DeleteAsync(id));
+    }
+    #endregion
+
+    #region TicketPrice
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<TicketPriceDTO>), 200)]
+    public Task<IActionResult> GetTicketPrices([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetTicketPrices), () => _ticketPrices.GetAsync(search));
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(TicketPriceDTO), 200)]
+    public Task<IActionResult> GetTicketPrice([FromQuery] Guid id)
+    {
+        return Run(nameof(GetTicketPrice), () => _ticketPrices.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(TicketPriceDTO), 200)]
+    public Task<IActionResult> CreateTicketPrice([FromBody] CreateTicketPriceRequest request)
+    {
+        return Run(nameof(CreateTicketPrice), () => _ticketPrices.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(TicketPriceDTO), 200)]
+    public Task<IActionResult> UpdateTicketPrice([FromBody] UpdateTicketPriceRequest request)
+    {
+        return Run(nameof(UpdateTicketPrice), () => _ticketPrices.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public Task<IActionResult> DeleteTicketPrice([FromQuery] Guid id)
+    {
+        return RunNoContent(nameof(DeleteTicketPrice), () => _ticketPrices.DeleteAsync(id));
+    }
+    #endregion
+
 
     #region UserType
     [HttpPost]
@@ -928,6 +1014,14 @@ public class CinemaController : ControllerBase
     public Task<IActionResult> SaveRoomSeatMap([FromBody] SaveSeatMapRequest request)
     {
         return RunNoContent(nameof(SaveRoomSeatMap), () => _rooms.SaveSeatMapAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<RoomSeatDTO>), 200)]
+    public Task<IActionResult> ResizeRoomSeatGrid([FromBody] ResizeSeatGridRequest request)
+    {
+        return Run(nameof(ResizeRoomSeatGrid), () => _rooms.ResizeSeatGridAsync(request));
     }
     #endregion
 

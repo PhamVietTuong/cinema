@@ -36,6 +36,8 @@ public static class DependencyInjection
         services.AddScoped<IShowTimeManager, ShowTimeManager>();
         services.AddScoped<IMovieTypeDetailManager, MovieTypeDetailManager>();
         services.AddScoped<IInvoiceAdminManager, InvoiceAdminManager>();
+        services.AddScoped<ITimeSlotManager, TimeSlotManager>();
+        services.AddScoped<ITicketPriceManager, TicketPriceManager>();
         return services;
     }
 }

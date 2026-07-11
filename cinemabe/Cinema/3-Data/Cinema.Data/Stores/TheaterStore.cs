@@ -15,7 +15,6 @@ public class TheaterStore : GenericStore<Theater>, ITheaterStore
     public async Task<Theater?> GetDetailAsync(Guid id)
         => await DbSet
             .Include(t => t.Rooms)
-            .Include(t => t.FoodAndDrinkTheaters).ThenInclude(f => f.FoodAndDrink)
             .FirstOrDefaultAsync(t => t.Id == id);
 
     public async Task<IEnumerable<Theater>> GetByMovieAsync(Guid movieId, DateTime date)
