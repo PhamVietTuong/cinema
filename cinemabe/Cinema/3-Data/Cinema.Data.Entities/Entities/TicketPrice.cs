@@ -9,6 +9,9 @@ public class TicketPrice : BaseEntity
     public Guid TheaterId { get; set; }
     public Theater Theater { get; set; } = null!;
 
+    public Guid RoomTypeId { get; set; }
+    public RoomType RoomType { get; set; } = null!;
+
     public Guid SeatTypeId { get; set; }
     public SeatType SeatType { get; set; } = null!;
 

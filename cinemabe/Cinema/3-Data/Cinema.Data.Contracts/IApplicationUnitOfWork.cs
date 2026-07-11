@@ -9,6 +9,7 @@ public interface IApplicationUnitOfWork : IDisposable
     IInvoiceStore InvoiceStore { get; }
     IUserStore UserStore { get; }
     IRoomStore RoomStore { get; }
+    IRoomTypeStore RoomTypeStore { get; }
     IDiscountStore DiscountStore { get; }
     IMovieTypeDetailStore MovieTypeDetailStore { get; }
     IUserTypeStore UserTypeStore { get; }

@@ -3016,6 +3016,188 @@
         ]
       }
     },
+    "/api/Cinema/GetRoomTypes": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetRoomTypes",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfRoomTypeDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetRoomType": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetRoomType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomTypeDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/CreateRoomType": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_CreateRoomType",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoomTypeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomTypeDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/UpdateRoomType": {
+      "put": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpdateRoomType",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoomTypeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomTypeDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/DeleteRoomType": {
+      "delete": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_DeleteRoomType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetShowTimeList": {
       "post": {
         "tags": [
@@ -4714,6 +4896,10 @@
             "type": "string",
             "format": "guid"
           },
+          "roomTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
           "seatTypeId": {
             "type": "string",
             "format": "guid"
@@ -4736,6 +4922,10 @@
         "additionalProperties": false,
         "properties": {
           "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomTypeId": {
             "type": "string",
             "format": "guid"
           },
@@ -4765,6 +4955,10 @@
             "format": "guid"
           },
           "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomTypeId": {
             "type": "string",
             "format": "guid"
           },
@@ -5539,6 +5733,10 @@
             "type": "string",
             "format": "guid"
           },
+          "roomTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
           "totalRows": {
             "type": "integer",
             "format": "int32"
@@ -5577,6 +5775,10 @@
             "type": "string",
             "format": "guid"
           },
+          "roomTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
           "totalRows": {
             "type": "integer",
             "format": "int32"
@@ -5605,6 +5807,10 @@
             "type": "string",
             "format": "guid"
           },
+          "roomTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
           "totalRows": {
             "type": "integer",
             "format": "int32"
@@ -5615,6 +5821,101 @@
           },
           "status": {
             "$ref": "#/components/schemas/RoomStatus"
+          }
+        }
+      },
+      "DefaultSearchResultsOfRoomTypeDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfRoomTypeDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfRoomTypeDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomTypeDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RoomTypeDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreateRoomTypeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateRoomTypeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

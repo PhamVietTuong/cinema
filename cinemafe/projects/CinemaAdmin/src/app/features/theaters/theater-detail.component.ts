@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 import { ImageUploadService } from '../../shared/image-upload.service';
 import { TheaterRoomsComponent } from './theater-rooms.component';
+import { TheaterRoomTypesComponent } from './theater-room-types.component';
 import { TheaterSeatTypesComponent } from './theater-seat-types.component';
 import { TheaterFoodComponent } from './theater-food.component';
 import { TheaterTimeSlotsComponent } from './theater-time-slots.component';
@@ -16,6 +17,7 @@ import { TheaterTicketPricesComponent } from './theater-ticket-prices.component'
   imports: [
     SharedModule,
     TheaterRoomsComponent,
+    TheaterRoomTypesComponent,
     TheaterSeatTypesComponent,
     TheaterFoodComponent,
     TheaterTimeSlotsComponent,

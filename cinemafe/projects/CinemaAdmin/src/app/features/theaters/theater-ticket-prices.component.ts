@@ -19,18 +19,21 @@ export class TheaterTicketPricesComponent extends CatalogCrudBase<Dto> {
   @Input({ required: true }) theaterId!: string;
   private _svc = inject(CinemaServiceAgent.HttpService);
 
+  roomTypes: CinemaServiceAgent.RoomTypeDTO[] = [];
   seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
   timeSlots: CinemaServiceAgent.TimeSlotDTO[] = [];
 
   override ngOnInit(): void {
     super.ngOnInit();
     const search = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500, filters: { theaterId: this.theaterId } });
+    this._svc.getRoomTypes(search).subscribe(r => { this.roomTypes = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getSeatTypes(search).subscribe(r => { this.seatTypes = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getTimeSlots(search).subscribe(r => { this.timeSlots = r.results ?? []; this._cdr.markForCheck(); });
   }
 
   buildForm() {
     return this._fb.group({
+      roomTypeId: ['', Validators.required],
       seatTypeId: ['', Validators.required],
       timeSlotId: ['', Validators.required],
       isHoliday: [false],
@@ -45,6 +48,9 @@ export class TheaterTicketPricesComponent extends CatalogCrudBase<Dto> {
   update(v: any, id: string) { return this._svc.updateTicketPrice(CinemaServiceAgent.UpdateTicketPriceRequest.fromJS({ ...v, id, theaterId: this.theaterId })); }
   remove(id: string) { return this._svc.deleteTicketPrice(id); }
 
+  roomTypeName(id?: string): string {
+    return this.roomTypes.find(t => t.id === id)?.name ?? '—';
+  }
   seatTypeName(id?: string): string {
     return this.seatTypes.find(s => s.id === id)?.name ?? '—';
   }

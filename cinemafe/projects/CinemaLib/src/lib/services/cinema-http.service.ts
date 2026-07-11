@@ -102,6 +102,11 @@ export interface IHttpService {
     createRoom(request: CreateRoomRequest): Observable<RoomDTO>;
     updateRoom(request: UpdateRoomRequest): Observable<RoomDTO>;
     deleteRoom(id?: string | undefined): Observable<void>;
+    getRoomTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfRoomTypeDTO>;
+    getRoomType(id?: string | undefined): Observable<RoomTypeDTO>;
+    createRoomType(request: CreateRoomTypeRequest): Observable<RoomTypeDTO>;
+    updateRoomType(request: UpdateRoomTypeRequest): Observable<RoomTypeDTO>;
+    deleteRoomType(id?: string | undefined): Observable<void>;
     getShowTimeList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeDTO>;
     getShowTime(id?: string | undefined): Observable<ShowTimeDTO>;
     createShowTime(request: CreateShowTimeRequest): Observable<ShowTimeDTO>;
@@ -4338,6 +4343,262 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
+    getRoomTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfRoomTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetRoomTypes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRoomTypes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRoomTypes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfRoomTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfRoomTypeDTO>;
+        }));
+    }
+
+    protected processGetRoomTypes(response: HttpResponseBase): Observable<DefaultSearchResultsOfRoomTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfRoomTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRoomType(id?: string | undefined): Observable<RoomTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetRoomType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRoomType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRoomType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomTypeDTO>;
+        }));
+    }
+
+    protected processGetRoomType(response: HttpResponseBase): Observable<RoomTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RoomTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createRoomType(request: CreateRoomTypeRequest): Observable<RoomTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateRoomType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateRoomType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateRoomType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomTypeDTO>;
+        }));
+    }
+
+    protected processCreateRoomType(response: HttpResponseBase): Observable<RoomTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RoomTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateRoomType(request: UpdateRoomTypeRequest): Observable<RoomTypeDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateRoomType";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateRoomType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateRoomType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomTypeDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomTypeDTO>;
+        }));
+    }
+
+    protected processUpdateRoomType(response: HttpResponseBase): Observable<RoomTypeDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RoomTypeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteRoomType(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteRoomType?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteRoomType(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteRoomType(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteRoomType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     getShowTimeList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeDTO> {
         let url_ = this.baseUrl + "/api/Cinema/GetShowTimeList";
         url_ = url_.replace(/[?&]$/, "");
@@ -7522,6 +7783,7 @@ export interface IDefaultSearchResultsOfTicketPriceDTO extends IBaseSearchResult
 export class TicketPriceDTO implements ITicketPriceDTO {
     id?: string;
     theaterId?: string;
+    roomTypeId?: string;
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
@@ -7540,6 +7802,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
         if (_data) {
             this.id = _data["id"];
             this.theaterId = _data["theaterId"];
+            this.roomTypeId = _data["roomTypeId"];
             this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
@@ -7558,6 +7821,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["theaterId"] = this.theaterId;
+        data["roomTypeId"] = this.roomTypeId;
         data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
@@ -7569,6 +7833,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
 export interface ITicketPriceDTO {
     id?: string;
     theaterId?: string;
+    roomTypeId?: string;
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
@@ -7577,6 +7842,7 @@ export interface ITicketPriceDTO {
 
 export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
     theaterId?: string;
+    roomTypeId?: string;
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
@@ -7594,6 +7860,7 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
     init(_data?: any) {
         if (_data) {
             this.theaterId = _data["theaterId"];
+            this.roomTypeId = _data["roomTypeId"];
             this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
@@ -7611,6 +7878,7 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["theaterId"] = this.theaterId;
+        data["roomTypeId"] = this.roomTypeId;
         data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
@@ -7621,6 +7889,7 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
 
 export interface ICreateTicketPriceRequest {
     theaterId?: string;
+    roomTypeId?: string;
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
@@ -7630,6 +7899,7 @@ export interface ICreateTicketPriceRequest {
 export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
     id?: string;
     theaterId?: string;
+    roomTypeId?: string;
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
@@ -7648,6 +7918,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
         if (_data) {
             this.id = _data["id"];
             this.theaterId = _data["theaterId"];
+            this.roomTypeId = _data["roomTypeId"];
             this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
@@ -7666,6 +7937,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["theaterId"] = this.theaterId;
+        data["roomTypeId"] = this.roomTypeId;
         data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
@@ -7677,6 +7949,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
 export interface IUpdateTicketPriceRequest {
     id?: string;
     theaterId?: string;
+    roomTypeId?: string;
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
@@ -9230,6 +9503,7 @@ export class RoomDTO implements IRoomDTO {
     id?: string;
     name?: string;
     theaterId?: string;
+    roomTypeId?: string;
     totalRows?: number;
     totalColumns?: number;
     status?: RoomStatus;
@@ -9248,6 +9522,7 @@ export class RoomDTO implements IRoomDTO {
             this.id = _data["id"];
             this.name = _data["name"];
             this.theaterId = _data["theaterId"];
+            this.roomTypeId = _data["roomTypeId"];
             this.totalRows = _data["totalRows"];
             this.totalColumns = _data["totalColumns"];
             this.status = _data["status"];
@@ -9266,6 +9541,7 @@ export class RoomDTO implements IRoomDTO {
         data["id"] = this.id;
         data["name"] = this.name;
         data["theaterId"] = this.theaterId;
+        data["roomTypeId"] = this.roomTypeId;
         data["totalRows"] = this.totalRows;
         data["totalColumns"] = this.totalColumns;
         data["status"] = this.status;
@@ -9277,6 +9553,7 @@ export interface IRoomDTO {
     id?: string;
     name?: string;
     theaterId?: string;
+    roomTypeId?: string;
     totalRows?: number;
     totalColumns?: number;
     status?: RoomStatus;
@@ -9291,6 +9568,7 @@ export enum RoomStatus {
 export class CreateRoomRequest implements ICreateRoomRequest {
     name?: string;
     theaterId?: string;
+    roomTypeId?: string;
     totalRows?: number;
     totalColumns?: number;
     status?: RoomStatus;
@@ -9308,6 +9586,7 @@ export class CreateRoomRequest implements ICreateRoomRequest {
         if (_data) {
             this.name = _data["name"];
             this.theaterId = _data["theaterId"];
+            this.roomTypeId = _data["roomTypeId"];
             this.totalRows = _data["totalRows"];
             this.totalColumns = _data["totalColumns"];
             this.status = _data["status"];
@@ -9325,6 +9604,7 @@ export class CreateRoomRequest implements ICreateRoomRequest {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
         data["theaterId"] = this.theaterId;
+        data["roomTypeId"] = this.roomTypeId;
         data["totalRows"] = this.totalRows;
         data["totalColumns"] = this.totalColumns;
         data["status"] = this.status;
@@ -9335,6 +9615,7 @@ export class CreateRoomRequest implements ICreateRoomRequest {
 export interface ICreateRoomRequest {
     name?: string;
     theaterId?: string;
+    roomTypeId?: string;
     totalRows?: number;
     totalColumns?: number;
     status?: RoomStatus;
@@ -9344,6 +9625,7 @@ export class UpdateRoomRequest implements IUpdateRoomRequest {
     id?: string;
     name?: string;
     theaterId?: string;
+    roomTypeId?: string;
     totalRows?: number;
     totalColumns?: number;
     status?: RoomStatus;
@@ -9362,6 +9644,7 @@ export class UpdateRoomRequest implements IUpdateRoomRequest {
             this.id = _data["id"];
             this.name = _data["name"];
             this.theaterId = _data["theaterId"];
+            this.roomTypeId = _data["roomTypeId"];
             this.totalRows = _data["totalRows"];
             this.totalColumns = _data["totalColumns"];
             this.status = _data["status"];
@@ -9380,6 +9663,7 @@ export class UpdateRoomRequest implements IUpdateRoomRequest {
         data["id"] = this.id;
         data["name"] = this.name;
         data["theaterId"] = this.theaterId;
+        data["roomTypeId"] = this.roomTypeId;
         data["totalRows"] = this.totalRows;
         data["totalColumns"] = this.totalColumns;
         data["status"] = this.status;
@@ -9391,9 +9675,231 @@ export interface IUpdateRoomRequest {
     id?: string;
     name?: string;
     theaterId?: string;
+    roomTypeId?: string;
     totalRows?: number;
     totalColumns?: number;
     status?: RoomStatus;
+}
+
+export abstract class BaseSearchResultsOfRoomTypeDTO implements IBaseSearchResultsOfRoomTypeDTO {
+    results?: RoomTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfRoomTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(RoomTypeDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfRoomTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfRoomTypeDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfRoomTypeDTO {
+    results?: RoomTypeDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfRoomTypeDTO extends BaseSearchResultsOfRoomTypeDTO implements IDefaultSearchResultsOfRoomTypeDTO {
+
+    constructor(data?: IDefaultSearchResultsOfRoomTypeDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfRoomTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfRoomTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfRoomTypeDTO extends IBaseSearchResultsOfRoomTypeDTO {
+}
+
+export class RoomTypeDTO implements IRoomTypeDTO {
+    id?: string;
+    theaterId?: string;
+    name?: string;
+    description?: string | undefined;
+
+    constructor(data?: IRoomTypeDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.theaterId = _data["theaterId"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): RoomTypeDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new RoomTypeDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["theaterId"] = this.theaterId;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface IRoomTypeDTO {
+    id?: string;
+    theaterId?: string;
+    name?: string;
+    description?: string | undefined;
+}
+
+export class CreateRoomTypeRequest implements ICreateRoomTypeRequest {
+    theaterId?: string;
+    name?: string;
+    description?: string | undefined;
+
+    constructor(data?: ICreateRoomTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): CreateRoomTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateRoomTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface ICreateRoomTypeRequest {
+    theaterId?: string;
+    name?: string;
+    description?: string | undefined;
+}
+
+export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
+    id?: string;
+    theaterId?: string;
+    name?: string;
+    description?: string | undefined;
+
+    constructor(data?: IUpdateRoomTypeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.theaterId = _data["theaterId"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): UpdateRoomTypeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateRoomTypeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["theaterId"] = this.theaterId;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface IUpdateRoomTypeRequest {
+    id?: string;
+    theaterId?: string;
+    name?: string;
+    description?: string | undefined;
 }
 
 export abstract class BaseSearchResultsOfShowTimeDTO implements IBaseSearchResultsOfShowTimeDTO {

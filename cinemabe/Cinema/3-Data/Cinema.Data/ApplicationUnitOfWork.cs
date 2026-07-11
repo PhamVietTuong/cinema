@@ -18,6 +18,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IInvoiceStore InvoiceStore { get; }
     public IUserStore UserStore { get; }
     public IRoomStore RoomStore { get; }
+    public IRoomTypeStore RoomTypeStore { get; }
     public IDiscountStore DiscountStore { get; }
     public IMovieTypeDetailStore MovieTypeDetailStore { get; }
     public IUserTypeStore UserTypeStore { get; }
@@ -44,6 +45,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         InvoiceStore = new InvoiceStore(db);
         UserStore = new UserStore(db);
         RoomStore = new RoomStore(db);
+        RoomTypeStore = new RoomTypeStore(db);
         DiscountStore = new DiscountStore(db);
         MovieTypeDetailStore = new MovieTypeDetailStore(db);
         UserTypeStore = new UserTypeStore(db);

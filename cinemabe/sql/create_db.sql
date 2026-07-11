@@ -102,6 +102,17 @@ CREATE TABLE [Theater] (
     CONSTRAINT [PK_Theater] PRIMARY KEY ([Id])
 );
 
+CREATE TABLE [RoomType] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [Description] nvarchar(max) NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_RoomType] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_RoomType_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
+);
+
 CREATE TABLE [UserType] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [Name] nvarchar(max) NOT NULL,
@@ -153,13 +164,15 @@ CREATE TABLE [Room] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [Name] nvarchar(100) NOT NULL,
     [TheaterId] uniqueidentifier NOT NULL,
+    [RoomTypeId] uniqueidentifier NOT NULL,
     [TotalRows] int NOT NULL,
     [TotalColumns] int NOT NULL,
     [Status] int NOT NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Room] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Room_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
+    CONSTRAINT [FK_Room_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_Room_RoomType_RoomTypeId] FOREIGN KEY ([RoomTypeId]) REFERENCES [RoomType] ([Id]) ON DELETE NO ACTION
 );
 
 CREATE TABLE [User] (
@@ -324,6 +337,7 @@ CREATE TABLE [TimeSlot] (
 CREATE TABLE [TicketPrice] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [TheaterId] uniqueidentifier NOT NULL,
+    [RoomTypeId] uniqueidentifier NOT NULL,
     [SeatTypeId] uniqueidentifier NOT NULL,
     [TimeSlotId] uniqueidentifier NOT NULL,
     [IsHoliday] bit NOT NULL,
@@ -332,6 +346,7 @@ CREATE TABLE [TicketPrice] (
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_TicketPrice] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_TicketPrice_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_TicketPrice_RoomType_RoomTypeId] FOREIGN KEY ([RoomTypeId]) REFERENCES [RoomType] ([Id]) ON DELETE NO ACTION,
     CONSTRAINT [FK_TicketPrice_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION,
     CONSTRAINT [FK_TicketPrice_TimeSlot_TimeSlotId] FOREIGN KEY ([TimeSlotId]) REFERENCES [TimeSlot] ([Id]) ON DELETE NO ACTION
 );
@@ -364,9 +379,12 @@ CREATE INDEX [IX_Seat_SeatTypeId] ON [Seat] ([SeatTypeId]);
 CREATE INDEX [IX_Seat_SeatGroupId] ON [Seat] ([SeatGroupId]);
 CREATE INDEX [IX_SeatType_TheaterId] ON [SeatType] ([TheaterId]);
 CREATE INDEX [IX_TimeSlot_TheaterId] ON [TimeSlot] ([TheaterId]);
+CREATE INDEX [IX_TicketPrice_RoomTypeId] ON [TicketPrice] ([RoomTypeId]);
 CREATE INDEX [IX_TicketPrice_SeatTypeId] ON [TicketPrice] ([SeatTypeId]);
 CREATE INDEX [IX_TicketPrice_TimeSlotId] ON [TicketPrice] ([TimeSlotId]);
-CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_SeatTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [SeatTypeId], [TimeSlotId], [IsHoliday]);
+CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_SeatTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [RoomTypeId], [SeatTypeId], [TimeSlotId], [IsHoliday]);
+CREATE INDEX [IX_RoomType_TheaterId] ON [RoomType] ([TheaterId]);
+CREATE INDEX [IX_Room_RoomTypeId] ON [Room] ([RoomTypeId]);
 CREATE INDEX [IX_ShowTimeRoom_RoomId] ON [ShowTimeRoom] ([RoomId]);
 CREATE INDEX [IX_ShowTime_MovieId] ON [ShowTime] ([MovieId]);
 CREATE UNIQUE INDEX [IX_User_Email] ON [User] ([Email]);

@@ -13,6 +13,13 @@
         <input class="ad-input" formControlName="name" placeholder="VD: Phòng 1">
       </div>
       <div class="ad-field">
+        <label class="ad-label">Loại Phòng</label>
+        <select class="ad-input" formControlName="roomTypeId">
+          <option value="">— Chọn loại phòng —</option>
+          <option *ngFor="let t of roomTypes" [ngValue]="t.id">{{ t.name }}</option>
+        </select>
+      </div>
+      <div class="ad-field">
         <label class="ad-label">Số Hàng</label>
         <input class="ad-input" type="number" formControlName="totalRows" placeholder="10">
       </div>
@@ -39,9 +46,10 @@
     <div class="ad-table-wrap">
       <table class="ad-table">
         <thead>
-          <tr><th>Tên Phòng</th><th>Sức Chứa</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
+          <tr><th>Tên Phòng</th><th>Loại Phòng</th><th>Sức Chứa</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
           <tr class="ad-filter-row">
             <th><input class="ad-filter-input" [(ngModel)]="filters['name']" (input)="onFilterChange()" placeholder="Lọc..."></th>
+            <th></th>
             <th></th>
             <th></th>
             <th></th>
@@ -50,6 +58,7 @@
         <tbody>
           <tr *ngFor="let x of items">
             <td><strong>{{ x.name }}</strong></td>
+            <td>{{ roomTypeName(x.roomTypeId) }}</td>
             <td>{{ x.totalRows }} × {{ x.totalColumns }} = {{ (x.totalRows ?? 0) * (x.totalColumns ?? 0) }} ghế</td>
             <td>{{ statusLabel(x.status) }}</td>
             <td class="ad-td-actions">

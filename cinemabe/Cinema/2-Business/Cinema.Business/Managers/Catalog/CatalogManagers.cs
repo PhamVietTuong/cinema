@@ -122,6 +122,17 @@ public class FoodAndDrinkManager(IApplicationUnitOfWork uow)
     }
 }
 
+public class RoomTypeManager(IApplicationUnitOfWork uow)
+    : CatalogManager<RoomType, RoomTypeDTO, CreateRoomTypeRequest, UpdateRoomTypeRequest>(uow), IRoomTypeManager
+{
+    protected override IGenericStore<RoomType> Store => Uow.RoomTypeStore;
+
+    protected override bool Match(RoomType e, string kw)
+    {
+        return e.Name.Contains(kw, StringComparison.OrdinalIgnoreCase);
+    }
+}
+
 public class TimeSlotManager(IApplicationUnitOfWork uow)
     : CatalogManager<TimeSlot, TimeSlotDTO, CreateTimeSlotRequest, UpdateTimeSlotRequest>(uow), ITimeSlotManager
 {

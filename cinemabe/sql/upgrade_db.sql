@@ -253,4 +253,55 @@ END
 
 PRINT 'upgrade: per-theater catalog + ticket pricing applied.';
 
+-- ── screening room types (2D/3D/IMAX/4DX) ──────────────────────────────────────
+-- Room type drives ticket price (4th dimension) + equipment. Backfills existing
+-- rows to a default per-theater "2D" type.
+PRINT 'upgrade: applying screening room types...';
+
+-- 1) RoomType table (+ a default 2D per theater to backfill existing rooms)
+IF OBJECT_ID('RoomType', 'U') IS NULL
+BEGIN
+    CREATE TABLE [RoomType] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [Name] nvarchar(100) NOT NULL,
+        [Description] nvarchar(max) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_RoomType] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_RoomType_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_RoomType_TheaterId] ON [RoomType] ([TheaterId]);
+    INSERT INTO [RoomType] ([Id], [TheaterId], [Name], [Description], [CreationTime])
+    SELECT NEWID(), t.[Id], N'2D', N'Standard 2D projection', GETUTCDATE() FROM [Theater] t;
+    PRINT 'Created [RoomType] + seeded default 2D per theater.';
+END
+
+-- 2) Room.RoomTypeId (backfill each room to its theater's 2D type)
+IF COL_LENGTH('[Room]', 'RoomTypeId') IS NULL
+BEGIN
+    ALTER TABLE [Room] ADD [RoomTypeId] uniqueidentifier NULL;
+    EXEC('UPDATE r SET r.[RoomTypeId] = (SELECT TOP 1 rt.[Id] FROM [RoomType] rt WHERE rt.[TheaterId] = r.[TheaterId]) FROM [Room] r WHERE r.[RoomTypeId] IS NULL');
+    ALTER TABLE [Room] ALTER COLUMN [RoomTypeId] uniqueidentifier NOT NULL;
+    ALTER TABLE [Room] ADD CONSTRAINT [FK_Room_RoomType_RoomTypeId] FOREIGN KEY ([RoomTypeId]) REFERENCES [RoomType] ([Id]);
+    CREATE INDEX [IX_Room_RoomTypeId] ON [Room] ([RoomTypeId]);
+    PRINT 'Added [Room].[RoomTypeId].';
+END
+
+-- 3) TicketPrice.RoomTypeId (rebuild the unique index to include it)
+IF COL_LENGTH('[TicketPrice]', 'RoomTypeId') IS NULL
+BEGIN
+    ALTER TABLE [TicketPrice] ADD [RoomTypeId] uniqueidentifier NULL;
+    EXEC('UPDATE p SET p.[RoomTypeId] = (SELECT TOP 1 rt.[Id] FROM [RoomType] rt WHERE rt.[TheaterId] = p.[TheaterId]) FROM [TicketPrice] p WHERE p.[RoomTypeId] IS NULL');
+    ALTER TABLE [TicketPrice] ALTER COLUMN [RoomTypeId] uniqueidentifier NOT NULL;
+    ALTER TABLE [TicketPrice] ADD CONSTRAINT [FK_TicketPrice_RoomType_RoomTypeId] FOREIGN KEY ([RoomTypeId]) REFERENCES [RoomType] ([Id]);
+    CREATE INDEX [IX_TicketPrice_RoomTypeId] ON [TicketPrice] ([RoomTypeId]);
+    IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TicketPrice_TheaterId_SeatTypeId_TimeSlotId_IsHoliday' AND object_id = OBJECT_ID('TicketPrice'))
+        DROP INDEX [IX_TicketPrice_TheaterId_SeatTypeId_TimeSlotId_IsHoliday] ON [TicketPrice];
+    CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_SeatTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [RoomTypeId], [SeatTypeId], [TimeSlotId], [IsHoliday]);
+    PRINT 'Added [TicketPrice].[RoomTypeId].';
+END
+
+PRINT 'upgrade: screening room types applied.';
+
 PRINT 'upgrade_db.sql: completed.';

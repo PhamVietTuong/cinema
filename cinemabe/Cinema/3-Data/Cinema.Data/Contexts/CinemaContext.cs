@@ -16,6 +16,7 @@ public class CinemaContext : DbContext
     public DbSet<AgeRestriction> AgeRestriction => Set<AgeRestriction>();
     public DbSet<Theater> Theater => Set<Theater>();
     public DbSet<Room> Room => Set<Room>();
+    public DbSet<RoomType> RoomType => Set<RoomType>();
     public DbSet<Seat> Seat => Set<Seat>();
     public DbSet<SeatType> SeatType => Set<SeatType>();
     public DbSet<ShowTime> ShowTime => Set<ShowTime>();

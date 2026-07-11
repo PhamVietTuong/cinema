@@ -105,6 +105,17 @@ INSERT INTO [Theater] ([Id], [Name], [Address], [City], [Phone], [Email], [IsAct
 (@Theater2, N'Cinema Landmark 81',      N'461A Dien Bien Phu Street, Binh Thanh District', N'Ho Chi Minh City', N'028-3512-5678', N'landmark81@cinema.vn',      1, GETUTCDATE()),
 (@Theater3, N'Cinema Vincom Royal City',N'72A Nguyen Trai Street, Thanh Xuan District',   N'Hanoi',            N'024-3795-9101', N'royalcity@cinema.vn',        1, GETUTCDATE());
 
+-- ── Room types (per theater) ──────────────────────────────────────────────────
+INSERT INTO [RoomType] ([Id], [TheaterId], [Name], [Description], [CreationTime])
+SELECT NEWID(), t.Id, rt.Name, rt.Description, GETUTCDATE()
+FROM [Theater] t
+CROSS JOIN (VALUES
+    (N'2D',   N'Standard 2D projection'),
+    (N'3D',   N'3D projection with glasses'),
+    (N'IMAX', N'IMAX large-format screen, Dolby Atmos'),
+    (N'4DX',  N'Motion seats + environmental effects')
+) AS rt(Name, Description);
+
 -- ── Seat types (3 per theater) ────────────────────────────────────────────────
 INSERT INTO [SeatType] ([Id], [TheaterId], [Name], [Description], [Color], [PriceMultiplier], [CreationTime])
 SELECT NEWID(), t.Id, s.Name, s.Description, s.Color, s.PriceMultiplier, GETUTCDATE()
@@ -140,17 +151,19 @@ CROSS JOIN (VALUES
     (N'Tối',   N'17:00', N'23:00')
 ) AS s(Name, StartTime, EndTime);
 
--- ── Ticket prices (seat type × time slot × holiday, per theater) ──────────────
--- Explicit price = base 70,000đ × seat multiplier × time-slot factor × holiday factor,
--- rounded to the nearest 1,000đ.
-INSERT INTO [TicketPrice] ([Id], [TheaterId], [SeatTypeId], [TimeSlotId], [IsHoliday], [Price], [CreationTime])
-SELECT NEWID(), st.TheaterId, st.Id, ts.Id, h.IsHoliday,
+-- ── Ticket prices (room type × seat type × time slot × holiday, per theater) ──
+-- Explicit price = base 70,000đ × seat multiplier × time-slot factor × room-type
+-- factor × holiday factor, rounded to the nearest 1,000đ.
+INSERT INTO [TicketPrice] ([Id], [TheaterId], [RoomTypeId], [SeatTypeId], [TimeSlotId], [IsHoliday], [Price], [CreationTime])
+SELECT NEWID(), st.TheaterId, rt.Id, st.Id, ts.Id, h.IsHoliday,
        CAST(ROUND(70000 * st.PriceMultiplier
             * CASE ts.Name WHEN N'Tối' THEN 1.2 WHEN N'Sáng' THEN 0.9 ELSE 1.0 END
+            * CASE rt.Name WHEN N'IMAX' THEN 1.5 WHEN N'4DX' THEN 1.8 WHEN N'3D' THEN 1.2 ELSE 1.0 END
             * CASE WHEN h.IsHoliday = 1 THEN 1.2 ELSE 1.0 END, -3) AS float),
        GETUTCDATE()
 FROM [SeatType] st
 JOIN [TimeSlot] ts ON ts.TheaterId = st.TheaterId
+JOIN [RoomType] rt ON rt.TheaterId = st.TheaterId
 CROSS JOIN (VALUES (CAST(0 AS bit)), (CAST(1 AS bit))) AS h(IsHoliday);
 
 -- ── Rooms ─────────────────────────────────────────────────────────────────────
@@ -170,17 +183,22 @@ DECLARE @T3R1 uniqueidentifier = NEWID(); -- 8×12
 DECLARE @T3R2 uniqueidentifier = NEWID(); -- 8×12
 DECLARE @T3R3 uniqueidentifier = NEWID(); -- 6×10
 
-INSERT INTO [Room] ([Id], [Name], [TheaterId], [TotalRows], [TotalColumns], [Status], [CreationTime]) VALUES
-(@T1R1, N'Room 1',     @Theater1, 8,  12, 0, GETUTCDATE()),
-(@T1R2, N'Room 2',     @Theater1, 8,  12, 0, GETUTCDATE()),
-(@T1R3, N'Room 3',     @Theater1, 6,  10, 0, GETUTCDATE()),
-(@T1R4, N'IMAX Hall',  @Theater1, 10, 14, 0, GETUTCDATE()),
-(@T2R1, N'Room 1',     @Theater2, 8,  12, 0, GETUTCDATE()),
-(@T2R2, N'Room 2',     @Theater2, 8,  12, 0, GETUTCDATE()),
-(@T2R3, N'Room 3',     @Theater2, 6,  10, 0, GETUTCDATE()),
-(@T3R1, N'Room 1',     @Theater3, 8,  12, 0, GETUTCDATE()),
-(@T3R2, N'Room 2',     @Theater3, 8,  12, 0, GETUTCDATE()),
-(@T3R3, N'Room 3',     @Theater3, 6,  10, 0, GETUTCDATE());
+INSERT INTO [Room] ([Id], [Name], [TheaterId], [RoomTypeId], [TotalRows], [TotalColumns], [Status], [CreationTime])
+SELECT r.Id, r.Name, r.TheaterId,
+       (SELECT Id FROM [RoomType] rt WHERE rt.TheaterId = r.TheaterId AND rt.Name = r.TypeName),
+       r.Rows, r.Cols, 0, GETUTCDATE()
+FROM (VALUES
+    (@T1R1, N'Room 1',    @Theater1, N'2D',   8,  12),
+    (@T1R2, N'Room 2',    @Theater1, N'3D',   8,  12),
+    (@T1R3, N'Room 3',    @Theater1, N'2D',   6,  10),
+    (@T1R4, N'IMAX Hall', @Theater1, N'IMAX', 10, 14),
+    (@T2R1, N'Room 1',    @Theater2, N'2D',   8,  12),
+    (@T2R2, N'Room 2',    @Theater2, N'3D',   8,  12),
+    (@T2R3, N'Room 3',    @Theater2, N'2D',   6,  10),
+    (@T3R1, N'Room 1',    @Theater3, N'2D',   8,  12),
+    (@T3R2, N'Room 2',    @Theater3, N'4DX',  8,  12),
+    (@T3R3, N'Room 3',    @Theater3, N'2D',   6,  10)
+) AS r(Id, Name, TheaterId, TypeName, Rows, Cols);
 
 -- ── Seats (cross-join approach — no cursor) ───────────────────────────────────
 

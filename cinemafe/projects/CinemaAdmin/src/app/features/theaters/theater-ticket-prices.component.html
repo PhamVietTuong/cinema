@@ -1,18 +1,25 @@
 <div class="tab-toolbar">
   <p class="ad-sub">Giá vé theo loại ghế × khung giờ × ngày lễ.</p>
-  <button class="ad-btn ad-btn--primary" (click)="openCreate()" [disabled]="!seatTypes.length || !timeSlots.length">
+  <button class="ad-btn ad-btn--primary" (click)="openCreate()" [disabled]="!roomTypes.length || !seatTypes.length || !timeSlots.length">
     <mat-icon>add</mat-icon> Thêm Giá Vé
   </button>
 </div>
 
-<p class="ad-sub" *ngIf="!seatTypes.length || !timeSlots.length">
-  Cần có ít nhất một loại ghế và một khung giờ trước khi thêm giá vé.
+<p class="ad-sub" *ngIf="!roomTypes.length || !seatTypes.length || !timeSlots.length">
+  Cần có ít nhất một loại phòng, một loại ghế và một khung giờ trước khi thêm giá vé.
 </p>
 
 <app-modal [open]="showForm" (closed)="cancelEdit()">
 <div class="ad-card form-card">
   <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Giá Vé' : 'Giá Vé Mới' }}</h3>
   <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
+    <div class="ad-field">
+      <label class="ad-label">Loại Phòng</label>
+      <select class="ad-input" formControlName="roomTypeId">
+        <option value="">— Chọn loại phòng —</option>
+        <option *ngFor="let t of roomTypes" [ngValue]="t.id">{{ t.name }}</option>
+      </select>
+    </div>
     <div class="ad-field">
       <label class="ad-label">Loại Ghế</label>
       <select class="ad-input" formControlName="seatTypeId">
@@ -47,11 +54,12 @@
   <div class="ad-table-wrap">
     <table class="ad-table">
       <thead>
-        <tr><th>Loại Ghế</th><th>Khung Giờ</th><th>Ngày</th><th>Giá</th><th class="ad-td-actions">Thao Tác</th></tr>
+        <tr><th>Loại Phòng</th><th>Loại Ghế</th><th>Khung Giờ</th><th>Ngày</th><th>Giá</th><th class="ad-td-actions">Thao Tác</th></tr>
       </thead>
       <tbody>
         <tr *ngFor="let x of items">
-          <td><strong>{{ seatTypeName(x.seatTypeId) }}</strong></td>
+          <td><strong>{{ roomTypeName(x.roomTypeId) }}</strong></td>
+          <td>{{ seatTypeName(x.seatTypeId) }}</td>
           <td>{{ timeSlotName(x.timeSlotId) }}</td>
           <td>
             <span class="ad-pill" [class.ad-pill--warn]="x.isHoliday" [class.ad-pill--neutral]="!x.isHoliday">

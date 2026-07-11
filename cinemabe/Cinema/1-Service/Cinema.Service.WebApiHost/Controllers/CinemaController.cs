@@ -31,6 +31,7 @@ public class CinemaController : ControllerBase
     private readonly IDiscountManager       _discounts;
     private readonly IFoodAndDrinkManager   _foodAndDrinks;
     private readonly IRoomManager           _rooms;
+    private readonly IRoomTypeManager       _roomTypes;
     private readonly IShowTimeManager       _showTimes;
     private readonly IMovieTypeDetailManager     _movieTypeDetails;
     private readonly IInvoiceAdminManager        _invoices;
@@ -52,6 +53,7 @@ public class CinemaController : ControllerBase
         IDiscountManager discounts,
         IFoodAndDrinkManager foodAndDrinks,
         IRoomManager rooms,
+        IRoomTypeManager roomTypes,
         IShowTimeManager showTimes,
         IMovieTypeDetailManager movieTypeDetails,
         IInvoiceAdminManager invoices,
@@ -72,6 +74,7 @@ public class CinemaController : ControllerBase
         _discounts       = discounts;
         _foodAndDrinks   = foodAndDrinks;
         _rooms           = rooms;
+        _roomTypes       = roomTypes;
         _showTimes       = showTimes;
         _movieTypeDetails    = movieTypeDetails;
         _invoices            = invoices;
@@ -931,6 +934,46 @@ public class CinemaController : ControllerBase
     public Task<IActionResult> DeleteRoom([FromQuery] Guid id)
     {
         return RunNoContent(nameof(DeleteRoom), () => _rooms.DeleteAsync(id));
+    }
+    #endregion
+
+    #region RoomType
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<RoomTypeDTO>), 200)]
+    public Task<IActionResult> GetRoomTypes([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetRoomTypes), () => _roomTypes.GetAsync(search));
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(RoomTypeDTO), 200)]
+    public Task<IActionResult> GetRoomType([FromQuery] Guid id)
+    {
+        return Run(nameof(GetRoomType), () => _roomTypes.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(RoomTypeDTO), 200)]
+    public Task<IActionResult> CreateRoomType([FromBody] CreateRoomTypeRequest request)
+    {
+        return Run(nameof(CreateRoomType), () => _roomTypes.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(RoomTypeDTO), 200)]
+    public Task<IActionResult> UpdateRoomType([FromBody] UpdateRoomTypeRequest request)
+    {
+        return Run(nameof(UpdateRoomType), () => _roomTypes.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public Task<IActionResult> DeleteRoomType([FromQuery] Guid id)
+    {
+        return RunNoContent(nameof(DeleteRoomType), () => _roomTypes.DeleteAsync(id));
     }
     #endregion
 

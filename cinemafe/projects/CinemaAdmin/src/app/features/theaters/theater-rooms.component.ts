@@ -26,6 +26,17 @@ export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
     { v: CinemaServiceAgent.RoomStatus.Maintenance, label: 'Bảo Trì' },
     { v: CinemaServiceAgent.RoomStatus.Inactive, label: 'Ngừng Hoạt Động' },
   ];
+  roomTypes: CinemaServiceAgent.RoomTypeDTO[] = [];
+
+  override ngOnInit(): void {
+    super.ngOnInit();
+    this._svc.getRoomTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500, filters: { theaterId: this.theaterId } }))
+      .subscribe(r => { this.roomTypes = r.results ?? []; this._cdr.markForCheck(); });
+  }
+
+  roomTypeName(id?: string): string {
+    return this.roomTypes.find(t => t.id === id)?.name ?? '—';
+  }
 
   // ── Seat-map editor popup ─────────────────────────────────────────────────────
   viewingRoom: Dto | null = null;
@@ -43,6 +54,7 @@ export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
   buildForm() {
     return this._fb.group({
       name: ['', Validators.required],
+      roomTypeId: ['', Validators.required],
       totalRows: [1, [Validators.required, Validators.min(1)]],
       totalColumns: [1, [Validators.required, Validators.min(1)]],
       status: [CinemaServiceAgent.RoomStatus.Active, Validators.required],

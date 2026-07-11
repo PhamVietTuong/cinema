@@ -35,5 +35,6 @@ public interface IRoomManager           : ICatalogManager<RoomDTO,           Cre
     Task<List<RoomSeatDTO>> ResizeSeatGridAsync(ResizeSeatGridRequest request);
 }
 public interface IShowTimeManager       : ICatalogManager<ShowTimeDTO,       CreateShowTimeRequest,       UpdateShowTimeRequest> { }
+public interface IRoomTypeManager       : ICatalogManager<RoomTypeDTO,       CreateRoomTypeRequest,       UpdateRoomTypeRequest> { }
 public interface ITimeSlotManager       : ICatalogManager<TimeSlotDTO,       CreateTimeSlotRequest,       UpdateTimeSlotRequest> { }
 public interface ITicketPriceManager    : ICatalogManager<TicketPriceDTO,    CreateTicketPriceRequest,    UpdateTicketPriceRequest> { }
