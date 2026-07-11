@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent } from 'CinemaLib';
+import * as QRCode from 'qrcode';
 
 /** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
 const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
@@ -38,6 +39,8 @@ export class ProfileComponent implements OnInit {
   invoices: PaymentServiceAgent.InvoiceDTO[] = [];
   invoicesLoading = false;
   expandedId: string | null = null;
+  /** Per-ticket e-ticket QR data URLs, keyed by the ticket's QR token. */
+  qrMap: Record<string, string> = {};
 
   profileForm: FormGroup = this._fb.group({
     name: ['', Validators.required],
@@ -69,9 +72,31 @@ export class ProfileComponent implements OnInit {
     this.invoicesLoading = true;
     this._payment.getMyInvoices(PaymentServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 50 }))
       .subscribe({
-        next: r => { this.invoices = r.results ?? []; this.invoicesLoading = false; this._cdr.markForCheck(); },
+        next: r => { this.invoices = r.results ?? []; this.invoicesLoading = false; this._buildQrCodes(); this._cdr.markForCheck(); },
         error: () => { this.invoicesLoading = false; this._cdr.markForCheck(); },
       });
+  }
+
+  /** Renders each paid ticket's QR token into a scannable image (one per seat). */
+  private _buildQrCodes(): void {
+    for (const inv of this.invoices) {
+      if (inv.status !== this.InvoiceStatus.Paid) { continue; }
+      for (const t of inv.tickets ?? []) {
+        const code = t.qrCode;
+        if (!code || this.qrMap[code]) { continue; }
+        QRCode.toDataURL(code, { margin: 1, width: 140 })
+          .then(url => { this.qrMap[code] = url; this._cdr.markForCheck(); })
+          .catch(() => { /* leave unset */ });
+      }
+    }
+  }
+
+  /** The full ticket list for an invoice id (for the expanded e-ticket panel). */
+  ticketsOf(id?: string): PaymentServiceAgent.InvoiceTicketDTO[] {
+    return this.invoices.find(i => i.id === id)?.tickets ?? [];
+  }
+  isPaid(status?: PaymentServiceAgent.InvoiceStatus): boolean {
+    return status === this.InvoiceStatus.Paid;
   }
 
   saveProfile(): void {

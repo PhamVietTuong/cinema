@@ -101,14 +101,33 @@
           <div class="ov-row ov-row-head bk-cols">
             <span>Tên Phim</span><span>Suất Chiếu</span><span>Ghế</span><span>Tổng Tiền</span><span>Trạng Thái</span><span></span>
           </div>
-          <div class="ov-row bk-cols" *ngFor="let r of bookingRows">
+          <ng-container *ngFor="let r of bookingRows">
+          <div class="ov-row bk-cols" [class.expandable]="isPaid(r.status)" (click)="isPaid(r.status) && toggleInvoice(r.id)">
             <span class="ov-movie">{{ r.movie }}</span>
             <span>{{ r.date | date:'dd/MM/yy HH:mm' }}</span>
             <span>{{ r.seats }}</span>
             <span>{{ r.total | number:'1.0-0' }}đ</span>
             <span><span class="invoice-status" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></span>
-            <span><button *ngIf="r.status === InvoiceStatus.Pending" class="bk-cancel" (click)="cancelById(r.id)" title="Hủy đặt vé"><i class="fas fa-xmark"></i></button></span>
+            <span class="bk-actions">
+              <button *ngIf="r.status === InvoiceStatus.Pending" class="bk-cancel" (click)="$event.stopPropagation(); cancelById(r.id)" title="Hủy đặt vé"><i class="fas fa-xmark"></i></button>
+              <i *ngIf="isPaid(r.status)" class="fas" [class.fa-chevron-down]="expandedId !== r.id" [class.fa-chevron-up]="expandedId === r.id"></i>
+            </span>
           </div>
+          <div class="eticket-panel" *ngIf="expandedId === r.id">
+            <div class="eticket" *ngFor="let t of ticketsOf(r.id)">
+              <div class="eticket-info">
+                <div class="eticket-movie">{{ t.movieTitle }}</div>
+                <div class="eticket-meta">{{ t.theaterName }} · {{ t.roomName }} · {{ t.showTime | date:'dd/MM HH:mm' }}</div>
+                <div class="eticket-seat">Ghế <strong>{{ t.seatLabel }}</strong> · {{ t.seatType }}</div>
+                <span class="eticket-used" *ngIf="t.isUsed">Đã soát vé</span>
+              </div>
+              <div class="eticket-qr">
+                <img *ngIf="t.qrCode && qrMap[t.qrCode]" [src]="qrMap[t.qrCode]" alt="Mã QR vé" width="120" height="120">
+                <i *ngIf="!(t.qrCode && qrMap[t.qrCode])" class="fas fa-qrcode"></i>
+              </div>
+            </div>
+          </div>
+          </ng-container>
         </div>
         <ng-template #noBk><div class="empty"><i class="fas fa-ticket"></i><p>Bạn chưa có vé nào.</p></div></ng-template>
       </ng-container>

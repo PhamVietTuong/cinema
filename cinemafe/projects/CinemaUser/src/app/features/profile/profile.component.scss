@@ -255,3 +255,31 @@
   .bk-stats { grid-template-columns: 1fr 1fr; }
   .set-row-2, .set-row-3 { grid-template-columns: 1fr; }
 }
+
+/* Expandable e-ticket panel (My Bookings) */
+.ov-row.expandable { cursor: pointer; }
+.bk-actions { display: inline-flex; align-items: center; gap: 10px; justify-content: flex-end; }
+.eticket-panel {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  padding: 16px; margin: -4px 0 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+}
+.eticket {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 16px; border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 280px; flex: 1;
+}
+.eticket-info { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.eticket-movie { font-weight: 700; }
+.eticket-meta { font-size: 0.82rem; opacity: 0.7; }
+.eticket-seat { font-size: 0.9rem; }
+.eticket-used { align-self: flex-start; margin-top: 4px; font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.eticket-qr {
+  width: 120px; height: 120px; flex: 0 0 120px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border-radius: 10px; overflow: hidden;
+}
+.eticket-qr i { font-size: 3rem; color: #111; }

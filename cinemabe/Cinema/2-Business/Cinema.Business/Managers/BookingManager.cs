@@ -104,21 +104,23 @@ public class BookingManager : IBookingManager
                 var price      = showTimeRoom.BasePrice * multiplier;
                 ticketTotal += price;
 
+                // Unguessable per-ticket token; encoded as the e-ticket QR and checked at the gate.
+                var qr = Guid.NewGuid().ToString("N");
                 tickets.Add(new InvoiceTicket
                 {
                     ShowTimeId   = request.ShowTimeId,
                     RoomId       = request.RoomId,
                     SeatId       = seatItem.SeatId,
                     Price        = price,
-                    // Unguessable per-ticket token; encoded as the e-ticket QR and checked at the gate.
-                    QrCode       = Guid.NewGuid().ToString("N"),
+                    QrCode       = qr,
                 });
 
                 ticketItems.Add(new TicketItemDTO
                 {
                     SeatLabel = $"{seat.RowName}{seat.ColIndex}",
                     SeatType  = seatType?.Name ?? string.Empty,
-                    Price     = price
+                    Price     = price,
+                    QrCode    = qr,
                 });
             }
 

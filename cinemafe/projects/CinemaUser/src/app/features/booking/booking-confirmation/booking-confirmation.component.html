@@ -38,6 +38,24 @@
         </div>
       </div>
 
+      <!-- Concessions / combos (this theater's menu) -->
+      <div class="form-card" *ngIf="foods.length">
+        <h3 class="card-title"><i class="fas fa-utensils"></i> Bắp Nước & Combo</h3>
+        <div class="combo-list">
+          <div class="combo-row" *ngFor="let f of foods">
+            <div class="combo-info">
+              <span class="combo-name">{{ f.name }}</span>
+              <span class="combo-price">{{ f.price | number:'1.0-0' }}đ</span>
+            </div>
+            <div class="combo-qty">
+              <button type="button" (click)="decFood(f)" [disabled]="!foodQty[f.id!]">−</button>
+              <span>{{ foodQty[f.id!] || 0 }}</span>
+              <button type="button" (click)="incFood(f)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Card form (shown for card) -->
       <div class="form-card" *ngIf="paymentMethod === 'Card'">
         <h3 class="card-title">Thẻ Tín Dụng / Ghi Nợ</h3>
@@ -90,12 +108,20 @@
         <div class="summary-divider"></div>
 
         <div class="summary-row">
-          <span>Tạm tính</span>
+          <span>Vé ({{ seats.length }} ghế)</span>
           <span>{{ totalPrice | number:'1.0-0' }}đ</span>
         </div>
-        <div class="summary-row muted">
-          <span>Phí đặt vé online</span>
-          <span>10.000đ</span>
+        <div class="summary-row" *ngFor="let f of selectedFoods">
+          <span>{{ f.name }} × {{ foodQty[f.id!] }}</span>
+          <span>{{ (f.price || 0) * foodQty[f.id!] | number:'1.0-0' }}đ</span>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <div class="field-group">
+          <label class="field-label">Mã Giảm Giá</label>
+          <input class="field-input" [(ngModel)]="discountCode" placeholder="VD: SUMMER25">
+          <span class="discount-note">Mã hợp lệ sẽ được trừ khi thanh toán.</span>
         </div>
 
         <div class="summary-divider"></div>
