@@ -19,6 +19,10 @@
         <option value="">Thể loại</option>
         <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
       </select>
+      <select class="genre-select" [(ngModel)]="selectedLanguage" *ngIf="!isPaged && languages.length">
+        <option value="">Ngôn ngữ</option>
+        <option *ngFor="let l of languages" [value]="l">{{ l }}</option>
+      </select>
     </div>
   </div>
 </div>

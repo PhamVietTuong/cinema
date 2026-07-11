@@ -33,6 +33,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
 
   mode: Mode = 'all';
   selectedGenre = '';
+  selectedLanguage = '';
   searchCtrl = new FormControl('');
   page = 1;
   pageSize = 12;
@@ -54,8 +55,13 @@ export class MovieListComponent implements OnInit, OnDestroy {
   get genres(): string[] {
     return [...new Set(this._source.flatMap(m => m.genres ?? []))].sort();
   }
+  get languages(): string[] {
+    return [...new Set(this._source.map(m => m.language).filter(Boolean))].sort();
+  }
   get displayed(): any[] {
-    return this.selectedGenre ? this._source.filter(m => (m.genres ?? []).includes(this.selectedGenre)) : this._source;
+    return this._source.filter(m =>
+      (!this.selectedGenre || (m.genres ?? []).includes(this.selectedGenre)) &&
+      (!this.selectedLanguage || m.language === this.selectedLanguage));
   }
 
   ngOnInit(): void {
@@ -75,6 +81,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
   setMode(m: Mode): void {
     this.mode = m;
     this.selectedGenre = '';
+    this.selectedLanguage = '';
     if (m === 'now') { this._store.dispatch(loadNowShowing()); }
     else if (m === 'coming') { this._store.dispatch(loadComingSoon()); }
     else { this.page = 1; this._loadPaged(); }
