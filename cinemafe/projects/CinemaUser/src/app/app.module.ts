@@ -17,6 +17,7 @@ import {
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { App } from './app';
+import { ChatbotComponent } from './shared/chatbot/chatbot.component';
 
 @NgModule({
   declarations: [App],
@@ -25,6 +26,7 @@ import { App } from './app';
     BrowserAnimationsModule,
     RouterModule.forRoot(routes),
     SharedModule,
+    ChatbotComponent,
     StoreModule.forRoot({ auth: authReducer, movies: moviesReducer }),
     EffectsModule.forRoot([AuthEffects, MoviesEffects]),
     StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: environment.production }),
