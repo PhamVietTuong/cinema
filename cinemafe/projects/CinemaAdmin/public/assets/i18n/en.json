@@ -1,0 +1,74 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "reports": "Reports",
+    "movies": "Movies",
+    "showtimes": "Showtimes",
+    "theaters": "Theaters",
+    "users": "Users",
+    "movieTypes": "Genres",
+    "ageRestrictions": "Age Restrictions",
+    "discountTypes": "Discount Types",
+    "memberships": "Membership Tiers",
+    "userTypes": "User Types",
+    "holidays": "Holidays",
+    "news": "News",
+    "discounts": "Discount Codes",
+    "invoices": "Invoices",
+    "logout": "Log Out"
+  },
+  "section": {
+    "catalog": "Catalog",
+    "operations": "Operations"
+  },
+  "pageTitle": {
+    "dashboard": "System Overview",
+    "reports": "Revenue Reports",
+    "movies": "Movie Management",
+    "theaters": "Theater Management",
+    "showtimes": "Showtime Management",
+    "users": "User Management",
+    "movieTypes": "Genre Management",
+    "ageRestrictions": "Age Restriction Management",
+    "discountTypes": "Discount Type Management",
+    "memberships": "Membership Tier Management",
+    "userTypes": "User Type Management",
+    "holidays": "Holiday Management",
+    "news": "News Management",
+    "discounts": "Discount Code Management",
+    "invoices": "Invoice Management",
+    "default": "Control Panel"
+  },
+  "topbar": {
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "notifications": "Notifications"
+  },
+  "profile": {
+    "myProfile": "My profile",
+    "adminFallback": "Administrator"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "search": "Search",
+    "add": "Add New",
+    "edit": "Edit",
+    "delete": "Delete",
+    "actions": "Actions",
+    "back": "Back",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "status": "Status",
+    "name": "Name",
+    "description": "Description",
+    "noResults": "No data",
+    "error": "An error occurred"
+  }
+}

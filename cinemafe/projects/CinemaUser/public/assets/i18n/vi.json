@@ -1,0 +1,28 @@
+{
+  "nav": {
+    "movies": "Phim",
+    "theaters": "Rạp Chiếu",
+    "promotions": "Khuyến Mãi",
+    "membership": "Thành Viên",
+    "account": "Tài Khoản",
+    "logout": "Đăng Xuất",
+    "login": "Đăng Nhập",
+    "register": "Đăng Ký"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "confirm": "Xác Nhận",
+    "close": "Đóng",
+    "search": "Tìm Kiếm",
+    "back": "Quay Lại",
+    "next": "Tiếp Theo",
+    "previous": "Trước",
+    "yes": "Có",
+    "no": "Không",
+    "all": "Tất Cả",
+    "noResults": "Không có kết quả",
+    "error": "Đã xảy ra lỗi"
+  }
+}

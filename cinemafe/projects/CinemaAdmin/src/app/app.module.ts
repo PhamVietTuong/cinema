@@ -14,6 +14,7 @@ import {
   API_BASE_URL, HUB_BASE_URL,
   CinemaServiceAgent, IdentityServiceAgent, PaymentServiceAgent,
   provideCinemaSvgIcons,
+  provideCinemaTranslation,
 } from 'CinemaLib';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
@@ -32,6 +33,7 @@ import { App } from './app';
   ],
   providers: [
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+    provideCinemaTranslation(),
     ...provideCinemaSvgIcons(),
     { provide: API_BASE_URL, useValue: environment.apiUrl },
     { provide: HUB_BASE_URL, useValue: environment.hubUrl },

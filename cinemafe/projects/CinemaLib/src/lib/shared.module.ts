@@ -26,6 +26,8 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
 import { SvgIconComponent } from '@ngneat/svg-icon';
+import { TranslatePipe, TranslateDirective } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from './i18n/language-switcher.component';
 
 const SHARED = [
   CommonModule,
@@ -56,6 +58,9 @@ const SHARED = [
   MatTooltipModule,
   MatBadgeModule,
   SvgIconComponent,
+  TranslatePipe,
+  TranslateDirective,
+  LanguageSwitcherComponent,
 ];
 
 @NgModule({

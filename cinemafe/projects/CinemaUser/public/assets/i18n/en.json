@@ -1,0 +1,28 @@
+{
+  "nav": {
+    "movies": "Movies",
+    "theaters": "Theaters",
+    "promotions": "Promotions",
+    "membership": "Membership",
+    "account": "Account",
+    "logout": "Log Out",
+    "login": "Log In",
+    "register": "Sign Up"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "noResults": "No results",
+    "error": "An error occurred"
+  }
+}

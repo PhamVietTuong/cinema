@@ -11,66 +11,66 @@
 
       <nav class="nav">
         <a routerLink="/dashboard" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>dashboard</mat-icon><span>Tổng Quan</span>
+          <mat-icon>dashboard</mat-icon><span>{{ 'nav.dashboard' | translate }}</span>
         </a>
         <a routerLink="/reports" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>bar_chart</mat-icon><span>Báo Cáo</span>
+          <mat-icon>bar_chart</mat-icon><span>{{ 'nav.reports' | translate }}</span>
         </a>
         <a routerLink="/movies" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>movie</mat-icon><span>Quản Lý Phim</span>
+          <mat-icon>movie</mat-icon><span>{{ 'nav.movies' | translate }}</span>
         </a>
         <a routerLink="/showtimes" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>event</mat-icon><span>Lịch Chiếu</span>
+          <mat-icon>event</mat-icon><span>{{ 'nav.showtimes' | translate }}</span>
         </a>
         <a routerLink="/theaters" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>theaters</mat-icon><span>Rạp Chiếu</span>
+          <mat-icon>theaters</mat-icon><span>{{ 'nav.theaters' | translate }}</span>
         </a>
         <a routerLink="/users" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>group</mat-icon><span>Người Dùng</span>
+          <mat-icon>group</mat-icon><span>{{ 'nav.users' | translate }}</span>
         </a>
 
-        <span class="nav-section">Danh Mục</span>
+        <span class="nav-section">{{ 'section.catalog' | translate }}</span>
         <a routerLink="/movie-types" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>category</mat-icon><span>Thể Loại Phim</span>
+          <mat-icon>category</mat-icon><span>{{ 'nav.movieTypes' | translate }}</span>
         </a>
         <a routerLink="/age-restrictions" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>shield</mat-icon><span>Giới Hạn Độ Tuổi</span>
+          <mat-icon>shield</mat-icon><span>{{ 'nav.ageRestrictions' | translate }}</span>
         </a>
         <a routerLink="/discount-types" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>sell</mat-icon><span>Loại Giảm Giá</span>
+          <mat-icon>sell</mat-icon><span>{{ 'nav.discountTypes' | translate }}</span>
         </a>
         <a routerLink="/memberships" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>card_membership</mat-icon><span>Hạng Thành Viên</span>
+          <mat-icon>card_membership</mat-icon><span>{{ 'nav.memberships' | translate }}</span>
         </a>
         <a routerLink="/user-types" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>badge</mat-icon><span>Loại Người Dùng</span>
+          <mat-icon>badge</mat-icon><span>{{ 'nav.userTypes' | translate }}</span>
         </a>
         <a routerLink="/holidays" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>celebration</mat-icon><span>Ngày Lễ</span>
+          <mat-icon>celebration</mat-icon><span>{{ 'nav.holidays' | translate }}</span>
         </a>
         <a routerLink="/news" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>article</mat-icon><span>Tin Tức</span>
+          <mat-icon>article</mat-icon><span>{{ 'nav.news' | translate }}</span>
         </a>
 
-        <span class="nav-section">Vận Hành</span>
+        <span class="nav-section">{{ 'section.operations' | translate }}</span>
         <a routerLink="/discounts" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>local_offer</mat-icon><span>Mã Giảm Giá</span>
+          <mat-icon>local_offer</mat-icon><span>{{ 'nav.discounts' | translate }}</span>
         </a>
         <a routerLink="/invoices" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>receipt_long</mat-icon><span>Hóa Đơn</span>
+          <mat-icon>receipt_long</mat-icon><span>{{ 'nav.invoices' | translate }}</span>
         </a>
       </nav>
 
       <div class="sidebar-footer">
-        <a class="profile" routerLink="/profile" *ngIf="user$ | async as user" title="Hồ sơ của tôi">
+        <a class="profile" routerLink="/profile" *ngIf="user$ | async as user" [title]="'profile.myProfile' | translate">
           <span class="ad-avatar">{{ (user.name || 'QT') | slice:0:1 }}</span>
           <div class="profile-meta">
-            <span class="profile-name">{{ user.name || 'Quản Trị Viên' }}</span>
+            <span class="profile-name">{{ user.name || ('profile.adminFallback' | translate) }}</span>
             <span class="profile-mail">{{ user.email || 'admin@cinema.vn' }}</span>
           </div>
         </a>
         <button type="button" class="nav-item logout" (click)="doLogout()">
-          <mat-icon>logout</mat-icon><span>Đăng Xuất</span>
+          <mat-icon>logout</mat-icon><span>{{ 'nav.logout' | translate }}</span>
         </button>
       </div>
     </aside>
@@ -81,12 +81,13 @@
         <button type="button" class="menu-toggle ad-icon-btn" (click)="toggleMenu()" aria-label="Menu">
           <mat-icon>menu</mat-icon>
         </button>
-        <h2 class="topbar-title">{{ pageTitle$ | async }}</h2>
+        <h2 class="topbar-title">{{ ((pageTitleKey$ | async) ?? '') | translate }}</h2>
         <div class="topbar-right">
-          <button type="button" class="ad-icon-btn" (click)="toggleTheme()" [attr.aria-label]="isDark ? 'Chế độ sáng' : 'Chế độ tối'" [title]="isDark ? 'Chế độ sáng' : 'Chế độ tối'">
+          <cl-language-switcher></cl-language-switcher>
+          <button type="button" class="ad-icon-btn" (click)="toggleTheme()" [attr.aria-label]="(isDark ? 'topbar.lightMode' : 'topbar.darkMode') | translate" [title]="(isDark ? 'topbar.lightMode' : 'topbar.darkMode') | translate">
             <mat-icon>{{ isDark ? 'light_mode' : 'dark_mode' }}</mat-icon>
           </button>
-          <button type="button" class="ad-icon-btn" aria-label="Thông báo"><mat-icon>notifications_none</mat-icon></button>
+          <button type="button" class="ad-icon-btn" [attr.aria-label]="'topbar.notifications' | translate"><mat-icon>notifications_none</mat-icon></button>
           <span class="ad-avatar" *ngIf="user$ | async as user">{{ (user.name || 'QT') | slice:0:1 }}</span>
         </div>
       </header>

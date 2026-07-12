@@ -7,12 +7,13 @@
       </span>
     </a>
     <ul class="nav-links">
-      <li><a routerLink="/movies" routerLinkActive="active-link">Phim</a></li>
-      <li><a routerLink="/theaters" routerLinkActive="active-link">Rạp Chiếu</a></li>
-      <li><a routerLink="/promotions" routerLinkActive="active-link">Khuyến Mãi</a></li>
-      <li><a routerLink="/membership" routerLinkActive="active-link">Thành Viên</a></li>
+      <li><a routerLink="/movies" routerLinkActive="active-link">{{ 'nav.movies' | translate }}</a></li>
+      <li><a routerLink="/theaters" routerLinkActive="active-link">{{ 'nav.theaters' | translate }}</a></li>
+      <li><a routerLink="/promotions" routerLinkActive="active-link">{{ 'nav.promotions' | translate }}</a></li>
+      <li><a routerLink="/membership" routerLinkActive="active-link">{{ 'nav.membership' | translate }}</a></li>
     </ul>
     <div class="nav-actions">
+      <cl-language-switcher></cl-language-switcher>
       <ng-container *ngIf="isAuth$ | async; else guestNav">
         <button class="nav-user-btn" [matMenuTriggerFor]="userMenu">
           <i class="fas fa-circle-user"></i>
@@ -21,16 +22,16 @@
         </button>
         <mat-menu #userMenu="matMenu">
           <a mat-menu-item routerLink="/profile">
-            <i class="fas fa-user menu-icon"></i> Tài Khoản
+            <i class="fas fa-user menu-icon"></i> {{ 'nav.account' | translate }}
           </a>
           <button mat-menu-item (click)="doLogout()">
-            <i class="fas fa-right-from-bracket menu-icon"></i> Đăng Xuất
+            <i class="fas fa-right-from-bracket menu-icon"></i> {{ 'nav.logout' | translate }}
           </button>
         </mat-menu>
       </ng-container>
       <ng-template #guestNav>
-        <a routerLink="/auth/login" class="nav-link-text">Đăng Nhập</a>
-        <a routerLink="/auth/register" class="btn-nav-primary">Đăng Ký</a>
+        <a routerLink="/auth/login" class="nav-link-text">{{ 'nav.login' | translate }}</a>
+        <a routerLink="/auth/register" class="btn-nav-primary">{{ 'nav.register' | translate }}</a>
       </ng-template>
     </div>
 
@@ -42,18 +43,18 @@
 
   <!-- Mobile menu panel -->
   <div class="mobile-menu" [class.is-open]="menuOpen">
-    <a routerLink="/movies" routerLinkActive="active-link" (click)="closeMenu()">Phim</a>
-    <a routerLink="/theaters" routerLinkActive="active-link" (click)="closeMenu()">Rạp Chiếu</a>
-    <a routerLink="/promotions" routerLinkActive="active-link" (click)="closeMenu()">Khuyến Mãi</a>
-    <a routerLink="/membership" routerLinkActive="active-link" (click)="closeMenu()">Thành Viên</a>
+    <a routerLink="/movies" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.movies' | translate }}</a>
+    <a routerLink="/theaters" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.theaters' | translate }}</a>
+    <a routerLink="/promotions" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.promotions' | translate }}</a>
+    <a routerLink="/membership" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.membership' | translate }}</a>
     <div class="mobile-menu-divider"></div>
     <ng-container *ngIf="isAuth$ | async; else guestMobile">
-      <a routerLink="/profile" (click)="closeMenu()">Tài Khoản</a>
-      <button type="button" (click)="doLogout()">Đăng Xuất</button>
+      <a routerLink="/profile" (click)="closeMenu()">{{ 'nav.account' | translate }}</a>
+      <button type="button" (click)="doLogout()">{{ 'nav.logout' | translate }}</button>
     </ng-container>
     <ng-template #guestMobile>
-      <a routerLink="/auth/login" (click)="closeMenu()">Đăng Nhập</a>
-      <a routerLink="/auth/register" (click)="closeMenu()">Đăng Ký</a>
+      <a routerLink="/auth/login" (click)="closeMenu()">{{ 'nav.login' | translate }}</a>
+      <a routerLink="/auth/register" (click)="closeMenu()">{{ 'nav.register' | translate }}</a>
     </ng-template>
   </div>
 </nav>

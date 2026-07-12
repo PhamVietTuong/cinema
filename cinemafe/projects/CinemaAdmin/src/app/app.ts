@@ -5,22 +5,24 @@ import { Store } from '@ngrx/store';
 import { Router, NavigationEnd } from '@angular/router';
 import { selectIsAuthenticated, selectCurrentUser, loadUserFromStorage, logout } from 'CinemaLib';
 
-const PAGE_TITLES: Record<string, string> = {
-  dashboard: 'Tổng Quan Hệ Thống',
-  reports: 'Báo Cáo Doanh Thu',
-  movies: 'Quản Lý Phim',
-  theaters: 'Quản Lý Rạp Chiếu',
-  showtimes: 'Quản Lý Lịch Chiếu',
-  users: 'Quản Lý Người Dùng',
-  'movie-types': 'Quản Lý Thể Loại Phim',
-  'age-restrictions': 'Quản Lý Giới Hạn Độ Tuổi',
-  'discount-types': 'Quản Lý Loại Giảm Giá',
-  memberships: 'Quản Lý Hạng Thành Viên',
-  'user-types': 'Quản Lý Loại Người Dùng',
-  holidays: 'Quản Lý Ngày Lễ',
-  news: 'Quản Lý Tin Tức',
-  discounts: 'Quản Lý Mã Giảm Giá',
-  invoices: 'Quản Lý Hóa Đơn',
+/** Route segment → i18n key. The key is resolved with the `translate` pipe in
+ *  the template so the page title reacts to language switches too. */
+const PAGE_TITLE_KEYS: Record<string, string> = {
+  dashboard: 'pageTitle.dashboard',
+  reports: 'pageTitle.reports',
+  movies: 'pageTitle.movies',
+  theaters: 'pageTitle.theaters',
+  showtimes: 'pageTitle.showtimes',
+  users: 'pageTitle.users',
+  'movie-types': 'pageTitle.movieTypes',
+  'age-restrictions': 'pageTitle.ageRestrictions',
+  'discount-types': 'pageTitle.discountTypes',
+  memberships: 'pageTitle.memberships',
+  'user-types': 'pageTitle.userTypes',
+  holidays: 'pageTitle.holidays',
+  news: 'pageTitle.news',
+  discounts: 'pageTitle.discounts',
+  invoices: 'pageTitle.invoices',
 };
 
 @Component({
@@ -32,7 +34,7 @@ const PAGE_TITLES: Record<string, string> = {
 export class App implements OnInit {
   isAuth$: Observable<boolean>;
   user$: Observable<any>;
-  pageTitle$: Observable<string>;
+  pageTitleKey$: Observable<string>;
 
   /** Mobile sidebar drawer open state (ignored on desktop where the rail is static). */
   menuOpen = false;
@@ -46,9 +48,9 @@ export class App implements OnInit {
     const nav$ = this._router.events.pipe(filter(e => e instanceof NavigationEnd));
     // Close the mobile drawer whenever navigation completes.
     nav$.subscribe(() => { this.menuOpen = false; });
-    this.pageTitle$ = nav$.pipe(
-      map(() => this._titleFromUrl(this._router.url)),
-      startWith(this._titleFromUrl(this._router.url)),
+    this.pageTitleKey$ = nav$.pipe(
+      map(() => this._titleKeyFromUrl(this._router.url)),
+      startWith(this._titleKeyFromUrl(this._router.url)),
     );
   }
 
@@ -75,8 +77,8 @@ export class App implements OnInit {
     this._store.dispatch(logout());
   }
 
-  private _titleFromUrl(url: string): string {
+  private _titleKeyFromUrl(url: string): string {
     const seg = url.split('?')[0].split('/').filter(Boolean)[0] ?? 'dashboard';
-    return PAGE_TITLES[seg] ?? 'Bảng Điều Khiển';
+    return PAGE_TITLE_KEYS[seg] ?? 'pageTitle.default';
   }
 }

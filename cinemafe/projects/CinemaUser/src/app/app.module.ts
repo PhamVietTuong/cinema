@@ -13,6 +13,7 @@ import {
   authInterceptor, errorInterceptor,
   API_BASE_URL, HUB_BASE_URL,
   CinemaServiceAgent, IdentityServiceAgent, PaymentServiceAgent,
+  provideCinemaTranslation,
 } from 'CinemaLib';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
@@ -33,6 +34,7 @@ import { ChatbotComponent } from './shared/chatbot/chatbot.component';
   ],
   providers: [
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+    provideCinemaTranslation(),
     { provide: API_BASE_URL, useValue: environment.apiUrl },
     { provide: HUB_BASE_URL, useValue: environment.hubUrl },
     { provide: CinemaServiceAgent.CINEMA_BASE_URL, useValue: environment.apiUrl },

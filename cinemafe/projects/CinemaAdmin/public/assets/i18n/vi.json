@@ -1,0 +1,74 @@
+{
+  "nav": {
+    "dashboard": "Tổng Quan",
+    "reports": "Báo Cáo",
+    "movies": "Quản Lý Phim",
+    "showtimes": "Lịch Chiếu",
+    "theaters": "Rạp Chiếu",
+    "users": "Người Dùng",
+    "movieTypes": "Thể Loại Phim",
+    "ageRestrictions": "Giới Hạn Độ Tuổi",
+    "discountTypes": "Loại Giảm Giá",
+    "memberships": "Hạng Thành Viên",
+    "userTypes": "Loại Người Dùng",
+    "holidays": "Ngày Lễ",
+    "news": "Tin Tức",
+    "discounts": "Mã Giảm Giá",
+    "invoices": "Hóa Đơn",
+    "logout": "Đăng Xuất"
+  },
+  "section": {
+    "catalog": "Danh Mục",
+    "operations": "Vận Hành"
+  },
+  "pageTitle": {
+    "dashboard": "Tổng Quan Hệ Thống",
+    "reports": "Báo Cáo Doanh Thu",
+    "movies": "Quản Lý Phim",
+    "theaters": "Quản Lý Rạp Chiếu",
+    "showtimes": "Quản Lý Lịch Chiếu",
+    "users": "Quản Lý Người Dùng",
+    "movieTypes": "Quản Lý Thể Loại Phim",
+    "ageRestrictions": "Quản Lý Giới Hạn Độ Tuổi",
+    "discountTypes": "Quản Lý Loại Giảm Giá",
+    "memberships": "Quản Lý Hạng Thành Viên",
+    "userTypes": "Quản Lý Loại Người Dùng",
+    "holidays": "Quản Lý Ngày Lễ",
+    "news": "Quản Lý Tin Tức",
+    "discounts": "Quản Lý Mã Giảm Giá",
+    "invoices": "Quản Lý Hóa Đơn",
+    "default": "Bảng Điều Khiển"
+  },
+  "topbar": {
+    "lightMode": "Chế độ sáng",
+    "darkMode": "Chế độ tối",
+    "notifications": "Thông báo"
+  },
+  "profile": {
+    "myProfile": "Hồ sơ của tôi",
+    "adminFallback": "Quản Trị Viên"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "confirm": "Xác Nhận",
+    "close": "Đóng",
+    "search": "Tìm Kiếm",
+    "add": "Thêm Mới",
+    "edit": "Chỉnh Sửa",
+    "delete": "Xóa",
+    "actions": "Thao Tác",
+    "back": "Quay Lại",
+    "yes": "Có",
+    "no": "Không",
+    "all": "Tất Cả",
+    "active": "Đang Hoạt Động",
+    "inactive": "Ngừng Hoạt Động",
+    "status": "Trạng Thái",
+    "name": "Tên",
+    "description": "Mô Tả",
+    "noResults": "Không có dữ liệu",
+    "error": "Đã xảy ra lỗi"
+  }
+}
