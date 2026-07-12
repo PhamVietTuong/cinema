@@ -16,7 +16,7 @@ import { SharedModule } from 'CinemaLib';
       <div class="modal-card" [class.modal-card--wide]="wide">
         <div class="modal-head">
           <h3 class="ad-card-title" *ngIf="title">{{ title }}</h3>
-          <button class="ad-icon-btn" type="button" (click)="closed.emit()" title="Đóng"><mat-icon>close</mat-icon></button>
+          <button class="ad-icon-btn" type="button" (click)="closed.emit()" [title]="'common.close' | translate"><mat-icon>close</mat-icon></button>
         </div>
         <div class="modal-body"><ng-content></ng-content></div>
       </div>

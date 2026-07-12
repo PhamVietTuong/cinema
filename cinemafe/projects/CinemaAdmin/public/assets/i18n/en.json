@@ -69,6 +69,19 @@
     "name": "Name",
     "description": "Description",
     "noResults": "No data",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "confirmDelete": "Are you sure you want to delete this item?",
+    "create": "Create",
+    "update": "Update",
+    "reset": "Reset",
+    "filter": "Filter",
+    "code": "Code",
+    "type": "Type",
+    "price": "Price",
+    "date": "Date",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "createdAt": "Created At",
+    "none": "None"
   }
 }

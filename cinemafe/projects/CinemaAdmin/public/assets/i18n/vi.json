@@ -69,6 +69,19 @@
     "name": "Tên",
     "description": "Mô Tả",
     "noResults": "Không có dữ liệu",
-    "error": "Đã xảy ra lỗi"
+    "error": "Đã xảy ra lỗi",
+    "confirmDelete": "Bạn có chắc muốn xóa mục này?",
+    "create": "Tạo Mới",
+    "update": "Cập Nhật",
+    "reset": "Đặt Lại",
+    "filter": "Lọc",
+    "code": "Mã",
+    "type": "Loại",
+    "price": "Giá",
+    "date": "Ngày",
+    "startDate": "Ngày Bắt Đầu",
+    "endDate": "Ngày Kết Thúc",
+    "createdAt": "Ngày Tạo",
+    "none": "Không có"
   }
 }
