@@ -11,6 +11,10 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     Task<(IEnumerable<Invoice> Items, int Total)> GetPagedAsync(InvoiceStatus? status, DateTime? from, DateTime? to, int page, int pageSize);
     Task<double> GetTotalRevenueAsync(DateTime from, DateTime to);
     Task<IReadOnlyDictionary<DateTime, double>> GetRevenueByDayAsync(DateTime from, DateTime to);
+    /// <summary>Ticket revenue grouped by movie title, over paid invoices in the range.</summary>
+    Task<IReadOnlyDictionary<string, double>> GetRevenueByMovieAsync(DateTime from, DateTime to);
+    /// <summary>Ticket revenue grouped by theater name, over paid invoices in the range.</summary>
+    Task<IReadOnlyDictionary<string, double>> GetRevenueByTheaterAsync(DateTime from, DateTime to);
     /// <summary>Pending invoices created before <paramref name="olderThan"/> (abandoned/unpaid holds).</summary>
     Task<IReadOnlyList<Invoice>> GetStalePendingAsync(DateTime olderThan);
     /// <summary>Loads a ticket by its QR token, with invoice + seat + showtime/room details, for gate check-in.</summary>

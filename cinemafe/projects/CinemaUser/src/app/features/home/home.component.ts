@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import {
-  SharedModule,
+  SharedModule, CinemaServiceAgent,
   loadNowShowing, loadComingSoon,
   selectNowShowing, selectComingSoon, selectMoviesLoading,
 } from 'CinemaLib';
@@ -16,10 +16,16 @@ import {
   styleUrl: './home.component.scss',
 })
 export class HomeComponent implements OnInit {
+  private _cinema = inject(CinemaServiceAgent.HttpService);
+  private _cdr = inject(ChangeDetectorRef);
+
   nowShowing$: Observable<any[]>;
   comingSoon$: Observable<any[]>;
   loading$: Observable<boolean>;
   featuredMovie$: Observable<any>;
+
+  /** Personalised picks (top-rated for anonymous visitors). */
+  recommended: any[] = [];
 
   constructor(private _store: Store) {
     this.nowShowing$ = this._store.select(selectNowShowing);
@@ -31,6 +37,10 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     this._store.dispatch(loadNowShowing());
     this._store.dispatch(loadComingSoon());
+    this._cinema.getRecommendedMovies(8).subscribe({
+      next: r => { this.recommended = r ?? []; this._cdr.markForCheck(); },
+      error: () => this._cdr.markForCheck(),
+    });
   }
 
   /** Falls back to the bundled placeholder when a poster URL fails to load. */

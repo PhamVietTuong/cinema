@@ -129,6 +129,25 @@ public class CinemaController : ControllerBase
     // ── Movies ────────────────────────────────────────────────────────────────
 
     [HttpPost]
+    [ProducesResponseType(typeof(List<MovieDTO>), 200)]
+    public async Task<IActionResult> GetRecommendedMovies([FromQuery] int count = 8)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetRecommendedMovies being awakened to process request...");
+        try
+        {
+            // Personalise for a signed-in user; anonymous callers get top-rated picks.
+            Guid? userId = User?.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+            var result = await _movieManager.GetRecommendedAsync(userId, count);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRecommendedMovies->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
+    [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<MovieDTO>), 200)]
     public async Task<IActionResult> GetMovies([FromBody] PagingSearchDTO search)
     {

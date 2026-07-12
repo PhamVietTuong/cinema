@@ -218,6 +218,42 @@ public class PaymentController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(List<RevenueBreakdownDTO>), 200)]
+    public async Task<IActionResult> GetRevenueByMovie([FromQuery] DateTime from, [FromQuery] DateTime to)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetRevenueByMovie being awakened to process request...");
+        try
+        {
+            var result = await _invoiceManager.GetRevenueByMovieAsync(from, to);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenueByMovie->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(List<RevenueBreakdownDTO>), 200)]
+    public async Task<IActionResult> GetRevenueByTheater([FromQuery] DateTime from, [FromQuery] DateTime to)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetRevenueByTheater being awakened to process request...");
+        try
+        {
+            var result = await _invoiceManager.GetRevenueByTheaterAsync(from, to);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenueByTheater->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
 }
 
 // ── Request classes ───────────────────────────────────────────────────────────

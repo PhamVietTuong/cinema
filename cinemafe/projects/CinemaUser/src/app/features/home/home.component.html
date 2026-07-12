@@ -60,6 +60,35 @@
   </ng-template>
 </section>
 
+<!-- ── RECOMMENDED FOR YOU ─────────────────────────────────────────────────── -->
+<section class="section" *ngIf="recommended.length">
+  <div class="section-header">
+    <div class="section-titlewrap">
+      <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
+      <h2 class="section-title">Đề Xuất Cho Bạn</h2>
+    </div>
+  </div>
+  <div class="scroll-row">
+    <div class="movie-card" *ngFor="let movie of recommended" [routerLink]="['/movies', movie.id]">
+      <div class="card-poster">
+        <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
+        <div class="card-hover-overlay">
+          <span class="btn-book-small"><i class="fas fa-ticket"></i> Đặt Vé</span>
+        </div>
+        <div class="card-rating"><i class="fas fa-star"></i> {{ movie.averageRating | number:'1.1-1' }}</div>
+        <span class="card-age">{{ movie.ageRestrictionCode }}</span>
+      </div>
+      <div class="card-info">
+        <h3 class="card-title">{{ movie.title }}</h3>
+        <div class="card-genres">
+          <span class="chip-genre" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
+        </div>
+        <p class="card-duration"><i class="fas fa-clock"></i> {{ movie.duration }} phút</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ── NOW SHOWING ─────────────────────────────────────────────────────────── -->
 <section class="section">
   <div class="section-header">

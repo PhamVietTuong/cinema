@@ -1,0 +1,66 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">Báo Cáo Doanh Thu</h1>
+      <p class="ad-sub">Thống kê doanh thu theo ngày, phim và rạp.</p>
+    </div>
+    <div class="ad-toolbar rp-range">
+      <span class="ad-field"><label class="ad-label">Từ</label><input class="ad-input" type="date" [(ngModel)]="from"></span>
+      <span class="ad-field"><label class="ad-label">Đến</label><input class="ad-input" type="date" [(ngModel)]="to"></span>
+      <button class="ad-btn ad-btn--primary" (click)="load()" [disabled]="loading"><mat-icon>refresh</mat-icon> Cập Nhật</button>
+    </div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="rp-kpis">
+    <div class="ad-card rp-kpi">
+      <span class="rp-kpi-label">Tổng Doanh Thu</span>
+      <span class="rp-kpi-val">{{ total | number:'1.0-0' }}đ</span>
+    </div>
+    <div class="ad-card rp-kpi">
+      <span class="rp-kpi-label">Doanh Thu Vé</span>
+      <span class="rp-kpi-val">{{ ticketsTotal | number:'1.0-0' }}đ</span>
+    </div>
+    <div class="ad-card rp-kpi">
+      <span class="rp-kpi-label">Số Phim Có Doanh Thu</span>
+      <span class="rp-kpi-val">{{ byMovie.length }}</span>
+    </div>
+  </div>
+
+  <!-- Trend by day -->
+  <div class="ad-card">
+    <h3 class="ad-card-title">Xu Hướng Theo Ngày</h3>
+    <div class="rp-trend" *ngIf="byDay.length; else noData">
+      <div class="rp-bar-col" *ngFor="let d of byDay" [title]="(d.date | date:'dd/MM') + ': ' + (d.total | number:'1.0-0') + 'đ'">
+        <div class="rp-bar" [style.height.%]="pct(d.total, maxDay)"></div>
+        <span class="rp-bar-x">{{ d.date | date:'dd/MM' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- By movie -->
+  <div class="ad-card">
+    <h3 class="ad-card-title">Doanh Thu Theo Phim</h3>
+    <div class="rp-rows" *ngIf="byMovie.length; else noData">
+      <div class="rp-row" *ngFor="let m of byMovie">
+        <span class="rp-row-name">{{ m.name }}</span>
+        <span class="rp-row-track"><span class="rp-row-fill" [style.width.%]="pct(m.total, maxMovie)"></span></span>
+        <span class="rp-row-val">{{ m.total | number:'1.0-0' }}đ</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- By theater -->
+  <div class="ad-card">
+    <h3 class="ad-card-title">Doanh Thu Theo Rạp</h3>
+    <div class="rp-rows" *ngIf="byTheater.length; else noData">
+      <div class="rp-row" *ngFor="let t of byTheater">
+        <span class="rp-row-name">{{ t.name }}</span>
+        <span class="rp-row-track"><span class="rp-row-fill" [style.width.%]="pct(t.total, maxTheater)"></span></span>
+        <span class="rp-row-val">{{ t.total | number:'1.0-0' }}đ</span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noData><div class="ad-empty"><mat-icon>bar_chart</mat-icon><p>Chưa có dữ liệu doanh thu trong khoảng này.</p></div></ng-template>
+</div>

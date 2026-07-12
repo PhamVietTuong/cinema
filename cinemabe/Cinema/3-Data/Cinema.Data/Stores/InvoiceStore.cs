@@ -66,6 +66,28 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         return rows.ToDictionary(r => r.Date, r => r.Total);
     }
 
+    public async Task<IReadOnlyDictionary<string, double>> GetRevenueByMovieAsync(DateTime from, DateTime to)
+    {
+        var rows = await Context.InvoiceTicket
+            .Where(t => t.Invoice.Status == InvoiceStatus.Paid && t.Invoice.PaidAt != null
+                        && t.Invoice.PaidAt >= from && t.Invoice.PaidAt <= to)
+            .GroupBy(t => t.ShowTimeRoom.ShowTime.Movie.Title)
+            .Select(g => new { Name = g.Key, Total = g.Sum(x => x.Price) })
+            .ToListAsync();
+        return rows.ToDictionary(r => r.Name, r => r.Total);
+    }
+
+    public async Task<IReadOnlyDictionary<string, double>> GetRevenueByTheaterAsync(DateTime from, DateTime to)
+    {
+        var rows = await Context.InvoiceTicket
+            .Where(t => t.Invoice.Status == InvoiceStatus.Paid && t.Invoice.PaidAt != null
+                        && t.Invoice.PaidAt >= from && t.Invoice.PaidAt <= to)
+            .GroupBy(t => t.ShowTimeRoom.Room.Theater.Name)
+            .Select(g => new { Name = g.Key, Total = g.Sum(x => x.Price) })
+            .ToListAsync();
+        return rows.ToDictionary(r => r.Name, r => r.Total);
+    }
+
     public async Task<IReadOnlyList<Invoice>> GetStalePendingAsync(DateTime olderThan)
         => await DbSet
             .Where(i => i.Status == InvoiceStatus.Pending && i.CreationTime < olderThan)

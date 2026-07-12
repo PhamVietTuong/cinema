@@ -14,4 +14,6 @@ public interface IMovieManager
     Task                                       DeleteAsync(Guid id);
     Task<CommentDTO>                           AddCommentAsync(Guid movieId, Guid userId, string content, Guid? parentId);
     Task<int>                                  RateMovieAsync(Guid movieId, Guid userId, int score, string? review);
+    /// <summary>Recommends movies by the user's favourite genres (if signed in) then by rating.</summary>
+    Task<List<MovieDTO>>                       GetRecommendedAsync(Guid? userId, int count);
 }

@@ -9,4 +9,6 @@ public interface IInvoiceManager
     Task<InvoiceDTO>                       GetByIdAsync(Guid id, Guid requestingUserId, bool isAdmin);
     Task<double>                          GetTotalRevenueAsync(DateTime from, DateTime to);
     Task<List<RevenueByDayDTO>>            GetRevenueByDayAsync(DateTime from, DateTime to);
+    Task<List<RevenueBreakdownDTO>>        GetRevenueByMovieAsync(DateTime from, DateTime to);
+    Task<List<RevenueBreakdownDTO>>        GetRevenueByTheaterAsync(DateTime from, DateTime to);
 }

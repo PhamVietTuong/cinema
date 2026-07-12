@@ -33,6 +33,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/movies/movies-management.component').then(m => m.MoviesManagementComponent)
       },
       {
+        path: 'reports',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent)
+      },
+      {
         path: 'theaters',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/theaters/theaters-management.component').then(m => m.TheatersManagementComponent)

@@ -7,6 +7,7 @@ import { selectIsAuthenticated, selectCurrentUser, loadUserFromStorage, logout }
 
 const PAGE_TITLES: Record<string, string> = {
   dashboard: 'Tổng Quan Hệ Thống',
+  reports: 'Báo Cáo Doanh Thu',
   movies: 'Quản Lý Phim',
   theaters: 'Quản Lý Rạp Chiếu',
   showtimes: 'Quản Lý Lịch Chiếu',

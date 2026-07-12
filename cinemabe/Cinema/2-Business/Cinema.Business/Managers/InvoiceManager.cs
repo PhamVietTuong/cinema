@@ -70,6 +70,20 @@ public class InvoiceManager : IInvoiceManager
         return result;
     }
 
+    public async Task<List<RevenueBreakdownDTO>> GetRevenueByMovieAsync(DateTime from, DateTime to)
+    {
+        var map = await _uow.InvoiceStore.GetRevenueByMovieAsync(from, to);
+        return map.Select(kv => new RevenueBreakdownDTO { Name = kv.Key, Total = kv.Value })
+                  .OrderByDescending(x => x.Total).ToList();
+    }
+
+    public async Task<List<RevenueBreakdownDTO>> GetRevenueByTheaterAsync(DateTime from, DateTime to)
+    {
+        var map = await _uow.InvoiceStore.GetRevenueByTheaterAsync(from, to);
+        return map.Select(kv => new RevenueBreakdownDTO { Name = kv.Key, Total = kv.Value })
+                  .OrderByDescending(x => x.Total).ToList();
+    }
+
     private static InvoiceDTO ToInvoiceDTO(Invoice invoice)
     {
         var dto = invoice.ToDTO<Invoice, InvoiceDTO>();

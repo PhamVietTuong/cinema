@@ -1,0 +1,29 @@
+:host { display: block; }
+
+.ad-page > .ad-card { margin-bottom: 20px; }
+.rp-range { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.rp-range .ad-field { display: flex; flex-direction: column; gap: 4px; }
+
+.rp-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.rp-kpi { display: flex; flex-direction: column; gap: 8px; }
+.rp-kpi-label { color: var(--ad-muted); font-size: 13px; }
+.rp-kpi-val { font-family: var(--ad-font-head); font-size: 28px; font-weight: 700; color: var(--ad-on); }
+
+/* Daily trend — column bars */
+.rp-trend { display: flex; align-items: flex-end; gap: 4px; height: 200px; overflow-x: auto; padding-top: 8px; }
+.rp-bar-col { flex: 1 0 26px; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 6px; }
+.rp-bar { width: 60%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--ad-primary); transition: height 0.2s ease; }
+.rp-bar-x { font-size: 10px; color: var(--ad-muted); white-space: nowrap; }
+
+/* Breakdown — horizontal bars */
+.rp-rows { display: flex; flex-direction: column; gap: 12px; }
+.rp-row { display: grid; grid-template-columns: 200px 1fr 130px; align-items: center; gap: 12px; }
+.rp-row-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-row-track { height: 12px; border-radius: 999px; background: var(--ad-surface-3); overflow: hidden; }
+.rp-row-fill { display: block; height: 100%; border-radius: 999px; background: var(--ad-primary); }
+.rp-row-val { text-align: right; color: var(--ad-muted); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 720px) {
+  .rp-kpis { grid-template-columns: 1fr; }
+  .rp-row { grid-template-columns: 120px 1fr 90px; }
+}

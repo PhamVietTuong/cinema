@@ -30,6 +30,8 @@ export interface IHttpService {
     getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceDTO>;
     getRevenue(from?: Date | undefined, to?: Date | undefined): Observable<any>;
     getRevenueByDay(days?: number | undefined): Observable<RevenueByDayDTO[]>;
+    getRevenueByMovie(from?: Date | undefined, to?: Date | undefined): Observable<RevenueBreakdownDTO[]>;
+    getRevenueByTheater(from?: Date | undefined, to?: Date | undefined): Observable<RevenueBreakdownDTO[]>;
 }
 
 @Injectable()
@@ -567,6 +569,132 @@ export class HttpService implements IHttpService {
                 result200 = [] as any;
                 for (let item of resultData200)
                     result200!.push(RevenueByDayDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRevenueByMovie(from?: Date | undefined, to?: Date | undefined): Observable<RevenueBreakdownDTO[]> {
+        let url_ = this.baseUrl + "/api/Payment/GetRevenueByMovie?";
+        if (from === null)
+            throw new Error("The parameter 'from' cannot be null.");
+        else if (from !== undefined)
+            url_ += "from=" + encodeURIComponent(from ? "" + from.toISOString() : "") + "&";
+        if (to === null)
+            throw new Error("The parameter 'to' cannot be null.");
+        else if (to !== undefined)
+            url_ += "to=" + encodeURIComponent(to ? "" + to.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRevenueByMovie(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRevenueByMovie(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RevenueBreakdownDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RevenueBreakdownDTO[]>;
+        }));
+    }
+
+    protected processGetRevenueByMovie(response: HttpResponseBase): Observable<RevenueBreakdownDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(RevenueBreakdownDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRevenueByTheater(from?: Date | undefined, to?: Date | undefined): Observable<RevenueBreakdownDTO[]> {
+        let url_ = this.baseUrl + "/api/Payment/GetRevenueByTheater?";
+        if (from === null)
+            throw new Error("The parameter 'from' cannot be null.");
+        else if (from !== undefined)
+            url_ += "from=" + encodeURIComponent(from ? "" + from.toISOString() : "") + "&";
+        if (to === null)
+            throw new Error("The parameter 'to' cannot be null.");
+        else if (to !== undefined)
+            url_ += "to=" + encodeURIComponent(to ? "" + to.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRevenueByTheater(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRevenueByTheater(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RevenueBreakdownDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RevenueBreakdownDTO[]>;
+        }));
+    }
+
+    protected processGetRevenueByTheater(response: HttpResponseBase): Observable<RevenueBreakdownDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(RevenueBreakdownDTO.fromJS(item));
             }
             else {
                 result200 = <any>null;
@@ -1686,6 +1814,46 @@ export class RevenueByDayDTO implements IRevenueByDayDTO {
 
 export interface IRevenueByDayDTO {
     date?: Date;
+    total?: number;
+}
+
+export class RevenueBreakdownDTO implements IRevenueBreakdownDTO {
+    name?: string;
+    total?: number;
+
+    constructor(data?: IRevenueBreakdownDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.total = _data["total"];
+        }
+    }
+
+    static fromJS(data: any): RevenueBreakdownDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new RevenueBreakdownDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["total"] = this.total;
+        return data;
+    }
+}
+
+export interface IRevenueBreakdownDTO {
+    name?: string;
     total?: number;
 }
 

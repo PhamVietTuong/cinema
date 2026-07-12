@@ -176,6 +176,32 @@ public class MovieManager : IMovieManager
         return score;
     }
 
+    public async Task<List<MovieDTO>> GetRecommendedAsync(Guid? userId, int count)
+    {
+        // Candidate pool: active movies (GetMoviesAsync already fills rating + genres).
+        var pool = (await GetMoviesAsync(new PagingSearchDTO { PageIndex = 1, PageSize = 200, Filters = new() }))
+            .Results.Where(m => m.IsActive).ToList();
+
+        var ratedIds  = new HashSet<Guid>();
+        var favGenres = new HashSet<string>();
+        if (userId is Guid uid)
+        {
+            var evals = (await _uow.EvaluationStore.FindAsync(e => e.UserId == uid)).ToList();
+            ratedIds  = evals.Select(e => e.MovieId).ToHashSet();
+            var liked = evals.Where(e => e.Score >= 4).Select(e => e.MovieId).ToHashSet();
+            favGenres = pool.Where(m => liked.Contains(m.Id)).SelectMany(m => m.Genres).ToHashSet();
+        }
+
+        // Movies in a favourite genre first, then highest-rated; exclude ones already rated.
+        return pool
+            .Where(m => !ratedIds.Contains(m.Id))
+            .OrderByDescending(m => m.Genres.Any(g => favGenres.Contains(g)) ? 1 : 0)
+            .ThenByDescending(m => m.AverageRating)
+            .ThenByDescending(m => m.RatingCount)
+            .Take(count > 0 ? count : 8)
+            .ToList();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /// <summary>Maps a comment (and its approved replies, recursively) to a DTO.</summary>
