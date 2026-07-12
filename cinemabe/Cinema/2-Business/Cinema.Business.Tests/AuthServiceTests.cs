@@ -15,11 +15,12 @@ public class AuthServiceTests
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();
     private readonly Mock<ITokenService> _tokenMock = new();
     private readonly Mock<IGoogleTokenValidator> _googleMock = new();
+    private readonly Mock<IFacebookTokenValidator> _facebookMock = new();
     private readonly AuthManager _sut;
 
     public AuthServiceTests()
     {
-        _sut = new AuthManager(_uowMock.Object, _tokenMock.Object, new DevLogNotificationService(), _googleMock.Object);
+        _sut = new AuthManager(_uowMock.Object, _tokenMock.Object, new DevLogNotificationService(), _googleMock.Object, _facebookMock.Object);
     }
 
     [Fact]
