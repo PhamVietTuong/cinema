@@ -66,6 +66,16 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         return rows.ToDictionary(r => r.Date, r => r.Total);
     }
 
+    public async Task<IReadOnlyList<InvoiceTicket>> GetPaidTicketsForShowtimesAsync(DateTime from, DateTime to)
+        => await Context.InvoiceTicket
+            .Include(t => t.Invoice).ThenInclude(i => i.User)
+            .Include(t => t.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
+            .Include(t => t.Seat)
+            .Where(t => t.Invoice.Status == InvoiceStatus.Paid
+                        && t.ShowTimeRoom.ShowTime.StartTime >= from
+                        && t.ShowTimeRoom.ShowTime.StartTime < to)
+            .ToListAsync();
+
     public async Task<IReadOnlyDictionary<string, double>> GetRevenueByMovieAsync(DateTime from, DateTime to)
     {
         var rows = await Context.InvoiceTicket

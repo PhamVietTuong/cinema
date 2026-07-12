@@ -19,4 +19,6 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     Task<IReadOnlyList<Invoice>> GetStalePendingAsync(DateTime olderThan);
     /// <summary>Loads a ticket by its QR token, with invoice + seat + showtime/room details, for gate check-in.</summary>
     Task<InvoiceTicket?> GetTicketByQrAsync(string qrCode);
+    /// <summary>Paid tickets whose showtime starts in [from, to) — with user + movie + seat — for reminders.</summary>
+    Task<IReadOnlyList<InvoiceTicket>> GetPaidTicketsForShowtimesAsync(DateTime from, DateTime to);
 }

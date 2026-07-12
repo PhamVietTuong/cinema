@@ -19,6 +19,10 @@ builder.Services.AddFoundationLogging();
 builder.Services.AddBusiness();
 builder.Services.AddData(builder.Configuration);
 
+// Real email delivery when SMTP is configured; otherwise AddBusiness's dev-log sender stays.
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Smtp:Host"]))
+    builder.Services.AddSingleton<Cinema.Business.Contracts.INotificationService, Cinema.Business.Notifications.SmtpNotificationService>();
+
 // Controllers
 builder.Services.AddControllers();
 
@@ -27,6 +31,8 @@ builder.Services.AddSignalR();
 
 // Background job: expire abandoned unpaid bookings and free their seats
 builder.Services.AddHostedService<Cinema.Service.WebApiHost.Services.PendingBookingReaper>();
+// Background job: email showtime reminders ~1h before start
+builder.Services.AddHostedService<Cinema.Service.WebApiHost.Services.ShowtimeReminderService>();
 
 // CORS
 builder.Services.AddCors(options =>
