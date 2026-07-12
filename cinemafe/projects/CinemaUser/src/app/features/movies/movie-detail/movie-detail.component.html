@@ -32,8 +32,8 @@
         </div>
 
         <div class="hero-actions">
-          <button class="btn-primary-cta" (click)="scrollToShowtimes()"><i class="fas fa-ticket"></i> Đặt Vé Ngay</button>
-          <a class="btn-ghost-cta" *ngIf="movie.trailerUrl" [href]="movie.trailerUrl" target="_blank"><i class="fas fa-play"></i> Xem Trailer</a>
+          <button class="btn-primary-cta" (click)="scrollToShowtimes()"><i class="fas fa-ticket"></i> {{ 'movies.detail.bookNow' | translate }}</button>
+          <a class="btn-ghost-cta" *ngIf="movie.trailerUrl" [href]="movie.trailerUrl" target="_blank"><i class="fas fa-play"></i> {{ 'movies.detail.watchTrailer' | translate }}</a>
         </div>
       </div>
 
@@ -45,7 +45,7 @@
         <div class="score-stars">
           <i *ngFor="let i of [1,2,3,4,5]" class="fas fa-star" [class.lit]="i <= (movie.averageRating / 2)"></i>
         </div>
-        <span class="score-count">{{ movie.ratingCount | number }} đánh giá</span>
+        <span class="score-count">{{ 'movies.detail.ratingCount' | translate:{ count: (movie.ratingCount | number) } }}</span>
       </div>
     </div>
   </section>
@@ -55,18 +55,18 @@
 
     <!-- Synopsis -->
     <section class="md-section">
-      <h2 class="md-title">Tóm Tắt Nội Dung</h2>
+      <h2 class="md-title">{{ 'movies.detail.synopsisTitle' | translate }}</h2>
       <p class="md-text">{{ movie.description }}</p>
       <div class="md-facts">
-        <span><b>Đạo diễn:</b> {{ movie.director || '—' }}</span>
-        <span><b>Khởi chiếu:</b> {{ movie.releaseDate | date:'dd/MM/yyyy' }}</span>
-        <span><b>Ngôn ngữ:</b> {{ movie.language || '—' }}</span>
+        <span><b>{{ 'movies.detail.director' | translate }}</b> {{ movie.director || '—' }}</span>
+        <span><b>{{ 'movies.detail.releaseDate' | translate }}</b> {{ movie.releaseDate | date:'dd/MM/yyyy' }}</span>
+        <span><b>{{ 'movies.detail.language' | translate }}</b> {{ movie.language || '—' }}</span>
       </div>
     </section>
 
     <!-- Showtimes -->
     <section class="md-section" id="showtimes">
-      <h2 class="md-title">Lịch Chiếu & Suất Diễn</h2>
+      <h2 class="md-title">{{ 'movies.detail.showtimesTitle' | translate }}</h2>
 
       <div class="format-list" *ngIf="movie.showTimes?.length; else noShowtimes">
         <div class="format-card" *ngFor="let group of groupByFormat(movie.showTimes)">
@@ -79,19 +79,19 @@
                [queryParams]="{ showTimeId: st.id, roomId: st.roomId }"
                [title]="st.theaterName + ' · ' + st.roomName">
               <span class="slot-time">{{ st.startTime | date:'HH:mm' }}</span>
-              <span class="slot-seats">{{ st.availableSeats }} ghế</span>
+              <span class="slot-seats">{{ 'movies.showtimes.seats' | translate:{ count: st.availableSeats } }}</span>
             </a>
           </div>
         </div>
       </div>
       <ng-template #noShowtimes>
-        <p class="md-text">Hiện chưa có lịch chiếu cho phim này. Vui lòng quay lại sau.</p>
+        <p class="md-text">{{ 'movies.showtimes.empty' | translate }}</p>
       </ng-template>
     </section>
 
     <!-- Cast -->
     <section class="md-section" *ngIf="getCastMembers(movie.cast).length">
-      <h2 class="md-title">Diễn Viên & Đoàn Phim</h2>
+      <h2 class="md-title">{{ 'movies.detail.castTitle' | translate }}</h2>
       <div class="cast-row">
         <div class="cast-item" *ngFor="let name of getCastMembers(movie.cast)">
           <div class="cast-avatar">{{ getInitials(name) }}</div>
@@ -102,7 +102,7 @@
 
     <!-- Reviews -->
     <section class="md-section" *ngIf="movie.recentComments?.length">
-      <h2 class="md-title">Đánh Giá Tiêu Biểu</h2>
+      <h2 class="md-title">{{ 'movies.detail.reviewsTitle' | translate }}</h2>
       <div class="review-grid">
         <div class="review-card" *ngFor="let c of movie.recentComments">
           <div class="review-head">
@@ -127,7 +127,7 @@
 
     <!-- Write a review / comment -->
     <section class="md-section">
-      <h2 class="md-title">Viết Đánh Giá</h2>
+      <h2 class="md-title">{{ 'movies.detail.writeReviewTitle' | translate }}</h2>
 
       <ng-container *ngIf="(isAuthenticated$ | async); else loginToReview">
         <div class="rate-box">
@@ -136,18 +136,18 @@
                     [class.on]="s <= myScore" (click)="setScore(s)" [title]="s + '/10'">★</button>
             <span class="rate-score" *ngIf="myScore">{{ myScore }}/10</span>
           </div>
-          <textarea class="rate-input" [(ngModel)]="myReview" rows="2" placeholder="Cảm nhận của bạn về phim (không bắt buộc)..."></textarea>
-          <button class="btn-primary-cta" type="button" [disabled]="myScore < 1" (click)="submitRating()">Gửi Đánh Giá</button>
+          <textarea class="rate-input" [(ngModel)]="myReview" rows="2" [placeholder]="'movies.detail.reviewPlaceholder' | translate"></textarea>
+          <button class="btn-primary-cta" type="button" [disabled]="myScore < 1" (click)="submitRating()">{{ 'movies.detail.submitRating' | translate }}</button>
         </div>
 
         <div class="rate-box">
-          <textarea class="rate-input" [(ngModel)]="newComment" rows="2" placeholder="Viết bình luận..."></textarea>
-          <button class="btn-primary-cta" type="button" [disabled]="!newComment.trim()" (click)="submitComment()">Gửi Bình Luận</button>
+          <textarea class="rate-input" [(ngModel)]="newComment" rows="2" [placeholder]="'movies.detail.commentPlaceholder' | translate"></textarea>
+          <button class="btn-primary-cta" type="button" [disabled]="!newComment.trim()" (click)="submitComment()">{{ 'movies.detail.submitComment' | translate }}</button>
         </div>
       </ng-container>
 
       <ng-template #loginToReview>
-        <p class="md-text">Vui lòng <a routerLink="/auth/login">đăng nhập</a> để đánh giá và bình luận.</p>
+        <p class="md-text">{{ 'movies.detail.loginPromptBefore' | translate }} <a routerLink="/auth/login">{{ 'movies.detail.loginPromptLink' | translate }}</a> {{ 'movies.detail.loginPromptAfter' | translate }}</p>
       </ng-template>
     </section>
 

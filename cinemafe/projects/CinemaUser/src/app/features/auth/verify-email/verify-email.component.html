@@ -6,8 +6,8 @@
         <i class="fas fa-film"></i>
         <span>Midnight Premium</span>
       </div>
-      <h2 class="cinema-headline">Xác Thực Email<br>Để Bắt Đầu Đặt Vé</h2>
-      <p class="cinema-sub">Chúng tôi cần xác nhận địa chỉ email của bạn để bảo vệ tài khoản.</p>
+      <h2 class="cinema-headline">{{ 'auth.verify.heroTitle1' | translate }}<br>{{ 'auth.verify.heroTitle2' | translate }}</h2>
+      <p class="cinema-sub">{{ 'auth.verify.heroSub' | translate }}</p>
     </div>
     <div class="cinema-film-strip">
       <div *ngFor="let f of [1,2,3,4,5,6,7,8]" class="strip-frame"></div>
@@ -16,17 +16,17 @@
 
   <div class="auth-panel">
     <div class="auth-form-wrap">
-      <h3 class="form-title">Xác Thực Email</h3>
+      <h3 class="form-title">{{ 'auth.verify.title' | translate }}</h3>
 
       <!-- Confirming a verification link -->
       <ng-container *ngIf="hasLink">
-        <p class="form-sub">Đang xác thực địa chỉ email của bạn...</p>
+        <p class="form-sub">{{ 'auth.verify.confirming' | translate }}</p>
 
         <div class="api-success" *ngIf="status === 'confirmed'">
-          <i class="fas fa-check-circle"></i> Email của bạn đã được xác thực. Bạn có thể đăng nhập ngay bây giờ.
+          <i class="fas fa-check-circle"></i> {{ 'auth.verify.confirmed' | translate }}
         </div>
         <div class="api-error" *ngIf="status === 'error'">
-          <i class="fas fa-exclamation-circle"></i> Liên kết xác thực không hợp lệ hoặc đã hết hạn.
+          <i class="fas fa-exclamation-circle"></i> {{ 'auth.verify.error' | translate }}
         </div>
         <div class="api-error" *ngIf="loading" style="background:none;border:none;color:var(--mp-muted)">
           <mat-spinner diameter="18"></mat-spinner>
@@ -35,33 +35,33 @@
 
       <!-- Resend form -->
       <ng-container *ngIf="!hasLink">
-        <p class="form-sub">Nhập email để nhận lại liên kết xác thực</p>
+        <p class="form-sub">{{ 'auth.verify.resendSubtitle' | translate }}</p>
 
         <div class="api-success" *ngIf="status === 'resent'">
-          <i class="fas fa-check-circle"></i> Nếu tài khoản tồn tại và chưa xác thực, chúng tôi đã gửi lại liên kết.
+          <i class="fas fa-check-circle"></i> {{ 'auth.verify.resent' | translate }}
         </div>
 
         <form *ngIf="status !== 'resent'" [formGroup]="resendForm" (ngSubmit)="resend()">
           <div class="field-group">
-            <label class="field-label">Email</label>
+            <label class="field-label">{{ 'auth.fields.email' | translate }}</label>
             <div class="field-wrap">
               <i class="fas fa-envelope field-icon"></i>
               <input class="field-input" type="email" formControlName="email" placeholder="email@example.com">
             </div>
             <div class="field-error" *ngIf="resendForm.get('email')?.touched && resendForm.get('email')?.invalid">
-              Vui lòng nhập email hợp lệ
+              {{ 'auth.errors.emailValid' | translate }}
             </div>
           </div>
 
           <button type="submit" class="btn-primary-cta submit-btn" [disabled]="loading">
             <mat-spinner diameter="18" *ngIf="loading"></mat-spinner>
-            <ng-container *ngIf="!loading">Gửi Lại Liên Kết <i class="fas fa-paper-plane"></i></ng-container>
+            <ng-container *ngIf="!loading">{{ 'auth.verify.resendSubmit' | translate }} <i class="fas fa-paper-plane"></i></ng-container>
           </button>
         </form>
       </ng-container>
 
       <p class="switch-link">
-        <a routerLink="/auth/login"><i class="fas fa-arrow-left"></i> Quay lại đăng nhập</a>
+        <a routerLink="/auth/login"><i class="fas fa-arrow-left"></i> {{ 'auth.backToLogin' | translate }}</a>
       </p>
     </div>
   </div>

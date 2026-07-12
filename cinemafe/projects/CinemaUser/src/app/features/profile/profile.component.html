@@ -1,6 +1,6 @@
 <div class="page-header">
   <div class="page-header-inner">
-    <h1 class="page-title">Tài Khoản Của Tôi</h1>
+    <h1 class="page-title">{{ 'profile.pageTitle' | translate }}</h1>
   </div>
 </div>
 
@@ -16,19 +16,19 @@
 
     <div class="id-meta">
       <div class="id-meta-row">
-        <span><i class="fas fa-id-badge"></i> Hạng</span>
+        <span><i class="fas fa-id-badge"></i> {{ 'profile.rank' | translate }}</span>
         <strong>{{ user?.memberShipName || user?.userTypeName || 'Thành viên' }}</strong>
       </div>
       <div class="id-meta-row">
-        <span><i class="fas fa-star"></i> Điểm</span>
+        <span><i class="fas fa-star"></i> {{ 'profile.points' | translate }}</span>
         <strong>{{ user?.points ?? 0 }}</strong>
       </div>
     </div>
 
     <nav class="id-tabs">
-      <button [class.active]="tab === 'overview'" (click)="tab = 'overview'"><i class="fas fa-gauge"></i> Bảng Điều Khiển</button>
-      <button [class.active]="tab === 'bookings'" (click)="tab = 'bookings'"><i class="fas fa-ticket"></i> Lịch Sử Đặt Vé</button>
-      <button [class.active]="tab === 'settings'" (click)="tab = 'settings'"><i class="fas fa-gear"></i> Cài Đặt</button>
+      <button [class.active]="tab === 'overview'" (click)="tab = 'overview'"><i class="fas fa-gauge"></i> {{ 'profile.tabOverview' | translate }}</button>
+      <button [class.active]="tab === 'bookings'" (click)="tab = 'bookings'"><i class="fas fa-ticket"></i> {{ 'profile.tabBookings' | translate }}</button>
+      <button [class.active]="tab === 'settings'" (click)="tab = 'settings'"><i class="fas fa-gear"></i> {{ 'profile.tabSettings' | translate }}</button>
     </nav>
   </aside>
 
@@ -44,32 +44,32 @@
           </span>
           <div>
             <h2 class="ov-name">{{ user?.name || '—' }}</h2>
-            <p class="ov-sub">Thành viên {{ user?.memberShipName || user?.userTypeName || 'Midnight Premium' }}</p>
+            <p class="ov-sub">{{ 'profile.memberPrefix' | translate }} {{ user?.memberShipName || user?.userTypeName || 'Midnight Premium' }}</p>
           </div>
         </div>
         <div class="ov-points">
-          <span class="ov-points-label">ĐIỂM THƯỞNG</span>
+          <span class="ov-points-label">{{ 'profile.rewardPoints' | translate }}</span>
           <span class="ov-points-val">{{ user?.points ?? 0 | number }}</span>
         </div>
       </div>
 
       <div class="ov-grid">
-        <div class="ov-stat"><i class="fas fa-ticket"></i><span class="ov-stat-val">{{ ticketCount }}</span><span class="ov-stat-label">Vé Đã Đặt</span></div>
-        <div class="ov-stat"><i class="fas fa-receipt"></i><span class="ov-stat-val">{{ bookingCount }}</span><span class="ov-stat-label">Đơn Hàng</span></div>
-        <div class="ov-stat"><i class="fas fa-star"></i><span class="ov-stat-val">{{ user?.points ?? 0 | number }}</span><span class="ov-stat-label">Điểm Thưởng</span></div>
+        <div class="ov-stat"><i class="fas fa-ticket"></i><span class="ov-stat-val">{{ ticketCount }}</span><span class="ov-stat-label">{{ 'profile.ticketsBooked' | translate }}</span></div>
+        <div class="ov-stat"><i class="fas fa-receipt"></i><span class="ov-stat-val">{{ bookingCount }}</span><span class="ov-stat-label">{{ 'profile.orders' | translate }}</span></div>
+        <div class="ov-stat"><i class="fas fa-star"></i><span class="ov-stat-val">{{ user?.points ?? 0 | number }}</span><span class="ov-stat-label">{{ 'profile.rewardPointsLabel' | translate }}</span></div>
       </div>
 
       <div class="ov-perks">
-        <h3 class="ov-perks-title"><i class="fas fa-crown"></i> Đặc Quyền Thành Viên</h3>
+        <h3 class="ov-perks-title"><i class="fas fa-crown"></i> {{ 'profile.memberPerks' | translate }}</h3>
         <ul>
-          <li *ngFor="let p of perks"><i class="fas" [ngClass]="p.icon"></i> {{ p.text }}</li>
+          <li *ngFor="let p of perks"><i class="fas" [ngClass]="p.icon"></i> {{ p.text | translate }}</li>
         </ul>
       </div>
 
-      <h3 class="ov-section-title">Lịch Sử Đặt Vé Gần Đây</h3>
+      <h3 class="ov-section-title">{{ 'profile.recentBookings' | translate }}</h3>
       <div class="ov-table" *ngIf="recentBookings.length; else noOv">
         <div class="ov-row ov-row-head">
-          <span>Phim</span><span>Ngày Chiếu</span><span>Ghế</span><span>Trạng Thái</span>
+          <span>{{ 'profile.colMovie' | translate }}</span><span>{{ 'profile.colDate' | translate }}</span><span>{{ 'profile.colSeats' | translate }}</span><span>{{ 'profile.colStatus' | translate }}</span>
         </div>
         <div class="ov-row" *ngFor="let r of recentBookings">
           <span class="ov-movie">{{ r.movie }}</span>
@@ -79,27 +79,27 @@
         </div>
       </div>
       <ng-template #noOv>
-        <div class="empty"><i class="fas fa-ticket"></i><p>Bạn chưa có vé nào.</p></div>
+        <div class="empty"><i class="fas fa-ticket"></i><p>{{ 'profile.noTickets' | translate }}</p></div>
       </ng-template>
     </ng-container>
 
     <!-- Booking history (table) -->
     <ng-container *ngIf="tab === 'bookings'">
-      <h2 class="section-title">Lịch Sử Đặt Vé</h2>
+      <h2 class="section-title">{{ 'profile.bookingHistory' | translate }}</h2>
 
       <div *ngIf="invoicesLoading" class="empty"><mat-spinner diameter="34"></mat-spinner></div>
 
       <ng-container *ngIf="!invoicesLoading">
         <div class="bk-stats">
-          <div class="bk-stat"><span class="bk-stat-val">{{ ticketCount }}</span><span class="bk-stat-label">Tổng vé đã mua</span></div>
-          <div class="bk-stat"><span class="bk-stat-val">{{ upcomingCount }}</span><span class="bk-stat-label">Sắp tới</span></div>
-          <div class="bk-stat"><span class="bk-stat-val">{{ totalSpent | number:'1.0-0' }}đ</span><span class="bk-stat-label">Tổng chi tiêu</span></div>
-          <div class="bk-stat"><span class="bk-stat-val">{{ user?.points ?? 0 | number }}</span><span class="bk-stat-label">Điểm tích lũy</span></div>
+          <div class="bk-stat"><span class="bk-stat-val">{{ ticketCount }}</span><span class="bk-stat-label">{{ 'profile.totalTicketsBought' | translate }}</span></div>
+          <div class="bk-stat"><span class="bk-stat-val">{{ upcomingCount }}</span><span class="bk-stat-label">{{ 'profile.upcoming' | translate }}</span></div>
+          <div class="bk-stat"><span class="bk-stat-val">{{ totalSpent | number:'1.0-0' }}đ</span><span class="bk-stat-label">{{ 'profile.totalSpent' | translate }}</span></div>
+          <div class="bk-stat"><span class="bk-stat-val">{{ user?.points ?? 0 | number }}</span><span class="bk-stat-label">{{ 'profile.pointsAccrued' | translate }}</span></div>
         </div>
 
         <div class="ov-table" *ngIf="bookingRows.length; else noBk">
           <div class="ov-row ov-row-head bk-cols">
-            <span>Tên Phim</span><span>Suất Chiếu</span><span>Ghế</span><span>Tổng Tiền</span><span>Trạng Thái</span><span></span>
+            <span>{{ 'profile.colMovieName' | translate }}</span><span>{{ 'profile.colShowtime' | translate }}</span><span>{{ 'profile.colSeats' | translate }}</span><span>{{ 'profile.colTotal' | translate }}</span><span>{{ 'profile.colStatus' | translate }}</span><span></span>
           </div>
           <ng-container *ngFor="let r of bookingRows">
           <div class="ov-row bk-cols" [class.expandable]="isPaid(r.status)" (click)="isPaid(r.status) && toggleInvoice(r.id)">
@@ -109,7 +109,7 @@
             <span>{{ r.total | number:'1.0-0' }}đ</span>
             <span><span class="invoice-status" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></span>
             <span class="bk-actions">
-              <button *ngIf="r.status === InvoiceStatus.Pending" class="bk-cancel" (click)="$event.stopPropagation(); cancelById(r.id)" title="Hủy đặt vé"><i class="fas fa-xmark"></i></button>
+              <button *ngIf="r.status === InvoiceStatus.Pending" class="bk-cancel" (click)="$event.stopPropagation(); cancelById(r.id)" [title]="'profile.cancelBookingTooltip' | translate"><i class="fas fa-xmark"></i></button>
               <i *ngIf="isPaid(r.status)" class="fas" [class.fa-chevron-down]="expandedId !== r.id" [class.fa-chevron-up]="expandedId === r.id"></i>
             </span>
           </div>
@@ -118,86 +118,86 @@
               <div class="eticket-info">
                 <div class="eticket-movie">{{ t.movieTitle }}</div>
                 <div class="eticket-meta">{{ t.theaterName }} · {{ t.roomName }} · {{ t.showTime | date:'dd/MM HH:mm' }}</div>
-                <div class="eticket-seat">Ghế <strong>{{ t.seatLabel }}</strong> · {{ t.seatType }}</div>
-                <span class="eticket-used" *ngIf="t.isUsed">Đã soát vé</span>
+                <div class="eticket-seat">{{ 'profile.seat' | translate }} <strong>{{ t.seatLabel }}</strong> · {{ t.seatType }}</div>
+                <span class="eticket-used" *ngIf="t.isUsed">{{ 'profile.checkedIn' | translate }}</span>
               </div>
               <div class="eticket-qr">
-                <img *ngIf="t.qrCode && qrMap[t.qrCode]" [src]="qrMap[t.qrCode]" alt="Mã QR vé" width="120" height="120">
+                <img *ngIf="t.qrCode && qrMap[t.qrCode]" [src]="qrMap[t.qrCode]" [alt]="'profile.qrAlt' | translate" width="120" height="120">
                 <i *ngIf="!(t.qrCode && qrMap[t.qrCode])" class="fas fa-qrcode"></i>
               </div>
             </div>
           </div>
           </ng-container>
         </div>
-        <ng-template #noBk><div class="empty"><i class="fas fa-ticket"></i><p>Bạn chưa có vé nào.</p></div></ng-template>
+        <ng-template #noBk><div class="empty"><i class="fas fa-ticket"></i><p>{{ 'profile.noTickets' | translate }}</p></div></ng-template>
       </ng-container>
     </ng-container>
 
     <!-- Settings -->
     <ng-container *ngIf="tab === 'settings'">
-      <h2 class="section-title">Cài Đặt Tài Khoản</h2>
+      <h2 class="section-title">{{ 'profile.accountSettings' | translate }}</h2>
 
       <div class="set-card">
-        <h3 class="set-title"><i class="fas fa-user"></i> Thông Tin Cá Nhân</h3>
+        <h3 class="set-title"><i class="fas fa-user"></i> {{ 'profile.personalInfo' | translate }}</h3>
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form">
           <div class="set-row-2">
-            <label class="field"><span class="field-label">Họ và tên</span><input type="text" formControlName="name" placeholder="Nguyễn Văn A"></label>
-            <label class="field"><span class="field-label">Email</span><input type="text" [value]="user?.email || ''" disabled></label>
+            <label class="field"><span class="field-label">{{ 'profile.fullName' | translate }}</span><input type="text" formControlName="name" [placeholder]="'profile.fullNamePlaceholder' | translate"></label>
+            <label class="field"><span class="field-label">{{ 'profile.email' | translate }}</span><input type="text" [value]="user?.email || ''" disabled></label>
           </div>
           <div class="set-row-2">
             <label class="field">
-              <span class="field-label">Số điện thoại</span>
+              <span class="field-label">{{ 'profile.phone' | translate }}</span>
               <input type="text" formControlName="phone" placeholder="0901234567">
-              <span class="msg err" *ngIf="profileForm.get('phone')?.touched && profileForm.get('phone')?.hasError('pattern')">Số điện thoại không hợp lệ.</span>
+              <span class="msg err" *ngIf="profileForm.get('phone')?.touched && profileForm.get('phone')?.hasError('pattern')">{{ 'profile.phoneInvalid' | translate }}</span>
             </label>
             <label class="field">
-              <span class="field-label">Ảnh đại diện</span>
-              <input type="text" formControlName="avatar" placeholder="Dán URL hoặc tải ảnh lên">
+              <span class="field-label">{{ 'profile.avatar' | translate }}</span>
+              <input type="text" formControlName="avatar" [placeholder]="'profile.avatarPlaceholder' | translate">
               <span class="avatar-upload">
                 <label class="btn-upload">
-                  <i class="fas fa-upload"></i> Tải ảnh lên
+                  <i class="fas fa-upload"></i> {{ 'profile.uploadImage' | translate }}
                   <input type="file" accept="image/*" hidden (change)="onPickAvatar($event)">
                 </label>
                 <img class="avatar-preview" *ngIf="profileForm.value.avatar" [src]="profileForm.value.avatar" alt="">
-                <span class="msg" *ngIf="avatarUploading">Đang tải...</span>
+                <span class="msg" *ngIf="avatarUploading">{{ 'profile.uploading' | translate }}</span>
                 <span class="msg err" *ngIf="avatarErr">{{ avatarErr }}</span>
               </span>
             </label>
           </div>
           <p class="msg ok" *ngIf="profileMsg">{{ profileMsg }}</p>
           <p class="msg err" *ngIf="profileErr">{{ profileErr }}</p>
-          <button type="submit" class="btn-primary-cta" [disabled]="profileForm.invalid">Lưu Thay Đổi</button>
+          <button type="submit" class="btn-primary-cta" [disabled]="profileForm.invalid">{{ 'profile.saveChanges' | translate }}</button>
         </form>
       </div>
 
       <div class="set-card">
-        <h3 class="set-title"><i class="fas fa-lock"></i> Mật Khẩu & Bảo Mật</h3>
+        <h3 class="set-title"><i class="fas fa-lock"></i> {{ 'profile.passwordSecurity' | translate }}</h3>
         <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="form">
           <div class="set-row-3">
-            <label class="field"><span class="field-label">Mật khẩu hiện tại</span><input type="password" formControlName="currentPassword" autocomplete="current-password"></label>
-            <label class="field"><span class="field-label">Mật khẩu mới</span><input type="password" formControlName="newPassword" autocomplete="new-password"></label>
-            <label class="field"><span class="field-label">Xác nhận</span><input type="password" formControlName="confirmNewPassword" autocomplete="new-password"></label>
+            <label class="field"><span class="field-label">{{ 'profile.currentPassword' | translate }}</span><input type="password" formControlName="currentPassword" autocomplete="current-password"></label>
+            <label class="field"><span class="field-label">{{ 'profile.newPassword' | translate }}</span><input type="password" formControlName="newPassword" autocomplete="new-password"></label>
+            <label class="field"><span class="field-label">{{ 'common.confirm' | translate }}</span><input type="password" formControlName="confirmNewPassword" autocomplete="new-password"></label>
           </div>
           <p class="msg ok" *ngIf="passwordMsg">{{ passwordMsg }}</p>
           <p class="msg err" *ngIf="passwordErr">{{ passwordErr }}</p>
-          <button type="submit" class="btn-primary-cta" [disabled]="passwordForm.invalid">Cập Nhật Mật Khẩu</button>
+          <button type="submit" class="btn-primary-cta" [disabled]="passwordForm.invalid">{{ 'profile.updatePassword' | translate }}</button>
         </form>
       </div>
 
       <div class="set-card">
-        <h3 class="set-title"><i class="fas fa-bell"></i> Cấu Hình Thông Báo</h3>
-        <label class="toggle-row"><span>Phim mới & Trailer</span>
+        <h3 class="set-title"><i class="fas fa-bell"></i> {{ 'profile.notificationSettings' | translate }}</h3>
+        <label class="toggle-row"><span>{{ 'profile.notifTrailers' | translate }}</span>
           <span class="switch"><input type="checkbox" [(ngModel)]="notif.trailers"><span class="track"></span></span></label>
-        <label class="toggle-row"><span>Nhắc nhở lịch chiếu đã đặt</span>
+        <label class="toggle-row"><span>{{ 'profile.notifReminders' | translate }}</span>
           <span class="switch"><input type="checkbox" [(ngModel)]="notif.reminders"><span class="track"></span></span></label>
-        <label class="toggle-row"><span>Chương trình khuyến mãi & Ưu đãi</span>
+        <label class="toggle-row"><span>{{ 'profile.notifPromos' | translate }}</span>
           <span class="switch"><input type="checkbox" [(ngModel)]="notif.promos"><span class="track"></span></span></label>
       </div>
 
       <div class="set-card danger">
-        <h3 class="set-title danger-title"><i class="fas fa-triangle-exclamation"></i> Xóa Tài Khoản</h3>
-        <p class="set-desc">Hành động này không thể hoàn tác. Toàn bộ dữ liệu xem phim và vé đã đặt của bạn sẽ bị xóa vĩnh viễn.</p>
-        <button class="danger-btn" type="button">Xóa Vĩnh Viễn</button>
+        <h3 class="set-title danger-title"><i class="fas fa-triangle-exclamation"></i> {{ 'profile.deleteAccount' | translate }}</h3>
+        <p class="set-desc">{{ 'profile.deleteAccountDesc' | translate }}</p>
+        <button class="danger-btn" type="button">{{ 'profile.deletePermanently' | translate }}</button>
       </div>
     </ng-container>
   </section>

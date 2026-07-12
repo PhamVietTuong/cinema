@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SharedModule, PaymentServiceAgent, CinemaServiceAgent } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 
 type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean };
@@ -33,6 +34,7 @@ export class BookingConfirmationComponent implements OnInit {
     private _paymentService: PaymentServiceAgent.HttpService,
     private _cinemaService: CinemaServiceAgent.HttpService,
     private _cdr: ChangeDetectorRef,
+    private _translate: TranslateService,
   ) {}
 
   get totalPrice(): number {
@@ -107,7 +109,7 @@ export class BookingConfirmationComponent implements OnInit {
             .catch(() => { /* keep the icon fallback */ });
         }
       },
-      error: err => { this.error = this._err(err, 'Đặt vé thất bại. Vui lòng thử lại.'); this.loading = false; this._cdr.markForCheck(); },
+      error: err => { this.error = this._err(err, this._translate.instant('booking.errors.bookingFailed')); this.loading = false; this._cdr.markForCheck(); },
     });
   }
 

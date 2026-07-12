@@ -26,9 +26,9 @@ export class MovieListComponent implements OnInit, OnDestroy {
   private _destroy$ = new Subject<void>();
 
   readonly tabs: { mode: Mode; label: string }[] = [
-    { mode: 'all', label: 'Tất Cả' },
-    { mode: 'now', label: 'Đang Chiếu' },
-    { mode: 'coming', label: 'Sắp Chiếu' },
+    { mode: 'all', label: 'movies.tabs.all' },
+    { mode: 'now', label: 'movies.tabs.now' },
+    { mode: 'coming', label: 'movies.tabs.coming' },
   ];
 
   mode: Mode = 'all';
@@ -47,7 +47,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
 
   get isPaged(): boolean { return this.mode === 'all'; }
   get title(): string {
-    return this.mode === 'now' ? 'Phim Đang Chiếu' : this.mode === 'coming' ? 'Phim Sắp Chiếu' : 'Danh Sách Phim';
+    return this.mode === 'now' ? 'movies.list.titleNow' : this.mode === 'coming' ? 'movies.list.titleComing' : 'movies.list.titleAll';
   }
   private get _source(): any[] {
     return this.mode === 'now' ? this._now : this.mode === 'coming' ? this._coming : this._paged;

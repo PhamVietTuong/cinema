@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SharedModule } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../../environments/environment';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -24,6 +25,7 @@ export class ResetPasswordComponent {
   private _route = inject(ActivatedRoute);
   private _router = inject(Router);
   private _cdr = inject(ChangeDetectorRef);
+  private _translate = inject(TranslateService);
 
   private _email = this._route.snapshot.queryParamMap.get('email') ?? '';
   private _token = this._route.snapshot.queryParamMap.get('token') ?? '';
@@ -48,7 +50,7 @@ export class ResetPasswordComponent {
       next: () => this._router.navigate(['/auth/login']),
       error: () => {
         this.loading = false;
-        this.error = 'Liên kết đặt lại không hợp lệ hoặc đã hết hạn.';
+        this.error = this._translate.instant('auth.reset.error');
         this._cdr.markForCheck();
       },
     });

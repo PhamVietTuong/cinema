@@ -8,12 +8,12 @@
         <i class="fas fa-film"></i>
         <span>Midnight Premium</span>
       </div>
-      <h2 class="cinema-headline">Tham Gia Cộng Đồng<br>Điện Ảnh Đẳng Cấp</h2>
-      <p class="cinema-sub">Tạo tài khoản để trải nghiệm đặt vé nhanh chóng và nhận nhiều ưu đãi hấp dẫn.</p>
+      <h2 class="cinema-headline">{{ 'auth.register.heroTitle1' | translate }}<br>{{ 'auth.register.heroTitle2' | translate }}</h2>
+      <p class="cinema-sub">{{ 'auth.register.heroSub' | translate }}</p>
       <div class="cinema-perks">
-        <div class="perk-item"><i class="fas fa-check-circle"></i> Tích điểm mỗi lần đặt vé</div>
-        <div class="perk-item"><i class="fas fa-check-circle"></i> Nhận thông báo phim mới sớm nhất</div>
-        <div class="perk-item"><i class="fas fa-check-circle"></i> Quản lý vé & lịch sử dễ dàng</div>
+        <div class="perk-item"><i class="fas fa-check-circle"></i> {{ 'auth.register.perk1' | translate }}</div>
+        <div class="perk-item"><i class="fas fa-check-circle"></i> {{ 'auth.register.perk2' | translate }}</div>
+        <div class="perk-item"><i class="fas fa-check-circle"></i> {{ 'auth.register.perk3' | translate }}</div>
       </div>
     </div>
     <div class="cinema-film-strip">
@@ -27,80 +27,80 @@
 
       <!-- Tab toggle -->
       <div class="auth-tabs">
-        <a routerLink="/auth/login" class="auth-tab">Đăng Nhập</a>
-        <button class="auth-tab active">Tạo Tài Khoản</button>
+        <a routerLink="/auth/login" class="auth-tab">{{ 'auth.login.tab' | translate }}</a>
+        <button class="auth-tab active">{{ 'auth.register.tab' | translate }}</button>
       </div>
 
-      <h3 class="form-title">Tạo Tài Khoản</h3>
-      <p class="form-sub">Điền thông tin bên dưới để bắt đầu</p>
+      <h3 class="form-title">{{ 'auth.register.title' | translate }}</h3>
+      <p class="form-sub">{{ 'auth.register.subtitle' | translate }}</p>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
 
         <div class="field-row-2">
           <div class="field-group">
-            <label class="field-label">Họ và Tên</label>
+            <label class="field-label">{{ 'auth.fields.name' | translate }}</label>
             <div class="field-wrap">
               <i class="fas fa-user field-icon"></i>
-              <input class="field-input" type="text" formControlName="name" placeholder="Nguyễn Văn A">
+              <input class="field-input" type="text" formControlName="name" [placeholder]="'auth.register.namePlaceholder' | translate">
             </div>
             <div class="field-error" *ngIf="form.get('name')?.touched && form.get('name')?.hasError('required')">
-              Vui lòng nhập họ tên
+              {{ 'auth.errors.nameRequired' | translate }}
             </div>
           </div>
           <div class="field-group">
-            <label class="field-label">Số Điện Thoại</label>
+            <label class="field-label">{{ 'auth.fields.phone' | translate }}</label>
             <div class="field-wrap">
               <i class="fas fa-phone field-icon"></i>
               <input class="field-input" type="tel" formControlName="phone" placeholder="0901234567">
             </div>
             <div class="field-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('required')">
-              Vui lòng nhập số điện thoại
+              {{ 'auth.errors.phoneRequired' | translate }}
             </div>
             <div class="field-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('pattern')">
-              Số điện thoại không hợp lệ
+              {{ 'auth.errors.phoneInvalid' | translate }}
             </div>
           </div>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Email</label>
+          <label class="field-label">{{ 'auth.fields.email' | translate }}</label>
           <div class="field-wrap">
             <i class="fas fa-envelope field-icon"></i>
             <input class="field-input" type="email" formControlName="email" placeholder="email@example.com">
           </div>
           <div class="field-error" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('required')">
-            Vui lòng nhập email
+            {{ 'auth.errors.emailRequired' | translate }}
           </div>
           <div class="field-error" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')">
-            Email không hợp lệ
+            {{ 'auth.errors.emailInvalid' | translate }}
           </div>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Mật Khẩu</label>
+          <label class="field-label">{{ 'auth.fields.password' | translate }}</label>
           <div class="field-wrap">
             <i class="fas fa-lock field-icon"></i>
-            <input class="field-input" type="password" formControlName="password" placeholder="Tối thiểu 8 ký tự">
+            <input class="field-input" type="password" formControlName="password" [placeholder]="'auth.fields.passwordPlaceholder' | translate">
           </div>
           <div class="field-error" *ngIf="form.get('password')?.touched && form.get('password')?.hasError('required')">
-            Vui lòng nhập mật khẩu
+            {{ 'auth.errors.passwordRequired' | translate }}
           </div>
           <div class="field-error" *ngIf="form.get('password')?.touched && form.get('password')?.hasError('minlength')">
-            Mật khẩu tối thiểu 8 ký tự
+            {{ 'auth.errors.passwordMinLength' | translate }}
           </div>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Xác Nhận Mật Khẩu</label>
+          <label class="field-label">{{ 'auth.fields.confirmPassword' | translate }}</label>
           <div class="field-wrap">
             <i class="fas fa-lock field-icon"></i>
-            <input class="field-input" type="password" formControlName="confirmPassword" placeholder="Nhập lại mật khẩu">
+            <input class="field-input" type="password" formControlName="confirmPassword" [placeholder]="'auth.fields.confirmPasswordPlaceholder' | translate">
           </div>
           <div class="field-error" *ngIf="form.get('confirmPassword')?.touched && form.get('confirmPassword')?.hasError('required')">
-            Vui lòng xác nhận mật khẩu
+            {{ 'auth.errors.confirmPasswordRequired' | translate }}
           </div>
           <div class="field-error" *ngIf="form.get('confirmPassword')?.touched && form.hasError('passwordMismatch')">
-            Mật khẩu xác nhận không khớp
+            {{ 'auth.errors.passwordMismatch' | translate }}
           </div>
         </div>
 
@@ -111,13 +111,13 @@
         <button type="submit" class="btn-primary-cta submit-btn" [disabled]="loading$ | async">
           <mat-spinner diameter="18" *ngIf="loading$ | async"></mat-spinner>
           <ng-container *ngIf="!(loading$ | async)">
-            Tạo Tài Khoản <i class="fas fa-arrow-right"></i>
+            {{ 'auth.register.submit' | translate }} <i class="fas fa-arrow-right"></i>
           </ng-container>
         </button>
       </form>
 
       <p class="switch-link">
-        Đã có tài khoản? <a routerLink="/auth/login">Đăng Nhập</a>
+        {{ 'auth.register.hasAccount' | translate }} <a routerLink="/auth/login">{{ 'auth.register.loginLink' | translate }}</a>
       </p>
     </div>
   </div>

@@ -8,12 +8,12 @@
         <i class="fas fa-film"></i>
         <span>Midnight Premium</span>
       </div>
-      <h2 class="cinema-headline">Trải Nghiệm Điện Ảnh<br>Đẳng Cấp Thế Giới</h2>
-      <p class="cinema-sub">Đặt vé trực tuyến, chọn ghế yêu thích, tận hưởng bộ phim.</p>
+      <h2 class="cinema-headline">{{ 'auth.login.heroTitle1' | translate }}<br>{{ 'auth.login.heroTitle2' | translate }}</h2>
+      <p class="cinema-sub">{{ 'auth.login.heroSub' | translate }}</p>
       <div class="cinema-perks">
-        <div class="perk-item"><i class="fas fa-check-circle"></i> Đặt vé nhanh chóng, tiện lợi</div>
-        <div class="perk-item"><i class="fas fa-check-circle"></i> Ưu đãi độc quyền cho thành viên</div>
-        <div class="perk-item"><i class="fas fa-check-circle"></i> Lịch sử vé & nhận thông báo sớm</div>
+        <div class="perk-item"><i class="fas fa-check-circle"></i> {{ 'auth.login.perk1' | translate }}</div>
+        <div class="perk-item"><i class="fas fa-check-circle"></i> {{ 'auth.login.perk2' | translate }}</div>
+        <div class="perk-item"><i class="fas fa-check-circle"></i> {{ 'auth.login.perk3' | translate }}</div>
       </div>
     </div>
     <div class="cinema-film-strip">
@@ -27,17 +27,17 @@
 
       <!-- Tab toggle -->
       <div class="auth-tabs">
-        <button class="auth-tab active">Đăng Nhập</button>
-        <a routerLink="/auth/register" class="auth-tab">Tạo Tài Khoản</a>
+        <button class="auth-tab active">{{ 'auth.login.tab' | translate }}</button>
+        <a routerLink="/auth/register" class="auth-tab">{{ 'auth.register.tab' | translate }}</a>
       </div>
 
-      <h3 class="form-title">Chào Mừng Trở Lại</h3>
-      <p class="form-sub">Đăng nhập để tiếp tục đặt vé</p>
+      <h3 class="form-title">{{ 'auth.login.title' | translate }}</h3>
+      <p class="form-sub">{{ 'auth.login.subtitle' | translate }}</p>
 
       <form *ngIf="!(awaitingTwoFactor$ | async)" [formGroup]="form" (ngSubmit)="onSubmit()">
 
         <div class="field-group">
-          <label class="field-label">Email hoặc Số Điện Thoại</label>
+          <label class="field-label">{{ 'auth.login.emailOrPhoneLabel' | translate }}</label>
           <div class="field-wrap">
             <i class="fas fa-envelope field-icon"></i>
             <input class="field-input"
@@ -46,17 +46,17 @@
                    placeholder="email@example.com">
           </div>
           <div class="field-error" *ngIf="form.get('emailOrPhone')?.touched && form.get('emailOrPhone')?.hasError('required')">
-            Vui lòng nhập email hoặc số điện thoại
+            {{ 'auth.errors.emailOrPhoneRequired' | translate }}
           </div>
           <div class="field-error" *ngIf="form.get('emailOrPhone')?.touched && form.get('emailOrPhone')?.hasError('emailOrPhone')">
-            Email hoặc số điện thoại không hợp lệ
+            {{ 'auth.errors.emailOrPhoneInvalid' | translate }}
           </div>
         </div>
 
         <div class="field-group">
           <div class="label-row">
-            <label class="field-label">Mật Khẩu</label>
-            <a routerLink="/auth/forgot-password" class="forgot-link">Quên mật khẩu?</a>
+            <label class="field-label">{{ 'auth.fields.password' | translate }}</label>
+            <a routerLink="/auth/forgot-password" class="forgot-link">{{ 'auth.login.forgotLink' | translate }}</a>
           </div>
           <div class="field-wrap">
             <i class="fas fa-lock field-icon"></i>
@@ -71,17 +71,17 @@
             </button>
           </div>
           <div class="caps-warning" *ngIf="capsLockOn">
-            <i class="fas fa-exclamation-triangle"></i> Phím Caps Lock đang bật
+            <i class="fas fa-exclamation-triangle"></i> {{ 'auth.login.capsLock' | translate }}
           </div>
           <div class="field-error" *ngIf="form.get('password')?.touched && form.get('password')?.hasError('required')">
-            Vui lòng nhập mật khẩu
+            {{ 'auth.errors.passwordRequired' | translate }}
           </div>
         </div>
 
         <div class="remember-row">
           <label class="remember-label">
             <input type="checkbox" formControlName="rememberMe">
-            Ghi nhớ đăng nhập
+            {{ 'auth.login.rememberMe' | translate }}
           </label>
         </div>
 
@@ -92,14 +92,14 @@
         <button type="submit" class="btn-primary-cta submit-btn" [disabled]="(loading$ | async) || form.invalid">
           <mat-spinner diameter="18" *ngIf="loading$ | async"></mat-spinner>
           <ng-container *ngIf="!(loading$ | async)">
-            Đăng Nhập <i class="fas fa-arrow-right"></i>
+            {{ 'auth.login.submit' | translate }} <i class="fas fa-arrow-right"></i>
           </ng-container>
         </button>
       </form>
 
       <!-- Sign in with Google (shown only when a client id is configured) -->
       <ng-container *ngIf="googleEnabled && !(awaitingTwoFactor$ | async)">
-        <div class="divider"><span>hoặc</span></div>
+        <div class="divider"><span>{{ 'auth.login.or' | translate }}</span></div>
         <div #googleBtn class="google-btn-wrap"></div>
         <div class="api-error" *ngIf="googleError">
           <i class="fas fa-exclamation-circle"></i> {{ googleError }}
@@ -108,9 +108,9 @@
 
       <!-- Continue with Facebook (shown only when an app id is configured) -->
       <ng-container *ngIf="facebookEnabled && !(awaitingTwoFactor$ | async)">
-        <div class="divider" *ngIf="!googleEnabled"><span>hoặc</span></div>
+        <div class="divider" *ngIf="!googleEnabled"><span>{{ 'auth.login.or' | translate }}</span></div>
         <button type="button" class="fb-btn" (click)="loginWithFacebook()">
-          <i class="fab fa-facebook-f"></i> Tiếp tục với Facebook
+          <i class="fab fa-facebook-f"></i> {{ 'auth.login.facebook' | translate }}
         </button>
         <div class="api-error" *ngIf="facebookError">
           <i class="fas fa-exclamation-circle"></i> {{ facebookError }}
@@ -119,16 +119,16 @@
 
       <!-- Two-factor step: enter the emailed 6-digit code -->
       <form *ngIf="awaitingTwoFactor$ | async" [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
-        <p class="form-sub">Chúng tôi đã gửi mã xác thực gồm 6 chữ số tới email của bạn.</p>
+        <p class="form-sub">{{ 'auth.login.otpSent' | translate }}</p>
         <div class="field-group">
-          <label class="field-label">Mã Xác Thực</label>
+          <label class="field-label">{{ 'auth.login.otpLabel' | translate }}</label>
           <div class="field-wrap">
             <i class="fas fa-key field-icon"></i>
             <input class="field-input" type="text" inputmode="numeric" maxlength="6"
-                   formControlName="code" placeholder="6 chữ số">
+                   formControlName="code" [placeholder]="'auth.login.otpPlaceholder' | translate">
           </div>
           <div class="field-error" *ngIf="otpForm.get('code')?.touched && otpForm.get('code')?.invalid">
-            Mã gồm 6 chữ số
+            {{ 'auth.login.otpInvalid' | translate }}
           </div>
         </div>
 
@@ -138,15 +138,15 @@
 
         <button type="submit" class="btn-primary-cta submit-btn" [disabled]="verifying">
           <mat-spinner diameter="18" *ngIf="verifying"></mat-spinner>
-          <ng-container *ngIf="!verifying">Xác Nhận <i class="fas fa-arrow-right"></i></ng-container>
+          <ng-container *ngIf="!verifying">{{ 'auth.login.otpSubmit' | translate }} <i class="fas fa-arrow-right"></i></ng-container>
         </button>
       </form>
 
       <p class="switch-link">
-        Chưa có tài khoản? <a routerLink="/auth/register">Đăng Ký Ngay</a>
+        {{ 'auth.login.noAccount' | translate }} <a routerLink="/auth/register">{{ 'auth.login.registerNow' | translate }}</a>
       </p>
       <p class="switch-link" style="margin-top: 8px;">
-        Chưa xác thực email? <a routerLink="/auth/verify-email">Xác thực ngay</a>
+        {{ 'auth.login.notVerified' | translate }} <a routerLink="/auth/verify-email">{{ 'auth.login.verifyNow' | translate }}</a>
       </p>
     </div>
   </div>

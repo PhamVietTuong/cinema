@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 
 @Component({
@@ -11,6 +12,7 @@ import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 export class TheatersComponent implements OnInit {
   private _cinema = inject(CinemaServiceAgent.HttpService);
   private _cdr = inject(ChangeDetectorRef);
+  private _translate = inject(TranslateService);
 
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
   city = '';
@@ -61,11 +63,11 @@ export class TheatersComponent implements OnInit {
   }
 
   findNearest(): void {
-    if (!navigator.geolocation) { this.geoError = 'Trình duyệt không hỗ trợ định vị.'; return; }
+    if (!navigator.geolocation) { this.geoError = this._translate.instant('theaters.geoNotSupported'); return; }
     this.locating = true; this.geoError = '';
     navigator.geolocation.getCurrentPosition(
       pos => { this._lat = pos.coords.latitude; this._lng = pos.coords.longitude; this.locating = false; this._cdr.markForCheck(); },
-      () => { this.locating = false; this.geoError = 'Không lấy được vị trí của bạn.'; this._cdr.markForCheck(); },
+      () => { this.locating = false; this.geoError = this._translate.instant('theaters.geoFailed'); this._cdr.markForCheck(); },
       { enableHighAccuracy: false, timeout: 10000 },
     );
   }

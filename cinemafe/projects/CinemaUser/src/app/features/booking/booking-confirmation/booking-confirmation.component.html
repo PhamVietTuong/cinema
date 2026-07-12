@@ -4,13 +4,13 @@
   <div class="page-header">
     <div class="page-header-inner">
       <nav class="breadcrumb">
-        <a routerLink="/">Trang Chủ</a>
+        <a routerLink="/">{{ 'booking.breadcrumb.home' | translate }}</a>
         <i class="fas fa-chevron-right"></i>
-        <a routerLink="/movies">Phim</a>
+        <a routerLink="/movies">{{ 'booking.breadcrumb.movies' | translate }}</a>
         <i class="fas fa-chevron-right"></i>
-        <span>Thanh Toán</span>
+        <span>{{ 'booking.confirm.title' | translate }}</span>
       </nav>
-      <h1 class="page-title">Thanh Toán</h1>
+      <h1 class="page-title">{{ 'booking.confirm.title' | translate }}</h1>
     </div>
   </div>
 
@@ -21,7 +21,7 @@
 
       <!-- Payment Methods -->
       <div class="form-card">
-        <h3 class="card-title"><i class="fas fa-credit-card"></i> Phương Thức Thanh Toán</h3>
+        <h3 class="card-title"><i class="fas fa-credit-card"></i> {{ 'booking.confirm.paymentMethod' | translate }}</h3>
         <div class="method-grid">
           <button class="method-card" [class.active]="paymentMethod === 'ApplePay'" (click)="paymentMethod='ApplePay'">
             <i class="fab fa-apple"></i> Apple Pay
@@ -30,17 +30,17 @@
             <i class="fab fa-google"></i> Google Pay
           </button>
           <button class="method-card momo" [class.active]="paymentMethod === 'Momo'" (click)="paymentMethod='Momo'">
-            <i class="fas fa-wallet"></i> Ví MoMo
+            <i class="fas fa-wallet"></i> {{ 'booking.confirm.momoWallet' | translate }}
           </button>
           <button class="method-card" [class.active]="paymentMethod === 'Card'" (click)="paymentMethod='Card'">
-            <i class="fas fa-credit-card"></i> Thẻ ATM nội địa
+            <i class="fas fa-credit-card"></i> {{ 'booking.confirm.domesticCard' | translate }}
           </button>
         </div>
       </div>
 
       <!-- Concessions / combos (this theater's menu) -->
       <div class="form-card" *ngIf="foods.length">
-        <h3 class="card-title"><i class="fas fa-utensils"></i> Bắp Nước & Combo</h3>
+        <h3 class="card-title"><i class="fas fa-utensils"></i> {{ 'booking.confirm.concessions' | translate }}</h3>
         <div class="combo-list">
           <div class="combo-row" *ngFor="let f of foods">
             <div class="combo-info">
@@ -58,14 +58,14 @@
 
       <!-- Card form (shown for card) -->
       <div class="form-card" *ngIf="paymentMethod === 'Card'">
-        <h3 class="card-title">Thẻ Tín Dụng / Ghi Nợ</h3>
+        <h3 class="card-title">{{ 'booking.confirm.creditDebit' | translate }}</h3>
         <div class="field-group">
-          <label class="field-label">Số Thẻ</label>
+          <label class="field-label">{{ 'booking.confirm.cardNumber' | translate }}</label>
           <input class="field-input" placeholder="0000 0000 0000 0000" maxlength="19">
         </div>
         <div class="field-row">
           <div class="field-group">
-            <label class="field-label">Ngày Hết Hạn</label>
+            <label class="field-label">{{ 'booking.confirm.expiry' | translate }}</label>
             <input class="field-input" placeholder="MM / YY" maxlength="7">
           </div>
           <div class="field-group">
@@ -74,7 +74,7 @@
           </div>
         </div>
         <div class="field-group">
-          <label class="field-label">Tên Trên Thẻ</label>
+          <label class="field-label">{{ 'booking.confirm.cardName' | translate }}</label>
           <input class="field-input" placeholder="NGUYEN VAN A">
         </div>
       </div>
@@ -82,7 +82,7 @@
       <!-- E-wallet note -->
       <div class="form-card center" *ngIf="paymentMethod !== 'Card'">
         <div class="qr-placeholder"><i class="fas fa-qrcode"></i></div>
-        <p class="qr-note">Quét mã QR bằng ứng dụng {{ paymentMethod === 'Momo' ? 'MoMo' : paymentMethod === 'ApplePay' ? 'Apple Pay' : 'Google Pay' }} để hoàn tất thanh toán.</p>
+        <p class="qr-note">{{ 'booking.confirm.qrNote' | translate:{ app: paymentMethod === 'Momo' ? 'MoMo' : paymentMethod === 'ApplePay' ? 'Apple Pay' : 'Google Pay' } }}</p>
       </div>
 
       <div *ngIf="error" class="error-banner">
@@ -93,7 +93,7 @@
     <!-- Right: Order Summary -->
     <div class="summary-col">
       <div class="summary-card">
-        <h3 class="summary-title">Tóm Tắt Đơn Hàng</h3>
+        <h3 class="summary-title">{{ 'booking.summary.orderTitle' | translate }}</h3>
 
         <div class="seat-list">
           <div class="seat-entry" *ngFor="let s of seats">
@@ -108,7 +108,7 @@
         <div class="summary-divider"></div>
 
         <div class="summary-row">
-          <span>Vé ({{ seats.length }} ghế)</span>
+          <span>{{ 'booking.summary.tickets' | translate:{ count: seats.length } }}</span>
           <span>{{ totalPrice | number:'1.0-0' }}đ</span>
         </div>
         <div class="summary-row" *ngFor="let f of selectedFoods">
@@ -119,26 +119,26 @@
         <div class="summary-divider"></div>
 
         <div class="field-group">
-          <label class="field-label">Mã Giảm Giá</label>
-          <input class="field-input" [(ngModel)]="discountCode" placeholder="VD: SUMMER25">
-          <span class="discount-note">Mã hợp lệ sẽ được trừ khi thanh toán.</span>
+          <label class="field-label">{{ 'booking.summary.discountCode' | translate }}</label>
+          <input class="field-input" [(ngModel)]="discountCode" [placeholder]="'booking.summary.discountPlaceholder' | translate">
+          <span class="discount-note">{{ 'booking.summary.discountNote' | translate }}</span>
         </div>
 
         <div class="summary-divider"></div>
 
         <div class="summary-row total">
-          <span>Tổng Cộng</span>
+          <span>{{ 'booking.summary.grandTotal' | translate }}</span>
           <span class="total-amount">{{ grandTotal | number:'1.0-0' }}đ</span>
         </div>
 
         <button class="btn-primary-cta confirm-btn" (click)="confirmBooking()" [disabled]="loading">
           <mat-spinner diameter="18" *ngIf="loading"></mat-spinner>
           <ng-container *ngIf="!loading">
-            <i class="fas fa-lock"></i> XÁC NHẬN & THANH TOÁN
+            <i class="fas fa-lock"></i> {{ 'booking.confirm.payCta' | translate }}
           </ng-container>
         </button>
 
-        <p class="secure-note"><i class="fas fa-shield-alt"></i> Thanh toán được bảo mật 256-bit SSL</p>
+        <p class="secure-note"><i class="fas fa-shield-alt"></i> {{ 'booking.confirm.secureNote' | translate }}</p>
       </div>
     </div>
 
@@ -156,8 +156,8 @@
         <i class="fas fa-check"></i>
       </div>
     </div>
-    <h2 class="success-title">Đặt Vé Thành Công!</h2>
-    <p class="success-sub">Cảm ơn bạn đã đặt vé. Vé của bạn đã được xác nhận.</p>
+    <h2 class="success-title">{{ 'booking.success.title' | translate }}</h2>
+    <p class="success-sub">{{ 'booking.success.subtitle' | translate }}</p>
 
     <!-- Ticket Card -->
     <div class="ticket-card">
@@ -171,13 +171,13 @@
 
       <div class="ticket-body">
         <div class="ticket-seats">
-          <div class="ticket-detail-label">Ghế</div>
+          <div class="ticket-detail-label">{{ 'booking.success.seatsLabel' | translate }}</div>
           <div class="ticket-seats-row">
             <span class="ticket-seat-chip" *ngFor="let s of seats">{{ s.rowName }}{{ s.colIndex }}</span>
           </div>
         </div>
         <div class="ticket-total-wrap">
-          <div class="ticket-detail-label">Tổng tiền</div>
+          <div class="ticket-detail-label">{{ 'booking.success.totalLabel' | translate }}</div>
           <div class="ticket-total-val">{{ grandTotal | number:'1.0-0' }}đ</div>
         </div>
       </div>
@@ -194,17 +194,17 @@
           <img *ngIf="qrDataUrl" [src]="qrDataUrl" alt="E-ticket QR" width="160" height="160">
           <i *ngIf="!qrDataUrl" class="fas fa-qrcode"></i>
         </div>
-        <p class="qr-instruction">Xuất trình mã QR tại quầy hoặc cổng soát vé</p>
+        <p class="qr-instruction">{{ 'booking.success.qrInstruction' | translate }}</p>
       </div>
     </div>
 
     <!-- Actions -->
     <div class="success-actions">
       <button class="btn-primary-cta" (click)="goProfile()">
-        <i class="fas fa-ticket-alt"></i> Xem Vé Của Tôi
+        <i class="fas fa-ticket-alt"></i> {{ 'booking.success.viewTickets' | translate }}
       </button>
       <button class="btn-ghost-cta" (click)="goHome()">
-        <i class="fas fa-home"></i> Về Trang Chủ
+        <i class="fas fa-home"></i> {{ 'booking.success.backHome' | translate }}
       </button>
     </div>
   </div>

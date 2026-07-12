@@ -16,10 +16,10 @@ export class MembershipComponent implements OnInit {
   loading = true;
 
   readonly perks = [
-    'Tích điểm trên mỗi vé đã mua',
-    'Giảm giá vé theo hạng thành viên',
-    'Ưu đãi sinh nhật & sự kiện độc quyền',
-    'Đặt vé sớm cho các suất công chiếu',
+    'membership.perkEarnPoints',
+    'membership.perkTierDiscount',
+    'membership.perkBirthday',
+    'membership.perkEarlyBooking',
   ];
 
   ngOnInit(): void {

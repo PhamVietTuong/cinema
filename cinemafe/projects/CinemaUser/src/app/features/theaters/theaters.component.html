@@ -1,15 +1,15 @@
 <div class="page-header">
   <div class="page-header-inner">
-    <h1 class="page-title">Hệ Thống Rạp Chiếu</h1>
-    <p class="page-sub">Trải nghiệm điện ảnh đẳng cấp tại các cụm rạp Midnight Premium trên toàn quốc.</p>
+    <h1 class="page-title">{{ 'theaters.pageTitle' | translate }}</h1>
+    <p class="page-sub">{{ 'theaters.pageSub' | translate }}</p>
     <div class="filter-row" *ngIf="cities.length">
       <select class="city-select" [(ngModel)]="city">
-        <option value="">Tất cả thành phố</option>
+        <option value="">{{ 'theaters.allCities' | translate }}</option>
         <option *ngFor="let c of cities" [value]="c">{{ c }}</option>
       </select>
       <button type="button" class="near-btn" (click)="findNearest()" [disabled]="locating">
         <i class="fas fa-location-crosshairs"></i>
-        {{ locating ? 'Đang định vị...' : (hasLocation ? 'Sắp xếp theo khoảng cách' : 'Tìm rạp gần nhất') }}
+        {{ locating ? ('theaters.locating' | translate) : (hasLocation ? ('theaters.sortByDistance' | translate) : ('theaters.findNearest' | translate)) }}
       </button>
     </div>
     <p class="geo-error" *ngIf="geoError"><i class="fas fa-triangle-exclamation"></i> {{ geoError }}</p>
@@ -21,7 +21,7 @@
 
   <div *ngIf="!loading && !filtered.length" class="empty">
     <i class="fas fa-film"></i>
-    <p>Chưa có rạp chiếu nào.</p>
+    <p>{{ 'theaters.empty' | translate }}</p>
   </div>
 
   <div class="theater-grid">
@@ -35,11 +35,11 @@
         <h3 class="theater-name">{{ t.name }}</h3>
         <p class="theater-addr"><i class="fas fa-location-dot"></i> {{ t.address }}</p>
         <div class="theater-meta">
-          <span><i class="fas fa-door-open"></i> {{ t.roomCount || 0 }} phòng chiếu</span>
+          <span><i class="fas fa-door-open"></i> {{ 'theaters.roomCount' | translate:{ n: (t.roomCount || 0) } }}</span>
           <span *ngIf="t.phone"><i class="fas fa-phone"></i> {{ t.phone }}</span>
         </div>
         <a class="btn-primary-cta theater-cta" routerLink="/movies">
-          <i class="fas fa-ticket"></i> Xem Lịch Chiếu
+          <i class="fas fa-ticket"></i> {{ 'theaters.viewShowtimes' | translate }}
         </a>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 
 /** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
@@ -19,6 +20,7 @@ export class ProfileComponent implements OnInit {
   private _cinema = inject(CinemaServiceAgent.HttpService);
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
+  private _translate = inject(TranslateService);
 
   avatarUploading = false;
   avatarErr = '';
@@ -30,9 +32,9 @@ export class ProfileComponent implements OnInit {
   notif = { trailers: true, reminders: true, promos: false };
 
   readonly perks = [
-    { icon: 'fa-ticket', text: 'Giảm 10% cho tất cả các vé' },
-    { icon: 'fa-bowl-food', text: 'Bắp rang miễn phí hàng tháng' },
-    { icon: 'fa-star', text: 'Tích điểm thưởng cho mỗi lần đặt vé' },
+    { icon: 'fa-ticket', text: 'profile.perkDiscount' },
+    { icon: 'fa-bowl-food', text: 'profile.perkFreePopcorn' },
+    { icon: 'fa-star', text: 'profile.perkEarnPoints' },
   ];
 
   user: IdentityServiceAgent.UserDTO | null = null;
@@ -105,11 +107,11 @@ export class ProfileComponent implements OnInit {
     this._identity.updateProfile(IdentityServiceAgent.UpdateProfileRequest.fromJS(this.profileForm.value))
       .subscribe({
         next: () => {
-          this.profileMsg = 'Cập nhật thông tin thành công.';
+          this.profileMsg = this._translate.instant('profile.updateSuccess');
           this._identity.getProfile().subscribe(u => { this.user = u; this._cdr.markForCheck(); });
           this._cdr.markForCheck();
         },
-        error: e => { this.profileErr = this._err(e, 'Cập nhật thất bại.'); this._cdr.markForCheck(); },
+        error: e => { this.profileErr = this._err(e, this._translate.instant('profile.updateFailed')); this._cdr.markForCheck(); },
       });
   }
 
@@ -119,7 +121,7 @@ export class ProfileComponent implements OnInit {
     this.avatarUploading = true; this.avatarErr = '';
     this._cinema.uploadImage({ data: file, fileName: file.name }).subscribe({
       next: r => { this.profileForm.patchValue({ avatar: r.url ?? '' }); this.avatarUploading = false; this._cdr.markForCheck(); },
-      error: () => { this.avatarErr = 'Tải ảnh thất bại.'; this.avatarUploading = false; this._cdr.markForCheck(); },
+      error: () => { this.avatarErr = this._translate.instant('profile.uploadFailed'); this.avatarUploading = false; this._cdr.markForCheck(); },
     });
   }
 
@@ -127,11 +129,11 @@ export class ProfileComponent implements OnInit {
     if (this.passwordForm.invalid) { this.passwordForm.markAllAsTouched(); return; }
     const v = this.passwordForm.value;
     this.passwordMsg = ''; this.passwordErr = '';
-    if (v.newPassword !== v.confirmNewPassword) { this.passwordErr = 'Mật khẩu xác nhận không khớp.'; return; }
+    if (v.newPassword !== v.confirmNewPassword) { this.passwordErr = this._translate.instant('profile.passwordMismatch'); return; }
     this._identity.changePassword(IdentityServiceAgent.ChangePasswordRequest.fromJS(v))
       .subscribe({
-        next: () => { this.passwordMsg = 'Đổi mật khẩu thành công.'; this.passwordForm.reset(); this._cdr.markForCheck(); },
-        error: e => { this.passwordErr = this._err(e, 'Đổi mật khẩu thất bại.'); this._cdr.markForCheck(); },
+        next: () => { this.passwordMsg = this._translate.instant('profile.passwordChangeSuccess'); this.passwordForm.reset(); this._cdr.markForCheck(); },
+        error: e => { this.passwordErr = this._err(e, this._translate.instant('profile.passwordChangeFailed')); this._cdr.markForCheck(); },
       });
   }
 
@@ -174,7 +176,7 @@ export class ProfileComponent implements OnInit {
   toggleInvoice(id?: string): void { this.expandedId = this.expandedId === id ? null : (id ?? null); }
 
   cancelBooking(inv: PaymentServiceAgent.InvoiceDTO): void {
-    if (!inv.id || !confirm('Bạn có chắc muốn hủy đặt vé này?')) { return; }
+    if (!inv.id || !confirm(this._translate.instant('profile.confirmCancelBooking'))) { return; }
     this._payment.cancelBooking(PaymentServiceAgent.CancelBookingRequest.fromJS({ invoiceId: inv.id }))
       .subscribe({ next: () => this.loadInvoices(), error: () => this.loadInvoices() });
   }
@@ -185,10 +187,10 @@ export class ProfileComponent implements OnInit {
   }
   statusLabel(s?: PaymentServiceAgent.InvoiceStatus): string {
     switch (s) {
-      case this.InvoiceStatus.Paid: return 'Đã Thanh Toán';
-      case this.InvoiceStatus.Pending: return 'Chờ Thanh Toán';
-      case this.InvoiceStatus.Cancelled: return 'Đã Hủy';
-      case this.InvoiceStatus.Failed: return 'Thất Bại';
+      case this.InvoiceStatus.Paid: return this._translate.instant('profile.statusPaid');
+      case this.InvoiceStatus.Pending: return this._translate.instant('profile.statusPending');
+      case this.InvoiceStatus.Cancelled: return this._translate.instant('profile.statusCancelled');
+      case this.InvoiceStatus.Failed: return this._translate.instant('profile.statusFailed');
       default: return '—';
     }
   }

@@ -2,11 +2,11 @@
 <div class="page-header">
   <div class="page-header-inner">
     <nav class="breadcrumb">
-      <a routerLink="/">Trang Chủ</a>
+      <a routerLink="/">{{ 'booking.breadcrumb.home' | translate }}</a>
       <i class="fas fa-chevron-right"></i>
-      <span>Chọn Chỗ Ngồi</span>
+      <span>{{ 'booking.seats.title' | translate }}</span>
     </nav>
-    <h1 class="page-title">Chọn Chỗ Ngồi</h1>
+    <h1 class="page-title">{{ 'booking.seats.title' | translate }}</h1>
   </div>
 </div>
 
@@ -23,7 +23,7 @@
       <!-- Screen -->
       <div class="screen-wrap">
         <div class="screen-arc"></div>
-        <span class="screen-label">MÀN HÌNH</span>
+        <span class="screen-label">{{ 'booking.seats.screen' | translate }}</span>
       </div>
 
       <!-- Seat Grid -->
@@ -46,16 +46,16 @@
       <!-- Legend -->
       <div class="legend">
         <span class="legend-item">
-          <span class="legend-dot available"></span> Ghế Trống
+          <span class="legend-dot available"></span> {{ 'booking.seats.legendAvailable' | translate }}
         </span>
         <span class="legend-item">
-          <span class="legend-dot selected"></span> Đang Chọn
+          <span class="legend-dot selected"></span> {{ 'booking.seats.legendSelected' | translate }}
         </span>
         <span class="legend-item">
-          <span class="legend-dot occupied"></span> Đã Bán
+          <span class="legend-dot occupied"></span> {{ 'booking.seats.legendOccupied' | translate }}
         </span>
         <span class="legend-item">
-          <span class="legend-dot vip available"></span> Ghế VIP
+          <span class="legend-dot vip available"></span> {{ 'booking.seats.legendVip' | translate }}
         </span>
       </div>
     </ng-container>
@@ -64,11 +64,11 @@
   <!-- ── SIDEBAR ────────────────────────────────────────────────────────────── -->
   <div class="sidebar">
     <div class="sidebar-card">
-      <h3 class="sidebar-title">Ghế Đã Chọn</h3>
+      <h3 class="sidebar-title">{{ 'booking.seats.selectedTitle' | translate }}</h3>
 
       <div *ngIf="selectedSeats.length === 0" class="empty-seats">
         <i class="fas fa-chair"></i>
-        <p>Chưa chọn ghế</p>
+        <p>{{ 'booking.seats.empty' | translate }}</p>
       </div>
 
       <div class="selected-list">
@@ -84,21 +84,21 @@
       <ng-container *ngIf="selectedSeats.length > 0">
         <div class="price-divider"></div>
         <div class="price-row">
-          <span>Tạm tính ({{ selectedSeats.length }} ghế)</span>
+          <span>{{ 'booking.summary.subtotal' | translate:{ count: selectedSeats.length } }}</span>
           <span>{{ totalPrice | number:'1.0-0' }}đ</span>
         </div>
         <div class="price-row muted">
-          <span>Phí đặt vé online</span>
+          <span>{{ 'booking.summary.onlineFee' | translate }}</span>
           <span>10.000đ</span>
         </div>
         <div class="price-divider"></div>
         <div class="price-row total-row">
-          <span>Tổng cộng</span>
+          <span>{{ 'booking.summary.total' | translate }}</span>
           <span class="total-amount">{{ (totalPrice + 10000) | number:'1.0-0' }}đ</span>
         </div>
 
         <button class="btn-primary-cta confirm-btn" (click)="proceedToCheckout()">
-          XÁC NHẬN ĐẶT VÉ
+          {{ 'booking.seats.confirmCta' | translate }}
         </button>
       </ng-container>
     </div>

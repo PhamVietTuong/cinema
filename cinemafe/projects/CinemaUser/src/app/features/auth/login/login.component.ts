@@ -7,6 +7,7 @@ import {
   SharedModule, login, loginSuccess,
   selectAuthLoading, selectAuthError, selectAwaitingTwoFactor,
 } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../../environments/environment';
 
 // Provided by the Google Identity Services script loaded in index.html.
@@ -33,6 +34,7 @@ export class LoginComponent implements AfterViewInit {
   private _fb = inject(FormBuilder);
   private _http = inject(HttpClient);
   private _cdr = inject(ChangeDetectorRef);
+  private _translate = inject(TranslateService);
 
   @ViewChild('googleBtn') googleBtn?: ElementRef<HTMLElement>;
 
@@ -85,7 +87,7 @@ export class LoginComponent implements AfterViewInit {
         this._store.dispatch(loginSuccess({ response, rememberMe: this.form.value.rememberMe })),
       error: () => {
         this.verifying = false;
-        this.otpError = 'Mã không hợp lệ hoặc đã hết hạn.';
+        this.otpError = this._translate.instant('auth.login.otpError');
         this._cdr.markForCheck();
       },
     });
@@ -142,7 +144,7 @@ export class LoginComponent implements AfterViewInit {
         this._http.post(`${environment.apiUrl}/api/Identity/FacebookLogin`, { accessToken: token }).subscribe({
           next: (response: any) => this._store.dispatch(loginSuccess({ response, rememberMe: this.form.value.rememberMe })),
           error: () => {
-            this.facebookError = 'Đăng nhập bằng Facebook thất bại. Vui lòng thử lại.';
+            this.facebookError = this._translate.instant('auth.login.facebookError');
             this._cdr.markForCheck();
           },
         });
@@ -155,7 +157,7 @@ export class LoginComponent implements AfterViewInit {
     this._http.post(`${environment.apiUrl}/api/Identity/GoogleLogin`, { idToken: resp.credential }).subscribe({
       next: (response: any) => this._store.dispatch(loginSuccess({ response, rememberMe: this.form.value.rememberMe })),
       error: () => {
-        this.googleError = 'Đăng nhập bằng Google thất bại. Vui lòng thử lại.';
+        this.googleError = this._translate.instant('auth.login.googleError');
         this._cdr.markForCheck();
       },
     });

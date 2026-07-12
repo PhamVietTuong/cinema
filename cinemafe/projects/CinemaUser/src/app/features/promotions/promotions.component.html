@@ -1,7 +1,7 @@
 <div class="page-header">
   <div class="ph-inner">
-    <h1 class="page-title">Khuyến Mãi</h1>
-    <p class="page-sub">Khám phá những ưu đãi đặc quyền dành riêng cho thành viên Midnight Premium. Tận hưởng trải nghiệm điện ảnh đẳng cấp với chi phí tối ưu.</p>
+    <h1 class="page-title">{{ 'promotions.pageTitle' | translate }}</h1>
+    <p class="page-sub">{{ 'promotions.pageSubtitle' | translate }}</p>
   </div>
 </div>
 
@@ -10,26 +10,26 @@
 
   <div *ngIf="!loading && !promos.length" class="empty">
     <i class="fas fa-tags"></i>
-    <p>Hiện chưa có chương trình khuyến mãi nào.</p>
+    <p>{{ 'promotions.empty' | translate }}</p>
   </div>
 
   <div class="promo-grid">
     <div class="promo-card" *ngFor="let p of promos">
       <div class="promo-left">
         <span class="promo-percent">{{ p.percent }}%</span>
-        <span class="promo-label">GIẢM GIÁ</span>
+        <span class="promo-label">{{ 'promotions.discountLabel' | translate }}</span>
       </div>
       <div class="promo-perf"></div>
       <div class="promo-right">
-        <h3 class="promo-desc">{{ p.description || 'Ưu đãi đặc biệt' }}</h3>
-        <p class="promo-detail" *ngIf="p.maxDiscountAmount">Giảm tối đa {{ p.maxDiscountAmount | number:'1.0-0' }}đ</p>
-        <p class="promo-validity"><i class="fas fa-calendar-days"></i> HSD: {{ p.endDate | date:'dd/MM/yyyy' }}</p>
+        <h3 class="promo-desc">{{ p.description || ('promotions.specialOffer' | translate) }}</h3>
+        <p class="promo-detail" *ngIf="p.maxDiscountAmount">{{ 'promotions.maxDiscount' | translate:{ amount: (p.maxDiscountAmount | number:'1.0-0') } }}</p>
+        <p class="promo-validity"><i class="fas fa-calendar-days"></i> {{ 'promotions.expiry' | translate:{ date: (p.endDate | date:'dd/MM/yyyy') } }}</p>
         <div class="promo-bottom">
           <div class="promo-code">
-            <span class="code-label">Mã</span>
+            <span class="code-label">{{ 'promotions.codeLabel' | translate }}</span>
             <span class="code-val">{{ p.code }}</span>
           </div>
-          <button class="dungngay-btn">Dùng Ngay</button>
+          <button class="dungngay-btn">{{ 'promotions.useNow' | translate }}</button>
         </div>
       </div>
     </div>
@@ -40,10 +40,10 @@
     <img class="feature-img" src="assets/promo-banner.png" alt="">
     <div class="feature-scrim"></div>
     <div class="feature-content">
-      <span class="feature-badge">BẮP ĐIỆN ẢNH</span>
-      <h2 class="feature-title">Đại Tiệc Buffet Bắp Nước</h2>
-      <p class="feature-desc">Dành riêng cho hạng thẻ Diamond. Ăn bắp và uống nước không giới hạn trong suốt kỳ nghỉ lễ.</p>
-      <button class="btn-ghost-cta feature-btn">Tìm hiểu thêm</button>
+      <span class="feature-badge">{{ 'promotions.featureBadge' | translate }}</span>
+      <h2 class="feature-title">{{ 'promotions.featureTitle' | translate }}</h2>
+      <p class="feature-desc">{{ 'promotions.featureDesc' | translate }}</p>
+      <button class="btn-ghost-cta feature-btn">{{ 'promotions.featureCta' | translate }}</button>
     </div>
   </div>
 </div>

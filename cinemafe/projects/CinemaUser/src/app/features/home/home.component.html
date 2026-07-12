@@ -11,7 +11,7 @@
         <div class="hero-meta">
           <span class="meta-rating"><i class="fas fa-star"></i> {{ f.averageRating | number:'1.1-1' }}</span>
           <span class="meta-dot">·</span>
-          <span class="meta-duration">{{ f.duration }} phút</span>
+          <span class="meta-duration">{{ 'home.movie.minutes' | translate:{ n: f.duration } }}</span>
           <ng-container *ngIf="f.genres?.length">
             <span class="meta-dot">·</span>
             <span class="meta-genres">
@@ -24,10 +24,10 @@
         <p class="hero-desc">{{ f.description }}</p>
         <div class="hero-actions">
           <a class="btn-primary-cta" [routerLink]="['/movies', f.id]">
-            <i class="fas fa-ticket"></i> Đặt Vé Ngay
+            <i class="fas fa-ticket"></i> {{ 'home.hero.bookNow' | translate }}
           </a>
           <button class="btn-ghost-cta">
-            <i class="fas fa-play"></i> Xem Trailer
+            <i class="fas fa-play"></i> {{ 'home.hero.watchTrailer' | translate }}
           </button>
         </div>
       </div>
@@ -49,10 +49,10 @@
           <span class="badge-pill badge-imax">PREMIUM CINEMA</span>
         </div>
         <h1 class="hero-title">Midnight Premium</h1>
-        <p class="hero-desc">Trải nghiệm điện ảnh đẳng cấp nhất — những bộ phim bom tấn, ghế hạng nhất, âm thanh vòm sống động.</p>
+        <p class="hero-desc">{{ 'home.hero.defaultDesc' | translate }}</p>
         <div class="hero-actions">
           <a class="btn-primary-cta" routerLink="/movies">
-            <i class="fas fa-film"></i> Khám Phá Phim
+            <i class="fas fa-film"></i> {{ 'home.hero.explore' | translate }}
           </a>
         </div>
       </div>
@@ -65,7 +65,7 @@
   <div class="section-header">
     <div class="section-titlewrap">
       <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
-      <h2 class="section-title">Đề Xuất Cho Bạn</h2>
+      <h2 class="section-title">{{ 'home.sections.recommended' | translate }}</h2>
     </div>
   </div>
   <div class="scroll-row">
@@ -73,7 +73,7 @@
       <div class="card-poster">
         <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
         <div class="card-hover-overlay">
-          <span class="btn-book-small"><i class="fas fa-ticket"></i> Đặt Vé</span>
+          <span class="btn-book-small"><i class="fas fa-ticket"></i> {{ 'home.card.book' | translate }}</span>
         </div>
         <div class="card-rating"><i class="fas fa-star"></i> {{ movie.averageRating | number:'1.1-1' }}</div>
         <span class="card-age">{{ movie.ageRestrictionCode }}</span>
@@ -83,7 +83,7 @@
         <div class="card-genres">
           <span class="chip-genre" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
         </div>
-        <p class="card-duration"><i class="fas fa-clock"></i> {{ movie.duration }} phút</p>
+        <p class="card-duration"><i class="fas fa-clock"></i> {{ 'home.movie.minutes' | translate:{ n: movie.duration } }}</p>
       </div>
     </div>
   </div>
@@ -94,9 +94,9 @@
   <div class="section-header">
     <div class="section-titlewrap">
       <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
-      <h2 class="section-title">Phim Đang Chiếu</h2>
+      <h2 class="section-title">{{ 'home.sections.nowShowing' | translate }}</h2>
     </div>
-    <a routerLink="/movies" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
+    <a routerLink="/movies" class="section-more">{{ 'home.sections.viewAll' | translate }} <i class="fas fa-chevron-right"></i></a>
   </div>
   <div *ngIf="loading$ | async" class="spinner-wrap">
     <mat-spinner diameter="36"></mat-spinner>
@@ -108,7 +108,7 @@
       <div class="card-poster">
         <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
         <div class="card-hover-overlay">
-          <span class="btn-book-small"><i class="fas fa-ticket"></i> Đặt Vé</span>
+          <span class="btn-book-small"><i class="fas fa-ticket"></i> {{ 'home.card.book' | translate }}</span>
         </div>
         <div class="card-rating"><i class="fas fa-star"></i> {{ movie.averageRating | number:'1.1-1' }}</div>
         <span class="card-age">{{ movie.ageRestrictionCode }}</span>
@@ -118,7 +118,7 @@
         <div class="card-genres">
           <span class="chip-genre" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
         </div>
-        <p class="card-duration"><i class="fas fa-clock"></i> {{ movie.duration }} phút</p>
+        <p class="card-duration"><i class="fas fa-clock"></i> {{ 'home.movie.minutes' | translate:{ n: movie.duration } }}</p>
       </div>
     </div>
   </div>
@@ -129,15 +129,15 @@
   <div class="section-header">
     <div class="section-titlewrap">
       <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
-      <h2 class="section-title">Phim Sắp Chiếu</h2>
+      <h2 class="section-title">{{ 'home.sections.comingSoon' | translate }}</h2>
     </div>
-    <a routerLink="/movies" class="section-more">Xem Tất Cả <i class="fas fa-chevron-right"></i></a>
+    <a routerLink="/movies" class="section-more">{{ 'home.sections.viewAll' | translate }} <i class="fas fa-chevron-right"></i></a>
   </div>
   <div class="movie-grid">
     <div class="movie-card coming-card" *ngFor="let movie of comingSoon$ | async">
       <div class="card-poster">
         <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
-        <div class="coming-badge">Sắp Chiếu</div>
+        <div class="coming-badge">{{ 'home.card.comingSoonBadge' | translate }}</div>
       </div>
       <div class="card-info">
         <h3 class="card-title">{{ movie.title }}</h3>
@@ -155,18 +155,18 @@
   <div class="membership-inner">
     <div class="membership-content">
       <p class="membership-label">PREMIUM EXPERIENCE</p>
-      <h2 class="membership-title">Nâng Tầm Trải Nghiệm<br>Điện Ảnh</h2>
+      <h2 class="membership-title">{{ 'home.membership.titleLine1' | translate }}<br>{{ 'home.membership.titleLine2' | translate }}</h2>
       <p class="membership-desc">
-        Trở thành thành viên Midnight Premium để tận hưởng những đặc quyền độc quyền dành riêng cho bạn.
+        {{ 'home.membership.desc' | translate }}
       </p>
       <ul class="membership-perks">
-        <li><i class="fas fa-check-circle"></i> Đặt vé ưu tiên không cần chờ đợi</li>
-        <li><i class="fas fa-check-circle"></i> Đồ ăn không giới hạn tại Gold Lounge</li>
-        <li><i class="fas fa-check-circle"></i> Truy cập buổi chiếu ra mắt độc quyền</li>
-        <li><i class="fas fa-check-circle"></i> Ghế ưu tiên tại mọi suất chiếu</li>
+        <li><i class="fas fa-check-circle"></i> {{ 'home.membership.perk1' | translate }}</li>
+        <li><i class="fas fa-check-circle"></i> {{ 'home.membership.perk2' | translate }}</li>
+        <li><i class="fas fa-check-circle"></i> {{ 'home.membership.perk3' | translate }}</li>
+        <li><i class="fas fa-check-circle"></i> {{ 'home.membership.perk4' | translate }}</li>
       </ul>
       <a routerLink="/auth/register" class="btn-primary-cta">
-        <i class="fas fa-crown"></i> Tham Gia Ngay
+        <i class="fas fa-crown"></i> {{ 'home.membership.join' | translate }}
       </a>
     </div>
     <div class="membership-visual">
@@ -187,7 +187,7 @@
         <i class="fas fa-film"></i>
         <strong>Midnight Premium</strong>
       </a>
-      <p>Trải nghiệm điện ảnh đẳng cấp nhất Việt Nam.</p>
+      <p>{{ 'home.footer.tagline' | translate }}</p>
       <div class="social-row">
         <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
         <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
@@ -196,25 +196,25 @@
       </div>
     </div>
     <div class="footer-col">
-      <h4>Khám Phá</h4>
-      <a routerLink="/movies">Phim Đang Chiếu</a>
-      <a href="#">Phim Sắp Chiếu</a>
-      <a href="#">Rạp Chiếu Phim</a>
-      <a href="#">Khuyến Mãi</a>
+      <h4>{{ 'home.footer.explore.title' | translate }}</h4>
+      <a routerLink="/movies">{{ 'home.footer.explore.nowShowing' | translate }}</a>
+      <a href="#">{{ 'home.footer.explore.comingSoon' | translate }}</a>
+      <a href="#">{{ 'home.footer.explore.theaters' | translate }}</a>
+      <a href="#">{{ 'home.footer.explore.promotions' | translate }}</a>
     </div>
     <div class="footer-col">
-      <h4>Thành Viên</h4>
-      <a href="#">Chương Trình</a>
-      <a href="#">Ưu Đãi</a>
-      <a routerLink="/auth/login">Đăng Nhập</a>
-      <a routerLink="/auth/register">Đăng Ký</a>
+      <h4>{{ 'home.footer.members.title' | translate }}</h4>
+      <a href="#">{{ 'home.footer.members.program' | translate }}</a>
+      <a href="#">{{ 'home.footer.members.offers' | translate }}</a>
+      <a routerLink="/auth/login">{{ 'home.footer.members.login' | translate }}</a>
+      <a routerLink="/auth/register">{{ 'home.footer.members.register' | translate }}</a>
     </div>
     <div class="footer-col">
-      <h4>Hỗ Trợ</h4>
-      <a href="#">Trung Tâm Hỗ Trợ</a>
-      <a href="#">Liên Hệ</a>
-      <a href="#">Chính Sách Bảo Mật</a>
-      <a href="#">Điều Khoản Dịch Vụ</a>
+      <h4>{{ 'home.footer.support.title' | translate }}</h4>
+      <a href="#">{{ 'home.footer.support.center' | translate }}</a>
+      <a href="#">{{ 'home.footer.support.contact' | translate }}</a>
+      <a href="#">{{ 'home.footer.support.privacy' | translate }}</a>
+      <a href="#">{{ 'home.footer.support.terms' | translate }}</a>
     </div>
   </div>
   <div class="footer-bottom">

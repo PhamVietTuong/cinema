@@ -2,25 +2,25 @@
   <div class="page-header-inner">
     <div class="header-top">
       <div>
-        <h1 class="page-title">{{ title }}</h1>
-        <p class="page-sub">Khám phá những siêu phẩm điện ảnh mới nhất với chất lượng âm thanh và hình ảnh đỉnh cao.</p>
+        <h1 class="page-title">{{ title | translate }}</h1>
+        <p class="page-sub">{{ 'movies.list.subtitle' | translate }}</p>
       </div>
       <span class="search-box">
         <i class="fas fa-magnifying-glass"></i>
-        <input [formControl]="searchCtrl" placeholder="Tìm phim, đạo diễn...">
+        <input [formControl]="searchCtrl" [placeholder]="'movies.list.searchPlaceholder' | translate">
       </span>
     </div>
 
     <div class="filter-row">
       <div class="tabs">
-        <button *ngFor="let t of tabs" class="tab" [class.active]="mode === t.mode" (click)="setMode(t.mode)">{{ t.label }}</button>
+        <button *ngFor="let t of tabs" class="tab" [class.active]="mode === t.mode" (click)="setMode(t.mode)">{{ t.label | translate }}</button>
       </div>
       <select class="genre-select" [(ngModel)]="selectedGenre" *ngIf="!isPaged && genres.length">
-        <option value="">Thể loại</option>
+        <option value="">{{ 'movies.filters.genre' | translate }}</option>
         <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
       </select>
       <select class="genre-select" [(ngModel)]="selectedLanguage" *ngIf="!isPaged && languages.length">
-        <option value="">Ngôn ngữ</option>
+        <option value="">{{ 'movies.filters.language' | translate }}</option>
         <option *ngFor="let l of languages" [value]="l">{{ l }}</option>
       </select>
     </div>
@@ -37,7 +37,7 @@
       <div class="card-poster">
         <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title">
         <div class="card-hover-overlay">
-          <span class="btn-book-small"><i class="fas fa-ticket"></i> Đặt Vé</span>
+          <span class="btn-book-small"><i class="fas fa-ticket"></i> {{ 'movies.list.book' | translate }}</span>
         </div>
         <div class="card-rating" *ngIf="movie.averageRating"><i class="fas fa-star"></i> {{ movie.averageRating | number:'1.1-1' }}</div>
         <span class="card-age" *ngIf="movie.ageRestrictionCode">{{ movie.ageRestrictionCode }}</span>
@@ -47,14 +47,14 @@
         <div class="card-genres">
           <span class="chip-genre" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
         </div>
-        <p class="card-duration"><i class="fas fa-clock"></i> {{ movie.duration }} phút</p>
+        <p class="card-duration"><i class="fas fa-clock"></i> {{ 'movies.durationMinutes' | translate:{ count: movie.duration } }}</p>
       </div>
     </div>
   </div>
 
   <div *ngIf="displayed.length === 0 && !(loading$ | async)" class="empty">
     <i class="fas fa-film"></i>
-    <p>Không có phim nào.</p>
+    <p>{{ 'movies.list.empty' | translate }}</p>
   </div>
 
   <div class="pager" *ngIf="isPaged && total > pageSize">
@@ -67,20 +67,20 @@
   <div class="ml-footer-inner">
     <div class="foot-brand">
       <a class="foot-logo"><i class="fas fa-film"></i> <strong>Midnight Premium</strong></a>
-      <p>Trải nghiệm điện ảnh đẳng cấp nhất Việt Nam.</p>
+      <p>{{ 'movies.footer.tagline' | translate }}</p>
     </div>
     <div class="foot-col">
-      <h4>Liên Kết</h4>
-      <a routerLink="/movies">Phim</a>
-      <a routerLink="/theaters">Rạp Chiếu</a>
-      <a routerLink="/promotions">Khuyến Mãi</a>
-      <a routerLink="/membership">Thành Viên</a>
+      <h4>{{ 'movies.footer.links' | translate }}</h4>
+      <a routerLink="/movies">{{ 'movies.footer.linkMovies' | translate }}</a>
+      <a routerLink="/theaters">{{ 'movies.footer.linkTheaters' | translate }}</a>
+      <a routerLink="/promotions">{{ 'movies.footer.linkPromotions' | translate }}</a>
+      <a routerLink="/membership">{{ 'movies.footer.linkMembership' | translate }}</a>
     </div>
     <div class="foot-col">
-      <h4>Hỗ Trợ</h4>
-      <a href="#">Điều Khoản</a>
-      <a href="#">Bảo Mật</a>
-      <a href="#">Liên Hệ</a>
+      <h4>{{ 'movies.footer.support' | translate }}</h4>
+      <a href="#">{{ 'movies.footer.terms' | translate }}</a>
+      <a href="#">{{ 'movies.footer.privacy' | translate }}</a>
+      <a href="#">{{ 'movies.footer.contact' | translate }}</a>
     </div>
   </div>
   <p class="foot-copy">© 2026 Midnight Premium Cinema. All rights reserved.</p>
