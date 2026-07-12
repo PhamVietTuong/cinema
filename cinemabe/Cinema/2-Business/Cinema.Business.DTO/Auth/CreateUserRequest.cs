@@ -8,5 +8,7 @@ public class CreateUserRequest
     public string Phone { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public Guid UserTypeId { get; set; }
+    /// <summary>Required for theater-staff accounts; the theater they manage.</summary>
+    public Guid? TheaterId { get; set; }
     public UserStatus Status { get; set; } = UserStatus.Active;
 }

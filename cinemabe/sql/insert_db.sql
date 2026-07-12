@@ -20,10 +20,12 @@ INSERT INTO [AgeRestriction] ([Id], [Code], [Description], [MinAge], [CreationTi
 -- ── User Types ────────────────────────────────────────────────────────────────
 DECLARE @UserTypeAdmin    uniqueidentifier = NEWID();
 DECLARE @UserTypeCustomer uniqueidentifier = NEWID();
+DECLARE @UserTypeStaff    uniqueidentifier = NEWID();
 
 INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES
-(@UserTypeAdmin,    N'Admin',    GETUTCDATE()),
-(@UserTypeCustomer, N'Customer', GETUTCDATE());
+(@UserTypeAdmin,    N'Admin',        GETUTCDATE()),
+(@UserTypeCustomer, N'Customer',     GETUTCDATE()),
+(@UserTypeStaff,    N'TheaterStaff', GETUTCDATE());
 
 -- ── Membership tiers ─────────────────────────────────────────────────────────
 DECLARE @MemberBronze  uniqueidentifier = NEWID();

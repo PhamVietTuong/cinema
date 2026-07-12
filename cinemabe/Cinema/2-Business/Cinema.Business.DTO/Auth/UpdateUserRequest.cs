@@ -8,5 +8,6 @@ public class UpdateUserRequest
     public string Phone { get; set; } = string.Empty;
     public string? Avatar { get; set; }
     public Guid UserTypeId { get; set; }
+    public Guid? TheaterId { get; set; }
     public UserStatus Status { get; set; } = UserStatus.Active;
 }

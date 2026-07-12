@@ -17,4 +17,11 @@ public static class ClaimsPrincipalExtensions
 
     public static bool IsAdmin(this ClaimsPrincipal principal)
         => principal.IsInRole("Admin");
+
+    public static bool IsTheaterStaff(this ClaimsPrincipal principal)
+        => principal.IsInRole("TheaterStaff");
+
+    /// <summary>The theater a staff account manages, or null (admins/customers have no scope).</summary>
+    public static Guid? GetTheaterId(this ClaimsPrincipal principal)
+        => Guid.TryParse(principal.FindFirstValue("theaterId"), out var id) ? id : null;
 }

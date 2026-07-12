@@ -11,6 +11,8 @@ public class User : BaseEntity
     public byte[] PasswordSalt { get; set; } = Array.Empty<byte>();
     public UserStatus Status { get; set; } = UserStatus.Active;
     public Guid UserTypeId { get; set; }
+    /// <summary>For theater-staff accounts: the single theater they manage (null for admin/customer).</summary>
+    public Guid? TheaterId { get; set; }
     public Guid? MemberShipId { get; set; }
     public int Points { get; set; } = 0;
     // Password reset: SHA-256 hash of the emailed token + its expiry (both null when no reset is pending).

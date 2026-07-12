@@ -18,5 +18,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(u => u.PasswordSalt).IsRequired();
         b.HasOne(u => u.UserType).WithMany(ut => ut.Users).HasForeignKey(u => u.UserTypeId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(u => u.MemberShip).WithMany(m => m.Users).HasForeignKey(u => u.MemberShipId).OnDelete(DeleteBehavior.SetNull);
+        // Theater-staff scope (null for admin/customer). No inverse nav needed.
+        b.HasOne<Theater>().WithMany().HasForeignKey(u => u.TheaterId).OnDelete(DeleteBehavior.SetNull);
     }
 }

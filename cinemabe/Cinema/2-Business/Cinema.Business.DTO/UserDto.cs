@@ -10,6 +10,7 @@ public class UserDTO
     public string? Avatar { get; set; }
     public Guid UserTypeId { get; set; }
     public string UserTypeName { get; set; } = string.Empty;
+    public Guid? TheaterId { get; set; }
     public int Points { get; set; }
     public string? MemberShipName { get; set; }
     public UserStatus Status { get; set; }

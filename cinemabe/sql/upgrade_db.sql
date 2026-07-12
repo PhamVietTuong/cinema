@@ -320,4 +320,15 @@ BEGIN
     PRINT 'Added [Theater].[Latitude]/[Longitude].';
 END
 
+-- ── theater-staff role ─────────────────────────────────────────────────────────
+IF COL_LENGTH('[User]', 'TheaterId') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [TheaterId] uniqueidentifier NULL;
+    ALTER TABLE [User] ADD CONSTRAINT [FK_User_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE SET NULL;
+    CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);
+    PRINT 'Added [User].[TheaterId].';
+END
+IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'TheaterStaff')
+    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'TheaterStaff', GETUTCDATE());
+
 PRINT 'upgrade_db.sql: completed.';

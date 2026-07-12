@@ -421,6 +421,7 @@ public class AuthManager : IAuthManager
             PasswordHash = hash,
             PasswordSalt = salt,
             UserTypeId   = userTypeId,
+            TheaterId    = request.TheaterId,
             Status       = request.Status,
         };
         await _uow.UserStore.CreateAsync(user);
@@ -436,6 +437,7 @@ public class AuthManager : IAuthManager
         user.Status = request.Status;
         if (request.Avatar != null) user.Avatar = request.Avatar;
         if (request.UserTypeId != Guid.Empty) user.UserTypeId = request.UserTypeId;
+        user.TheaterId = request.TheaterId;
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
         return ToUserDTO(await _uow.UserStore.GetByIdAsync(request.Id) ?? user);

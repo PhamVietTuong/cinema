@@ -955,6 +955,7 @@ export class UserDTO implements IUserDTO {
     avatar?: string | undefined;
     userTypeId?: string;
     userTypeName?: string;
+    theaterId?: string | undefined;
     points?: number;
     memberShipName?: string | undefined;
     status?: UserStatus;
@@ -978,6 +979,7 @@ export class UserDTO implements IUserDTO {
             this.avatar = _data["avatar"];
             this.userTypeId = _data["userTypeId"];
             this.userTypeName = _data["userTypeName"];
+            this.theaterId = _data["theaterId"];
             this.points = _data["points"];
             this.memberShipName = _data["memberShipName"];
             this.status = _data["status"];
@@ -1001,6 +1003,7 @@ export class UserDTO implements IUserDTO {
         data["avatar"] = this.avatar;
         data["userTypeId"] = this.userTypeId;
         data["userTypeName"] = this.userTypeName;
+        data["theaterId"] = this.theaterId;
         data["points"] = this.points;
         data["memberShipName"] = this.memberShipName;
         data["status"] = this.status;
@@ -1017,6 +1020,7 @@ export interface IUserDTO {
     avatar?: string | undefined;
     userTypeId?: string;
     userTypeName?: string;
+    theaterId?: string | undefined;
     points?: number;
     memberShipName?: string | undefined;
     status?: UserStatus;
@@ -1700,6 +1704,7 @@ export class CreateUserRequest implements ICreateUserRequest {
     phone?: string;
     password?: string;
     userTypeId?: string;
+    theaterId?: string | undefined;
     status?: UserStatus;
 
     constructor(data?: ICreateUserRequest) {
@@ -1718,6 +1723,7 @@ export class CreateUserRequest implements ICreateUserRequest {
             this.phone = _data["phone"];
             this.password = _data["password"];
             this.userTypeId = _data["userTypeId"];
+            this.theaterId = _data["theaterId"];
             this.status = _data["status"];
         }
     }
@@ -1736,6 +1742,7 @@ export class CreateUserRequest implements ICreateUserRequest {
         data["phone"] = this.phone;
         data["password"] = this.password;
         data["userTypeId"] = this.userTypeId;
+        data["theaterId"] = this.theaterId;
         data["status"] = this.status;
         return data;
     }
@@ -1747,6 +1754,7 @@ export interface ICreateUserRequest {
     phone?: string;
     password?: string;
     userTypeId?: string;
+    theaterId?: string | undefined;
     status?: UserStatus;
 }
 
@@ -1756,6 +1764,7 @@ export class UpdateUserRequest implements IUpdateUserRequest {
     phone?: string;
     avatar?: string | undefined;
     userTypeId?: string;
+    theaterId?: string | undefined;
     status?: UserStatus;
 
     constructor(data?: IUpdateUserRequest) {
@@ -1774,6 +1783,7 @@ export class UpdateUserRequest implements IUpdateUserRequest {
             this.phone = _data["phone"];
             this.avatar = _data["avatar"];
             this.userTypeId = _data["userTypeId"];
+            this.theaterId = _data["theaterId"];
             this.status = _data["status"];
         }
     }
@@ -1792,6 +1802,7 @@ export class UpdateUserRequest implements IUpdateUserRequest {
         data["phone"] = this.phone;
         data["avatar"] = this.avatar;
         data["userTypeId"] = this.userTypeId;
+        data["theaterId"] = this.theaterId;
         data["status"] = this.status;
         return data;
     }
@@ -1803,6 +1814,7 @@ export interface IUpdateUserRequest {
     phone?: string;
     avatar?: string | undefined;
     userTypeId?: string;
+    theaterId?: string | undefined;
     status?: UserStatus;
 }
 

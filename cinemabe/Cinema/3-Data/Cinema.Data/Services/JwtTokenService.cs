@@ -19,7 +19,7 @@ public class JwtTokenService : ITokenService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:Secret"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
@@ -27,6 +27,9 @@ public class JwtTokenService : ITokenService
             new Claim(ClaimTypes.Role, user.UserType?.Name ?? "Customer"),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
+        // Theater staff carry the theater they manage, so the API can scope their access.
+        if (user.TheaterId is Guid theaterId)
+            claims.Add(new Claim("theaterId", theaterId.ToString()));
 
         var token = new JwtSecurityToken(
             issuer: _config["JWT:Issuer"],

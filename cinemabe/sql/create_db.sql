@@ -189,6 +189,7 @@ CREATE TABLE [User] (
     [PasswordSalt] varbinary(max) NOT NULL,
     [Status] int NOT NULL,
     [UserTypeId] uniqueidentifier NOT NULL,
+    [TheaterId] uniqueidentifier NULL,
     [MemberShipId] uniqueidentifier NULL,
     [Points] int NOT NULL,
     [PasswordResetTokenHash] nvarchar(max) NULL,
@@ -205,7 +206,8 @@ CREATE TABLE [User] (
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_User] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_User_MemberShip_MemberShipId] FOREIGN KEY ([MemberShipId]) REFERENCES [MemberShip] ([Id]) ON DELETE SET NULL,
-    CONSTRAINT [FK_User_UserType_UserTypeId] FOREIGN KEY ([UserTypeId]) REFERENCES [UserType] ([Id]) ON DELETE NO ACTION
+    CONSTRAINT [FK_User_UserType_UserTypeId] FOREIGN KEY ([UserTypeId]) REFERENCES [UserType] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_User_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE SET NULL
 );
 
 CREATE TABLE [MovieTypeDetail] (
@@ -396,3 +398,4 @@ CREATE UNIQUE INDEX [IX_User_Email] ON [User] ([Email]);
 CREATE INDEX [IX_User_MemberShipId] ON [User] ([MemberShipId]);
 CREATE UNIQUE INDEX [IX_User_Phone] ON [User] ([Phone]);
 CREATE INDEX [IX_User_UserTypeId] ON [User] ([UserTypeId]);
+CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);

@@ -624,6 +624,11 @@
           "userTypeName": {
             "type": "string"
           },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
           "points": {
             "type": "integer",
             "format": "int32"
@@ -900,6 +905,11 @@
             "type": "string",
             "format": "guid"
           },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
           "status": {
             "$ref": "#/components/schemas/UserStatus"
           }
@@ -926,6 +936,11 @@
           "userTypeId": {
             "type": "string",
             "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           },
           "status": {
             "$ref": "#/components/schemas/UserStatus"
