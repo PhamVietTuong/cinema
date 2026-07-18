@@ -1,60 +1,60 @@
 <div class="tab-toolbar">
-  <p class="ad-sub">Giá vé theo loại ghế × khung giờ × ngày lễ.</p>
+  <p class="ad-sub">{{ 'theaters.ticketPrices.subtitle' | translate }}</p>
   <button class="ad-btn ad-btn--primary" (click)="openCreate()" [disabled]="!roomTypes.length || !seatTypes.length || !timeSlots.length">
-    <mat-icon>add</mat-icon> Thêm Giá Vé
+    <mat-icon>add</mat-icon> {{ 'theaters.ticketPrices.add' | translate }}
   </button>
 </div>
 
 <p class="ad-sub" *ngIf="!roomTypes.length || !seatTypes.length || !timeSlots.length">
-  Cần có ít nhất một loại phòng, một loại ghế và một khung giờ trước khi thêm giá vé.
+  {{ 'theaters.ticketPrices.prereq' | translate }}
 </p>
 
 <app-modal [open]="showForm" (closed)="cancelEdit()">
 <div class="ad-card form-card">
-  <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Giá Vé' : 'Giá Vé Mới' }}</h3>
+  <h3 class="ad-card-title">{{ editingId ? ('theaters.ticketPrices.editTitle' | translate) : ('theaters.ticketPrices.newTitle' | translate) }}</h3>
   <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
     <div class="ad-field">
-      <label class="ad-label">Loại Phòng</label>
+      <label class="ad-label">{{ 'theaters.ticketPrices.roomTypeLabel' | translate }}</label>
       <select class="ad-input" formControlName="roomTypeId">
-        <option value="">— Chọn loại phòng —</option>
+        <option value="">{{ 'theaters.ticketPrices.selectRoomType' | translate }}</option>
         <option *ngFor="let t of roomTypes" [ngValue]="t.id">{{ t.name }}</option>
       </select>
     </div>
     <div class="ad-field">
-      <label class="ad-label">Loại Ghế</label>
+      <label class="ad-label">{{ 'theaters.ticketPrices.seatTypeLabel' | translate }}</label>
       <select class="ad-input" formControlName="seatTypeId">
-        <option value="">— Chọn loại ghế —</option>
+        <option value="">{{ 'theaters.ticketPrices.selectSeatType' | translate }}</option>
         <option *ngFor="let s of seatTypes" [ngValue]="s.id">{{ s.name }}</option>
       </select>
     </div>
     <div class="ad-field">
-      <label class="ad-label">Khung Giờ</label>
+      <label class="ad-label">{{ 'theaters.ticketPrices.timeSlotLabel' | translate }}</label>
       <select class="ad-input" formControlName="timeSlotId">
-        <option value="">— Chọn khung giờ —</option>
+        <option value="">{{ 'theaters.ticketPrices.selectTimeSlot' | translate }}</option>
         <option *ngFor="let t of timeSlots" [ngValue]="t.id">{{ t.name }} ({{ t.startTime }}–{{ t.endTime }})</option>
       </select>
     </div>
     <div class="ad-field">
-      <label class="ad-label">Giá (đ)</label>
+      <label class="ad-label">{{ 'theaters.ticketPrices.priceLabel' | translate }}</label>
       <input class="ad-input" type="number" formControlName="price" placeholder="70000">
     </div>
     <div class="ad-field">
-      <label class="ad-check"><input type="checkbox" formControlName="isHoliday"> Áp dụng ngày lễ</label>
+      <label class="ad-check"><input type="checkbox" formControlName="isHoliday"> {{ 'theaters.ticketPrices.applyHoliday' | translate }}</label>
     </div>
     <div class="form-actions full-span">
-      <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
-      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
+      <button class="ad-btn ad-btn--primary" type="submit">{{ 'common.save' | translate }}</button>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
     </div>
   </form>
 </div>
 </app-modal>
-<app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+<app-confirm-modal [open]="confirmOpen" [message]="'common.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
 
 <div class="ad-card ad-card--pad-0">
   <div class="ad-table-wrap">
     <table class="ad-table">
       <thead>
-        <tr><th>Loại Phòng</th><th>Loại Ghế</th><th>Khung Giờ</th><th>Ngày</th><th>Giá</th><th class="ad-td-actions">Thao Tác</th></tr>
+        <tr><th>{{ 'theaters.ticketPrices.roomTypeLabel' | translate }}</th><th>{{ 'theaters.ticketPrices.seatTypeLabel' | translate }}</th><th>{{ 'theaters.ticketPrices.timeSlotLabel' | translate }}</th><th>{{ 'common.date' | translate }}</th><th>{{ 'common.price' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
       </thead>
       <tbody>
         <tr *ngFor="let x of items">
@@ -63,17 +63,17 @@
           <td>{{ timeSlotName(x.timeSlotId) }}</td>
           <td>
             <span class="ad-pill" [class.ad-pill--warn]="x.isHoliday" [class.ad-pill--neutral]="!x.isHoliday">
-              {{ x.isHoliday ? 'Ngày Lễ' : 'Ngày Thường' }}
+              {{ x.isHoliday ? ('theaters.ticketPrices.holiday' | translate) : ('theaters.ticketPrices.regularDay' | translate) }}
             </span>
           </td>
           <td>{{ x.price | number:'1.0-0' }}đ</td>
           <td class="ad-td-actions">
-            <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Sửa"><mat-icon>edit</mat-icon></button>
-            <button class="ad-icon-btn" (click)="delete(x.id)" title="Xóa"><mat-icon>delete</mat-icon></button>
+            <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
           </td>
         </tr>
       </tbody>
     </table>
-    <div *ngIf="!items.length" class="ad-empty"><mat-icon>sell</mat-icon><p>Rạp này chưa có bảng giá vé.</p></div>
+    <div *ngIf="!items.length" class="ad-empty"><mat-icon>sell</mat-icon><p>{{ 'theaters.ticketPrices.empty' | translate }}</p></div>
   </div>
 </div>

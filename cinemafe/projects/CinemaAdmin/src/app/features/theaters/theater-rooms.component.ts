@@ -22,9 +22,9 @@ export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
   private _svc = inject(CinemaServiceAgent.HttpService);
 
   readonly statuses = [
-    { v: CinemaServiceAgent.RoomStatus.Active, label: 'Hoạt Động' },
-    { v: CinemaServiceAgent.RoomStatus.Maintenance, label: 'Bảo Trì' },
-    { v: CinemaServiceAgent.RoomStatus.Inactive, label: 'Ngừng Hoạt Động' },
+    { v: CinemaServiceAgent.RoomStatus.Active, label: 'theaters.rooms.statusActive' },
+    { v: CinemaServiceAgent.RoomStatus.Maintenance, label: 'theaters.rooms.statusMaintenance' },
+    { v: CinemaServiceAgent.RoomStatus.Inactive, label: 'theaters.rooms.statusInactive' },
   ];
   roomTypes: CinemaServiceAgent.RoomTypeDTO[] = [];
 

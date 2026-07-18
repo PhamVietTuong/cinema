@@ -1,29 +1,29 @@
 <div class="tab-toolbar">
-  <p class="ad-sub">Bắp, nước và combo bán tại rạp này.</p>
-  <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> Thêm Món</button>
+  <p class="ad-sub">{{ 'theaters.food.subtitle' | translate }}</p>
+  <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'theaters.food.add' | translate }}</button>
 </div>
 
 <app-modal [open]="showForm" (closed)="cancelEdit()">
 <div class="ad-card form-card">
-  <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Món' : 'Món Mới' }}</h3>
+  <h3 class="ad-card-title">{{ editingId ? ('theaters.food.editTitle' | translate) : ('theaters.food.newTitle' | translate) }}</h3>
   <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
     <div class="ad-field">
-      <label class="ad-label">Tên Món</label>
-      <input class="ad-input" formControlName="name" placeholder="VD: Bắp rang bơ (L)">
+      <label class="ad-label">{{ 'theaters.food.nameLabel' | translate }}</label>
+      <input class="ad-input" formControlName="name" [placeholder]="'theaters.food.namePlaceholder' | translate">
     </div>
     <div class="ad-field">
-      <label class="ad-label">Giá (đ)</label>
+      <label class="ad-label">{{ 'theaters.food.priceLabel' | translate }}</label>
       <input class="ad-input" type="number" formControlName="price" placeholder="45000">
     </div>
     <div class="ad-field full-span">
-      <label class="ad-label">Ảnh</label>
-      <input class="ad-input" formControlName="imageUrl" placeholder="Dán URL hoặc tải ảnh lên">
+      <label class="ad-label">{{ 'theaters.food.imageLabel' | translate }}</label>
+      <input class="ad-input" formControlName="imageUrl" [placeholder]="'theaters.food.imagePlaceholder' | translate">
       <div class="img-upload-row">
         <label class="ad-btn ad-btn--ghost">
-          <mat-icon>upload</mat-icon> Tải Ảnh Lên
+          <mat-icon>upload</mat-icon> {{ 'theaters.food.upload' | translate }}
           <input type="file" accept="image/*" hidden (change)="onPickImage($event, 'imageUrl')">
         </label>
-        <span class="img-upload-status" *ngIf="uploading">Đang tải...</span>
+        <span class="img-upload-status" *ngIf="uploading">{{ 'theaters.food.uploading' | translate }}</span>
         <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
       </div>
       <div class="img-preview" *ngIf="form.value.imageUrl">
@@ -31,26 +31,26 @@
       </div>
     </div>
     <div class="ad-field full-span">
-      <label class="ad-label">Mô Tả</label>
-      <input class="ad-input" formControlName="description" placeholder="Mô tả ngắn...">
+      <label class="ad-label">{{ 'common.description' | translate }}</label>
+      <input class="ad-input" formControlName="description" [placeholder]="'theaters.food.descPlaceholder' | translate">
     </div>
     <div class="ad-field full-span">
-      <label class="ad-check"><input type="checkbox" formControlName="isAvailable"> Đang bán</label>
+      <label class="ad-check"><input type="checkbox" formControlName="isAvailable"> {{ 'theaters.food.available' | translate }}</label>
     </div>
     <div class="form-actions full-span">
-      <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
-      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
+      <button class="ad-btn ad-btn--primary" type="submit">{{ 'common.save' | translate }}</button>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
     </div>
   </form>
 </div>
 </app-modal>
-<app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+<app-confirm-modal [open]="confirmOpen" [message]="'common.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
 
 <div class="ad-card ad-card--pad-0">
   <div class="ad-table-wrap">
     <table class="ad-table">
       <thead>
-        <tr><th>Tên Món</th><th>Giá</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
+        <tr><th>{{ 'theaters.food.nameLabel' | translate }}</th><th>{{ 'common.price' | translate }}</th><th>{{ 'common.status' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
       </thead>
       <tbody>
         <tr *ngFor="let x of items">
@@ -58,16 +58,16 @@
           <td>{{ x.price | number:'1.0-0' }}đ</td>
           <td>
             <span class="ad-pill" [class.ad-pill--success]="x.isAvailable" [class.ad-pill--neutral]="!x.isAvailable">
-              {{ x.isAvailable ? 'Đang Bán' : 'Ngừng Bán' }}
+              {{ x.isAvailable ? ('theaters.food.onSale' | translate) : ('theaters.food.offSale' | translate) }}
             </span>
           </td>
           <td class="ad-td-actions">
-            <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Sửa"><mat-icon>edit</mat-icon></button>
-            <button class="ad-icon-btn" (click)="delete(x.id)" title="Xóa"><mat-icon>delete</mat-icon></button>
+            <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
           </td>
         </tr>
       </tbody>
     </table>
-    <div *ngIf="!items.length" class="ad-empty"><mat-icon>fastfood</mat-icon><p>Rạp này chưa có món nào.</p></div>
+    <div *ngIf="!items.length" class="ad-empty"><mat-icon>fastfood</mat-icon><p>{{ 'theaters.food.empty' | translate }}</p></div>
   </div>
 </div>

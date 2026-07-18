@@ -1,54 +1,54 @@
 <div class="rooms-tab">
   <div class="rooms-toolbar">
-    <p class="ad-sub">Phòng chiếu và sơ đồ ghế (số hàng × số cột).</p>
-    <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> Thêm Phòng</button>
+    <p class="ad-sub">{{ 'theaters.rooms.subtitle' | translate }}</p>
+    <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'theaters.rooms.add' | translate }}</button>
   </div>
 
   <app-modal [open]="showForm" (closed)="cancelEdit()">
   <div class="ad-card form-card">
-    <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Phòng' : 'Phòng Mới' }}</h3>
+    <h3 class="ad-card-title">{{ editingId ? ('theaters.rooms.editTitle' | translate) : ('theaters.rooms.newTitle' | translate) }}</h3>
     <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
       <div class="ad-field">
-        <label class="ad-label">Tên Phòng</label>
-        <input class="ad-input" formControlName="name" placeholder="VD: Phòng 1">
+        <label class="ad-label">{{ 'theaters.rooms.nameLabel' | translate }}</label>
+        <input class="ad-input" formControlName="name" [placeholder]="'theaters.rooms.namePlaceholder' | translate">
       </div>
       <div class="ad-field">
-        <label class="ad-label">Loại Phòng</label>
+        <label class="ad-label">{{ 'theaters.rooms.roomTypeLabel' | translate }}</label>
         <select class="ad-input" formControlName="roomTypeId">
-          <option value="">— Chọn loại phòng —</option>
+          <option value="">{{ 'theaters.rooms.selectRoomType' | translate }}</option>
           <option *ngFor="let t of roomTypes" [ngValue]="t.id">{{ t.name }}</option>
         </select>
       </div>
       <div class="ad-field">
-        <label class="ad-label">Số Hàng</label>
+        <label class="ad-label">{{ 'theaters.rooms.rowsLabel' | translate }}</label>
         <input class="ad-input" type="number" formControlName="totalRows" placeholder="10">
       </div>
       <div class="ad-field">
-        <label class="ad-label">Số Cột</label>
+        <label class="ad-label">{{ 'theaters.rooms.columnsLabel' | translate }}</label>
         <input class="ad-input" type="number" formControlName="totalColumns" placeholder="12">
       </div>
       <div class="ad-field">
-        <label class="ad-label">Trạng Thái</label>
+        <label class="ad-label">{{ 'common.status' | translate }}</label>
         <select class="ad-input" formControlName="status">
-          <option *ngFor="let s of statuses" [ngValue]="s.v">{{ s.label }}</option>
+          <option *ngFor="let s of statuses" [ngValue]="s.v">{{ s.label | translate }}</option>
         </select>
       </div>
       <div class="form-actions full-span">
-        <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
+        <button class="ad-btn ad-btn--primary" type="submit">{{ 'common.save' | translate }}</button>
+        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
       </div>
     </form>
   </div>
   </app-modal>
-  <app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+  <app-confirm-modal [open]="confirmOpen" [message]="'common.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
 
   <div class="ad-card ad-card--pad-0">
     <div class="ad-table-wrap">
       <table class="ad-table">
         <thead>
-          <tr><th>Tên Phòng</th><th>Loại Phòng</th><th>Sức Chứa</th><th>Trạng Thái</th><th class="ad-td-actions">Thao Tác</th></tr>
+          <tr><th>{{ 'theaters.rooms.nameLabel' | translate }}</th><th>{{ 'theaters.rooms.roomTypeLabel' | translate }}</th><th>{{ 'theaters.rooms.capacity' | translate }}</th><th>{{ 'common.status' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
           <tr class="ad-filter-row">
-            <th><input class="ad-filter-input" [(ngModel)]="filters['name']" (input)="onFilterChange()" placeholder="Lọc..."></th>
+            <th><input class="ad-filter-input" [(ngModel)]="filters['name']" (input)="onFilterChange()" [placeholder]="'common.filter' | translate"></th>
             <th></th>
             <th></th>
             <th></th>
@@ -60,30 +60,30 @@
             <td><strong>{{ x.name }}</strong></td>
             <td>{{ roomTypeName(x.roomTypeId) }}</td>
             <td>{{ x.totalRows }} × {{ x.totalColumns }} = {{ (x.totalRows ?? 0) * (x.totalColumns ?? 0) }} ghế</td>
-            <td>{{ statusLabel(x.status) }}</td>
+            <td>{{ statusLabel(x.status) | translate }}</td>
             <td class="ad-td-actions">
-              <button class="ad-icon-btn" type="button" (click)="editSeats(x)" title="Sơ đồ ghế"><mat-icon>event_seat</mat-icon></button>
-              <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Sửa"><mat-icon>edit</mat-icon></button>
-              <button class="ad-icon-btn" (click)="delete(x.id)" title="Xóa"><mat-icon>delete</mat-icon></button>
+              <button class="ad-icon-btn" type="button" (click)="editSeats(x)" [title]="'theaters.rooms.seatMapTitle' | translate"><mat-icon>event_seat</mat-icon></button>
+              <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
             </td>
           </tr>
         </tbody>
       </table>
-      <div *ngIf="!items.length" class="ad-empty"><mat-icon>meeting_room</mat-icon><p>Rạp này chưa có phòng nào.</p></div>
+      <div *ngIf="!items.length" class="ad-empty"><mat-icon>meeting_room</mat-icon><p>{{ 'theaters.rooms.empty' | translate }}</p></div>
     </div>
 
     <div class="ad-pagination" *ngIf="totalCount > 0">
       <span class="ad-pagination-info">{{ rangeStart }}–{{ rangeEnd }} / {{ totalCount }}</span>
       <span class="ad-pagination-size">
-        <label class="ad-label">Hiển thị</label>
+        <label class="ad-label">{{ 'theaters.rooms.show' | translate }}</label>
         <select class="ad-input" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
           <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
         </select>
       </span>
       <span class="ad-pagination-nav">
-        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" title="Trước"><mat-icon>chevron_left</mat-icon></button>
-        <span class="ad-pagination-page">Trang {{ pageIndex }}/{{ totalPages }}</span>
-        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" title="Sau"><mat-icon>chevron_right</mat-icon></button>
+        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" [title]="'theaters.rooms.prev' | translate"><mat-icon>chevron_left</mat-icon></button>
+        <span class="ad-pagination-page">{{ 'theaters.rooms.pageOf' | translate:{ index: pageIndex, total: totalPages } }}</span>
+        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" [title]="'theaters.rooms.next' | translate"><mat-icon>chevron_right</mat-icon></button>
       </span>
     </div>
   </div>
@@ -94,24 +94,24 @@
 <div class="seatmap-modal" *ngIf="viewingRoom">
   <div class="seatmap-head">
     <div>
-      <h3 class="ad-card-title">Sơ Đồ Ghế · {{ viewingRoom.name }}</h3>
+      <h3 class="ad-card-title">{{ 'theaters.rooms.seatMapHeading' | translate }} · {{ viewingRoom.name }}</h3>
       <p class="ad-sub">{{ viewingRoom.totalRows }} × {{ viewingRoom.totalColumns }} = {{ (viewingRoom.totalRows ?? 0) * (viewingRoom.totalColumns ?? 0) }} ghế</p>
     </div>
-    <button class="ad-icon-btn" type="button" (click)="closeSeats()" title="Đóng"><mat-icon>close</mat-icon></button>
+    <button class="ad-icon-btn" type="button" (click)="closeSeats()" [title]="'common.close' | translate"><mat-icon>close</mat-icon></button>
   </div>
 
   <div class="seatmap-body">
-    <div *ngIf="seatsLoading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>Đang tải sơ đồ ghế…</p></div>
+    <div *ngIf="seatsLoading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'theaters.rooms.loadingSeatMap' | translate }}</p></div>
 
     <ng-container *ngIf="!seatsLoading">
       <!-- Grid size: add / remove rows and columns (existing seats are preserved) -->
       <div class="grid-resize">
-        <span class="ad-sub">Lưới ghế: {{ viewingRoom.totalRows }} hàng × {{ viewingRoom.totalColumns }} cột</span>
+        <span class="ad-sub">{{ 'theaters.rooms.gridSize' | translate:{ rows: viewingRoom.totalRows, cols: viewingRoom.totalColumns } }}</span>
         <div class="grid-resize-btns">
-          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing" (click)="addRow()"><mat-icon>add</mat-icon> Hàng</button>
-          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing || (viewingRoom.totalRows ?? 0) <= 1" (click)="removeRow()"><mat-icon>remove</mat-icon> Hàng</button>
-          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing" (click)="addColumn()"><mat-icon>add</mat-icon> Cột</button>
-          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing || (viewingRoom.totalColumns ?? 0) <= 1" (click)="removeColumn()"><mat-icon>remove</mat-icon> Cột</button>
+          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing" (click)="addRow()"><mat-icon>add</mat-icon> {{ 'theaters.rooms.row' | translate }}</button>
+          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing || (viewingRoom.totalRows ?? 0) <= 1" (click)="removeRow()"><mat-icon>remove</mat-icon> {{ 'theaters.rooms.row' | translate }}</button>
+          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing" (click)="addColumn()"><mat-icon>add</mat-icon> {{ 'theaters.rooms.column' | translate }}</button>
+          <button type="button" class="ad-btn ad-btn--ghost" [disabled]="resizing || (viewingRoom.totalColumns ?? 0) <= 1" (click)="removeColumn()"><mat-icon>remove</mat-icon> {{ 'theaters.rooms.column' | translate }}</button>
         </div>
       </div>
 
@@ -119,10 +119,10 @@
       <div class="seatmap-toolbar">
         <div class="mode-tabs">
           <button type="button" class="ad-btn" [class.ad-btn--primary]="mode === 'paint'" [class.ad-btn--ghost]="mode !== 'paint'" (click)="setMode('paint')">
-            <mat-icon>format_paint</mat-icon> Gán Loại Ghế
+            <mat-icon>format_paint</mat-icon> {{ 'theaters.rooms.assignSeatType' | translate }}
           </button>
           <button type="button" class="ad-btn" [class.ad-btn--primary]="mode === 'pair'" [class.ad-btn--ghost]="mode !== 'pair'" (click)="setMode('pair')">
-            <mat-icon>link</mat-icon> Ghế Đôi
+            <mat-icon>link</mat-icon> {{ 'theaters.rooms.doubleSeat' | translate }}
           </button>
         </div>
 
@@ -133,12 +133,12 @@
             <span class="palette-dot"></span>{{ t.name }} <small>×{{ t.priceMultiplier | number:'1.0-2' }}</small>
           </button>
         </div>
-        <p class="ad-sub" *ngIf="mode === 'pair'">Chọn 2 ghế cạnh nhau để ghép thành ghế đôi. Bấm vào ghế đã ghép để hủy.</p>
+        <p class="ad-sub" *ngIf="mode === 'pair'">{{ 'theaters.rooms.pairHint' | translate }}</p>
       </div>
 
       <div class="screen-wrap">
         <div class="screen-arc"></div>
-        <span class="screen-label">MÀN HÌNH</span>
+        <span class="screen-label">{{ 'theaters.rooms.screen' | translate }}</span>
       </div>
 
       <div class="seat-grid" *ngIf="seats.length; else noSeats">
@@ -150,11 +150,11 @@
                [class.paired]="s.seatGroupId"
                [class.pending]="isPairPending(s)"
                (click)="onSeatClick(s)"
-               [title]="row + s.colIndex + ' · ' + s.seatTypeName + (s.seatGroupId ? ' · ghế đôi' : '')">{{ s.colIndex }}<mat-icon *ngIf="s.seatGroupId" class="pair-badge">link</mat-icon></div>
+               [title]="row + s.colIndex + ' · ' + s.seatTypeName + (s.seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : '')">{{ s.colIndex }}<mat-icon *ngIf="s.seatGroupId" class="pair-badge">link</mat-icon></div>
         </div>
       </div>
       <ng-template #noSeats>
-        <div class="ad-empty"><mat-icon>event_seat</mat-icon><p>Phòng này chưa có ghế nào. Hãy kiểm tra đã có loại ghế trước khi tạo phòng.</p></div>
+        <div class="ad-empty"><mat-icon>event_seat</mat-icon><p>{{ 'theaters.rooms.noSeats' | translate }}</p></div>
       </ng-template>
 
       <div class="legend" *ngIf="allSeatTypes.length">
@@ -165,9 +165,9 @@
 
       <div class="form-actions">
         <button class="ad-btn ad-btn--primary" type="button" [disabled]="saving || !seats.length" (click)="saveSeatMap()">
-          {{ saving ? 'Đang lưu…' : 'Lưu Sơ Đồ' }}
+          {{ saving ? ('theaters.rooms.saving' | translate) : ('theaters.rooms.saveSeatMap' | translate) }}
         </button>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="closeSeats()">Đóng</button>
+        <button class="ad-btn ad-btn--ghost" type="button" (click)="closeSeats()">{{ 'common.close' | translate }}</button>
       </div>
     </ng-container>
   </div>
