@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 import { CatalogCrudBase } from '../catalog-crud.base';
 import { ModalComponent } from '../../../shared/modal.component';
@@ -15,6 +16,7 @@ type Dto = CinemaServiceAgent.DiscountDTO;
 })
 export class DiscountsManagementComponent extends CatalogCrudBase<Dto> {
   private _svc = inject(CinemaServiceAgent.HttpService);
+  private _translate = inject(TranslateService);
 
   discountTypes: CinemaServiceAgent.DiscountTypeDTO[] = [];
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
@@ -62,6 +64,6 @@ export class DiscountsManagementComponent extends CatalogCrudBase<Dto> {
   }
 
   theaterScope(id?: string): string {
-    return id ? (this.theaters.find(t => t.id === id)?.name ?? '—') : 'Toàn hệ thống';
+    return id ? (this.theaters.find(t => t.id === id)?.name ?? '—') : this._translate.instant('discounts.systemWide');
   }
 }

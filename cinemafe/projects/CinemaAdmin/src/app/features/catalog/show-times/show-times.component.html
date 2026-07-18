@@ -1,31 +1,31 @@
-<div class="ad-page st-page">
+<div class="ad-page">
   <!-- Header -->
   <div class="ad-page-header">
     <div>
-      <h1 class="ad-h1">Lịch Chiếu</h1>
-      <p class="ad-sub">Thời khóa biểu suất chiếu theo tuần.</p>
+      <h1 class="ad-h1">{{ 'showTimes.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'showTimes.subtitle' | translate }}</p>
     </div>
     <div class="ad-toolbar">
       <div class="st-week-nav">
-        <button class="ad-icon-btn" type="button" (click)="prevWeek()" title="Tuần trước"><mat-icon>chevron_left</mat-icon></button>
+        <button class="ad-icon-btn" type="button" (click)="prevWeek()" [title]="'showTimes.prevWeek' | translate"><mat-icon>chevron_left</mat-icon></button>
         <button class="ad-btn ad-btn--ghost st-week-label" type="button" (click)="goToday()">
           <mat-icon>calendar_today</mat-icon> {{ weekLabel }}
         </button>
-        <button class="ad-icon-btn" type="button" (click)="nextWeek()" title="Tuần sau"><mat-icon>chevron_right</mat-icon></button>
+        <button class="ad-icon-btn" type="button" (click)="nextWeek()" [title]="'showTimes.nextWeek' | translate"><mat-icon>chevron_right</mat-icon></button>
       </div>
       <select class="ad-select st-movie-filter" [(ngModel)]="filterMovieId" (ngModelChange)="onFilterChange()">
-        <option value="">Tất cả phim</option>
+        <option value="">{{ 'showTimes.allMovies' | translate }}</option>
         <option *ngFor="let m of movies" [ngValue]="m.id">{{ m.title }}</option>
       </select>
-      <button class="ad-btn ad-btn--primary" type="button" (click)="openCreate()"><mat-icon>add</mat-icon> Thêm Suất Chiếu</button>
+      <button class="ad-btn ad-btn--primary" type="button" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'showTimes.addShowTime' | translate }}</button>
     </div>
   </div>
 
   <!-- Legend -->
   <div class="st-legend">
-    <span class="st-legend-item"><i class="st-dot st-block--normal"></i> Thường</span>
-    <span class="st-legend-item"><i class="st-dot st-block--premiere"></i> Công Chiếu</span>
-    <span class="st-legend-item"><i class="st-dot st-block--special"></i> Đặc Biệt</span>
+    <span class="st-legend-item"><i class="st-dot st-block--normal"></i> {{ 'showTimes.typeNormal' | translate }}</span>
+    <span class="st-legend-item"><i class="st-dot st-block--premiere"></i> {{ 'showTimes.typePremiere' | translate }}</span>
+    <span class="st-legend-item"><i class="st-dot st-block--special"></i> {{ 'showTimes.typeSpecial' | translate }}</span>
   </div>
 
   <!-- Timetable -->
@@ -71,15 +71,15 @@
 <div class="st-drawer-scrim" *ngIf="showForm" (click)="cancel()"></div>
 <aside class="st-drawer" [class.is-open]="showForm">
   <div class="st-drawer-head">
-    <h3 class="ad-card-title">{{ editingId ? 'Chỉnh Sửa Suất Chiếu' : 'Thêm Suất Chiếu' }}</h3>
-    <button class="ad-icon-btn" type="button" (click)="cancel()" title="Đóng"><mat-icon>close</mat-icon></button>
+    <h3 class="ad-card-title">{{ (editingId ? 'showTimes.editTitle' : 'showTimes.addShowTime') | translate }}</h3>
+    <button class="ad-icon-btn" type="button" (click)="cancel()" [title]="'common.close' | translate"><mat-icon>close</mat-icon></button>
   </div>
 
   <form class="st-drawer-body" [formGroup]="form" (ngSubmit)="save()">
     <div class="ad-field">
-      <label class="ad-label">Phim</label>
+      <label class="ad-label">{{ 'showTimes.movie' | translate }}</label>
       <select class="ad-input" formControlName="movieId">
-        <option value="">— Chọn phim —</option>
+        <option value="">{{ 'showTimes.selectMovie' | translate }}</option>
         <option *ngFor="let m of movies" [ngValue]="m.id">{{ m.title }}</option>
       </select>
       <div class="st-poster" *ngIf="moviePoster(form.value.movieId) as poster">
@@ -88,23 +88,23 @@
     </div>
 
     <div class="ad-field">
-      <label class="ad-label">Ngày Chiếu</label>
+      <label class="ad-label">{{ 'showTimes.showDate' | translate }}</label>
       <input class="ad-input" type="date" formControlName="date">
     </div>
 
     <div class="st-row-2">
       <div class="ad-field">
-        <label class="ad-label">Bắt Đầu</label>
+        <label class="ad-label">{{ 'showTimes.startTime' | translate }}</label>
         <input class="ad-input" type="time" formControlName="start">
       </div>
       <div class="ad-field">
-        <label class="ad-label">Kết Thúc</label>
+        <label class="ad-label">{{ 'showTimes.endTime' | translate }}</label>
         <input class="ad-input" type="time" formControlName="end">
       </div>
     </div>
 
     <div class="ad-field">
-      <label class="ad-label">Định Dạng</label>
+      <label class="ad-label">{{ 'showTimes.format' | translate }}</label>
       <div class="st-seg">
         <button *ngFor="let p of projectionForms" type="button"
                 class="st-seg-btn" [class.is-active]="form.value.projectionForm === p.v"
@@ -113,7 +113,7 @@
     </div>
 
     <div class="ad-field">
-      <label class="ad-label">Loại Suất</label>
+      <label class="ad-label">{{ 'showTimes.showType' | translate }}</label>
       <div class="st-seg">
         <button *ngFor="let t of showTimeTypes" type="button"
                 class="st-seg-btn" [class.is-active]="form.value.showTimeType === t.v"
@@ -123,14 +123,14 @@
 
     <div class="st-row-2">
       <div class="ad-field">
-        <label class="ad-label">Phòng Chiếu</label>
+        <label class="ad-label">{{ 'showTimes.room' | translate }}</label>
         <select class="ad-input" formControlName="roomId">
-          <option value="">— Chọn phòng —</option>
+          <option value="">{{ 'showTimes.selectRoom' | translate }}</option>
           <option *ngFor="let r of rooms" [ngValue]="r.id">{{ roomLabel(r) }}</option>
         </select>
       </div>
       <div class="ad-field">
-        <label class="ad-label">Giá Vé Cơ Bản (đ)</label>
+        <label class="ad-label">{{ 'showTimes.basePrice' | translate }}</label>
         <input class="ad-input" type="number" min="0" step="1000" formControlName="basePrice">
       </div>
     </div>
@@ -138,16 +138,16 @@
     <label class="st-toggle">
       <input type="checkbox" formControlName="isActive">
       <span class="st-toggle-track"></span>
-      <span>Mở bán</span>
+      <span>{{ 'showTimes.onSale' | translate }}</span>
     </label>
 
     <div class="st-drawer-actions">
-      <button class="ad-btn ad-btn--danger" type="button" *ngIf="editingId" (click)="deleteCurrent()"><mat-icon>delete</mat-icon> Xóa</button>
+      <button class="ad-btn ad-btn--danger" type="button" *ngIf="editingId" (click)="deleteCurrent()"><mat-icon>delete</mat-icon> {{ 'common.delete' | translate }}</button>
       <span class="st-spacer"></span>
-      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancel()">Hủy</button>
-      <button class="ad-btn ad-btn--primary" type="submit">Lưu Suất Chiếu</button>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+      <button class="ad-btn ad-btn--primary" type="submit">{{ 'showTimes.saveShowTime' | translate }}</button>
     </div>
   </form>
 </aside>
 
-<app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa suất chiếu này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+<app-confirm-modal [open]="confirmOpen" [message]="'showTimes.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>

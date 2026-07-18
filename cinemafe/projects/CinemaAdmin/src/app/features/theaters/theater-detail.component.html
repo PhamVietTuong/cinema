@@ -1,55 +1,55 @@
 <div class="ad-page">
   <div class="ad-page-header">
     <div>
-      <button class="ad-btn ad-btn--ghost" (click)="goBack()"><mat-icon>arrow_back</mat-icon> Danh Sách Rạp</button>
-      <h1 class="ad-h1">{{ form.value.name || 'Chi Tiết Rạp' }}</h1>
-      <p class="ad-sub">Thông tin rạp và danh sách phòng chiếu.</p>
+      <button class="ad-btn ad-btn--ghost" (click)="goBack()"><mat-icon>arrow_back</mat-icon> {{ 'theaters.detail.backToList' | translate }}</button>
+      <h1 class="ad-h1">{{ form.value.name || ('theaters.detail.title' | translate) }}</h1>
+      <p class="ad-sub">{{ 'theaters.detail.subtitle' | translate }}</p>
     </div>
   </div>
 
   <!-- Theater information (editable) — always shown at the top -->
   <div class="ad-card">
-    <h3 class="ad-card-title">Thông Tin Rạp</h3>
+    <h3 class="ad-card-title">{{ 'theaters.detail.infoTitle' | translate }}</h3>
     <form [formGroup]="form" (ngSubmit)="save()" class="theater-form">
       <div class="ad-field">
-        <label class="ad-label">Tên Rạp</label>
-        <input class="ad-input" formControlName="name" placeholder="VD: CGV Vincom">
+        <label class="ad-label">{{ 'theaters.detail.nameLabel' | translate }}</label>
+        <input class="ad-input" formControlName="name" [placeholder]="'theaters.detail.namePlaceholder' | translate">
       </div>
       <div class="ad-field">
-        <label class="ad-label">Thành Phố</label>
-        <input class="ad-input" formControlName="city" placeholder="VD: Hà Nội">
+        <label class="ad-label">{{ 'theaters.detail.cityLabel' | translate }}</label>
+        <input class="ad-input" formControlName="city" [placeholder]="'theaters.detail.cityPlaceholder' | translate">
       </div>
       <div class="ad-field full-span">
-        <label class="ad-label">Địa Chỉ</label>
-        <input class="ad-input" formControlName="address" placeholder="Số nhà, đường, quận...">
+        <label class="ad-label">{{ 'theaters.detail.addressLabel' | translate }}</label>
+        <input class="ad-input" formControlName="address" [placeholder]="'theaters.detail.addressPlaceholder' | translate">
       </div>
       <div class="ad-field">
-        <label class="ad-label">Số Điện Thoại</label>
+        <label class="ad-label">{{ 'theaters.detail.phoneLabel' | translate }}</label>
         <input class="ad-input" formControlName="phone" placeholder="0123456789">
-        <span class="ad-field-err" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('pattern')">Số điện thoại không hợp lệ.</span>
+        <span class="ad-field-err" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('pattern')">{{ 'theaters.detail.phoneInvalid' | translate }}</span>
       </div>
       <div class="ad-field">
-        <label class="ad-label">Email</label>
+        <label class="ad-label">{{ 'theaters.detail.emailLabel' | translate }}</label>
         <input class="ad-input" formControlName="email" placeholder="rap@cinema.vn">
-        <span class="ad-field-err" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')">Email không hợp lệ.</span>
+        <span class="ad-field-err" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')">{{ 'theaters.detail.emailInvalid' | translate }}</span>
       </div>
       <div class="ad-field">
-        <label class="ad-label">Vĩ Độ (Latitude)</label>
+        <label class="ad-label">{{ 'theaters.detail.latitudeLabel' | translate }}</label>
         <input class="ad-input" type="number" step="0.0001" formControlName="latitude" placeholder="10.7743">
       </div>
       <div class="ad-field">
-        <label class="ad-label">Kinh Độ (Longitude)</label>
+        <label class="ad-label">{{ 'theaters.detail.longitudeLabel' | translate }}</label>
         <input class="ad-input" type="number" step="0.0001" formControlName="longitude" placeholder="106.7038">
       </div>
       <div class="ad-field full-span">
-        <label class="ad-label">Ảnh Rạp</label>
-        <input class="ad-input" formControlName="imageUrl" placeholder="Dán URL hoặc tải ảnh lên">
+        <label class="ad-label">{{ 'theaters.detail.imageLabel' | translate }}</label>
+        <input class="ad-input" formControlName="imageUrl" [placeholder]="'theaters.detail.imagePlaceholder' | translate">
         <div class="img-upload-row">
           <label class="ad-btn ad-btn--ghost">
-            <mat-icon>upload</mat-icon> Tải Ảnh Lên
+            <mat-icon>upload</mat-icon> {{ 'theaters.detail.uploadImage' | translate }}
             <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
           </label>
-          <span class="img-upload-status" *ngIf="uploading">Đang tải...</span>
+          <span class="img-upload-status" *ngIf="uploading">{{ 'theaters.detail.uploading' | translate }}</span>
           <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
         </div>
         <div class="img-preview" *ngIf="form.value.imageUrl">
@@ -57,39 +57,39 @@
         </div>
       </div>
       <div class="form-actions full-span">
-        <button class="ad-btn ad-btn--primary" type="submit" [disabled]="saving">{{ saving ? 'Đang lưu…' : 'Lưu' }}</button>
+        <button class="ad-btn ad-btn--primary" type="submit" [disabled]="saving">{{ (saving ? 'theaters.detail.saving' : 'common.save') | translate }}</button>
       </div>
     </form>
   </div>
 
   <!-- Per-theater management tabs -->
   <mat-tab-group class="detail-tabs" animationDuration="150ms">
-    <mat-tab label="Phòng Chiếu">
+    <mat-tab [label]="'theaters.detail.tabRooms' | translate">
       <div class="tab-body">
         <app-theater-rooms [theaterId]="theaterId"></app-theater-rooms>
       </div>
     </mat-tab>
-    <mat-tab label="Loại Phòng">
+    <mat-tab [label]="'theaters.detail.tabRoomTypes' | translate">
       <div class="tab-body">
         <app-theater-room-types [theaterId]="theaterId"></app-theater-room-types>
       </div>
     </mat-tab>
-    <mat-tab label="Loại Ghế">
+    <mat-tab [label]="'theaters.detail.tabSeatTypes' | translate">
       <div class="tab-body">
         <app-theater-seat-types [theaterId]="theaterId"></app-theater-seat-types>
       </div>
     </mat-tab>
-    <mat-tab label="Đồ Ăn & Thức Uống">
+    <mat-tab [label]="'theaters.detail.tabFood' | translate">
       <div class="tab-body">
         <app-theater-food [theaterId]="theaterId"></app-theater-food>
       </div>
     </mat-tab>
-    <mat-tab label="Khung Giờ">
+    <mat-tab [label]="'theaters.detail.tabTimeSlots' | translate">
       <div class="tab-body">
         <app-theater-time-slots [theaterId]="theaterId"></app-theater-time-slots>
       </div>
     </mat-tab>
-    <mat-tab label="Giá Vé">
+    <mat-tab [label]="'theaters.detail.tabTicketPrices' | translate">
       <div class="tab-body">
         <app-theater-ticket-prices [theaterId]="theaterId"></app-theater-ticket-prices>
       </div>

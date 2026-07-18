@@ -17,11 +17,12 @@ type Dto = CinemaServiceAgent.InvoiceAdminDTO;
 export class InvoicesManagementComponent extends CatalogCrudBase<Dto> {
   private _svc = inject(CinemaServiceAgent.HttpService);
 
+  // `label` holds an i18n key; the template pipes it through `translate`.
   readonly statuses = [
-    { v: CinemaServiceAgent.InvoiceStatus.Pending, label: 'Chờ Xử Lý' },
-    { v: CinemaServiceAgent.InvoiceStatus.Paid, label: 'Đã Thanh Toán' },
-    { v: CinemaServiceAgent.InvoiceStatus.Cancelled, label: 'Đã Hủy' },
-    { v: CinemaServiceAgent.InvoiceStatus.Failed, label: 'Thất Bại' },
+    { v: CinemaServiceAgent.InvoiceStatus.Pending, label: 'invoices.statusPending' },
+    { v: CinemaServiceAgent.InvoiceStatus.Paid, label: 'invoices.statusPaid' },
+    { v: CinemaServiceAgent.InvoiceStatus.Cancelled, label: 'invoices.statusCancelled' },
+    { v: CinemaServiceAgent.InvoiceStatus.Failed, label: 'invoices.statusFailed' },
   ];
 
   buildForm() {

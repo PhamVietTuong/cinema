@@ -7,14 +7,14 @@
     </div>
 
     <div class="brand-hero">
-      <h1>Bảng Điều Khiển<br>Quản Trị</h1>
-      <p>Quản lý phim, lịch chiếu, rạp và người dùng tại một nơi.</p>
+      <h1>{{ 'login.heroTitleLine1' | translate }}<br>{{ 'login.heroTitleLine2' | translate }}</h1>
+      <p>{{ 'login.heroSubtitle' | translate }}</p>
     </div>
 
     <div class="brand-stats">
-      <span class="ad-chip"><mat-icon>movie</mat-icon> 120 Phim</span>
-      <span class="ad-chip"><mat-icon>theaters</mat-icon> 8 Rạp</span>
-      <span class="ad-chip"><mat-icon>confirmation_number</mat-icon> 3.4K Vé bán</span>
+      <span class="ad-chip"><mat-icon>movie</mat-icon> {{ 'login.statMovies' | translate }}</span>
+      <span class="ad-chip"><mat-icon>theaters</mat-icon> {{ 'login.statTheaters' | translate }}</span>
+      <span class="ad-chip"><mat-icon>confirmation_number</mat-icon> {{ 'login.statTickets' | translate }}</span>
     </div>
   </section>
 
@@ -23,28 +23,28 @@
     <div class="login-card ad-card">
       <div class="login-head">
         <span class="shield"><mat-icon>admin_panel_settings</mat-icon></span>
-        <h2>Đăng Nhập Quản Trị</h2>
-        <p>Vui lòng đăng nhập bằng tài khoản quản trị viên.</p>
+        <h2>{{ 'login.title' | translate }}</h2>
+        <p>{{ 'login.subtitle' | translate }}</p>
       </div>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form">
         <div class="ad-field">
-          <label class="ad-label" for="emailOrPhone">Email hoặc Số Điện Thoại</label>
+          <label class="ad-label" for="emailOrPhone">{{ 'login.emailOrPhoneLabel' | translate }}</label>
           <div class="control">
             <mat-icon>person</mat-icon>
             <input id="emailOrPhone" class="ad-input has-icon" formControlName="emailOrPhone"
-                   placeholder="Nhập email hoặc số điện thoại" autocomplete="username">
+                   [placeholder]="'login.emailOrPhonePlaceholder' | translate" autocomplete="username">
           </div>
         </div>
 
         <div class="ad-field">
-          <label class="ad-label" for="password">Mật Khẩu</label>
+          <label class="ad-label" for="password">{{ 'login.passwordLabel' | translate }}</label>
           <div class="control">
             <mat-icon>lock</mat-icon>
             <input id="password" class="ad-input has-icon has-trail" [type]="hidePass ? 'password' : 'text'"
                    formControlName="password" placeholder="••••••••" autocomplete="current-password">
             <button type="button" class="trail" (click)="hidePass = !hidePass" tabindex="-1"
-                    [attr.aria-label]="hidePass ? 'Hiện mật khẩu' : 'Ẩn mật khẩu'">
+                    [attr.aria-label]="(hidePass ? 'login.showPassword' : 'login.hidePassword') | translate">
               <mat-icon>{{ hidePass ? 'visibility_off' : 'visibility' }}</mat-icon>
             </button>
           </div>
@@ -52,9 +52,9 @@
 
         <div class="login-row">
           <label class="remember">
-            <input type="checkbox"> <span>Ghi nhớ đăng nhập</span>
+            <input type="checkbox"> <span>{{ 'login.rememberMe' | translate }}</span>
           </label>
-          <a class="forgot" href="javascript:void(0)">Quên mật khẩu?</a>
+          <a class="forgot" href="javascript:void(0)">{{ 'login.forgotPassword' | translate }}</a>
         </div>
 
         <div *ngIf="error$ | async as error" class="login-error">
@@ -63,11 +63,11 @@
 
         <button type="submit" class="ad-btn ad-btn--primary ad-btn--block" [disabled]="loading$ | async">
           <mat-spinner diameter="20" *ngIf="loading$ | async"></mat-spinner>
-          <span *ngIf="!(loading$ | async)">Đăng Nhập</span>
+          <span *ngIf="!(loading$ | async)">{{ 'login.submit' | translate }}</span>
         </button>
       </form>
 
-      <p class="login-foot">© 2026 Cinema. Hệ thống quản trị nội bộ.</p>
+      <p class="login-foot">{{ 'login.footer' | translate }}</p>
     </div>
   </section>
 </div>

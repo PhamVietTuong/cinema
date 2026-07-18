@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
 import { ImageUploadService } from '../../shared/image-upload.service';
 import { ModalComponent } from '../../shared/modal.component';
 
@@ -33,6 +34,7 @@ export class MovieFormComponent implements OnInit, OnChanges {
     private _fb: FormBuilder,
     private _cdr: ChangeDetectorRef,
     private _upload: ImageUploadService,
+    private _translate: TranslateService,
   ) {
     this.form = this._fb.group({
       title: ['', Validators.required],
@@ -99,7 +101,7 @@ export class MovieFormComponent implements OnInit, OnChanges {
     this.uploading = true; this.uploadError = '';
     this._upload.upload(file).subscribe({
       next: url => { this.form.patchValue({ posterUrl: url }); this.uploading = false; this._cdr.markForCheck(); },
-      error: () => { this.uploadError = 'Tải ảnh thất bại.'; this.uploading = false; this._cdr.markForCheck(); },
+      error: () => { this.uploadError = this._translate.instant('movies.form.uploadFailed'); this.uploading = false; this._cdr.markForCheck(); },
     });
   }
 

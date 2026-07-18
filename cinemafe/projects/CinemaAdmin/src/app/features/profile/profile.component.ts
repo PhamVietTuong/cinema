@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { SharedModule, IdentityServiceAgent } from 'CinemaLib';
 
 @Component({
@@ -13,6 +14,7 @@ export class ProfileComponent implements OnInit {
   private _identity = inject(IdentityServiceAgent.HttpService);
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
+  private _translate = inject(TranslateService);
 
   tab: 'info' | 'password' = 'info';
   user: IdentityServiceAgent.UserDTO | null = null;
@@ -48,11 +50,11 @@ export class ProfileComponent implements OnInit {
     this._identity.updateProfile(IdentityServiceAgent.UpdateProfileRequest.fromJS(this.profileForm.value))
       .subscribe({
         next: () => {
-          this.profileMsg = 'Cập nhật thông tin thành công.';
+          this.profileMsg = this._translate.instant('profile.profileUpdateSuccess');
           this._identity.getProfile().subscribe(u => { this.user = u; this._cdr.markForCheck(); });
           this._cdr.markForCheck();
         },
-        error: e => { this.profileErr = this._err(e, 'Cập nhật thất bại.'); this._cdr.markForCheck(); },
+        error: e => { this.profileErr = this._err(e, this._translate.instant('profile.profileUpdateFailed')); this._cdr.markForCheck(); },
       });
   }
 
@@ -60,11 +62,11 @@ export class ProfileComponent implements OnInit {
     if (this.passwordForm.invalid) { this.passwordForm.markAllAsTouched(); return; }
     const v = this.passwordForm.value;
     this.passwordMsg = ''; this.passwordErr = '';
-    if (v.newPassword !== v.confirmNewPassword) { this.passwordErr = 'Mật khẩu xác nhận không khớp.'; return; }
+    if (v.newPassword !== v.confirmNewPassword) { this.passwordErr = this._translate.instant('profile.passwordMismatch'); return; }
     this._identity.changePassword(IdentityServiceAgent.ChangePasswordRequest.fromJS(v))
       .subscribe({
-        next: () => { this.passwordMsg = 'Đổi mật khẩu thành công.'; this.passwordForm.reset(); this._cdr.markForCheck(); },
-        error: e => { this.passwordErr = this._err(e, 'Đổi mật khẩu thất bại.'); this._cdr.markForCheck(); },
+        next: () => { this.passwordMsg = this._translate.instant('profile.passwordChangeSuccess'); this.passwordForm.reset(); this._cdr.markForCheck(); },
+        error: e => { this.passwordErr = this._err(e, this._translate.instant('profile.passwordChangeFailed')); this._cdr.markForCheck(); },
       });
   }
 

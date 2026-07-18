@@ -1,35 +1,35 @@
 <div class="ad-page">
   <div class="ad-page-header">
     <div>
-      <h1 class="ad-h1">Quản Lý Hóa Đơn</h1>
-      <p class="ad-sub">Hóa đơn được tạo khi đặt vé — quản trị viên đổi trạng thái / xóa.</p>
+      <h1 class="ad-h1">{{ 'invoices.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'invoices.subtitle' | translate }}</p>
     </div>
   </div>
 
   <app-modal [open]="showForm" (closed)="cancelEdit()">
   <div class="ad-card form-card">
-    <h3 class="ad-card-title">Cập Nhật Trạng Thái Hóa Đơn</h3>
+    <h3 class="ad-card-title">{{ 'invoices.editTitle' | translate }}</h3>
     <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
       <div class="ad-field">
-        <label class="ad-label">Trạng Thái</label>
+        <label class="ad-label">{{ 'common.status' | translate }}</label>
         <select class="ad-input" formControlName="status">
-          <option *ngFor="let s of statuses" [ngValue]="s.v">{{ s.label }}</option>
+          <option *ngFor="let s of statuses" [ngValue]="s.v">{{ s.label | translate }}</option>
         </select>
       </div>
       <div class="form-actions full-span">
-        <button class="ad-btn ad-btn--primary" type="submit">Lưu</button>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">Hủy</button>
+        <button class="ad-btn ad-btn--primary" type="submit">{{ 'common.save' | translate }}</button>
+        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
       </div>
     </form>
   </div>
   </app-modal>
-  <app-confirm-modal [open]="confirmOpen" message="Bạn có chắc muốn xóa mục này?" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+  <app-confirm-modal [open]="confirmOpen" [message]="'common.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
 
   <div class="ad-card ad-card--pad-0">
     <div class="ad-table-wrap">
       <table class="ad-table">
         <thead>
-          <tr><th>Mã HĐ</th><th>Khách Hàng</th><th>Tổng</th><th>Thành Tiền</th><th>Trạng Thái</th><th>Ngày Tạo</th><th class="ad-td-actions">Thao Tác</th></tr>
+          <tr><th>{{ 'invoices.invoiceCode' | translate }}</th><th>{{ 'invoices.customer' | translate }}</th><th>{{ 'invoices.total' | translate }}</th><th>{{ 'invoices.finalAmount' | translate }}</th><th>{{ 'common.status' | translate }}</th><th>{{ 'common.createdAt' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
           <tr class="ad-filter-row">
             <th></th>
             <th></th>
@@ -37,8 +37,8 @@
             <th></th>
             <th>
               <select class="ad-filter-input" [(ngModel)]="filters['status']" (ngModelChange)="onFilterChange()">
-                <option value="">Tất cả</option>
-                <option *ngFor="let s of statuses" [value]="s.v">{{ s.label }}</option>
+                <option value="">{{ 'common.all' | translate }}</option>
+                <option *ngFor="let s of statuses" [value]="s.v">{{ s.label | translate }}</option>
               </select>
             </th>
             <th></th>
@@ -51,30 +51,30 @@
             <td>{{ x.userName || x.userEmail || '—' }}</td>
             <td>{{ x.totalAmount | number:'1.0-0' }}đ</td>
             <td>{{ x.finalAmount | number:'1.0-0' }}đ</td>
-            <td><span class="ad-pill" [ngClass]="statusClass(x.status)">{{ statusLabel(x.status) }}</span></td>
+            <td><span class="ad-pill" [ngClass]="statusClass(x.status)">{{ statusLabel(x.status) | translate }}</span></td>
             <td>{{ x.creationTime | date:'dd/MM/yy HH:mm' }}</td>
             <td class="ad-td-actions">
-              <button class="ad-icon-btn is-primary" (click)="edit(x)" title="Đổi trạng thái"><mat-icon>edit</mat-icon></button>
-              <button class="ad-icon-btn" (click)="delete(x.id)" title="Xóa"><mat-icon>delete</mat-icon></button>
+              <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'invoices.changeStatus' | translate"><mat-icon>edit</mat-icon></button>
+              <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
             </td>
           </tr>
         </tbody>
       </table>
-      <div *ngIf="!items.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>Không có hóa đơn nào.</p></div>
+      <div *ngIf="!items.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>{{ 'invoices.empty' | translate }}</p></div>
     </div>
 
     <div class="ad-pagination" *ngIf="totalCount > 0">
       <span class="ad-pagination-info">{{ rangeStart }}–{{ rangeEnd }} / {{ totalCount }}</span>
       <span class="ad-pagination-size">
-        <label class="ad-label">Hiển thị</label>
+        <label class="ad-label">{{ 'invoices.perPage' | translate }}</label>
         <select class="ad-input" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
           <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
         </select>
       </span>
       <span class="ad-pagination-nav">
-        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" title="Trước"><mat-icon>chevron_left</mat-icon></button>
-        <span class="ad-pagination-page">Trang {{ pageIndex }}/{{ totalPages }}</span>
-        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" title="Sau"><mat-icon>chevron_right</mat-icon></button>
+        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" [title]="'invoices.prev' | translate"><mat-icon>chevron_left</mat-icon></button>
+        <span class="ad-pagination-page">{{ 'invoices.pageInfo' | translate:{ current: pageIndex, total: totalPages } }}</span>
+        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" [title]="'invoices.next' | translate"><mat-icon>chevron_right</mat-icon></button>
       </span>
     </div>
   </div>

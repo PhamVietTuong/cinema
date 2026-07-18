@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule, IdentityServiceAgent, CinemaServiceAgent } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
 import { ModalComponent } from '../../shared/modal.component';
 
 const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
@@ -20,11 +21,7 @@ export class UserFormComponent implements OnInit, OnChanges {
   @Output() closed = new EventEmitter<void>();
 
   readonly UserStatus = IdentityServiceAgent.UserStatus;
-  readonly statuses = [
-    { v: IdentityServiceAgent.UserStatus.Active, label: 'Hoạt Động' },
-    { v: IdentityServiceAgent.UserStatus.Inactive, label: 'Khóa' },
-    { v: IdentityServiceAgent.UserStatus.Banned, label: 'Cấm' },
-  ];
+  readonly statuses: { v: IdentityServiceAgent.UserStatus; label: string }[];
   userTypes: CinemaServiceAgent.UserTypeDTO[] = [];
   form: FormGroup;
   errorMsg = '';
@@ -34,7 +31,13 @@ export class UserFormComponent implements OnInit, OnChanges {
     private _cinema: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
     private _cdr: ChangeDetectorRef,
+    private _translate: TranslateService,
   ) {
+    this.statuses = [
+      { v: IdentityServiceAgent.UserStatus.Active, label: this._translate.instant('users.status.active') },
+      { v: IdentityServiceAgent.UserStatus.Inactive, label: this._translate.instant('users.status.locked') },
+      { v: IdentityServiceAgent.UserStatus.Banned, label: this._translate.instant('users.status.banned') },
+    ];
     this.form = this._fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
@@ -97,6 +100,6 @@ export class UserFormComponent implements OnInit, OnChanges {
 
   private _err(e: any): string {
     const x = e?.error;
-    return (typeof x === 'string' && x) ? x : (x?.message || 'Lưu thất bại.');
+    return (typeof x === 'string' && x) ? x : (x?.message || this._translate.instant('users.form.saveFailed'));
   }
 }

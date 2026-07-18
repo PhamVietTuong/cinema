@@ -1,8 +1,8 @@
 <div class="ad-page">
   <div class="ad-page-header">
     <div>
-      <h1 class="ad-h1">Hồ Sơ Của Tôi</h1>
-      <p class="ad-sub">Quản lý thông tin tài khoản quản trị viên.</p>
+      <h1 class="ad-h1">{{ 'profile.myProfile' | translate }}</h1>
+      <p class="ad-sub">{{ 'profile.subtitle' | translate }}</p>
     </div>
   </div>
 
@@ -12,14 +12,14 @@
       <span class="ad-avatar id-avatar">{{ initials(user?.name) }}</span>
       <div class="id-name">{{ user?.name || '—' }}</div>
       <div class="id-email">{{ user?.email }}</div>
-      <span class="ad-pill ad-pill--violet no-dot">{{ user?.userTypeName || 'Quản Trị Viên' }}</span>
+      <span class="ad-pill ad-pill--violet no-dot">{{ user?.userTypeName || ('profile.adminFallback' | translate) }}</span>
 
       <nav class="id-tabs">
         <button class="ad-btn" [class.ad-btn--primary]="tab === 'info'" [class.ad-btn--ghost]="tab !== 'info'" (click)="tab = 'info'">
-          <mat-icon>person</mat-icon> Thông Tin
+          <mat-icon>person</mat-icon> {{ 'profile.tabInfo' | translate }}
         </button>
         <button class="ad-btn" [class.ad-btn--primary]="tab === 'password'" [class.ad-btn--ghost]="tab !== 'password'" (click)="tab = 'password'">
-          <mat-icon>lock</mat-icon> Đổi Mật Khẩu
+          <mat-icon>lock</mat-icon> {{ 'profile.changePassword' | translate }}
         </button>
       </nav>
     </div>
@@ -27,22 +27,22 @@
     <!-- Content -->
     <div class="ad-card content-card">
       <ng-container *ngIf="tab === 'info'">
-        <h3 class="ad-card-title">Thông Tin Cá Nhân</h3>
+        <h3 class="ad-card-title">{{ 'profile.personalInfo' | translate }}</h3>
         <form class="ad-form" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
           <div class="ad-field">
-            <label class="ad-label">Họ và tên</label>
-            <input class="ad-input" type="text" formControlName="name" placeholder="Quản trị viên">
+            <label class="ad-label">{{ 'profile.fullName' | translate }}</label>
+            <input class="ad-input" type="text" formControlName="name" [placeholder]="'profile.namePlaceholder' | translate">
           </div>
           <div class="ad-field">
-            <label class="ad-label">Email</label>
+            <label class="ad-label">{{ 'profile.email' | translate }}</label>
             <input class="ad-input" type="text" [value]="user?.email || ''" disabled>
           </div>
           <div class="ad-field">
-            <label class="ad-label">Số điện thoại</label>
+            <label class="ad-label">{{ 'profile.phone' | translate }}</label>
             <input class="ad-input" type="text" formControlName="phone" placeholder="0901234567">
           </div>
           <div class="ad-field">
-            <label class="ad-label">Ảnh đại diện (URL)</label>
+            <label class="ad-label">{{ 'profile.avatar' | translate }}</label>
             <input class="ad-input" type="text" formControlName="avatar" placeholder="https://...">
           </div>
 
@@ -50,24 +50,24 @@
           <p class="msg err" *ngIf="profileErr">{{ profileErr }}</p>
 
           <div class="form-actions">
-            <button class="ad-btn ad-btn--primary" type="submit" [disabled]="profileForm.invalid">Lưu Thay Đổi</button>
+            <button class="ad-btn ad-btn--primary" type="submit" [disabled]="profileForm.invalid">{{ 'profile.saveChanges' | translate }}</button>
           </div>
         </form>
       </ng-container>
 
       <ng-container *ngIf="tab === 'password'">
-        <h3 class="ad-card-title">Đổi Mật Khẩu</h3>
+        <h3 class="ad-card-title">{{ 'profile.changePassword' | translate }}</h3>
         <form class="ad-form" [formGroup]="passwordForm" (ngSubmit)="changePassword()">
           <div class="ad-field">
-            <label class="ad-label">Mật khẩu hiện tại</label>
+            <label class="ad-label">{{ 'profile.currentPassword' | translate }}</label>
             <input class="ad-input" type="password" formControlName="currentPassword" autocomplete="current-password">
           </div>
           <div class="ad-field">
-            <label class="ad-label">Mật khẩu mới</label>
+            <label class="ad-label">{{ 'profile.newPassword' | translate }}</label>
             <input class="ad-input" type="password" formControlName="newPassword" autocomplete="new-password">
           </div>
           <div class="ad-field">
-            <label class="ad-label">Xác nhận mật khẩu mới</label>
+            <label class="ad-label">{{ 'profile.confirmNewPassword' | translate }}</label>
             <input class="ad-input" type="password" formControlName="confirmNewPassword" autocomplete="new-password">
           </div>
 
@@ -75,7 +75,7 @@
           <p class="msg err" *ngIf="passwordErr">{{ passwordErr }}</p>
 
           <div class="form-actions">
-            <button class="ad-btn ad-btn--primary" type="submit" [disabled]="passwordForm.invalid">Cập Nhật Mật Khẩu</button>
+            <button class="ad-btn ad-btn--primary" type="submit" [disabled]="passwordForm.invalid">{{ 'profile.updatePassword' | translate }}</button>
           </div>
         </form>
       </ng-container>

@@ -1,8 +1,8 @@
 <div class="ad-page">
   <div class="ad-page-header">
     <div>
-      <h1 class="ad-h1">Tổng Quan Hệ Thống</h1>
-      <p class="ad-sub">Theo dõi hoạt động kinh doanh của hệ thống rạp chiếu phim.</p>
+      <h1 class="ad-h1">{{ 'dashboard.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'dashboard.subtitle' | translate }}</p>
     </div>
   </div>
 
@@ -10,28 +10,28 @@
   <div class="kpi-grid">
     <div class="ad-card kpi">
       <div class="kpi-head">
-        <span class="kpi-label">Tổng Số Phim</span>
+        <span class="kpi-label">{{ 'dashboard.kpiMovies' | translate }}</span>
         <span class="kpi-icon i-violet"><mat-icon>movie</mat-icon></span>
       </div>
       <span class="kpi-value">{{ stats.movies }}</span>
     </div>
     <div class="ad-card kpi">
       <div class="kpi-head">
-        <span class="kpi-label">Rạp Chiếu</span>
+        <span class="kpi-label">{{ 'dashboard.kpiTheaters' | translate }}</span>
         <span class="kpi-icon i-blue"><mat-icon>theaters</mat-icon></span>
       </div>
       <span class="kpi-value">{{ stats.theaters }}</span>
     </div>
     <div class="ad-card kpi">
       <div class="kpi-head">
-        <span class="kpi-label">Đơn Hàng Hôm Nay</span>
+        <span class="kpi-label">{{ 'dashboard.kpiInvoicesToday' | translate }}</span>
         <span class="kpi-icon i-orange"><mat-icon>receipt_long</mat-icon></span>
       </div>
       <span class="kpi-value">{{ stats.invoicesToday }}</span>
     </div>
     <div class="ad-card kpi">
       <div class="kpi-head">
-        <span class="kpi-label">Doanh Thu Hôm Nay</span>
+        <span class="kpi-label">{{ 'dashboard.kpiRevenueToday' | translate }}</span>
         <span class="kpi-icon i-green"><mat-icon>monetization_on</mat-icon></span>
       </div>
       <span class="kpi-value">{{ stats.revenueToday | currency:'VND':'symbol':'1.0-0' }}</span>
@@ -40,20 +40,20 @@
 
   <!-- Quick actions -->
   <div class="quick-actions">
-    <a class="ad-btn ad-btn--primary" routerLink="/movies"><mat-icon>movie</mat-icon> Quản Lý Phim</a>
-    <a class="ad-btn ad-btn--ghost" routerLink="/theaters"><mat-icon>theaters</mat-icon> Quản Lý Rạp</a>
-    <a class="ad-btn ad-btn--ghost" routerLink="/showtimes"><mat-icon>event</mat-icon> Quản Lý Lịch Chiếu</a>
-    <a class="ad-btn ad-btn--ghost" routerLink="/users"><mat-icon>group</mat-icon> Quản Lý Người Dùng</a>
+    <a class="ad-btn ad-btn--primary" routerLink="/movies"><mat-icon>movie</mat-icon> {{ 'dashboard.actionManageMovies' | translate }}</a>
+    <a class="ad-btn ad-btn--ghost" routerLink="/theaters"><mat-icon>theaters</mat-icon> {{ 'dashboard.actionManageTheaters' | translate }}</a>
+    <a class="ad-btn ad-btn--ghost" routerLink="/showtimes"><mat-icon>event</mat-icon> {{ 'dashboard.actionManageShowtimes' | translate }}</a>
+    <a class="ad-btn ad-btn--ghost" routerLink="/users"><mat-icon>group</mat-icon> {{ 'dashboard.actionManageUsers' | translate }}</a>
   </div>
 
   <!-- Two column -->
   <div class="two-col">
     <div class="ad-card">
       <div class="card-head">
-        <h3 class="ad-card-title">Doanh Thu {{ revenueDays }} Ngày</h3>
+        <h3 class="ad-card-title">{{ 'dashboard.revenueTitle' | translate:{ days: revenueDays } }}</h3>
         <select class="ad-input period-select" [ngModel]="revenueDays" (ngModelChange)="onPeriodChange($event)">
-          <option [ngValue]="7">Tuần này</option>
-          <option [ngValue]="30">30 ngày</option>
+          <option [ngValue]="7">{{ 'dashboard.periodThisWeek' | translate }}</option>
+          <option [ngValue]="30">{{ 'dashboard.period30Days' | translate }}</option>
         </select>
       </div>
       <div class="chart" *ngIf="revenueTrend.length; else noRevenue">
@@ -63,12 +63,12 @@
         </div>
       </div>
       <ng-template #noRevenue>
-        <div class="ad-empty"><mat-icon>bar_chart</mat-icon><p>Chưa có dữ liệu doanh thu.</p></div>
+        <div class="ad-empty"><mat-icon>bar_chart</mat-icon><p>{{ 'dashboard.noRevenueData' | translate }}</p></div>
       </ng-template>
     </div>
 
     <div class="ad-card">
-      <h3 class="ad-card-title">Phim Bán Chạy</h3>
+      <h3 class="ad-card-title">{{ 'dashboard.topMovies' | translate }}</h3>
       <ul class="top-list" *ngIf="topMovies.length; else noTop">
         <li *ngFor="let m of topMovies; let i = index">
           <span class="rank">{{ i + 1 }}</span>
@@ -77,7 +77,7 @@
           </span>
           <span class="top-meta">
             <span class="top-title">{{ m.title }}</span>
-            <span class="top-sub">{{ m.language || 'Đang chiếu' }}</span>
+            <span class="top-sub">{{ m.language || ('dashboard.nowShowing' | translate) }}</span>
           </span>
           <span class="top-rating" *ngIf="m.averageRating">
             <mat-icon>star</mat-icon> {{ m.averageRating | number:'1.1-1' }}
@@ -85,7 +85,7 @@
         </li>
       </ul>
       <ng-template #noTop>
-        <div class="ad-empty"><mat-icon>movie</mat-icon><p>Chưa có dữ liệu phim.</p></div>
+        <div class="ad-empty"><mat-icon>movie</mat-icon><p>{{ 'dashboard.noMovieData' | translate }}</p></div>
       </ng-template>
     </div>
   </div>
@@ -93,13 +93,13 @@
   <!-- Recent invoices -->
   <div class="ad-card ad-card--pad-0 invoices">
     <div class="card-head">
-      <h3 class="ad-card-title">Đơn Hàng Gần Đây</h3>
-      <a class="see-all" routerLink="/invoices">Xem tất cả</a>
+      <h3 class="ad-card-title">{{ 'dashboard.recentInvoices' | translate }}</h3>
+      <a class="see-all" routerLink="/invoices">{{ 'dashboard.seeAll' | translate }}</a>
     </div>
     <div class="ad-table-wrap">
       <table class="ad-table">
         <thead>
-          <tr><th>Mã Đơn</th><th>Khách Hàng</th><th>Số Tiền</th><th>Trạng Thái</th><th>Ngày</th></tr>
+          <tr><th>{{ 'dashboard.colCode' | translate }}</th><th>{{ 'dashboard.colCustomer' | translate }}</th><th>{{ 'dashboard.colAmount' | translate }}</th><th>{{ 'common.status' | translate }}</th><th>{{ 'common.date' | translate }}</th></tr>
         </thead>
         <tbody>
           <tr *ngFor="let i of invoices">
@@ -111,7 +111,7 @@
           </tr>
         </tbody>
       </table>
-      <div *ngIf="!invoices.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>Chưa có đơn hàng.</p></div>
+      <div *ngIf="!invoices.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>{{ 'dashboard.noInvoices' | translate }}</p></div>
     </div>
   </div>
 </div>

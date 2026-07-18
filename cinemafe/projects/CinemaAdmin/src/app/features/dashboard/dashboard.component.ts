@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SharedModule, CinemaServiceAgent, PaymentServiceAgent } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 
 /** One day of RevenueByDayDTO from GET /api/Payment/GetRevenueByDay. */
@@ -27,6 +28,7 @@ export class DashboardComponent implements OnInit {
     private _payment: PaymentServiceAgent.HttpService,
     private _http: HttpClient,
     private _cdr: ChangeDetectorRef,
+    private _translate: TranslateService,
   ) {}
 
   ngOnInit(): void {
@@ -80,10 +82,10 @@ export class DashboardComponent implements OnInit {
 
   statusLabel(s?: PaymentServiceAgent.InvoiceStatus): string {
     switch (s) {
-      case PaymentServiceAgent.InvoiceStatus.Paid: return 'Đã Thanh Toán';
-      case PaymentServiceAgent.InvoiceStatus.Pending: return 'Chờ Xử Lý';
-      case PaymentServiceAgent.InvoiceStatus.Cancelled: return 'Đã Hủy';
-      case PaymentServiceAgent.InvoiceStatus.Failed: return 'Thất Bại';
+      case PaymentServiceAgent.InvoiceStatus.Paid: return this._translate.instant('dashboard.statusPaid');
+      case PaymentServiceAgent.InvoiceStatus.Pending: return this._translate.instant('dashboard.statusPending');
+      case PaymentServiceAgent.InvoiceStatus.Cancelled: return this._translate.instant('dashboard.statusCancelled');
+      case PaymentServiceAgent.InvoiceStatus.Failed: return this._translate.instant('dashboard.statusFailed');
       default: return '—';
     }
   }
