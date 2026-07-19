@@ -223,6 +223,7 @@
   font-family: var(--mp-font-display); font-size: 1.1rem;
   font-weight: 700; color: var(--mp-ink);
 }
+.ticket-points { margin-top: 4px; font-size: 0.8rem; color: var(--mp-gold, #d4af37); }
 
 .ticket-perforation {
   display: flex; align-items: center; padding: 0 16px; height: 24px;

@@ -124,11 +124,30 @@
           <span class="discount-note">{{ 'booking.summary.discountNote' | translate }}</span>
         </div>
 
+        <!-- Loyalty points redemption -->
         <div class="summary-divider"></div>
+        <div class="field-group">
+          <label class="field-label">
+            <i class="fas fa-star"></i> {{ 'booking.summary.redeemPoints' | translate }}
+          </label>
+          <span class="discount-note">{{ 'booking.summary.pointsBalance' | translate:{ points: pointsBalance } }}</span>
+          <input class="field-input" type="number" min="0" [max]="maxRedeemablePoints" step="1"
+            [(ngModel)]="pointsToRedeem" (ngModelChange)="clampPoints()"
+            [disabled]="maxRedeemablePoints === 0"
+            [placeholder]="'booking.summary.pointsPlaceholder' | translate">
+          <span class="discount-note">{{ 'booking.summary.pointsHint' | translate:{ max: maxRedeemablePoints } }}</span>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <div class="summary-row" *ngIf="pointsToRedeem > 0">
+          <span>{{ 'booking.summary.pointsDiscount' | translate:{ points: pointsToRedeem } }}</span>
+          <span>−{{ pointsDiscount | number:'1.0-0' }}đ</span>
+        </div>
 
         <div class="summary-row total">
           <span>{{ 'booking.summary.grandTotal' | translate }}</span>
-          <span class="total-amount">{{ grandTotal | number:'1.0-0' }}đ</span>
+          <span class="total-amount">{{ finalTotal | number:'1.0-0' }}đ</span>
         </div>
 
         <button class="btn-primary-cta confirm-btn" (click)="confirmBooking()" [disabled]="loading">
@@ -178,7 +197,10 @@
         </div>
         <div class="ticket-total-wrap">
           <div class="ticket-detail-label">{{ 'booking.success.totalLabel' | translate }}</div>
-          <div class="ticket-total-val">{{ grandTotal | number:'1.0-0' }}đ</div>
+          <div class="ticket-total-val">{{ finalTotal | number:'1.0-0' }}đ</div>
+          <div class="ticket-points" *ngIf="pointsRedeemed > 0">
+            {{ 'booking.success.pointsRedeemed' | translate:{ points: pointsRedeemed } }}
+          </div>
         </div>
       </div>
 

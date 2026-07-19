@@ -154,7 +154,12 @@
       "discountCode": "Discount Code",
       "discountPlaceholder": "e.g. SUMMER25",
       "discountNote": "A valid code will be applied at checkout.",
-      "grandTotal": "Grand Total"
+      "grandTotal": "Grand Total",
+      "redeemPoints": "Redeem Points",
+      "pointsBalance": "You have {{points}} points available",
+      "pointsPlaceholder": "Points to redeem",
+      "pointsHint": "Max {{max}} points (1 point = 1,000đ)",
+      "pointsDiscount": "Points discount ({{points}} pts)"
     },
     "confirm": {
       "title": "Payment",
@@ -177,10 +182,19 @@
       "totalLabel": "Total",
       "qrInstruction": "Present the QR code at the counter or ticket gate",
       "viewTickets": "View My Tickets",
-      "backHome": "Back to Home"
+      "backHome": "Back to Home",
+      "pointsRedeemed": "{{points}} points redeemed"
+    },
+    "return": {
+      "verifyingTitle": "Verifying payment…",
+      "verifyingSub": "Please wait while we confirm your payment. Don't close this window.",
+      "pendingTitle": "Payment pending",
+      "pendingSub": "We haven't confirmed your payment yet. If you completed it, it may take a moment — please check your bookings.",
+      "checkBookings": "Check My Bookings"
     },
     "errors": {
-      "bookingFailed": "Booking failed. Please try again."
+      "bookingFailed": "Booking failed. Please try again.",
+      "paymentFailed": "Payment could not be started. Please try again."
     }
   },
   "home": {

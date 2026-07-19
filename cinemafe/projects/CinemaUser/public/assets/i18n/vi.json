@@ -154,7 +154,12 @@
       "discountCode": "Mã Giảm Giá",
       "discountPlaceholder": "VD: SUMMER25",
       "discountNote": "Mã hợp lệ sẽ được trừ khi thanh toán.",
-      "grandTotal": "Tổng Cộng"
+      "grandTotal": "Tổng Cộng",
+      "redeemPoints": "Đổi Điểm Thưởng",
+      "pointsBalance": "Bạn có {{points}} điểm khả dụng",
+      "pointsPlaceholder": "Số điểm muốn đổi",
+      "pointsHint": "Tối đa {{max}} điểm (1 điểm = 1.000đ)",
+      "pointsDiscount": "Giảm giá từ điểm ({{points}} điểm)"
     },
     "confirm": {
       "title": "Thanh Toán",
@@ -177,10 +182,19 @@
       "totalLabel": "Tổng tiền",
       "qrInstruction": "Xuất trình mã QR tại quầy hoặc cổng soát vé",
       "viewTickets": "Xem Vé Của Tôi",
-      "backHome": "Về Trang Chủ"
+      "backHome": "Về Trang Chủ",
+      "pointsRedeemed": "Đã đổi {{points}} điểm"
+    },
+    "return": {
+      "verifyingTitle": "Đang xác minh thanh toán…",
+      "verifyingSub": "Vui lòng đợi trong khi chúng tôi xác nhận thanh toán. Đừng đóng cửa sổ này.",
+      "pendingTitle": "Thanh toán đang chờ xử lý",
+      "pendingSub": "Chúng tôi chưa xác nhận được thanh toán của bạn. Nếu bạn đã hoàn tất, có thể mất một chút thời gian — vui lòng kiểm tra vé đã đặt.",
+      "checkBookings": "Kiểm Tra Vé Của Tôi"
     },
     "errors": {
-      "bookingFailed": "Đặt vé thất bại. Vui lòng thử lại."
+      "bookingFailed": "Đặt vé thất bại. Vui lòng thử lại.",
+      "paymentFailed": "Không thể bắt đầu thanh toán. Vui lòng thử lại."
     }
   },
   "home": {

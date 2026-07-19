@@ -1,0 +1,78 @@
+:host { display: block; }
+
+.return-page {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+.return-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 460px;
+  width: 100%;
+}
+
+.return-title {
+  margin: 20px 0 8px;
+  font-family: var(--mp-font-display, inherit);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--mp-ink, #fff);
+}
+.return-sub {
+  margin: 0 0 24px;
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+.success-icon-wrap { margin-bottom: 4px; }
+.success-icon {
+  width: 72px; height: 72px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(52, 199, 89, 0.15);
+  color: #34c759; font-size: 2rem;
+}
+.pending-icon {
+  width: 72px; height: 72px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107; font-size: 2rem; margin-bottom: 12px;
+}
+
+.ticket-card {
+  width: 100%;
+  background: var(--mp-surface-2, #17171d);
+  border: 1px solid var(--mp-line-2, rgba(255,255,255,0.08));
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.ticket-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px dashed var(--mp-line-2, rgba(255,255,255,0.1));
+}
+.ticket-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.ticket-code { font-family: monospace; opacity: 0.85; }
+.ticket-body { padding: 16px 20px; text-align: left; }
+.ticket-detail-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; margin-bottom: 8px; }
+.ticket-seats-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.ticket-seat-chip {
+  padding: 4px 10px; border-radius: 8px;
+  background: var(--mp-surface-3, rgba(255,255,255,0.06));
+  font-size: 0.85rem; font-weight: 600;
+}
+.ticket-qr-section { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.qr-box {
+  width: 176px; height: 176px; border-radius: 12px; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  color: #111; font-size: 3rem;
+}
+.qr-instruction { font-size: 0.85rem; opacity: 0.7; text-align: center; margin: 0; }
+
+.return-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }

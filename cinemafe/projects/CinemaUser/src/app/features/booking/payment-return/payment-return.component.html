@@ -1,0 +1,65 @@
+<div class="return-page">
+
+  <!-- ── VERIFYING ─────────────────────────────────────────────────────────── -->
+  <div class="return-state" *ngIf="state === 'verifying'">
+    <mat-spinner diameter="56"></mat-spinner>
+    <h2 class="return-title">{{ 'booking.return.verifyingTitle' | translate }}</h2>
+    <p class="return-sub">{{ 'booking.return.verifyingSub' | translate }}</p>
+  </div>
+
+  <!-- ── SUCCESS ───────────────────────────────────────────────────────────── -->
+  <div class="return-state" *ngIf="state === 'success'">
+    <div class="success-icon-wrap">
+      <div class="success-icon"><i class="fas fa-check"></i></div>
+    </div>
+    <h2 class="return-title">{{ 'booking.success.title' | translate }}</h2>
+    <p class="return-sub">{{ 'booking.success.subtitle' | translate }}</p>
+
+    <div class="ticket-card">
+      <div class="ticket-top">
+        <div class="ticket-brand"><i class="fas fa-film"></i><span>Midnight Premium</span></div>
+        <div class="ticket-code">{{ bookingCode }}</div>
+      </div>
+
+      <div class="ticket-body" *ngIf="seatLabels.length">
+        <div class="ticket-detail-label">{{ 'booking.success.seatsLabel' | translate }}</div>
+        <div class="ticket-seats-row">
+          <span class="ticket-seat-chip" *ngFor="let s of seatLabels">{{ s }}</span>
+        </div>
+      </div>
+
+      <div class="ticket-qr-section">
+        <div class="qr-box">
+          <img *ngIf="qrDataUrl" [src]="qrDataUrl" alt="E-ticket QR" width="160" height="160">
+          <i *ngIf="!qrDataUrl" class="fas fa-qrcode"></i>
+        </div>
+        <p class="qr-instruction">{{ 'booking.success.qrInstruction' | translate }}</p>
+      </div>
+    </div>
+
+    <div class="return-actions">
+      <button class="btn-primary-cta" (click)="goProfile()">
+        <i class="fas fa-ticket-alt"></i> {{ 'booking.success.viewTickets' | translate }}
+      </button>
+      <button class="btn-ghost-cta" (click)="goHome()">
+        <i class="fas fa-home"></i> {{ 'booking.success.backHome' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── PENDING / FAILED ──────────────────────────────────────────────────── -->
+  <div class="return-state" *ngIf="state === 'pending'">
+    <div class="pending-icon"><i class="fas fa-clock"></i></div>
+    <h2 class="return-title">{{ 'booking.return.pendingTitle' | translate }}</h2>
+    <p class="return-sub">{{ 'booking.return.pendingSub' | translate }}</p>
+    <div class="return-actions">
+      <button class="btn-primary-cta" (click)="goProfile()">
+        <i class="fas fa-ticket-alt"></i> {{ 'booking.return.checkBookings' | translate }}
+      </button>
+      <button class="btn-ghost-cta" (click)="goHome()">
+        <i class="fas fa-home"></i> {{ 'booking.success.backHome' | translate }}
+      </button>
+    </div>
+  </div>
+
+</div>

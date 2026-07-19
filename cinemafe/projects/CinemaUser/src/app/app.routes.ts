@@ -68,6 +68,10 @@ export const routes: Routes = [
       {
         path: 'confirmation',
         loadComponent: () => import('./features/booking/booking-confirmation/booking-confirmation.component').then(m => m.BookingConfirmationComponent)
+      },
+      {
+        path: 'payment-return',
+        loadComponent: () => import('./features/booking/payment-return/payment-return.component').then(m => m.PaymentReturnComponent)
       }
     ]
   },
