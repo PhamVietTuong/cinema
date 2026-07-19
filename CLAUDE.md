@@ -120,6 +120,7 @@ When editing `CinemaLib`, rebuild it (or `ng build CinemaLib --watch`) before th
 
 ## Working conventions to preserve
 
+- **Git feature-branch workflow**: Before starting a new feature, `git fetch` and `git pull` first so you branch from the latest `master`. Do the work on a dedicated feature branch (`git checkout -b feature/<name>`), and once the feature is finished, merge it back into `master`.
 - **Don't hand-edit NSwag-generated files** (`Cinema.Service.Clients/**`, `projects/CinemaLib/src/lib/services/*-http.service.ts`). Regenerate via the PowerShell script.
 - **All list/search endpoints take `PagingSearchDTO` in the body via POST** and return `DefaultSearchResults<T>`. Filters use `search.Filters.GetGuid("key")` etc. (extension methods in `Cinema.Business/Extensions/FilterExtensions.cs`).
 - **Controllers follow a try/catch + `LogProvider.Current` pattern** (`{GetType().Name}.{Method} being awakened…` on entry, `Fatal` on exception, then `StatusCode(500, e.Message)`). New endpoints should match.
