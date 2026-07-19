@@ -146,7 +146,7 @@ CREATE TABLE [Movie] (
 
 CREATE TABLE [Discount] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [Code] nvarchar(50) NOT NULL,
+    [Code] nvarchar(50) NULL,
     [Description] nvarchar(max) NULL,
     [Percent] float NOT NULL,
     [MaxDiscountAmount] float NULL,
@@ -156,12 +156,29 @@ CREATE TABLE [Discount] (
     [MaxUsage] int NULL,
     [UsedCount] int NOT NULL,
     [IsActive] bit NOT NULL,
-    [TheaterId] uniqueidentifier NULL,
+    [AutoApply] bit NOT NULL DEFAULT 0,
+    [ApplyToAllTheaters] bit NOT NULL DEFAULT 1,
+    [MovieId] uniqueidentifier NULL,
+    [DaysOfWeekMask] int NULL,
+    [StartTimeOfDay] time NULL,
+    [EndTimeOfDay] time NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Discount] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_Discount_DiscountType_DiscountTypeId] FOREIGN KEY ([DiscountTypeId]) REFERENCES [DiscountType] ([Id]) ON DELETE NO ACTION,
-    CONSTRAINT [FK_Discount_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE SET NULL
+    CONSTRAINT [FK_Discount_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE SET NULL
+);
+
+-- Theaters a promotion is limited to (only when [Discount].[ApplyToAllTheaters] = 0).
+CREATE TABLE [DiscountTheater] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [DiscountId] uniqueidentifier NOT NULL,
+    [TheaterId] uniqueidentifier NOT NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_DiscountTheater] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_DiscountTheater_Discount_DiscountId] FOREIGN KEY ([DiscountId]) REFERENCES [Discount] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_DiscountTheater_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
 );
 
 CREATE TABLE [Room] (
@@ -366,9 +383,11 @@ ALTER TABLE [FoodAndDrink] ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId] FO
 CREATE INDEX [IX_Comment_MovieId] ON [Comment] ([MovieId]);
 CREATE INDEX [IX_Comment_ParentId] ON [Comment] ([ParentId]);
 CREATE INDEX [IX_Comment_UserId] ON [Comment] ([UserId]);
-CREATE UNIQUE INDEX [IX_Discount_Code] ON [Discount] ([Code]);
+CREATE UNIQUE INDEX [IX_Discount_Code] ON [Discount] ([Code]) WHERE [Code] IS NOT NULL;
 CREATE INDEX [IX_Discount_DiscountTypeId] ON [Discount] ([DiscountTypeId]);
-CREATE INDEX [IX_Discount_TheaterId] ON [Discount] ([TheaterId]);
+CREATE INDEX [IX_Discount_MovieId] ON [Discount] ([MovieId]);
+CREATE UNIQUE INDEX [IX_DiscountTheater_DiscountId_TheaterId] ON [DiscountTheater] ([DiscountId], [TheaterId]);
+CREATE INDEX [IX_DiscountTheater_TheaterId] ON [DiscountTheater] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_Evaluation_MovieId_UserId] ON [Evaluation] ([MovieId], [UserId]);
 CREATE INDEX [IX_Evaluation_UserId] ON [Evaluation] ([UserId]);
 CREATE INDEX [IX_FoodAndDrink_TheaterId] ON [FoodAndDrink] ([TheaterId]);

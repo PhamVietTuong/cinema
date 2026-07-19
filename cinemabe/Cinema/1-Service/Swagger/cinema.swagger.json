@@ -5495,7 +5495,8 @@
             "format": "guid"
           },
           "code": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "description": {
             "type": "string",
@@ -5534,9 +5535,35 @@
           "isActive": {
             "type": "boolean"
           },
-          "theaterId": {
+          "autoApply": {
+            "type": "boolean"
+          },
+          "applyToAllTheaters": {
+            "type": "boolean"
+          },
+          "theaterIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          "movieId": {
             "type": "string",
             "format": "guid",
+            "nullable": true
+          },
+          "daysOfWeekMask": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startTimeOfDay": {
+            "type": "string",
+            "nullable": true
+          },
+          "endTimeOfDay": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -5546,7 +5573,8 @@
         "additionalProperties": false,
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "description": {
             "type": "string",
@@ -5581,9 +5609,35 @@
           "isActive": {
             "type": "boolean"
           },
-          "theaterId": {
+          "autoApply": {
+            "type": "boolean"
+          },
+          "applyToAllTheaters": {
+            "type": "boolean"
+          },
+          "theaterIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          "movieId": {
             "type": "string",
             "format": "guid",
+            "nullable": true
+          },
+          "daysOfWeekMask": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startTimeOfDay": {
+            "type": "string",
+            "nullable": true
+          },
+          "endTimeOfDay": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -5597,7 +5651,8 @@
             "format": "guid"
           },
           "code": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "description": {
             "type": "string",
@@ -5632,9 +5687,35 @@
           "isActive": {
             "type": "boolean"
           },
-          "theaterId": {
+          "autoApply": {
+            "type": "boolean"
+          },
+          "applyToAllTheaters": {
+            "type": "boolean"
+          },
+          "theaterIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          "movieId": {
             "type": "string",
             "format": "guid",
+            "nullable": true
+          },
+          "daysOfWeekMask": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startTimeOfDay": {
+            "type": "string",
+            "nullable": true
+          },
+          "endTimeOfDay": {
+            "type": "string",
             "nullable": true
           }
         }

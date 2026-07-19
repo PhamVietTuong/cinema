@@ -9031,7 +9031,7 @@ export interface IDefaultSearchResultsOfDiscountDTO extends IBaseSearchResultsOf
 
 export class DiscountDTO implements IDiscountDTO {
     id?: string;
-    code?: string;
+    code?: string | undefined;
     description?: string | undefined;
     percent?: number;
     maxDiscountAmount?: number | undefined;
@@ -9041,7 +9041,13 @@ export class DiscountDTO implements IDiscountDTO {
     maxUsage?: number | undefined;
     usedCount?: number;
     isActive?: boolean;
-    theaterId?: string | undefined;
+    autoApply?: boolean;
+    applyToAllTheaters?: boolean;
+    theaterIds?: string[];
+    movieId?: string | undefined;
+    daysOfWeekMask?: number | undefined;
+    startTimeOfDay?: string | undefined;
+    endTimeOfDay?: string | undefined;
 
     constructor(data?: IDiscountDTO) {
         if (data) {
@@ -9065,7 +9071,17 @@ export class DiscountDTO implements IDiscountDTO {
             this.maxUsage = _data["maxUsage"];
             this.usedCount = _data["usedCount"];
             this.isActive = _data["isActive"];
-            this.theaterId = _data["theaterId"];
+            this.autoApply = _data["autoApply"];
+            this.applyToAllTheaters = _data["applyToAllTheaters"];
+            if (Array.isArray(_data["theaterIds"])) {
+                this.theaterIds = [] as any;
+                for (let item of _data["theaterIds"])
+                    this.theaterIds!.push(item);
+            }
+            this.movieId = _data["movieId"];
+            this.daysOfWeekMask = _data["daysOfWeekMask"];
+            this.startTimeOfDay = _data["startTimeOfDay"];
+            this.endTimeOfDay = _data["endTimeOfDay"];
         }
     }
 
@@ -9089,14 +9105,24 @@ export class DiscountDTO implements IDiscountDTO {
         data["maxUsage"] = this.maxUsage;
         data["usedCount"] = this.usedCount;
         data["isActive"] = this.isActive;
-        data["theaterId"] = this.theaterId;
+        data["autoApply"] = this.autoApply;
+        data["applyToAllTheaters"] = this.applyToAllTheaters;
+        if (Array.isArray(this.theaterIds)) {
+            data["theaterIds"] = [];
+            for (let item of this.theaterIds)
+                data["theaterIds"].push(item);
+        }
+        data["movieId"] = this.movieId;
+        data["daysOfWeekMask"] = this.daysOfWeekMask;
+        data["startTimeOfDay"] = this.startTimeOfDay;
+        data["endTimeOfDay"] = this.endTimeOfDay;
         return data;
     }
 }
 
 export interface IDiscountDTO {
     id?: string;
-    code?: string;
+    code?: string | undefined;
     description?: string | undefined;
     percent?: number;
     maxDiscountAmount?: number | undefined;
@@ -9106,11 +9132,17 @@ export interface IDiscountDTO {
     maxUsage?: number | undefined;
     usedCount?: number;
     isActive?: boolean;
-    theaterId?: string | undefined;
+    autoApply?: boolean;
+    applyToAllTheaters?: boolean;
+    theaterIds?: string[];
+    movieId?: string | undefined;
+    daysOfWeekMask?: number | undefined;
+    startTimeOfDay?: string | undefined;
+    endTimeOfDay?: string | undefined;
 }
 
 export class CreateDiscountRequest implements ICreateDiscountRequest {
-    code?: string;
+    code?: string | undefined;
     description?: string | undefined;
     percent?: number;
     maxDiscountAmount?: number | undefined;
@@ -9119,7 +9151,13 @@ export class CreateDiscountRequest implements ICreateDiscountRequest {
     endDate?: Date;
     maxUsage?: number | undefined;
     isActive?: boolean;
-    theaterId?: string | undefined;
+    autoApply?: boolean;
+    applyToAllTheaters?: boolean;
+    theaterIds?: string[];
+    movieId?: string | undefined;
+    daysOfWeekMask?: number | undefined;
+    startTimeOfDay?: string | undefined;
+    endTimeOfDay?: string | undefined;
 
     constructor(data?: ICreateDiscountRequest) {
         if (data) {
@@ -9141,7 +9179,17 @@ export class CreateDiscountRequest implements ICreateDiscountRequest {
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.maxUsage = _data["maxUsage"];
             this.isActive = _data["isActive"];
-            this.theaterId = _data["theaterId"];
+            this.autoApply = _data["autoApply"];
+            this.applyToAllTheaters = _data["applyToAllTheaters"];
+            if (Array.isArray(_data["theaterIds"])) {
+                this.theaterIds = [] as any;
+                for (let item of _data["theaterIds"])
+                    this.theaterIds!.push(item);
+            }
+            this.movieId = _data["movieId"];
+            this.daysOfWeekMask = _data["daysOfWeekMask"];
+            this.startTimeOfDay = _data["startTimeOfDay"];
+            this.endTimeOfDay = _data["endTimeOfDay"];
         }
     }
 
@@ -9163,13 +9211,23 @@ export class CreateDiscountRequest implements ICreateDiscountRequest {
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["maxUsage"] = this.maxUsage;
         data["isActive"] = this.isActive;
-        data["theaterId"] = this.theaterId;
+        data["autoApply"] = this.autoApply;
+        data["applyToAllTheaters"] = this.applyToAllTheaters;
+        if (Array.isArray(this.theaterIds)) {
+            data["theaterIds"] = [];
+            for (let item of this.theaterIds)
+                data["theaterIds"].push(item);
+        }
+        data["movieId"] = this.movieId;
+        data["daysOfWeekMask"] = this.daysOfWeekMask;
+        data["startTimeOfDay"] = this.startTimeOfDay;
+        data["endTimeOfDay"] = this.endTimeOfDay;
         return data;
     }
 }
 
 export interface ICreateDiscountRequest {
-    code?: string;
+    code?: string | undefined;
     description?: string | undefined;
     percent?: number;
     maxDiscountAmount?: number | undefined;
@@ -9178,12 +9236,18 @@ export interface ICreateDiscountRequest {
     endDate?: Date;
     maxUsage?: number | undefined;
     isActive?: boolean;
-    theaterId?: string | undefined;
+    autoApply?: boolean;
+    applyToAllTheaters?: boolean;
+    theaterIds?: string[];
+    movieId?: string | undefined;
+    daysOfWeekMask?: number | undefined;
+    startTimeOfDay?: string | undefined;
+    endTimeOfDay?: string | undefined;
 }
 
 export class UpdateDiscountRequest implements IUpdateDiscountRequest {
     id?: string;
-    code?: string;
+    code?: string | undefined;
     description?: string | undefined;
     percent?: number;
     maxDiscountAmount?: number | undefined;
@@ -9192,7 +9256,13 @@ export class UpdateDiscountRequest implements IUpdateDiscountRequest {
     endDate?: Date;
     maxUsage?: number | undefined;
     isActive?: boolean;
-    theaterId?: string | undefined;
+    autoApply?: boolean;
+    applyToAllTheaters?: boolean;
+    theaterIds?: string[];
+    movieId?: string | undefined;
+    daysOfWeekMask?: number | undefined;
+    startTimeOfDay?: string | undefined;
+    endTimeOfDay?: string | undefined;
 
     constructor(data?: IUpdateDiscountRequest) {
         if (data) {
@@ -9215,7 +9285,17 @@ export class UpdateDiscountRequest implements IUpdateDiscountRequest {
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.maxUsage = _data["maxUsage"];
             this.isActive = _data["isActive"];
-            this.theaterId = _data["theaterId"];
+            this.autoApply = _data["autoApply"];
+            this.applyToAllTheaters = _data["applyToAllTheaters"];
+            if (Array.isArray(_data["theaterIds"])) {
+                this.theaterIds = [] as any;
+                for (let item of _data["theaterIds"])
+                    this.theaterIds!.push(item);
+            }
+            this.movieId = _data["movieId"];
+            this.daysOfWeekMask = _data["daysOfWeekMask"];
+            this.startTimeOfDay = _data["startTimeOfDay"];
+            this.endTimeOfDay = _data["endTimeOfDay"];
         }
     }
 
@@ -9238,14 +9318,24 @@ export class UpdateDiscountRequest implements IUpdateDiscountRequest {
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["maxUsage"] = this.maxUsage;
         data["isActive"] = this.isActive;
-        data["theaterId"] = this.theaterId;
+        data["autoApply"] = this.autoApply;
+        data["applyToAllTheaters"] = this.applyToAllTheaters;
+        if (Array.isArray(this.theaterIds)) {
+            data["theaterIds"] = [];
+            for (let item of this.theaterIds)
+                data["theaterIds"].push(item);
+        }
+        data["movieId"] = this.movieId;
+        data["daysOfWeekMask"] = this.daysOfWeekMask;
+        data["startTimeOfDay"] = this.startTimeOfDay;
+        data["endTimeOfDay"] = this.endTimeOfDay;
         return data;
     }
 }
 
 export interface IUpdateDiscountRequest {
     id?: string;
-    code?: string;
+    code?: string | undefined;
     description?: string | undefined;
     percent?: number;
     maxDiscountAmount?: number | undefined;
@@ -9254,7 +9344,13 @@ export interface IUpdateDiscountRequest {
     endDate?: Date;
     maxUsage?: number | undefined;
     isActive?: boolean;
-    theaterId?: string | undefined;
+    autoApply?: boolean;
+    applyToAllTheaters?: boolean;
+    theaterIds?: string[];
+    movieId?: string | undefined;
+    daysOfWeekMask?: number | undefined;
+    startTimeOfDay?: string | undefined;
+    endTimeOfDay?: string | undefined;
 }
 
 export abstract class BaseSearchResultsOfFoodAndDrinkDTO implements IBaseSearchResultsOfFoodAndDrinkDTO {

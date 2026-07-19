@@ -26,6 +26,7 @@ public class CinemaContext : DbContext
     public DbSet<InvoiceFoodAndDrink> InvoiceFoodAndDrink => Set<InvoiceFoodAndDrink>();
     public DbSet<FoodAndDrink> FoodAndDrink => Set<FoodAndDrink>();
     public DbSet<Discount> Discount => Set<Discount>();
+    public DbSet<DiscountTheater> DiscountTheater => Set<DiscountTheater>();
     public DbSet<DiscountType> DiscountType => Set<DiscountType>();
     public DbSet<Holiday> Holiday => Set<Holiday>();
     public DbSet<TimeSlot> TimeSlot => Set<TimeSlot>();

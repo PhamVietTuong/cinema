@@ -142,7 +142,7 @@ public class BookingManager : IBookingManager
 
             var total = ticketTotal + foodTotal;
             var (discountAmount, finalAmount, discountId) =
-                await ComputePricingAsync(userId, total, request.DiscountCode, request.RoomId);
+                await ComputePricingAsync(userId, total, request.DiscountCode, request.RoomId, request.ShowTimeId);
 
             var invoice = new Invoice
             {
@@ -263,11 +263,12 @@ public class BookingManager : IBookingManager
     // 1 loyalty point per 10,000 VND of the paid amount.
     private const int _pointsPerUnit = 10000;
 
-    // Pricing: apply the member's tier discount first, then a valid promo code on the remainder
-    // (capped by the code's MaxDiscountAmount). A provided-but-invalid code is rejected so the
-    // customer is never silently charged full price. Returns (discountAmount, finalAmount, discountId).
+    // Pricing: apply the member's tier discount first, then either a valid promo code or — when no
+    // code is given — the best-value auto-apply promotion whose scope (theater/movie/day/time) matches
+    // this booking. A provided-but-invalid code is rejected so the customer is never silently charged
+    // full price. Returns (discountAmount, finalAmount, discountId).
     private async Task<(double DiscountAmount, double FinalAmount, Guid? DiscountId)> ComputePricingAsync(
-        Guid userId, double total, string? discountCode, Guid roomId)
+        Guid userId, double total, string? discountCode, Guid roomId, Guid showTimeId)
     {
         var running = total;
 
@@ -279,29 +280,77 @@ public class BookingManager : IBookingManager
                 running -= running * (membership.DiscountPercent / 100.0);
         }
 
+        var now = DateTime.UtcNow;
+        var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
+        var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeId);
+
         Guid? discountId = null;
         if (!string.IsNullOrWhiteSpace(discountCode))
         {
-            var now  = DateTime.UtcNow;
             var code = discountCode.Trim();
-            var discount = await _uow.DiscountStore.FindSingleAsync(d => d.Code == code);
-            // A theater-scoped code only applies to bookings at that theater; null = system-wide.
-            var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
+            var discount = await _uow.DiscountStore.GetByCodeAsync(code);
             if (discount is null
                 || !discount.IsActive
                 || discount.StartDate > now || now > discount.EndDate
                 || (discount.MaxUsage != null && discount.UsedCount >= discount.MaxUsage)
-                || (discount.TheaterId != null && discount.TheaterId != bookingTheaterId))
+                || !MatchesScope(discount, bookingTheaterId, showTime))
                 throw new InvalidOperationException("Discount code is invalid or no longer available.");
 
-            var promo = running * (discount.Percent / 100.0);
-            if (discount.MaxDiscountAmount is double cap && promo > cap) promo = cap;
-            running -= promo;
+            running -= ApplyPercent(running, discount);
             discountId = discount.Id;
+        }
+        else
+        {
+            // Auto-apply the best-value promotion whose scope matches this booking (no code needed).
+            var candidates = await _uow.DiscountStore.GetActiveAutoApplyAsync(now);
+            var best = candidates
+                .Where(d => (d.MaxUsage == null || d.UsedCount < d.MaxUsage)
+                            && MatchesScope(d, bookingTheaterId, showTime))
+                .Select(d => (Discount: d, Amount: ApplyPercent(running, d)))
+                .OrderByDescending(x => x.Amount)
+                .FirstOrDefault();
+            if (best.Discount != null && best.Amount > 0)
+            {
+                running -= best.Amount;
+                discountId = best.Discount.Id;
+            }
         }
 
         if (running < 0) running = 0;
         return (Math.Round(total - running, 2), Math.Round(running, 2), discountId);
+    }
+
+    // Percentage reduction on the running total, capped by the promotion's MaxDiscountAmount.
+    private static double ApplyPercent(double running, Discount d)
+    {
+        var amount = running * (d.Percent / 100.0);
+        if (d.MaxDiscountAmount is double cap && amount > cap) amount = cap;
+        return amount;
+    }
+
+    // Checks a promotion's theater / movie / day-of-week / time-of-day scope against the booking.
+    private static bool MatchesScope(Discount d, Guid? bookingTheaterId, ShowTime? showTime)
+    {
+        if (!d.ApplyToAllTheaters)
+        {
+            if (bookingTheaterId == null || d.DiscountTheaters.All(t => t.TheaterId != bookingTheaterId))
+                return false;
+        }
+
+        var hasShowScope = d.MovieId != null || d.DaysOfWeekMask != null
+                           || d.StartTimeOfDay != null || d.EndTimeOfDay != null;
+        if (hasShowScope && showTime == null)
+            return false; // cannot verify a movie/day/time-scoped promotion without the showtime
+
+        if (showTime != null)
+        {
+            if (d.MovieId != null && showTime.MovieId != d.MovieId) return false;
+            if (d.DaysOfWeekMask is int mask && (mask & (1 << (int)showTime.StartTime.DayOfWeek)) == 0) return false;
+            var start = TimeOnly.FromDateTime(showTime.StartTime);
+            if (d.StartTimeOfDay is TimeOnly from && start < from) return false;
+            if (d.EndTimeOfDay is TimeOnly to && start > to) return false;
+        }
+        return true;
     }
 
     public async Task<bool> CancelBookingAsync(Guid userId, Guid invoiceId)

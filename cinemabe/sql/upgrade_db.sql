@@ -304,13 +304,71 @@ END
 
 PRINT 'upgrade: screening room types applied.';
 
--- ── promotions scope (global vs per-theater) ───────────────────────────────────
-IF COL_LENGTH('[Discount]', 'TheaterId') IS NULL
+-- ── promotions scope (multi-theater / movie / day + time-of-day, auto-apply) ────
+-- New promotion columns on [Discount]. EXEC() defers name resolution so statements
+-- referencing the just-added columns parse cleanly in this single batch.
+IF COL_LENGTH('[Discount]', 'AutoApply') IS NULL
 BEGIN
-    ALTER TABLE [Discount] ADD [TheaterId] uniqueidentifier NULL;
-    ALTER TABLE [Discount] ADD CONSTRAINT [FK_Discount_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE SET NULL;
-    CREATE INDEX [IX_Discount_TheaterId] ON [Discount] ([TheaterId]);
-    PRINT 'Added [Discount].[TheaterId] (null = system-wide).';
+    ALTER TABLE [Discount] ADD
+        [AutoApply] bit NOT NULL CONSTRAINT [DF_Discount_AutoApply] DEFAULT 0,
+        [ApplyToAllTheaters] bit NOT NULL CONSTRAINT [DF_Discount_ApplyToAllTheaters] DEFAULT 1,
+        [MovieId] uniqueidentifier NULL,
+        [DaysOfWeekMask] int NULL,
+        [StartTimeOfDay] time NULL,
+        [EndTimeOfDay] time NULL;
+    PRINT 'Added promotion scope columns to [Discount].';
+END
+
+IF OBJECT_ID('FK_Discount_Movie_MovieId', 'F') IS NULL
+    ALTER TABLE [Discount] ADD CONSTRAINT [FK_Discount_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE SET NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Discount_MovieId' AND object_id = OBJECT_ID('Discount'))
+    CREATE INDEX [IX_Discount_MovieId] ON [Discount] ([MovieId]);
+
+-- [Code] becomes optional (auto-apply promotions have no code); keep it unique when present.
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Discount') AND name = 'Code' AND is_nullable = 0)
+BEGIN
+    IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Discount_Code' AND object_id = OBJECT_ID('Discount'))
+        DROP INDEX [IX_Discount_Code] ON [Discount];
+    ALTER TABLE [Discount] ALTER COLUMN [Code] nvarchar(50) NULL;
+    CREATE UNIQUE INDEX [IX_Discount_Code] ON [Discount] ([Code]) WHERE [Code] IS NOT NULL;
+    PRINT 'Made [Discount].[Code] nullable with filtered-unique index.';
+END
+
+-- Join table for per-theater promotion scope.
+IF OBJECT_ID('[DiscountTheater]', 'U') IS NULL
+BEGIN
+    CREATE TABLE [DiscountTheater] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [DiscountId] uniqueidentifier NOT NULL,
+        [TheaterId] uniqueidentifier NOT NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_DiscountTheater] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_DiscountTheater_Discount_DiscountId] FOREIGN KEY ([DiscountId]) REFERENCES [Discount] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_DiscountTheater_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE UNIQUE INDEX [IX_DiscountTheater_DiscountId_TheaterId] ON [DiscountTheater] ([DiscountId], [TheaterId]);
+    CREATE INDEX [IX_DiscountTheater_TheaterId] ON [DiscountTheater] ([TheaterId]);
+    PRINT 'Created [DiscountTheater].';
+END
+
+-- Migrate the old single-theater scope into the join table, then drop [Discount].[TheaterId].
+IF COL_LENGTH('[Discount]', 'TheaterId') IS NOT NULL
+BEGIN
+    EXEC('INSERT INTO [DiscountTheater] ([Id], [DiscountId], [TheaterId], [CreationTime])
+          SELECT NEWID(), d.[Id], d.[TheaterId], GETUTCDATE()
+          FROM [Discount] d
+          WHERE d.[TheaterId] IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM [DiscountTheater] dt WHERE dt.[DiscountId] = d.[Id] AND dt.[TheaterId] = d.[TheaterId])');
+    -- A theater-scoped code is no longer system-wide.
+    EXEC('UPDATE [Discount] SET [ApplyToAllTheaters] = 0 WHERE [TheaterId] IS NOT NULL');
+
+    IF OBJECT_ID('FK_Discount_Theater_TheaterId', 'F') IS NOT NULL
+        ALTER TABLE [Discount] DROP CONSTRAINT [FK_Discount_Theater_TheaterId];
+    IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Discount_TheaterId' AND object_id = OBJECT_ID('Discount'))
+        DROP INDEX [IX_Discount_TheaterId] ON [Discount];
+    ALTER TABLE [Discount] DROP COLUMN [TheaterId];
+    PRINT 'Migrated [Discount].[TheaterId] into [DiscountTheater] and dropped the column.';
 END
 
 -- ── theater geo-coordinates (nearest-theater search) ───────────────────────────
