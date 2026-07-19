@@ -42,6 +42,8 @@ public class ShowtimeReminderService : BackgroundService
                     var first = group.First();
                     var email = first.Invoice.User?.Email;
                     if (string.IsNullOrWhiteSpace(email)) { continue; }
+                    // Respect the customer's opt-out of showtime reminder emails.
+                    if (first.Invoice.User?.NotifyReminderEmails == false) { continue; }
 
                     var movie = first.ShowTimeRoom?.ShowTime?.Movie?.Title ?? "phim";
                     var start = first.ShowTimeRoom?.ShowTime?.StartTime ?? default;

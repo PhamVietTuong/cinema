@@ -9,6 +9,7 @@ public interface IAuthManager
     Task<AuthResponse> RegisterAsync(RegisterRequest request);
     Task<UserDTO> GetProfileAsync(Guid userId);
     Task UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
+    Task UpdateNotificationPreferencesAsync(Guid userId, UpdateNotificationPreferencesRequest request);
     Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
     Task RequestPasswordResetAsync(ForgotPasswordRequest request);
     Task ResetPasswordAsync(ResetPasswordRequest request);

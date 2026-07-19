@@ -207,6 +207,23 @@ public class IdentityController : ApiControllerBase
     [Authorize]
     [HttpPost]
     [ProducesResponseType(204)]
+    public async Task<IActionResult> UpdateNotificationPreferences([FromBody] UpdateNotificationPreferencesRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.UpdateNotificationPreferences being awakened to process request...");
+        try
+        {
+            await _authManager.UpdateNotificationPreferencesAsync(User.GetUserId(), request);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(UpdateNotificationPreferences));
+        }
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ProducesResponseType(204)]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         LogProvider.Current.Information($"{GetType().Name}.ChangePassword being awakened to process request...");

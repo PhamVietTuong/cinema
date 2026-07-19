@@ -326,6 +326,17 @@ public class AuthManager : IAuthManager
         await _uow.SaveChangesAsync();
     }
 
+    public async Task UpdateNotificationPreferencesAsync(Guid userId, UpdateNotificationPreferencesRequest request)
+    {
+        var user = await _uow.UserStore.GetByIdAsync(userId)
+                   ?? throw new KeyNotFoundException("User not found.");
+        user.NotifyBookingEmails   = request.NotifyBookingEmails;
+        user.NotifyPromotionEmails = request.NotifyPromotionEmails;
+        user.NotifyReminderEmails  = request.NotifyReminderEmails;
+        await _uow.UserStore.UpdateAsync(user);
+        await _uow.SaveChangesAsync();
+    }
+
     public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
     {
         var user = await _uow.UserStore.GetByIdAsync(userId)

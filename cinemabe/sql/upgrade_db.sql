@@ -407,4 +407,21 @@ BEGIN
     PRINT 'Added [Invoice].[PointsRedeemed].';
 END
 
+-- ── notification preferences (opt-out, default on) ──────────────────────────────
+IF COL_LENGTH('[User]', 'NotifyBookingEmails') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [NotifyBookingEmails] bit NOT NULL CONSTRAINT [DF_User_NotifyBookingEmails] DEFAULT 1;
+    PRINT 'Added [User].[NotifyBookingEmails].';
+END
+IF COL_LENGTH('[User]', 'NotifyPromotionEmails') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [NotifyPromotionEmails] bit NOT NULL CONSTRAINT [DF_User_NotifyPromotionEmails] DEFAULT 1;
+    PRINT 'Added [User].[NotifyPromotionEmails].';
+END
+IF COL_LENGTH('[User]', 'NotifyReminderEmails') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [NotifyReminderEmails] bit NOT NULL CONSTRAINT [DF_User_NotifyReminderEmails] DEFAULT 1;
+    PRINT 'Added [User].[NotifyReminderEmails].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

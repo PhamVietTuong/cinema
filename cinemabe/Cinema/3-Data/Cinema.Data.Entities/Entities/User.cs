@@ -15,6 +15,11 @@ public class User : BaseEntity
     public Guid? TheaterId { get; set; }
     public Guid? MemberShipId { get; set; }
     public int Points { get; set; } = 0;
+
+    // Notification preferences (opt-out). Default on so existing users keep receiving mail.
+    public bool NotifyBookingEmails { get; set; } = true;
+    public bool NotifyPromotionEmails { get; set; } = true;
+    public bool NotifyReminderEmails { get; set; } = true;
     // Password reset: SHA-256 hash of the emailed token + its expiry (both null when no reset is pending).
     public string? PasswordResetTokenHash { get; set; }
     public DateTime? PasswordResetExpiresAt { get; set; }
