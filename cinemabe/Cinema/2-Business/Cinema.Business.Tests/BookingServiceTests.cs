@@ -52,6 +52,7 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
             .ReturnsAsync(new ShowTimeRoom { BasePrice = 100 });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
 
         var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
 
@@ -67,10 +68,67 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId2)).ReturnsAsync(new List<Guid> { SeatId5 });
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId2))
             .ReturnsAsync(new ShowTimeRoom { BasePrice = 120 });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
 
         var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId2));
 
         result.Results.First().Status.Should().Be(SeatStatus.Occupied);
+    }
+
+    [Fact]
+    public async Task GetSeatsAsync_UsesTicketPriceMatrix_WhenRowMatches()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var timeSlotId = Guid.NewGuid();
+        var seatType   = new SeatType { Id = SeatTypeId1, PriceMultiplier = 2 };
+        var seats      = new List<Seat> { new() { Id = SeatId1, RowName = "A", ColIndex = 1, SeatTypeId = SeatTypeId1, SeatType = seatType } };
+
+        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100 });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(RoomId1))
+            .ReturnsAsync(new Room { Id = RoomId1, TheaterId = theaterId, RoomTypeId = roomTypeId });
+        _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(ShowTimeId1))
+            .ReturnsAsync(new ShowTime { Id = ShowTimeId1, StartTime = new DateTime(2026, 3, 2, 19, 0, 0) });
+        _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Holiday, bool>>>()))
+            .ReturnsAsync(new List<Holiday>());
+        _uowMock.Setup(u => u.TimeSlotStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<TimeSlot, bool>>>()))
+            .ReturnsAsync(new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" } });
+        _uowMock.Setup(u => u.TicketPriceStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<TicketPrice, bool>>>()))
+            .ReturnsAsync(new List<TicketPrice> { new() { SeatTypeId = SeatTypeId1, TimeSlotId = timeSlotId, IsHoliday = false, Price = 250 } });
+
+        var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
+
+        // Matrix row (250) wins over BasePrice(100) × multiplier(2) = 200.
+        result.Results.First().Price.Should().Be(250);
+    }
+
+    [Fact]
+    public async Task GetSeatsAsync_AppliesHolidayMultiplier_WhenNoMatrixRow()
+    {
+        var theaterId = Guid.NewGuid();
+        var seatType  = new SeatType { Id = SeatTypeId1, PriceMultiplier = 2 };
+        var seats     = new List<Seat> { new() { Id = SeatId1, RowName = "A", ColIndex = 1, SeatTypeId = SeatTypeId1, SeatType = seatType } };
+
+        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100 });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(RoomId1))
+            .ReturnsAsync(new Room { Id = RoomId1, TheaterId = theaterId, RoomTypeId = Guid.NewGuid() });
+        _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(ShowTimeId1))
+            .ReturnsAsync(new ShowTime { Id = ShowTimeId1, StartTime = new DateTime(2026, 1, 1, 19, 0, 0) });
+        _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Holiday, bool>>>()))
+            .ReturnsAsync(new List<Holiday> { new() { Date = new DateOnly(2026, 1, 1), PriceMultiplier = 1.5 } });
+        _uowMock.Setup(u => u.TimeSlotStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<TimeSlot, bool>>>()))
+            .ReturnsAsync(new List<TimeSlot>());   // no slot → no matrix lookup, fall back
+
+        var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
+
+        // Fallback: BasePrice(100) × multiplier(2) × holiday(1.5) = 300.
+        result.Results.First().Price.Should().Be(300);
     }
 
     [Fact]

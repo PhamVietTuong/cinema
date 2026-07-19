@@ -43,6 +43,7 @@ public class BookingManager : IBookingManager
         var seats        = await _uow.SeatStore.GetByRoomAsync(roomId);
         var bookedIds    = (await _uow.SeatStore.GetBookedSeatIdsAsync(showTimeId, roomId)).ToHashSet();
         var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId);
+        var pricing      = await BuildSeatPricingContextAsync(showTimeRoom);
 
         var dtos = seats.Select(s =>
         {
@@ -58,7 +59,7 @@ public class BookingManager : IBookingManager
                 SeatTypeName  = s.SeatType?.Name ?? "",
                 SeatTypeColor = s.SeatType?.Color ?? "#808080",
                 Status        = isBooked ? SeatStatus.Occupied : isLocked ? SeatStatus.Reserved : SeatStatus.Available,
-                Price         = (showTimeRoom?.BasePrice ?? 0) * (s.SeatType?.PriceMultiplier ?? 1),
+                Price         = PriceSeat(pricing, s.SeatTypeId, s.SeatType?.PriceMultiplier ?? 1),
                 IsLocked      = isLocked && !isBooked,
                 SeatGroupId   = s.SeatGroupId
             };
@@ -84,6 +85,7 @@ public class BookingManager : IBookingManager
         {
             var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(request.ShowTimeId, request.RoomId)
                                ?? throw new InvalidOperationException("ShowTime/Room combination not found.");
+            var pricing = await BuildSeatPricingContextAsync(showTimeRoom);
 
             var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
 
@@ -99,10 +101,11 @@ public class BookingManager : IBookingManager
                 var seat = await _uow.SeatStore.GetByIdAsync(seatItem.SeatId)
                            ?? throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
 
-                // Price = showtime base price scaled by the seat type's multiplier.
+                // Price from the ticket-price matrix (theater/roomType/seatType/timeSlot/holiday), falling
+                // back to base price × the seat type's multiplier (× holiday factor). See BuildSeatPricingContextAsync.
                 var seatType   = await _uow.SeatTypeStore.GetByIdAsync(seat.SeatTypeId);
                 var multiplier = seatType?.PriceMultiplier ?? 1;
-                var price      = showTimeRoom.BasePrice * multiplier;
+                var price      = PriceSeat(pricing, seat.SeatTypeId, multiplier);
                 ticketTotal += price;
 
                 // Unguessable per-ticket token; encoded as the e-ticket QR and checked at the gate.
@@ -347,6 +350,79 @@ public class BookingManager : IBookingManager
                 $"Your payment was received. Booking code: {invoice.Code}. " +
                 $"Total paid: {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
         }
+    }
+
+    // ── Seat pricing ────────────────────────────────────────────────────────────
+    // A seat's price comes from the ticket-price matrix (theater × roomType × seatType × timeSlot ×
+    // isHoliday) when a matching row exists; otherwise it falls back to BasePrice × SeatType multiplier,
+    // scaled by the holiday multiplier on holidays. The context is resolved once per showtime and reused
+    // for every seat. All store lookups are null-guarded so the fallback holds when nothing is configured.
+    private sealed record SeatPricingContext(double BasePrice, IReadOnlyDictionary<Guid, double> MatrixBySeatType, double HolidayFactor);
+
+    private static double PriceSeat(SeatPricingContext ctx, Guid seatTypeId, double seatMultiplier)
+    {
+        if (ctx.MatrixBySeatType.TryGetValue(seatTypeId, out var explicitPrice))
+        {
+            return explicitPrice;
+        }
+        return ctx.BasePrice * seatMultiplier * ctx.HolidayFactor;
+    }
+
+    private async Task<SeatPricingContext> BuildSeatPricingContextAsync(ShowTimeRoom? showTimeRoom)
+    {
+        var basePrice = showTimeRoom?.BasePrice ?? 0;
+        var empty = new Dictionary<Guid, double>();
+        if (showTimeRoom is null)
+        {
+            return new SeatPricingContext(basePrice, empty, 1.0);
+        }
+
+        var room     = await _uow.RoomStore.GetByIdAsync(showTimeRoom.RoomId);
+        var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeRoom.ShowTimeId);
+        if (room is null || showTime is null)
+        {
+            return new SeatPricingContext(basePrice, empty, 1.0);
+        }
+
+        var date      = DateOnly.FromDateTime(showTime.StartTime);
+        var timeOfDay = TimeOnly.FromDateTime(showTime.StartTime);
+
+        // Holiday: any Holiday whose date matches the showtime's date scales the fallback price.
+        var holidays  = await _uow.HolidayStore.FindAsync(h => h.Date == date) ?? Enumerable.Empty<Holiday>();
+        var holiday   = holidays.FirstOrDefault();
+        var isHoliday = holiday is not null;
+        var holidayFactor = isHoliday ? holiday!.PriceMultiplier : 1.0;
+
+        // The theater time slot whose [start, end) window contains the showtime's time-of-day.
+        var slots = await _uow.TimeSlotStore.FindAsync(t => t.TheaterId == room.TheaterId) ?? Enumerable.Empty<TimeSlot>();
+        var slot  = slots.FirstOrDefault(s => TimeInSlot(timeOfDay, s));
+
+        var matrix = new Dictionary<Guid, double>();
+        if (slot is not null)
+        {
+            var rows = await _uow.TicketPriceStore.FindAsync(tp =>
+                           tp.TheaterId == room.TheaterId
+                           && tp.RoomTypeId == room.RoomTypeId
+                           && tp.TimeSlotId == slot.Id
+                           && tp.IsHoliday == isHoliday)
+                       ?? Enumerable.Empty<TicketPrice>();
+            foreach (var r in rows)
+            {
+                matrix[r.SeatTypeId] = r.Price;
+            }
+        }
+
+        return new SeatPricingContext(basePrice, matrix, holidayFactor);
+    }
+
+    private static bool TimeInSlot(TimeOnly t, TimeSlot slot)
+    {
+        if (!TimeOnly.TryParse(slot.StartTime, out var start) || !TimeOnly.TryParse(slot.EndTime, out var end))
+        {
+            return false;
+        }
+        // Only match a normal, non-wrapping [start, end) window.
+        return end > start && t >= start && t < end;
     }
 
     public async Task<TicketValidationDTO> ValidateTicketAsync(string qrCode)
