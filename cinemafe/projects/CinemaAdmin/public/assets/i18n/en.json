@@ -521,7 +521,12 @@
     "statusPending": "Pending",
     "statusPaid": "Paid",
     "statusCancelled": "Cancelled",
-    "statusFailed": "Failed"
+    "statusFailed": "Failed",
+    "statusRefunded": "Refunded",
+    "refund": "Refund",
+    "confirmRefund": "Are you sure you want to refund this invoice?",
+    "refundSuccess": "Refund successful.",
+    "refundFailed": "Refund failed."
   },
   "memberships": {
     "title": "Membership Tier Management",

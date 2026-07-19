@@ -24,6 +24,7 @@
   </div>
   </app-modal>
   <app-confirm-modal [open]="confirmOpen" [message]="'common.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+  <app-confirm-modal [open]="refundConfirmOpen" [title]="'invoices.refund' | translate" [message]="'invoices.confirmRefund' | translate" [confirmText]="'invoices.refund' | translate" (confirmed)="confirmRefund()" (closed)="refundConfirmOpen = false"></app-confirm-modal>
 
   <div class="ad-card ad-card--pad-0">
     <div class="ad-table-wrap">
@@ -55,6 +56,7 @@
             <td>{{ x.creationTime | date:'dd/MM/yy HH:mm' }}</td>
             <td class="ad-td-actions">
               <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'invoices.changeStatus' | translate"><mat-icon>edit</mat-icon></button>
+              <button *ngIf="x.status === InvoiceStatus.Paid" class="ad-icon-btn" (click)="refund(x.id)" [title]="'invoices.refund' | translate"><mat-icon>undo</mat-icon></button>
               <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
             </td>
           </tr>

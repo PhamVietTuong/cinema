@@ -110,6 +110,7 @@
             <span><span class="invoice-status" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></span>
             <span class="bk-actions">
               <button *ngIf="r.status === InvoiceStatus.Pending" class="bk-cancel" (click)="$event.stopPropagation(); cancelById(r.id)" [title]="'profile.cancelBookingTooltip' | translate"><i class="fas fa-xmark"></i></button>
+              <button *ngIf="r.status === InvoiceStatus.Paid" class="bk-refund" (click)="$event.stopPropagation(); refundById(r.id)" [title]="'profile.requestRefundTooltip' | translate"><i class="fas fa-rotate-left"></i></button>
               <i *ngIf="isPaid(r.status)" class="fas" [class.fa-chevron-down]="expandedId !== r.id" [class.fa-chevron-up]="expandedId === r.id"></i>
             </span>
           </div>

@@ -521,7 +521,12 @@
     "statusPending": "Chờ Xử Lý",
     "statusPaid": "Đã Thanh Toán",
     "statusCancelled": "Đã Hủy",
-    "statusFailed": "Thất Bại"
+    "statusFailed": "Thất Bại",
+    "statusRefunded": "Đã Hoàn Tiền",
+    "refund": "Hoàn tiền",
+    "confirmRefund": "Bạn có chắc muốn hoàn tiền hóa đơn này?",
+    "refundSuccess": "Hoàn tiền thành công.",
+    "refundFailed": "Hoàn tiền thất bại."
   },
   "memberships": {
     "title": "Quản Lý Hạng Thành Viên",

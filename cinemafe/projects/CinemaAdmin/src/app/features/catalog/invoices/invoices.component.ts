@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { EMPTY, Observable } from 'rxjs';
-import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
+import { SharedModule, CinemaServiceAgent, PaymentServiceAgent, ToastService } from 'CinemaLib';
 import { CatalogCrudBase } from '../catalog-crud.base';
 import { ModalComponent } from '../../../shared/modal.component';
 import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
@@ -16,6 +17,11 @@ type Dto = CinemaServiceAgent.InvoiceAdminDTO;
 })
 export class InvoicesManagementComponent extends CatalogCrudBase<Dto> {
   private _svc = inject(CinemaServiceAgent.HttpService);
+  private _payment = inject(PaymentServiceAgent.HttpService);
+  private _toast = inject(ToastService);
+  private _translate = inject(TranslateService);
+
+  readonly InvoiceStatus = CinemaServiceAgent.InvoiceStatus;
 
   // `label` holds an i18n key; the template pipes it through `translate`.
   readonly statuses = [
@@ -23,7 +29,12 @@ export class InvoicesManagementComponent extends CatalogCrudBase<Dto> {
     { v: CinemaServiceAgent.InvoiceStatus.Paid, label: 'invoices.statusPaid' },
     { v: CinemaServiceAgent.InvoiceStatus.Cancelled, label: 'invoices.statusCancelled' },
     { v: CinemaServiceAgent.InvoiceStatus.Failed, label: 'invoices.statusFailed' },
+    { v: CinemaServiceAgent.InvoiceStatus.Refunded, label: 'invoices.statusRefunded' },
   ];
+
+  /** Refund-confirmation modal state. */
+  refundConfirmOpen = false;
+  private _pendingRefundId: string | null = null;
 
   buildForm() {
     return this._fb.group({
@@ -51,7 +62,37 @@ export class InvoicesManagementComponent extends CatalogCrudBase<Dto> {
     switch (s) {
       case CinemaServiceAgent.InvoiceStatus.Paid: return 'ad-pill--success';
       case CinemaServiceAgent.InvoiceStatus.Pending: return 'ad-pill--warn';
+      case CinemaServiceAgent.InvoiceStatus.Refunded: return 'ad-pill--neutral';
       default: return 'ad-pill--danger';
     }
+  }
+
+  // Refund is only valid for a Paid invoice; the server re-checks (check-in / showtime).
+  refund(id?: string): void {
+    if (!id) { return; }
+    this._pendingRefundId = id;
+    this.refundConfirmOpen = true;
+  }
+
+  confirmRefund(): void {
+    const id = this._pendingRefundId;
+    this.refundConfirmOpen = false;
+    this._pendingRefundId = null;
+    if (!id) { return; }
+    this._payment.refundBooking(PaymentServiceAgent.RefundBookingRequest.fromJS({ invoiceId: id }))
+      .subscribe({
+        next: () => {
+          this._toast.success(this._translate.instant('invoices.refundSuccess'));
+          this.load();
+        },
+        error: e => {
+          this._toast.error(this._err(e, this._translate.instant('invoices.refundFailed')));
+        },
+      });
+  }
+
+  private _err(e: any, fallback: string): string {
+    const x = e?.error;
+    return (typeof x === 'string' && x) ? x : (x?.error || x?.message || fallback);
   }
 }

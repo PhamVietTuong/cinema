@@ -390,7 +390,12 @@
     "statusPaid": "Đã Thanh Toán",
     "statusPending": "Chờ Thanh Toán",
     "statusCancelled": "Đã Hủy",
-    "statusFailed": "Thất Bại"
+    "statusFailed": "Thất Bại",
+    "statusRefunded": "Đã Hoàn Tiền",
+    "requestRefundTooltip": "Yêu cầu hoàn tiền",
+    "confirmRefundBooking": "Bạn có chắc muốn hoàn tiền đặt vé này?",
+    "refundSuccess": "Yêu cầu hoàn tiền thành công.",
+    "refundFailed": "Hoàn tiền thất bại."
   },
   "chatbot": {
     "openAssistant": "Mở trợ lý hỗ trợ",

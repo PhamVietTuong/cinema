@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 
@@ -21,6 +21,7 @@ export class ProfileComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
   private _translate = inject(TranslateService);
+  private _toast = inject(ToastService);
 
   avatarUploading = false;
   avatarErr = '';
@@ -172,6 +173,10 @@ export class ProfileComponent implements OnInit {
     const inv = this.invoices.find(i => i.id === id);
     if (inv) { this.cancelBooking(inv); }
   }
+  refundById(id?: string): void {
+    const inv = this.invoices.find(i => i.id === id);
+    if (inv) { this.refundBooking(inv); }
+  }
 
   toggleInvoice(id?: string): void { this.expandedId = this.expandedId === id ? null : (id ?? null); }
 
@@ -179,6 +184,21 @@ export class ProfileComponent implements OnInit {
     if (!inv.id || !confirm(this._translate.instant('profile.confirmCancelBooking'))) { return; }
     this._payment.cancelBooking(PaymentServiceAgent.CancelBookingRequest.fromJS({ invoiceId: inv.id }))
       .subscribe({ next: () => this.loadInvoices(), error: () => this.loadInvoices() });
+  }
+
+  refundBooking(inv: PaymentServiceAgent.InvoiceDTO): void {
+    if (!inv.id || !confirm(this._translate.instant('profile.confirmRefundBooking'))) { return; }
+    this._payment.refundBooking(PaymentServiceAgent.RefundBookingRequest.fromJS({ invoiceId: inv.id }))
+      .subscribe({
+        next: () => {
+          this._toast.success(this._translate.instant('profile.refundSuccess'));
+          this.loadInvoices();
+        },
+        error: e => {
+          this._toast.error(this._err(e, this._translate.instant('profile.refundFailed')));
+          this._cdr.markForCheck();
+        },
+      });
   }
 
   initials(name?: string): string {
@@ -191,6 +211,7 @@ export class ProfileComponent implements OnInit {
       case this.InvoiceStatus.Pending: return this._translate.instant('profile.statusPending');
       case this.InvoiceStatus.Cancelled: return this._translate.instant('profile.statusCancelled');
       case this.InvoiceStatus.Failed: return this._translate.instant('profile.statusFailed');
+      case this.InvoiceStatus.Refunded: return this._translate.instant('profile.statusRefunded');
       default: return '—';
     }
   }
@@ -198,6 +219,7 @@ export class ProfileComponent implements OnInit {
     switch (s) {
       case this.InvoiceStatus.Paid: return 'is-paid';
       case this.InvoiceStatus.Pending: return 'is-pending';
+      case this.InvoiceStatus.Refunded: return 'is-refunded';
       default: return 'is-cancelled';
     }
   }

@@ -132,6 +132,7 @@
   &.is-paid { background: rgba(22, 163, 74, 0.12); color: var(--mp-success); }
   &.is-pending { background: rgba(217, 119, 6, 0.12); color: var(--mp-warn); }
   &.is-cancelled { background: rgba(220, 38, 38, 0.12); color: var(--mp-danger); }
+  &.is-refunded { background: rgba(100, 116, 139, 0.14); color: var(--mp-muted); }
 }
 .invoice-body { padding: 4px 18px 18px; border-top: 1px solid var(--mp-line-2); display: flex; flex-direction: column; gap: 10px; }
 .ticket {
@@ -209,6 +210,11 @@
   border: none; cursor: pointer; background: rgba(220, 38, 38, 0.1); color: var(--mp-danger);
   width: 30px; height: 30px; border-radius: 8px;
   &:hover { background: rgba(220, 38, 38, 0.18); }
+}
+.bk-refund {
+  border: none; cursor: pointer; background: rgba(217, 119, 6, 0.1); color: var(--mp-warn);
+  width: 30px; height: 30px; border-radius: 8px;
+  &:hover { background: rgba(217, 119, 6, 0.18); }
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

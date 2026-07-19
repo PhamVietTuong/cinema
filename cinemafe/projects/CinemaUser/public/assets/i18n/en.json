@@ -390,7 +390,12 @@
     "statusPaid": "Paid",
     "statusPending": "Pending Payment",
     "statusCancelled": "Cancelled",
-    "statusFailed": "Failed"
+    "statusFailed": "Failed",
+    "statusRefunded": "Refunded",
+    "requestRefundTooltip": "Request refund",
+    "confirmRefundBooking": "Are you sure you want to refund this booking?",
+    "refundSuccess": "Refund request successful.",
+    "refundFailed": "Refund failed."
   },
   "chatbot": {
     "openAssistant": "Open support assistant",
