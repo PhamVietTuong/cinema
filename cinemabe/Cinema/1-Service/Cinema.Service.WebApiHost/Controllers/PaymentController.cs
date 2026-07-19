@@ -104,6 +104,77 @@ public class PaymentController : ControllerBase
         }
     }
 
+    [HttpPost]
+    [ProducesResponseType(typeof(PaymentInitiationDTO), 200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> InitiatePayment([FromBody] InitiatePaymentRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.InitiatePayment being awakened to process request...");
+        try
+        {
+            var result = await _bookingManager.InitiatePaymentAsync(User.GetUserId(), request.InvoiceId, request.Provider, request.ReturnUrl);
+            if (result is null)
+            {
+                return BadRequest(new { error = "Cannot start payment for this invoice." });
+            }
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.InitiatePayment->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
+    /// <summary>Server-to-server gateway callback (VNPay/MoMo IPN, Stripe webhook). Signature is verified
+    /// inside the resolved gateway; only a valid, paid callback flips the invoice to Paid.</summary>
+    [AllowAnonymous]
+    [HttpPost]
+    [HttpGet]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> PaymentCallback([FromQuery] string provider)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.PaymentCallback being awakened to process request...");
+        try
+        {
+            var data = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var kv in Request.Query)
+            {
+                data[kv.Key] = kv.Value.ToString();
+            }
+            if (Request.HasFormContentType)
+            {
+                var form = await Request.ReadFormAsync();
+                foreach (var kv in form)
+                {
+                    data[kv.Key] = kv.Value.ToString();
+                }
+            }
+            else
+            {
+                using var reader = new StreamReader(Request.Body, leaveOpen: true);
+                data["__rawBody"] = await reader.ReadToEndAsync();
+            }
+            if (Request.Headers.TryGetValue("Stripe-Signature", out var signature))
+            {
+                data["__signature"] = signature.ToString();
+            }
+
+            var ok = await _bookingManager.HandlePaymentCallbackAsync(provider, data);
+            if (ok)
+            {
+                return Ok(new { message = "Payment processed." });
+            }
+            return BadRequest(new { error = "Callback rejected." });
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.PaymentCallback->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
     [Authorize(Roles = _adminRole)]
     [HttpPost]
     [ProducesResponseType(typeof(TicketValidationDTO), 200)]
@@ -259,5 +330,6 @@ public class PaymentController : ControllerBase
 // ── Request classes ───────────────────────────────────────────────────────────
 
 public record ConfirmPaymentRequest(Guid InvoiceId, string PaymentReference);
+public record InitiatePaymentRequest(Guid InvoiceId, string? Provider, string? ReturnUrl);
 public record ValidateTicketRequest(string QrCode);
 public record CancelBookingRequest(Guid InvoiceId);

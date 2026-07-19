@@ -6,10 +6,9 @@ namespace Cinema.Business.Payments;
 /// Development/sandbox payment gateway. Approves any non-empty reference for a positive amount so
 /// dev and test flows complete end-to-end, while exposing the exact seam a real provider plugs into.
 ///
-/// A production provider (VNPay/MoMo/Stripe) implements the same <see cref="IPaymentGateway"/>:
-/// CreatePaymentAsync calls the provider to open a checkout session; VerifyPaymentAsync validates a
-/// signed callback/webhook (or does a server-to-server lookup) AND confirms the captured amount
-/// equals the expected amount. Register it in place of this class in DependencyInjection.
+/// A production provider (VNPay/MoMo/Stripe) implements the same <see cref="IPaymentGateway"/> and is
+/// selected via <c>Payments:Provider</c>. Unlike the real providers, the sandbox also approves the
+/// synchronous <see cref="VerifyPaymentAsync"/> path so local dev doesn't need a live callback.
 /// </summary>
 public class SandboxPaymentGateway : IPaymentGateway
 {
@@ -24,5 +23,17 @@ public class SandboxPaymentGateway : IPaymentGateway
         return Task.FromResult(ok
             ? new PaymentVerification(true)
             : new PaymentVerification(false, "Invalid payment reference or amount."));
+    }
+
+    public PaymentCallbackResult ParseCallback(IReadOnlyDictionary<string, string> data)
+    {
+        var reference = data.TryGetValue("reference", out var r) && !string.IsNullOrWhiteSpace(r)
+            ? r
+            : "SANDBOX-CALLBACK";
+        if (data.TryGetValue("invoiceId", out var idStr) && Guid.TryParse(idStr, out var invoiceId))
+        {
+            return new PaymentCallbackResult(true, invoiceId, reference);
+        }
+        return new PaymentCallbackResult(false, Guid.Empty, reference, "Missing or invalid invoiceId.");
     }
 }

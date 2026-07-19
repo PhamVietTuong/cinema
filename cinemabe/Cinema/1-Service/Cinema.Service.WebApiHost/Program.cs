@@ -21,7 +21,21 @@ builder.Services.AddData(builder.Configuration);
 
 // Real email delivery when SMTP is configured; otherwise AddBusiness's dev-log sender stays.
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Smtp:Host"]))
+{
     builder.Services.AddSingleton<Cinema.Business.Contracts.INotificationService, Cinema.Business.Notifications.SmtpNotificationService>();
+}
+
+// Payment gateways. Sandbox is always available for dev; VNPay/MoMo/Stripe activate when their
+// "Payments:*" config is filled in. "Payments:Provider" picks the default provider (Sandbox when unset).
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGateway, Cinema.Business.Payments.SandboxPaymentGateway>();
+builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGateway, Cinema.Business.Payments.VnPayGateway>();
+builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGateway, Cinema.Business.Payments.MoMoGateway>();
+builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGateway, Cinema.Business.Payments.StripeGateway>();
+builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGatewayResolver>(sp =>
+    new Cinema.Business.Payments.PaymentGatewayResolver(
+        sp.GetServices<Cinema.Business.Contracts.Payments.IPaymentGateway>(),
+        builder.Configuration["Payments:Provider"]));
 
 // Controllers
 builder.Services.AddControllers();

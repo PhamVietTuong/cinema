@@ -1,8 +1,6 @@
 using Cinema.Business.Contracts;
-using Cinema.Business.Contracts.Payments;
 using Cinema.Business.Managers;
 using Cinema.Business.Notifications;
-using Cinema.Business.Payments;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cinema.Business;
@@ -17,8 +15,8 @@ public static class DependencyInjection
         services.AddSingleton<IFacebookTokenValidator, FacebookTokenValidator>();
         services.AddScoped<IMovieManager, MovieManager>();
         services.AddScoped<IBookingManager, BookingManager>();
-        // Payment provider — swap SandboxPaymentGateway for a real provider (VNPay/MoMo/Stripe).
-        services.AddSingleton<IPaymentGateway, SandboxPaymentGateway>();
+        // Payment gateways (Sandbox + VNPay/MoMo/Stripe) and their resolver are registered in the
+        // Web API host's Program.cs, where IConfiguration is available to read the "Payments" section.
         services.AddScoped<IInvoiceManager, InvoiceManager>();
         services.AddScoped<ITheaterManager, TheaterManager>();
 

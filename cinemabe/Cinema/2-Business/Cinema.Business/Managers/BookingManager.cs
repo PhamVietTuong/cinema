@@ -3,6 +3,7 @@ using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Payments;
 using Cinema.Business.DTO;
 using Cinema.Business.DTO.Booking;
+using Cinema.Business.DTO.Invoices;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
 using Cinema.Data.Contracts;
@@ -24,13 +25,13 @@ public class BookingManager : IBookingManager
     private static SemaphoreSlim BookingGate(Guid showTimeId, Guid roomId)
         => _bookingGates.GetOrAdd($"{showTimeId}:{roomId}", _ => new SemaphoreSlim(1, 1));
 
-    private readonly IPaymentGateway _paymentGateway;
+    private readonly IPaymentGatewayResolver _gateways;
     private readonly INotificationService _notifications;
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGateway paymentGateway, INotificationService notifications)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications)
     {
         _uow = uow;
-        _paymentGateway = paymentGateway;
+        _gateways = gateways;
         _notifications = notifications;
     }
 
@@ -183,32 +184,119 @@ public class BookingManager : IBookingManager
         }
     }
 
+    public async Task<PaymentInitiationDTO?> InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl)
+    {
+        var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
+        if (invoice == null)
+        {
+            return null;
+        }
+        // Object-level authorization: only the invoice owner may start its payment.
+        if (invoice.UserId != userId)
+        {
+            return null;
+        }
+        // Only a Pending invoice can be paid.
+        if (invoice.Status != InvoiceStatus.Pending)
+        {
+            return null;
+        }
+
+        var gateway = _gateways.Resolve(provider);
+        var initiation = await gateway.CreatePaymentAsync(invoice.Id, invoice.FinalAmount, returnUrl);
+
+        // Remember which provider owns this invoice so ConfirmPayment/HandlePaymentCallback resolve the same one.
+        invoice.PaymentMethod    = gateway.Name;
+        invoice.PaymentReference = initiation.PaymentReference;
+        await _uow.InvoiceStore.UpdateAsync(invoice);
+        await _uow.SaveChangesAsync();
+
+        return new PaymentInitiationDTO
+        {
+            Provider         = gateway.Name,
+            PaymentReference = initiation.PaymentReference,
+            RedirectUrl      = initiation.RedirectUrl,
+        };
+    }
+
     public async Task<bool> ConfirmPaymentAsync(Guid userId, Guid invoiceId, string paymentReference)
     {
         var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
-        if (invoice == null) return false;
+        if (invoice == null)
+        {
+            return false;
+        }
         // Object-level authorization: only the invoice owner may confirm its payment.
-        if (invoice.UserId != userId) return false;
+        if (invoice.UserId != userId)
+        {
+            return false;
+        }
         // Only a Pending invoice can transition to Paid (prevents re-confirming / double-charge state churn).
-        if (invoice.Status != InvoiceStatus.Pending) return false;
-        // Verify the payment with the gateway (must succeed and the captured amount must match FinalAmount)
-        // before marking Paid. The sandbox approves dev flows; a real provider plugs in behind IPaymentGateway.
-        var verification = await _paymentGateway.VerifyPaymentAsync(paymentReference, invoice.FinalAmount);
-        if (!verification.Success) return false;
+        if (invoice.Status != InvoiceStatus.Pending)
+        {
+            return false;
+        }
+        // Verify with the invoice's provider (must succeed and the captured amount must match FinalAmount).
+        // Only the dev Sandbox approves this synchronous path; real providers are callback-authoritative, so
+        // this returns false for them and the invoice is instead finalized by HandlePaymentCallbackAsync.
+        var verification = await _gateways.Resolve(invoice.PaymentMethod).VerifyPaymentAsync(paymentReference, invoice.FinalAmount);
+        if (!verification.Success)
+        {
+            return false;
+        }
 
+        await FinalizePaidInvoiceAsync(invoice, paymentReference);
+        return true;
+    }
+
+    public async Task<bool> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData)
+    {
+        // Signature-verify the provider callback first; this is the authoritative "money moved" signal.
+        var result = _gateways.Resolve(provider).ParseCallback(callbackData);
+        if (!result.Success)
+        {
+            return false;
+        }
+
+        var invoice = await _uow.InvoiceStore.GetByIdAsync(result.InvoiceId);
+        if (invoice == null)
+        {
+            return false;
+        }
+        // Idempotency: a provider may deliver the callback more than once.
+        if (invoice.Status == InvoiceStatus.Paid)
+        {
+            return true;
+        }
+        if (invoice.Status != InvoiceStatus.Pending)
+        {
+            return false;
+        }
+
+        await FinalizePaidInvoiceAsync(invoice, result.PaymentReference);
+        return true;
+    }
+
+    /// <summary>Marks the invoice Paid and applies the side effects: loyalty accrual, tier re-eval,
+    /// promo-code consumption, and the confirmation notification. Caller must have verified payment.</summary>
+    private async Task FinalizePaidInvoiceAsync(Invoice invoice, string paymentReference)
+    {
         invoice.Status           = InvoiceStatus.Paid;
         invoice.PaymentReference = paymentReference;
         invoice.PaidAt           = DateTime.UtcNow;
         await _uow.InvoiceStore.UpdateAsync(invoice);
 
         // Loyalty: accrue points on the paid amount and re-evaluate the membership tier.
-        var user = await _uow.UserStore.GetByIdAsync(userId);
+        var user = await _uow.UserStore.GetByIdAsync(invoice.UserId);
         if (user is not null)
         {
             user.Points += (int)(invoice.FinalAmount / _pointsPerUnit);
             var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
             var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
-            if (tier is not null) user.MemberShipId = tier.Id;
+            if (tier is not null)
+            {
+                user.MemberShipId = tier.Id;
+            }
             await _uow.UserStore.UpdateAsync(user);
         }
 
@@ -227,13 +315,13 @@ public class BookingManager : IBookingManager
 
         // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
         if (user is not null)
+        {
             await _notifications.SendAsync(
                 user.Email,
                 $"Booking confirmed — {invoice.Code}",
                 $"Your payment was received. Booking code: {invoice.Code}. " +
                 $"Total paid: {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
-
-        return true;
+        }
     }
 
     public async Task<TicketValidationDTO> ValidateTicketAsync(string qrCode)
