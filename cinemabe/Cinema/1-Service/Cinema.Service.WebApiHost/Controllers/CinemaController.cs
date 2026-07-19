@@ -305,6 +305,64 @@ public class CinemaController : ControllerBase
         }
     }
 
+    // ── Comment moderation (admin) ──────────────────────────────────────────────
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<CommentModerationDTO>), 200)]
+    public async Task<IActionResult> GetCommentsForModeration([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetCommentsForModeration being awakened to process request...");
+        try
+        {
+            var result = await _movieManager.GetCommentsForModerationAsync(search);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetCommentsForModeration->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> ModerateComment([FromBody] ModerateCommentRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ModerateComment being awakened to process request...");
+        try
+        {
+            var ok = await _movieManager.ModerateCommentAsync(request.CommentId, request.Approved);
+            return ok ? Ok(new { message = "Comment updated." }) : NotFound(new { error = "Comment not found." });
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.ModerateComment->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> DeleteComment([FromBody] DeleteCommentRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.DeleteComment being awakened to process request...");
+        try
+        {
+            var ok = await _movieManager.DeleteCommentAsync(request.CommentId);
+            return ok ? Ok(new { message = "Comment deleted." }) : NotFound(new { error = "Comment not found." });
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.DeleteComment->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
     // ── Theaters ──────────────────────────────────────────────────────────────
 
     [HttpPost]
@@ -1148,4 +1206,6 @@ public class CinemaController : ControllerBase
 // ── Request classes ───────────────────────────────────────────────────────────
 
 public record AddCommentRequest(string Content, Guid? ParentId);
+public record ModerateCommentRequest(Guid CommentId, bool Approved);
+public record DeleteCommentRequest(Guid CommentId);
 public record RateMovieRequest(int Score, string? Review);

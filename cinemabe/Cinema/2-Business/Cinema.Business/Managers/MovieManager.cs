@@ -113,7 +113,7 @@ public class MovieManager : IMovieManager
         dto.AverageRating             = await _uow.MovieStore.GetAverageRatingAsync(id);
         dto.RatingCount               = movie.Evaluations.Count;
         dto.RecentComments = movie.Comments
-            .Where(c => c.ParentId == null).Take(10)
+            .Where(c => c.ParentId == null && c.IsApproved).Take(10)
             .Select(ToCommentDTO).ToList();
         return dto;
     }
@@ -157,6 +157,64 @@ public class MovieManager : IMovieManager
         var comment = new Comment { MovieId = movieId, UserId = userId, Content = content, ParentId = parentId };
         await _uow.CommentStore.CreateAsync(comment);
         return new CommentDTO { Id = comment.Id, Content = content, CreationTime = DateTime.UtcNow };
+    }
+
+    public async Task<DefaultSearchResults<CommentModerationDTO>> GetCommentsForModerationAsync(PagingSearchDTO search)
+    {
+        var approved = search.Filters.GetBool("approved");
+        var movieId  = search.Filters.GetGuid("movieId");
+        var page     = search.PageIndex > 0 ? search.PageIndex : 1;
+        var size     = search.PageSize  > 0 ? search.PageSize  : 20;
+
+        var (items, total) = await _uow.CommentStore.GetForModerationAsync(approved, movieId, page, size);
+        return new DefaultSearchResults<CommentModerationDTO>
+        {
+            Results = items.Select(c => new CommentModerationDTO
+            {
+                Id           = c.Id,
+                MovieId      = c.MovieId,
+                MovieTitle   = c.Movie?.Title ?? string.Empty,
+                UserName     = c.User?.Name ?? string.Empty,
+                Content      = c.Content,
+                IsApproved   = c.IsApproved,
+                ParentId     = c.ParentId,
+                CreationTime = c.CreationTime,
+            }).ToList(),
+            TotalCount   = total,
+            Page         = page,
+            CountPerPage = size,
+        };
+    }
+
+    public async Task<bool> ModerateCommentAsync(Guid commentId, bool approved)
+    {
+        var comment = await _uow.CommentStore.GetByIdAsync(commentId);
+        if (comment is null)
+        {
+            return false;
+        }
+        comment.IsApproved = approved;
+        await _uow.CommentStore.UpdateAsync(comment);
+        await _uow.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteCommentAsync(Guid commentId)
+    {
+        var comment = await _uow.CommentStore.GetByIdAsync(commentId);
+        if (comment is null)
+        {
+            return false;
+        }
+        // Remove direct replies too so none are left orphaned (moderation is a hard removal of content).
+        var replies = await _uow.CommentStore.GetRepliesAsync(commentId);
+        foreach (var reply in replies)
+        {
+            await _uow.CommentStore.DeleteAsync(reply);
+        }
+        await _uow.CommentStore.DeleteAsync(comment);
+        await _uow.SaveChangesAsync();
+        return true;
     }
 
     public async Task<int> RateMovieAsync(Guid movieId, Guid userId, int score, string? review)
