@@ -1337,6 +1337,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
     discountCode?: string | undefined;
     paymentMethod?: string;
     pointsToRedeem?: number;
+    connectionId?: string | undefined;
 
     constructor(data?: ICreateBookingRequest) {
         if (data) {
@@ -1364,6 +1365,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
             this.discountCode = _data["discountCode"];
             this.paymentMethod = _data["paymentMethod"];
             this.pointsToRedeem = _data["pointsToRedeem"];
+            this.connectionId = _data["connectionId"];
         }
     }
 
@@ -1391,6 +1393,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
         data["discountCode"] = this.discountCode;
         data["paymentMethod"] = this.paymentMethod;
         data["pointsToRedeem"] = this.pointsToRedeem;
+        data["connectionId"] = this.connectionId;
         return data;
     }
 }
@@ -1403,6 +1406,7 @@ export interface ICreateBookingRequest {
     discountCode?: string | undefined;
     paymentMethod?: string;
     pointsToRedeem?: number;
+    connectionId?: string | undefined;
 }
 
 export class BookingSeatItem implements IBookingSeatItem {

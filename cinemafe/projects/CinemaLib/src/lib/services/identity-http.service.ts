@@ -31,6 +31,7 @@ export interface IHttpService {
     verifyTwoFactor(request: VerifyTwoFactorRequest): Observable<AuthResponse>;
     getProfile(): Observable<UserDTO>;
     updateProfile(request: UpdateProfileRequest): Observable<void>;
+    updateNotificationPreferences(request: UpdateNotificationPreferencesRequest): Observable<void>;
     changePassword(request: ChangePasswordRequest): Observable<void>;
     setTwoFactor(request: SetTwoFactorRequest): Observable<void>;
     getUsers(search: PagingSearchDTO): Observable<DefaultSearchResultsOfUserDTO>;
@@ -598,6 +599,54 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
+    updateNotificationPreferences(request: UpdateNotificationPreferencesRequest): Observable<void> {
+        let url_ = this.baseUrl + "/api/Identity/UpdateNotificationPreferences";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateNotificationPreferences(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateNotificationPreferences(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processUpdateNotificationPreferences(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     changePassword(request: ChangePasswordRequest): Observable<void> {
         let url_ = this.baseUrl + "/api/Identity/ChangePassword";
         url_ = url_.replace(/[?&]$/, "");
@@ -957,6 +1006,9 @@ export class UserDTO implements IUserDTO {
     userTypeName?: string;
     theaterId?: string | undefined;
     points?: number;
+    notifyBookingEmails?: boolean;
+    notifyPromotionEmails?: boolean;
+    notifyReminderEmails?: boolean;
     memberShipName?: string | undefined;
     status?: UserStatus;
     creationTime?: Date;
@@ -981,6 +1033,9 @@ export class UserDTO implements IUserDTO {
             this.userTypeName = _data["userTypeName"];
             this.theaterId = _data["theaterId"];
             this.points = _data["points"];
+            this.notifyBookingEmails = _data["notifyBookingEmails"];
+            this.notifyPromotionEmails = _data["notifyPromotionEmails"];
+            this.notifyReminderEmails = _data["notifyReminderEmails"];
             this.memberShipName = _data["memberShipName"];
             this.status = _data["status"];
             this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
@@ -1005,6 +1060,9 @@ export class UserDTO implements IUserDTO {
         data["userTypeName"] = this.userTypeName;
         data["theaterId"] = this.theaterId;
         data["points"] = this.points;
+        data["notifyBookingEmails"] = this.notifyBookingEmails;
+        data["notifyPromotionEmails"] = this.notifyPromotionEmails;
+        data["notifyReminderEmails"] = this.notifyReminderEmails;
         data["memberShipName"] = this.memberShipName;
         data["status"] = this.status;
         data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
@@ -1022,6 +1080,9 @@ export interface IUserDTO {
     userTypeName?: string;
     theaterId?: string | undefined;
     points?: number;
+    notifyBookingEmails?: boolean;
+    notifyPromotionEmails?: boolean;
+    notifyReminderEmails?: boolean;
     memberShipName?: string | undefined;
     status?: UserStatus;
     creationTime?: Date;
@@ -1435,6 +1496,50 @@ export interface IUpdateProfileRequest {
     name?: string;
     phone?: string;
     avatar?: string | undefined;
+}
+
+export class UpdateNotificationPreferencesRequest implements IUpdateNotificationPreferencesRequest {
+    notifyBookingEmails?: boolean;
+    notifyPromotionEmails?: boolean;
+    notifyReminderEmails?: boolean;
+
+    constructor(data?: IUpdateNotificationPreferencesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.notifyBookingEmails = _data["notifyBookingEmails"];
+            this.notifyPromotionEmails = _data["notifyPromotionEmails"];
+            this.notifyReminderEmails = _data["notifyReminderEmails"];
+        }
+    }
+
+    static fromJS(data: any): UpdateNotificationPreferencesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateNotificationPreferencesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["notifyBookingEmails"] = this.notifyBookingEmails;
+        data["notifyPromotionEmails"] = this.notifyPromotionEmails;
+        data["notifyReminderEmails"] = this.notifyReminderEmails;
+        return data;
+    }
+}
+
+export interface IUpdateNotificationPreferencesRequest {
+    notifyBookingEmails?: boolean;
+    notifyPromotionEmails?: boolean;
+    notifyReminderEmails?: boolean;
 }
 
 export class ChangePasswordRequest implements IChangePasswordRequest {

@@ -909,6 +909,10 @@
           "pointsToRedeem": {
             "type": "integer",
             "format": "int32"
+          },
+          "connectionId": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

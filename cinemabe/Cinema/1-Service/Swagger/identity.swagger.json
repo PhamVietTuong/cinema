@@ -366,6 +366,36 @@
         ]
       }
     },
+    "/api/Identity/UpdateNotificationPreferences": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "Identity_UpdateNotificationPreferences",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Identity/ChangePassword": {
       "post": {
         "tags": [
@@ -633,6 +663,15 @@
             "type": "integer",
             "format": "int32"
           },
+          "notifyBookingEmails": {
+            "type": "boolean"
+          },
+          "notifyPromotionEmails": {
+            "type": "boolean"
+          },
+          "notifyReminderEmails": {
+            "type": "boolean"
+          },
           "memberShipName": {
             "type": "string",
             "nullable": true
@@ -781,6 +820,21 @@
           "avatar": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "UpdateNotificationPreferencesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "notifyBookingEmails": {
+            "type": "boolean"
+          },
+          "notifyPromotionEmails": {
+            "type": "boolean"
+          },
+          "notifyReminderEmails": {
+            "type": "boolean"
           }
         }
       },
