@@ -7,6 +7,8 @@ public class BookingResultDTO
     public double TotalAmount { get; set; }
     public double DiscountAmount { get; set; }
     public double FinalAmount { get; set; }
+    /// <summary>Loyalty points spent on this booking (part of DiscountAmount).</summary>
+    public int PointsRedeemed { get; set; }
     public InvoiceStatus Status { get; set; }
     public string? PaymentUrl { get; set; }
     public List<TicketItemDTO> Tickets { get; set; } = new();

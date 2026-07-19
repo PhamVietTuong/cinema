@@ -399,4 +399,12 @@ BEGIN
     PRINT 'Added [Invoice].[RefundedAt].';
 END
 
+-- ── loyalty redemption ──────────────────────────────────────────────────────────
+-- Points spent on a booking, reserved at creation and restored on cancel/expire/refund.
+IF COL_LENGTH('[Invoice]', 'PointsRedeemed') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [PointsRedeemed] int NOT NULL CONSTRAINT [DF_Invoice_PointsRedeemed] DEFAULT 0;
+    PRINT 'Added [Invoice].[PointsRedeemed].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

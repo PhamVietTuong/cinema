@@ -145,6 +145,29 @@ public class BookingManager : IBookingManager
             var (discountAmount, finalAmount, discountId) =
                 await ComputePricingAsync(userId, total, request.DiscountCode, request.RoomId, request.ShowTimeId);
 
+            // Loyalty redemption: spend points for a discount. The points are reserved (deducted) now and
+            // restored if the booking is cancelled, expires, or is refunded. 1 point = _pointValueVnd VND,
+            // capped at the customer's balance and the order total so the amount can't go negative.
+            var pointsRedeemed = 0;
+            if (request.PointsToRedeem > 0)
+            {
+                var redeemingUser = await _uow.UserStore.GetByIdAsync(userId);
+                if (redeemingUser is not null)
+                {
+                    var maxByBalance = redeemingUser.Points;
+                    var maxByAmount  = (int)(finalAmount / _pointValueVnd);
+                    pointsRedeemed = Math.Min(request.PointsToRedeem, Math.Min(maxByBalance, maxByAmount));
+                    if (pointsRedeemed > 0)
+                    {
+                        var pointsValue = pointsRedeemed * _pointValueVnd;
+                        finalAmount    -= pointsValue;
+                        discountAmount += pointsValue;
+                        redeemingUser.Points -= pointsRedeemed;
+                        await _uow.UserStore.UpdateAsync(redeemingUser);
+                    }
+                }
+            }
+
             var invoice = new Invoice
             {
                 Code                = GenerateCode(),
@@ -152,6 +175,7 @@ public class BookingManager : IBookingManager
                 TotalAmount         = total,
                 DiscountAmount      = discountAmount,
                 FinalAmount         = finalAmount,
+                PointsRedeemed      = pointsRedeemed,
                 DiscountId          = discountId,
                 Status              = InvoiceStatus.Pending,
                 PaymentMethod       = request.PaymentMethod,
@@ -169,6 +193,7 @@ public class BookingManager : IBookingManager
                 TotalAmount    = total,
                 DiscountAmount = discountAmount,
                 FinalAmount    = finalAmount,
+                PointsRedeemed = pointsRedeemed,
                 Status         = InvoiceStatus.Pending,
                 Tickets        = ticketItems
             };
@@ -350,6 +375,8 @@ public class BookingManager : IBookingManager
 
     // 1 loyalty point per 10,000 VND of the paid amount.
     private const int _pointsPerUnit = 10000;
+    // Redemption value: 1 loyalty point is worth this many VND when spent at checkout.
+    private const int _pointValueVnd = 1000;
 
     // Pricing: apply the member's tier discount first, then either a valid promo code or — when no
     // code is given — the best-value auto-apply promotion whose scope (theater/movie/day/time) matches
@@ -454,8 +481,24 @@ public class BookingManager : IBookingManager
         }
         invoice.Status = InvoiceStatus.Cancelled;
         await _uow.InvoiceStore.UpdateAsync(invoice);
+        await RestoreRedeemedPointsAsync(invoice);
         await _uow.SaveChangesAsync();
         return true;
+    }
+
+    // Returns the loyalty points reserved for a booking that did not complete (cancelled/expired/refunded).
+    private async Task RestoreRedeemedPointsAsync(Invoice invoice)
+    {
+        if (invoice.PointsRedeemed <= 0)
+        {
+            return;
+        }
+        var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(invoice.UserId);
+        if (user is not null)
+        {
+            user.Points += invoice.PointsRedeemed;
+            await _uow.UserStore.UpdateAsync(user);
+        }
     }
 
     public async Task<bool> RefundBookingAsync(Guid userId, Guid invoiceId, bool isAdmin)
@@ -504,11 +547,13 @@ public class BookingManager : IBookingManager
         invoice.RefundedAt = DateTime.UtcNow;
         await _uow.InvoiceStore.UpdateAsync(invoice);
 
-        // Reverse the loyalty points accrued at payment and re-evaluate the membership tier.
+        // Reverse the loyalty points accrued at payment, give back any points spent on this booking,
+        // and re-evaluate the membership tier.
         var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(invoice.UserId);
         if (user is not null)
         {
             user.Points -= (int)(invoice.FinalAmount / _pointsPerUnit);
+            user.Points += invoice.PointsRedeemed;
             if (user.Points < 0)
             {
                 user.Points = 0;
@@ -553,6 +598,7 @@ public class BookingManager : IBookingManager
             // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
             invoice.Status = InvoiceStatus.Cancelled;
             await _uow.InvoiceStore.UpdateAsync(invoice);
+            await RestoreRedeemedPointsAsync(invoice);
         }
         await _uow.SaveChangesAsync();
         return stale.Count;

@@ -7,6 +7,9 @@ public class CreateBookingRequest
     public List<BookingFoodItem> Foods { get; set; } = new();
     public string? DiscountCode { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
+    /// <summary>Loyalty points the customer wants to spend on this booking (0 = none). Capped server-side
+    /// at the balance and the order total.</summary>
+    public int PointsToRedeem { get; set; }
 }
 
 public class BookingSeatItem

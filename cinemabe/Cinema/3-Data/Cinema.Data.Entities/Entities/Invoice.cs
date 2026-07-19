@@ -13,6 +13,9 @@ public class Invoice : BaseEntity
     public string? PaymentReference { get; set; }
     public DateTime? PaidAt { get; set; }
     public DateTime? RefundedAt { get; set; }
+    /// <summary>Loyalty points spent on this booking, reserved at creation and restored if it is
+    /// cancelled, expired, or refunded.</summary>
+    public int PointsRedeemed { get; set; }
     public Guid? DiscountId { get; set; }
     public User User { get; set; } = null!;
     public Discount? Discount { get; set; }

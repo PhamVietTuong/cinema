@@ -213,4 +213,29 @@ public class BookingServiceTests
         invoice.RefundedAt.Should().NotBeNull();
         user.Points.Should().Be(40);
     }
+
+    [Fact]
+    public async Task CancelBookingAsync_RestoresReservedLoyaltyPoints()
+    {
+        var userId  = Guid.NewGuid();
+        var user    = new User { Id = userId, Points = 5 };
+        var invoice = new Invoice
+        {
+            Id             = Guid.NewGuid(),
+            UserId         = userId,
+            Status         = InvoiceStatus.Pending,
+            PointsRedeemed = 10,
+        };
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        var result = await _sut.CancelBookingAsync(userId, invoice.Id);
+
+        result.Should().BeTrue();
+        invoice.Status.Should().Be(InvoiceStatus.Cancelled);
+        user.Points.Should().Be(15);
+    }
 }

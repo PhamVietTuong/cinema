@@ -304,6 +304,7 @@ CREATE TABLE [Invoice] (
     [PaymentReference] nvarchar(max) NULL,
     [PaidAt] datetime NULL,
     [RefundedAt] datetime NULL,
+    [PointsRedeemed] int NOT NULL DEFAULT 0,
     [DiscountId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
