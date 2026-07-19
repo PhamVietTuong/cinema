@@ -444,11 +444,102 @@ public class BookingManager : IBookingManager
     public async Task<bool> CancelBookingAsync(Guid userId, Guid invoiceId)
     {
         var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
-        if (invoice == null || invoice.UserId != userId) return false;
-        if (invoice.Status != InvoiceStatus.Pending) return false;
+        if (invoice == null || invoice.UserId != userId)
+        {
+            return false;
+        }
+        if (invoice.Status != InvoiceStatus.Pending)
+        {
+            return false;
+        }
         invoice.Status = InvoiceStatus.Cancelled;
         await _uow.InvoiceStore.UpdateAsync(invoice);
         await _uow.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> RefundBookingAsync(Guid userId, Guid invoiceId, bool isAdmin)
+    {
+        var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(invoiceId);
+        if (invoice == null)
+        {
+            return false;
+        }
+        // Object-level authorization: the owner, or an admin, may refund.
+        if (!isAdmin && invoice.UserId != userId)
+        {
+            return false;
+        }
+        // Only a Paid invoice can be refunded (Pending is cancelled, not refunded).
+        if (invoice.Status != InvoiceStatus.Paid)
+        {
+            return false;
+        }
+        // Don't refund a ticket that was already checked in at the gate.
+        if (invoice.InvoiceTickets.Any(t => t.IsUsed))
+        {
+            return false;
+        }
+        // Don't refund once the (earliest) showtime has started.
+        var earliestStart = invoice.InvoiceTickets
+            .Select(t => t.ShowTimeRoom?.ShowTime?.StartTime)
+            .Where(s => s.HasValue)
+            .DefaultIfEmpty(null)
+            .Min();
+        if (earliestStart.HasValue && earliestStart.Value <= DateTime.Now)
+        {
+            return false;
+        }
+
+        // Return the money. Stripe/Sandbox process via API; VNPay/MoMo are refunded out-of-band via the
+        // merchant portal, so an admin is allowed to record the refund even when the API declines it.
+        var refund = await _gateways.Resolve(invoice.PaymentMethod).RefundAsync(invoice.PaymentReference ?? "", invoice.FinalAmount);
+        if (!refund.Success && !isAdmin)
+        {
+            return false;
+        }
+
+        // Mark refunded. Because seat occupancy counts only Pending/Paid invoices, this frees the seats.
+        invoice.Status     = InvoiceStatus.Refunded;
+        invoice.RefundedAt = DateTime.UtcNow;
+        await _uow.InvoiceStore.UpdateAsync(invoice);
+
+        // Reverse the loyalty points accrued at payment and re-evaluate the membership tier.
+        var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(invoice.UserId);
+        if (user is not null)
+        {
+            user.Points -= (int)(invoice.FinalAmount / _pointsPerUnit);
+            if (user.Points < 0)
+            {
+                user.Points = 0;
+            }
+            var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
+            var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
+            user.MemberShipId = tier?.Id;
+            await _uow.UserStore.UpdateAsync(user);
+        }
+
+        // Give the promo code's usage back.
+        if (invoice.DiscountId is Guid usedDiscountId)
+        {
+            var discount = invoice.Discount ?? await _uow.DiscountStore.GetByIdAsync(usedDiscountId);
+            if (discount is not null && discount.UsedCount > 0)
+            {
+                discount.UsedCount -= 1;
+                await _uow.DiscountStore.UpdateAsync(discount);
+            }
+        }
+
+        await _uow.SaveChangesAsync();
+
+        if (user is not null)
+        {
+            await _notifications.SendAsync(
+                user.Email,
+                $"Refund processed — {invoice.Code}",
+                $"Your booking {invoice.Code} has been refunded. Amount: {invoice.FinalAmount:0} VND.");
+        }
+
         return true;
     }
 

@@ -159,4 +159,58 @@ public class BookingServiceTests
         result.Should().BeTrue();
         invoice.Status.Should().Be(InvoiceStatus.Cancelled);
     }
+
+    [Fact]
+    public async Task RefundBookingAsync_NotPaid_ReturnsFalse()
+    {
+        var userId  = Guid.NewGuid();
+        var invoice = new Invoice { Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Pending };
+        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
+
+        var result = await _sut.RefundBookingAsync(userId, invoice.Id, isAdmin: false);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task RefundBookingAsync_WrongUserNonAdmin_ReturnsFalse()
+    {
+        var invoice = new Invoice { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), Status = InvoiceStatus.Paid };
+        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
+
+        var result = await _sut.RefundBookingAsync(Guid.NewGuid(), invoice.Id, isAdmin: false);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task RefundBookingAsync_ValidPaid_RefundsReversesPointsAndSetsRefunded()
+    {
+        var userId  = Guid.NewGuid();
+        var user    = new User { Id = userId, Email = "u@cinema.vn", Points = 50 };
+        var invoice = new Invoice
+        {
+            Id               = Guid.NewGuid(),
+            UserId           = userId,
+            Status           = InvoiceStatus.Paid,
+            FinalAmount      = 100000,          // originally accrued 10 points (1 / 10,000 VND)
+            PaymentMethod    = "Sandbox",
+            PaymentReference = "SANDBOX-abc",
+            User             = user,
+        };
+        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.MemberShipStore.FindAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<MemberShip, bool>>>()))
+            .ReturnsAsync(new List<MemberShip>());
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        var result = await _sut.RefundBookingAsync(userId, invoice.Id, isAdmin: false);
+
+        result.Should().BeTrue();
+        invoice.Status.Should().Be(InvoiceStatus.Refunded);
+        invoice.RefundedAt.Should().NotBeNull();
+        user.Points.Should().Be(40);
+    }
 }

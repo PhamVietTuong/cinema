@@ -175,6 +175,28 @@ public class PaymentController : ControllerBase
         }
     }
 
+    [HttpPost]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> RefundBooking([FromBody] RefundBookingRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.RefundBooking being awakened to process request...");
+        try
+        {
+            var success = await _bookingManager.RefundBookingAsync(User.GetUserId(), request.InvoiceId, User.IsInRole(_adminRole));
+            if (success)
+            {
+                return Ok(new { message = "Booking refunded." });
+            }
+            return BadRequest(new { error = "Cannot refund this booking." });
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.RefundBooking->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
     [Authorize(Roles = _adminRole)]
     [HttpPost]
     [ProducesResponseType(typeof(TicketValidationDTO), 200)]
@@ -333,3 +355,4 @@ public record ConfirmPaymentRequest(Guid InvoiceId, string PaymentReference);
 public record InitiatePaymentRequest(Guid InvoiceId, string? Provider, string? ReturnUrl);
 public record ValidateTicketRequest(string QrCode);
 public record CancelBookingRequest(Guid InvoiceId);
+public record RefundBookingRequest(Guid InvoiceId);

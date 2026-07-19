@@ -38,6 +38,12 @@ public interface IPaymentGateway
     /// under <c>__signature</c>). Returns whether the payment succeeded plus the invoice + reference.
     /// </summary>
     PaymentCallbackResult ParseCallback(IReadOnlyDictionary<string, string> data);
+
+    /// <summary>
+    /// Refunds a previously captured payment (server-to-server, authenticated). Unlike payment capture,
+    /// a refund needs no user redirect, so this is synchronous. Returns success or a failure reason.
+    /// </summary>
+    Task<PaymentVerification> RefundAsync(string paymentReference, double amount);
 }
 
 /// <summary>Selects a registered <see cref="IPaymentGateway"/> by name, falling back to the configured default.</summary>

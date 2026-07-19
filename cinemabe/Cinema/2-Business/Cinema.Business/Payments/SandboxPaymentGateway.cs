@@ -25,6 +25,14 @@ public class SandboxPaymentGateway : IPaymentGateway
             : new PaymentVerification(false, "Invalid payment reference or amount."));
     }
 
+    public Task<PaymentVerification> RefundAsync(string paymentReference, double amount)
+    {
+        var ok = !string.IsNullOrWhiteSpace(paymentReference) && amount > 0;
+        return Task.FromResult(ok
+            ? new PaymentVerification(true)
+            : new PaymentVerification(false, "Invalid payment reference or amount."));
+    }
+
     public PaymentCallbackResult ParseCallback(IReadOnlyDictionary<string, string> data)
     {
         var reference = data.TryGetValue("reference", out var r) && !string.IsNullOrWhiteSpace(r)

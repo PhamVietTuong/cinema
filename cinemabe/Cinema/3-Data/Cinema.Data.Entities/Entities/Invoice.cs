@@ -12,6 +12,7 @@ public class Invoice : BaseEntity
     public string? PaymentMethod { get; set; }
     public string? PaymentReference { get; set; }
     public DateTime? PaidAt { get; set; }
+    public DateTime? RefundedAt { get; set; }
     public Guid? DiscountId { get; set; }
     public User User { get; set; } = null!;
     public Discount? Discount { get; set; }

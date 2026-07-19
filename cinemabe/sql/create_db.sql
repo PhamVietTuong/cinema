@@ -303,6 +303,7 @@ CREATE TABLE [Invoice] (
     [PaymentMethod] nvarchar(max) NULL,
     [PaymentReference] nvarchar(max) NULL,
     [PaidAt] datetime NULL,
+    [RefundedAt] datetime NULL,
     [DiscountId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,

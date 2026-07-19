@@ -389,4 +389,14 @@ END
 IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'TheaterStaff')
     INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'TheaterStaff', GETUTCDATE());
 
+-- ── refund flow ─────────────────────────────────────────────────────────────────
+-- Records when a Paid invoice was refunded (InvoiceStatus.Refunded = 4). Refunding
+-- frees the seats (seat occupancy counts only Pending/Paid invoices) and reverses
+-- the loyalty points and promo-code usage accrued at payment.
+IF COL_LENGTH('[Invoice]', 'RefundedAt') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [RefundedAt] datetime NULL;
+    PRINT 'Added [Invoice].[RefundedAt].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

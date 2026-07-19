@@ -15,6 +15,9 @@ public interface IBookingManager
     /// <summary>Gate check-in: validates a ticket QR, marks it used (once), returns its details.</summary>
     Task<TicketValidationDTO>           ValidateTicketAsync(string qrCode);
     Task<bool>                          CancelBookingAsync(Guid userId, Guid invoiceId);
+    /// <summary>Refunds a Paid invoice: returns money via the gateway (or, for an admin, records an
+    /// out-of-band refund), frees the seats, and reverses accrued loyalty points and promo-code usage.</summary>
+    Task<bool>                          RefundBookingAsync(Guid userId, Guid invoiceId, bool isAdmin);
     /// <summary>Cancels Pending invoices older than <paramref name="age"/> (frees their held seats). Returns the count expired.</summary>
     Task<int>                           ExpireStalePendingBookingsAsync(TimeSpan age);
     void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);

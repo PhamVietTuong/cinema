@@ -85,6 +85,39 @@ public class StripeGateway : IPaymentGateway
     public Task<PaymentVerification> VerifyPaymentAsync(string paymentReference, double expectedAmount)
         => Task.FromResult(new PaymentVerification(false, "Stripe payments are confirmed via the signed webhook."));
 
+    public async Task<PaymentVerification> RefundAsync(string paymentReference, double amount)
+    {
+        if (string.IsNullOrWhiteSpace(SecretKey))
+        {
+            return new PaymentVerification(false, "Stripe is not configured.");
+        }
+
+        var form = new Dictionary<string, string>
+        {
+            ["payment_intent"] = paymentReference,
+            ["amount"]         = ((long)Math.Round(amount)).ToString(CultureInfo.InvariantCulture),
+        };
+        var http = _httpFactory.CreateClient();
+        using var req = new HttpRequestMessage(HttpMethod.Post, "https://api.stripe.com/v1/refunds")
+        {
+            Content = new FormUrlEncodedContent(form),
+        };
+        req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", SecretKey);
+
+        using var resp = await http.SendAsync(req);
+        if (resp.IsSuccessStatusCode)
+        {
+            return new PaymentVerification(true);
+        }
+
+        var body = await resp.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        var msg = doc.RootElement.TryGetProperty("error", out var err) && err.TryGetProperty("message", out var m)
+            ? m.GetString()
+            : "unknown error";
+        return new PaymentVerification(false, $"Stripe refund failed: {msg}");
+    }
+
     public PaymentCallbackResult ParseCallback(IReadOnlyDictionary<string, string> data)
     {
         if (string.IsNullOrWhiteSpace(WebhookSecret))

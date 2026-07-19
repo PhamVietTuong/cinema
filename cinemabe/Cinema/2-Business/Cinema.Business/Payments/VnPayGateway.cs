@@ -63,6 +63,11 @@ public class VnPayGateway : IPaymentGateway
     public Task<PaymentVerification> VerifyPaymentAsync(string paymentReference, double expectedAmount)
         => Task.FromResult(new PaymentVerification(false, "VNPay payments are confirmed via the signed IPN callback."));
 
+    // VNPay refunds require the merchant refund/approval workflow and are processed out-of-band via the
+    // VNPay merchant portal; an admin records the completed refund in the app (see RefundBookingAsync).
+    public Task<PaymentVerification> RefundAsync(string paymentReference, double amount)
+        => Task.FromResult(new PaymentVerification(false, "Process VNPay refunds via the VNPay merchant portal, then record it as an admin."));
+
     public PaymentCallbackResult ParseCallback(IReadOnlyDictionary<string, string> data)
     {
         if (string.IsNullOrWhiteSpace(HashSecret))
