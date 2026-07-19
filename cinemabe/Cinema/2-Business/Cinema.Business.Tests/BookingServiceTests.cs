@@ -165,6 +165,31 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task CreateBookingAsync_RejectsSeatHeldByAnotherConnection()
+    {
+        var userId   = Guid.NewGuid();
+        var heldSeat = Guid.NewGuid();   // unique id so the static lock store isn't shared with other tests
+        _sut.LockSeat(ShowTimeId1, RoomId1, heldSeat, "other-conn");
+
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100 });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = heldSeat } },
+            ConnectionId  = "my-conn",           // booker's own connection differs from the holder's
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(userId, request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*held by another user*");
+    }
+
+    [Fact]
     public async Task CancelBookingAsync_WrongUser_ReturnsFalse()
     {
         var invoice = new Invoice

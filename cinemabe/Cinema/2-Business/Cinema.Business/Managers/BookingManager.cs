@@ -96,7 +96,18 @@ public class BookingManager : IBookingManager
             foreach (var seatItem in request.Seats)
             {
                 if (bookedIds.Contains(seatItem.SeatId))
+                {
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is already booked.");
+                }
+
+                // Reject a seat another user is actively holding (SignalR lock). Enforced only when the
+                // client supplies its connection id, so the booker's own held seats still pass. IsSeatLocked
+                // applies the 5-minute lock expiry and the owner (connection) exclusion.
+                if (!string.IsNullOrEmpty(request.ConnectionId)
+                    && IsSeatLocked(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId))
+                {
+                    throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
+                }
 
                 var seat = await _uow.SeatStore.GetByIdAsync(seatItem.SeatId)
                            ?? throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");

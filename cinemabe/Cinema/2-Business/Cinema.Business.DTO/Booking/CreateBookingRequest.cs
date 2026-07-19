@@ -10,6 +10,9 @@ public class CreateBookingRequest
     /// <summary>Loyalty points the customer wants to spend on this booking (0 = none). Capped server-side
     /// at the balance and the order total.</summary>
     public int PointsToRedeem { get; set; }
+    /// <summary>The caller's SignalR connection id (from the seat-locking hub). When supplied, booking
+    /// rejects seats another connection is actively holding; the caller's own held seats still pass.</summary>
+    public string? ConnectionId { get; set; }
 }
 
 public class BookingSeatItem
