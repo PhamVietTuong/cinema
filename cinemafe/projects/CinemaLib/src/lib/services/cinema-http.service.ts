@@ -10922,6 +10922,7 @@ export enum InvoiceStatus {
     Paid = 1,
     Cancelled = 2,
     Failed = 3,
+    Refunded = 4,
 }
 
 export class UpdateInvoiceStatusRequest implements IUpdateInvoiceStatusRequest {

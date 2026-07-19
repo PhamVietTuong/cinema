@@ -24,6 +24,10 @@ export interface IHttpService {
     createBooking(request: CreateBookingRequest): Observable<BookingResultDTO>;
     confirmPayment(request: ConfirmPaymentRequest): Observable<void>;
     cancelBooking(request: CancelBookingRequest): Observable<void>;
+    initiatePayment(request: InitiatePaymentRequest): Observable<PaymentInitiationDTO>;
+    paymentCallbackPOST(provider?: string | undefined): Observable<void>;
+    paymentCallbackGET(provider?: string | undefined): Observable<void>;
+    refundBooking(request: RefundBookingRequest): Observable<void>;
     validateTicket(request: ValidateTicketRequest): Observable<TicketValidationDTO>;
     getMyInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceDTO>;
     getInvoice(id?: string | undefined): Observable<InvoiceDTO>;
@@ -234,6 +238,230 @@ export class HttpService implements IHttpService {
     }
 
     protected processCancelBooking(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    initiatePayment(request: InitiatePaymentRequest): Observable<PaymentInitiationDTO> {
+        let url_ = this.baseUrl + "/api/Payment/InitiatePayment";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processInitiatePayment(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processInitiatePayment(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PaymentInitiationDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PaymentInitiationDTO>;
+        }));
+    }
+
+    protected processInitiatePayment(response: HttpResponseBase): Observable<PaymentInitiationDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaymentInitiationDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    paymentCallbackPOST(provider?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Payment/PaymentCallback?";
+        if (provider === null)
+            throw new Error("The parameter 'provider' cannot be null.");
+        else if (provider !== undefined)
+            url_ += "provider=" + encodeURIComponent("" + provider) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPaymentCallbackPOST(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPaymentCallbackPOST(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processPaymentCallbackPOST(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    paymentCallbackGET(provider?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Payment/PaymentCallback?";
+        if (provider === null)
+            throw new Error("The parameter 'provider' cannot be null.");
+        else if (provider !== undefined)
+            url_ += "provider=" + encodeURIComponent("" + provider) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPaymentCallbackGET(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPaymentCallbackGET(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processPaymentCallbackGET(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    refundBooking(request: RefundBookingRequest): Observable<void> {
+        let url_ = this.baseUrl + "/api/Payment/RefundBooking";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRefundBooking(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRefundBooking(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRefundBooking(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -975,6 +1203,7 @@ export class BookingResultDTO implements IBookingResultDTO {
     totalAmount?: number;
     discountAmount?: number;
     finalAmount?: number;
+    pointsRedeemed?: number;
     status?: InvoiceStatus;
     paymentUrl?: string | undefined;
     tickets?: TicketItemDTO[];
@@ -995,6 +1224,7 @@ export class BookingResultDTO implements IBookingResultDTO {
             this.totalAmount = _data["totalAmount"];
             this.discountAmount = _data["discountAmount"];
             this.finalAmount = _data["finalAmount"];
+            this.pointsRedeemed = _data["pointsRedeemed"];
             this.status = _data["status"];
             this.paymentUrl = _data["paymentUrl"];
             if (Array.isArray(_data["tickets"])) {
@@ -1019,6 +1249,7 @@ export class BookingResultDTO implements IBookingResultDTO {
         data["totalAmount"] = this.totalAmount;
         data["discountAmount"] = this.discountAmount;
         data["finalAmount"] = this.finalAmount;
+        data["pointsRedeemed"] = this.pointsRedeemed;
         data["status"] = this.status;
         data["paymentUrl"] = this.paymentUrl;
         if (Array.isArray(this.tickets)) {
@@ -1036,6 +1267,7 @@ export interface IBookingResultDTO {
     totalAmount?: number;
     discountAmount?: number;
     finalAmount?: number;
+    pointsRedeemed?: number;
     status?: InvoiceStatus;
     paymentUrl?: string | undefined;
     tickets?: TicketItemDTO[];
@@ -1046,6 +1278,7 @@ export enum InvoiceStatus {
     Paid = 1,
     Cancelled = 2,
     Failed = 3,
+    Refunded = 4,
 }
 
 export class TicketItemDTO implements ITicketItemDTO {
@@ -1103,6 +1336,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
     foods?: BookingFoodItem[];
     discountCode?: string | undefined;
     paymentMethod?: string;
+    pointsToRedeem?: number;
 
     constructor(data?: ICreateBookingRequest) {
         if (data) {
@@ -1129,6 +1363,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
             }
             this.discountCode = _data["discountCode"];
             this.paymentMethod = _data["paymentMethod"];
+            this.pointsToRedeem = _data["pointsToRedeem"];
         }
     }
 
@@ -1155,6 +1390,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
         }
         data["discountCode"] = this.discountCode;
         data["paymentMethod"] = this.paymentMethod;
+        data["pointsToRedeem"] = this.pointsToRedeem;
         return data;
     }
 }
@@ -1166,6 +1402,7 @@ export interface ICreateBookingRequest {
     foods?: BookingFoodItem[];
     discountCode?: string | undefined;
     paymentMethod?: string;
+    pointsToRedeem?: number;
 }
 
 export class BookingSeatItem implements IBookingSeatItem {
@@ -1381,6 +1618,130 @@ export class CancelBookingRequest implements ICancelBookingRequest {
 }
 
 export interface ICancelBookingRequest {
+    invoiceId?: string;
+}
+
+export class PaymentInitiationDTO implements IPaymentInitiationDTO {
+    provider?: string;
+    paymentReference?: string;
+    redirectUrl?: string | undefined;
+
+    constructor(data?: IPaymentInitiationDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.provider = _data["provider"];
+            this.paymentReference = _data["paymentReference"];
+            this.redirectUrl = _data["redirectUrl"];
+        }
+    }
+
+    static fromJS(data: any): PaymentInitiationDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaymentInitiationDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["provider"] = this.provider;
+        data["paymentReference"] = this.paymentReference;
+        data["redirectUrl"] = this.redirectUrl;
+        return data;
+    }
+}
+
+export interface IPaymentInitiationDTO {
+    provider?: string;
+    paymentReference?: string;
+    redirectUrl?: string | undefined;
+}
+
+export class InitiatePaymentRequest implements IInitiatePaymentRequest {
+    invoiceId?: string;
+    provider?: string | undefined;
+    returnUrl?: string | undefined;
+
+    constructor(data?: IInitiatePaymentRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.invoiceId = _data["invoiceId"];
+            this.provider = _data["provider"];
+            this.returnUrl = _data["returnUrl"];
+        }
+    }
+
+    static fromJS(data: any): InitiatePaymentRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new InitiatePaymentRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["invoiceId"] = this.invoiceId;
+        data["provider"] = this.provider;
+        data["returnUrl"] = this.returnUrl;
+        return data;
+    }
+}
+
+export interface IInitiatePaymentRequest {
+    invoiceId?: string;
+    provider?: string | undefined;
+    returnUrl?: string | undefined;
+}
+
+export class RefundBookingRequest implements IRefundBookingRequest {
+    invoiceId?: string;
+
+    constructor(data?: IRefundBookingRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.invoiceId = _data["invoiceId"];
+        }
+    }
+
+    static fromJS(data: any): RefundBookingRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RefundBookingRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["invoiceId"] = this.invoiceId;
+        return data;
+    }
+}
+
+export interface IRefundBookingRequest {
     invoiceId?: string;
 }
 

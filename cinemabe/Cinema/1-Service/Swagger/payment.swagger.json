@@ -160,6 +160,167 @@
         ]
       }
     },
+    "/api/Payment/InitiatePayment": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "Payment_InitiatePayment",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiatePaymentRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInitiationDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Payment/PaymentCallback": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "Payment_PaymentCallbackPOST",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "Payment_PaymentCallbackGET",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Payment/RefundBooking": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "Payment_RefundBooking",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundBookingRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Payment/ValidateTicket": {
       "post": {
         "tags": [
@@ -657,6 +818,10 @@
             "type": "number",
             "format": "double"
           },
+          "pointsRedeemed": {
+            "type": "integer",
+            "format": "int32"
+          },
           "status": {
             "$ref": "#/components/schemas/InvoiceStatus"
           },
@@ -679,13 +844,15 @@
           "Pending",
           "Paid",
           "Cancelled",
-          "Failed"
+          "Failed",
+          "Refunded"
         ],
         "enum": [
           0,
           1,
           2,
-          3
+          3,
+          4
         ]
       },
       "TicketItemDTO": {
@@ -738,6 +905,10 @@
           },
           "paymentMethod": {
             "type": "string"
+          },
+          "pointsToRedeem": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -808,6 +979,50 @@
         }
       },
       "CancelBookingRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
+      },
+      "PaymentInitiationDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "paymentReference": {
+            "type": "string"
+          },
+          "redirectUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "InitiatePaymentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "returnUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RefundBookingRequest": {
         "type": "object",
         "additionalProperties": false,
         "properties": {

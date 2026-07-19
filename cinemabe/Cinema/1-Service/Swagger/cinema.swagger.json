@@ -6498,13 +6498,15 @@
           "Pending",
           "Paid",
           "Cancelled",
-          "Failed"
+          "Failed",
+          "Refunded"
         ],
         "enum": [
           0,
           1,
           2,
-          3
+          3,
+          4
         ]
       },
       "UpdateInvoiceStatusRequest": {
