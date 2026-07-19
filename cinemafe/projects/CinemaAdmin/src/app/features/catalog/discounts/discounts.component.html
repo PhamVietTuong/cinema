@@ -45,16 +45,52 @@
         <input class="ad-input" type="number" formControlName="maxUsage" placeholder="100">
       </div>
       <div class="ad-field">
-        <label class="ad-label">{{ 'discounts.scope' | translate }}</label>
-        <select class="ad-input" formControlName="theaterId">
-          <option [ngValue]="null">{{ 'discounts.systemWide' | translate }}</option>
-          <option *ngFor="let t of theaters" [ngValue]="t.id">{{ t.name }}</option>
+        <label class="ad-label">{{ 'discounts.movieScope' | translate }}</label>
+        <select class="ad-input" formControlName="movieId">
+          <option [ngValue]="null">{{ 'discounts.anyMovie' | translate }}</option>
+          <option *ngFor="let m of movies" [ngValue]="m.id">{{ m.title }}</option>
         </select>
       </div>
       <div class="ad-field full-span">
         <label class="ad-label">{{ 'common.description' | translate }}</label>
         <input class="ad-input" formControlName="description" [placeholder]="'discounts.descriptionPlaceholder' | translate">
       </div>
+
+      <!-- ── Promotion scope ── -->
+      <div class="ad-field full-span">
+        <label class="ad-check"><input type="checkbox" formControlName="autoApply" (change)="onAutoApplyChange()"> {{ 'discounts.autoApply' | translate }}</label>
+        <small class="ad-hint">{{ 'discounts.autoApplyHint' | translate }}</small>
+      </div>
+
+      <div class="ad-field full-span">
+        <label class="ad-label">{{ 'discounts.scope' | translate }}</label>
+        <label class="ad-check"><input type="checkbox" formControlName="applyToAllTheaters" (change)="onApplyToAllChange()"> {{ 'discounts.applyToAll' | translate }}</label>
+        <div class="scope-checklist" *ngIf="!form.value.applyToAllTheaters">
+          <label class="ad-check" *ngFor="let t of theaters">
+            <input type="checkbox" [checked]="isTheaterSelected(t.id)" (change)="toggleTheater(t.id)"> {{ t.name }}
+          </label>
+          <p *ngIf="!theaters.length" class="ad-hint">—</p>
+        </div>
+      </div>
+
+      <div class="ad-field full-span">
+        <label class="ad-label">{{ 'discounts.daysOfWeek' | translate }} <small class="ad-hint">{{ 'discounts.anyDayHint' | translate }}</small></label>
+        <div class="scope-days">
+          <label class="ad-check" *ngFor="let d of weekDays">
+            <input type="checkbox" [checked]="isDaySelected(d.value)" (change)="toggleDay(d.value)"> {{ 'discounts.days.' + d.key | translate }}
+          </label>
+        </div>
+      </div>
+
+      <div class="ad-field">
+        <label class="ad-label">{{ 'discounts.timeFrom' | translate }}</label>
+        <input class="ad-input" type="time" formControlName="startTimeOfDay">
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">{{ 'discounts.timeTo' | translate }}</label>
+        <input class="ad-input" type="time" formControlName="endTimeOfDay">
+      </div>
+
       <div class="ad-field full-span">
         <label class="ad-check"><input type="checkbox" formControlName="isActive"> {{ 'discounts.activeLabel' | translate }}</label>
       </div>
@@ -84,9 +120,9 @@
         </thead>
         <tbody>
           <tr *ngFor="let x of items">
-            <td><strong>{{ x.code }}</strong></td>
+            <td><strong>{{ x.code || ('discounts.autoApplyShort' | translate) }}</strong></td>
             <td>{{ typeName(x.discountTypeId) }}</td>
-            <td>{{ theaterScope(x.theaterId) }}</td>
+            <td>{{ scopeLabel(x) }}</td>
             <td>{{ x.percent }}%</td>
             <td>{{ (x.startDate | date:'dd/MM/yy') }} – {{ (x.endDate | date:'dd/MM/yy') }}</td>
             <td>
