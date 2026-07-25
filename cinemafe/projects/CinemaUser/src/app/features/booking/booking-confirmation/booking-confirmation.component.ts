@@ -36,6 +36,13 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
   foodQty: Record<string, number> = {};
   discountCode = '';
 
+  /** Gift-card code entered at checkout. The server applies the actual discount. */
+  giftCardCode = '';
+  /** Result of the last gift-card validation (null = not yet checked). */
+  giftCardValid: boolean | null = null;
+  giftCardMessage = '';
+  giftCardChecking = false;
+
   /** 1 loyalty point == 1000 VND when redeemed. */
   static readonly POINT_VALUE = 1000;
   /** Available loyalty-points balance for the signed-in user. */
@@ -154,6 +161,33 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
     this.pointsToRedeem = Math.max(0, Math.min(n, this.maxRedeemablePoints));
   }
 
+  /** Check the entered gift-card code and show its balance/message. */
+  validateGiftCard(): void {
+    const code = this.giftCardCode.trim();
+    if (!code) {
+      this.giftCardValid = null;
+      this.giftCardMessage = '';
+      return;
+    }
+    this.giftCardChecking = true;
+    this._paymentService.validateGiftCard(PaymentServiceAgent.ValidateGiftCardRequest.fromJS({ code }))
+      .subscribe({
+        next: res => {
+          this.giftCardValid = !!res?.valid;
+          this.giftCardMessage = res?.message
+            ?? (res?.valid ? this._translate.instant('booking.summary.giftCardBalance', { balance: res?.balance ?? 0 }) : '');
+          this.giftCardChecking = false;
+          this._cdr.markForCheck();
+        },
+        error: err => {
+          this.giftCardValid = false;
+          this.giftCardMessage = this._err(err, this._translate.instant('booking.summary.giftCardInvalid'));
+          this.giftCardChecking = false;
+          this._cdr.markForCheck();
+        },
+      });
+  }
+
   confirmBooking(): void {
     this.clampPoints();
     this.loading = true;
@@ -168,6 +202,7 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
       seats: this.seats.map(s => PaymentServiceAgent.BookingSeatItem.fromJS({ seatId: s.id })),
       foods,
       discountCode: this.discountCode.trim() || undefined,
+      giftCardCode: this.giftCardCode.trim() || undefined,
       paymentMethod: this.paymentMethod,
       pointsToRedeem: this.pointsToRedeem || undefined,
       // Pass our live hub connection id so the server ignores our own held seats when enforcing locks.
@@ -218,6 +253,11 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
     });
     this._paymentService.initiatePayment(request).subscribe({
       next: init => {
+        if (init?.alreadyPaid) {
+          // Gift card covered the full invoice — nothing to pay, go straight to the e-ticket.
+          this._showSuccess(code);
+          return;
+        }
         if (init?.redirectUrl) {
           // Real gateway: hand the browser over to the hosted checkout page.
           window.location.href = init.redirectUrl;

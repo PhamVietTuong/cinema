@@ -108,6 +108,11 @@ export const routes: Routes = [
         path: 'comments',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/catalog/comments/comments.component').then(m => m.CommentsModerationComponent)
+      },
+      {
+        path: 'gift-cards',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/gift-cards/gift-cards.component').then(m => m.GiftCardsManagementComponent)
       }
     ]
   },

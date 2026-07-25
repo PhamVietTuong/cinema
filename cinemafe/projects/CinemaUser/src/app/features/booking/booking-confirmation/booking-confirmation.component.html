@@ -134,6 +134,19 @@
           <span class="discount-note">{{ 'booking.summary.discountNote' | translate }}</span>
         </div>
 
+        <div class="field-group">
+          <label class="field-label">{{ 'booking.summary.giftCardCode' | translate }}</label>
+          <div class="gift-card-row">
+            <input class="field-input" [(ngModel)]="giftCardCode" [placeholder]="'booking.summary.giftCardPlaceholder' | translate">
+            <button type="button" class="gift-card-apply" (click)="validateGiftCard()" [disabled]="giftCardChecking || !giftCardCode.trim()">
+              {{ 'booking.summary.giftCardApply' | translate }}
+            </button>
+          </div>
+          <span class="discount-note" *ngIf="giftCardMessage" [class.gift-card-valid]="giftCardValid" [class.gift-card-invalid]="giftCardValid === false">
+            {{ giftCardMessage }}
+          </span>
+        </div>
+
         <!-- Loyalty points redemption -->
         <div class="summary-divider"></div>
         <div class="field-group">

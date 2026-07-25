@@ -16,6 +16,7 @@
     "discounts": "Discount Codes",
     "invoices": "Invoices",
     "comments": "Moderation",
+    "giftCards": "Gift Cards",
     "logout": "Log Out"
   },
   "section": {
@@ -579,6 +580,33 @@
     "approveSuccess": "Comment approved",
     "hideSuccess": "Comment hidden",
     "moderateFailed": "Could not update the comment"
+  },
+  "giftCards": {
+    "title": "Gift Cards",
+    "subtitle": "Issue gift cards and enable or disable existing ones",
+    "issue": "Issue",
+    "issueTitle": "Issue Gift Card",
+    "amount": "Amount (đ)",
+    "expiry": "Expiry",
+    "noExpiry": "No expiry",
+    "recipient": "Recipient email",
+    "recipientPlaceholder": "Optional — email the card to a customer",
+    "balance": "Balance",
+    "initial": "Initial",
+    "statusActive": "Active",
+    "statusInactive": "Disabled",
+    "enable": "Enable",
+    "disable": "Disable",
+    "issued": "Gift card issued: {{code}}",
+    "issueFailed": "Could not issue the gift card",
+    "enabled": "Gift card enabled",
+    "disabled": "Gift card disabled",
+    "updateFailed": "Could not update the gift card",
+    "empty": "No gift cards yet",
+    "perPage": "Per page",
+    "pageInfo": "Page {{current}} / {{total}}",
+    "prev": "Previous",
+    "next": "Next"
   },
   "news": {
     "title": "News Management",

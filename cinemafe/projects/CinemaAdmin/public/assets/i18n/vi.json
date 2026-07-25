@@ -16,6 +16,7 @@
     "discounts": "Mã Giảm Giá",
     "invoices": "Hóa Đơn",
     "comments": "Kiểm Duyệt",
+    "giftCards": "Thẻ Quà Tặng",
     "logout": "Đăng Xuất"
   },
   "section": {
@@ -579,6 +580,33 @@
     "approveSuccess": "Đã duyệt bình luận",
     "hideSuccess": "Đã ẩn bình luận",
     "moderateFailed": "Không thể cập nhật bình luận"
+  },
+  "giftCards": {
+    "title": "Thẻ Quà Tặng",
+    "subtitle": "Phát hành thẻ quà tặng và bật hoặc tắt các thẻ hiện có",
+    "issue": "Phát hành",
+    "issueTitle": "Phát Hành Thẻ Quà Tặng",
+    "amount": "Số tiền (đ)",
+    "expiry": "Hạn dùng",
+    "noExpiry": "Không hết hạn",
+    "recipient": "Email người nhận",
+    "recipientPlaceholder": "Tùy chọn — gửi thẻ tới email khách hàng",
+    "balance": "Số dư",
+    "initial": "Ban đầu",
+    "statusActive": "Đang hoạt động",
+    "statusInactive": "Đã tắt",
+    "enable": "Bật",
+    "disable": "Tắt",
+    "issued": "Đã phát hành thẻ: {{code}}",
+    "issueFailed": "Không thể phát hành thẻ quà tặng",
+    "enabled": "Đã bật thẻ quà tặng",
+    "disabled": "Đã tắt thẻ quà tặng",
+    "updateFailed": "Không thể cập nhật thẻ quà tặng",
+    "empty": "Chưa có thẻ quà tặng",
+    "perPage": "Mỗi trang",
+    "pageInfo": "Trang {{current}} / {{total}}",
+    "prev": "Trước",
+    "next": "Sau"
   },
   "news": {
     "title": "Quản Lý Tin Tức",

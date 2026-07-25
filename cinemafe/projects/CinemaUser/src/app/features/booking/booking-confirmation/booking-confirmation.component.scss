@@ -274,6 +274,20 @@
 .combo-qty button:disabled { opacity: 0.4; cursor: default; }
 .combo-qty span { min-width: 18px; text-align: center; font-weight: 700; }
 .discount-note { display: block; margin-top: 6px; font-size: 0.8rem; opacity: 0.65; }
+.discount-note.gift-card-valid { color: var(--mp-green, #2e7d32); opacity: 1; }
+.discount-note.gift-card-invalid { color: var(--mp-red); opacity: 1; }
+
+/* Gift-card code input + apply button */
+.gift-card-row { display: flex; gap: 8px; align-items: stretch; }
+.gift-card-row .field-input { flex: 1; }
+.gift-card-apply {
+  flex: 0 0 auto; padding: 0 16px; border-radius: 10px;
+  border: 1.5px solid var(--mp-line); background: var(--mp-card);
+  color: var(--mp-ink); font-family: var(--mp-font-body); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  &:hover:not(:disabled) { border-color: var(--mp-red); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
 
 /* Seat-hold countdown banner */
 .hold-banner {
