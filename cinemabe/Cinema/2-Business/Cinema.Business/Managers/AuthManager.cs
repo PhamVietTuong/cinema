@@ -16,6 +16,7 @@ public class AuthManager : IAuthManager
     private readonly IApplicationUnitOfWork _uow;
     private readonly ITokenService _tokenService;
     private readonly INotificationService _notifications;
+    private readonly ISmsNotificationService _sms;
     private readonly IGoogleTokenValidator _googleValidator;
     private readonly IFacebookTokenValidator _facebookValidator;
 
@@ -23,12 +24,14 @@ public class AuthManager : IAuthManager
         IApplicationUnitOfWork uow,
         ITokenService tokenService,
         INotificationService notifications,
+        ISmsNotificationService sms,
         IGoogleTokenValidator googleValidator,
         IFacebookTokenValidator facebookValidator)
     {
         _uow = uow;
         _tokenService = tokenService;
         _notifications = notifications;
+        _sms = sms;
         _googleValidator = googleValidator;
         _facebookValidator = facebookValidator;
     }
@@ -191,6 +194,12 @@ public class AuthManager : IAuthManager
             user.Email,
             "Your Cinema login code",
             $"Your verification code is {code} (valid 5 minutes).");
+
+        // Also deliver the login code by SMS when the user has a phone number (dev-log unless Twilio is configured).
+        if (!string.IsNullOrWhiteSpace(user.Phone))
+        {
+            await _sms.SendSmsAsync(user.Phone, $"Cinema login code: {code} (valid 5 minutes).");
+        }
     }
 
     public async Task<AuthResponse> VerifyTwoFactorAsync(VerifyTwoFactorRequest request)

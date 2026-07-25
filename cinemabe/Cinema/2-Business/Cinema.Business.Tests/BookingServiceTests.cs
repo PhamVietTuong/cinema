@@ -32,7 +32,7 @@ public class BookingServiceTests
     public BookingServiceTests()
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
-        _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService());
+        _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService(), new DevLogSmsNotificationService());
     }
 
     private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId) => new()

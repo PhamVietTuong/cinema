@@ -20,7 +20,7 @@ public class AuthServiceTests
 
     public AuthServiceTests()
     {
-        _sut = new AuthManager(_uowMock.Object, _tokenMock.Object, new DevLogNotificationService(), _googleMock.Object, _facebookMock.Object);
+        _sut = new AuthManager(_uowMock.Object, _tokenMock.Object, new DevLogNotificationService(), new DevLogSmsNotificationService(), _googleMock.Object, _facebookMock.Object);
     }
 
     [Fact]

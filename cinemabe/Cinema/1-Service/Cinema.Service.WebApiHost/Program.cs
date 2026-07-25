@@ -25,6 +25,12 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Smtp:Host"]))
     builder.Services.AddSingleton<Cinema.Business.Contracts.INotificationService, Cinema.Business.Notifications.SmtpNotificationService>();
 }
 
+// Real SMS delivery when Twilio is configured; otherwise AddBusiness's dev-log SMS sender stays.
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Sms:Twilio:AccountSid"]))
+{
+    builder.Services.AddSingleton<Cinema.Business.Contracts.ISmsNotificationService, Cinema.Business.Notifications.TwilioSmsNotificationService>();
+}
+
 // Payment gateways. Sandbox is always available for dev; VNPay/MoMo/Stripe activate when their
 // "Payments:*" config is filled in. "Payments:Provider" picks the default provider (Sandbox when unset).
 builder.Services.AddHttpClient();

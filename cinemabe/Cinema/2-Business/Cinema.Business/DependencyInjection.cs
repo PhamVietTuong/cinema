@@ -11,6 +11,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IAuthManager, AuthManager>();
         services.AddSingleton<INotificationService, DevLogNotificationService>();
+        services.AddSingleton<ISmsNotificationService, DevLogSmsNotificationService>();
         services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddSingleton<IFacebookTokenValidator, FacebookTokenValidator>();
         services.AddScoped<IMovieManager, MovieManager>();

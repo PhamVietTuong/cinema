@@ -27,12 +27,14 @@ public class BookingManager : IBookingManager
 
     private readonly IPaymentGatewayResolver _gateways;
     private readonly INotificationService _notifications;
+    private readonly ISmsNotificationService _sms;
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms)
     {
         _uow = uow;
         _gateways = gateways;
         _notifications = notifications;
+        _sms = sms;
     }
 
     public async Task<DefaultSearchResults<SeatDTO>> GetSeatsAsync(PagingSearchDTO search)
@@ -367,6 +369,13 @@ public class BookingManager : IBookingManager
                 $"Booking confirmed — {invoice.Code}",
                 $"Your payment was received. Booking code: {invoice.Code}. " +
                 $"Total paid: {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
+
+            // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
+            if (!string.IsNullOrWhiteSpace(user.Phone))
+            {
+                await _sms.SendSmsAsync(user.Phone,
+                    $"Cinema: booking {invoice.Code} confirmed. Total {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
+            }
         }
     }
 
