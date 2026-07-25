@@ -86,7 +86,7 @@
 
   &.is-today { background: rgba(225, 29, 52, 0.05); }
 }
-.st-line { border-bottom: 1px solid rgba(21, 23, 29, 0.06); }
+.st-line { border-bottom: 1px solid var(--ad-line-soft); }
 
 // Event blocks
 .st-block {

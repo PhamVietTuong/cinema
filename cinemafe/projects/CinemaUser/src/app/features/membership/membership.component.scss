@@ -43,7 +43,7 @@
   &:hover { transform: translateY(-4px); box-shadow: var(--mp-shadow-md); }
   &.featured {
     border-color: var(--mp-gold-soft);
-    background: linear-gradient(160deg, #fbf4e2 0%, #f7edd6 100%);
+    background: linear-gradient(160deg, var(--mp-gold-card-1) 0%, var(--mp-gold-card-2) 100%);
     box-shadow: var(--mp-shadow-lg);
   }
 }

@@ -13,6 +13,11 @@
       <li><a routerLink="/membership" routerLinkActive="active-link">{{ 'nav.membership' | translate }}</a></li>
     </ul>
     <div class="nav-actions">
+      <button type="button" class="nav-theme-btn" (click)="toggleTheme()"
+              [attr.aria-label]="(theme.isDark() ? 'nav.lightMode' : 'nav.darkMode') | translate"
+              [title]="(theme.isDark() ? 'nav.lightMode' : 'nav.darkMode') | translate">
+        <i class="fas" [class.fa-sun]="theme.isDark()" [class.fa-moon]="!theme.isDark()"></i>
+      </button>
       <cl-language-switcher></cl-language-switcher>
       <ng-container *ngIf="isAuth$ | async; else guestNav">
         <button class="nav-user-btn" [matMenuTriggerFor]="userMenu">
@@ -47,6 +52,11 @@
     <a routerLink="/theaters" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.theaters' | translate }}</a>
     <a routerLink="/promotions" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.promotions' | translate }}</a>
     <a routerLink="/membership" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.membership' | translate }}</a>
+    <div class="mobile-menu-divider"></div>
+    <button type="button" (click)="toggleTheme()">
+      <i class="fas" [class.fa-sun]="theme.isDark()" [class.fa-moon]="!theme.isDark()"></i>
+      {{ (theme.isDark() ? 'nav.lightMode' : 'nav.darkMode') | translate }}
+    </button>
     <div class="mobile-menu-divider"></div>
     <ng-container *ngIf="isAuth$ | async; else guestMobile">
       <a routerLink="/profile" (click)="closeMenu()">{{ 'nav.account' | translate }}</a>

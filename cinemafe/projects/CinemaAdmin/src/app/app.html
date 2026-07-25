@@ -59,6 +59,9 @@
         <a routerLink="/invoices" routerLinkActive="is-active" class="nav-item">
           <mat-icon>receipt_long</mat-icon><span>{{ 'nav.invoices' | translate }}</span>
         </a>
+        <a routerLink="/comments" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>forum</mat-icon><span>{{ 'nav.comments' | translate }}</span>
+        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -84,8 +87,8 @@
         <h2 class="topbar-title">{{ ((pageTitleKey$ | async) ?? '') | translate }}</h2>
         <div class="topbar-right">
           <cl-language-switcher></cl-language-switcher>
-          <button type="button" class="ad-icon-btn" (click)="toggleTheme()" [attr.aria-label]="(isDark ? 'topbar.lightMode' : 'topbar.darkMode') | translate" [title]="(isDark ? 'topbar.lightMode' : 'topbar.darkMode') | translate">
-            <mat-icon>{{ isDark ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          <button type="button" class="ad-icon-btn" (click)="toggleTheme()" [attr.aria-label]="(theme.isDark() ? 'topbar.lightMode' : 'topbar.darkMode') | translate" [title]="(theme.isDark() ? 'topbar.lightMode' : 'topbar.darkMode') | translate">
+            <mat-icon>{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
           </button>
           <button type="button" class="ad-icon-btn" [attr.aria-label]="'topbar.notifications' | translate"><mat-icon>notifications_none</mat-icon></button>
           <span class="ad-avatar" *ngIf="user$ | async as user">{{ (user.name || 'QT') | slice:0:1 }}</span>

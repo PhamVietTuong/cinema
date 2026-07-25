@@ -52,7 +52,7 @@ $radius-pill:  9999px;
 .badge-imax { background: var(--mp-gold-soft); color: var(--mp-gold-deep); }
 
 .badge-age {
-  background: #fff;
+  background: var(--mp-card);
   color: var(--mp-red);
   border: 1px solid rgba(225, 29, 52, 0.3);
 }
@@ -129,7 +129,7 @@ $radius-pill:  9999px;
   position: absolute;
   top: 18px;
   right: 18px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--mp-card-glass);
   border-radius: $radius-pill;
   padding: 8px 13px;
   font-size: 0.9rem;
@@ -298,7 +298,7 @@ $radius-pill:  9999px;
   position: absolute;
   top: 12px;
   left: 12px;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--mp-card-glass);
   border-radius: $radius-pill;
   padding: 4px 9px;
   font-size: 0.78rem;
@@ -327,7 +327,7 @@ $radius-pill:  9999px;
   position: absolute;
   top: 12px;
   left: 12px;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--mp-card-glass);
   color: var(--mp-gold-deep);
   border-radius: $radius-pill;
   padding: 4px 10px;
@@ -389,7 +389,7 @@ $radius-pill:  9999px;
   display: flex;
   align-items: center;
   gap: 56px;
-  background: linear-gradient(135deg, #fbf4e2 0%, #f7edd6 100%);
+  background: linear-gradient(135deg, var(--mp-gold-card-1) 0%, var(--mp-gold-card-2) 100%);
   border: 1px solid var(--mp-gold-soft);
   border-radius: 26px;
   padding: 50px 52px;

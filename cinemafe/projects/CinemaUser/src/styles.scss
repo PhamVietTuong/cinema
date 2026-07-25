@@ -12,6 +12,8 @@
   --mp-paper:      #edeef1;   // page ground (cool light)
   --mp-paper-2:    #f7f8fa;   // alternate section
   --mp-card:       #ffffff;
+  --mp-card-glass: rgba(255, 255, 255, 0.94);  // cards floating over artwork
+  --mp-topbar:     rgba(255, 255, 255, 0.82);  // translucent sticky nav
 
   // Ink / text
   --mp-ink:        #15171d;   // headings, primary text, ink buttons
@@ -22,6 +24,11 @@
   // Lines
   --mp-line:       rgba(21, 23, 29, 0.10);
   --mp-line-2:     rgba(21, 23, 29, 0.06);
+  --mp-line-3:     rgba(21, 23, 29, 0.20);   // hover/emphasis border
+
+  // Ink washes (zebra rows, film-strip perforations, subtle fills)
+  --mp-ink-wash:   rgba(21, 23, 29, 0.04);
+  --mp-ink-wash-2: rgba(21, 23, 29, 0.02);
 
   // Brand — ticket red (action) + marquee gold (premium)
   --mp-red:        #e11d34;
@@ -30,11 +37,22 @@
   --mp-gold:       #b9861f;
   --mp-gold-deep:  #9a6f16;
   --mp-gold-soft:  #f4e9cf;
+  --mp-gold-hover: #efe0bd;   // hover fill on a gold-soft surface
+  // Gold "premium card" gradient stops
+  --mp-gold-card-1: #fbf4e2;
+  --mp-gold-card-2: #f7edd6;
 
   // Status
   --mp-success:    #16a34a;
   --mp-warn:       #d97706;
   --mp-danger:     #dc2626;
+  // Status text sitting on a translucent status tint
+  --mp-success-ink: #15803d;
+  --mp-danger-ink:  #b91c1c;
+
+  // Seat map
+  --mp-seat-empty: #eef1f5;
+  --mp-seat-taken: #c3c8d0;
 
   // Elevation
   --mp-shadow-sm:  0 1px 2px rgba(20, 25, 45, 0.06), 0 2px 6px rgba(20, 25, 45, 0.05);
@@ -50,6 +68,56 @@
   // Type
   --mp-font-display: 'Bricolage Grotesque', 'Montserrat', system-ui, sans-serif;
   --mp-font-body:    'Inter', system-ui, -apple-system, sans-serif;
+
+  // Native widgets (scrollbars, form controls) follow the theme.
+  color-scheme: light;
+}
+
+// ── Dark theme ("Marquee after dark") ─────────────────────────────────────────
+// Toggled via [data-theme="dark"] on <html> by CinemaLib's ThemeService. Only the
+// tokens flip — the brand red and marquee gold stay put so the identity holds.
+:root[data-theme="dark"] {
+  --mp-paper:      #0f1116;
+  --mp-paper-2:    #14171e;
+  --mp-card:       #1b1e26;
+  --mp-card-glass: rgba(27, 30, 38, 0.94);
+  --mp-topbar:     rgba(15, 17, 22, 0.82);
+
+  --mp-ink:        #e7e9ee;
+  --mp-ink-2:      #c3c8d2;
+  --mp-muted:      #9aa1ad;
+  --mp-faint:      #6b7280;
+
+  --mp-line:       rgba(255, 255, 255, 0.10);
+  --mp-line-2:     rgba(255, 255, 255, 0.06);
+  --mp-line-3:     rgba(255, 255, 255, 0.22);
+
+  --mp-ink-wash:   rgba(255, 255, 255, 0.05);
+  --mp-ink-wash-2: rgba(255, 255, 255, 0.025);
+
+  // Red reads hotter on a dark ground — lift it slightly for contrast.
+  --mp-red:        #f2415a;
+  --mp-red-strong: #e11d34;
+  --mp-red-soft:   rgba(242, 65, 90, 0.16);
+  --mp-gold:       #d9a637;
+  --mp-gold-deep:  #b9861f;
+  --mp-gold-soft:  #3a2f14;
+  --mp-gold-hover: #4a3c1a;
+  --mp-gold-card-1: #33291180;
+  --mp-gold-card-2: #2a220f80;
+
+  --mp-success-ink: #4ade80;
+  --mp-danger-ink:  #f87171;
+
+  --mp-seat-empty: #2a2f39;
+  --mp-seat-taken: #4a515e;
+
+  // Shadows need more punch to register against a dark ground.
+  --mp-shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --mp-shadow-md:  0 12px 30px -14px rgba(0, 0, 0, 0.7);
+  --mp-shadow-lg:  0 30px 60px -24px rgba(0, 0, 0, 0.8);
+
+  color-scheme: dark;
 }
 
 body {
@@ -131,7 +199,7 @@ a { color: inherit; text-decoration: none; &:hover { text-decoration: none; } }
   text-decoration: none;
 
   &:hover {
-    border-color: rgba(21, 23, 29, 0.2);
+    border-color: var(--mp-line-3);
     transform: translateY(-2px);
     box-shadow: var(--mp-shadow-md);
     text-decoration: none;

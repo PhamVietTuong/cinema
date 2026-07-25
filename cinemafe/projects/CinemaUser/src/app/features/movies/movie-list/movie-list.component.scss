@@ -18,9 +18,9 @@
 }
 .genre-select {
   height: 42px; padding: 0 16px; border-radius: 10px;
-  background: #fff; color: var(--mp-ink); border: 1px solid var(--mp-line); cursor: pointer; min-width: 150px;
+  background: var(--mp-card); color: var(--mp-ink); border: 1px solid var(--mp-line); cursor: pointer; min-width: 150px;
   &:focus { outline: none; border-color: var(--mp-red); box-shadow: 0 0 0 3px var(--mp-red-soft); }
-  option { background: #fff; }
+  option { background: var(--mp-card); }
 }
 
 .search-box {
@@ -29,7 +29,7 @@
   input {
     width: 320px; max-width: 70vw; height: 46px;
     padding: 0 16px 0 42px; border-radius: 12px;
-    background: #fff; border: 1px solid var(--mp-line); color: var(--mp-ink); font-size: 0.9rem; outline: none;
+    background: var(--mp-card); border: 1px solid var(--mp-line); color: var(--mp-ink); font-size: 0.9rem; outline: none;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
     &::placeholder { color: var(--mp-faint); }
     &:focus { border-color: var(--mp-red); box-shadow: 0 0 0 3px var(--mp-red-soft); }

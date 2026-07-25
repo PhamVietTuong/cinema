@@ -6,7 +6,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--mp-topbar);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--mp-line);
@@ -104,7 +104,8 @@
 
 .btn-nav-primary {
   background: var(--mp-ink);
-  color: #fff;
+  // Label tracks the page ground so the "ink" button inverts cleanly in dark.
+  color: var(--mp-paper);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
@@ -135,10 +136,28 @@
   box-shadow: var(--mp-shadow-sm);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 
-  &:hover { border-color: rgba(21, 23, 29, 0.2); box-shadow: var(--mp-shadow-md); }
+  &:hover { border-color: var(--mp-line-3); box-shadow: var(--mp-shadow-md); }
 
   i:first-child { color: var(--mp-red); font-size: 1rem; }
   .small-icon { font-size: 0.65rem; opacity: 0.5; }
+}
+
+.nav-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  background: var(--mp-card);
+  border: 1px solid var(--mp-line);
+  border-radius: var(--mp-r-sm);
+  color: var(--mp-ink-2);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+
+  &:hover { color: var(--mp-gold); border-color: var(--mp-line-3); }
 }
 
 // ── Mobile nav (hamburger + slide-down panel) ─────────────────────────────────
@@ -191,5 +210,5 @@
   .nav-actions { display: none; }
   .nav-burger { display: inline-flex; align-items: center; justify-content: center; }
   .topbar-inner { gap: 16px; padding: 0 20px; }
-  .mobile-menu.is-open { display: flex; position: relative; z-index: 1001; background: #fff; }
+  .mobile-menu.is-open { display: flex; position: relative; z-index: 1001; background: var(--mp-card); }
 }

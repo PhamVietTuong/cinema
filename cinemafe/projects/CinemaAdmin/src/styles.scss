@@ -24,6 +24,14 @@
   --ad-glass-border:   rgba(21, 23, 29, 0.10);
   --ad-glass-border-strong: rgba(21, 23, 29, 0.16);
 
+  // Translucent app chrome (sidebar / topbar, sit over the page gradient)
+  --ad-chrome:         rgba(255, 255, 255, 0.90);
+  --ad-chrome-2:       rgba(255, 255, 255, 0.75);
+
+  // Hairlines & row hover (softer than --ad-glass-border)
+  --ad-line-soft:      rgba(21, 23, 29, 0.06);
+  --ad-hover:          rgba(21, 23, 29, 0.025);
+
   // Text
   --ad-on:             #15171d;
   --ad-muted:          #6b7280;
@@ -46,6 +54,11 @@
   --ad-danger-soft:    rgba(220, 38, 38, 0.10);
   --ad-info:           #0ea5e9;
 
+  // Status text on a *-soft tint (needs to flip in dark to stay legible)
+  --ad-success-ink:    #15803d;
+  --ad-warn-ink:       #b45309;
+  --ad-danger-ink:     #b91c1c;
+
   --ad-outline:        rgba(21, 23, 29, 0.10);
 
   // Radius
@@ -60,6 +73,9 @@
 
   --ad-font-head: 'Bricolage Grotesque', 'Montserrat', 'Segoe UI', sans-serif;
   --ad-font-body: 'Inter', 'Segoe UI', sans-serif;
+
+  // Tells the browser to render native widgets (scrollbars, form controls) light.
+  color-scheme: light;
 }
 
 // ── Dark theme (toggled via [data-theme="dark"] on <html>) ──────────────────
@@ -76,12 +92,27 @@
   --ad-glass-border:   rgba(255, 255, 255, 0.10);
   --ad-glass-border-strong: rgba(255, 255, 255, 0.18);
 
+  --ad-chrome:         rgba(27, 30, 38, 0.90);
+  --ad-chrome-2:       rgba(20, 23, 30, 0.75);
+
+  --ad-line-soft:      rgba(255, 255, 255, 0.07);
+  --ad-hover:          rgba(255, 255, 255, 0.04);
+
   --ad-on:             #e7e9ee;
   --ad-muted:          #9aa1ad;
   --ad-faint:          #6b7280;
 
   --ad-primary-soft:   rgba(225, 29, 52, 0.16);
   --ad-outline:        rgba(255, 255, 255, 0.12);
+
+  --ad-success-soft:   rgba(22, 163, 74, 0.18);
+  --ad-warn-soft:      rgba(217, 119, 6, 0.18);
+  --ad-danger-soft:    rgba(220, 38, 38, 0.18);
+  --ad-success-ink:    #4ade80;
+  --ad-warn-ink:       #fbbf24;
+  --ad-danger-ink:     #f87171;
+
+  color-scheme: dark;
 }
 
 :root[data-theme="dark"] body {
@@ -205,7 +236,7 @@ h1, h2, h3, h4 { font-family: var(--ad-font-head); }
 }
 .ad-btn--danger {
   background: var(--ad-danger-soft);
-  color: #b91c1c;
+  color: var(--ad-danger-ink);
   border-color: rgba(220, 38, 38, 0.28);
   &:hover:not(:disabled) { background: rgba(220, 38, 38, 0.16); }
 }
@@ -227,7 +258,7 @@ h1, h2, h3, h4 { font-family: var(--ad-font-head); }
 
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
   &:hover { color: var(--ad-on); border-color: var(--ad-glass-border-strong); background: var(--ad-glass-strong); }
-  &.is-danger:hover { color: #b91c1c; border-color: rgba(220, 38, 38, 0.4); background: var(--ad-danger-soft); }
+  &.is-danger:hover { color: var(--ad-danger-ink); border-color: rgba(220, 38, 38, 0.4); background: var(--ad-danger-soft); }
   &.is-primary:hover { color: var(--ad-primary-strong); border-color: rgba(225, 29, 52, 0.4); background: var(--ad-primary-soft); }
 }
 
@@ -304,11 +335,11 @@ textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: 
   tbody td {
     padding: 14px 18px;
     color: var(--ad-on);
-    border-bottom: 1px solid rgba(21, 23, 29, 0.06);
+    border-bottom: 1px solid var(--ad-line-soft);
     vertical-align: middle;
   }
   tbody tr { transition: background 0.15s ease; }
-  tbody tr:hover { background: rgba(21, 23, 29, 0.025); }
+  tbody tr:hover { background: var(--ad-hover); }
   tbody tr:last-child td { border-bottom: none; }
   .ad-td-actions { text-align: right; white-space: nowrap; }
   .ad-td-actions .ad-icon-btn + .ad-icon-btn { margin-left: 6px; }
@@ -329,9 +360,9 @@ textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: 
 
   &::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 }
-.ad-pill--success { background: var(--ad-success-soft); color: #15803d; }
-.ad-pill--warn    { background: var(--ad-warn-soft);    color: #b45309; }
-.ad-pill--danger  { background: var(--ad-danger-soft);  color: #b91c1c; }
+.ad-pill--success { background: var(--ad-success-soft); color: var(--ad-success-ink); }
+.ad-pill--warn    { background: var(--ad-warn-soft);    color: var(--ad-warn-ink); }
+.ad-pill--danger  { background: var(--ad-danger-soft);  color: var(--ad-danger-ink); }
 .ad-pill--violet  { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
 .ad-pill--neutral { background: var(--ad-surface-3);    color: var(--ad-muted); }
 .ad-pill.no-dot::before { display: none; }
@@ -446,7 +477,7 @@ textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: 
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 1px solid rgba(21, 23, 29, 0.2);
+  border: 1px solid var(--ad-glass-border-strong);
   vertical-align: middle;
 }
 

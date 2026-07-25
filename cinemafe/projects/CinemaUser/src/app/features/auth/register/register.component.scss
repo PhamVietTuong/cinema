@@ -48,8 +48,8 @@
 }
 .strip-frame {
   flex: 1; border-right: 2px solid var(--mp-line);
-  background: rgba(21, 23, 29, 0.04);
-  &:nth-child(odd) { background: rgba(21, 23, 29, 0.02); }
+  background: var(--mp-ink-wash);
+  &:nth-child(odd) { background: var(--mp-ink-wash-2); }
 }
 
 // ── Auth Right Panel ──────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@
 }
 .field-input {
   width: 100%; padding: 12px 14px 12px 40px;
-  border-radius: 10px; background: #fff;
+  border-radius: 10px; background: var(--mp-card);
   border: 1.5px solid var(--mp-line); color: var(--mp-ink);
   font-family: var(--mp-font-body); font-size: 0.9rem;
   outline: none; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s;

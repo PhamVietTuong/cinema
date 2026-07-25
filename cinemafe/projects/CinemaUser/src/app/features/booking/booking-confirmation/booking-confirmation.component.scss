@@ -52,7 +52,7 @@
   color: var(--mp-ink); font-size: 0.9rem; font-weight: 600; cursor: pointer;
   transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
   i { font-size: 1.2rem; color: var(--mp-muted); }
-  &:hover:not(.active) { border-color: rgba(21, 23, 29, 0.2); }
+  &:hover:not(.active) { border-color: var(--mp-line-3); }
   &.active {
     background: var(--mp-red-soft); border-color: var(--mp-red);
     box-shadow: 0 0 0 2px var(--mp-red-soft);
@@ -67,7 +67,7 @@
 
 // ── Card Preview ──────────────────────────────────────────────────────────────
 .card-preview {
-  background: linear-gradient(135deg, #fbf4e2 0%, #f7edd6 100%);
+  background: linear-gradient(135deg, var(--mp-gold-card-1) 0%, var(--mp-gold-card-2) 100%);
   border: 1px solid var(--mp-gold-soft);
   border-radius: 12px; padding: 20px; margin-bottom: 20px;
 }
@@ -191,7 +191,7 @@
   box-shadow: var(--mp-shadow-lg);
 }
 .ticket-top {
-  background: linear-gradient(135deg, #fbf4e2, #f7edd6);
+  background: linear-gradient(135deg, var(--mp-gold-card-1), var(--mp-gold-card-2));
   padding: 20px 24px;
   display: flex; justify-content: space-between; align-items: center;
 }

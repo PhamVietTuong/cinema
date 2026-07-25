@@ -26,8 +26,8 @@
 .ad-form { display: flex; flex-direction: column; gap: 16px; max-width: 440px; }
 .form-actions { margin-top: 4px; }
 .msg { font-size: 14px; margin: 0; }
-.msg.ok { color: #15803d; }
-.msg.err { color: #b91c1c; }
+.msg.ok { color: var(--ad-success-ink); }
+.msg.err { color: var(--ad-danger-ink); }
 
 @media (max-width: 820px) {
   .profile-layout { grid-template-columns: 1fr; }

@@ -1,8 +1,9 @@
 // "Marquee" — Seat Selection (light premium cinema)
 // Tokens (from styles.scss): paper #edeef1 · card #fff · ink #15171d · red #e11d34 · gold #b9861f
 
-$seat-available: #eef1f5;   // light neutral empty seat fill
-$occupied:       #c3c8d0;   // muted grey booked seat fill
+// Seat fills come from the theme tokens so they flip with dark mode.
+$seat-available: var(--mp-seat-empty);
+$occupied:       var(--mp-seat-taken);
 
 // ── Page Header ───────────────────────────────────────────────────────────────
 .page-header {
@@ -113,7 +114,7 @@ $occupied:       #c3c8d0;   // muted grey booked seat fill
     border-color: rgba(185, 134, 31, 0.5);
     background: var(--mp-gold-soft);
     color: var(--mp-gold-deep);
-    &:hover { border-color: var(--mp-gold); background: #efe0bd; }
+    &:hover { border-color: var(--mp-gold); background: var(--mp-gold-hover); }
   }
   &.vip.selected {
     background: var(--mp-gold);

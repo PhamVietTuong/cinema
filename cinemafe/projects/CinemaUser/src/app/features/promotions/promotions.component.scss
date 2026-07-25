@@ -72,7 +72,7 @@
 }
 .feature-title { font-family: var(--mp-font-display); font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0 0 10px; }
 .feature-desc { color: rgba(255, 255, 255, 0.85); margin: 0 0 18px; }
-.feature-btn { background: #fff; color: var(--mp-ink); }
+.feature-btn { background: var(--mp-card); color: var(--mp-ink); }
 
 @media (max-width: 760px) {
   .promo-grid { grid-template-columns: 1fr; }

@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -15,6 +15,7 @@ import {
   CinemaServiceAgent, IdentityServiceAgent, PaymentServiceAgent,
   provideCinemaSvgIcons,
   provideCinemaTranslation,
+  ThemeService,
 } from 'CinemaLib';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
@@ -34,6 +35,7 @@ import { App } from './app';
   providers: [
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideCinemaTranslation(),
+    provideAppInitializer(() => inject(ThemeService).init()),
     ...provideCinemaSvgIcons(),
     { provide: API_BASE_URL, useValue: environment.apiUrl },
     { provide: HUB_BASE_URL, useValue: environment.hubUrl },

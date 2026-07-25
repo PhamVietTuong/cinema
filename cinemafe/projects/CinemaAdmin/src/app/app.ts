@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { filter, map, startWith } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { Router, NavigationEnd } from '@angular/router';
-import { selectIsAuthenticated, selectCurrentUser, loadUserFromStorage, logout } from 'CinemaLib';
+import { selectIsAuthenticated, selectCurrentUser, loadUserFromStorage, logout, ThemeService } from 'CinemaLib';
 
 /** Route segment → i18n key. The key is resolved with the `translate` pipe in
  *  the template so the page title reacts to language switches too. */
@@ -39,8 +39,8 @@ export class App implements OnInit {
   /** Mobile sidebar drawer open state (ignored on desktop where the rail is static). */
   menuOpen = false;
 
-  /** Dark-theme state, persisted to localStorage and applied to <html data-theme>. */
-  isDark = false;
+  /** Dark/light state — persisted and applied to <html data-theme> by the service. */
+  readonly theme = inject(ThemeService);
 
   constructor(private _store: Store, private _router: Router) {
     this.isAuth$ = this._store.select(selectIsAuthenticated);
@@ -59,18 +59,10 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this._store.dispatch(loadUserFromStorage());
-    this.isDark = localStorage.getItem('ad_theme') === 'dark';
-    this._applyTheme();
   }
 
   toggleTheme(): void {
-    this.isDark = !this.isDark;
-    localStorage.setItem('ad_theme', this.isDark ? 'dark' : 'light');
-    this._applyTheme();
-  }
-
-  private _applyTheme(): void {
-    document.documentElement.setAttribute('data-theme', this.isDark ? 'dark' : 'light');
+    this.theme.toggle();
   }
 
   doLogout(): void {

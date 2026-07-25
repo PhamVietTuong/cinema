@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -14,6 +14,7 @@ import {
   API_BASE_URL, HUB_BASE_URL,
   CinemaServiceAgent, IdentityServiceAgent, PaymentServiceAgent,
   provideCinemaTranslation,
+  ThemeService,
 } from 'CinemaLib';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
@@ -35,6 +36,7 @@ import { ChatbotComponent } from './shared/chatbot/chatbot.component';
   providers: [
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideCinemaTranslation(),
+    provideAppInitializer(() => inject(ThemeService).init()),
     { provide: API_BASE_URL, useValue: environment.apiUrl },
     { provide: HUB_BASE_URL, useValue: environment.hubUrl },
     { provide: CinemaServiceAgent.CINEMA_BASE_URL, useValue: environment.apiUrl },

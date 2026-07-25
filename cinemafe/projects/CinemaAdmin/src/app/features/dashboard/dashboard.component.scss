@@ -14,8 +14,8 @@
   width: 44px; height: 44px; border-radius: var(--ad-r-md); flex: none;
   mat-icon { font-size: 23px; width: 23px; height: 23px; }
   &.i-violet { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
-  &.i-blue   { background: rgba(14, 165, 233, 0.12); color: #0369a1; }
-  &.i-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+  &.i-blue   { background: rgba(14, 165, 233, 0.12); color: var(--ad-info); }
+  &.i-orange { background: var(--ad-warn-soft); color: var(--ad-warn-ink); }
   &.i-green  { background: var(--ad-success-soft); color: #15803d; }
 }
 .kpi-label { font-size: 13px; color: var(--ad-muted); }
