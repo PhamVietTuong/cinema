@@ -1,56 +1,67 @@
-// "Marquee" — Seat Selection (light premium cinema)
-// Tokens (from styles.scss): paper #edeef1 · card #fff · ink #15171d · red #e11d34 · gold #b9861f
-
-// Seat fills come from the theme tokens so they flip with dark mode.
-$seat-available: var(--mp-seat-empty);
-$occupied:       var(--mp-seat-taken);
+// "Night Screening" — Seat Selection
+//
+// The idea this page is built on: the screen is the only light source in the
+// room. It glows, it spills down over the front rows, and the seats are wells
+// cut into a dark floor. Exactly one thing else is allowed to glow — the seat
+// you just took — because that is the single piece of state worth finding
+// without looking for it.
+//
+// This file is written against the --ns-* tokens directly rather than the
+// --mp-* compat aliases in styles.scss; new and reworked pages should do the same.
 
 // ── Page Header ───────────────────────────────────────────────────────────────
 .page-header {
-  background: var(--mp-card);
-  border-bottom: 1px solid var(--mp-line-2);
+  background: var(--ns-ground-2);
+  border-bottom: 1px solid var(--ns-line-2);
   padding: 20px 0;
 }
 .page-header-inner {
   max-width: 1280px; margin: 0 auto; padding: 0 40px;
 }
 .breadcrumb {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 0.8rem; color: var(--mp-muted); margin-bottom: 8px;
-  a { color: var(--mp-muted); transition: color 0.2s; &:hover { color: var(--mp-red); } }
+  display: flex; align-items: center; gap: var(--cx-space-2);
+  font-size: var(--cx-text-xs); color: var(--ns-muted); margin-bottom: 6px;
+  a { color: var(--ns-muted); transition: color var(--cx-dur) var(--cx-ease); &:hover { color: var(--ns-beam); } }
   i { font-size: 0.65rem; }
 }
 .page-title {
-  font-family: var(--mp-font-display); font-size: 1.5rem;
-  font-weight: 700; color: var(--mp-ink); margin: 0;
+  font-family: var(--ns-font-display); font-size: var(--cx-text-xl);
+  font-weight: var(--cx-weight-bold); color: var(--ns-ink); margin: 0;
+  letter-spacing: var(--cx-track-tight);
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 .seat-page {
   max-width: 1280px; margin: 0 auto; padding: 40px;
-  display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start;
+  display: grid; grid-template-columns: 1fr 300px; gap: var(--cx-space-6); align-items: start;
 }
 
 .seat-area { min-width: 0; }
 
 .spinner-wrap {
   display: flex; justify-content: center; padding: 80px;
-  ::ng-deep circle { stroke: var(--mp-red) !important; }
+  ::ng-deep circle { stroke: var(--ns-beam) !important; }
 }
 
-// ── Cinema Screen ─────────────────────────────────────────────────────────────
+// ── The screen — the light source ─────────────────────────────────────────────
 .screen-wrap {
-  display: flex; flex-direction: column; align-items: center; margin-bottom: 32px;
+  display: flex; flex-direction: column; align-items: center; margin-bottom: var(--cx-space-6);
 }
 .screen-arc {
-  width: 70%; max-width: 480px; height: 28px;
-  border-top: 3px solid var(--mp-gold);
+  width: 70%; max-width: 480px; height: 30px;
+  border-top: 2px solid var(--ns-beam);
   border-radius: 50% 50% 0 0;
-  box-shadow: 0 -6px 24px rgba(185, 134, 31, 0.28);
+  // Light leaves the screen in both directions: up as bloom, down as spill.
+  background: linear-gradient(180deg, rgba(89, 217, 210, 0.18), rgba(89, 217, 210, 0));
+  box-shadow: 0 -10px 34px rgba(89, 217, 210, 0.30);
 }
 .screen-label {
-  margin-top: 6px; font-size: 0.7rem; font-weight: 600;
-  letter-spacing: 0.2em; color: var(--mp-muted); text-transform: uppercase;
+  margin-top: var(--cx-space-2);
+  font-family: var(--ns-font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.3em;
+  color: var(--ns-muted);
+  text-transform: uppercase;
 }
 
 // ── Seat Grid ─────────────────────────────────────────────────────────────────
@@ -59,7 +70,10 @@ $occupied:       var(--mp-seat-taken);
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  margin-bottom: 28px;
+  padding: var(--cx-space-5) var(--cx-space-4) var(--cx-space-6);
+  margin-bottom: var(--cx-space-5);
+  // The spill: front rows sit closer to the screen, so they catch more of it.
+  background: radial-gradient(120% 76% at 50% -8%, rgba(89, 217, 210, 0.075) 0%, rgba(7, 8, 11, 0) 62%);
 }
 
 // One cinema row per line: label + that row's seats laid out horizontally.
@@ -72,113 +86,152 @@ $occupied:       var(--mp-seat-taken);
 .row-label {
   width: 34px; flex: none;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.75rem; font-weight: 700; color: var(--mp-muted);
+  font-family: var(--ns-font-data);
+  font-size: 0.72rem; font-weight: var(--cx-weight-medium); color: var(--ns-faint);
 }
 
+// Seats read as wells cut into the floor, not as raised chips — hence the inset
+// highlight and the flat fill.
 .seat {
-  width: 34px; height: 34px; border-radius: 6px 6px 4px 4px;
+  width: 34px; height: 34px;
+  border-radius: 7px 7px 3px 3px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.55rem; font-weight: 600; color: var(--mp-ink-2);
-  cursor: pointer; border: 1.5px solid var(--mp-line);
-  background: #{$seat-available};
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: var(--ns-font-data);
+  font-size: 0.55rem; font-weight: var(--cx-weight-medium);
+  color: var(--ns-muted);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: var(--ns-seat-empty);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: transform var(--cx-dur-fast) var(--cx-ease),
+              background var(--cx-dur-fast) var(--cx-ease),
+              border-color var(--cx-dur-fast) var(--cx-ease);
 
-  &.selected, &.vip.selected { color: #fff; }
-  &:hover:not(.occupied):not(.locked) { transform: scale(1.15); }
+  &:hover:not(.occupied):not(.locked) { transform: scale(1.14); }
 
   &.available {
-    background: #{$seat-available};
-    border-color: var(--mp-line);
-    &:hover { border-color: var(--mp-red); background: var(--mp-red-soft); }
+    &:hover {
+      border-color: var(--ns-beam);
+      background: var(--ns-beam-soft);
+      color: var(--ns-beam);
+    }
   }
+
+  // The one glowing object on the page.
   &.selected {
-    background: var(--mp-red);
-    border-color: var(--mp-red);
-    box-shadow: 0 6px 16px -6px rgba(225, 29, 52, 0.55);
-    cursor: pointer;
+    background: var(--ns-beam);
+    border-color: var(--ns-beam);
+    color: var(--ns-beam-ink);
+    font-weight: var(--cx-weight-semibold);
+    box-shadow: 0 0 0 3px var(--ns-beam-soft), 0 0 16px rgba(89, 217, 210, 0.55);
   }
+
+  // Taken: still legible as a seat, clearly not yours, and not competing for
+  // attention. No border — it recedes into the floor.
   &.occupied {
-    background: #{$occupied};
-    border-color: #{$occupied};
-    color: var(--mp-faint);
-    opacity: 0.7;
+    background: var(--ns-seat-taken);
+    border-color: transparent;
+    color: var(--ns-faint);
     cursor: not-allowed;
+    box-shadow: none;
   }
+
+  // Held by someone else mid-checkout — temporary, so amber rather than dead grey.
   &.locked {
-    background: rgba(217, 119, 6, 0.18);
-    border-color: rgba(217, 119, 6, 0.5);
-    color: var(--mp-warn);
+    background: rgba(245, 184, 67, 0.14);
+    border-color: rgba(245, 184, 67, 0.42);
+    color: var(--ns-warn);
     cursor: not-allowed;
+    box-shadow: none;
   }
+
+  // Premium seating carries the gel, and only premium seating does.
   &.vip.available {
-    border-color: rgba(185, 134, 31, 0.5);
-    background: var(--mp-gold-soft);
-    color: var(--mp-gold-deep);
-    &:hover { border-color: var(--mp-gold); background: var(--mp-gold-hover); }
+    background: var(--ns-gel-soft);
+    border-color: rgba(255, 78, 138, 0.42);
+    color: var(--ns-gel);
+
+    &:hover { background: var(--ns-gel-hover); border-color: var(--ns-gel); }
   }
   &.vip.selected {
-    background: var(--mp-gold);
-    border-color: var(--mp-gold);
-    box-shadow: 0 6px 16px -6px rgba(185, 134, 31, 0.55);
+    background: var(--ns-gel);
+    border-color: var(--ns-gel);
+    color: #fff;
+    box-shadow: 0 0 0 3px var(--ns-gel-soft), 0 0 16px rgba(255, 78, 138, 0.5);
   }
 }
 
 // ── Legend ────────────────────────────────────────────────────────────────────
 .legend {
-  display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
-  padding: 16px; border-top: 1px solid var(--mp-line-2);
+  display: flex; gap: var(--cx-space-5); flex-wrap: wrap; justify-content: center;
+  padding: var(--cx-space-4); border-top: 1px solid var(--ns-line-2);
 }
-.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--mp-muted); }
+.legend-item { display: flex; align-items: center; gap: var(--cx-space-2); font-size: var(--cx-text-xs); color: var(--ns-muted); }
 .legend-dot {
-  width: 18px; height: 18px; border-radius: 4px;
-  &.available { background: #{$seat-available}; border: 1.5px solid var(--mp-line); }
-  &.selected  { background: var(--mp-red); }
-  &.occupied  { background: #{$occupied}; border: 1.5px solid #{$occupied}; opacity: 0.7; }
-  &.vip.available { background: var(--mp-gold-soft); border: 1.5px solid rgba(185, 134, 31, 0.5); }
+  width: 16px; height: 16px; border-radius: 4px 4px 2px 2px; flex: none;
+  &.available { background: var(--ns-seat-empty); }
+  &.selected  { background: var(--ns-beam); box-shadow: 0 0 10px rgba(89, 217, 210, 0.5); }
+  &.occupied  { background: var(--ns-seat-taken); }
+  &.vip.available { background: var(--ns-gel-soft); border: 1px solid rgba(255, 78, 138, 0.42); }
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 .sidebar-card {
-  background: var(--mp-card);
-  border: 1px solid var(--mp-line-2);
-  border-radius: 16px;
-  padding: 24px;
+  background: var(--ns-panel);
+  border: 1px solid var(--ns-line);
+  border-radius: var(--ns-r-lg);
+  padding: var(--cx-space-5);
   position: sticky;
   top: 80px;
-  box-shadow: var(--mp-shadow-sm);
+  box-shadow: var(--ns-shadow-md);
 }
 .sidebar-title {
-  font-family: var(--mp-font-display); font-size: 1rem;
-  font-weight: 700; color: var(--mp-ink); margin: 0 0 20px;
+  font-family: var(--ns-font-display); font-size: var(--cx-text-lg);
+  font-weight: var(--cx-weight-bold); color: var(--ns-ink); margin: 0 0 var(--cx-space-5);
+  letter-spacing: var(--cx-track-tight);
 }
 .empty-seats {
-  text-align: center; padding: 24px 0; color: var(--mp-muted);
-  i { font-size: 2rem; margin-bottom: 8px; display: block; opacity: 0.4; }
-  p { font-size: 0.85rem; margin: 0; }
+  text-align: center; padding: var(--cx-space-5) 0; color: var(--ns-muted);
+  i { font-size: 1.9rem; margin-bottom: var(--cx-space-2); display: block; color: var(--ns-faint); }
+  p { font-size: var(--cx-text-sm); margin: 0; }
 }
-.selected-list { display: flex; flex-direction: column; gap: 10px; }
+.selected-list { display: flex; flex-direction: column; gap: var(--cx-space-2); }
 .selected-item {
   display: flex; align-items: center; justify-content: space-between;
-  background: var(--mp-red-soft); border: 1px solid rgba(225, 29, 52, 0.18);
-  border-radius: 8px; padding: 10px 14px;
+  background: var(--ns-beam-soft);
+  border: 1px solid rgba(89, 217, 210, 0.22);
+  border-radius: var(--ns-r-sm); padding: 10px 13px;
 }
 .selected-seat-name { display: flex; flex-direction: column; gap: 2px; }
-.seat-code { font-family: var(--mp-font-display); font-size: 0.95rem; font-weight: 700; color: var(--mp-red); }
-.seat-type { font-size: 0.75rem; color: var(--mp-muted); }
-.seat-price { font-size: 0.9rem; font-weight: 600; color: var(--mp-ink); }
+.seat-code {
+  font-family: var(--ns-font-data); font-size: var(--cx-text-md);
+  font-weight: var(--cx-weight-medium); color: var(--ns-beam);
+  font-variant-numeric: tabular-nums;
+}
+.seat-type { font-size: var(--cx-text-xs); color: var(--ns-muted); }
+.seat-price {
+  font-family: var(--ns-font-data); font-size: var(--cx-text-sm);
+  color: var(--ns-ink); font-variant-numeric: tabular-nums;
+}
 
-.price-divider { border: none; border-top: 1px solid var(--mp-line-2); margin: 16px 0; }
+.price-divider { border: none; border-top: 1px solid var(--ns-line-2); margin: var(--cx-space-4) 0; }
 .price-row {
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 0.875rem; color: var(--mp-ink); margin-bottom: 8px;
-  &.muted { color: var(--mp-muted); font-size: 0.82rem; }
+  font-size: var(--cx-text-sm); color: var(--ns-ink-2); margin-bottom: var(--cx-space-2);
+  font-variant-numeric: tabular-nums;
+  &.muted { color: var(--ns-muted); }
 }
-.total-row { font-weight: 600; margin-top: 4px; }
-.total-amount { font-family: var(--mp-font-display); font-size: 1.1rem; font-weight: 700; color: var(--mp-red); }
+.total-row { color: var(--ns-ink); font-weight: var(--cx-weight-semibold); margin-top: var(--cx-space-1); }
+.total-amount {
+  font-family: var(--ns-font-data); font-size: var(--cx-text-lg);
+  font-weight: var(--cx-weight-medium); color: var(--ns-beam);
+  font-variant-numeric: tabular-nums;
+}
 
-.confirm-btn { width: 100%; justify-content: center; margin-top: 20px; font-size: 0.85rem; letter-spacing: 0.04em; }
+.confirm-btn { width: 100%; justify-content: center; margin-top: var(--cx-space-5); font-size: var(--cx-text-sm); letter-spacing: 0.03em; }
 
 @media (max-width: 900px) {
   .seat-page { grid-template-columns: 1fr; padding: 24px 20px; }
   .sidebar-card { position: static; }
+  .page-header-inner { padding: 0 20px; }
 }

@@ -1,9 +1,17 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, InjectionToken, computed, inject, signal } from '@angular/core';
 
 export type AppTheme = 'light' | 'dark';
 
 const STORAGE_KEY = 'cinema_theme';
-const DEFAULT_THEME: AppTheme = 'light';
+
+/**
+ * Which theme the host app is designed around. The two apps no longer share one
+ * answer: CinemaUser ships the dark "Night Screening" identity, CinemaAdmin the
+ * light "Box Office" one. Apps override this in their providers; unset means light.
+ */
+export const APP_DEFAULT_THEME = new InjectionToken<AppTheme>('APP_DEFAULT_THEME', {
+  factory: () => 'light',
+});
 
 /**
  * Central light/dark state for both apps. Persists the choice to localStorage
@@ -13,7 +21,9 @@ const DEFAULT_THEME: AppTheme = 'light';
  */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  readonly current = signal<AppTheme>(DEFAULT_THEME);
+  private readonly defaultTheme = inject(APP_DEFAULT_THEME);
+
+  readonly current = signal<AppTheme>(this.defaultTheme);
   readonly isDark = computed(() => this.current() === 'dark');
 
   /** Called once at startup (via provideAppInitializer) to apply the saved theme. */
@@ -43,7 +53,7 @@ export class ThemeService {
     } catch {
       /* storage unavailable — fall through to the OS preference */
     }
-    return this.prefersDark() ? 'dark' : DEFAULT_THEME;
+    return this.prefersDark() ? 'dark' : this.defaultTheme;
   }
 
   private persist(theme: AppTheme): void {
