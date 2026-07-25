@@ -344,6 +344,7 @@ CREATE TABLE [InvoiceTicket] (
     [Price] float NOT NULL,
     [QrCode] nvarchar(max) NULL,
     [IsUsed] bit NOT NULL,
+    [IsActive] bit NOT NULL DEFAULT 1,
     CONSTRAINT [PK_InvoiceTicket] PRIMARY KEY ([InvoiceId], [ShowTimeId], [RoomId], [SeatId]),
     CONSTRAINT [FK_InvoiceTicket_Invoice_InvoiceId] FOREIGN KEY ([InvoiceId]) REFERENCES [Invoice] ([Id]) ON DELETE CASCADE,
     CONSTRAINT [FK_InvoiceTicket_Seat_SeatId] FOREIGN KEY ([SeatId]) REFERENCES [Seat] ([Id]) ON DELETE NO ACTION,
@@ -402,6 +403,8 @@ CREATE INDEX [IX_Invoice_DiscountId] ON [Invoice] ([DiscountId]);
 CREATE INDEX [IX_Invoice_UserId] ON [Invoice] ([UserId]);
 CREATE INDEX [IX_InvoiceTicket_SeatId] ON [InvoiceTicket] ([SeatId]);
 CREATE INDEX [IX_InvoiceTicket_ShowTimeId_RoomId] ON [InvoiceTicket] ([ShowTimeId], [RoomId]);
+-- Cross-instance double-booking guard: at most one active ticket per (showtime, room, seat).
+CREATE UNIQUE INDEX [IX_InvoiceTicket_ActiveSeat] ON [InvoiceTicket] ([ShowTimeId], [RoomId], [SeatId]) WHERE [IsActive] = 1;
 CREATE INDEX [IX_Movie_AgeRestrictionId] ON [Movie] ([AgeRestrictionId]);
 CREATE INDEX [IX_MovieTypeDetail_MovieTypeId] ON [MovieTypeDetail] ([MovieTypeId]);
 CREATE INDEX [IX_Room_TheaterId] ON [Room] ([TheaterId]);

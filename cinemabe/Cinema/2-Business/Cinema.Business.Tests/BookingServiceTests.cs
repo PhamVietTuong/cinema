@@ -321,4 +321,19 @@ public class BookingServiceTests
         invoice.Status.Should().Be(InvoiceStatus.Cancelled);
         user.Points.Should().Be(15);
     }
+
+    [Fact]
+    public async Task CancelBookingAsync_DeactivatesTicketsToFreeSeats()
+    {
+        var userId  = Guid.NewGuid();
+        var invoice = new Invoice { Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Pending };
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        await _sut.CancelBookingAsync(userId, invoice.Id);
+
+        // Frees the seats at the DB unique-index level for multi-instance safety.
+        _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
+    }
 }

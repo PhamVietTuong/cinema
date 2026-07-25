@@ -424,4 +424,23 @@ BEGIN
     PRINT 'Added [User].[NotifyReminderEmails].';
 END
 
+-- ── cross-instance double-booking guard (active-seat unique index) ───────────────
+-- A ticket is active while its invoice is Pending/Paid; a filtered unique index over active tickets
+-- means two server instances can't double-sell the same (showtime, room, seat).
+IF COL_LENGTH('[InvoiceTicket]', 'IsActive') IS NULL
+BEGIN
+    ALTER TABLE [InvoiceTicket] ADD [IsActive] bit NOT NULL CONSTRAINT [DF_InvoiceTicket_IsActive] DEFAULT 1;
+    PRINT 'Added [InvoiceTicket].[IsActive].';
+    -- Backfill: tickets on Cancelled/Failed/Refunded invoices are inactive (0=Pending, 1=Paid stay active).
+    UPDATE it SET it.[IsActive] = 0
+    FROM [InvoiceTicket] it JOIN [Invoice] i ON i.[Id] = it.[InvoiceId]
+    WHERE i.[Status] NOT IN (0, 1);
+    PRINT 'Backfilled [InvoiceTicket].[IsActive] from invoice status.';
+END
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_InvoiceTicket_ActiveSeat' AND object_id = OBJECT_ID('InvoiceTicket'))
+BEGIN
+    CREATE UNIQUE INDEX [IX_InvoiceTicket_ActiveSeat] ON [InvoiceTicket] ([ShowTimeId], [RoomId], [SeatId]) WHERE [IsActive] = 1;
+    PRINT 'Created [IX_InvoiceTicket_ActiveSeat].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

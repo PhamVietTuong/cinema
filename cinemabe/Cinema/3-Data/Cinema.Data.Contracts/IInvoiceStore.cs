@@ -21,4 +21,7 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     Task<InvoiceTicket?> GetTicketByQrAsync(string qrCode);
     /// <summary>Paid tickets whose showtime starts in [from, to) — with user + movie + seat — for reminders.</summary>
     Task<IReadOnlyList<InvoiceTicket>> GetPaidTicketsForShowtimesAsync(DateTime from, DateTime to);
+    /// <summary>Marks an invoice's tickets inactive (frees their seats at the DB unique-index level).
+    /// Called when a booking is cancelled, expires, or is refunded.</summary>
+    Task DeactivateTicketsAsync(Guid invoiceId);
 }

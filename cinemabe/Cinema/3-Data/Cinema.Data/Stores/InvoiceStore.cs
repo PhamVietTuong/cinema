@@ -10,6 +10,20 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
 {
     public InvoiceStore(CinemaContext db) : base(db) { }
 
+    // Translate a seat-uniqueness violation (another booking, possibly on another instance, took a seat
+    // first) into a friendly domain exception instead of a raw persistence error.
+    public override async Task<Invoice> CreateAsync(Invoice entity)
+    {
+        try
+        {
+            return await base.CreateAsync(entity);
+        }
+        catch (DbUpdateException ex) when (ex.Entries.Any(e => e.Entity is InvoiceTicket))
+        {
+            throw new SeatUnavailableException("One or more selected seats are no longer available.", ex);
+        }
+    }
+
     public async Task<Invoice?> GetWithDetailsAsync(Guid id)
         => await DbSet
             .Include(i => i.User)
@@ -110,4 +124,9 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             .Include(t => t.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
             .Include(t => t.ShowTimeRoom).ThenInclude(sr => sr.Room)
             .FirstOrDefaultAsync(t => t.QrCode == qrCode);
+
+    public async Task DeactivateTicketsAsync(Guid invoiceId)
+        => await Context.InvoiceTicket
+            .Where(t => t.InvoiceId == invoiceId && t.IsActive)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
 }

@@ -212,6 +212,13 @@ public class BookingManager : IBookingManager
                 Tickets        = ticketItems
             };
         }
+        catch (SeatUnavailableException)
+        {
+            // Another booking (possibly on another server instance) claimed a seat first — the DB unique
+            // index rejected the insert. Surface it like the in-process "already booked" check.
+            await _uow.RollbackTransactionAsync();
+            throw new InvalidOperationException("One or more selected seats were just booked by someone else.");
+        }
         catch
         {
             await _uow.RollbackTransactionAsync();
@@ -568,6 +575,7 @@ public class BookingManager : IBookingManager
         }
         invoice.Status = InvoiceStatus.Cancelled;
         await _uow.InvoiceStore.UpdateAsync(invoice);
+        await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
         await RestoreRedeemedPointsAsync(invoice);
         await _uow.SaveChangesAsync();
         return true;
@@ -633,6 +641,7 @@ public class BookingManager : IBookingManager
         invoice.Status     = InvoiceStatus.Refunded;
         invoice.RefundedAt = DateTime.UtcNow;
         await _uow.InvoiceStore.UpdateAsync(invoice);
+        await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
 
         // Reverse the loyalty points accrued at payment, give back any points spent on this booking,
         // and re-evaluate the membership tier.
@@ -685,6 +694,7 @@ public class BookingManager : IBookingManager
             // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
             invoice.Status = InvoiceStatus.Cancelled;
             await _uow.InvoiceStore.UpdateAsync(invoice);
+            await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
             await RestoreRedeemedPointsAsync(invoice);
         }
         await _uow.SaveChangesAsync();
