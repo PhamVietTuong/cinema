@@ -385,6 +385,17 @@ CREATE TABLE [TicketPrice] (
 ALTER TABLE [SeatType]     ADD CONSTRAINT [FK_SeatType_Theater_TheaterId]     FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 ALTER TABLE [FoodAndDrink] ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 
+-- Showtime reminders already sent (persists dedup across restarts).
+CREATE TABLE [ReminderLog] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [UserId] uniqueidentifier NOT NULL,
+    [ShowTimeId] uniqueidentifier NOT NULL,
+    [SentAt] datetime NOT NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_ReminderLog] PRIMARY KEY ([Id])
+);
+
 -- Indexes
 CREATE INDEX [IX_Comment_MovieId] ON [Comment] ([MovieId]);
 CREATE INDEX [IX_Comment_ParentId] ON [Comment] ([ParentId]);
@@ -426,3 +437,4 @@ CREATE INDEX [IX_User_MemberShipId] ON [User] ([MemberShipId]);
 CREATE UNIQUE INDEX [IX_User_Phone] ON [User] ([Phone]);
 CREATE INDEX [IX_User_UserTypeId] ON [User] ([UserTypeId]);
 CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);
+CREATE UNIQUE INDEX [IX_ReminderLog_UserId_ShowTimeId] ON [ReminderLog] ([UserId], [ShowTimeId]);

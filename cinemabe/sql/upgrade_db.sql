@@ -443,4 +443,21 @@ BEGIN
     PRINT 'Created [IX_InvoiceTicket_ActiveSeat].';
 END
 
+-- ── restart-safe showtime reminders ──────────────────────────────────────────────
+-- Persists which (user, showtime) reminders were sent so a process restart doesn't re-send.
+IF OBJECT_ID('ReminderLog', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ReminderLog] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [UserId] uniqueidentifier NOT NULL,
+        [ShowTimeId] uniqueidentifier NOT NULL,
+        [SentAt] datetime NOT NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ReminderLog] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_ReminderLog_UserId_ShowTimeId] ON [ReminderLog] ([UserId], [ShowTimeId]);
+    PRINT 'Created [ReminderLog].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

@@ -1,13 +1,16 @@
 using Cinema.Business.Contracts;
 using Cinema.Data.Contracts;
+using Cinema.Data.Entities;
 using Cinema.Foundation.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Service.WebApiHost.Services;
 
 /// <summary>
 /// Periodically emails a "your showtime is soon" reminder to customers holding paid tickets
 /// for a showtime starting ~1 hour out. Delivery goes through <see cref="INotificationService"/>
-/// (real email when SMTP is configured, dev log otherwise). Dedup is in-memory per (user, showtime).
+/// (real email when SMTP is configured, dev log otherwise). Dedup is persisted in ReminderLog so a
+/// process restart doesn't re-send, and the unique (user, showtime) index dedups across instances.
 /// </summary>
 public class ShowtimeReminderService : BackgroundService
 {
@@ -16,7 +19,6 @@ public class ShowtimeReminderService : BackgroundService
     private static readonly TimeSpan _window    = TimeSpan.FromMinutes(15); // scan band each tick
 
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly HashSet<string> _sent = new(); // "{userId}:{showTimeId}" already reminded
 
     public ShowtimeReminderService(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
 
@@ -36,8 +38,10 @@ public class ShowtimeReminderService : BackgroundService
 
                 foreach (var group in tickets.GroupBy(t => new { t.Invoice.UserId, t.ShowTimeRoom.ShowTimeId }))
                 {
-                    var key = $"{group.Key.UserId}:{group.Key.ShowTimeId}";
-                    if (!_sent.Add(key)) { continue; } // already reminded this run's lifetime
+                    var userId     = group.Key.UserId;
+                    var showTimeId = group.Key.ShowTimeId;
+                    // Persisted dedup: survives restarts, and the unique index dedups across instances.
+                    if (await uow.ReminderLogStore.WasSentAsync(userId, showTimeId)) { continue; }
 
                     var first = group.First();
                     var email = first.Invoice.User?.Email;
@@ -54,6 +58,19 @@ public class ShowtimeReminderService : BackgroundService
                     await notify.SendAsync(email!,
                         $"Nhắc lịch: {movie} lúc {start:HH:mm dd/MM}",
                         $"Suất chiếu \"{movie}\" bắt đầu lúc {start:HH:mm dd/MM}. Ghế: {seats}. Hẹn gặp bạn tại rạp!");
+
+                    // Record the send so a restart (or another instance) won't repeat it.
+                    try
+                    {
+                        await uow.ReminderLogStore.CreateAsync(new ReminderLog
+                        {
+                            UserId = userId, ShowTimeId = showTimeId, SentAt = DateTime.UtcNow,
+                        });
+                    }
+                    catch (DbUpdateException)
+                    {
+                        // Another instance recorded this reminder first — the unique index rejected it. Fine.
+                    }
                 }
             }
             catch (Exception e)
