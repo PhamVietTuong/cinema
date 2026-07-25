@@ -274,3 +274,16 @@
 .combo-qty button:disabled { opacity: 0.4; cursor: default; }
 .combo-qty span { min-width: 18px; text-align: center; font-weight: 700; }
 .discount-note { display: block; margin-top: 6px; font-size: 0.8rem; opacity: 0.65; }
+
+/* Seat-hold countdown banner */
+.hold-banner {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 16px; padding: 10px 14px; border-radius: 10px;
+  font-size: 0.9rem; font-weight: 600;
+  background: var(--mp-gold-soft); color: var(--mp-ink);
+  border: 1px solid var(--mp-gold);
+}
+.hold-banner mat-icon { font-size: 20px; width: 20px; height: 20px; }
+.hold-banner.expired {
+  background: var(--mp-faint); border-color: var(--mp-danger); color: var(--mp-danger);
+}

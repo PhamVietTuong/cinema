@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, IdentityServiceAgent, BookingHubService } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,8 +13,15 @@ type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean };
   templateUrl: './booking-confirmation.component.html',
   styleUrl: './booking-confirmation.component.scss'
 })
-export class BookingConfirmationComponent implements OnInit {
+export class BookingConfirmationComponent implements OnInit, OnDestroy {
   seats: SelectableSeat[] = [];
+
+  /** Client-side seat-hold countdown. Seats are held ~5 minutes by the realtime lock; this warns the
+   * user to finish before it lapses. If it expires and someone else takes a seat, the booking is safely
+   * rejected server-side (active-seat unique index), so we warn rather than block. */
+  holdSecondsLeft = 5 * 60;
+  holdExpired = false;
+  private _holdTimer: any;
   showTimeId = '';
   roomId = '';
   paymentMethod = 'Card';
@@ -89,6 +96,7 @@ export class BookingConfirmationComponent implements OnInit {
       this.showTimeId = state.showTimeId;
       this.roomId = state.roomId;
     }
+    this._startHoldCountdown();
     // Load the signed-in user's loyalty balance so they can redeem points.
     this._identityService.getProfile().subscribe({
       next: u => { this.pointsBalance = u.points ?? 0; this._cdr.markForCheck(); },
@@ -106,6 +114,31 @@ export class BookingConfirmationComponent implements OnInit {
           });
       });
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this._holdTimer) {
+      clearInterval(this._holdTimer);
+    }
+  }
+
+  private _startHoldCountdown(): void {
+    this._holdTimer = setInterval(() => {
+      if (this.holdSecondsLeft > 0) {
+        this.holdSecondsLeft--;
+      } else {
+        this.holdExpired = true;
+        clearInterval(this._holdTimer);
+      }
+      this._cdr.markForCheck();
+    }, 1000);
+  }
+
+  /** The seat-hold countdown as MM:SS. */
+  get holdCountdown(): string {
+    const m = Math.floor(this.holdSecondsLeft / 60);
+    const s = this.holdSecondsLeft % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
   incFood(f: CinemaServiceAgent.FoodAndDrinkDTO): void {

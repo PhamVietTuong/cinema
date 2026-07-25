@@ -132,6 +132,8 @@
     }
   },
   "booking": {
+    "holdTimer": "Đang giữ ghế — vui lòng hoàn tất đặt vé trong {{time}}",
+    "holdExpired": "Thời gian giữ ghế đã hết. Bạn vẫn có thể thanh toán, nhưng ghế có thể đã bị người khác đặt.",
     "breadcrumb": {
       "home": "Trang Chủ",
       "movies": "Phim"

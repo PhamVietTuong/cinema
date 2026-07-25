@@ -132,6 +132,8 @@
     }
   },
   "booking": {
+    "holdTimer": "Seats held — complete your booking within {{time}}",
+    "holdExpired": "Your seat hold has expired. You can still try to pay, but a seat may have been taken.",
     "breadcrumb": {
       "home": "Home",
       "movies": "Movies"
