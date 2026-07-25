@@ -28,6 +28,10 @@ export interface IHttpService {
     paymentCallbackPOST(provider?: string | undefined): Observable<void>;
     paymentCallbackGET(provider?: string | undefined): Observable<void>;
     refundBooking(request: RefundBookingRequest): Observable<void>;
+    validateGiftCard(request: ValidateGiftCardRequest): Observable<GiftCardValidationDTO>;
+    getGiftCards(search: PagingSearchDTO): Observable<DefaultSearchResultsOfGiftCardDTO>;
+    issueGiftCard(request: IssueGiftCardRequest): Observable<GiftCardDTO>;
+    setGiftCardActive(request: SetGiftCardActiveRequest): Observable<void>;
     validateTicket(request: ValidateTicketRequest): Observable<TicketValidationDTO>;
     getMyInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceDTO>;
     getInvoice(id?: string | undefined): Observable<InvoiceDTO>;
@@ -478,6 +482,224 @@ export class HttpService implements IHttpService {
             let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result400 = ProblemDetails.fromJS(resultData400);
             return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    validateGiftCard(request: ValidateGiftCardRequest): Observable<GiftCardValidationDTO> {
+        let url_ = this.baseUrl + "/api/Payment/ValidateGiftCard";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processValidateGiftCard(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processValidateGiftCard(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GiftCardValidationDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GiftCardValidationDTO>;
+        }));
+    }
+
+    protected processValidateGiftCard(response: HttpResponseBase): Observable<GiftCardValidationDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GiftCardValidationDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getGiftCards(search: PagingSearchDTO): Observable<DefaultSearchResultsOfGiftCardDTO> {
+        let url_ = this.baseUrl + "/api/Payment/GetGiftCards";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetGiftCards(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetGiftCards(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfGiftCardDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfGiftCardDTO>;
+        }));
+    }
+
+    protected processGetGiftCards(response: HttpResponseBase): Observable<DefaultSearchResultsOfGiftCardDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfGiftCardDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    issueGiftCard(request: IssueGiftCardRequest): Observable<GiftCardDTO> {
+        let url_ = this.baseUrl + "/api/Payment/IssueGiftCard";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIssueGiftCard(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIssueGiftCard(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GiftCardDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GiftCardDTO>;
+        }));
+    }
+
+    protected processIssueGiftCard(response: HttpResponseBase): Observable<GiftCardDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GiftCardDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setGiftCardActive(request: SetGiftCardActiveRequest): Observable<void> {
+        let url_ = this.baseUrl + "/api/Payment/SetGiftCardActive";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetGiftCardActive(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetGiftCardActive(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetGiftCardActive(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            let resultData404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -1338,6 +1560,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
     paymentMethod?: string;
     pointsToRedeem?: number;
     connectionId?: string | undefined;
+    giftCardCode?: string | undefined;
 
     constructor(data?: ICreateBookingRequest) {
         if (data) {
@@ -1366,6 +1589,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
             this.paymentMethod = _data["paymentMethod"];
             this.pointsToRedeem = _data["pointsToRedeem"];
             this.connectionId = _data["connectionId"];
+            this.giftCardCode = _data["giftCardCode"];
         }
     }
 
@@ -1394,6 +1618,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
         data["paymentMethod"] = this.paymentMethod;
         data["pointsToRedeem"] = this.pointsToRedeem;
         data["connectionId"] = this.connectionId;
+        data["giftCardCode"] = this.giftCardCode;
         return data;
     }
 }
@@ -1407,6 +1632,7 @@ export interface ICreateBookingRequest {
     paymentMethod?: string;
     pointsToRedeem?: number;
     connectionId?: string | undefined;
+    giftCardCode?: string | undefined;
 }
 
 export class BookingSeatItem implements IBookingSeatItem {
@@ -1629,6 +1855,7 @@ export class PaymentInitiationDTO implements IPaymentInitiationDTO {
     provider?: string;
     paymentReference?: string;
     redirectUrl?: string | undefined;
+    alreadyPaid?: boolean;
 
     constructor(data?: IPaymentInitiationDTO) {
         if (data) {
@@ -1644,6 +1871,7 @@ export class PaymentInitiationDTO implements IPaymentInitiationDTO {
             this.provider = _data["provider"];
             this.paymentReference = _data["paymentReference"];
             this.redirectUrl = _data["redirectUrl"];
+            this.alreadyPaid = _data["alreadyPaid"];
         }
     }
 
@@ -1659,6 +1887,7 @@ export class PaymentInitiationDTO implements IPaymentInitiationDTO {
         data["provider"] = this.provider;
         data["paymentReference"] = this.paymentReference;
         data["redirectUrl"] = this.redirectUrl;
+        data["alreadyPaid"] = this.alreadyPaid;
         return data;
     }
 }
@@ -1667,6 +1896,7 @@ export interface IPaymentInitiationDTO {
     provider?: string;
     paymentReference?: string;
     redirectUrl?: string | undefined;
+    alreadyPaid?: boolean;
 }
 
 export class InitiatePaymentRequest implements IInitiatePaymentRequest {
@@ -1747,6 +1977,315 @@ export class RefundBookingRequest implements IRefundBookingRequest {
 
 export interface IRefundBookingRequest {
     invoiceId?: string;
+}
+
+export class GiftCardValidationDTO implements IGiftCardValidationDTO {
+    valid?: boolean;
+    balance?: number;
+    message?: string | undefined;
+
+    constructor(data?: IGiftCardValidationDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.valid = _data["valid"];
+            this.balance = _data["balance"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): GiftCardValidationDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new GiftCardValidationDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["valid"] = this.valid;
+        data["balance"] = this.balance;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface IGiftCardValidationDTO {
+    valid?: boolean;
+    balance?: number;
+    message?: string | undefined;
+}
+
+export class ValidateGiftCardRequest implements IValidateGiftCardRequest {
+    code?: string;
+
+    constructor(data?: IValidateGiftCardRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.code = _data["code"];
+        }
+    }
+
+    static fromJS(data: any): ValidateGiftCardRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ValidateGiftCardRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        return data;
+    }
+}
+
+export interface IValidateGiftCardRequest {
+    code?: string;
+}
+
+export abstract class BaseSearchResultsOfGiftCardDTO implements IBaseSearchResultsOfGiftCardDTO {
+    results?: GiftCardDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfGiftCardDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(GiftCardDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfGiftCardDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfGiftCardDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfGiftCardDTO {
+    results?: GiftCardDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfGiftCardDTO extends BaseSearchResultsOfGiftCardDTO implements IDefaultSearchResultsOfGiftCardDTO {
+
+    constructor(data?: IDefaultSearchResultsOfGiftCardDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfGiftCardDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfGiftCardDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfGiftCardDTO extends IBaseSearchResultsOfGiftCardDTO {
+}
+
+export class GiftCardDTO implements IGiftCardDTO {
+    id?: string;
+    code?: string;
+    initialBalance?: number;
+    balance?: number;
+    isActive?: boolean;
+    expiresAt?: Date | undefined;
+    issuedToEmail?: string | undefined;
+    creationTime?: Date;
+
+    constructor(data?: IGiftCardDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.initialBalance = _data["initialBalance"];
+            this.balance = _data["balance"];
+            this.isActive = _data["isActive"];
+            this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
+            this.issuedToEmail = _data["issuedToEmail"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): GiftCardDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new GiftCardDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["initialBalance"] = this.initialBalance;
+        data["balance"] = this.balance;
+        data["isActive"] = this.isActive;
+        data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
+        data["issuedToEmail"] = this.issuedToEmail;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IGiftCardDTO {
+    id?: string;
+    code?: string;
+    initialBalance?: number;
+    balance?: number;
+    isActive?: boolean;
+    expiresAt?: Date | undefined;
+    issuedToEmail?: string | undefined;
+    creationTime?: Date;
+}
+
+export class IssueGiftCardRequest implements IIssueGiftCardRequest {
+    amount?: number;
+    expiresAt?: Date | undefined;
+    issuedToEmail?: string | undefined;
+
+    constructor(data?: IIssueGiftCardRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.amount = _data["amount"];
+            this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
+            this.issuedToEmail = _data["issuedToEmail"];
+        }
+    }
+
+    static fromJS(data: any): IssueGiftCardRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new IssueGiftCardRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["amount"] = this.amount;
+        data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
+        data["issuedToEmail"] = this.issuedToEmail;
+        return data;
+    }
+}
+
+export interface IIssueGiftCardRequest {
+    amount?: number;
+    expiresAt?: Date | undefined;
+    issuedToEmail?: string | undefined;
+}
+
+export class SetGiftCardActiveRequest implements ISetGiftCardActiveRequest {
+    id?: string;
+    active?: boolean;
+
+    constructor(data?: ISetGiftCardActiveRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.active = _data["active"];
+        }
+    }
+
+    static fromJS(data: any): SetGiftCardActiveRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetGiftCardActiveRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["active"] = this.active;
+        return data;
+    }
+}
+
+export interface ISetGiftCardActiveRequest {
+    id?: string;
+    active?: boolean;
 }
 
 export class TicketValidationDTO implements ITicketValidationDTO {
