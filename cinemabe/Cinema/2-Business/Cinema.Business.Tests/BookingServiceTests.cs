@@ -323,6 +323,30 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task CancelBookingAsync_RestoresGiftCardBalance()
+    {
+        var userId  = Guid.NewGuid();
+        var card    = new GiftCard { Id = Guid.NewGuid(), Balance = 20000 };
+        var invoice = new Invoice
+        {
+            Id             = Guid.NewGuid(),
+            UserId         = userId,
+            Status         = InvoiceStatus.Pending,
+            GiftCardId     = card.Id,
+            GiftCardAmount = 30000,
+        };
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.GiftCardStore.GetByIdAsync(card.Id)).ReturnsAsync(card);
+        _uowMock.Setup(u => u.GiftCardStore.UpdateAsync(card)).ReturnsAsync(card);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        await _sut.CancelBookingAsync(userId, invoice.Id);
+
+        card.Balance.Should().Be(50000); // 20000 remaining + 30000 restored
+    }
+
+    [Fact]
     public async Task CancelBookingAsync_DeactivatesTicketsToFreeSeats()
     {
         var userId  = Guid.NewGuid();

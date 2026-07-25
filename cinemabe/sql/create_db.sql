@@ -308,6 +308,8 @@ CREATE TABLE [Invoice] (
     [PaidAt] datetime NULL,
     [RefundedAt] datetime NULL,
     [PointsRedeemed] int NOT NULL DEFAULT 0,
+    [GiftCardId] uniqueidentifier NULL,
+    [GiftCardAmount] float NOT NULL DEFAULT 0,
     [DiscountId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
@@ -396,6 +398,20 @@ CREATE TABLE [ReminderLog] (
     CONSTRAINT [PK_ReminderLog] PRIMARY KEY ([Id])
 );
 
+-- Stored-value gift cards / vouchers.
+CREATE TABLE [GiftCard] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [Code] nvarchar(50) NOT NULL,
+    [InitialBalance] float NOT NULL,
+    [Balance] float NOT NULL,
+    [IsActive] bit NOT NULL DEFAULT 1,
+    [ExpiresAt] datetime NULL,
+    [IssuedToEmail] nvarchar(max) NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_GiftCard] PRIMARY KEY ([Id])
+);
+
 -- Indexes
 CREATE INDEX [IX_Comment_MovieId] ON [Comment] ([MovieId]);
 CREATE INDEX [IX_Comment_ParentId] ON [Comment] ([ParentId]);
@@ -438,3 +454,4 @@ CREATE UNIQUE INDEX [IX_User_Phone] ON [User] ([Phone]);
 CREATE INDEX [IX_User_UserTypeId] ON [User] ([UserTypeId]);
 CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_ReminderLog_UserId_ShowTimeId] ON [ReminderLog] ([UserId], [ShowTimeId]);
+CREATE UNIQUE INDEX [IX_GiftCard_Code] ON [GiftCard] ([Code]);

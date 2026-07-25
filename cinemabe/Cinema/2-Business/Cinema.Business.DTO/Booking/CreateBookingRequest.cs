@@ -13,6 +13,8 @@ public class CreateBookingRequest
     /// <summary>The caller's SignalR connection id (from the seat-locking hub). When supplied, booking
     /// rejects seats another connection is actively holding; the caller's own held seats still pass.</summary>
     public string? ConnectionId { get; set; }
+    /// <summary>Optional gift-card code to apply its balance to this booking.</summary>
+    public string? GiftCardCode { get; set; }
 }
 
 public class BookingSeatItem

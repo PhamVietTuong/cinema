@@ -35,6 +35,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public ITimeSlotStore TimeSlotStore { get; }
     public ITicketPriceStore TicketPriceStore { get; }
     public IReminderLogStore ReminderLogStore { get; }
+    public IGiftCardStore GiftCardStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
     {
@@ -63,6 +64,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         TimeSlotStore = new TimeSlotStore(db);
         TicketPriceStore = new TicketPriceStore(db);
         ReminderLogStore = new ReminderLogStore(db);
+        GiftCardStore = new GiftCardStore(db);
     }
 
     public Task<int> SaveChangesAsync() => _db.SaveChangesAsync();

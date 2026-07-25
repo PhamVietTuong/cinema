@@ -460,4 +460,33 @@ BEGIN
     PRINT 'Created [ReminderLog].';
 END
 
+-- ── gift cards / vouchers ────────────────────────────────────────────────────────
+IF OBJECT_ID('GiftCard', 'U') IS NULL
+BEGIN
+    CREATE TABLE [GiftCard] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [Code] nvarchar(50) NOT NULL,
+        [InitialBalance] float NOT NULL,
+        [Balance] float NOT NULL,
+        [IsActive] bit NOT NULL DEFAULT 1,
+        [ExpiresAt] datetime NULL,
+        [IssuedToEmail] nvarchar(max) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_GiftCard] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_GiftCard_Code] ON [GiftCard] ([Code]);
+    PRINT 'Created [GiftCard].';
+END
+IF COL_LENGTH('[Invoice]', 'GiftCardId') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [GiftCardId] uniqueidentifier NULL;
+    PRINT 'Added [Invoice].[GiftCardId].';
+END
+IF COL_LENGTH('[Invoice]', 'GiftCardAmount') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [GiftCardAmount] float NOT NULL CONSTRAINT [DF_Invoice_GiftCardAmount] DEFAULT 0;
+    PRINT 'Added [Invoice].[GiftCardAmount].';
+END
+
 PRINT 'upgrade_db.sql: completed.';

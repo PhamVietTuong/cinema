@@ -35,6 +35,7 @@ public class CinemaContext : DbContext
     public DbSet<Comment> Comment => Set<Comment>();
     public DbSet<Evaluation> Evaluation => Set<Evaluation>();
     public DbSet<ReminderLog> ReminderLog => Set<ReminderLog>();
+    public DbSet<GiftCard> GiftCard => Set<GiftCard>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

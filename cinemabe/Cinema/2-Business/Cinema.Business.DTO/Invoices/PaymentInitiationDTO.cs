@@ -11,4 +11,8 @@ public class PaymentInitiationDTO
 
     /// <summary>URL to redirect the user to for hosted checkout. Null when none is required (dev sandbox).</summary>
     public string? RedirectUrl { get; set; }
+
+    /// <summary>True when the invoice was fully covered (e.g. by a gift card) and is already Paid — the
+    /// client should skip payment and show the success/e-ticket screen.</summary>
+    public bool AlreadyPaid { get; set; }
 }

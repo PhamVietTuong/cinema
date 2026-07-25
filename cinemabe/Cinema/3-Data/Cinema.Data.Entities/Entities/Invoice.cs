@@ -16,6 +16,10 @@ public class Invoice : BaseEntity
     /// <summary>Loyalty points spent on this booking, reserved at creation and restored if it is
     /// cancelled, expired, or refunded.</summary>
     public int PointsRedeemed { get; set; }
+    /// <summary>Gift card applied to this booking (if any) and the amount drawn from it; the amount is
+    /// restored to the card if the booking is cancelled, expired, or refunded.</summary>
+    public Guid? GiftCardId { get; set; }
+    public double GiftCardAmount { get; set; }
     public Guid? DiscountId { get; set; }
     public User User { get; set; } = null!;
     public Discount? Discount { get; set; }

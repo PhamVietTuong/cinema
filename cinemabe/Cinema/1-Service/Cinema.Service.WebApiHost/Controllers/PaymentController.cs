@@ -20,11 +20,13 @@ public class PaymentController : ControllerBase
 
     private readonly IBookingManager _bookingManager;
     private readonly IInvoiceManager _invoiceManager;
+    private readonly IGiftCardManager _giftCardManager;
 
-    public PaymentController(IBookingManager bookingManager, IInvoiceManager invoiceManager)
+    public PaymentController(IBookingManager bookingManager, IInvoiceManager invoiceManager, IGiftCardManager giftCardManager)
     {
         _bookingManager = bookingManager;
         _invoiceManager = invoiceManager;
+        _giftCardManager = giftCardManager;
     }
 
     // ── Booking ───────────────────────────────────────────────────────────────
@@ -197,6 +199,85 @@ public class PaymentController : ControllerBase
         }
     }
 
+    // ── Gift cards ────────────────────────────────────────────────────────────
+
+    [HttpPost]
+    [ProducesResponseType(typeof(GiftCardValidationDTO), 200)]
+    public async Task<IActionResult> ValidateGiftCard([FromBody] ValidateGiftCardRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ValidateGiftCard being awakened to process request...");
+        try
+        {
+            var result = await _giftCardManager.ValidateAsync(request.Code);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.ValidateGiftCard->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<GiftCardDTO>), 200)]
+    public async Task<IActionResult> GetGiftCards([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetGiftCards being awakened to process request...");
+        try
+        {
+            var result = await _giftCardManager.GetGiftCardsAsync(search);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetGiftCards->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(GiftCardDTO), 200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> IssueGiftCard([FromBody] IssueGiftCardRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.IssueGiftCard being awakened to process request...");
+        try
+        {
+            var result = await _giftCardManager.IssueAsync(request);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.IssueGiftCard->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> SetGiftCardActive([FromBody] SetGiftCardActiveRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.SetGiftCardActive being awakened to process request...");
+        try
+        {
+            var ok = await _giftCardManager.SetActiveAsync(request.Id, request.Active);
+            return ok ? Ok(new { message = "Gift card updated." }) : NotFound(new { error = "Gift card not found." });
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Fatal(e, $"{GetType().Name}.SetGiftCardActive->Exception: {e.GetType()}, {e.Message}");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
+    }
+
     [Authorize(Roles = _adminRole)]
     [HttpPost]
     [ProducesResponseType(typeof(TicketValidationDTO), 200)]
@@ -356,3 +437,5 @@ public record InitiatePaymentRequest(Guid InvoiceId, string? Provider, string? R
 public record ValidateTicketRequest(string QrCode);
 public record CancelBookingRequest(Guid InvoiceId);
 public record RefundBookingRequest(Guid InvoiceId);
+public record ValidateGiftCardRequest(string Code);
+public record SetGiftCardActiveRequest(Guid Id, bool Active);

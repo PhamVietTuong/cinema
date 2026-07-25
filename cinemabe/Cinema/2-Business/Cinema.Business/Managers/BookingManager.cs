@@ -184,6 +184,31 @@ public class BookingManager : IBookingManager
                 }
             }
 
+            // Gift card: draw down its balance to cover part (or all) of the remaining amount. Reserved
+            // now and restored if the booking is cancelled, expires, or is refunded. An invalid/expired
+            // code provided by the customer is rejected (so they're never silently charged full price).
+            Guid? giftCardId = null;
+            double giftCardAmount = 0;
+            if (!string.IsNullOrWhiteSpace(request.GiftCardCode))
+            {
+                var card = await _uow.GiftCardStore.GetByCodeAsync(request.GiftCardCode.Trim());
+                var usable = card is not null && card.IsActive
+                             && (card.ExpiresAt is null || card.ExpiresAt > DateTime.UtcNow);
+                if (!usable)
+                {
+                    throw new InvalidOperationException("Invalid or expired gift card.");
+                }
+                giftCardAmount = Math.Min(card!.Balance, finalAmount);
+                if (giftCardAmount > 0)
+                {
+                    finalAmount    -= giftCardAmount;
+                    discountAmount += giftCardAmount;
+                    card.Balance   -= giftCardAmount;
+                    await _uow.GiftCardStore.UpdateAsync(card);
+                    giftCardId = card.Id;
+                }
+            }
+
             var invoice = new Invoice
             {
                 Code                = GenerateCode(),
@@ -192,6 +217,8 @@ public class BookingManager : IBookingManager
                 DiscountAmount      = discountAmount,
                 FinalAmount         = finalAmount,
                 PointsRedeemed      = pointsRedeemed,
+                GiftCardId          = giftCardId,
+                GiftCardAmount      = giftCardAmount,
                 DiscountId          = discountId,
                 Status              = InvoiceStatus.Pending,
                 PaymentMethod       = request.PaymentMethod,
@@ -248,6 +275,19 @@ public class BookingManager : IBookingManager
         if (invoice.Status != InvoiceStatus.Pending)
         {
             return null;
+        }
+
+        // Fully covered (e.g. by a gift card) — nothing to charge, so finalize immediately with no gateway.
+        if (invoice.FinalAmount <= 0)
+        {
+            await FinalizePaidInvoiceAsync(invoice, "GIFTCARD-FULL");
+            return new PaymentInitiationDTO
+            {
+                Provider         = "None",
+                PaymentReference = invoice.PaymentReference ?? "GIFTCARD-FULL",
+                RedirectUrl      = null,
+                AlreadyPaid      = true,
+            };
         }
 
         var gateway = _gateways.Resolve(provider);
@@ -586,6 +626,7 @@ public class BookingManager : IBookingManager
         await _uow.InvoiceStore.UpdateAsync(invoice);
         await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
         await RestoreRedeemedPointsAsync(invoice);
+        await RestoreGiftCardAsync(invoice);
         await _uow.SaveChangesAsync();
         return true;
     }
@@ -602,6 +643,21 @@ public class BookingManager : IBookingManager
         {
             user.Points += invoice.PointsRedeemed;
             await _uow.UserStore.UpdateAsync(user);
+        }
+    }
+
+    // Returns the gift-card balance drawn for a booking that did not complete (cancelled/expired/refunded).
+    private async Task RestoreGiftCardAsync(Invoice invoice)
+    {
+        if (invoice.GiftCardId is not Guid giftCardId || invoice.GiftCardAmount <= 0)
+        {
+            return;
+        }
+        var card = await _uow.GiftCardStore.GetByIdAsync(giftCardId);
+        if (card is not null)
+        {
+            card.Balance += invoice.GiftCardAmount;
+            await _uow.GiftCardStore.UpdateAsync(card);
         }
     }
 
@@ -680,6 +736,9 @@ public class BookingManager : IBookingManager
             }
         }
 
+        // Give the gift-card balance back.
+        await RestoreGiftCardAsync(invoice);
+
         await _uow.SaveChangesAsync();
 
         if (user is not null)
@@ -705,6 +764,7 @@ public class BookingManager : IBookingManager
             await _uow.InvoiceStore.UpdateAsync(invoice);
             await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
             await RestoreRedeemedPointsAsync(invoice);
+            await RestoreGiftCardAsync(invoice);
         }
         await _uow.SaveChangesAsync();
         return stale.Count;

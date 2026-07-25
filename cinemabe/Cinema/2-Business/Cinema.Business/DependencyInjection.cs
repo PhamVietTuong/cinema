@@ -19,6 +19,7 @@ public static class DependencyInjection
         // Payment gateways (Sandbox + VNPay/MoMo/Stripe) and their resolver are registered in the
         // Web API host's Program.cs, where IConfiguration is available to read the "Payments" section.
         services.AddScoped<IInvoiceManager, InvoiceManager>();
+        services.AddScoped<IGiftCardManager, GiftCardManager>();
         services.AddScoped<ITheaterManager, TheaterManager>();
 
         // Catalog (simple lookup) managers
