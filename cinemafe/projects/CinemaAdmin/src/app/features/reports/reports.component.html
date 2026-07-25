@@ -29,7 +29,10 @@
 
   <!-- Trend by day -->
   <div class="ad-card">
-    <h3 class="ad-card-title">{{ 'reports.trendByDay' | translate }}</h3>
+    <div class="rp-card-head">
+      <h3 class="ad-card-title">{{ 'reports.trendByDay' | translate }}</h3>
+      <button class="ad-icon-btn" (click)="exportByDay()" [disabled]="!byDay.length" [title]="'reports.exportCsv' | translate"><mat-icon>download</mat-icon></button>
+    </div>
     <div class="rp-trend" *ngIf="byDay.length; else noData">
       <div class="rp-bar-col" *ngFor="let d of byDay" [title]="(d.date | date:'dd/MM') + ': ' + (d.total | number:'1.0-0') + 'đ'">
         <div class="rp-bar" [style.height.%]="pct(d.total, maxDay)"></div>
@@ -40,7 +43,10 @@
 
   <!-- By movie -->
   <div class="ad-card">
-    <h3 class="ad-card-title">{{ 'reports.revenueByMovie' | translate }}</h3>
+    <div class="rp-card-head">
+      <h3 class="ad-card-title">{{ 'reports.revenueByMovie' | translate }}</h3>
+      <button class="ad-icon-btn" (click)="exportByMovie()" [disabled]="!byMovie.length" [title]="'reports.exportCsv' | translate"><mat-icon>download</mat-icon></button>
+    </div>
     <div class="rp-rows" *ngIf="byMovie.length; else noData">
       <div class="rp-row" *ngFor="let m of byMovie">
         <span class="rp-row-name">{{ m.name }}</span>
@@ -52,7 +58,10 @@
 
   <!-- By theater -->
   <div class="ad-card">
-    <h3 class="ad-card-title">{{ 'reports.revenueByTheater' | translate }}</h3>
+    <div class="rp-card-head">
+      <h3 class="ad-card-title">{{ 'reports.revenueByTheater' | translate }}</h3>
+      <button class="ad-icon-btn" (click)="exportByTheater()" [disabled]="!byTheater.length" [title]="'reports.exportCsv' | translate"><mat-icon>download</mat-icon></button>
+    </div>
     <div class="rp-rows" *ngIf="byTheater.length; else noData">
       <div class="rp-row" *ngFor="let t of byTheater">
         <span class="rp-row-name">{{ t.name }}</span>

@@ -27,3 +27,9 @@
   .rp-kpis { grid-template-columns: 1fr; }
   .rp-row { grid-template-columns: 120px 1fr 90px; }
 }
+
+/* Section header with export action */
+.rp-card-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.rp-card-head .ad-card-title { margin: 0; }

@@ -56,6 +56,33 @@ export class ReportsComponent implements OnInit {
     return Math.round(((value ?? 0) / max) * 100);
   }
 
+  exportByDay(): void {
+    this._downloadCsv('revenue-by-day', ['Date', 'Revenue (VND)'],
+      this.byDay.map(d => [d.date ? this._iso(new Date(d.date)) : '', String(d.total ?? 0)]));
+  }
+  exportByMovie(): void {
+    this._downloadCsv('revenue-by-movie', ['Movie', 'Revenue (VND)'],
+      this.byMovie.map(m => [m.name ?? '', String(m.total ?? 0)]));
+  }
+  exportByTheater(): void {
+    this._downloadCsv('revenue-by-theater', ['Theater', 'Revenue (VND)'],
+      this.byTheater.map(t => [t.name ?? '', String(t.total ?? 0)]));
+  }
+
+  /** Builds a CSV (RFC-4180 quoting, UTF-8 BOM for Excel) and triggers a download. */
+  private _downloadCsv(name: string, headers: string[], rows: string[][]): void {
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const lines = [headers, ...rows].map(r => r.map(esc).join(','));
+    const csv = '﻿' + lines.join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}-${this.from}_${this.to}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   private _iso(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }

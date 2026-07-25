@@ -208,7 +208,8 @@
     "trendByDay": "Trend By Day",
     "revenueByMovie": "Revenue By Movie",
     "revenueByTheater": "Revenue By Theater",
-    "noData": "No revenue data for this period."
+    "noData": "No revenue data for this period.",
+    "exportCsv": "Export CSV"
   },
   "theaters": {
     "mgmt": {

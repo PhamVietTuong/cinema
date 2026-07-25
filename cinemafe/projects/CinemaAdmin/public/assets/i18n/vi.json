@@ -208,7 +208,8 @@
     "trendByDay": "Xu Hướng Theo Ngày",
     "revenueByMovie": "Doanh Thu Theo Phim",
     "revenueByTheater": "Doanh Thu Theo Rạp",
-    "noData": "Chưa có dữ liệu doanh thu trong khoảng này."
+    "noData": "Chưa có dữ liệu doanh thu trong khoảng này.",
+    "exportCsv": "Xuất CSV"
   },
   "theaters": {
     "mgmt": {
