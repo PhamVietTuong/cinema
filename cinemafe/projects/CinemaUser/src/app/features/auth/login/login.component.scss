@@ -1,5 +1,5 @@
-// "Marquee" — Login (light premium cinema)
-// Tokens (from styles.scss): paper #edeef1 · card #fff · ink #15171d · red #e11d34 · gold #b9861f
+// "Night Screening" — Login
+// Tokens (from styles.scss): ground #07080b · panel #101319 · ink #e9edf3 · beam #59d9d2 (action) · gel #ff4e8a (premium)
 
 // ── Split Layout ──────────────────────────────────────────────────────────────
 .auth-split {
@@ -11,8 +11,8 @@
 // ── Cinema Left Panel ─────────────────────────────────────────────────────────
 .auth-cinema {
   background:
-    radial-gradient(ellipse at 30% 50%, rgba(185, 134, 31, 0.14) 0%, transparent 55%),
-    radial-gradient(600px 400px at 80% -10%, rgba(225, 29, 52, 0.07), transparent 60%),
+    radial-gradient(ellipse at 30% 50%, var(--ns-gel-soft) 0%, transparent 55%),
+    radial-gradient(600px 400px at 80% -10%, var(--ns-beam-soft), transparent 60%),
     var(--mp-paper-2);
   display: flex; flex-direction: column; justify-content: center;
   padding: 60px 56px; position: relative; overflow: hidden;
@@ -20,7 +20,7 @@
 .cinema-glow {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
   width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(185, 134, 31, 0.10) 0%, transparent 65%);
+  background: radial-gradient(circle, var(--ns-gel-soft) 0%, transparent 65%);
   pointer-events: none;
 }
 .cinema-inner { position: relative; z-index: 1; }
@@ -135,7 +135,7 @@
 
 // ── API Error ─────────────────────────────────────────────────────────────────
 .api-error {
-  background: var(--mp-red-soft); border: 1px solid rgba(225, 29, 52, 0.25);
+  background: var(--mp-red-soft); border: 1px solid var(--ns-beam-line);
   border-radius: 8px; padding: 10px 14px; color: var(--mp-danger);
   font-size: 0.8rem; margin-bottom: 16px;
   i { margin-right: 6px; }

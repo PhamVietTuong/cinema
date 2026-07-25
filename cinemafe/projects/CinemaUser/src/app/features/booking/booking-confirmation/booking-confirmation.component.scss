@@ -1,5 +1,5 @@
-// "Marquee" — Booking Confirmation / Checkout (light premium cinema)
-// Tokens (from styles.scss): paper #edeef1 · card #fff · ink #15171d · red #e11d34 · gold #b9861f
+// "Night Screening" — Booking Confirmation / Checkout
+// Tokens (from styles.scss): ground #07080b · panel #101319 · ink #e9edf3 · beam #59d9d2 (action) · gel #ff4e8a (premium)
 
 // ── Page Header ───────────────────────────────────────────────────────────────
 .page-header {
@@ -165,7 +165,7 @@
 .success-glow {
   position: absolute; top: 0; left: 50%; transform: translateX(-50%);
   width: 400px; height: 400px;
-  background: radial-gradient(circle, rgba(185, 134, 31, 0.14) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--ns-gel-soft) 0%, transparent 70%);
   pointer-events: none;
 }
 .success-icon-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
@@ -214,7 +214,7 @@
 }
 .ticket-seats-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .ticket-seat-chip {
-  background: var(--mp-red-soft); border: 1px solid rgba(225, 29, 52, 0.2);
+  background: var(--mp-red-soft); border: 1px solid var(--ns-beam-line);
   border-radius: 6px; padding: 4px 10px;
   font-family: var(--mp-font-display); font-size: 0.8rem; font-weight: 700; color: var(--mp-red);
 }

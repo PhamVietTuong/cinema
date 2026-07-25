@@ -73,7 +73,7 @@
   &.is-active {
     color: var(--ad-on);
     background: var(--ad-primary-soft);
-    border-color: rgba(225, 29, 52, 0.28);
+    border-color: var(--bo-action-ring);
     box-shadow: inset 3px 0 0 var(--ad-primary);
     mat-icon { color: var(--ad-primary-strong); }
   }

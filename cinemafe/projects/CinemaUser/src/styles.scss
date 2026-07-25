@@ -52,6 +52,7 @@
   --ns-beam-strong: #7fe9e3;   // hover: on a dark ground, brighter reads as nearer
   --ns-beam-deep:   #2fb3ac;
   --ns-beam-soft:   rgba(89, 217, 210, 0.14);
+  --ns-beam-line:   rgba(89, 217, 210, 0.26);   // border on a beam-soft surface
   --ns-beam-ink:    #04141a;   // text sitting ON the beam
 
   // ── Gel — magenta. Premium seating and premium tiers. Never an action. ────
@@ -130,6 +131,7 @@
   --ns-beam-strong: #0b6460;
   --ns-beam-deep:   #094f4c;
   --ns-beam-soft:   rgba(15, 125, 120, 0.10);
+  --ns-beam-line:   rgba(15, 125, 120, 0.24);
   --ns-beam-ink:    #ffffff;
 
   --ns-gel:        #c3175d;

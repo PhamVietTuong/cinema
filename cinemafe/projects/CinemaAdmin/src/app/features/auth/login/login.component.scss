@@ -14,18 +14,11 @@
   justify-content: space-between;
   padding: 48px 56px;
   overflow: hidden;
-  background:
-    radial-gradient(900px 500px at 30% 10%, rgba(185, 134, 31, 0.16), transparent 60%),
-    linear-gradient(160deg, #ffffff 0%, #f2f3f6 55%, #edeef1 100%);
-  border-right: 1px solid var(--ad-glass-border);
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(600px 600px at 90% 90%, rgba(225, 29, 52, 0.08), transparent 60%);
-    pointer-events: none;
-  }
+  // "Box Office" is a flat direction — the two ambient brand glows that used to
+  // wash this panel are gone rather than recoloured. A hairline and a shift in
+  // surface tone are enough to separate the brand side from the form side.
+  background: var(--bo-panel);
+  border-right: 1px solid var(--bo-rule);
 }
 
 .brand-lockup { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }

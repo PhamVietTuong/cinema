@@ -84,7 +84,7 @@
   position: relative;
   border-right: 1px solid var(--ad-glass-border);
 
-  &.is-today { background: rgba(225, 29, 52, 0.05); }
+  &.is-today { background: var(--bo-action-soft); }
 }
 .st-line { border-bottom: 1px solid var(--ad-line-soft); }
 

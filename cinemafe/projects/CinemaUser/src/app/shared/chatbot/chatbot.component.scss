@@ -1,10 +1,18 @@
+// "Night Screening" — Chatbot
+// Tokens (from styles.scss): ground #07080b · panel #101319 · ink #e9edf3 · beam #59d9d2 (action) · gel #ff4e8a (premium)
+//
+// This file previously referenced var(--brand-primary, #e11d34) — a token name
+// that exists nowhere in the theme, so it always fell through to a hardcoded
+// ticket red, and the panel hardcoded its own dark palette. Both are on tokens
+// now, so the widget follows the theme instead of contradicting it.
+
 :host { position: fixed; right: 22px; bottom: 22px; z-index: 900; }
 
 .cb-fab {
   width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
-  background: var(--brand-primary, #e11d34); color: #fff; font-size: 1.4rem;
-  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.55);
-  transition: transform 0.15s ease;
+  background: var(--ns-beam); color: var(--ns-beam-ink); font-size: 1.4rem;
+  box-shadow: var(--ns-glow-beam);
+  transition: transform var(--cx-dur-fast) var(--cx-ease);
 }
 .cb-fab:hover { transform: scale(1.06); }
 
@@ -12,42 +20,47 @@
   position: absolute; right: 0; bottom: 68px;
   width: min(360px, 88vw); height: 460px; max-height: 72vh;
   display: flex; flex-direction: column; overflow: hidden;
-  background: #16181f; color: #eef0f4;
-  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px;
-  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.7);
+  background: var(--ns-panel); color: var(--ns-ink);
+  border: 1px solid var(--ns-line); border-radius: var(--ns-r-lg);
+  box-shadow: var(--ns-shadow-lg);
 }
 .cb-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 16px; background: var(--ns-wash);
+  border-bottom: 1px solid var(--ns-line-2);
 }
-.cb-title { font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
-.cb-close { background: none; border: none; color: inherit; cursor: pointer; font-size: 1.1rem; opacity: 0.7; }
-.cb-close:hover { opacity: 1; }
+.cb-title { font-family: var(--ns-font-display); font-weight: var(--cx-weight-bold); display: inline-flex; align-items: center; gap: 8px; }
+.cb-close { background: none; border: none; color: var(--ns-muted); cursor: pointer; font-size: 1.1rem; }
+.cb-close:hover { color: var(--ns-ink); }
 
 .cb-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .cb-msg { display: flex; }
 .cb-msg--user { justify-content: flex-end; }
 .cb-bubble {
-  max-width: 80%; padding: 9px 13px; border-radius: 14px; font-size: 0.9rem; line-height: 1.45;
-  background: rgba(255, 255, 255, 0.08);
+  max-width: 80%; padding: 9px 13px; border-radius: 14px;
+  font-size: 0.9rem; line-height: 1.45;
+  background: var(--ns-panel-2); color: var(--ns-ink-2);
 }
-.cb-msg--user .cb-bubble { background: var(--brand-primary, #e11d34); color: #fff; }
+.cb-msg--user .cb-bubble { background: var(--ns-beam); color: var(--ns-beam-ink); }
 
 .cb-quick { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; }
 .cb-chip {
-  border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.05);
-  color: inherit; border-radius: 999px; padding: 5px 11px; font-size: 0.78rem; cursor: pointer;
+  border: 1px solid var(--ns-line); background: var(--ns-wash);
+  color: var(--ns-ink-2); border-radius: 999px; padding: 5px 11px; font-size: 0.78rem; cursor: pointer;
+  transition: border-color var(--cx-dur) var(--cx-ease), color var(--cx-dur) var(--cx-ease);
 }
-.cb-chip:hover { background: rgba(255, 255, 255, 0.12); }
+.cb-chip:hover { border-color: var(--ns-beam); color: var(--ns-beam); }
 
-.cb-input { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.cb-input { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--ns-line-2); }
 .cb-input input {
-  flex: 1; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06); color: inherit; padding: 9px 12px; font: inherit;
+  flex: 1; border-radius: var(--ns-r-sm); border: 1px solid var(--ns-line);
+  background: var(--ns-panel-3); color: var(--ns-ink); padding: 9px 12px; font: inherit;
+  outline: none;
 }
+.cb-input input::placeholder { color: var(--ns-faint); }
+.cb-input input:focus { border-color: var(--ns-beam); }
 .cb-input button {
-  width: 40px; border: none; border-radius: 10px; cursor: pointer;
-  background: var(--brand-primary, #e11d34); color: #fff;
+  width: 40px; border: none; border-radius: var(--ns-r-sm); cursor: pointer;
+  background: var(--ns-beam); color: var(--ns-beam-ink);
 }
 .cb-input button:disabled { opacity: 0.5; cursor: default; }
