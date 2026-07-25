@@ -7,7 +7,9 @@
     "account": "Account",
     "logout": "Log Out",
     "login": "Log In",
-    "register": "Sign Up"
+    "register": "Sign Up",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
   },
   "common": {
     "loading": "Loading...",
@@ -375,8 +377,11 @@
     "updatePassword": "Update Password",
     "notificationSettings": "Notification Settings",
     "notifTrailers": "New movies & trailers",
+    "notifBooking": "Booking confirmation emails",
     "notifReminders": "Reminders for booked showtimes",
     "notifPromos": "Promotions & offers",
+    "notifSaveSuccess": "Notification settings saved.",
+    "notifSaveFailed": "Failed to save notification settings.",
     "deleteAccount": "Delete Account",
     "deleteAccountDesc": "This action cannot be undone. All your viewing data and booked tickets will be permanently deleted.",
     "deletePermanently": "Delete Permanently",

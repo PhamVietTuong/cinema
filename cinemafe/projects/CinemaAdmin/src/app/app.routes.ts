@@ -103,6 +103,11 @@ export const routes: Routes = [
         path: 'news',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/catalog/news/news.component').then(m => m.NewsManagementComponent)
+      },
+      {
+        path: 'comments',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/catalog/comments/comments.component').then(m => m.CommentsModerationComponent)
       }
     ]
   },

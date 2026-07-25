@@ -187,12 +187,13 @@
 
       <div class="set-card">
         <h3 class="set-title"><i class="fas fa-bell"></i> {{ 'profile.notificationSettings' | translate }}</h3>
-        <label class="toggle-row"><span>{{ 'profile.notifTrailers' | translate }}</span>
-          <span class="switch"><input type="checkbox" [(ngModel)]="notif.trailers"><span class="track"></span></span></label>
-        <label class="toggle-row"><span>{{ 'profile.notifReminders' | translate }}</span>
-          <span class="switch"><input type="checkbox" [(ngModel)]="notif.reminders"><span class="track"></span></span></label>
+        <label class="toggle-row"><span>{{ 'profile.notifBooking' | translate }}</span>
+          <span class="switch"><input type="checkbox" [(ngModel)]="notif.booking"><span class="track"></span></span></label>
         <label class="toggle-row"><span>{{ 'profile.notifPromos' | translate }}</span>
           <span class="switch"><input type="checkbox" [(ngModel)]="notif.promos"><span class="track"></span></span></label>
+        <label class="toggle-row"><span>{{ 'profile.notifReminders' | translate }}</span>
+          <span class="switch"><input type="checkbox" [(ngModel)]="notif.reminders"><span class="track"></span></span></label>
+        <button type="button" class="btn-primary-cta" [disabled]="notifSaving" (click)="saveNotifications()">{{ 'profile.saveChanges' | translate }}</button>
       </div>
 
       <div class="set-card danger">

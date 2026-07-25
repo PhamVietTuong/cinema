@@ -7,7 +7,9 @@
     "account": "Tài Khoản",
     "logout": "Đăng Xuất",
     "login": "Đăng Nhập",
-    "register": "Đăng Ký"
+    "register": "Đăng Ký",
+    "darkMode": "Chế độ tối",
+    "lightMode": "Chế độ sáng"
   },
   "common": {
     "loading": "Đang tải...",
@@ -375,8 +377,11 @@
     "updatePassword": "Cập Nhật Mật Khẩu",
     "notificationSettings": "Cấu Hình Thông Báo",
     "notifTrailers": "Phim mới & Trailer",
+    "notifBooking": "Xác nhận đặt vé qua email",
     "notifReminders": "Nhắc nhở lịch chiếu đã đặt",
     "notifPromos": "Chương trình khuyến mãi & Ưu đãi",
+    "notifSaveSuccess": "Đã lưu cấu hình thông báo.",
+    "notifSaveFailed": "Lưu cấu hình thông báo thất bại.",
     "deleteAccount": "Xóa Tài Khoản",
     "deleteAccountDesc": "Hành động này không thể hoàn tác. Toàn bộ dữ liệu xem phim và vé đã đặt của bạn sẽ bị xóa vĩnh viễn.",
     "deletePermanently": "Xóa Vĩnh Viễn",

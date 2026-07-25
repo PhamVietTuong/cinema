@@ -15,6 +15,7 @@
     "news": "News",
     "discounts": "Discount Codes",
     "invoices": "Invoices",
+    "comments": "Moderation",
     "logout": "Log Out"
   },
   "section": {
@@ -557,6 +558,26 @@
     "page": "Page {{index}}/{{total}}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "comments": {
+    "title": "Comment Moderation",
+    "subtitle": "Approve, hide, or delete user-submitted comments",
+    "movie": "Movie",
+    "user": "User",
+    "content": "Content",
+    "statusApproved": "Approved",
+    "statusHidden": "Hidden",
+    "approve": "Approve",
+    "hide": "Hide",
+    "confirmDelete": "Delete this comment (and its replies)?",
+    "empty": "No comments to moderate",
+    "perPage": "Per page",
+    "pageInfo": "Page {{current}} / {{total}}",
+    "prev": "Previous",
+    "next": "Next",
+    "approveSuccess": "Comment approved",
+    "hideSuccess": "Comment hidden",
+    "moderateFailed": "Could not update the comment"
   },
   "news": {
     "title": "News Management",

@@ -15,6 +15,7 @@
     "news": "Tin Tức",
     "discounts": "Mã Giảm Giá",
     "invoices": "Hóa Đơn",
+    "comments": "Kiểm Duyệt",
     "logout": "Đăng Xuất"
   },
   "section": {
@@ -557,6 +558,26 @@
     "page": "Trang {{index}}/{{total}}",
     "prev": "Trước",
     "next": "Sau"
+  },
+  "comments": {
+    "title": "Kiểm Duyệt Bình Luận",
+    "subtitle": "Duyệt, ẩn hoặc xóa bình luận của người dùng",
+    "movie": "Phim",
+    "user": "Người dùng",
+    "content": "Nội dung",
+    "statusApproved": "Đã duyệt",
+    "statusHidden": "Đã ẩn",
+    "approve": "Duyệt",
+    "hide": "Ẩn",
+    "confirmDelete": "Xóa bình luận này (và các phản hồi)?",
+    "empty": "Không có bình luận cần kiểm duyệt",
+    "perPage": "Mỗi trang",
+    "pageInfo": "Trang {{current}} / {{total}}",
+    "prev": "Trước",
+    "next": "Sau",
+    "approveSuccess": "Đã duyệt bình luận",
+    "hideSuccess": "Đã ẩn bình luận",
+    "moderateFailed": "Không thể cập nhật bình luận"
   },
   "news": {
     "title": "Quản Lý Tin Tức",

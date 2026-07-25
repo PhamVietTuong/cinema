@@ -29,8 +29,9 @@ export class ProfileComponent implements OnInit {
   readonly InvoiceStatus = PaymentServiceAgent.InvoiceStatus;
   tab: 'overview' | 'bookings' | 'settings' = 'overview';
 
-  /** Static (non-persisted) notification preferences for the settings UI. */
-  notif = { trailers: true, reminders: true, promos: false };
+  /** Persisted email notification preferences (initialised from the profile). */
+  notif = { booking: true, promos: false, reminders: true };
+  notifSaving = false;
 
   readonly perks = [
     { icon: 'fa-ticket', text: 'profile.perkDiscount' },
@@ -64,6 +65,11 @@ export class ProfileComponent implements OnInit {
       next: u => {
         this.user = u;
         this.profileForm.patchValue({ name: u.name ?? '', phone: u.phone ?? '', avatar: u.avatar ?? '' });
+        this.notif = {
+          booking: u.notifyBookingEmails ?? true,
+          promos: u.notifyPromotionEmails ?? false,
+          reminders: u.notifyReminderEmails ?? true,
+        };
         this._cdr.markForCheck();
       },
       error: () => this._cdr.markForCheck(),
@@ -136,6 +142,26 @@ export class ProfileComponent implements OnInit {
         next: () => { this.passwordMsg = this._translate.instant('profile.passwordChangeSuccess'); this.passwordForm.reset(); this._cdr.markForCheck(); },
         error: e => { this.passwordErr = this._err(e, this._translate.instant('profile.passwordChangeFailed')); this._cdr.markForCheck(); },
       });
+  }
+
+  saveNotifications(): void {
+    this.notifSaving = true;
+    this._identity.updateNotificationPreferences(IdentityServiceAgent.UpdateNotificationPreferencesRequest.fromJS({
+      notifyBookingEmails: this.notif.booking,
+      notifyPromotionEmails: this.notif.promos,
+      notifyReminderEmails: this.notif.reminders,
+    })).subscribe({
+      next: () => {
+        this.notifSaving = false;
+        this._toast.success(this._translate.instant('profile.notifSaveSuccess'));
+        this._cdr.markForCheck();
+      },
+      error: e => {
+        this.notifSaving = false;
+        this._toast.error(this._err(e, this._translate.instant('profile.notifSaveFailed')));
+        this._cdr.markForCheck();
+      },
+    });
   }
 
   get bookingCount(): number { return this.invoices.length; }

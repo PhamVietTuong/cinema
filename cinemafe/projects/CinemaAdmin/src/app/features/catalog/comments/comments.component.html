@@ -1,0 +1,66 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'comments.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'comments.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <app-confirm-modal [open]="confirmOpen" [message]="'comments.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+
+  <div class="ad-card ad-card--pad-0">
+    <div class="ad-table-wrap">
+      <table class="ad-table">
+        <thead>
+          <tr><th>{{ 'comments.movie' | translate }}</th><th>{{ 'comments.user' | translate }}</th><th>{{ 'comments.content' | translate }}</th><th>{{ 'common.status' | translate }}</th><th>{{ 'common.createdAt' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
+          <tr class="ad-filter-row">
+            <th></th>
+            <th></th>
+            <th></th>
+            <th>
+              <select class="ad-filter-input" [(ngModel)]="filters['approved']" (ngModelChange)="onFilterChange()">
+                <option value="">{{ 'common.all' | translate }}</option>
+                <option value="true">{{ 'comments.statusApproved' | translate }}</option>
+                <option value="false">{{ 'comments.statusHidden' | translate }}</option>
+              </select>
+            </th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let x of items">
+            <td>{{ x.movieTitle || '—' }}</td>
+            <td>{{ x.userName || '—' }}</td>
+            <td class="ad-cell-wrap">{{ x.content }}</td>
+            <td>
+              <span class="ad-pill" [ngClass]="x.isApproved ? 'ad-pill--success' : 'ad-pill--warn'">{{ (x.isApproved ? 'comments.statusApproved' : 'comments.statusHidden') | translate }}</span>
+            </td>
+            <td>{{ x.creationTime | date:'dd/MM/yy HH:mm' }}</td>
+            <td class="ad-td-actions">
+              <button *ngIf="!x.isApproved" class="ad-icon-btn is-primary" (click)="moderate(x.id, true)" [title]="'comments.approve' | translate"><mat-icon>check_circle</mat-icon></button>
+              <button *ngIf="x.isApproved" class="ad-icon-btn" (click)="moderate(x.id, false)" [title]="'comments.hide' | translate"><mat-icon>visibility_off</mat-icon></button>
+              <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!items.length" class="ad-empty"><mat-icon>forum</mat-icon><p>{{ 'comments.empty' | translate }}</p></div>
+    </div>
+
+    <div class="ad-pagination" *ngIf="totalCount > 0">
+      <span class="ad-pagination-info">{{ rangeStart }}–{{ rangeEnd }} / {{ totalCount }}</span>
+      <span class="ad-pagination-size">
+        <label class="ad-label">{{ 'comments.perPage' | translate }}</label>
+        <select class="ad-input" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
+          <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
+        </select>
+      </span>
+      <span class="ad-pagination-nav">
+        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" [title]="'comments.prev' | translate"><mat-icon>chevron_left</mat-icon></button>
+        <span class="ad-pagination-page">{{ 'comments.pageInfo' | translate:{ current: pageIndex, total: totalPages } }}</span>
+        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" [title]="'comments.next' | translate"><mat-icon>chevron_right</mat-icon></button>
+      </span>
+    </div>
+  </div>
+</div>

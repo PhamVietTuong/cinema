@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, IdentityServiceAgent } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, IdentityServiceAgent, BookingHubService } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 
@@ -43,6 +43,7 @@ export class BookingConfirmationComponent implements OnInit {
     private _paymentService: PaymentServiceAgent.HttpService,
     private _cinemaService: CinemaServiceAgent.HttpService,
     private _identityService: IdentityServiceAgent.HttpService,
+    private _bookingHub: BookingHubService,
     private _cdr: ChangeDetectorRef,
     private _translate: TranslateService,
   ) {}
@@ -136,6 +137,8 @@ export class BookingConfirmationComponent implements OnInit {
       discountCode: this.discountCode.trim() || undefined,
       paymentMethod: this.paymentMethod,
       pointsToRedeem: this.pointsToRedeem || undefined,
+      // Pass our live hub connection id so the server ignores our own held seats when enforcing locks.
+      connectionId: this._bookingHub.connectionId ?? undefined,
     });
     this._paymentService.createBooking(request).subscribe({
       next: res => {
