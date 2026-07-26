@@ -14,7 +14,7 @@ namespace Cinema.Service.WebApiHost.Controllers;
 [Route("api/[controller]/[action]")]
 [Authorize]
 [ApiExplorerSettings(GroupName = "payment")]
-public class PaymentController : ControllerBase
+public class PaymentController : ApiControllerBase
 {
     private const string _adminRole = "Admin";
 
@@ -44,8 +44,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetSeats->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetSeats));
         }
     }
 
@@ -61,8 +60,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.CreateBooking->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(CreateBooking));
         }
     }
 
@@ -81,8 +79,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.ConfirmPayment->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(ConfirmPayment));
         }
     }
 
@@ -101,8 +98,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.CancelBooking->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(CancelBooking));
         }
     }
 
@@ -123,8 +119,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.InitiatePayment->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(InitiatePayment));
         }
     }
 
@@ -172,8 +167,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.PaymentCallback->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(PaymentCallback));
         }
     }
 
@@ -194,8 +188,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.RefundBooking->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(RefundBooking));
         }
     }
 
@@ -213,8 +206,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.ValidateGiftCard->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(ValidateGiftCard));
         }
     }
 
@@ -231,8 +223,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetGiftCards->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetGiftCards));
         }
     }
 
@@ -254,8 +245,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.IssueGiftCard->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(IssueGiftCard));
         }
     }
 
@@ -273,8 +263,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.SetGiftCardActive->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(SetGiftCardActive));
         }
     }
 
@@ -291,8 +280,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.ValidateTicket->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(ValidateTicket));
         }
     }
 
@@ -310,8 +298,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetMyInvoices->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetMyInvoices));
         }
     }
 
@@ -331,8 +318,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetInvoice->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetInvoice));
         }
     }
 
@@ -349,8 +335,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetInvoices->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetInvoices));
         }
     }
 
@@ -367,8 +352,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenue->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetRevenue));
         }
     }
 
@@ -388,8 +372,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenueByDay->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetRevenueByDay));
         }
     }
 
@@ -406,8 +389,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenueByMovie->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetRevenueByMovie));
         }
     }
 
@@ -424,8 +406,7 @@ public class PaymentController : ControllerBase
         }
         catch (Exception e)
         {
-            LogProvider.Current.Fatal(e, $"{GetType().Name}.GetRevenueByTheater->Exception: {e.GetType()}, {e.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            return HandleException(e, nameof(GetRevenueByTheater));
         }
     }
 }
