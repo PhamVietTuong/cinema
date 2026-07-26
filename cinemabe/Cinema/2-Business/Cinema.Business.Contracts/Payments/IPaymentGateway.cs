@@ -22,6 +22,13 @@ public interface IPaymentGateway
     /// <summary>Stable provider key (e.g. "Sandbox", "VNPay", "MoMo", "Stripe"). Stored on the invoice.</summary>
     string Name { get; }
 
+    /// <summary>
+    /// True when this provider has the credentials it needs to actually take a payment.
+    /// The resolver refuses to hand out an unconfigured gateway, so a half-set-up provider
+    /// surfaces as a clear error at selection time instead of throwing mid-checkout.
+    /// </summary>
+    bool IsConfigured { get; }
+
     /// <summary>Begins a payment; returns a provider reference and (usually) a redirect URL for hosted checkout.</summary>
     Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl);
 

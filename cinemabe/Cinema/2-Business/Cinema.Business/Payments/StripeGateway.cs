@@ -29,6 +29,8 @@ public class StripeGateway : IPaymentGateway
 
     public string Name => "Stripe";
 
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(SecretKey);
+
     private string SecretKey     => _config["Payments:Stripe:SecretKey"]     ?? "";
     private string WebhookSecret => _config["Payments:Stripe:WebhookSecret"] ?? "";
 
