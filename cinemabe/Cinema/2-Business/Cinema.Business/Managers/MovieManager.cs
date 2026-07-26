@@ -23,8 +23,14 @@ public class MovieManager : IMovieManager
 
         var (items, total) = await _uow.MovieStore.GetPagedAsync(searchText, movieTypeId, page, pageSize);
         var dtos = items.Select(ToMovieDTO).ToList();
+
+        // One grouped query for the whole page. Querying per movie made this endpoint issue
+        // 1 + N queries, and GetRecommendedAsync calls it with a 200-row page.
+        var ratings = await _uow.MovieStore.GetAverageRatingsAsync(dtos.Select(d => d.Id).ToList());
         foreach (var dto in dtos)
-            dto.AverageRating = await _uow.MovieStore.GetAverageRatingAsync(dto.Id);
+        {
+            dto.AverageRating = ratings.TryGetValue(dto.Id, out var avg) ? avg : 0;
+        }
 
         return new DefaultSearchResults<MovieDTO>
         {
@@ -89,13 +95,16 @@ public class MovieManager : IMovieManager
         dto.AgeRestrictionMinAge      = movie.AgeRestriction?.MinAge ?? 0;
         // Flatten each showtime's rooms into the summary list the detail page renders.
         // AvailableSeats = room capacity minus seats already booked (Pending/Paid) for that showtime.
+        // Booked counts come from one grouped query for the whole movie — querying per showtime-room
+        // turned a public page into 1 + N round-trips as a film's schedule grew.
+        var bookedCounts = await _uow.SeatStore.GetBookedSeatCountsByMovieAsync(id);
         var summaries = new List<ShowTimeSummaryDTO>();
         foreach (var s in movie.ShowTimes.Where(s => s.IsActive))
         {
             foreach (var sr in s.ShowTimeRooms.DefaultIfEmpty())
             {
                 var capacity = (sr?.Room?.TotalRows ?? 0) * (sr?.Room?.TotalColumns ?? 0);
-                var booked   = sr == null ? 0 : (await _uow.SeatStore.GetBookedSeatIdsAsync(s.Id, sr.RoomId)).Count();
+                var booked   = sr != null && bookedCounts.TryGetValue((s.Id, sr.RoomId), out var n) ? n : 0;
                 summaries.Add(new ShowTimeSummaryDTO
                 {
                     Id             = s.Id,
@@ -112,8 +121,7 @@ public class MovieManager : IMovieManager
         dto.ShowTimes = summaries.OrderBy(x => x.StartTime).ToList();
         dto.AverageRating             = await _uow.MovieStore.GetAverageRatingAsync(id);
         dto.RatingCount               = movie.Evaluations.Count;
-        dto.RecentComments = movie.Comments
-            .Where(c => c.ParentId == null && c.IsApproved).Take(10)
+        dto.RecentComments = (await _uow.CommentStore.GetRecentForMovieAsync(id, 10))
             .Select(ToCommentDTO).ToList();
         return dto;
     }
@@ -263,18 +271,16 @@ public class MovieManager : IMovieManager
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /// <summary>Maps a comment (and its approved replies, recursively) to a DTO.</summary>
-    private static CommentDTO ToCommentDTO(Comment c)
+    private static CommentDTO ToCommentDTO(CommentView c) => new()
     {
-        var cd = c.ToDTO<Comment, CommentDTO>();
-        cd.UserName   = c.User?.Name ?? string.Empty;
-        cd.UserAvatar = c.User?.Avatar;
-        cd.Replies = (c.Replies ?? new List<Comment>())
-            .Where(r => r.IsApproved)
-            .OrderBy(r => r.CreationTime)
-            .Select(ToCommentDTO)
-            .ToList();
-        return cd;
-    }
+        Id           = c.Id,
+        Content      = c.Content,
+        ParentId     = c.ParentId,
+        CreationTime = c.CreationTime,
+        UserName     = c.UserName,
+        UserAvatar   = c.UserAvatar,
+        Replies      = c.Replies.Select(ToCommentDTO).ToList(),
+    };
 
     private async Task<MovieDTO> GetBasicDTOAsync(Guid id)
     {
