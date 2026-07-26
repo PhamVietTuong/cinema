@@ -215,13 +215,25 @@ public class MovieManager : IMovieManager
             return false;
         }
         // Remove direct replies too so none are left orphaned (moderation is a hard removal of content).
+        // Each store delete commits on its own, so without an explicit transaction a failure partway
+        // through left some replies deleted and the parent still standing.
         var replies = await _uow.CommentStore.GetRepliesAsync(commentId);
-        foreach (var reply in replies)
+        await _uow.BeginTransactionAsync();
+        try
         {
-            await _uow.CommentStore.DeleteAsync(reply);
+            foreach (var reply in replies)
+            {
+                await _uow.CommentStore.DeleteAsync(reply);
+            }
+            await _uow.CommentStore.DeleteAsync(comment);
+            await _uow.SaveChangesAsync();
+            await _uow.CommitTransactionAsync();
         }
-        await _uow.CommentStore.DeleteAsync(comment);
-        await _uow.SaveChangesAsync();
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
         return true;
     }
 

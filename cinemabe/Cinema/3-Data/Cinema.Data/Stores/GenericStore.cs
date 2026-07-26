@@ -82,29 +82,46 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     {
         var lastUpdatedTimeProperty = typeof(Entity).GetProperty("LastUpdatedTime");
         if (lastUpdatedTimeProperty != null)
-            lastUpdatedTimeProperty.SetValue(entity, DateTime.UtcNow);
-
-        var idProperty = typeof(Entity).GetProperty("Id");
-        if (idProperty != null)
         {
-            object? key = idProperty.PropertyType == typeof(int)
-                ? idProperty.GetValue(entity)
-                : idProperty.GetValue(entity);
-
-            var tracked = await DbSet.FindAsync(key);
-            if (tracked != null) Context.Entry(tracked).State = EntityState.Detached;
+            lastUpdatedTimeProperty.SetValue(entity, DateTime.UtcNow);
         }
 
-        Context.Entry(entity).State = EntityState.Modified;
+        var entry = Context.Entry(entity);
+        if (entry.State == EntityState.Detached)
+        {
+            // The instance came from outside the context (e.g. mapped from a request). Detach any
+            // stale copy of the same row the context is already tracking, then mark this one Modified.
+            // Consulting the ChangeTracker avoids the SELECT that FindAsync used to issue on every update.
+            var id = GetId(entity);
+            var tracked = Context.ChangeTracker.Entries<Entity>()
+                .FirstOrDefault(e => !ReferenceEquals(e.Entity, entity) && Equals(GetId(e.Entity), id));
+            if (tracked != null)
+            {
+                tracked.State = EntityState.Detached;
+            }
+            entry.State = EntityState.Modified;
+        }
+        // When the entity is already tracked, leave it to change tracking: EF then writes only the
+        // columns that actually changed instead of every column (which rewrote password hashes and
+        // salts just to bump a failed-login counter).
+
         await Context.SaveChangesAsync();
         return entity;
     }
 
     public virtual async Task<Entity> DeleteAsync(Entity entity)
     {
-        var toDelete = await DbSet.FindAsync(GetId(entity))
-            ?? throw new KeyNotFoundException($"Cannot find {typeof(Entity).Name} in the database.");
-        DbSet.Remove(toDelete);
+        var entry = Context.Entry(entity);
+        if (entry.State == EntityState.Detached)
+        {
+            var toDelete = await DbSet.FindAsync(GetId(entity))
+                ?? throw new KeyNotFoundException($"Cannot find {typeof(Entity).Name} in the database.");
+            DbSet.Remove(toDelete);
+        }
+        else
+        {
+            DbSet.Remove(entity);
+        }
         await Context.SaveChangesAsync();
         return entity;
     }
