@@ -57,6 +57,9 @@
       <i class="fas" [class.fa-sun]="theme.isDark()" [class.fa-moon]="!theme.isDark()"></i>
       {{ (theme.isDark() ? 'nav.lightMode' : 'nav.darkMode') | translate }}
     </button>
+    <!-- The desktop switcher lives in .nav-actions, which is display:none on mobile, so without
+         this the language could not be changed at all on a phone. -->
+    <cl-language-switcher class="mobile-menu-lang"></cl-language-switcher>
     <div class="mobile-menu-divider"></div>
     <ng-container *ngIf="isAuth$ | async; else guestMobile">
       <a routerLink="/profile" (click)="closeMenu()">{{ 'nav.account' | translate }}</a>

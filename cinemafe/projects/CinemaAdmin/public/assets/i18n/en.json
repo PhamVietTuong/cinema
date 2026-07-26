@@ -681,5 +681,10 @@
     "title": "Access denied",
     "message": "This account is not an administrator. Please sign in with an admin account.",
     "switchAccount": "Sign in with another account"
+  },
+  "errors": {
+    "network": "Cannot reach the server. Please check your network connection.",
+    "forbidden": "You do not have permission to perform this action.",
+    "server": "A server error occurred. Please try again later."
   }
 }

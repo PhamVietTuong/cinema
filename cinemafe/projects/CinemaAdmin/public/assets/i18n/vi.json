@@ -681,5 +681,10 @@
     "title": "Không có quyền truy cập",
     "message": "Tài khoản này không phải quản trị viên. Vui lòng đăng nhập bằng tài khoản quản trị.",
     "switchAccount": "Đăng nhập tài khoản khác"
+  },
+  "errors": {
+    "network": "Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.",
+    "forbidden": "Bạn không có quyền thực hiện thao tác này.",
+    "server": "Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau."
   }
 }

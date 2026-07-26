@@ -74,8 +74,27 @@
 .feature-desc { color: rgba(255, 255, 255, 0.85); margin: 0 0 18px; }
 .feature-btn { background: var(--mp-card); color: var(--mp-ink); }
 
-@media (max-width: 760px) {
+// The card is a fixed 120px colour panel beside its content, and it clips (overflow: hidden)
+// rather than wrapping. Two columns therefore need a genuinely wide viewport: at 768px each card
+// was ~370px, leaving ~230px for the text, which cut titles mid-word and hid the CTA entirely.
+@media (max-width: 1024px) {
   .promo-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
   .promo-page, .ph-inner { padding-left: 20px; padding-right: 20px; }
   .feature-content { padding: 24px 22px; }
+}
+
+// Below this a single column is still too narrow for the side-by-side layout, so stack it.
+@media (max-width: 560px) {
+  .promo-card { flex-direction: column; }
+  .promo-left {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+  }
+  .promo-perf { display: none; }
 }
