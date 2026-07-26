@@ -40,8 +40,9 @@ export class RegisterComponent {
 
   onSubmit(): void {
     if (this.form.valid) {
-      const { confirmPassword, ...request } = this.form.value;
-      this._store.dispatch(register({ request: request as any }));
+      // Send the whole form, confirmPassword included: RegisterRequest declares it
+      // [Required] + [Compare(Password)], so stripping it here fails validation with a 400.
+      this._store.dispatch(register({ request: this.form.value as any }));
     } else {
       this.form.markAllAsTouched();
     }

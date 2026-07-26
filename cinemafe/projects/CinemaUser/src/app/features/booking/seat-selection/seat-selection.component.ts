@@ -1,11 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgFor, NgIf, NgClass, CurrencyPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SharedModule, PaymentServiceAgent, BookingHubService } from 'CinemaLib';
 
 type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean };

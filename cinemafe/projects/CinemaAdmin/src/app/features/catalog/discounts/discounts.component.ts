@@ -99,15 +99,25 @@ export class DiscountsManagementComponent extends CatalogCrudBase<Dto> {
 
   // ── Scope UI helpers ──────────────────────────────────────────────────────────
   toggleTheater(id?: string): void {
-    if (!id) return;
-    this.selectedTheaterIds.has(id) ? this.selectedTheaterIds.delete(id) : this.selectedTheaterIds.add(id);
+    if (!id) {
+      return;
+    }
+    if (this.selectedTheaterIds.has(id)) {
+      this.selectedTheaterIds.delete(id);
+    } else {
+      this.selectedTheaterIds.add(id);
+    }
     this._cdr.markForCheck();
   }
   isTheaterSelected(id?: string): boolean {
     return !!id && this.selectedTheaterIds.has(id);
   }
   toggleDay(value: number): void {
-    this.selectedDays.has(value) ? this.selectedDays.delete(value) : this.selectedDays.add(value);
+    if (this.selectedDays.has(value)) {
+      this.selectedDays.delete(value);
+    } else {
+      this.selectedDays.add(value);
+    }
     this._cdr.markForCheck();
   }
   isDaySelected(value: number): boolean {
