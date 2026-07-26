@@ -481,7 +481,15 @@
     "timeTo": "Đến giờ",
     "anyTimeHint": "Bỏ trống = áp dụng mọi giờ",
     "nTheaters": "{{n}} rạp",
-    "days": { "sun": "CN", "mon": "T2", "tue": "T3", "wed": "T4", "thu": "T5", "fri": "T6", "sat": "T7" },
+    "days": {
+      "sun": "CN",
+      "mon": "T2",
+      "tue": "T3",
+      "wed": "T4",
+      "thu": "T5",
+      "fri": "T6",
+      "sat": "T7"
+    },
     "scopeShort": "Phạm Vi",
     "discount": "Giảm",
     "validity": "Hiệu Lực",
@@ -668,5 +676,10 @@
     "page": "Trang {{index}}/{{total}}",
     "prev": "Trước",
     "next": "Sau"
+  },
+  "forbidden": {
+    "title": "Không có quyền truy cập",
+    "message": "Tài khoản này không phải quản trị viên. Vui lòng đăng nhập bằng tài khoản quản trị.",
+    "switchAccount": "Đăng nhập tài khoản khác"
   }
 }

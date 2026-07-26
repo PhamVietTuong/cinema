@@ -481,7 +481,15 @@
     "timeTo": "To",
     "anyTimeHint": "Leave empty = any time",
     "nTheaters": "{{n}} theaters",
-    "days": { "sun": "Sun", "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu", "fri": "Fri", "sat": "Sat" },
+    "days": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
     "scopeShort": "Scope",
     "discount": "Discount",
     "validity": "Validity",
@@ -668,5 +676,10 @@
     "page": "Page {{index}}/{{total}}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "forbidden": {
+    "title": "Access denied",
+    "message": "This account is not an administrator. Please sign in with an admin account.",
+    "switchAccount": "Sign in with another account"
   }
 }
