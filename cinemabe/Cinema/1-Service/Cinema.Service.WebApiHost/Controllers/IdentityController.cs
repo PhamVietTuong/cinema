@@ -7,6 +7,7 @@ using Cinema.Foundation.Logging;
 using Cinema.Service.WebApiHost.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Service.WebApiHost.Controllers;
 
@@ -25,6 +26,7 @@ public class IdentityController : ApiControllerBase
     // ── Auth ──────────────────────────────────────────────────────────────────
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -41,6 +43,7 @@ public class IdentityController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
@@ -57,6 +60,7 @@ public class IdentityController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.AuthEmail)]
     [ProducesResponseType(204)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
@@ -73,6 +77,7 @@ public class IdentityController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [ProducesResponseType(204)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
@@ -89,6 +94,7 @@ public class IdentityController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [ProducesResponseType(204)]
     public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
     {
@@ -105,6 +111,7 @@ public class IdentityController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.AuthEmail)]
     [ProducesResponseType(204)]
     public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest request)
     {
@@ -121,6 +128,7 @@ public class IdentityController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
     {
@@ -137,6 +145,7 @@ public class IdentityController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginRequest request)
     {
@@ -153,6 +162,7 @@ public class IdentityController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     public async Task<IActionResult> VerifyTwoFactor([FromBody] VerifyTwoFactorRequest request)
     {
