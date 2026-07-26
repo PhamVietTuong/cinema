@@ -86,7 +86,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.weekStart = this._mondayOf(new Date());
-    const wide = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 });
+    const wide = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 });
     this._svc.getMovies(wide).pipe(takeUntil(this._destroy$))
       .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getTheaters(wide).pipe(takeUntil(this._destroy$))
@@ -103,9 +103,16 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
 
   // ── Data ────────────────────────────────────────────────────────────────────
   load(): void {
-    // The backend has no week-range filter for showtimes, so we fetch a wide page
-    // and slice the visible week on the client.
-    this._svc.getShowTimeList(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1000 }))
+    // Fetch only the visible week; the backend filters on StartTime so the page stays
+    // small no matter how many showtimes exist overall.
+    this._svc.getShowTimeList(CinemaServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: 1,
+      pageSize: 200,
+      filters: {
+        from: this._isoLocal(this.weekStart),
+        to: this._isoLocal(this._addDays(this.weekStart, 7)),
+      },
+    }))
       .pipe(takeUntil(this._destroy$))
       .subscribe(r => {
         this._showtimes = r.results ?? [];
@@ -155,9 +162,10 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   }
 
   // ── Week navigation ───────────────────────────────────────────────────────────
-  prevWeek(): void { this.weekStart = this._addDays(this.weekStart, -7); this._rebuild(); }
-  nextWeek(): void { this.weekStart = this._addDays(this.weekStart, 7); this._rebuild(); }
-  goToday(): void { this.weekStart = this._mondayOf(new Date()); this._rebuild(); }
+  // Changing the week changes the server-side range, so these reload rather than re-slice.
+  prevWeek(): void { this.weekStart = this._addDays(this.weekStart, -7); this.load(); }
+  nextWeek(): void { this.weekStart = this._addDays(this.weekStart, 7); this.load(); }
+  goToday(): void { this.weekStart = this._mondayOf(new Date()); this.load(); }
   onFilterChange(): void { this._rebuild(); }
 
   get weekLabel(): string {
@@ -255,6 +263,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _hm(d: Date): string { return `${this._pad(d.getHours())}:${this._pad(d.getMinutes())}`; }
   private _ymd(d: Date): string { return `${d.getFullYear()}-${this._pad(d.getMonth() + 1)}-${this._pad(d.getDate())}`; }
   private _hoursFromStart(d: Date): number { return (d.getHours() - this.startHour) + d.getMinutes() / 60; }
+  /** Local-time ISO (no timezone suffix) so the server reads the same wall-clock week boundary we display. */
+  private _isoLocal(d: Date): string { return `${this._ymd(d)}T${this._pad(d.getHours())}:${this._pad(d.getMinutes())}:00`; }
   private _addDays(d: Date, n: number): Date { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
   private _sameDay(a: Date, b: Date): boolean {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();

@@ -51,7 +51,7 @@ export class UserFormComponent implements OnInit, OnChanges {
   get editingId(): string | null { return this.user?.id ?? null; }
 
   ngOnInit(): void {
-    this._cinema.getUserTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 }))
+    this._cinema.getUserTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
       .subscribe(r => { this.userTypes = r.results ?? []; this._cdr.markForCheck(); });
   }
 

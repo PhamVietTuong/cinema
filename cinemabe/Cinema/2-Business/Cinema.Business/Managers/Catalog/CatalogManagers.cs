@@ -434,6 +434,8 @@ public class ShowTimeManager(IApplicationUnitOfWork uow)
             search.Filters.GetGuid("movieId"),
             search.Filters.GetGuid("roomId"),
             search.Filters.GetBool("isActive"),
+            search.Filters.GetDateTime("from"),
+            search.Filters.GetDateTime("to"),
             page, pageSize);
 
         return new DefaultSearchResults<ShowTimeDTO>

@@ -54,7 +54,7 @@ export class MovieFormComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    const wide = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500 });
+    const wide = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 });
     this._cinemaService.getAgeRestrictions(wide)
       .subscribe(r => { this.ageRestrictions = r.results ?? []; this._cdr.markForCheck(); });
     this._cinemaService.getMovieTypes(wide)

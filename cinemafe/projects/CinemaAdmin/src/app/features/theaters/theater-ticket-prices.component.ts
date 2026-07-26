@@ -25,7 +25,7 @@ export class TheaterTicketPricesComponent extends CatalogCrudBase<Dto> {
 
   override ngOnInit(): void {
     super.ngOnInit();
-    const search = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500, filters: { theaterId: this.theaterId } });
+    const search = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: { theaterId: this.theaterId } });
     this._svc.getRoomTypes(search).subscribe(r => { this.roomTypes = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getSeatTypes(search).subscribe(r => { this.seatTypes = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getTimeSlots(search).subscribe(r => { this.timeSlots = r.results ?? []; this._cdr.markForCheck(); });
