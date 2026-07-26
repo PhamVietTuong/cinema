@@ -41,8 +41,23 @@ The solution enforces dependency direction by folder prefix. Higher-numbered lay
 ### Database
 
 - SQL Server (default connection string targets `PHAMVIETTUONG\SQLEXPRESS`, db `Cinema`). Override `ConnectionStrings:CinemaDatabase` in `appsettings.Development.json` or env vars.
-- Schema is **not** managed by EF migrations in this repo — apply `cinemabe/sql/create_db.sql` for a fresh DB, `upgrade_db.sql` for schema changes, `insert_db.sql` for reference data. Seed users by running the `Cinema.Business.Tests` exe (see above).
-- **Keep `create_db.sql` and `upgrade_db.sql` in sync**: whenever you add a schema change to `upgrade_db.sql` (the migration script for existing databases), make the equivalent change in `create_db.sql` (the fresh-install script) so a newly created DB already matches an upgraded one. The two must describe the same final schema.
+- **Schema is managed by EF Core migrations** (`Cinema.Data/Migrations`), baselined at `InitialBaseline` — the exact shape the SQL scripts produce. New schema changes go through migrations, not by hand-editing SQL.
+- Bootstrapping a database:
+  - **Fresh DB**: apply `cinemabe/sql/create_db.sql` (it ends by stamping `__EFMigrationsHistory` with the baseline), then `insert_db.sql` for reference data, then `dotnet ef database update` for anything added since. Seed users by running the `Cinema.Business.Tests` exe (see above).
+  - **Existing DB predating migrations**: apply `upgrade_db.sql` once — it ends with the same baseline stamp — then `dotnet ef database update`.
+- Migrations are **never applied automatically at startup**; `database update` is an explicit deploy step.
+- The pre-migration scripts remain the bootstrap path, so **keep `create_db.sql` and `upgrade_db.sql` in sync** — they must describe the same final schema, and both must end with the baseline stamp.
+
+```powershell
+# From cinemabe/. A design-time factory supplies the connection, so no --startup-project is
+# needed (the Web API host refuses to start without JWT:Secret, which would break design time).
+dotnet ef migrations add <Name> --project Cinema/3-Data/Cinema.Data
+dotnet ef migrations script --project Cinema/3-Data/Cinema.Data --idempotent   # review before applying
+
+# Point at a real server for anything that connects:
+$env:CINEMA_DESIGNTIME_CONNECTION = "Server=...;Database=Cinema;..."
+dotnet ef database update --project Cinema/3-Data/Cinema.Data
+```
 
 ### Common backend commands
 
