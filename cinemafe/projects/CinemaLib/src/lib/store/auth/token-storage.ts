@@ -15,6 +15,15 @@ export const TokenStorage = {
     primary.setItem(TOKEN_KEY, token);
     primary.setItem(USER_KEY, JSON.stringify(user));
   },
+  /**
+   * Replaces the cached user without touching the token, writing to whichever store already
+   * holds the session so the "remember me" choice is preserved. Used after a profile edit:
+   * otherwise the stale copy persisted here outlived a full page reload.
+   */
+  saveUser(user: unknown): void {
+    const target = localStorage.getItem(TOKEN_KEY) !== null ? localStorage : sessionStorage;
+    target.setItem(USER_KEY, JSON.stringify(user));
+  },
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
   },

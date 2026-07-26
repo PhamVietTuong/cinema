@@ -41,15 +41,24 @@ export class DashboardComponent implements OnInit {
     this._cinema.getNowShowingMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 5 }))
       .subscribe(r => { this.topMovies = r.results ?? []; this._cdr.markForCheck(); });
 
+    // Recent orders list — most recent regardless of date.
     this._payment.getInvoices(PaymentServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 8 }))
       .subscribe(r => {
         this.invoices = r.results ?? [];
-        this.stats.invoicesToday = r.totalCount ?? this.invoices.length;
-        this.stats.revenueToday = this.invoices
-          .filter(i => i.status === PaymentServiceAgent.InvoiceStatus.Paid)
-          .reduce((sum, i) => sum + (i.finalAmount ?? 0), 0);
         this._cdr.markForCheck();
       });
+
+    // "Orders today" needs its own date-filtered count. Reading totalCount off the list above
+    // reported every invoice ever created, and summing that page's Paid rows meant "revenue today"
+    // only ever counted whatever happened to fall in the first 8 rows.
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    this._payment.getInvoices(PaymentServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: 1,
+      pageSize: 1,
+      filters: { from: this._isoLocal(midnight), to: this._isoLocal(now) },
+    }))
+      .subscribe(r => { this.stats.invoicesToday = r.totalCount ?? 0; this._cdr.markForCheck(); });
 
     this.loadRevenue();
   }
@@ -63,9 +72,23 @@ export class DashboardComponent implements OnInit {
     // Direct call; typed PaymentServiceAgent.getRevenueByDay lands after NSwag regen.
     this._http.get<RevenueDay[]>(`${environment.apiUrl}/api/Payment/GetRevenueByDay`, { params: { days: this.revenueDays } })
       .subscribe({
-        next: days => { this.revenueTrend = this._toTrend(days ?? []); this._cdr.markForCheck(); },
+        next: days => {
+          const series = days ?? [];
+          this.revenueTrend = this._toTrend(series);
+          // The series always ends on today, so today's revenue comes from the server's own
+          // Paid-invoice totals rather than being re-derived from a page of the invoice list.
+          this.stats.revenueToday = series.length ? (series[series.length - 1].total ?? 0) : 0;
+          this._cdr.markForCheck();
+        },
         error: () => { this.revenueTrend = []; this._cdr.markForCheck(); },
       });
+  }
+
+  /** Local wall-clock ISO with no timezone suffix — the server's date filters compare against
+   *  values written the same way, so sending a UTC instant here would shift the day boundary. */
+  private _isoLocal(d: Date): string {
+    const p = (n: number) => `${n}`.padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   }
 
   private _toTrend(days: RevenueDay[]): { day: string; value: number }[] {

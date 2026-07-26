@@ -1,7 +1,8 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, IdentityServiceAgent } from 'CinemaLib';
+import { Store } from '@ngrx/store';
+import { SharedModule, IdentityServiceAgent, profileUpdated } from 'CinemaLib';
 
 @Component({
   selector: 'app-admin-profile',
@@ -15,6 +16,7 @@ export class ProfileComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
   private _translate = inject(TranslateService);
+  private _store = inject(Store);
 
   tab: 'info' | 'password' = 'info';
   user: IdentityServiceAgent.UserDTO | null = null;
@@ -51,7 +53,12 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: () => {
           this.profileMsg = this._translate.instant('profile.profileUpdateSuccess');
-          this._identity.getProfile().subscribe(u => { this.user = u; this._cdr.markForCheck(); });
+          this._identity.getProfile().subscribe(u => {
+            this.user = u;
+            // Keep the cached auth user in step so the sidebar doesn't show a stale name.
+            this._store.dispatch(profileUpdated({ user: u }));
+            this._cdr.markForCheck();
+          });
           this._cdr.markForCheck();
         },
         error: e => { this.profileErr = this._err(e, this._translate.instant('profile.profileUpdateFailed')); this._cdr.markForCheck(); },
