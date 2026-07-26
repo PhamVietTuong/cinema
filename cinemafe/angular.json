@@ -186,6 +186,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
+            "tsConfig": "projects/CinemaAdmin/tsconfig.spec.json",
             "runnerConfig": "vitest.config.ts"
           }
         }
