@@ -73,6 +73,7 @@
   background: var(--mp-card); border: 1px solid var(--mp-line); text-decoration: none;
   transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   &:hover { transform: translateY(-2px); border-color: var(--mp-red); background: var(--mp-red-soft); }
+  .slot-date { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; color: var(--mp-muted); }
   .slot-time { font-family: var(--mp-font-display); font-weight: 700; color: var(--mp-ink); font-size: 1rem; }
   .slot-seats { font-size: 0.7rem; color: var(--mp-muted); }
 }

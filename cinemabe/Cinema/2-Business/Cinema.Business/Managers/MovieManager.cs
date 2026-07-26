@@ -99,7 +99,11 @@ public class MovieManager : IMovieManager
         // turned a public page into 1 + N round-trips as a film's schedule grew.
         var bookedCounts = await _uow.SeatStore.GetBookedSeatCountsByMovieAsync(id);
         var summaries = new List<ShowTimeSummaryDTO>();
-        foreach (var s in movie.ShowTimes.Where(s => s.IsActive))
+        // Only screenings that haven't started yet: the detail page's showtimes are booking links,
+        // and it previously listed past ones (labelled with a time but no date) right alongside
+        // upcoming ones, so a customer could click through and book a screening that had ended.
+        var now = DateTime.Now;
+        foreach (var s in movie.ShowTimes.Where(s => s.IsActive && s.StartTime > now))
         {
             foreach (var sr in s.ShowTimeRooms.DefaultIfEmpty())
             {
