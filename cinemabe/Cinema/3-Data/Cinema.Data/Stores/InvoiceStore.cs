@@ -34,6 +34,9 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
                 .ThenInclude(it => it.ShowTimeRoom).ThenInclude(sr => sr.Room).ThenInclude(r => r.Theater)
             .Include(i => i.InvoiceTickets).ThenInclude(it => it.Seat).ThenInclude(s => s.SeatType)
             .Include(i => i.InvoiceFoodAndDrinks).ThenInclude(f => f.FoodAndDrink)
+            // Tickets and food are independent collections; in one query their rows multiply
+            // (6 seats x 4 snacks = 24 rows for a 10-row invoice).
+            .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Id == id);
 
     public async Task<Invoice?> GetByCodeAsync(string code)
