@@ -5778,10 +5778,6 @@
             "format": "int32",
             "nullable": true
           },
-          "usedCount": {
-            "type": "integer",
-            "format": "int32"
-          },
           "isActive": {
             "type": "boolean"
           },

@@ -12,7 +12,10 @@ public class MovieManager : IMovieManager
 {
     private readonly IApplicationUnitOfWork _uow;
 
-    public MovieManager(IApplicationUnitOfWork uow) => _uow = uow;
+    public MovieManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<DefaultSearchResults<MovieDTO>> GetMoviesAsync(PagingSearchDTO search)
     {
@@ -87,8 +90,11 @@ public class MovieManager : IMovieManager
 
     public async Task<MovieDetailDTO> GetDetailAsync(Guid id)
     {
-        var movie = await _uow.MovieStore.GetDetailAsync(id)
-                    ?? throw new KeyNotFoundException($"Movie {id} not found.");
+        var movie = await _uow.MovieStore.GetDetailAsync(id);
+        if (movie == null)
+        {
+            throw new KeyNotFoundException($"Movie {id} not found.");
+        }
         var dto = movie.ToDTO<Movie, MovieDetailDTO>();
         ApplyMovieComputedFields(movie, dto);
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
@@ -140,8 +146,11 @@ public class MovieManager : IMovieManager
 
     public async Task<MovieDTO> UpdateAsync(UpdateMovieRequest request)
     {
-        var movie = await _uow.MovieStore.GetForUpdateAsync(request.Id)
-                    ?? throw new KeyNotFoundException($"Movie {request.Id} not found.");
+        var movie = await _uow.MovieStore.GetForUpdateAsync(request.Id);
+        if (movie == null)
+        {
+            throw new KeyNotFoundException($"Movie {request.Id} not found.");
+        }
         movie.PatchEntity<Movie, UpdateMovieRequest>(request);
         movie.EndDate = request.EndDate;
 
@@ -157,8 +166,11 @@ public class MovieManager : IMovieManager
 
     public async Task DeleteAsync(Guid id)
     {
-        var movie = await _uow.MovieStore.GetByIdAsync(id)
-                    ?? throw new KeyNotFoundException($"Movie {id} not found.");
+        var movie = await _uow.MovieStore.GetByIdAsync(id);
+        if (movie == null)
+        {
+            throw new KeyNotFoundException($"Movie {id} not found.");
+        }
         movie.IsActive = false;
         await _uow.MovieStore.UpdateAsync(movie);
         await _uow.SaveChangesAsync();
@@ -287,20 +299,27 @@ public class MovieManager : IMovieManager
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /// <summary>Maps a comment (and its approved replies, recursively) to a DTO.</summary>
-    private static CommentDTO ToCommentDTO(CommentView c) => new()
+    private static CommentDTO ToCommentDTO(CommentView c)
     {
-        Id           = c.Id,
-        Content      = c.Content,
-        ParentId     = c.ParentId,
-        CreationTime = c.CreationTime,
-        UserName     = c.UserName,
-        UserAvatar   = c.UserAvatar,
-        Replies      = c.Replies.Select(ToCommentDTO).ToList(),
-    };
+        return new()
+        {
+            Id           = c.Id,
+            Content      = c.Content,
+            ParentId     = c.ParentId,
+            CreationTime = c.CreationTime,
+            UserName     = c.UserName,
+            UserAvatar   = c.UserAvatar,
+            Replies      = c.Replies.Select(ToCommentDTO).ToList(),
+        };
+    }
 
     private async Task<MovieDTO> GetBasicDTOAsync(Guid id)
     {
-        var movie = await _uow.MovieStore.GetDetailAsync(id) ?? throw new KeyNotFoundException();
+        var movie = await _uow.MovieStore.GetDetailAsync(id);
+        if (movie == null)
+        {
+            throw new KeyNotFoundException();
+        }
         return ToMovieDTO(movie);
     }
 

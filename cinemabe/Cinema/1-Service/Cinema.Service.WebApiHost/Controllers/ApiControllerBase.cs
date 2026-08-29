@@ -10,6 +10,22 @@ namespace Cinema.Service.WebApiHost.Controllers;
 /// </summary>
 public abstract class ApiControllerBase : ControllerBase
 {
+    /// <summary>
+    /// Checks existence before an id-based action (GetById/Update/Delete) calls into its manager.
+    /// Returns a 404 <see cref="IActionResult"/> if the entity doesn't exist, or <c>null</c> if the
+    /// caller should proceed.
+    /// </summary>
+    protected async Task<IActionResult?> EnsureExistsAsync(Func<Task<bool>> existsCheck, string action, string entityName, object id)
+    {
+        if (await existsCheck())
+        {
+            return null;
+        }
+        var message = $"{entityName} {id} not found.";
+        LogProvider.Current.Warning($"{GetType().Name}.{action}->NotFound: {message}");
+        return NotFound(new { error = message, statusCode = StatusCodes.Status404NotFound });
+    }
+
     /// <summary>Maps a caught exception to the appropriate status code and logs it.</summary>
     protected IActionResult HandleException(Exception e, string action)
     {

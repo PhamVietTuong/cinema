@@ -12,7 +12,10 @@ public class GiftCardManager : IGiftCardManager
 {
     private readonly IApplicationUnitOfWork _uow;
 
-    public GiftCardManager(IApplicationUnitOfWork uow) => _uow = uow;
+    public GiftCardManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<DefaultSearchResults<GiftCardDTO>> GetGiftCardsAsync(PagingSearchDTO search)
     {
@@ -88,17 +91,23 @@ public class GiftCardManager : IGiftCardManager
         return new GiftCardValidationDTO { Valid = true, Balance = card.Balance };
     }
 
-    private static GiftCardDTO ToDTO(GiftCard g) => new()
+    private static GiftCardDTO ToDTO(GiftCard g)
     {
-        Id             = g.Id,
-        Code           = g.Code,
-        InitialBalance = g.InitialBalance,
-        Balance        = g.Balance,
-        IsActive       = g.IsActive,
-        ExpiresAt      = g.ExpiresAt,
-        IssuedToEmail  = g.IssuedToEmail,
-        CreationTime   = g.CreationTime,
-    };
+        return new()
+        {
+            Id             = g.Id,
+            Code           = g.Code,
+            InitialBalance = g.InitialBalance,
+            Balance        = g.Balance,
+            IsActive       = g.IsActive,
+            ExpiresAt      = g.ExpiresAt,
+            IssuedToEmail  = g.IssuedToEmail,
+            CreationTime   = g.CreationTime,
+        };
+    }
 
-    private static string GenerateCode() => "GC-" + Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
+    private static string GenerateCode()
+    {
+        return "GC-" + Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
+    }
 }

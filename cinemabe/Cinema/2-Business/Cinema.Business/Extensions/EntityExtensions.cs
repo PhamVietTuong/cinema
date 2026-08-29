@@ -71,7 +71,10 @@ public static class EntityExtensions
     }
 
     /// <summary>Creates an empty (default-constructed) instance of the entity.</summary>
-    public static TEntity CreateEmpty<TEntity>() where TEntity : new() => new();
+    public static TEntity CreateEmpty<TEntity>() where TEntity : new()
+    {
+        return new();
+    }
 
     /// <summary>Sets all nullable reference and value-type properties to null/default.</summary>
     public static TEntity EmptyNullables<TEntity>(this TEntity entity)

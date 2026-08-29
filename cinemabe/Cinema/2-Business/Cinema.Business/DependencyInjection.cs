@@ -1,5 +1,7 @@
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Auth;
 using Cinema.Business.Managers;
+using Cinema.Business.Managers.Auth;
 using Cinema.Business.Notifications;
 using Microsoft.Extensions.DependencyInjection;
 

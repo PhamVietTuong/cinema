@@ -35,14 +35,17 @@ public class BookingServiceTests
         _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService(), new DevLogSmsNotificationService());
     }
 
-    private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId) => new()
+    private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId)
     {
-        Filters = new Dictionary<string, string>
+        return new()
         {
-            ["showTimeId"] = showTimeId.ToString(),
-            ["roomId"]     = roomId.ToString()
-        }
-    };
+            Filters = new Dictionary<string, string>
+            {
+                ["showTimeId"] = showTimeId.ToString(),
+                ["roomId"]     = roomId.ToString()
+            }
+        };
+    }
 
     [Fact]
     public async Task GetSeatsAsync_ReturnsAvailableStatus_WhenNotBookedOrLocked()

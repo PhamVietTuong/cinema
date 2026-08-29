@@ -20,7 +20,10 @@ public class ShowtimeReminderService : BackgroundService
 
     private readonly IServiceScopeFactory _scopeFactory;
 
-    public ShowtimeReminderService(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
+    public ShowtimeReminderService(IServiceScopeFactory scopeFactory)
+    {
+        _scopeFactory = scopeFactory;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

@@ -1,15 +1,18 @@
-using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Auth;
 using Google.Apis.Auth;
 using Microsoft.Extensions.Configuration;
 
-namespace Cinema.Business.Managers;
+namespace Cinema.Business.Managers.Auth;
 
 /// <summary>Validates Google ID tokens using Google's published keys and the configured client id.</summary>
 public class GoogleTokenValidator : IGoogleTokenValidator
 {
     private readonly IConfiguration _config;
 
-    public GoogleTokenValidator(IConfiguration config) => _config = config;
+    public GoogleTokenValidator(IConfiguration config)
+    {
+        _config = config;
+    }
 
     public async Task<GoogleUserInfo?> ValidateAsync(string idToken)
     {

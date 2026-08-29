@@ -85,8 +85,11 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
-            var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(request.ShowTimeId, request.RoomId)
-                               ?? throw new InvalidOperationException("ShowTime/Room combination not found.");
+            var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(request.ShowTimeId, request.RoomId);
+            if (showTimeRoom == null)
+            {
+                throw new InvalidOperationException("ShowTime/Room combination not found.");
+            }
             var pricing = await BuildSeatPricingContextAsync(showTimeRoom);
 
             var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
@@ -111,8 +114,11 @@ public class BookingManager : IBookingManager
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
                 }
 
-                var seat = await _uow.SeatStore.GetByIdAsync(seatItem.SeatId)
-                           ?? throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
+                var seat = await _uow.SeatStore.GetByIdAsync(seatItem.SeatId);
+                if (seat == null)
+                {
+                    throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
+                }
 
                 // Price from the ticket-price matrix (theater/roomType/seatType/timeSlot/holiday), falling
                 // back to base price × the seat type's multiplier (× holiday factor). See BuildSeatPricingContextAsync.
@@ -145,8 +151,11 @@ public class BookingManager : IBookingManager
             var foods = new List<InvoiceFoodAndDrink>();
             foreach (var f in request.Foods)
             {
-                var food = await _uow.FoodAndDrinkStore.GetByIdAsync(f.FoodAndDrinkId)
-                           ?? throw new KeyNotFoundException($"Food item {f.FoodAndDrinkId} not found.");
+                var food = await _uow.FoodAndDrinkStore.GetByIdAsync(f.FoodAndDrinkId);
+                if (food == null)
+                {
+                    throw new KeyNotFoundException($"Food item {f.FoodAndDrinkId} not found.");
+                }
                 foods.Add(new InvoiceFoodAndDrink
                 {
                     FoodAndDrinkId = f.FoodAndDrinkId,
@@ -500,8 +509,11 @@ public class BookingManager : IBookingManager
 
     public async Task<TicketValidationDTO> ValidateTicketAsync(string qrCode)
     {
-        var ticket = await _uow.InvoiceStore.GetTicketByQrAsync(qrCode)
-                     ?? throw new KeyNotFoundException("Ticket not found.");
+        var ticket = await _uow.InvoiceStore.GetTicketByQrAsync(qrCode);
+        if (ticket == null)
+        {
+            throw new KeyNotFoundException("Ticket not found.");
+        }
         if (ticket.Invoice.Status != InvoiceStatus.Paid)
             throw new InvalidOperationException("Ticket has not been paid.");
         if (ticket.IsUsed)
@@ -811,7 +823,10 @@ public class BookingManager : IBookingManager
         return released;
     }
 
-    private static string SeatKey(Guid showTimeId, Guid roomId, Guid seatId) => $"{showTimeId}:{roomId}:{seatId}";
+    private static string SeatKey(Guid showTimeId, Guid roomId, Guid seatId)
+    {
+        return $"{showTimeId}:{roomId}:{seatId}";
+    }
 
     private static bool TryParseSeatKey(string key, out (Guid ShowTimeId, Guid RoomId, Guid SeatId) ids)
     {
@@ -827,5 +842,8 @@ public class BookingManager : IBookingManager
         }
         return false;
     }
-    private static string GenerateCode() => $"CIN{DateTime.UtcNow:yyyyMMddHHmmss}{Random.Shared.Next(1000, 9999)}";
+    private static string GenerateCode()
+    {
+        return $"CIN{DateTime.UtcNow:yyyyMMddHHmmss}{Random.Shared.Next(1000, 9999)}";
+    }
 }

@@ -577,3 +577,209 @@ Re-run triggered by fix: `IdentityController` now extends `ApiControllerBase` (n
 - Security fixes validated against spec: PBKDF2-SHA256 hashing with legacy-HMAC verification fallback + auto-rehash on login does NOT alter any auth invariant — LoginAsync still throws `UnauthorizedAccessException` on bad creds, RegisterAsync still refuses duplicate email, Role claim and `[Authorize(Roles=_adminRole)]` gates unchanged, `cinema_token` FE key unchanged.
 - Spec hygiene note: SC-AUTH-03 `file` path `Cinema/3-Data/Cinema.Data/JwtTokenService.cs` is stale — actual file is at `Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs`. Check still resolved correctly; reconcile the YAML path. No code defect.
 - Action expected: none blocking. Safe to push after running the manual E2E playbook (§3), paying attention to the legacy-hash migration note.
+
+---
+
+# Flow Test Result — booking-seat-lock — 2026-07-12 13:15
+**Flow**: Seat locking + booking → Invoice lifecycle (Business + Data + Service + FE)   **Layers**: business, data, service, frontend
+**Changed scope detected**: recent commits touched `BookingManager.cs` (CreateBookingAsync now emits per-ticket `QrCode`; `ComputePricingAsync` takes `roomId` and enforces per-theater discount scope), `InvoiceManager.cs`, and added `InvoiceStore.GetPaidTicketsForShowtimesAsync`. Branch `feature/multi-theater-catalog-pricing` also changed `CinemaLib` services + `booking-confirmation` component (vs master). Working tree at run time: only `show-times.component.html` uncommitted.
+
+> ✅ **No P0 alert raised this run.** All 9 static checks PASS and all 3 build/test checks PASS. No regression indicators triggered by static/build analysis. Live-DB playbook items must be verified manually after the DB is reseeded (DB not reseeded and no app running this run).
+
+## §1 Static checks (9/9 PASS)
+| Check | Severity | Status | Detail |
+|---|---|---|---|
+| SC-BOOK-01 | P0 | ✅ PASS | `static`, `ConcurrentDictionary`, `_lockedSeats` all present (BookingManager.cs line 18) — lock store stays process-local static |
+| SC-BOOK-02 | P0 | ✅ PASS | `TimeSpan.FromMinutes(5)` present in `IsSeatLocked` (line 348) — 5-min lock expiry intact |
+| SC-BOOK-03 | P0 | ✅ PASS | `UnlockSeat` compares `info.ConnectionId == connectionId` (line 339) — owner-scoped release |
+| SC-BOOK-04 | P0 | ✅ PASS | `CreateBookingAsync` sets `Status = InvoiceStatus.Pending` (lines 155, 171); wrapped in `BeginTransactionAsync` (81) / `CommitTransactionAsync` (162) / `RollbackTransactionAsync` (177) — atomic |
+| SC-BOOK-05 | P0 | ✅ PASS | `CancelBookingAsync` (lines 307–316): `InvoiceStatus.Pending` gate `if (invoice.Status != InvoiceStatus.Pending) return false;` (line 311) AND `userId` ownership check `invoice.UserId != userId` (line 310) |
+| SC-BOOK-06 | P0 | ✅ PASS | No hardcoded magic-integer status assignment/comparison in BookingManager.cs or InvoiceManager.cs (forbidden regex: 0 matches) |
+| SC-BOOK-07 | P1 | ✅ PASS | `InvoiceStatus` enum declares all 4: `Pending=0, Paid=1, Cancelled=2, Failed=3` |
+| SC-BOOK-08 | P1 | ✅ PASS | `SeatStatus` enum declares all 3: `Available=0, Reserved=1, Occupied=2` |
+| SC-BOOK-09 | P1 | ✅ PASS | `seat-selection.component.html` renders `available`, `occupied`, `locked` (+ `selected`, `vip`) seat states (lines 36–40) |
+
+## §2 Build + test checks (3/3 PASS)
+| Check | Status | Output (excerpt if fail) |
+|---|---|---|
+| BC-BOOK-BUILD | ✅ PASS (exit 0) | Cinema.Business → built. `Build succeeded. 0 Warning(s) 0 Error(s)` (~3.9s) |
+| BC-BOOK-TEST | ✅ PASS (exit 0) | BookingServiceTests: `Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9` (only NU1603 restore warnings, non-blocking) |
+| BC-BOOK-FE | ✅ PASS (exit 0) | CinemaUser dev build complete (15.3s); `seat-selection-component` + `booking-confirmation-component` chunks emitted. Not skipped (booking FE + CinemaLib changed vs master). Node v22.12.0 via nvm. |
+
+## §3 Playbook to run manually
+
+**Prerequisites:**
+- Backend running: `dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost` (http://localhost:5102)
+- Seed accounts: `dotnet run --project Cinema/2-Business/Cinema.Business.Tests` (admin@cinema.vn / user@cinema.vn)
+- DB seeded with ≥1 Movie, ≥1 Theater/Room with a seat map, ≥1 ShowTime
+- FE: `ng serve CinemaUser` (http://localhost:4202)
+
+> ⚠️ **DB not reseeded and no app running this run** — all DB/live assertions below are "verify manually after reseed". The recent `CreateBookingAsync` change (per-ticket `QrCode`) means PB-BOOK-01 step 3 should also confirm each ticket carries a distinct QR token.
+
+### PB-BOOK-01 — Happy path: pick seats → create booking → confirm payment (P0)
+1. Login as user@cinema.vn, open a movie's showtime → `/booking/seats?showTimeId=...&roomId=...`
+   - Expected: Seat grid renders; available seats clickable, occupied seats not
+2. Select 2 available seats → click 'XÁC NHẬN ĐẶT VÉ'
+   - Expected: Navigates to `/booking/confirmation`
+   - Expected: DB Invoice created with Status = Pending (0), Code matching `CIN{yyyyMMddHHmmss}{NNNN}`
+   - Expected: DB 2 InvoiceTicket rows linked to the invoice, each with a distinct `QrCode`
+3. Choose a payment method → 'XÁC NHẬN & THANH TOÁN'
+   - Expected: Success page shows a ticket-code / QR
+   - Expected: DB Invoice.Status = Paid (1)
+
+### PB-BOOK-02 — Concurrent lock: two clients cannot book the same seat (P0)
+1. Client A opens the seat grid and selects seat R5 (SignalR LockSeat fires)
+   - Expected: Client B's grid shows R5 as 'locked' within ~1s
+2. Client B tries to select R5
+   - Expected: Selection rejected (seat is locked by A)
+3. Client A abandons the page without booking; wait 5 minutes
+   - Expected: R5 auto-expires (IsSeatLocked 5-min window) and becomes available to B again
+
+### PB-BOOK-03 — Cancel guards (P0)
+1. User cancels their own Pending booking
+   - Expected: DB Invoice.Status = Cancelled (2); seats freed
+2. User attempts to cancel a booking they do not own (different userId)
+   - Expected: Rejected (returns false / 4xx), invoice unchanged
+3. User attempts to cancel an already-Paid invoice
+   - Expected: Rejected, status stays Paid
+
+## §4 Regression indicators
+| Indicator | Severity | Status | Basis |
+|---|---|---|---|
+| RI-BOOK-01 | P0 | ✅ Not triggered | SC-BOOK-01 PASS |
+| RI-BOOK-02 | P0 | ✅ Not triggered (static) | SC-BOOK-02 PASS; PB-BOOK-02 step 3 → verify manually after reseed |
+| RI-BOOK-03 | P0 | ✅ Not triggered (static) | SC-BOOK-03 PASS; PB-BOOK-02 step 2 → verify manually after reseed |
+| RI-BOOK-04 | P0 | ✅ Not triggered (static) | SC-BOOK-04 PASS; PB-BOOK-01 step 2 → verify manually after reseed |
+| RI-BOOK-05 | P0 | ✅ Not triggered (static) | SC-BOOK-05 PASS; PB-BOOK-03 steps 2–3 → verify manually after reseed |
+| RI-BOOK-06 | P0 | ✅ Not triggered | SC-BOOK-06 PASS |
+| RI-BOOK-07 | P1 | ✅ Not triggered (static) | SC-BOOK-09 PASS; PB-BOOK-01 step 1 → verify manually after reseed |
+
+## §5 Summary
+- **Static**: 9 PASS / 0 FAIL / 0 SKIP.
+- **Build/test**: 3 PASS / 0 FAIL / 0 SKIP (BC-BOOK-FE not skipped — booking FE + CinemaLib changed vs master).
+- **Indicators triggered**: none. Live-DB indicators (RI-BOOK-02/03/04/05/07) have their playbook legs deferred to manual verification after the DB is reseeded and the app is running.
+- **Bugs exported**: none — no real code defects and no stale-check/contract mismatches to reconcile. The recent `BookingManager` / `InvoiceStore` changes are consistent with the YAML contract; no YAML reconciliation needed.
+
+---
+
+# Flow Test Result — movie-admin — 2026-07-12
+**Flow**: Admin movie & catalog management — CRUD, Admin gating, soft delete (Business + Service + FE)   **Layers**: business, service, frontend
+**Changed scope detected**: feature branch `feature/multi-theater-catalog-pricing` — catalog admin heavily reworked (seat types, food & drinks now per-theater; rooms gained RoomTypeId; new RoomType/TimeSlot/TicketPrice entities; standalone /rooms, /seat-types, /food-and-drinks admin pages moved into theater-detail tabs). Working-tree edit this run: `CinemaAdmin/.../catalog/show-times/show-times.component.html`.
+
+> ✅ **No P0 alert raised this run.** All 4 static checks PASS and all 3 build/test checks PASS. No regression indicators triggered. The spec's static checks reference only stable surfaces (controller `_adminRole` gate, `MovieManager.DeleteAsync`/`GetMoviesAsync`, guards folder) — none point at the removed standalone catalog pages, so no stale-check reconciliation is required for this flow.
+
+## §1 Static checks (4/4 PASS)
+| Check | Severity | Status | Detail |
+|---|---|---|---|
+| SC-MADM-01 | P0 | ✅ PASS | `Authorize(Roles = _adminRole)` present on every write endpoint in `CinemaController.cs` — CreateMovie (L218), UpdateMovie (L236), DeleteMovie (L254) and all catalog Create/Update/Delete actions. Reads stay public. |
+| SC-MADM-02 | P0 | ✅ PASS | `MovieManager.DeleteAsync` (L146–153) sets `movie.IsActive = false` then `MovieStore.UpdateAsync` — soft delete. `must_not_contain: Store.Delete` → 0 matches (no hard delete). |
+| SC-MADM-03 | P1 | ✅ PASS | `GetMoviesAsync` (L17–36) takes `PagingSearchDTO` and returns `DefaultSearchResults<MovieDTO>` — standard paging contract intact. |
+| SC-MADM-04 | P1 | ✅ PASS | `adminGuard` defined/exported in `CinemaLib/src/lib/guards/admin.guard.ts` (L7). |
+
+## §2 Build + test checks (3/3 PASS)
+| Check | Status | Output (excerpt if fail) |
+|---|---|---|
+| BC-MADM-BUILD | ✅ PASS (exit 0) | `Cinema.Business` → built. `Build succeeded. 0 Warning(s) 0 Error(s)` (3.53s) |
+| BC-MADM-TEST | ✅ PASS (exit 0) | MovieServiceTests: `Passed! - Failed: 0, Passed: 6, Skipped: 0, Total: 6` (incl. soft-delete assertion). Only NU1603 restore warnings, non-blocking. |
+| BC-MADM-FE | ✅ PASS (exit 0) | CinemaAdmin build complete (15.5s). movies-management + theater-detail chunks emitted. Not skipped (CinemaAdmin file changed). Node v22.12.0. |
+
+## §3 Playbook to run manually
+
+> DB has NOT been reseeded and no app is running — all live-DB items below are **"verify manually after reseed"**.
+
+**Prerequisites:**
+- Backend running: `dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost` (http://localhost:5102)
+- Seed accounts: `dotnet run --project Cinema/2-Business/Cinema.Business.Tests` (admin@cinema.vn / user@cinema.vn)
+- FE: `ng serve CinemaAdmin` (http://localhost:4201)
+
+### PB-MADM-01 — Admin CRUD a movie (P0)
+1. Login as admin → `/movies` (admin) → create a movie
+   - Expected: Movie appears in the list
+2. Edit then delete the movie
+   - Expected: List no longer shows it
+   - Expected: DB — row still present with `IsActive = false` (soft delete)  *(verify manually after reseed)*
+
+### PB-MADM-02 — Non-admin blocked (P0)
+1. Login as user@cinema.vn, navigate to an admin route
+   - Expected: `adminGuard` redirects away; no admin UI shown
+2. Call CreateMovie API with a standard user's token
+   - Expected: 403 Forbidden  *(verify manually after reseed)*
+
+## §4 Regression indicators
+| Indicator | Severity | Detection | Status |
+|---|---|---|---|
+| RI-MADM-01 | P0 | static SC-MADM-01 OR playbook PB-MADM-02 step 2 | ✅ Not triggered (SC-MADM-01 PASS; step 2 → verify manually) |
+| RI-MADM-02 | P0 | static SC-MADM-02 OR playbook PB-MADM-01 step 2 | ✅ Not triggered (SC-MADM-02 PASS; step 2 → verify manually) |
+| RI-MADM-03 | P1 | static SC-MADM-03 | ✅ Not triggered (SC-MADM-03 PASS) |
+| RI-MADM-04 | P0 | static SC-MADM-04 OR playbook PB-MADM-02 step 1 | ✅ Not triggered (SC-MADM-04 PASS; step 1 → verify manually) |
+
+## §5 Summary
+- **Verdict: PASS.** 4/4 static checks PASS, 3/3 build/test checks PASS, 0 of 4 regression indicators triggered. No P0 alert.
+- No real code defects found → no BUG files written.
+- Soft-delete invariant (RI-MADM-02) holds: `MovieManager.DeleteAsync` flips `IsActive` and never hard-deletes. All 6 MovieServiceTests pass.
+- Admin gating (RI-MADM-01/04) holds: controller writes carry `[Authorize(Roles = _adminRole)]`; FE `adminGuard` present.
+- **Stale-check note:** despite this session's heavy catalog rework (per-theater seat types & food/drinks, new RoomType/TimeSlot/TicketPrice, removed standalone /rooms · /seat-types · /food-and-drinks pages), none of this flow's static checks reference the removed paths, so no YAML reconciliation is needed for movie-admin. The controller correctly exposes the new catalog managers (RoomType, TimeSlot, TicketPrice) with the same Admin-gated write pattern.
+- Live-DB playbook (§3) not executed (no reseed / no running app) — run manually after reseed.
+
+---
+
+# 🔴 P1 — auth-login — 2026-07-12 13:15
+**Flow**: Authentication — login, register, JWT issuance, role-based gating   **Layers**: business, service, frontend
+**Changed scope detected**: this branch (`feature/multi-theater-catalog-pricing`) touches CinemaLib services (`cinema-http.service.ts`, `payment-http.service.ts`), CinemaAdmin/CinemaUser components, reports feature, and several backend Cinema/Payment/Invoice/Movie files. No direct edits to `AuthManager.cs`, `IdentityController.cs`, `JwtTokenService.cs`, or the auth store in the working tree — but the FE auth token persistence was refactored out of `auth.effects.ts` into a `TokenStorage` helper (`store/auth/token-storage.ts`) at some point since the 2026-07-05 run.
+
+> ⚠️ **P1 static miss (stale check, not a code defect).** SC-AUTH-05 asserts the literal `cinema_token` inside `auth.effects.ts`. That file no longer contains the key — token persistence was moved to `store/auth/token-storage.ts` (`const TOKEN_KEY = 'cinema_token'`) and `auth.effects.ts` now calls `TokenStorage.save(...)` / `TokenStorage.clear()`. The `cinema_token` key still exists and is still the one read by the interceptor and Playwright helper, so this is a YAML path/pattern that needs reconciling, **not** a regression. No BUG file written. All P0 auth invariants PASS.
+
+## §1 Static checks (4/5 PASS, 1 FAIL)
+| Check | Severity | Status | Detail |
+|---|---|---|---|
+| SC-AUTH-01 | P0 | PASS | `LoginAsync` throws `UnauthorizedAccessException("Invalid credentials.")` for unknown user (l.44) and bad password (l.57), plus lockout/2FA/email-unconfirmed paths. "Unauthorized" present. |
+| SC-AUTH-02 | P0 | PASS | `RegisterAsync` checks `GetByEmailAsync(request.Email) != null` and throws `"Email already in use."` before creating the user (l.108-109). "Email" present. |
+| SC-AUTH-03 | P0 | PASS | `JwtTokenService.GenerateToken` embeds `new Claim(ClaimTypes.Role, user.UserType?.Name ?? "Customer")` (l.27). Note: spec `file` path `Cinema.Data/JwtTokenService.cs` is stale — actual file is `Cinema.Data/Services/JwtTokenService.cs` (matches `trigger_paths` l.26). Check resolved via the real path. |
+| SC-AUTH-04 | P0 | PASS | `IdentityController` gates `GetUsers`/`CreateUser`/`UpdateUser`/`DeleteUser` with `[Authorize(Roles = _adminRole)]` (l.243,260,277,294); `_adminRole = "Admin"` (l.18). |
+| SC-AUTH-05 | P1 | **FAIL** | `auth.effects.ts` no longer contains the literal `cinema_token`; persistence delegates to `TokenStorage.save/clear` (l.50,60). Key now lives in `store/auth/token-storage.ts` (`const TOKEN_KEY = 'cinema_token'`, l.5). **Stale check** — key still present and honored by the interceptor; not a code defect. Reconcile the YAML `file`/`pattern`. |
+
+## §2 Build + test checks (3/3 PASS)
+| Check | Status | Output (excerpt if fail) |
+|---|---|---|
+| BC-AUTH-BUILD | PASS | `dotnet build Cinema.Business.csproj -v minimal` → Build succeeded, 0 Warning(s), 0 Error(s). Exit 0. |
+| BC-AUTH-TEST | PASS | `dotnet test --filter FullyQualifiedName~AuthServiceTests` → Passed! Failed: 0, Passed: 13, Skipped: 0, Total: 13. Exit 0. (NU1603 restore warnings only, non-fatal.) |
+| BC-AUTH-FE | PASS | `npx ng build CinemaLib` (node v22.12.0) → "Built CinemaLib", dist written. Exit 0. Not skipped — `projects/CinemaLib/**` changed on this branch. (PowerShell wraps ng's stderr progress lines as NativeCommandError noise; build genuinely succeeded.) |
+
+## §3 Playbook to run manually
+
+**Prerequisites**
+- Backend on http://localhost:5102, seed accounts created (`admin@cinema.vn / Admin@123`, `user@cinema.vn / User@123`). DB has NOT been reseeded and no app is running this session → all live-DB legs are "verify manually after reseed".
+- FE: `ng serve CinemaUser` (4202) and/or `ng serve CinemaAdmin` (4201).
+
+**PB-AUTH-01 — Login success + role routing** (P0)
+1. POST /api/Identity/Login `{email: admin@cinema.vn, password: Admin@123}` → expect 200 with a JWT; decoded token contains `role = Admin`. *(verify manually after reseed)*
+2. Login as admin in CinemaAdmin UI → expect localStorage `cinema_token` set; reaches `/dashboard`. *(verify manually after reseed)*
+
+**PB-AUTH-02 — Bad credentials + duplicate register** (P0)
+1. POST /api/Identity/Login with a wrong password → expect 401 Unauthorized (NOT 200, NOT 500). *(verify manually after reseed)*
+2. POST /api/Identity/Register with an already-existing email → expect 4xx with duplicate-email message; no second user created. *(verify manually after reseed)*
+
+**PB-AUTH-03 — Role gate enforced** (P0)
+1. Call an Admin-only endpoint (e.g. GetUsers) with a standard user's token → expect 403 Forbidden. *(verify manually after reseed)*
+
+> Manual note: `TokenStorage` now splits persistence between `localStorage` (remember-me) and `sessionStorage`, falling back across both on read. When verifying PB-AUTH-01 step 2, confirm the token lands under `cinema_token` in the expected store for the remember-me choice, and that logout clears both stores.
+
+## §4 Regression indicators
+| ID | Severity | Status | Source |
+|---|---|---|---|
+| RI-AUTH-01 | P0 | NOT TRIGGERED | static SC-AUTH-01 PASS (login still throws Unauthorized on bad creds). PB-AUTH-02 step 1 = verify manually after reseed. |
+| RI-AUTH-02 | P0 | NOT TRIGGERED | static SC-AUTH-02 PASS (duplicate email refused). PB-AUTH-02 step 2 = verify manually after reseed. |
+| RI-AUTH-03 | P0 | NOT TRIGGERED | static SC-AUTH-03 + SC-AUTH-04 both PASS (Role claim present, admin gates intact). PB-AUTH-03 = verify manually after reseed. |
+| RI-AUTH-04 | P1 | ⚠️ TRIGGERED (stale check) | static SC-AUTH-05 FAIL. But `cinema_token` was only relocated to `token-storage.ts`, not renamed or removed; the interceptor/Playwright helper still read the same key. No user-facing logout regression. Reconcile the YAML — no BUG file. |
+
+## §5 Summary
+- **Static**: 4 PASS / 1 FAIL / 0 SKIP.
+- **Build/test**: 3 PASS / 0 FAIL / 0 SKIP (BC-AUTH-FE ran — CinemaLib changed on this branch; 13/13 AuthServiceTests pass; Cinema.Business builds clean).
+- **Indicators triggered**: 1 (RI-AUTH-04, P1) — and it is a **stale check**, not a code defect. The FE token key `cinema_token` still exists (moved from `auth.effects.ts` into `store/auth/token-storage.ts`) and is still honored end-to-end. All four P0 indicators NOT triggered.
+- **Bugs exported**: none — no real code defects.
+- **YAML reconciliation needed (housekeeping, no code change):**
+  1. **SC-AUTH-05**: update `file` to `projects/CinemaLib/src/lib/store/auth/token-storage.ts` (or broaden to the `store/auth/` folder) since the `cinema_token` literal was refactored out of `auth.effects.ts`.
+  2. **SC-AUTH-03**: update `file` to `Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs` (add the missing `Services/` segment; `trigger_paths` already has the correct path).
+- Live-DB playbook (§3) not executed (no reseed / no running app) — run manually after reseed.
+
+---

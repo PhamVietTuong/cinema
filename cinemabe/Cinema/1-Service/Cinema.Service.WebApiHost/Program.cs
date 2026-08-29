@@ -14,6 +14,7 @@ using NSwag.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+FoundationLoggerFactory.SetupLogger(builder.Configuration);
 builder.Services.AddFoundationLogging();
 
 // Layers

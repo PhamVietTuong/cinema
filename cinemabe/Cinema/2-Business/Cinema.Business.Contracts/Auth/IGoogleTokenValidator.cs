@@ -1,4 +1,4 @@
-namespace Cinema.Business.Contracts;
+namespace Cinema.Business.Contracts.Auth;
 
 /// <summary>Verified identity extracted from a Google ID token.</summary>
 public class GoogleUserInfo

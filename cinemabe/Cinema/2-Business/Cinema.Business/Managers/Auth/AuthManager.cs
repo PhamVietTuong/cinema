@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Auth;
 using Cinema.Business.DTO;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Requests;
@@ -9,7 +10,7 @@ using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
 
-namespace Cinema.Business.Managers;
+namespace Cinema.Business.Managers.Auth;
 
 public class AuthManager : IAuthManager
 {
@@ -43,8 +44,11 @@ public class AuthManager : IAuthManager
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
         var user = await _uow.UserStore.GetByEmailAsync(request.EmailOrPhone)
-                   ?? await _uow.UserStore.GetByPhoneAsync(request.EmailOrPhone)
-                   ?? throw new UnauthorizedAccessException("Invalid credentials.");
+                   ?? await _uow.UserStore.GetByPhoneAsync(request.EmailOrPhone);
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Invalid credentials.");
+        }
 
         // Reject while a lockout window is still active.
         if (user.LockoutEndUtc is { } lockoutEnd && lockoutEnd > DateTime.UtcNow)
@@ -116,8 +120,11 @@ public class AuthManager : IAuthManager
 
         CreatePasswordHash(request.Password, out var hash, out var salt);
 
-        var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer")
-            ?? throw new InvalidOperationException("Customer user type not found.");
+        var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer");
+        if (customerType == null)
+        {
+            throw new InvalidOperationException("Customer user type not found.");
+        }
 
         var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         var user = new User
@@ -140,12 +147,14 @@ public class AuthManager : IAuthManager
         return BuildAuthResponse(user);
     }
 
-    private Task SendVerificationEmailAsync(User user, string rawToken) =>
-        _notifications.SendAsync(
+    private Task SendVerificationEmailAsync(User user, string rawToken)
+    {
+        return _notifications.SendAsync(
             user.Email,
             "Verify your Cinema email",
             "Confirm your email address (valid 24 hours): " +
             $"/auth/verify-email?email={Uri.EscapeDataString(user.Email)}&token={rawToken}");
+    }
 
     public async Task ConfirmEmailAsync(ConfirmEmailRequest request)
     {
@@ -205,8 +214,11 @@ public class AuthManager : IAuthManager
     public async Task<AuthResponse> VerifyTwoFactorAsync(VerifyTwoFactorRequest request)
     {
         var user = await _uow.UserStore.GetByEmailAsync(request.EmailOrPhone)
-                   ?? await _uow.UserStore.GetByPhoneAsync(request.EmailOrPhone)
-                   ?? throw new UnauthorizedAccessException("Invalid or expired code.");
+                   ?? await _uow.UserStore.GetByPhoneAsync(request.EmailOrPhone);
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Invalid or expired code.");
+        }
 
         if (!user.TwoFactorEnabled
             || string.IsNullOrEmpty(user.TwoFactorCodeHash)
@@ -228,8 +240,11 @@ public class AuthManager : IAuthManager
 
     public async Task SetTwoFactorAsync(Guid userId, bool enabled)
     {
-        var user = await _uow.UserStore.GetByIdAsync(userId)
-                   ?? throw new KeyNotFoundException("User not found.");
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
         user.TwoFactorEnabled = enabled;
         if (!enabled)
         {
@@ -242,8 +257,11 @@ public class AuthManager : IAuthManager
 
     public async Task<AuthResponse> LoginWithGoogleAsync(GoogleLoginRequest request)
     {
-        var info = await _googleValidator.ValidateAsync(request.IdToken)
-                   ?? throw new UnauthorizedAccessException("Invalid Google token.");
+        var info = await _googleValidator.ValidateAsync(request.IdToken);
+        if (info == null)
+        {
+            throw new UnauthorizedAccessException("Invalid Google token.");
+        }
 
         if (!info.EmailVerified)
             throw new UnauthorizedAccessException("Google account email is not verified.");
@@ -251,8 +269,11 @@ public class AuthManager : IAuthManager
         var user = await _uow.UserStore.GetByEmailAsync(info.Email);
         if (user == null)
         {
-            var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer")
-                ?? throw new InvalidOperationException("Customer user type not found.");
+            var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer");
+            if (customerType == null)
+            {
+                throw new InvalidOperationException("Customer user type not found.");
+            }
 
             // The account authenticates via Google, so give it a random unusable password.
             CreatePasswordHash(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), out var hash, out var salt);
@@ -284,14 +305,20 @@ public class AuthManager : IAuthManager
 
     public async Task<AuthResponse> LoginWithFacebookAsync(FacebookLoginRequest request)
     {
-        var info = await _facebookValidator.ValidateAsync(request.AccessToken)
-                   ?? throw new UnauthorizedAccessException("Invalid Facebook token.");
+        var info = await _facebookValidator.ValidateAsync(request.AccessToken);
+        if (info == null)
+        {
+            throw new UnauthorizedAccessException("Invalid Facebook token.");
+        }
 
         var user = await _uow.UserStore.GetByEmailAsync(info.Email);
         if (user == null)
         {
-            var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer")
-                ?? throw new InvalidOperationException("Customer user type not found.");
+            var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer");
+            if (customerType == null)
+            {
+                throw new InvalidOperationException("Customer user type not found.");
+            }
 
             // The account authenticates via Facebook, so give it a random unusable password.
             CreatePasswordHash(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), out var hash, out var salt);
@@ -321,15 +348,21 @@ public class AuthManager : IAuthManager
 
     public async Task<UserDTO> GetProfileAsync(Guid userId)
     {
-        var user = await _uow.UserStore.GetByIdAsync(userId)
-                   ?? throw new KeyNotFoundException("User not found.");
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
         return ToUserDTO(user);
     }
 
     public async Task UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
     {
-        var user = await _uow.UserStore.GetByIdAsync(userId)
-                   ?? throw new KeyNotFoundException("User not found.");
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
         user.PatchEntity<User, UpdateProfileRequest>(request);
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
@@ -337,8 +370,11 @@ public class AuthManager : IAuthManager
 
     public async Task UpdateNotificationPreferencesAsync(Guid userId, UpdateNotificationPreferencesRequest request)
     {
-        var user = await _uow.UserStore.GetByIdAsync(userId)
-                   ?? throw new KeyNotFoundException("User not found.");
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
         user.NotifyBookingEmails   = request.NotifyBookingEmails;
         user.NotifyPromotionEmails = request.NotifyPromotionEmails;
         user.NotifyReminderEmails  = request.NotifyReminderEmails;
@@ -348,8 +384,11 @@ public class AuthManager : IAuthManager
 
     public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
     {
-        var user = await _uow.UserStore.GetByIdAsync(userId)
-                   ?? throw new KeyNotFoundException("User not found.");
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
 
         if (!VerifyPassword(request.CurrentPassword, user.PasswordHash, user.PasswordSalt))
             throw new UnauthorizedAccessException("Current password is incorrect.");
@@ -427,10 +466,20 @@ public class AuthManager : IAuthManager
         if (await _uow.UserStore.GetByPhoneAsync(request.Phone) != null)
             throw new InvalidOperationException("Phone already in use.");
 
-        var userTypeId = request.UserTypeId != Guid.Empty
-            ? request.UserTypeId
-            : (await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer")
-               ?? throw new InvalidOperationException("Customer user type not found.")).Id;
+        Guid userTypeId;
+        if (request.UserTypeId != Guid.Empty)
+        {
+            userTypeId = request.UserTypeId;
+        }
+        else
+        {
+            var customerType = await _uow.UserTypeStore.FindSingleAsync(t => t.Name == "Customer");
+            if (customerType == null)
+            {
+                throw new InvalidOperationException("Customer user type not found.");
+            }
+            userTypeId = customerType.Id;
+        }
 
         CreatePasswordHash(request.Password, out var hash, out var salt);
         var user = new User
@@ -450,8 +499,11 @@ public class AuthManager : IAuthManager
 
     public async Task<UserDTO> UpdateUserAsync(UpdateUserRequest request)
     {
-        var user = await _uow.UserStore.GetByIdAsync(request.Id)
-                   ?? throw new KeyNotFoundException("User not found.");
+        var user = await _uow.UserStore.GetByIdAsync(request.Id);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
         user.Name   = request.Name;
         user.Phone  = request.Phone;
         user.Status = request.Status;
@@ -465,20 +517,26 @@ public class AuthManager : IAuthManager
 
     public async Task DeleteUserAsync(Guid id)
     {
-        var user = await _uow.UserStore.GetByIdAsync(id)
-                   ?? throw new KeyNotFoundException("User not found.");
+        var user = await _uow.UserStore.GetByIdAsync(id);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
         // Soft-delete: deactivating preserves the user's invoices/comments history.
         user.Status = UserStatus.Inactive;
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
     }
 
-    private AuthResponse BuildAuthResponse(User user) => new()
+    private AuthResponse BuildAuthResponse(User user)
     {
-        Token = _tokenService.GenerateToken(user),
-        ExpiresAt = _tokenService.GetTokenExpiry(),
-        User = ToUserDTO(user)
-    };
+        return new()
+        {
+            Token = _tokenService.GenerateToken(user),
+            ExpiresAt = _tokenService.GetTokenExpiry(),
+            User = ToUserDTO(user)
+        };
+    }
 
     private static UserDTO ToUserDTO(User user)
     {
@@ -517,5 +575,8 @@ public class AuthManager : IAuthManager
     }
 
     // New PBKDF2 salts are exactly _pbkdf2SaltSize bytes; the old HMAC-SHA512 key salts are 128 bytes.
-    private static bool IsLegacyHash(byte[] salt) => salt.Length != _pbkdf2SaltSize;
+    private static bool IsLegacyHash(byte[] salt)
+    {
+        return salt.Length != _pbkdf2SaltSize;
+    }
 }

@@ -9989,9 +9989,6 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("maxUsage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int? MaxUsage { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("usedCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int UsedCount { get; set; }
-
         [Newtonsoft.Json.JsonProperty("isActive", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsActive { get; set; }
 

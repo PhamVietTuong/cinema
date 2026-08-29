@@ -67,7 +67,10 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         GiftCardStore = new GiftCardStore(db);
     }
 
-    public Task<int> SaveChangesAsync() => _db.SaveChangesAsync();
+    public Task<int> SaveChangesAsync()
+    {
+        return _db.SaveChangesAsync();
+    }
 
     public async Task BeginTransactionAsync()
         => _transaction = await _db.Database.BeginTransactionAsync();

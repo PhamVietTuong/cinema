@@ -1,4 +1,4 @@
-using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Auth;
 using Cinema.Business.DTO;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Requests;
@@ -21,7 +21,10 @@ public class IdentityController : ApiControllerBase
 
     private readonly IAuthManager _authManager;
 
-    public IdentityController(IAuthManager authManager) => _authManager = authManager;
+    public IdentityController(IAuthManager authManager)
+    {
+        _authManager = authManager;
+    }
 
     // ── Auth ──────────────────────────────────────────────────────────────────
 

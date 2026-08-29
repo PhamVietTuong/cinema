@@ -1,8 +1,8 @@
 using System.Text.Json;
-using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Auth;
 using Microsoft.Extensions.Configuration;
 
-namespace Cinema.Business.Managers;
+namespace Cinema.Business.Managers.Auth;
 
 /// <summary>
 /// Validates a Facebook access token against the Graph API. When an app id + secret are
@@ -16,7 +16,10 @@ public class FacebookTokenValidator : IFacebookTokenValidator
 
     private readonly IConfiguration _config;
 
-    public FacebookTokenValidator(IConfiguration config) => _config = config;
+    public FacebookTokenValidator(IConfiguration config)
+    {
+        _config = config;
+    }
 
     public async Task<FacebookUserInfo?> ValidateAsync(string accessToken)
     {

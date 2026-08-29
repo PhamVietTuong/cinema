@@ -20,9 +20,9 @@ The solution enforces dependency direction by folder prefix. Higher-numbered lay
   - `Cinema.Service.WebApiHost/` — ASP.NET Core Web API host. Three controllers (`CinemaController`, `IdentityController`, `PaymentController`) grouped via `[ApiExplorerSettings(GroupName=...)]` so NSwag emits **one OpenAPI document per group** (`/swagger/cinema/swagger.json`, `/swagger/identity/swagger.json`, `/swagger/payment/swagger.json`). All controller routes follow `api/[controller]/[action]` and HTTP verb is **POST** even for queries (paged-search DTOs go in the body). Houses `BookingHub` (SignalR, route `/hubs/booking`) and `ExceptionMiddleware`.
   - `Cinema.Service.Clients/` — Holds NSwag-generated clients: `Angular/*-http.service.ts`, `Cinema/CinemaClient.cs`, `Identity/IdentityClient.cs`, `Payment/PaymentClient.cs`. **Do not edit these files — they are regenerated.**
 - **`2-Business/`**
-  - `Cinema.Business.Contracts/` — `IAuthManager`, `IMovieManager`, `IBookingManager`, `IInvoiceManager`, `ITheaterManager`, `ITokenService`.
+  - `Cinema.Business.Contracts/` — one interface per file (`IMovieManager`, `IBookingManager`, `IInvoiceManager`, `ITheaterManager`, `ITokenService`, the per-catalog-entity `I*Manager` interfaces, etc.), flat except `Auth/` (`IAuthManager`, `IFacebookTokenValidator`, `IGoogleTokenValidator`) and `Payments/`.
   - `Cinema.Business.DTO/` — DTOs grouped by domain (`Auth/`, `Booking/`, `Movies/`, `Theaters/`, `Invoices/`, `Requests/`). `PagingSearchDTO` + `DefaultSearchResults<T>` are the standard list contract.
-  - `Cinema.Business/` — `Managers/` (one per `I*Manager`) wired via `AddBusiness()` in `DependencyInjection.cs`. **Seat locking state lives in a static `ConcurrentDictionary` inside `BookingManager`** — it is process-local, not distributed.
+  - `Cinema.Business/` — `Managers/` (one file per `I*Manager`) wired via `AddBusiness()` in `DependencyInjection.cs`. Auth managers (`AuthManager`, `FacebookTokenValidator`, `GoogleTokenValidator`) live under `Managers/Auth/`; everything else (including the per-catalog-entity managers and the generic `CatalogManager<>` base) sits flat directly under `Managers/`. **Seat locking state lives in a static `ConcurrentDictionary` inside `BookingManager`** — it is process-local, not distributed.
   - `Cinema.Business.Tests/` — **Dual-purpose project**: `<OutputType>Exe</OutputType>` with `Program.cs` that seeds `admin@cinema.vn / Admin@123` and `user@cinema.vn / User@123` accounts, **plus** xUnit + Moq + FluentAssertions test classes (`AuthServiceTests`, `BookingServiceTests`, `MovieServiceTests`, `EntityTests`). `dotnet run` seeds; `dotnet test` runs the tests.
 - **`3-Data/`**
   - `Cinema.Data.Entities/` — POCO entities + enums. All inherit `BaseEntity` (Guid `Id`, `CreationTime`, `LastUpdatedTime`).
@@ -202,6 +202,88 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria allow independent looping. Weak criteria ("make it work") require constant clarification.
+
+
+### 5. Query Efficiency
+
+**Fetch the narrowest set of columns and rows that answers the question. Never issue one query per row.**
+
+This codebase reaches the database through `IGenericStore<Entity>` exposed on `IApplicationUnitOfWork`. That interface makes it easy to load far more than you need, so these two rules apply to every read path you touch.
+
+#### 5.1 Select only the columns you use
+
+`AllAsync()`, `FindAllAsync(...)` and `FindAsync(...)` issue `SELECT *` and materialise **fully tracked** entities. Every column travels over the wire, is allocated on the heap, and is kept alive by the change tracker until the request ends. On a wide table or a large result set this is the single biggest source of avoidable memory pressure in the API.
+
+Before writing a read, ask: *which properties does the caller actually consume?* If the answer is a subset of the entity, project to that subset.
+
+```csharp
+// Bad — loads Id, Type, Ordre, IsActif, SensDirection, HommePremier and tracks all 7 entities
+// when the caller only needs Id and Type.
+var criteres = await _uow.AdmissionAlgoCritereStore.AllAsync();
+var pairs = criteres.Select(x => new { x.Id, x.Type });
+
+// Good — the database returns two columns; nothing is tracked.
+var pairs = await _uow.AdmissionAlgoCritereStore
+    .GetQuery()
+    .AsNoTracking()
+    .Select(x => new { x.Id, x.Type })
+    .ToListAsync();
+```
+
+Use `FindAllSelectAsync<TClass>` / `FindSelectAsync<TClass>` when the store's projection overloads fit, or drop to `GetQuery()` and compose the LINQ yourself when they don't.
+
+Related rules:
+- **Filter in SQL, not in memory.** `FindAllAsync(x => ...)` and `GetQuery().Where(...)` push the predicate to the database. Loading everything and then calling `.Where(...)`/`.FirstOrDefault(...)` on the resulting `IEnumerable` does not.
+- **Count without materialising.** Use `CountAsync(...)`, never `(await AllAsync()).Count()`.
+- **Check existence without materialising.** Use `ExistsAsync(...)`, never `FindAsync(...) != null`.
+- **Page at the database.** Use `AllPageAsync` / `FindAllPageAsync` rather than fetching everything and slicing.
+- **`AsNoTracking()` on every read-only query.** Change tracking exists to support writes; on a read it only costs memory and snapshot work.
+- **Exception — writes.** When you intend to mutate and persist an entity, you *must* load the full tracked entity. Do not project a save path just to look efficient; EF needs the tracked instance. `AdmissionAlgoCritereManager.SaveOrdreAsync` is the reference example.
+
+#### 5.2 Guard against N+1 queries
+
+An N+1 is one query to fetch a list, then one more query per item in that list. It usually reads fine and passes review, because the extra queries are hidden behind a property access or a helper call inside a loop. It is the most common performance defect in this codebase's shape.
+
+The three ways it appears here:
+
+**a) A store call inside a loop.**
+
+```csharp
+// Bad — 1 query for the inscriptions, then one per inscription. 500 rows = 501 round-trips.
+var inscriptions = await _uow.AdmissionAlgoInscriptionStore.FindAllAsync(x => x.SessionAdmissionAlgoId == id);
+foreach (var inscription in inscriptions)
+{
+    var etudiant = await _uow.EtudiantStore.FindAsync(inscription.EtudiantId);
+    result.Add(Map(inscription, etudiant));
+}
+
+// Good — two queries total, joined in memory by key.
+var inscriptions = await _uow.AdmissionAlgoInscriptionStore
+    .GetQuery().AsNoTracking()
+    .Where(x => x.SessionAdmissionAlgoId == id)
+    .ToListAsync();
+
+var etudiantIds = inscriptions.Select(x => x.EtudiantId).Distinct().ToList();
+var etudiants = (await _uow.EtudiantStore
+        .GetQuery().AsNoTracking()
+        .Where(x => etudiantIds.Contains(x.Id))
+        .Select(x => new { x.Id, x.Nom, x.Prenom })
+        .ToListAsync())
+    .ToDictionary(x => x.Id);
+
+var result = inscriptions.Select(x => Map(x, etudiants[x.EtudiantId])).ToList();
+```
+
+**b) Lazy-loading a navigation property that was never included.** A navigation not named in the include path is `null`, not loaded on demand — so this usually surfaces as a `NullReferenceException` rather than as slowness. Name every navigation you dereference: `GetQuery("Etudiant,Programme")`, `FindAllIncludeAsync("Etudiant.Adresse", ...)`.
+
+**c) An `await` inside a `Select`/`foreach` that projects to a DTO.** Mapping code is where this hides best. If a mapper needs related data, pass it in from a pre-loaded dictionary; don't let the mapper query.
+
+Before you call a read path done, trace it and answer explicitly:
+- How many database round-trips does this make for 1 row? For 1 000 rows? If the second answer scales with the row count, fix it.
+- Does every `Include` I asked for get used? An unused include is the same waste as an unused column.
+- Am I including a collection navigation alongside other includes? That produces a cartesian result set in EF Core 3.1 — split it into a second query keyed by id instead.
+
+State these answers in your self-review. "It works" is not sufficient for a read path.
 
 ## QA / regression test harness (`QA-tests/`)
 

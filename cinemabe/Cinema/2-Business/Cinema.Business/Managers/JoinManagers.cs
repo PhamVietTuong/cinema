@@ -79,8 +79,11 @@ public class InvoiceAdminManager(IApplicationUnitOfWork uow) : IInvoiceAdminMana
 
     public async Task<InvoiceAdminDTO> UpdateStatusAsync(UpdateInvoiceStatusRequest request)
     {
-        var invoice = await uow.InvoiceStore.GetByIdAsync(request.Id)
-                      ?? throw new KeyNotFoundException($"Invoice {request.Id} not found.");
+        var invoice = await uow.InvoiceStore.GetByIdAsync(request.Id);
+        if (invoice == null)
+        {
+            throw new KeyNotFoundException($"Invoice {request.Id} not found.");
+        }
         invoice.Status = request.Status;
         if (request.Status == InvoiceStatus.Paid && invoice.PaidAt == null)
         {

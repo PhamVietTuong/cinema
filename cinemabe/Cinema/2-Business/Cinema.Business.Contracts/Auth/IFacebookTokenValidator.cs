@@ -1,4 +1,4 @@
-namespace Cinema.Business.Contracts;
+namespace Cinema.Business.Contracts.Auth;
 
 /// <summary>Verified identity extracted from a Facebook access token.</summary>
 public class FacebookUserInfo

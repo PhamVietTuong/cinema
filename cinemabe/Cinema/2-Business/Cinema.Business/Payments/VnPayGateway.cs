@@ -18,7 +18,10 @@ namespace Cinema.Business.Payments;
 public class VnPayGateway : IPaymentGateway
 {
     private readonly IConfiguration _config;
-    public VnPayGateway(IConfiguration config) => _config = config;
+    public VnPayGateway(IConfiguration config)
+    {
+        _config = config;
+    }
 
     public string Name => "VNPay";
 

@@ -12,7 +12,10 @@ public class JwtTokenService : ITokenService
 {
     private readonly IConfiguration _config;
 
-    public JwtTokenService(IConfiguration config) => _config = config;
+    public JwtTokenService(IConfiguration config)
+    {
+        _config = config;
+    }
 
     public string GenerateToken(User user)
     {

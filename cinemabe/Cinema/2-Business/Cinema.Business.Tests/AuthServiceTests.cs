@@ -1,7 +1,8 @@
 using System.Linq.Expressions;
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Auth;
 using Cinema.Business.DTO.Auth;
-using Cinema.Business.Managers;
+using Cinema.Business.Managers.Auth;
 using Cinema.Business.Notifications;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;

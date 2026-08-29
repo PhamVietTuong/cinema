@@ -14,7 +14,10 @@ public class PendingBookingReaper : BackgroundService
 
     private readonly IServiceScopeFactory _scopeFactory;
 
-    public PendingBookingReaper(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
+    public PendingBookingReaper(IServiceScopeFactory scopeFactory)
+    {
+        _scopeFactory = scopeFactory;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

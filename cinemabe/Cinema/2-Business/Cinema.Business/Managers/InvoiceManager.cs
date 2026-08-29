@@ -13,7 +13,10 @@ public class InvoiceManager : IInvoiceManager
 {
     private readonly IApplicationUnitOfWork _uow;
 
-    public InvoiceManager(IApplicationUnitOfWork uow) => _uow = uow;
+    public InvoiceManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<DefaultSearchResults<InvoiceDTO>> GetMyInvoicesAsync(Guid userId, PagingSearchDTO search)
     {
@@ -50,8 +53,11 @@ public class InvoiceManager : IInvoiceManager
 
     public async Task<InvoiceDTO> GetByIdAsync(Guid id, Guid requestingUserId, bool isAdmin)
     {
-        var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(id)
-                      ?? throw new KeyNotFoundException($"Invoice {id} not found.");
+        var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(id);
+        if (invoice == null)
+        {
+            throw new KeyNotFoundException($"Invoice {id} not found.");
+        }
         // Object-level authorization: only the owner (or an admin) may read an invoice.
         if (!isAdmin && invoice.UserId != requestingUserId)
             throw new UnauthorizedAccessException("You are not allowed to access this invoice.");

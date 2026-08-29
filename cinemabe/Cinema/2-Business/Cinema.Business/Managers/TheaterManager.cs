@@ -12,7 +12,10 @@ public class TheaterManager : ITheaterManager
 {
     private readonly IApplicationUnitOfWork _uow;
 
-    public TheaterManager(IApplicationUnitOfWork uow) => _uow = uow;
+    public TheaterManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<DefaultSearchResults<TheaterDTO>> GetTheatersAsync(PagingSearchDTO search)
     {
@@ -46,8 +49,11 @@ public class TheaterManager : ITheaterManager
 
     public async Task<TheaterDTO> GetByIdAsync(Guid id)
     {
-        var theater = await _uow.TheaterStore.GetDetailAsync(id)
-                      ?? throw new KeyNotFoundException($"Theater {id} not found.");
+        var theater = await _uow.TheaterStore.GetDetailAsync(id);
+        if (theater == null)
+        {
+            throw new KeyNotFoundException($"Theater {id} not found.");
+        }
         return ToTheaterDTO(theater);
     }
 
@@ -60,8 +66,11 @@ public class TheaterManager : ITheaterManager
 
     public async Task<TheaterDTO> UpdateAsync(UpdateTheaterRequest request)
     {
-        var theater = await _uow.TheaterStore.GetByIdAsync(request.Id)
-                      ?? throw new KeyNotFoundException($"Theater {request.Id} not found.");
+        var theater = await _uow.TheaterStore.GetByIdAsync(request.Id);
+        if (theater == null)
+        {
+            throw new KeyNotFoundException($"Theater {request.Id} not found.");
+        }
         theater.PatchEntity<Theater, UpdateTheaterRequest>(request);
         await _uow.TheaterStore.UpdateAsync(theater);
         await _uow.SaveChangesAsync();
@@ -70,8 +79,11 @@ public class TheaterManager : ITheaterManager
 
     public async Task DeleteAsync(Guid id)
     {
-        var theater = await _uow.TheaterStore.GetByIdAsync(id)
-                      ?? throw new KeyNotFoundException($"Theater {id} not found.");
+        var theater = await _uow.TheaterStore.GetByIdAsync(id);
+        if (theater == null)
+        {
+            throw new KeyNotFoundException($"Theater {id} not found.");
+        }
         theater.IsActive = false;
         await _uow.TheaterStore.UpdateAsync(theater);
         await _uow.SaveChangesAsync();

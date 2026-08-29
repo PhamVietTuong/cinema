@@ -9489,7 +9489,6 @@ export class DiscountDTO implements IDiscountDTO {
     startDate?: Date;
     endDate?: Date;
     maxUsage?: number | undefined;
-    usedCount?: number;
     isActive?: boolean;
     autoApply?: boolean;
     applyToAllTheaters?: boolean;
@@ -9519,7 +9518,6 @@ export class DiscountDTO implements IDiscountDTO {
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.maxUsage = _data["maxUsage"];
-            this.usedCount = _data["usedCount"];
             this.isActive = _data["isActive"];
             this.autoApply = _data["autoApply"];
             this.applyToAllTheaters = _data["applyToAllTheaters"];
@@ -9553,7 +9551,6 @@ export class DiscountDTO implements IDiscountDTO {
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["maxUsage"] = this.maxUsage;
-        data["usedCount"] = this.usedCount;
         data["isActive"] = this.isActive;
         data["autoApply"] = this.autoApply;
         data["applyToAllTheaters"] = this.applyToAllTheaters;
@@ -9580,7 +9577,6 @@ export interface IDiscountDTO {
     startDate?: Date;
     endDate?: Date;
     maxUsage?: number | undefined;
-    usedCount?: number;
     isActive?: boolean;
     autoApply?: boolean;
     applyToAllTheaters?: boolean;

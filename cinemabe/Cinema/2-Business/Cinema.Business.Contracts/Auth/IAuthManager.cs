@@ -2,7 +2,7 @@ using Cinema.Business.DTO;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Requests;
 using Cinema.Data.Entities;
-namespace Cinema.Business.Contracts;
+namespace Cinema.Business.Contracts.Auth;
 public interface IAuthManager
 {
     Task<AuthResponse> LoginAsync(LoginRequest request);

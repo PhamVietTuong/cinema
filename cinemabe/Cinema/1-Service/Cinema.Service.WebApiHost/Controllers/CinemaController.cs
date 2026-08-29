@@ -482,9 +482,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(AgeRestrictionDTO), 200)]
-    public Task<IActionResult> GetAgeRestriction([FromQuery] Guid id)
+    public async Task<IActionResult> GetAgeRestriction([FromQuery] Guid id)
     {
-        return Run(nameof(GetAgeRestriction), () => _ageRestrictions.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(id), nameof(GetAgeRestriction), "AgeRestriction", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetAgeRestriction), () => _ageRestrictions.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -498,17 +500,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(AgeRestrictionDTO), 200)]
-    public Task<IActionResult> UpdateAgeRestriction([FromBody] UpdateAgeRestrictionRequest request)
+    public async Task<IActionResult> UpdateAgeRestriction([FromBody] UpdateAgeRestrictionRequest request)
     {
-        return Run(nameof(UpdateAgeRestriction), () => _ageRestrictions.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(request.Id), nameof(UpdateAgeRestriction), "AgeRestriction", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateAgeRestriction), () => _ageRestrictions.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteAgeRestriction([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteAgeRestriction([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteAgeRestriction), () => _ageRestrictions.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(id), nameof(DeleteAgeRestriction), "AgeRestriction", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteAgeRestriction), () => _ageRestrictions.DeleteAsync(id));
     }
     #endregion
 
@@ -522,9 +528,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(DiscountTypeDTO), 200)]
-    public Task<IActionResult> GetDiscountType([FromQuery] Guid id)
+    public async Task<IActionResult> GetDiscountType([FromQuery] Guid id)
     {
-        return Run(nameof(GetDiscountType), () => _discountTypes.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(id), nameof(GetDiscountType), "DiscountType", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetDiscountType), () => _discountTypes.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -538,17 +546,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(DiscountTypeDTO), 200)]
-    public Task<IActionResult> UpdateDiscountType([FromBody] UpdateDiscountTypeRequest request)
+    public async Task<IActionResult> UpdateDiscountType([FromBody] UpdateDiscountTypeRequest request)
     {
-        return Run(nameof(UpdateDiscountType), () => _discountTypes.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(request.Id), nameof(UpdateDiscountType), "DiscountType", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateDiscountType), () => _discountTypes.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteDiscountType([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteDiscountType([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteDiscountType), () => _discountTypes.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(id), nameof(DeleteDiscountType), "DiscountType", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteDiscountType), () => _discountTypes.DeleteAsync(id));
     }
     #endregion
 
@@ -562,9 +574,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(MovieTypeDTO), 200)]
-    public Task<IActionResult> GetMovieType([FromQuery] Guid id)
+    public async Task<IActionResult> GetMovieType([FromQuery] Guid id)
     {
-        return Run(nameof(GetMovieType), () => _movieTypes.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(id), nameof(GetMovieType), "MovieType", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetMovieType), () => _movieTypes.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -578,17 +592,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(MovieTypeDTO), 200)]
-    public Task<IActionResult> UpdateMovieType([FromBody] UpdateMovieTypeRequest request)
+    public async Task<IActionResult> UpdateMovieType([FromBody] UpdateMovieTypeRequest request)
     {
-        return Run(nameof(UpdateMovieType), () => _movieTypes.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(request.Id), nameof(UpdateMovieType), "MovieType", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateMovieType), () => _movieTypes.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteMovieType([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteMovieType([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteMovieType), () => _movieTypes.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(id), nameof(DeleteMovieType), "MovieType", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteMovieType), () => _movieTypes.DeleteAsync(id));
     }
     #endregion
 
@@ -602,9 +620,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(SeatTypeDTO), 200)]
-    public Task<IActionResult> GetSeatType([FromQuery] Guid id)
+    public async Task<IActionResult> GetSeatType([FromQuery] Guid id)
     {
-        return Run(nameof(GetSeatType), () => _seatTypes.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(id), nameof(GetSeatType), "SeatType", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetSeatType), () => _seatTypes.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -618,17 +638,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(SeatTypeDTO), 200)]
-    public Task<IActionResult> UpdateSeatType([FromBody] UpdateSeatTypeRequest request)
+    public async Task<IActionResult> UpdateSeatType([FromBody] UpdateSeatTypeRequest request)
     {
-        return Run(nameof(UpdateSeatType), () => _seatTypes.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(request.Id), nameof(UpdateSeatType), "SeatType", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateSeatType), () => _seatTypes.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteSeatType([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteSeatType([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteSeatType), () => _seatTypes.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(id), nameof(DeleteSeatType), "SeatType", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteSeatType), () => _seatTypes.DeleteAsync(id));
     }
     #endregion
 
@@ -642,9 +666,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(TimeSlotDTO), 200)]
-    public Task<IActionResult> GetTimeSlot([FromQuery] Guid id)
+    public async Task<IActionResult> GetTimeSlot([FromQuery] Guid id)
     {
-        return Run(nameof(GetTimeSlot), () => _timeSlots.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(id), nameof(GetTimeSlot), "TimeSlot", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetTimeSlot), () => _timeSlots.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -658,17 +684,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(TimeSlotDTO), 200)]
-    public Task<IActionResult> UpdateTimeSlot([FromBody] UpdateTimeSlotRequest request)
+    public async Task<IActionResult> UpdateTimeSlot([FromBody] UpdateTimeSlotRequest request)
     {
-        return Run(nameof(UpdateTimeSlot), () => _timeSlots.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(request.Id), nameof(UpdateTimeSlot), "TimeSlot", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateTimeSlot), () => _timeSlots.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteTimeSlot([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteTimeSlot([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteTimeSlot), () => _timeSlots.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(id), nameof(DeleteTimeSlot), "TimeSlot", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteTimeSlot), () => _timeSlots.DeleteAsync(id));
     }
     #endregion
 
@@ -682,9 +712,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(TicketPriceDTO), 200)]
-    public Task<IActionResult> GetTicketPrice([FromQuery] Guid id)
+    public async Task<IActionResult> GetTicketPrice([FromQuery] Guid id)
     {
-        return Run(nameof(GetTicketPrice), () => _ticketPrices.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(id), nameof(GetTicketPrice), "TicketPrice", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetTicketPrice), () => _ticketPrices.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -698,17 +730,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(TicketPriceDTO), 200)]
-    public Task<IActionResult> UpdateTicketPrice([FromBody] UpdateTicketPriceRequest request)
+    public async Task<IActionResult> UpdateTicketPrice([FromBody] UpdateTicketPriceRequest request)
     {
-        return Run(nameof(UpdateTicketPrice), () => _ticketPrices.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(request.Id), nameof(UpdateTicketPrice), "TicketPrice", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateTicketPrice), () => _ticketPrices.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteTicketPrice([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteTicketPrice([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteTicketPrice), () => _ticketPrices.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(id), nameof(DeleteTicketPrice), "TicketPrice", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteTicketPrice), () => _ticketPrices.DeleteAsync(id));
     }
     #endregion
 
@@ -723,9 +759,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(UserTypeDTO), 200)]
-    public Task<IActionResult> GetUserType([FromQuery] Guid id)
+    public async Task<IActionResult> GetUserType([FromQuery] Guid id)
     {
-        return Run(nameof(GetUserType), () => _userTypes.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(id), nameof(GetUserType), "UserType", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetUserType), () => _userTypes.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -739,17 +777,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(UserTypeDTO), 200)]
-    public Task<IActionResult> UpdateUserType([FromBody] UpdateUserTypeRequest request)
+    public async Task<IActionResult> UpdateUserType([FromBody] UpdateUserTypeRequest request)
     {
-        return Run(nameof(UpdateUserType), () => _userTypes.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(request.Id), nameof(UpdateUserType), "UserType", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateUserType), () => _userTypes.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteUserType([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteUserType([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteUserType), () => _userTypes.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(id), nameof(DeleteUserType), "UserType", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteUserType), () => _userTypes.DeleteAsync(id));
     }
     #endregion
 
@@ -763,9 +805,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(MemberShipDTO), 200)]
-    public Task<IActionResult> GetMemberShip([FromQuery] Guid id)
+    public async Task<IActionResult> GetMemberShip([FromQuery] Guid id)
     {
-        return Run(nameof(GetMemberShip), () => _memberShips.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(id), nameof(GetMemberShip), "MemberShip", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetMemberShip), () => _memberShips.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -779,17 +823,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(MemberShipDTO), 200)]
-    public Task<IActionResult> UpdateMemberShip([FromBody] UpdateMemberShipRequest request)
+    public async Task<IActionResult> UpdateMemberShip([FromBody] UpdateMemberShipRequest request)
     {
-        return Run(nameof(UpdateMemberShip), () => _memberShips.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(request.Id), nameof(UpdateMemberShip), "MemberShip", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateMemberShip), () => _memberShips.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteMemberShip([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteMemberShip([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteMemberShip), () => _memberShips.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(id), nameof(DeleteMemberShip), "MemberShip", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteMemberShip), () => _memberShips.DeleteAsync(id));
     }
     #endregion
 
@@ -803,9 +851,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(HolidayDTO), 200)]
-    public Task<IActionResult> GetHoliday([FromQuery] Guid id)
+    public async Task<IActionResult> GetHoliday([FromQuery] Guid id)
     {
-        return Run(nameof(GetHoliday), () => _holidays.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(id), nameof(GetHoliday), "Holiday", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetHoliday), () => _holidays.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -819,17 +869,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(HolidayDTO), 200)]
-    public Task<IActionResult> UpdateHoliday([FromBody] UpdateHolidayRequest request)
+    public async Task<IActionResult> UpdateHoliday([FromBody] UpdateHolidayRequest request)
     {
-        return Run(nameof(UpdateHoliday), () => _holidays.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(request.Id), nameof(UpdateHoliday), "Holiday", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateHoliday), () => _holidays.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteHoliday([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteHoliday([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteHoliday), () => _holidays.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(id), nameof(DeleteHoliday), "Holiday", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteHoliday), () => _holidays.DeleteAsync(id));
     }
     #endregion
 
@@ -843,9 +897,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(NewsDTO), 200)]
-    public Task<IActionResult> GetNews([FromQuery] Guid id)
+    public async Task<IActionResult> GetNews([FromQuery] Guid id)
     {
-        return Run(nameof(GetNews), () => _news.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(id), nameof(GetNews), "News", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetNews), () => _news.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -859,17 +915,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(NewsDTO), 200)]
-    public Task<IActionResult> UpdateNews([FromBody] UpdateNewsRequest request)
+    public async Task<IActionResult> UpdateNews([FromBody] UpdateNewsRequest request)
     {
-        return Run(nameof(UpdateNews), () => _news.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(request.Id), nameof(UpdateNews), "News", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateNews), () => _news.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteNews([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteNews([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteNews), () => _news.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(id), nameof(DeleteNews), "News", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteNews), () => _news.DeleteAsync(id));
     }
     #endregion
 
@@ -883,9 +943,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(DiscountDTO), 200)]
-    public Task<IActionResult> GetDiscount([FromQuery] Guid id)
+    public async Task<IActionResult> GetDiscount([FromQuery] Guid id)
     {
-        return Run(nameof(GetDiscount), () => _discounts.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(id), nameof(GetDiscount), "Discount", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetDiscount), () => _discounts.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -899,17 +961,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(DiscountDTO), 200)]
-    public Task<IActionResult> UpdateDiscount([FromBody] UpdateDiscountRequest request)
+    public async Task<IActionResult> UpdateDiscount([FromBody] UpdateDiscountRequest request)
     {
-        return Run(nameof(UpdateDiscount), () => _discounts.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(request.Id), nameof(UpdateDiscount), "Discount", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateDiscount), () => _discounts.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteDiscount([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteDiscount([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteDiscount), () => _discounts.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(id), nameof(DeleteDiscount), "Discount", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteDiscount), () => _discounts.DeleteAsync(id));
     }
     #endregion
 
@@ -923,9 +989,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(FoodAndDrinkDTO), 200)]
-    public Task<IActionResult> GetFoodAndDrink([FromQuery] Guid id)
+    public async Task<IActionResult> GetFoodAndDrink([FromQuery] Guid id)
     {
-        return Run(nameof(GetFoodAndDrink), () => _foodAndDrinks.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(id), nameof(GetFoodAndDrink), "FoodAndDrink", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetFoodAndDrink), () => _foodAndDrinks.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -939,17 +1007,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(FoodAndDrinkDTO), 200)]
-    public Task<IActionResult> UpdateFoodAndDrink([FromBody] UpdateFoodAndDrinkRequest request)
+    public async Task<IActionResult> UpdateFoodAndDrink([FromBody] UpdateFoodAndDrinkRequest request)
     {
-        return Run(nameof(UpdateFoodAndDrink), () => _foodAndDrinks.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(request.Id), nameof(UpdateFoodAndDrink), "FoodAndDrink", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateFoodAndDrink), () => _foodAndDrinks.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteFoodAndDrink([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteFoodAndDrink([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteFoodAndDrink), () => _foodAndDrinks.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(id), nameof(DeleteFoodAndDrink), "FoodAndDrink", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteFoodAndDrink), () => _foodAndDrinks.DeleteAsync(id));
     }
     #endregion
 
@@ -963,9 +1035,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(RoomDTO), 200)]
-    public Task<IActionResult> GetRoom([FromQuery] Guid id)
+    public async Task<IActionResult> GetRoom([FromQuery] Guid id)
     {
-        return Run(nameof(GetRoom), () => _rooms.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(id), nameof(GetRoom), "Room", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetRoom), () => _rooms.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -979,17 +1053,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(RoomDTO), 200)]
-    public Task<IActionResult> UpdateRoom([FromBody] UpdateRoomRequest request)
+    public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomRequest request)
     {
-        return Run(nameof(UpdateRoom), () => _rooms.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(request.Id), nameof(UpdateRoom), "Room", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateRoom), () => _rooms.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteRoom([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteRoom([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteRoom), () => _rooms.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(id), nameof(DeleteRoom), "Room", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteRoom), () => _rooms.DeleteAsync(id));
     }
     #endregion
 
@@ -1003,9 +1081,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(RoomTypeDTO), 200)]
-    public Task<IActionResult> GetRoomType([FromQuery] Guid id)
+    public async Task<IActionResult> GetRoomType([FromQuery] Guid id)
     {
-        return Run(nameof(GetRoomType), () => _roomTypes.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(id), nameof(GetRoomType), "RoomType", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetRoomType), () => _roomTypes.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -1019,17 +1099,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(RoomTypeDTO), 200)]
-    public Task<IActionResult> UpdateRoomType([FromBody] UpdateRoomTypeRequest request)
+    public async Task<IActionResult> UpdateRoomType([FromBody] UpdateRoomTypeRequest request)
     {
-        return Run(nameof(UpdateRoomType), () => _roomTypes.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(request.Id), nameof(UpdateRoomType), "RoomType", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateRoomType), () => _roomTypes.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteRoomType([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteRoomType([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteRoomType), () => _roomTypes.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(id), nameof(DeleteRoomType), "RoomType", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteRoomType), () => _roomTypes.DeleteAsync(id));
     }
     #endregion
 
@@ -1043,9 +1127,11 @@ public class CinemaController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ShowTimeDTO), 200)]
-    public Task<IActionResult> GetShowTime([FromQuery] Guid id)
+    public async Task<IActionResult> GetShowTime([FromQuery] Guid id)
     {
-        return Run(nameof(GetShowTime), () => _showTimes.GetByIdAsync(id));
+        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(id), nameof(GetShowTime), "ShowTime", id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(GetShowTime), () => _showTimes.GetByIdAsync(id));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -1059,17 +1145,21 @@ public class CinemaController : ApiControllerBase
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(ShowTimeDTO), 200)]
-    public Task<IActionResult> UpdateShowTime([FromBody] UpdateShowTimeRequest request)
+    public async Task<IActionResult> UpdateShowTime([FromBody] UpdateShowTimeRequest request)
     {
-        return Run(nameof(UpdateShowTime), () => _showTimes.UpdateAsync(request));
+        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(request.Id), nameof(UpdateShowTime), "ShowTime", request.Id);
+        if (notFound != null) return notFound;
+        return await Run(nameof(UpdateShowTime), () => _showTimes.UpdateAsync(request));
     }
 
     [Authorize(Roles = _adminRole)]
     [HttpDelete]
     [ProducesResponseType(204)]
-    public Task<IActionResult> DeleteShowTime([FromQuery] Guid id)
+    public async Task<IActionResult> DeleteShowTime([FromQuery] Guid id)
     {
-        return RunNoContent(nameof(DeleteShowTime), () => _showTimes.DeleteAsync(id));
+        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(id), nameof(DeleteShowTime), "ShowTime", id);
+        if (notFound != null) return notFound;
+        return await RunNoContent(nameof(DeleteShowTime), () => _showTimes.DeleteAsync(id));
     }
     #endregion
 

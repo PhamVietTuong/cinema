@@ -20,7 +20,8 @@ last_updated: 2026-06-20
 maintained_by: "Cinema QA"
 
 trigger_paths:
-  - "Cinema/2-Business/Cinema.Business/Managers/AuthManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs"
+  - "Cinema/2-Business/Cinema.Business.Contracts/Auth/"
   - "Cinema/2-Business/Cinema.Business.DTO/Auth/"
   - "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/IdentityController.cs"
   - "Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs"
@@ -48,7 +49,7 @@ static_checks:
     description: >
       LoginAsync rejects invalid credentials with an Unauthorized-type exception
       (never returns a token for a wrong password or unknown user).
-    file: "Cinema/2-Business/Cinema.Business/Managers/AuthManager.cs"
+    file: "Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs"
     method: "LoginAsync"
     must_contain:
       - pattern: "Unauthorized"
@@ -58,7 +59,7 @@ static_checks:
     severity: P0
     description: >
       RegisterAsync refuses a duplicate email rather than creating a second user.
-    file: "Cinema/2-Business/Cinema.Business/Managers/AuthManager.cs"
+    file: "Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs"
     method: "RegisterAsync"
     must_contain:
       - pattern: "Email"

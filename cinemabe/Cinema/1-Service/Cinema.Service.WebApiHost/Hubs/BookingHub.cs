@@ -9,7 +9,10 @@ public class BookingHub : Hub
 {
     private readonly IBookingManager _bookingManager;
 
-    public BookingHub(IBookingManager bookingManager) => _bookingManager = bookingManager;
+    public BookingHub(IBookingManager bookingManager)
+    {
+        _bookingManager = bookingManager;
+    }
 
     public Task JoinRoom(Guid showTimeId, Guid roomId)
         => Groups.AddToGroupAsync(Context.ConnectionId, RoomGroup(showTimeId, roomId));
@@ -43,5 +46,8 @@ public class BookingHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-    private static string RoomGroup(Guid showTimeId, Guid roomId) => $"room-{showTimeId}-{roomId}";
+    private static string RoomGroup(Guid showTimeId, Guid roomId)
+    {
+        return $"room-{showTimeId}-{roomId}";
+    }
 }

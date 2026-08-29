@@ -16,7 +16,10 @@ public class SmtpNotificationService : INotificationService
 {
     private readonly IConfiguration _config;
 
-    public SmtpNotificationService(IConfiguration config) => _config = config;
+    public SmtpNotificationService(IConfiguration config)
+    {
+        _config = config;
+    }
 
     public async Task SendAsync(string to, string subject, string body)
     {

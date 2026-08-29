@@ -3,6 +3,7 @@ using System.Reflection;
 using Cinema.Data.Contexts;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Foundation.Logging;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Data.Stores;
@@ -20,7 +21,10 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
 
     #region FilterQuery
 
-    public virtual IQueryable<Entity> GetQuery() => DbSet.AsQueryable();
+    public virtual IQueryable<Entity> GetQuery()
+    {
+        return DbSet.AsQueryable();
+    }
 
     public IQueryable<Entity> GetQuery(string linkedElements)
     {
@@ -47,87 +51,154 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     #region CRUD (IGenericStore)
 
     public virtual async Task<Entity?> GetByIdAsync(Guid id)
-        => await DbSet.FindAsync(new object[] { id });
+    {
+        try
+        {
+            return await DbSet.FindAsync(new object[] { id });
+        }
+        catch (Exception ex)
+        {
+            LogProvider.Current.Error(ex, $"GenericStore.GetByIdAsync failed: {ex.Message}");
+            throw;
+        }
+    }
 
     public virtual async Task<IEnumerable<Entity>> GetAllAsync()
-        => await DbSet.ToListAsync();
+    {
+        try
+        {
+            return await DbSet.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            LogProvider.Current.Error(ex, $"GenericStore.GetAllAsync failed: {ex.Message}");
+            throw;
+        }
+    }
 
     public virtual async Task<IEnumerable<Entity>> FindAsync(Expression<Func<Entity, bool>> predicate)
-        => await DbSet.Where(predicate).ToListAsync();
+    {
+        try
+        {
+            return await DbSet.Where(predicate).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            LogProvider.Current.Error(ex, $"GenericStore.FindAsync failed: {ex.Message}");
+            throw;
+        }
+    }
 
     public virtual async Task<Entity> CreateAsync(Entity entity)
     {
-        var idProperty = typeof(Entity).GetProperty("Id");
-        if (idProperty != null && idProperty.PropertyType != typeof(int))
+        try
         {
-            var currentId = (Guid?)idProperty.GetValue(entity);
-            if (currentId == null || currentId == Guid.Empty)
-                idProperty.SetValue(entity, Guid.NewGuid());
-        }
+            var idProperty = typeof(Entity).GetProperty("Id");
+            if (idProperty != null && idProperty.PropertyType != typeof(int))
+            {
+                var currentId = (Guid?)idProperty.GetValue(entity);
+                if (currentId == null || currentId == Guid.Empty)
+                    idProperty.SetValue(entity, Guid.NewGuid());
+            }
 
-        var creationTimeProperty = typeof(Entity).GetProperty("CreationTime");
-        if (creationTimeProperty != null)
+            var creationTimeProperty = typeof(Entity).GetProperty("CreationTime");
+            if (creationTimeProperty != null)
+            {
+                var current = creationTimeProperty.GetValue(entity);
+                if (current == null || current.Equals(default(DateTime)))
+                    creationTimeProperty.SetValue(entity, DateTime.UtcNow);
+            }
+
+            await DbSet.AddAsync(entity);
+            await Context.SaveChangesAsync();
+            return entity;
+        }
+        catch (Exception ex)
         {
-            var current = creationTimeProperty.GetValue(entity);
-            if (current == null || current.Equals(default(DateTime)))
-                creationTimeProperty.SetValue(entity, DateTime.UtcNow);
+            LogProvider.Current.Error(ex, $"GenericStore.CreateAsync failed: {ex.Message}");
+            throw;
         }
-
-        await DbSet.AddAsync(entity);
-        await Context.SaveChangesAsync();
-        return entity;
     }
 
     public virtual async Task<Entity> UpdateAsync(Entity entity)
     {
-        var lastUpdatedTimeProperty = typeof(Entity).GetProperty("LastUpdatedTime");
-        if (lastUpdatedTimeProperty != null)
+        try
         {
-            lastUpdatedTimeProperty.SetValue(entity, DateTime.UtcNow);
-        }
-
-        var entry = Context.Entry(entity);
-        if (entry.State == EntityState.Detached)
-        {
-            // The instance came from outside the context (e.g. mapped from a request). Detach any
-            // stale copy of the same row the context is already tracking, then mark this one Modified.
-            // Consulting the ChangeTracker avoids the SELECT that FindAsync used to issue on every update.
-            var id = GetId(entity);
-            var tracked = Context.ChangeTracker.Entries<Entity>()
-                .FirstOrDefault(e => !ReferenceEquals(e.Entity, entity) && Equals(GetId(e.Entity), id));
-            if (tracked != null)
+            var lastUpdatedTimeProperty = typeof(Entity).GetProperty("LastUpdatedTime");
+            if (lastUpdatedTimeProperty != null)
             {
-                tracked.State = EntityState.Detached;
+                lastUpdatedTimeProperty.SetValue(entity, DateTime.UtcNow);
             }
-            entry.State = EntityState.Modified;
-        }
-        // When the entity is already tracked, leave it to change tracking: EF then writes only the
-        // columns that actually changed instead of every column (which rewrote password hashes and
-        // salts just to bump a failed-login counter).
 
-        await Context.SaveChangesAsync();
-        return entity;
+            var entry = Context.Entry(entity);
+            if (entry.State == EntityState.Detached)
+            {
+                // The instance came from outside the context (e.g. mapped from a request). Detach any
+                // stale copy of the same row the context is already tracking, then mark this one Modified.
+                // Consulting the ChangeTracker avoids the SELECT that FindAsync used to issue on every update.
+                var id = GetId(entity);
+                var tracked = Context.ChangeTracker.Entries<Entity>()
+                    .FirstOrDefault(e => !ReferenceEquals(e.Entity, entity) && Equals(GetId(e.Entity), id));
+                if (tracked != null)
+                {
+                    tracked.State = EntityState.Detached;
+                }
+                entry.State = EntityState.Modified;
+            }
+            // When the entity is already tracked, leave it to change tracking: EF then writes only the
+            // columns that actually changed instead of every column (which rewrote password hashes and
+            // salts just to bump a failed-login counter).
+
+            await Context.SaveChangesAsync();
+            return entity;
+        }
+        catch (Exception ex)
+        {
+            LogProvider.Current.Error(ex, $"GenericStore.UpdateAsync failed: {ex.Message}");
+            throw;
+        }
     }
 
     public virtual async Task<Entity> DeleteAsync(Entity entity)
     {
-        var entry = Context.Entry(entity);
-        if (entry.State == EntityState.Detached)
+        try
         {
-            var toDelete = await DbSet.FindAsync(GetId(entity))
-                ?? throw new KeyNotFoundException($"Cannot find {typeof(Entity).Name} in the database.");
-            DbSet.Remove(toDelete);
+            var entry = Context.Entry(entity);
+            if (entry.State == EntityState.Detached)
+            {
+                var toDelete = await DbSet.FindAsync(GetId(entity));
+                if (toDelete == null)
+                {
+                    throw new KeyNotFoundException($"Cannot find {typeof(Entity).Name} in the database.");
+                }
+                DbSet.Remove(toDelete);
+            }
+            else
+            {
+                DbSet.Remove(entity);
+            }
+            await Context.SaveChangesAsync();
+            return entity;
         }
-        else
+        catch (Exception ex) when (ex is not KeyNotFoundException)
         {
-            DbSet.Remove(entity);
+            LogProvider.Current.Error(ex, $"GenericStore.DeleteAsync failed: {ex.Message}");
+            throw;
         }
-        await Context.SaveChangesAsync();
-        return entity;
     }
 
     public virtual async Task<bool> ExistsAsync(Expression<Func<Entity, bool>> predicate)
-        => await DbSet.AnyAsync(predicate);
+    {
+        try
+        {
+            return await DbSet.AnyAsync(predicate);
+        }
+        catch (Exception ex)
+        {
+            LogProvider.Current.Error(ex, $"GenericStore.ExistsAsync failed: {ex.Message}");
+            throw;
+        }
+    }
 
     #endregion
 
@@ -193,8 +264,11 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
 
     public async Task<Entity> DeleteAsync(Guid entityId)
     {
-        var entity = await DbSet.FindAsync(entityId)
-            ?? throw new KeyNotFoundException($"Cannot find {typeof(Entity).Name} with id {entityId} in the database.");
+        var entity = await DbSet.FindAsync(entityId);
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Cannot find {typeof(Entity).Name} with id {entityId} in the database.");
+        }
         DbSet.Remove(entity);
         await Context.SaveChangesAsync();
         return entity;

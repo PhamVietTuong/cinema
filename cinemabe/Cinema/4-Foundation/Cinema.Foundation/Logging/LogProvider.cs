@@ -11,5 +11,8 @@ public static class LogProvider
     public static ILog Current => _current;
 
     /// <summary>Replaces the current default logger.</summary>
-    public static void SetCurrentLogger(ILog logger) => _current = logger;
+    public static void SetCurrentLogger(ILog logger)
+    {
+        _current = logger;
+    }
 }
