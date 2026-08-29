@@ -157,7 +157,9 @@ public class MovieManager : IMovieManager
         // Reconcile genre links against the requested set on the tracked collection.
         movie.MovieTypeDetails.Clear();
         foreach (var typeId in request.MovieTypeIds.Distinct())
+        {
             movie.MovieTypeDetails.Add(new MovieTypeDetail { MovieId = movie.Id, MovieTypeId = typeId });
+        }
 
         movie.LastUpdatedTime = DateTime.UtcNow;
         await _uow.SaveChangesAsync();

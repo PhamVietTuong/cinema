@@ -31,7 +31,9 @@ public class DiscountManager(IApplicationUnitOfWork uow)
 
         var keyword = search.Filters.GetString("keyword");
         if (!string.IsNullOrWhiteSpace(keyword))
+        {
             all = all.Where(e => Match(e, keyword)).ToList();
+        }
 
         var page = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize > 0 ? search.PageSize : 20;
@@ -105,11 +107,15 @@ public class DiscountManager(IApplicationUnitOfWork uow)
             : theaterIds.Where(id => id != Guid.Empty).ToHashSet();
 
         foreach (var link in entity.DiscountTheaters.Where(t => !wanted.Contains(t.TheaterId)).ToList())
+        {
             entity.DiscountTheaters.Remove(link);
+        }
 
         var existing = entity.DiscountTheaters.Select(t => t.TheaterId).ToHashSet();
         foreach (var id in wanted.Where(id => !existing.Contains(id)))
+        {
             entity.DiscountTheaters.Add(new DiscountTheater { TheaterId = id });
+        }
     }
 
     private static string? Normalize(string? code)

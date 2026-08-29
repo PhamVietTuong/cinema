@@ -32,7 +32,9 @@ public class UserStore : GenericStore<User>, IUserStore
     {
         var q = DbSet.Include(u => u.UserType).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
+        {
             q = q.Where(u => u.Name.Contains(search) || u.Email.Contains(search) || u.Phone.Contains(search));
+        }
         var total = await q.CountAsync();
         var items = await q.OrderBy(u => u.Name).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return (items, total);

@@ -515,9 +515,13 @@ public class BookingManager : IBookingManager
             throw new KeyNotFoundException("Ticket not found.");
         }
         if (ticket.Invoice.Status != InvoiceStatus.Paid)
+        {
             throw new InvalidOperationException("Ticket has not been paid.");
+        }
         if (ticket.IsUsed)
+        {
             throw new InvalidOperationException("Ticket has already been used.");
+        }
 
         ticket.IsUsed = true;
         await _uow.SaveChangesAsync();
@@ -553,7 +557,9 @@ public class BookingManager : IBookingManager
         {
             var membership = await _uow.MemberShipStore.GetByIdAsync(membershipId);
             if (membership is { DiscountPercent: > 0 })
+            {
                 running -= running * (membership.DiscountPercent / 100.0);
+            }
         }
 
         var now = DateTime.UtcNow;
@@ -592,7 +598,10 @@ public class BookingManager : IBookingManager
             }
         }
 
-        if (running < 0) running = 0;
+        if (running < 0)
+        {
+            running = 0;
+        }
         return (Math.Round(total - running, 2), Math.Round(running, 2), discountId);
     }
 
@@ -600,7 +609,10 @@ public class BookingManager : IBookingManager
     private static double ApplyPercent(double running, Discount d)
     {
         var amount = running * (d.Percent / 100.0);
-        if (d.MaxDiscountAmount is double cap && amount > cap) amount = cap;
+        if (d.MaxDiscountAmount is double cap && amount > cap)
+        {
+            amount = cap;
+        }
         return amount;
     }
 
@@ -610,21 +622,38 @@ public class BookingManager : IBookingManager
         if (!d.ApplyToAllTheaters)
         {
             if (bookingTheaterId == null || d.DiscountTheaters.All(t => t.TheaterId != bookingTheaterId))
+            {
                 return false;
+            }
         }
 
         var hasShowScope = d.MovieId != null || d.DaysOfWeekMask != null
                            || d.StartTimeOfDay != null || d.EndTimeOfDay != null;
         if (hasShowScope && showTime == null)
-            return false; // cannot verify a movie/day/time-scoped promotion without the showtime
+        {
+            // cannot verify a movie/day/time-scoped promotion without the showtime
+            return false;
+        }
 
         if (showTime != null)
         {
-            if (d.MovieId != null && showTime.MovieId != d.MovieId) return false;
-            if (d.DaysOfWeekMask is int mask && (mask & (1 << (int)showTime.StartTime.DayOfWeek)) == 0) return false;
+            if (d.MovieId != null && showTime.MovieId != d.MovieId)
+            {
+                return false;
+            }
+            if (d.DaysOfWeekMask is int mask && (mask & (1 << (int)showTime.StartTime.DayOfWeek)) == 0)
+            {
+                return false;
+            }
             var start = TimeOnly.FromDateTime(showTime.StartTime);
-            if (d.StartTimeOfDay is TimeOnly from && start < from) return false;
-            if (d.EndTimeOfDay is TimeOnly to && start > to) return false;
+            if (d.StartTimeOfDay is TimeOnly from && start < from)
+            {
+                return false;
+            }
+            if (d.EndTimeOfDay is TimeOnly to && start > to)
+            {
+                return false;
+            }
         }
         return true;
     }
@@ -774,7 +803,10 @@ public class BookingManager : IBookingManager
     {
         var cutoff = DateTime.UtcNow - age;
         var stale  = await _uow.InvoiceStore.GetStalePendingAsync(cutoff);
-        if (stale.Count == 0) return 0;
+        if (stale.Count == 0)
+        {
+            return 0;
+        }
         foreach (var invoice in stale)
         {
             // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
@@ -795,14 +827,22 @@ public class BookingManager : IBookingManager
     {
         var key = SeatKey(showTimeId, roomId, seatId);
         if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId)
+        {
             _lockedSeats.TryRemove(key, out _);
+        }
     }
 
     public bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null)
     {
         var key = SeatKey(showTimeId, roomId, seatId);
-        if (!_lockedSeats.TryGetValue(key, out var info)) return false;
-        if (excludeConnectionId != null && info.ConnectionId == excludeConnectionId) return false;
+        if (!_lockedSeats.TryGetValue(key, out var info))
+        {
+            return false;
+        }
+        if (excludeConnectionId != null && info.ConnectionId == excludeConnectionId)
+        {
+            return false;
+        }
         if (DateTime.UtcNow - info.LockedAt > TimeSpan.FromMinutes(5))
         {
             _lockedSeats.TryRemove(key, out _);
@@ -816,9 +856,14 @@ public class BookingManager : IBookingManager
         var released = new List<(Guid ShowTimeId, Guid RoomId, Guid SeatId)>();
         foreach (var entry in _lockedSeats)
         {
-            if (entry.Value.ConnectionId != connectionId) continue;
+            if (entry.Value.ConnectionId != connectionId)
+            {
+                continue;
+            }
             if (_lockedSeats.TryRemove(entry.Key, out _) && TryParseSeatKey(entry.Key, out var ids))
+            {
                 released.Add(ids);
+            }
         }
         return released;
     }

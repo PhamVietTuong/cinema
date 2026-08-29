@@ -88,11 +88,16 @@ public class RoomManager(IApplicationUnitOfWork uow)
     private async Task GenerateSeatsAsync(Guid roomId, Guid theaterId, int rows, int columns)
     {
         if (rows <= 0 || columns <= 0)
+        {
             return;
+        }
 
         var seatTypeId = (await _uow.SeatTypeStore.FindAsync(st => st.TheaterId == theaterId)).FirstOrDefault()?.Id ?? Guid.Empty;
         if (seatTypeId == Guid.Empty)
-            return; // No seat types for this theater yet — nothing valid to attach seats to.
+        {
+            // No seat types for this theater yet — nothing valid to attach seats to.
+            return;
+        }
 
         var seats = new List<Seat>();
         for (var r = 0; r < rows; r++)
@@ -160,7 +165,10 @@ public class RoomManager(IApplicationUnitOfWork uow)
             .ToDictionary(s => s.Id);
         foreach (var item in request.Seats)
         {
-            if (!seats.TryGetValue(item.SeatId, out var seat)) continue;
+            if (!seats.TryGetValue(item.SeatId, out var seat))
+            {
+                continue;
+            }
             seat.SeatTypeId  = item.SeatTypeId;
             seat.SeatGroupId = item.SeatGroupId;
             seat.IsActive    = item.IsActive;
@@ -185,7 +193,9 @@ public class RoomManager(IApplicationUnitOfWork uow)
         {
             var rowName = ToRowName(r);
             for (var c = 1; c <= columns; c++)
+            {
                 desired.Add((rowName, c));
+            }
         }
 
         var existing = (await _uow.SeatStore.FindAsync(s => s.RoomId == room.Id)).ToList();
@@ -218,7 +228,9 @@ public class RoomManager(IApplicationUnitOfWork uow)
                 })
                 .ToList();
             if (toAdd.Count > 0)
+            {
                 await _uow.SeatStore.CreateRangeAsync(toAdd);
+            }
         }
 
         // Keep the room's stored dimensions in step with its seat grid.

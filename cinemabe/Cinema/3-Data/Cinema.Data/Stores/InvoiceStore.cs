@@ -59,9 +59,18 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         InvoiceStatus? status, DateTime? from, DateTime? to, int page, int pageSize)
     {
         var q = DbSet.Include(i => i.User).AsQueryable();
-        if (status.HasValue) q = q.Where(i => i.Status == status.Value);
-        if (from.HasValue) q = q.Where(i => i.CreationTime >= from.Value);
-        if (to.HasValue) q = q.Where(i => i.CreationTime <= to.Value);
+        if (status.HasValue)
+        {
+            q = q.Where(i => i.Status == status.Value);
+        }
+        if (from.HasValue)
+        {
+            q = q.Where(i => i.CreationTime >= from.Value);
+        }
+        if (to.HasValue)
+        {
+            q = q.Where(i => i.CreationTime <= to.Value);
+        }
         q = q.OrderByDescending(i => i.CreationTime);
         var total = await q.CountAsync();
         var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();

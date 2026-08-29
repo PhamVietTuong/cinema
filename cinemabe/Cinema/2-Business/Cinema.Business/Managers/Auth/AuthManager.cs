@@ -66,7 +66,9 @@ public class AuthManager : IAuthManager
 
         // Email must be confirmed before a password login is allowed.
         if (!user.EmailConfirmed)
+        {
             throw new UnauthorizedAccessException("Please verify your email address before signing in.");
+        }
 
         // A successful login clears any accumulated failures / lockout.
         if (user.FailedLoginCount != 0 || user.LockoutEndUtc != null)
@@ -113,10 +115,14 @@ public class AuthManager : IAuthManager
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
         if (await _uow.UserStore.GetByEmailAsync(request.Email) != null)
+        {
             throw new InvalidOperationException("Email already in use.");
+        }
 
         if (await _uow.UserStore.GetByPhoneAsync(request.Phone) != null)
+        {
             throw new InvalidOperationException("Phone already in use.");
+        }
 
         CreatePasswordHash(request.Password, out var hash, out var salt);
 
@@ -179,7 +185,10 @@ public class AuthManager : IAuthManager
     {
         var user = await _uow.UserStore.GetByEmailAsync(request.Email);
         // Silent if unknown (no enumeration) or already confirmed (nothing to do).
-        if (user == null || user.EmailConfirmed) return;
+        if (user == null || user.EmailConfirmed)
+        {
+            return;
+        }
 
         var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         user.EmailVerificationTokenHash = HashToken(rawToken);
@@ -264,7 +273,9 @@ public class AuthManager : IAuthManager
         }
 
         if (!info.EmailVerified)
+        {
             throw new UnauthorizedAccessException("Google account email is not verified.");
+        }
 
         var user = await _uow.UserStore.GetByEmailAsync(info.Email);
         if (user == null)
@@ -391,7 +402,9 @@ public class AuthManager : IAuthManager
         }
 
         if (!VerifyPassword(request.CurrentPassword, user.PasswordHash, user.PasswordSalt))
+        {
             throw new UnauthorizedAccessException("Current password is incorrect.");
+        }
 
         CreatePasswordHash(request.NewPassword, out var hash, out var salt);
         user.PasswordHash = hash;
@@ -404,7 +417,10 @@ public class AuthManager : IAuthManager
     {
         var user = await _uow.UserStore.GetByEmailAsync(request.Email);
         // Do not reveal whether the email exists — return silently if there's no such account.
-        if (user == null) return;
+        if (user == null)
+        {
+            return;
+        }
 
         var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         user.PasswordResetTokenHash = HashToken(rawToken);
@@ -462,9 +478,13 @@ public class AuthManager : IAuthManager
     public async Task<UserDTO> CreateUserAsync(CreateUserRequest request)
     {
         if (await _uow.UserStore.GetByEmailAsync(request.Email) != null)
+        {
             throw new InvalidOperationException("Email already in use.");
+        }
         if (await _uow.UserStore.GetByPhoneAsync(request.Phone) != null)
+        {
             throw new InvalidOperationException("Phone already in use.");
+        }
 
         Guid userTypeId;
         if (request.UserTypeId != Guid.Empty)
@@ -507,8 +527,14 @@ public class AuthManager : IAuthManager
         user.Name   = request.Name;
         user.Phone  = request.Phone;
         user.Status = request.Status;
-        if (request.Avatar != null) user.Avatar = request.Avatar;
-        if (request.UserTypeId != Guid.Empty) user.UserTypeId = request.UserTypeId;
+        if (request.Avatar != null)
+        {
+            user.Avatar = request.Avatar;
+        }
+        if (request.UserTypeId != Guid.Empty)
+        {
+            user.UserTypeId = request.UserTypeId;
+        }
         user.TheaterId = request.TheaterId;
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();

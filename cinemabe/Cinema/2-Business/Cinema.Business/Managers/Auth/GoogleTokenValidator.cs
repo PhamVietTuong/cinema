@@ -18,7 +18,9 @@ public class GoogleTokenValidator : IGoogleTokenValidator
     {
         var clientId = _config["Google:ClientId"];
         if (string.IsNullOrWhiteSpace(clientId))
+        {
             throw new InvalidOperationException("Google login is not configured (Google:ClientId is missing).");
+        }
 
         var settings = new GoogleJsonWebSignature.ValidationSettings
         {

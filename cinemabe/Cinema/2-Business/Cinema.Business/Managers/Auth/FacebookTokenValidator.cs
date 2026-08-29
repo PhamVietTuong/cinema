@@ -24,11 +24,15 @@ public class FacebookTokenValidator : IFacebookTokenValidator
     public async Task<FacebookUserInfo?> ValidateAsync(string accessToken)
     {
         if (string.IsNullOrWhiteSpace(accessToken))
+        {
             return null;
+        }
 
         var appId = _config["Facebook:AppId"];
         if (string.IsNullOrWhiteSpace(appId))
+        {
             throw new InvalidOperationException("Facebook login is not configured (Facebook:AppId is missing).");
+        }
 
         var appSecret = _config["Facebook:AppSecret"];
 
@@ -39,25 +43,34 @@ public class FacebookTokenValidator : IFacebookTokenValidator
             using var debug = await _http.GetAsync(
                 $"{GraphBase}/debug_token?input_token={Uri.EscapeDataString(accessToken)}&access_token={Uri.EscapeDataString(appToken)}");
             if (!debug.IsSuccessStatusCode)
+            {
                 return null;
+            }
             using var debugDoc = JsonDocument.Parse(await debug.Content.ReadAsStringAsync());
             var data = debugDoc.RootElement.GetProperty("data");
             var isValid = data.TryGetProperty("is_valid", out var v) && v.GetBoolean();
             var tokenAppId = data.TryGetProperty("app_id", out var a) ? a.GetString() : null;
             if (!isValid || tokenAppId != appId)
+            {
                 return null;
+            }
         }
 
         using var me = await _http.GetAsync(
             $"{GraphBase}/me?fields=id,name,email&access_token={Uri.EscapeDataString(accessToken)}");
         if (!me.IsSuccessStatusCode)
+        {
             return null;
+        }
 
         using var doc = JsonDocument.Parse(await me.Content.ReadAsStringAsync());
         var root = doc.RootElement;
         var email = root.TryGetProperty("email", out var e) ? e.GetString() : null;
         if (string.IsNullOrWhiteSpace(email))
-            return null; // No email permission granted — can't create/link an account.
+        {
+            // No email permission granted — can't create/link an account.
+            return null;
+        }
 
         var name = root.TryGetProperty("name", out var n) ? n.GetString() : null;
         var id = root.TryGetProperty("id", out var i) ? i.GetString() : null;

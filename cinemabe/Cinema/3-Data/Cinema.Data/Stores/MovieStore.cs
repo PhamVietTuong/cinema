@@ -18,10 +18,14 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .Where(m => m.IsActive);
 
         if (!string.IsNullOrWhiteSpace(search))
+        {
             q = q.Where(m => m.Title.Contains(search) || (m.Director != null && m.Director.Contains(search)) || (m.Cast != null && m.Cast.Contains(search)));
+        }
 
         if (movieTypeId.HasValue)
+        {
             q = q.Where(m => m.MovieTypeDetails.Any(mt => mt.MovieTypeId == movieTypeId.Value));
+        }
 
         var total = await q.CountAsync();
         var items = await q.OrderByDescending(m => m.ReleaseDate)

@@ -41,7 +41,9 @@ public class BookingHub : Hub
         // Release every seat this connection still holds and notify the rooms.
         // (SignalR removes the connection from its groups automatically.)
         foreach (var (showTimeId, roomId, seatId) in _bookingManager.ReleaseConnectionLocks(Context.ConnectionId))
+        {
             await Clients.Group(RoomGroup(showTimeId, roomId)).SendAsync("SeatUnlocked", seatId);
+        }
 
         await base.OnDisconnectedAsync(exception);
     }

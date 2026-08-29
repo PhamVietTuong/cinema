@@ -60,7 +60,9 @@ public class InvoiceManager : IInvoiceManager
         }
         // Object-level authorization: only the owner (or an admin) may read an invoice.
         if (!isAdmin && invoice.UserId != requestingUserId)
+        {
             throw new UnauthorizedAccessException("You are not allowed to access this invoice.");
+        }
         return ToInvoiceDTO(invoice);
     }
 
@@ -72,7 +74,9 @@ public class InvoiceManager : IInvoiceManager
         var map = await _uow.InvoiceStore.GetRevenueByDayAsync(from, to);
         var result = new List<RevenueByDayDTO>();
         for (var day = from.Date; day <= to.Date; day = day.AddDays(1))
+        {
             result.Add(new RevenueByDayDTO { Date = day, Total = map.TryGetValue(day, out var t) ? t : 0 });
+        }
         return result;
     }
 

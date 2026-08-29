@@ -32,7 +32,9 @@ public class JwtTokenService : ITokenService
         };
         // Theater staff carry the theater they manage, so the API can scope their access.
         if (user.TheaterId is Guid theaterId)
+        {
             claims.Add(new Claim("theaterId", theaterId.ToString()));
+        }
 
         var token = new JwtSecurityToken(
             issuer: _config["JWT:Issuer"],

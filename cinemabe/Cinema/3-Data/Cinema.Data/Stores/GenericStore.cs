@@ -30,7 +30,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     {
         IQueryable<Entity> query = DbSet.AsQueryable();
         foreach (var element in linkedElements.Split(','))
+        {
             query = query.Include(element);
+        }
         return query;
     }
 
@@ -98,7 +100,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
             {
                 var currentId = (Guid?)idProperty.GetValue(entity);
                 if (currentId == null || currentId == Guid.Empty)
+                {
                     idProperty.SetValue(entity, Guid.NewGuid());
+                }
             }
 
             var creationTimeProperty = typeof(Entity).GetProperty("CreationTime");
@@ -106,7 +110,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
             {
                 var current = creationTimeProperty.GetValue(entity);
                 if (current == null || current.Equals(default(DateTime)))
+                {
                     creationTimeProperty.SetValue(entity, DateTime.UtcNow);
+                }
             }
 
             await DbSet.AddAsync(entity);
@@ -221,7 +227,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
         var parts = navigationPath.Split(',');
         var query = DbSet.Include(parts[0]);
         for (var i = 1; i < parts.Length; i++)
+        {
             query = query.Include(parts[i]);
+        }
         return await query.AnyAsync(whereExpression);
     }
 
@@ -250,7 +258,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     {
         var query = DbSet.Where(whereExpression);
         foreach (var element in navigationPath.Split(','))
+        {
             query = query.Include(element);
+        }
         return await query.Cast<Class>().ToListAsync();
     }
 
@@ -258,7 +268,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     {
         var query = DbSet.Where(whereExpression).Select(selectExpression);
         foreach (var element in navigationPath.Split(','))
+        {
             query = query.Include(element);
+        }
         return await query.Cast<Class>().SingleOrDefaultAsync();
     }
 
@@ -278,7 +290,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     {
         var toDelete = await DbSet.Where(whereExpression).ToListAsync();
         foreach (var e in toDelete)
+        {
             DbSet.Remove(e);
+        }
         await Context.SaveChangesAsync();
         return true;
     }
@@ -292,7 +306,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
             {
                 var current = creationTimeProperty.GetValue(entity);
                 if (current == null || current.Equals(default(DateTime)))
+                {
                     creationTimeProperty.SetValue(entity, DateTime.UtcNow);
+                }
             }
 
             var idProperty = typeof(Entity).GetProperty("Id");
@@ -300,7 +316,9 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
             {
                 var currentId = (Guid?)idProperty.GetValue(entity);
                 if (currentId == null || currentId == Guid.Empty)
+                {
                     idProperty.SetValue(entity, Guid.NewGuid());
+                }
             }
         }
 
@@ -315,10 +333,14 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
         {
             var lastUpdatedTimeProperty = typeof(Entity).GetProperty("LastUpdatedTime");
             if (lastUpdatedTimeProperty != null)
+            {
                 lastUpdatedTimeProperty.SetValue(entity, DateTime.UtcNow);
+            }
 
             if (Context.Entry(entity).State == EntityState.Detached)
+            {
                 DbSet.Attach(entity);
+            }
 
             Context.Entry(entity).State = EntityState.Modified;
         }

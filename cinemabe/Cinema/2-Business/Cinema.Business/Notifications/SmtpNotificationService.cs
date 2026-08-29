@@ -40,7 +40,9 @@ public class SmtpNotificationService : INotificationService
         {
             using var client = new SmtpClient(host, port) { EnableSsl = enableSsl };
             if (!string.IsNullOrWhiteSpace(user))
+            {
                 client.Credentials = new NetworkCredential(user, pass);
+            }
             using var message = new MailMessage(from, to, subject, body);
             await client.SendMailAsync(message);
         }

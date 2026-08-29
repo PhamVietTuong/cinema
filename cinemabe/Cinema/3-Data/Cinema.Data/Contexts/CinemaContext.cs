@@ -48,7 +48,9 @@ public class CinemaContext : DbContext
             foreach (var prop in entity.GetProperties())
             {
                 if (prop.ClrType == typeof(DateTime) || prop.ClrType == typeof(DateTime?))
+                {
                     prop.SetColumnType("datetime");
+                }
             }
         }
     }

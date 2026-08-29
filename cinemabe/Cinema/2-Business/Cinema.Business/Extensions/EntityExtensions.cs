@@ -16,8 +16,14 @@ public static class EntityExtensions
 
         foreach (var ep in entityProps)
         {
-            if (!dtoProps.TryGetValue(ep.Name, out var dp)) continue;
-            if (!dp.PropertyType.IsAssignableFrom(ep.PropertyType)) continue;
+            if (!dtoProps.TryGetValue(ep.Name, out var dp))
+            {
+                continue;
+            }
+            if (!dp.PropertyType.IsAssignableFrom(ep.PropertyType))
+            {
+                continue;
+            }
             dp.SetValue(dto, ep.GetValue(entity));
         }
         return dto;
@@ -34,10 +40,19 @@ public static class EntityExtensions
 
         foreach (var dp in dtoProps)
         {
-            if (!entityProps.TryGetValue(dp.Name, out var ep)) continue;
+            if (!entityProps.TryGetValue(dp.Name, out var ep))
+            {
+                continue;
+            }
             var value = dp.GetValue(dto);
-            if (value == null) continue;
-            if (!ep.PropertyType.IsAssignableFrom(dp.PropertyType)) continue;
+            if (value == null)
+            {
+                continue;
+            }
+            if (!ep.PropertyType.IsAssignableFrom(dp.PropertyType))
+            {
+                continue;
+            }
             ep.SetValue(entity, value);
         }
     }
@@ -65,7 +80,9 @@ public static class EntityExtensions
         {
             var attr = field.GetCustomAttribute<DescriptionAttribute>();
             if (attr?.Description == description || field.Name == description)
+            {
                 return (T)field.GetValue(null)!;
+            }
         }
         throw new ArgumentException($"'{description}' is not a valid description for {typeof(T)}.");
     }
@@ -85,7 +102,9 @@ public static class EntityExtensions
             bool isNullable = !type.IsValueType ||
                               (Nullable.GetUnderlyingType(type) != null);
             if (isNullable)
+            {
                 prop.SetValue(entity, null);
+            }
         }
         return entity;
     }

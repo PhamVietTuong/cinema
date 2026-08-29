@@ -98,13 +98,19 @@ public class CinemaController : ApiControllerBase
         try
         {
             if (file == null || file.Length == 0)
+            {
                 return BadRequest("No file uploaded.");
+            }
             if (file.Length > _maxImageBytes)
+            {
                 return BadRequest("File exceeds the 5 MB limit.");
+            }
 
             var ext = Path.GetExtension(file.FileName);
             if (!_allowedImageExtensions.Contains(ext) || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            {
                 return BadRequest("Only image files (jpg, png, webp, gif) are allowed.");
+            }
 
             var uploadsDir = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
             Directory.CreateDirectory(uploadsDir);
@@ -484,8 +490,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(AgeRestrictionDTO), 200)]
     public async Task<IActionResult> GetAgeRestriction([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(id), nameof(GetAgeRestriction), "AgeRestriction", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(id), nameof(GetAgeRestriction), nameof(AgeRestriction), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetAgeRestriction), () => _ageRestrictions.GetByIdAsync(id));
     }
 
@@ -502,8 +511,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(AgeRestrictionDTO), 200)]
     public async Task<IActionResult> UpdateAgeRestriction([FromBody] UpdateAgeRestrictionRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(request.Id), nameof(UpdateAgeRestriction), "AgeRestriction", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(request.Id), nameof(UpdateAgeRestriction), nameof(AgeRestriction), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateAgeRestriction), () => _ageRestrictions.UpdateAsync(request));
     }
 
@@ -512,8 +524,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteAgeRestriction([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(id), nameof(DeleteAgeRestriction), "AgeRestriction", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _ageRestrictions.ExistsAsync(id), nameof(DeleteAgeRestriction), nameof(AgeRestriction), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteAgeRestriction), () => _ageRestrictions.DeleteAsync(id));
     }
     #endregion
@@ -530,8 +545,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(DiscountTypeDTO), 200)]
     public async Task<IActionResult> GetDiscountType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(id), nameof(GetDiscountType), "DiscountType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(id), nameof(GetDiscountType), nameof(DiscountType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetDiscountType), () => _discountTypes.GetByIdAsync(id));
     }
 
@@ -548,8 +566,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(DiscountTypeDTO), 200)]
     public async Task<IActionResult> UpdateDiscountType([FromBody] UpdateDiscountTypeRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(request.Id), nameof(UpdateDiscountType), "DiscountType", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(request.Id), nameof(UpdateDiscountType), nameof(DiscountType), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateDiscountType), () => _discountTypes.UpdateAsync(request));
     }
 
@@ -558,8 +579,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteDiscountType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(id), nameof(DeleteDiscountType), "DiscountType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(id), nameof(DeleteDiscountType), nameof(DiscountType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteDiscountType), () => _discountTypes.DeleteAsync(id));
     }
     #endregion
@@ -576,8 +600,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(MovieTypeDTO), 200)]
     public async Task<IActionResult> GetMovieType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(id), nameof(GetMovieType), "MovieType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(id), nameof(GetMovieType), nameof(MovieType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetMovieType), () => _movieTypes.GetByIdAsync(id));
     }
 
@@ -594,8 +621,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(MovieTypeDTO), 200)]
     public async Task<IActionResult> UpdateMovieType([FromBody] UpdateMovieTypeRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(request.Id), nameof(UpdateMovieType), "MovieType", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(request.Id), nameof(UpdateMovieType), nameof(MovieType), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateMovieType), () => _movieTypes.UpdateAsync(request));
     }
 
@@ -604,8 +634,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteMovieType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(id), nameof(DeleteMovieType), "MovieType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _movieTypes.ExistsAsync(id), nameof(DeleteMovieType), nameof(MovieType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteMovieType), () => _movieTypes.DeleteAsync(id));
     }
     #endregion
@@ -622,8 +655,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(SeatTypeDTO), 200)]
     public async Task<IActionResult> GetSeatType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(id), nameof(GetSeatType), "SeatType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(id), nameof(GetSeatType), nameof(SeatType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetSeatType), () => _seatTypes.GetByIdAsync(id));
     }
 
@@ -640,8 +676,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(SeatTypeDTO), 200)]
     public async Task<IActionResult> UpdateSeatType([FromBody] UpdateSeatTypeRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(request.Id), nameof(UpdateSeatType), "SeatType", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(request.Id), nameof(UpdateSeatType), nameof(SeatType), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateSeatType), () => _seatTypes.UpdateAsync(request));
     }
 
@@ -650,8 +689,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteSeatType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(id), nameof(DeleteSeatType), "SeatType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(id), nameof(DeleteSeatType), nameof(SeatType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteSeatType), () => _seatTypes.DeleteAsync(id));
     }
     #endregion
@@ -668,8 +710,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(TimeSlotDTO), 200)]
     public async Task<IActionResult> GetTimeSlot([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(id), nameof(GetTimeSlot), "TimeSlot", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(id), nameof(GetTimeSlot), nameof(TimeSlot), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetTimeSlot), () => _timeSlots.GetByIdAsync(id));
     }
 
@@ -686,8 +731,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(TimeSlotDTO), 200)]
     public async Task<IActionResult> UpdateTimeSlot([FromBody] UpdateTimeSlotRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(request.Id), nameof(UpdateTimeSlot), "TimeSlot", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(request.Id), nameof(UpdateTimeSlot), nameof(TimeSlot), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateTimeSlot), () => _timeSlots.UpdateAsync(request));
     }
 
@@ -696,8 +744,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteTimeSlot([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(id), nameof(DeleteTimeSlot), "TimeSlot", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _timeSlots.ExistsAsync(id), nameof(DeleteTimeSlot), nameof(TimeSlot), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteTimeSlot), () => _timeSlots.DeleteAsync(id));
     }
     #endregion
@@ -714,8 +765,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(TicketPriceDTO), 200)]
     public async Task<IActionResult> GetTicketPrice([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(id), nameof(GetTicketPrice), "TicketPrice", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(id), nameof(GetTicketPrice), nameof(TicketPrice), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetTicketPrice), () => _ticketPrices.GetByIdAsync(id));
     }
 
@@ -732,8 +786,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(TicketPriceDTO), 200)]
     public async Task<IActionResult> UpdateTicketPrice([FromBody] UpdateTicketPriceRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(request.Id), nameof(UpdateTicketPrice), "TicketPrice", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(request.Id), nameof(UpdateTicketPrice), nameof(TicketPrice), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateTicketPrice), () => _ticketPrices.UpdateAsync(request));
     }
 
@@ -742,8 +799,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteTicketPrice([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(id), nameof(DeleteTicketPrice), "TicketPrice", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _ticketPrices.ExistsAsync(id), nameof(DeleteTicketPrice), nameof(TicketPrice), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteTicketPrice), () => _ticketPrices.DeleteAsync(id));
     }
     #endregion
@@ -761,8 +821,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(UserTypeDTO), 200)]
     public async Task<IActionResult> GetUserType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(id), nameof(GetUserType), "UserType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(id), nameof(GetUserType), nameof(UserType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetUserType), () => _userTypes.GetByIdAsync(id));
     }
 
@@ -779,8 +842,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(UserTypeDTO), 200)]
     public async Task<IActionResult> UpdateUserType([FromBody] UpdateUserTypeRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(request.Id), nameof(UpdateUserType), "UserType", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(request.Id), nameof(UpdateUserType), nameof(UserType), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateUserType), () => _userTypes.UpdateAsync(request));
     }
 
@@ -789,8 +855,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteUserType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(id), nameof(DeleteUserType), "UserType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _userTypes.ExistsAsync(id), nameof(DeleteUserType), nameof(UserType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteUserType), () => _userTypes.DeleteAsync(id));
     }
     #endregion
@@ -807,8 +876,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(MemberShipDTO), 200)]
     public async Task<IActionResult> GetMemberShip([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(id), nameof(GetMemberShip), "MemberShip", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(id), nameof(GetMemberShip), nameof(MemberShip), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetMemberShip), () => _memberShips.GetByIdAsync(id));
     }
 
@@ -825,8 +897,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(MemberShipDTO), 200)]
     public async Task<IActionResult> UpdateMemberShip([FromBody] UpdateMemberShipRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(request.Id), nameof(UpdateMemberShip), "MemberShip", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(request.Id), nameof(UpdateMemberShip), nameof(MemberShip), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateMemberShip), () => _memberShips.UpdateAsync(request));
     }
 
@@ -835,8 +910,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteMemberShip([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(id), nameof(DeleteMemberShip), "MemberShip", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _memberShips.ExistsAsync(id), nameof(DeleteMemberShip), nameof(MemberShip), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteMemberShip), () => _memberShips.DeleteAsync(id));
     }
     #endregion
@@ -853,8 +931,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(HolidayDTO), 200)]
     public async Task<IActionResult> GetHoliday([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(id), nameof(GetHoliday), "Holiday", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(id), nameof(GetHoliday), nameof(Holiday), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetHoliday), () => _holidays.GetByIdAsync(id));
     }
 
@@ -871,8 +952,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(HolidayDTO), 200)]
     public async Task<IActionResult> UpdateHoliday([FromBody] UpdateHolidayRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(request.Id), nameof(UpdateHoliday), "Holiday", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(request.Id), nameof(UpdateHoliday), nameof(Holiday), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateHoliday), () => _holidays.UpdateAsync(request));
     }
 
@@ -881,8 +965,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteHoliday([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(id), nameof(DeleteHoliday), "Holiday", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _holidays.ExistsAsync(id), nameof(DeleteHoliday), nameof(Holiday), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteHoliday), () => _holidays.DeleteAsync(id));
     }
     #endregion
@@ -899,8 +986,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(NewsDTO), 200)]
     public async Task<IActionResult> GetNews([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(id), nameof(GetNews), "News", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(id), nameof(GetNews), nameof(News), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetNews), () => _news.GetByIdAsync(id));
     }
 
@@ -917,8 +1007,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(NewsDTO), 200)]
     public async Task<IActionResult> UpdateNews([FromBody] UpdateNewsRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(request.Id), nameof(UpdateNews), "News", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(request.Id), nameof(UpdateNews), nameof(News), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateNews), () => _news.UpdateAsync(request));
     }
 
@@ -927,8 +1020,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteNews([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(id), nameof(DeleteNews), "News", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _news.ExistsAsync(id), nameof(DeleteNews), nameof(News), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteNews), () => _news.DeleteAsync(id));
     }
     #endregion
@@ -945,8 +1041,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(DiscountDTO), 200)]
     public async Task<IActionResult> GetDiscount([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(id), nameof(GetDiscount), "Discount", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(id), nameof(GetDiscount), nameof(Discount), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetDiscount), () => _discounts.GetByIdAsync(id));
     }
 
@@ -963,8 +1062,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(DiscountDTO), 200)]
     public async Task<IActionResult> UpdateDiscount([FromBody] UpdateDiscountRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(request.Id), nameof(UpdateDiscount), "Discount", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(request.Id), nameof(UpdateDiscount), nameof(Discount), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateDiscount), () => _discounts.UpdateAsync(request));
     }
 
@@ -973,8 +1075,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteDiscount([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(id), nameof(DeleteDiscount), "Discount", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(id), nameof(DeleteDiscount), nameof(Discount), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteDiscount), () => _discounts.DeleteAsync(id));
     }
     #endregion
@@ -991,8 +1096,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(FoodAndDrinkDTO), 200)]
     public async Task<IActionResult> GetFoodAndDrink([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(id), nameof(GetFoodAndDrink), "FoodAndDrink", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(id), nameof(GetFoodAndDrink), nameof(FoodAndDrink), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetFoodAndDrink), () => _foodAndDrinks.GetByIdAsync(id));
     }
 
@@ -1009,8 +1117,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(FoodAndDrinkDTO), 200)]
     public async Task<IActionResult> UpdateFoodAndDrink([FromBody] UpdateFoodAndDrinkRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(request.Id), nameof(UpdateFoodAndDrink), "FoodAndDrink", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(request.Id), nameof(UpdateFoodAndDrink), nameof(FoodAndDrink), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateFoodAndDrink), () => _foodAndDrinks.UpdateAsync(request));
     }
 
@@ -1019,8 +1130,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteFoodAndDrink([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(id), nameof(DeleteFoodAndDrink), "FoodAndDrink", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _foodAndDrinks.ExistsAsync(id), nameof(DeleteFoodAndDrink), nameof(FoodAndDrink), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteFoodAndDrink), () => _foodAndDrinks.DeleteAsync(id));
     }
     #endregion
@@ -1037,8 +1151,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(RoomDTO), 200)]
     public async Task<IActionResult> GetRoom([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(id), nameof(GetRoom), "Room", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(id), nameof(GetRoom), nameof(Room), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetRoom), () => _rooms.GetByIdAsync(id));
     }
 
@@ -1055,8 +1172,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(RoomDTO), 200)]
     public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(request.Id), nameof(UpdateRoom), "Room", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(request.Id), nameof(UpdateRoom), nameof(Room), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateRoom), () => _rooms.UpdateAsync(request));
     }
 
@@ -1065,8 +1185,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteRoom([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(id), nameof(DeleteRoom), "Room", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _rooms.ExistsAsync(id), nameof(DeleteRoom), nameof(Room), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteRoom), () => _rooms.DeleteAsync(id));
     }
     #endregion
@@ -1083,8 +1206,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(RoomTypeDTO), 200)]
     public async Task<IActionResult> GetRoomType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(id), nameof(GetRoomType), "RoomType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(id), nameof(GetRoomType), nameof(RoomType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetRoomType), () => _roomTypes.GetByIdAsync(id));
     }
 
@@ -1101,8 +1227,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(RoomTypeDTO), 200)]
     public async Task<IActionResult> UpdateRoomType([FromBody] UpdateRoomTypeRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(request.Id), nameof(UpdateRoomType), "RoomType", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(request.Id), nameof(UpdateRoomType), nameof(RoomType), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateRoomType), () => _roomTypes.UpdateAsync(request));
     }
 
@@ -1111,8 +1240,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteRoomType([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(id), nameof(DeleteRoomType), "RoomType", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _roomTypes.ExistsAsync(id), nameof(DeleteRoomType), nameof(RoomType), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteRoomType), () => _roomTypes.DeleteAsync(id));
     }
     #endregion
@@ -1129,8 +1261,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(ShowTimeDTO), 200)]
     public async Task<IActionResult> GetShowTime([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(id), nameof(GetShowTime), "ShowTime", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(id), nameof(GetShowTime), nameof(ShowTime), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(GetShowTime), () => _showTimes.GetByIdAsync(id));
     }
 
@@ -1147,8 +1282,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(ShowTimeDTO), 200)]
     public async Task<IActionResult> UpdateShowTime([FromBody] UpdateShowTimeRequest request)
     {
-        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(request.Id), nameof(UpdateShowTime), "ShowTime", request.Id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(request.Id), nameof(UpdateShowTime), nameof(ShowTime), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await Run(nameof(UpdateShowTime), () => _showTimes.UpdateAsync(request));
     }
 
@@ -1157,8 +1295,11 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteShowTime([FromQuery] Guid id)
     {
-        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(id), nameof(DeleteShowTime), "ShowTime", id);
-        if (notFound != null) return notFound;
+        var notFound = await EnsureExistsAsync(() => _showTimes.ExistsAsync(id), nameof(DeleteShowTime), nameof(ShowTime), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
         return await RunNoContent(nameof(DeleteShowTime), () => _showTimes.DeleteAsync(id));
     }
     #endregion

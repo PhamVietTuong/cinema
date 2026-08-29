@@ -78,9 +78,11 @@ var jwtSecret = builder.Configuration["JWT:Secret"];
 // user-secrets (dev) or the JWT__Secret environment variable (prod) — never commit it to source.
 const string insecureDefaultJwtSecret = "CinemaSecretKey2024!SuperSecureAndLongEnoughForHS256Algorithm";
 if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret == insecureDefaultJwtSecret)
+{
     throw new InvalidOperationException(
         "JWT:Secret is not configured, or is the insecure built-in default. Set a strong random value via " +
         "`dotnet user-secrets set \"JWT:Secret\" \"<value>\"` (Development) or the JWT__Secret environment variable.");
+}
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -191,7 +193,9 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads"
 });
 if (!app.Environment.IsDevelopment())
+{
     app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionMiddleware>();

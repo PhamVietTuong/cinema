@@ -29,7 +29,9 @@ public class PendingBookingReaper : BackgroundService
                 var bookings = scope.ServiceProvider.GetRequiredService<IBookingManager>();
                 var expired = await bookings.ExpireStalePendingBookingsAsync(_holdWindow);
                 if (expired > 0)
+                {
                     LogProvider.Current.Information($"PendingBookingReaper: expired {expired} stale pending invoice(s).");
+                }
             }
             catch (Exception e)
             {
