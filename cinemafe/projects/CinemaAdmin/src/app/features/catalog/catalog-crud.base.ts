@@ -2,6 +2,9 @@ import { ChangeDetectorRef, Directive, OnInit, OnDestroy, inject } from '@angula
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+import { ToastService } from 'CinemaLib';
+import { apiErrorMessage } from 'CinemaLib';
 import { ImageUploadService } from '../../shared/image-upload.service';
 
 /** Shape of the paged result returned by every catalog list endpoint. */
@@ -21,6 +24,9 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
   protected _fb = inject(FormBuilder);
   protected readonly _cdr = inject(ChangeDetectorRef);
   private readonly _upload = inject(ImageUploadService);
+  // Suffixed to avoid clashing with subclasses that already declare their own _toast/_translate.
+  private readonly _baseToast = inject(ToastService);
+  private readonly _baseTranslate = inject(TranslateService);
 
   uploading = false;
   uploadError = '';
@@ -37,6 +43,14 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
   showForm = false;
   editingId: string | null = null;
   form: FormGroup = this.buildForm();
+
+  /**
+   * The form's declared initial value. FormGroup.reset() with no argument nulls every control
+   * regardless of the default it was declared with, so a `[false]` checkbox posts null and a
+   * non-nullable bool on the server rejects the whole body ("$.isHoliday"). Resetting to this
+   * snapshot keeps declared defaults intact.
+   */
+  private readonly _formDefaults: unknown = this.form.getRawValue();
 
   /** Delete-confirmation modal state. */
   confirmOpen = false;
@@ -123,14 +137,14 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
   // ── Create / edit / delete ────────────────────────────────────────────────────
   openCreate(): void {
     this.editingId = null;
-    this.form.reset();
+    this.form.reset(this._formDefaults);
     this.uploadError = '';
     this.showForm = true;
   }
 
   edit(item: T): void {
     this.editingId = item.id ?? null;
-    this.form.reset();
+    this.form.reset(this._formDefaults);
     this.form.patchValue(this.toFormValue(item));
     this.uploadError = '';
     this.showForm = true;
@@ -149,6 +163,7 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
         this.load();
         this.cancelEdit();
       },
+      error: e => { this._toastError(e, 'common.saveFailed'); },
     });
   }
 
@@ -165,15 +180,24 @@ export abstract class CatalogCrudBase<T extends { id?: string }> implements OnIn
     this.confirmOpen = false;
     this._pendingDeleteId = null;
     if (id) {
-      this.remove(id).subscribe({ next: () => this.load() });
+      this.remove(id).subscribe({
+        next: () => this.load(),
+        error: e => { this._toastError(e, 'common.deleteFailed'); },
+      });
     }
   }
 
   cancelEdit(): void {
     this.showForm = false;
     this.editingId = null;
-    this.form.reset();
+    this.form.reset(this._formDefaults);
     this.uploadError = '';
+  }
+
+  /** Zoneless app: an rxjs error callback triggers no change detection on its own. */
+  private _toastError(err: unknown, fallbackKey: string): void {
+    this._baseToast.error(apiErrorMessage(err, this._baseTranslate.instant(fallbackKey)));
+    this._cdr.markForCheck();
   }
 
   /** Uploads the picked image and writes its URL into the given form control. */

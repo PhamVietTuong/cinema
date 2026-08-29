@@ -92,6 +92,8 @@
     "noResults": "No data",
     "error": "An error occurred",
     "confirmDelete": "Are you sure you want to delete this item?",
+    "saveFailed": "Could not save. Please try again.",
+    "deleteFailed": "Could not delete. Please try again.",
     "create": "Create",
     "update": "Update",
     "reset": "Reset",

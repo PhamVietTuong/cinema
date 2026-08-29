@@ -92,6 +92,8 @@
     "noResults": "Không có dữ liệu",
     "error": "Đã xảy ra lỗi",
     "confirmDelete": "Bạn có chắc muốn xóa mục này?",
+    "saveFailed": "Không thể lưu. Vui lòng thử lại.",
+    "deleteFailed": "Không thể xoá. Vui lòng thử lại.",
     "create": "Tạo Mới",
     "update": "Cập Nhật",
     "reset": "Đặt Lại",
