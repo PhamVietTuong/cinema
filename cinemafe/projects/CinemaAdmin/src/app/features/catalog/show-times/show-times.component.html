@@ -148,6 +148,11 @@
       <span>{{ 'showTimes.onSale' | translate }}</span>
     </label>
 
+    <div class="st-form-error" *ngIf="formError">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ formError }}</span>
+    </div>
+
     <div class="st-form-actions">
       <button class="ad-btn ad-btn--danger" type="button" *ngIf="editingId" (click)="deleteCurrent()"><mat-icon>delete</mat-icon> {{ 'common.delete' | translate }}</button>
       <span class="st-spacer"></span>

@@ -1,7 +1,8 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { SharedModule, CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues, apiErrorMessage } from 'CinemaLib';
 import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
 import { ModalComponent } from '../../../shared/modal.component';
 
@@ -37,6 +38,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _svc = inject(CinemaServiceAgent.HttpService);
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
+  private _translate = inject(TranslateService);
   private _destroy$ = new Subject<void>();
 
   confirmOpen = false;
@@ -65,6 +67,13 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   // ── Dialog / form ───────────────────────────────────────────────────────────
   showForm = false;
   editingId: string | null = null;
+
+  /**
+   * Why the API rejected the last save/delete. The error interceptor deliberately lets 400/404
+   * through untouched so the component can show them where the user can act on them — without
+   * this the request just failed silently and the dialog sat there looking idle.
+   */
+  formError: string | null = null;
 
   /** Today as yyyy-MM-dd — the earliest date a new showtime may be scheduled on. */
   get todayYmd(): string { return this._ymd(new Date()); }
@@ -260,7 +269,11 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
     const obs = this.editingId
       ? this._svc.updateShowTime(CinemaServiceAgent.UpdateShowTimeRequest.fromJS({ ...payload, id: this.editingId }))
       : this._svc.createShowTime(CinemaServiceAgent.CreateShowTimeRequest.fromJS(payload));
-    obs.pipe(takeUntil(this._destroy$)).subscribe(() => { this.cancel(); this.load(); });
+    this.formError = null;
+    obs.pipe(takeUntil(this._destroy$)).subscribe({
+      next: () => { this.cancel(); this.load(); },
+      error: e => { this._showError(e, 'showTimes.saveFailed'); },
+    });
   }
 
   deleteCurrent(): void {
@@ -272,13 +285,24 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
     const id = this.editingId;
     this.confirmOpen = false;
     if (id) {
-      this._svc.deleteShowTime(id).pipe(takeUntil(this._destroy$)).subscribe(() => { this.cancel(); this.load(); });
+      this.formError = null;
+      this._svc.deleteShowTime(id).pipe(takeUntil(this._destroy$)).subscribe({
+        next: () => { this.cancel(); this.load(); },
+        error: e => { this._showError(e, 'showTimes.deleteFailed'); },
+      });
     }
   }
 
   cancel(): void {
     this.showForm = false;
     this.editingId = null;
+    this.formError = null;
+  }
+
+  /** Zoneless app: nothing re-renders off an rxjs error callback without markForCheck. */
+  private _showError(err: unknown, fallbackKey: string): void {
+    this.formError = apiErrorMessage(err, this._translate.instant(fallbackKey));
+    this._cdr.markForCheck();
   }
 
   // ── Labels ────────────────────────────────────────────────────────────────────

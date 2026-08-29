@@ -664,6 +664,8 @@
     "theater": "Rạp",
     "selectTheater": "— Chọn rạp —",
     "dateInPast": "Không thể tạo suất chiếu cho ngày đã qua.",
+    "saveFailed": "Không thể lưu suất chiếu.",
+    "deleteFailed": "Không thể xoá suất chiếu.",
     "basePrice": "Giá Vé Cơ Bản (đ)",
     "onSale": "Mở bán",
     "saveShowTime": "Lưu Suất Chiếu",

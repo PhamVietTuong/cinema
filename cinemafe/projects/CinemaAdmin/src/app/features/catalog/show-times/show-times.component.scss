@@ -199,6 +199,21 @@
   input:checked + .st-toggle-track::after { transform: translateX(18px); }
 }
 
+.st-form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--bo-danger);
+  border-radius: var(--ad-r-sm);
+  background: color-mix(in srgb, var(--bo-danger) 12%, transparent);
+  color: var(--bo-danger);
+  font-size: 13px;
+  line-height: 1.45;
+
+  mat-icon { flex: none; width: 18px; height: 18px; font-size: 18px; }
+}
+
 .st-form-actions {
   display: flex;
   align-items: center;

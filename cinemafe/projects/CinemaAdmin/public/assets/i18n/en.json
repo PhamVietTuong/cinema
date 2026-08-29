@@ -664,6 +664,8 @@
     "theater": "Theater",
     "selectTheater": "— Select theater —",
     "dateInPast": "A showtime cannot be created for a past date.",
+    "saveFailed": "Could not save the showtime.",
+    "deleteFailed": "Could not delete the showtime.",
     "basePrice": "Base Ticket Price (₫)",
     "onSale": "On sale",
     "saveShowTime": "Save Showtime",
