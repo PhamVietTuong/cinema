@@ -46,8 +46,11 @@ await CreateAccount(services,
 Console.WriteLine();
 Console.WriteLine("Done.");
 
-Console.WriteLine("Press any key to exit...");
-Console.ReadKey();
+if (!Console.IsInputRedirected)
+{
+    Console.WriteLine("Press any key to exit...");
+    Console.ReadKey();
+}
 
 // ─── Create account helper ────────────────────────────────────────────────────
 static async Task CreateAccount(
