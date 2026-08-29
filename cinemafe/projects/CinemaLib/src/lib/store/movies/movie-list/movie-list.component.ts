@@ -1,2 +1,0 @@
-// This file was created by mistake and should be deleted.
-export {};
