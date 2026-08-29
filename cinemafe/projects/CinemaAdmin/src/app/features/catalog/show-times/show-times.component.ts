@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues } from 'CinemaLib';
 import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
 
 type Dto = CinemaServiceAgent.ShowTimeDTO;
@@ -51,16 +51,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   movies: CinemaServiceAgent.MovieDTO[] = [];
   rooms: CinemaServiceAgent.RoomDTO[] = [];
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
-  readonly projectionForms = [
-    { v: CinemaServiceAgent.ProjectionForm.TwoD, label: '2D' },
-    { v: CinemaServiceAgent.ProjectionForm.ThreeD, label: '3D' },
-    { v: CinemaServiceAgent.ProjectionForm.IMAX, label: 'IMAX' },
-  ];
-  readonly showTimeTypes = [
-    { v: CinemaServiceAgent.ShowTimeType.Normal, label: 'Thường', cls: 'st-block--normal' },
-    { v: CinemaServiceAgent.ShowTimeType.Premiere, label: 'Công Chiếu', cls: 'st-block--premiere' },
-    { v: CinemaServiceAgent.ShowTimeType.Special, label: 'Đặc Biệt', cls: 'st-block--special' },
-  ];
+  readonly projectionForms = ProjectionFormValues;
+  readonly showTimeTypes = ShowTimeTypeValues;
 
   // ── Week state ────────────────────────────────────────────────────────────────
   weekStart!: Date;               // Monday 00:00 of the visible week
@@ -157,7 +149,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       title: this.movieTitle(st.movieId),
       timeLabel: `${this._hm(start)} – ${this._hm(end)}`,
       formLabel: this.formLabel(st.projectionForm),
-      typeClass: this.showTimeTypes.find(t => t.v === st.showTimeType)?.cls ?? 'st-block--normal',
+      typeClass: this.showTimeTypes.find(t => t.value === st.showTimeType)?.cls ?? 'st-block--normal',
     };
   }
 
@@ -254,7 +246,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   // ── Labels ────────────────────────────────────────────────────────────────────
   movieTitle(id?: string): string { return this.movies.find(m => m.id === id)?.title ?? '—'; }
   moviePoster(id?: string): string | undefined { return this.movies.find(m => m.id === id)?.posterUrl; }
-  formLabel(v?: CinemaServiceAgent.ProjectionForm): string { return this.projectionForms.find(x => x.v === v)?.label ?? '—'; }
+  formLabel(v?: CinemaServiceAgent.ProjectionForm): string { return this.projectionForms.find(x => x.value === v)?.name ?? '—'; }
   theaterName(id?: string): string { return this.theaters.find(t => t.id === id)?.name ?? '—'; }
   roomLabel(r: CinemaServiceAgent.RoomDTO): string { return `${this.theaterName(r.theaterId)} · ${r.name}`; }
 

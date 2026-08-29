@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { EMPTY, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, CinemaServiceAgent, PaymentServiceAgent, ToastService } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, PaymentServiceAgent, ToastService, InvoiceStatusValues, invoiceStatusPillClass } from 'CinemaLib';
 import { CatalogCrudBase } from '../catalog-crud.base';
 import { ModalComponent } from '../../../shared/modal.component';
 import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
@@ -23,14 +23,8 @@ export class InvoicesManagementComponent extends CatalogCrudBase<Dto> {
 
   readonly InvoiceStatus = CinemaServiceAgent.InvoiceStatus;
 
-  // `label` holds an i18n key; the template pipes it through `translate`.
-  readonly statuses = [
-    { v: CinemaServiceAgent.InvoiceStatus.Pending, label: 'invoices.statusPending' },
-    { v: CinemaServiceAgent.InvoiceStatus.Paid, label: 'invoices.statusPaid' },
-    { v: CinemaServiceAgent.InvoiceStatus.Cancelled, label: 'invoices.statusCancelled' },
-    { v: CinemaServiceAgent.InvoiceStatus.Failed, label: 'invoices.statusFailed' },
-    { v: CinemaServiceAgent.InvoiceStatus.Refunded, label: 'invoices.statusRefunded' },
-  ];
+  // `name` holds an i18n key; the template pipes it through `translate`.
+  readonly statuses = InvoiceStatusValues;
 
   /** Refund-confirmation modal state. */
   refundConfirmOpen = false;
@@ -56,15 +50,10 @@ export class InvoicesManagementComponent extends CatalogCrudBase<Dto> {
   }
 
   statusLabel(s?: CinemaServiceAgent.InvoiceStatus): string {
-    return this.statuses.find(x => x.v === s)?.label ?? '—';
+    return this.statuses.find(x => x.value === s)?.name ?? '—';
   }
   statusClass(s?: CinemaServiceAgent.InvoiceStatus): string {
-    switch (s) {
-      case CinemaServiceAgent.InvoiceStatus.Paid: return 'ad-pill--success';
-      case CinemaServiceAgent.InvoiceStatus.Pending: return 'ad-pill--warn';
-      case CinemaServiceAgent.InvoiceStatus.Refunded: return 'ad-pill--neutral';
-      default: return 'ad-pill--danger';
-    }
+    return invoiceStatusPillClass(s);
   }
 
   // Refund is only valid for a Paid invoice; the server re-checks (check-in / showtime).

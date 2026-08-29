@@ -107,8 +107,8 @@
       <label class="ad-label">{{ 'showTimes.format' | translate }}</label>
       <div class="st-seg">
         <button *ngFor="let p of projectionForms" type="button"
-                class="st-seg-btn" [class.is-active]="form.value.projectionForm === p.v"
-                (click)="form.patchValue({ projectionForm: p.v })">{{ p.label }}</button>
+                class="st-seg-btn" [class.is-active]="form.value.projectionForm === p.value"
+                (click)="form.patchValue({ projectionForm: p.value })">{{ p.name }}</button>
       </div>
     </div>
 
@@ -116,8 +116,8 @@
       <label class="ad-label">{{ 'showTimes.showType' | translate }}</label>
       <div class="st-seg">
         <button *ngFor="let t of showTimeTypes" type="button"
-                class="st-seg-btn" [class.is-active]="form.value.showTimeType === t.v"
-                (click)="form.patchValue({ showTimeType: t.v })">{{ t.label }}</button>
+                class="st-seg-btn" [class.is-active]="form.value.showTimeType === t.value"
+                (click)="form.patchValue({ showTimeType: t.value })">{{ t.name }}</button>
       </div>
     </div>
 

@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { Validators } from '@angular/forms';
-import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, RoomStatusValues } from 'CinemaLib';
 import { CatalogCrudBase } from '../catalog/catalog-crud.base';
 import { ModalComponent } from '../../shared/modal.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal.component';
@@ -21,11 +21,7 @@ export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
 
   private _svc = inject(CinemaServiceAgent.HttpService);
 
-  readonly statuses = [
-    { v: CinemaServiceAgent.RoomStatus.Active, label: 'theaters.rooms.statusActive' },
-    { v: CinemaServiceAgent.RoomStatus.Maintenance, label: 'theaters.rooms.statusMaintenance' },
-    { v: CinemaServiceAgent.RoomStatus.Inactive, label: 'theaters.rooms.statusInactive' },
-  ];
+  readonly statuses = RoomStatusValues;
   roomTypes: CinemaServiceAgent.RoomTypeDTO[] = [];
 
   override ngOnInit(): void {
@@ -69,7 +65,7 @@ export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
   remove(id: string) { return this._svc.deleteRoom(id); }
 
   statusLabel(s?: CinemaServiceAgent.RoomStatus): string {
-    return this.statuses.find(x => x.v === s)?.label ?? '—';
+    return this.statuses.find(x => x.value === s)?.name ?? '—';
   }
 
   // ── Seat-map editor ───────────────────────────────────────────────────────────

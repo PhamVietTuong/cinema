@@ -30,7 +30,7 @@
       <div class="ad-field">
         <label class="ad-label">{{ 'common.status' | translate }}</label>
         <select class="ad-input" formControlName="status">
-          <option *ngFor="let s of statuses" [ngValue]="s.v">{{ s.label | translate }}</option>
+          <option *ngFor="let s of statuses" [ngValue]="s.value">{{ s.name | translate }}</option>
         </select>
       </div>
       <div class="form-actions full-span">
