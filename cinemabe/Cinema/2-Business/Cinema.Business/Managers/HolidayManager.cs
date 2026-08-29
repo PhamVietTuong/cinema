@@ -9,10 +9,14 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.Managers;
 
-public class HolidayManager(IApplicationUnitOfWork uow)
-    : IHolidayManager
+public class HolidayManager : IHolidayManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public HolidayManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {

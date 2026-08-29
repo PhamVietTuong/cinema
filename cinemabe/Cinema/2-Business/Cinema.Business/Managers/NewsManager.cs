@@ -9,10 +9,14 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.Managers;
 
-public class NewsManager(IApplicationUnitOfWork uow)
-    : INewsManager
+public class NewsManager : INewsManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public NewsManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {

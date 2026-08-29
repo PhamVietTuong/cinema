@@ -9,10 +9,14 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.Managers;
 
-public class RoomTypeManager(IApplicationUnitOfWork uow)
-    : IRoomTypeManager
+public class RoomTypeManager : IRoomTypeManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public RoomTypeManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {

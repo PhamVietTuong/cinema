@@ -9,10 +9,14 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.Managers;
 
-public class TicketPriceManager(IApplicationUnitOfWork uow)
-    : ITicketPriceManager
+public class TicketPriceManager : ITicketPriceManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public TicketPriceManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {

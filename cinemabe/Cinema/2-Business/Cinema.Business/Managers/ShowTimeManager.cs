@@ -7,10 +7,14 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.Managers;
 
-public class ShowTimeManager(IApplicationUnitOfWork uow)
-    : IShowTimeManager
+public class ShowTimeManager : IShowTimeManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public ShowTimeManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {

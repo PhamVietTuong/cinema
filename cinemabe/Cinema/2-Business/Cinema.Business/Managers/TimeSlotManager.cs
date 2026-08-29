@@ -9,10 +9,14 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.Managers;
 
-public class TimeSlotManager(IApplicationUnitOfWork uow)
-    : ITimeSlotManager
+public class TimeSlotManager : ITimeSlotManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public TimeSlotManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {

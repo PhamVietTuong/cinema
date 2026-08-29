@@ -8,12 +8,19 @@ using Cinema.Data.Enums;
 
 namespace Cinema.Business.Managers;
 
-public class MovieTypeDetailManager(IApplicationUnitOfWork uow) : IMovieTypeDetailManager
+public class MovieTypeDetailManager : IMovieTypeDetailManager
 {
+    private readonly IApplicationUnitOfWork _uow;
+
+    public MovieTypeDetailManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
+
     public async Task<DefaultSearchResults<MovieTypeDetailDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
-        var all = (await uow.MovieTypeDetailStore.GetAllAsync())
+        var all = (await _uow.MovieTypeDetailStore.GetAllAsync())
             .Select(x => new MovieTypeDetailDTO
             {
                 MovieId = x.MovieId,
@@ -38,11 +45,11 @@ public class MovieTypeDetailManager(IApplicationUnitOfWork uow) : IMovieTypeDeta
 
     public async Task<MovieTypeDetailDTO> CreateAsync(CreateMovieTypeDetailRequest request)
     {
-        if (await uow.MovieTypeDetailStore.ExistsAsync(request.MovieId, request.MovieTypeId))
+        if (await _uow.MovieTypeDetailStore.ExistsAsync(request.MovieId, request.MovieTypeId))
         {
             throw new InvalidOperationException("This movie / movie-type pairing already exists.");
         }
-        await uow.MovieTypeDetailStore.AddAsync(new MovieTypeDetail
+        await _uow.MovieTypeDetailStore.AddAsync(new MovieTypeDetail
         {
             MovieId = request.MovieId,
             MovieTypeId = request.MovieTypeId,
@@ -52,12 +59,19 @@ public class MovieTypeDetailManager(IApplicationUnitOfWork uow) : IMovieTypeDeta
 
     public Task DeleteAsync(Guid movieId, Guid movieTypeId)
     {
-        return uow.MovieTypeDetailStore.DeleteAsync(movieId, movieTypeId);
+        return _uow.MovieTypeDetailStore.DeleteAsync(movieId, movieTypeId);
     }
 }
 
-public class InvoiceAdminManager(IApplicationUnitOfWork uow) : IInvoiceAdminManager
+public class InvoiceAdminManager : IInvoiceAdminManager
 {
+    private readonly IApplicationUnitOfWork _uow;
+
+    public InvoiceAdminManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
+
     public async Task<DefaultSearchResults<InvoiceAdminDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
@@ -65,7 +79,7 @@ public class InvoiceAdminManager(IApplicationUnitOfWork uow) : IInvoiceAdminMana
         var page = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize > 0 ? search.PageSize : 20;
 
-        var (items, total) = await uow.InvoiceStore.GetPagedAsync(status, null, null, page, pageSize);
+        var (items, total) = await _uow.InvoiceStore.GetPagedAsync(status, null, null, page, pageSize);
         var dtos = items.Select(Map).ToList();
 
         return new DefaultSearchResults<InvoiceAdminDTO>
@@ -79,7 +93,7 @@ public class InvoiceAdminManager(IApplicationUnitOfWork uow) : IInvoiceAdminMana
 
     public async Task<InvoiceAdminDTO> UpdateStatusAsync(UpdateInvoiceStatusRequest request)
     {
-        var invoice = await uow.InvoiceStore.GetByIdAsync(request.Id);
+        var invoice = await _uow.InvoiceStore.GetByIdAsync(request.Id);
         if (invoice == null)
         {
             throw new KeyNotFoundException($"Invoice {request.Id} not found.");
@@ -89,13 +103,13 @@ public class InvoiceAdminManager(IApplicationUnitOfWork uow) : IInvoiceAdminMana
         {
             invoice.PaidAt = DateTime.UtcNow;
         }
-        await uow.InvoiceStore.UpdateAsync(invoice);
+        await _uow.InvoiceStore.UpdateAsync(invoice);
         return Map(invoice);
     }
 
     public Task DeleteAsync(Guid id)
     {
-        return uow.InvoiceStore.DeleteAsync(id);
+        return _uow.InvoiceStore.DeleteAsync(id);
     }
 
     private static InvoiceAdminDTO Map(Invoice i)

@@ -9,10 +9,14 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.Managers;
 
-public class FoodAndDrinkManager(IApplicationUnitOfWork uow)
-    : IFoodAndDrinkManager
+public class FoodAndDrinkManager : IFoodAndDrinkManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public FoodAndDrinkManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {

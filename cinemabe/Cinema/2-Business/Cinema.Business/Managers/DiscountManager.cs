@@ -7,10 +7,14 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.Managers;
 
-public class DiscountManager(IApplicationUnitOfWork uow)
-    : IDiscountManager
+public class DiscountManager : IDiscountManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public DiscountManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {

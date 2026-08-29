@@ -10,10 +10,14 @@ using Cinema.Data.Enums;
 
 namespace Cinema.Business.Managers;
 
-public class RoomManager(IApplicationUnitOfWork uow)
-    : IRoomManager
+public class RoomManager : IRoomManager
 {
-    protected readonly IApplicationUnitOfWork _uow = uow;
+    protected readonly IApplicationUnitOfWork _uow;
+
+    public RoomManager(IApplicationUnitOfWork uow)
+    {
+        _uow = uow;
+    }
 
     public async Task<bool> ExistsAsync(Guid id)
     {
