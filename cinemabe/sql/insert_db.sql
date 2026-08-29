@@ -108,18 +108,18 @@ INSERT INTO [Theater] ([Id], [Name], [Address], [City], [Phone], [Email], [IsAct
 (@Theater3, N'Cinema Vincom Royal City',N'72A Nguyen Trai Street, Thanh Xuan District',   N'Hanoi',            N'024-3795-9101', N'royalcity@cinema.vn',        1, 21.0016, 105.8126, GETUTCDATE());
 
 -- ── Room types (per theater) ──────────────────────────────────────────────────
--- Room classes stay at the baseline column set here: insert_db.sql runs before
--- `dotnet ef database update`, so SupportsThreeD / ThreeDSurcharge do not exist yet.
--- The RoomTypeThreeDSupport migration adds those columns and fills them in for these classes.
-INSERT INTO [RoomType] ([Id], [TheaterId], [Name], [Description], [CreationTime])
-SELECT NEWID(), t.Id, rt.Name, rt.Description, GETUTCDATE()
+-- SupportsThreeD is the class's projection capability; ThreeDSurcharge is the flat per-ticket
+-- amount a 3D screening adds on top of that class's base price (a 3D showtime in the IMAX hall
+-- pays the IMAX base plus this). A class without a 3D projector cannot host a 3D showtime.
+INSERT INTO [RoomType] ([Id], [TheaterId], [Name], [Description], [SupportsThreeD], [ThreeDSurcharge], [CreationTime])
+SELECT NEWID(), t.Id, rt.Name, rt.Description, rt.SupportsThreeD, rt.ThreeDSurcharge, GETUTCDATE()
 FROM [Theater] t
 CROSS JOIN (VALUES
-    (N'2D',   N'Standard 2D projection'),
-    (N'3D',   N'3D projection with glasses'),
-    (N'IMAX', N'IMAX large-format screen, Dolby Atmos'),
-    (N'4DX',  N'Motion seats + environmental effects')
-) AS rt(Name, Description);
+    (N'2D',   N'Standard 2D projection',                0,     0),
+    (N'3D',   N'3D projection with glasses',            1, 30000),
+    (N'IMAX', N'IMAX large-format screen, Dolby Atmos', 1, 40000),
+    (N'4DX',  N'Motion seats + environmental effects',  1, 40000)
+) AS rt(Name, Description, SupportsThreeD, ThreeDSurcharge);
 
 -- ── Seat types (3 per theater) ────────────────────────────────────────────────
 INSERT INTO [SeatType] ([Id], [TheaterId], [Name], [Description], [Color], [PriceMultiplier], [CreationTime])

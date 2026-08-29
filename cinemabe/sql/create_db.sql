@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- create_db.sql  --  Fresh database creation
 -- Run this on a new SQL Server instance to set up Cinema DB
 -- ============================================================
@@ -109,6 +109,11 @@ CREATE TABLE [RoomType] (
     [TheaterId] uniqueidentifier NOT NULL,
     [Name] nvarchar(100) NOT NULL,
     [Description] nvarchar(max) NULL,
+    -- Projection capability of the class, and the flat per-ticket amount a 3D screening adds on
+    -- top of its base price. Not derivable from [Name]: a premium class such as N'Lagom' is an
+    -- interior brand that may or may not have a 3D projector.
+    [SupportsThreeD] bit NOT NULL DEFAULT 0,
+    [ThreeDSurcharge] float NOT NULL DEFAULT 0,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_RoomType] PRIMARY KEY ([Id]),
