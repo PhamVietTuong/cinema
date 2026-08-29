@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0",
+  "last_updated": "2026-06-20",
+  "description": "Path -> module mapping + P0/P1/P2 diff rules for the cinema PreToolUse anti-regression hook. Edited as new invariants are documented. Companion to business-flows.json (cross-module keyword detection).",
+  "modules": {
+    "booking": {
+      "label": "Booking & seat locking",
+      "lead": "cinema dev",
+      "paths": [
+        "/managers/bookingmanager",
+        "/managers/invoicemanager",
+        "paymentcontroller",
+        "bookinghub",
+        "/booking/",
+        "/features/booking/",
+        "seat-selection",
+        "booking-confirmation"
+      ],
+      "entities": [
+        "Invoice.cs",
+        "InvoiceTicket.cs",
+        "Seat.cs",
+        "BookingResultDto",
+        "CreateBookingRequest",
+        "SeatDto"
+      ],
+      "flow_id": "booking-seat-lock",
+      "top_p0": [
+        "Seat-lock store is a process-local static ConcurrentDictionary keyed {showTimeId}:{roomId}:{seatId}. Do not make it instance-scoped.",
+        "Locks auto-expire after 5 minutes (IsSeatLocked / TimeSpan.FromMinutes(5)). Don't drop the expiry.",
+        "UnlockSeat is owner-scoped (compares ConnectionId). Don't let any connection release another's seat.",
+        "CreateBookingAsync creates Invoice with Status=InvoiceStatus.Pending inside a transaction. Never create as Paid; never drop the transaction.",
+        "CancelBookingAsync guards: only from Pending (status != Pending -> return false) and only the owning userId.",
+        "Status logic uses InvoiceStatus / SeatStatus enums, never magic integers."
+      ],
+      "coupled_to": ["auth", "catalog"]
+    },
+    "auth": {
+      "label": "Authentication & authorization",
+      "lead": "cinema dev",
+      "paths": [
+        "/managers/authmanager",
+        "identitycontroller",
+        "jwttokenservice",
+        "/features/auth/",
+        "/store/auth/",
+        "auth.effects",
+        "authinterceptor",
+        "auth.guard"
+      ],
+      "entities": ["User.cs", "AuthResponse", "LoginRequest", "RegisterRequest"],
+      "flow_id": "auth-login",
+      "top_p0": [
+        "Bad credentials must throw Unauthorized (never return a token).",
+        "RegisterAsync refuses a duplicate email.",
+        "The JWT carries the Role claim that drives [Authorize(Roles = _adminRole)].",
+        "Admin endpoints stay gated by the Admin role.",
+        "FE stores the JWT under the localStorage key 'cinema_token'."
+      ],
+      "coupled_to": ["booking", "catalog"]
+    },
+    "catalog": {
+      "label": "Movie & catalog admin (CRUD)",
+      "lead": "cinema dev",
+      "paths": [
+        "/managers/moviemanager",
+        "/managers/theatermanager",
+        "/managers/catalog/",
+        "cinemacontroller",
+        "/features/movies/",
+        "/features/catalog/",
+        "admin.guard"
+      ],
+      "entities": ["Movie.cs", "Theater.cs", "Room.cs", "ShowTime.cs"],
+      "flow_id": "movie-admin",
+      "top_p0": [
+        "Write endpoints (Create/Update/Delete movie + catalog) stay Admin-only via [Authorize(Roles = _adminRole)].",
+        "DeleteAsync is a SOFT delete (IsActive = false), never a hard row delete.",
+        "List endpoints honor PagingSearchDTO + DefaultSearchResults<T>.",
+        "Admin FE routes are behind adminGuard."
+      ],
+      "coupled_to": ["auth"]
+    }
+  },
+  "diff_rules": [
+    {
+      "id": "DIFF-STATUS-01",
+      "label": "Status compared/assigned as a magic integer instead of the enum",
+      "pattern": "(\\(\\s*(InvoiceStatus|SeatStatus|UserStatus|RoomStatus)\\s*\\)\\s*[0-9]+)|((InvoiceStatus|SeatStatus|UserStatus|RoomStatus)\\s*[:=]=?\\s*['\"]?[0-9]+['\"]?)|(\\(int\\)\\s*\\w*\\.?(Status)\\s*==?\\s*[0-9]+)",
+      "violates": "booking: enum-only status",
+      "severity": "P0",
+      "message": "Status value hardcoded as a number. Use the named enum member (InvoiceStatus.Pending/Paid/Cancelled/Failed, SeatStatus.Available/Reserved/Occupied) — a renumbered enum would silently corrupt status logic."
+    },
+    {
+      "id": "DIFF-DELETE-01",
+      "label": "Physical delete on a soft-delete entity (Movie / Invoice)",
+      "pattern": "(?i)(\\.Movies?\\.Remove|\\.Invoices?\\.Remove|MovieStore\\.Delete|InvoiceStore\\.Delete)",
+      "violates": "catalog: soft delete (IsActive=false)",
+      "severity": "P1",
+      "message": "Physical removal detected on Movie/Invoice. These use soft delete (IsActive = false) to preserve history and FKs. Confirm this is intentional before writing."
+    },
+    {
+      "id": "DIFF-AUTH-01",
+      "label": "[AllowAnonymous] introduced on an endpoint",
+      "pattern": "AllowAnonymous",
+      "violates": "auth: role gating",
+      "severity": "P1",
+      "message": "[AllowAnonymous] added — confirm this endpoint is genuinely meant to be public. Admin/user endpoints must stay behind [Authorize] / [Authorize(Roles = _adminRole)]."
+    }
+  ]
+}
