@@ -1095,8 +1095,8 @@ export enum UserStatus {
 }
 
 export class LoginRequest implements ILoginRequest {
-    emailOrPhone?: string;
-    password?: string;
+    emailOrPhone!: string;
+    password!: string;
 
     constructor(data?: ILoginRequest) {
         if (data) {
@@ -1130,16 +1130,16 @@ export class LoginRequest implements ILoginRequest {
 }
 
 export interface ILoginRequest {
-    emailOrPhone?: string;
-    password?: string;
+    emailOrPhone: string;
+    password: string;
 }
 
 export class RegisterRequest implements IRegisterRequest {
-    name?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-    confirmPassword?: string;
+    name!: string;
+    email!: string;
+    phone!: string;
+    password!: string;
+    confirmPassword!: string;
 
     constructor(data?: IRegisterRequest) {
         if (data) {
@@ -1179,15 +1179,15 @@ export class RegisterRequest implements IRegisterRequest {
 }
 
 export interface IRegisterRequest {
-    name?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-    confirmPassword?: string;
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    confirmPassword: string;
 }
 
 export class ForgotPasswordRequest implements IForgotPasswordRequest {
-    email?: string;
+    email!: string;
 
     constructor(data?: IForgotPasswordRequest) {
         if (data) {
@@ -1219,13 +1219,13 @@ export class ForgotPasswordRequest implements IForgotPasswordRequest {
 }
 
 export interface IForgotPasswordRequest {
-    email?: string;
+    email: string;
 }
 
 export class ResetPasswordRequest implements IResetPasswordRequest {
-    email?: string;
-    token?: string;
-    newPassword?: string;
+    email!: string;
+    token!: string;
+    newPassword!: string;
 
     constructor(data?: IResetPasswordRequest) {
         if (data) {
@@ -1261,14 +1261,14 @@ export class ResetPasswordRequest implements IResetPasswordRequest {
 }
 
 export interface IResetPasswordRequest {
-    email?: string;
-    token?: string;
-    newPassword?: string;
+    email: string;
+    token: string;
+    newPassword: string;
 }
 
 export class ConfirmEmailRequest implements IConfirmEmailRequest {
-    email?: string;
-    token?: string;
+    email!: string;
+    token!: string;
 
     constructor(data?: IConfirmEmailRequest) {
         if (data) {
@@ -1302,12 +1302,12 @@ export class ConfirmEmailRequest implements IConfirmEmailRequest {
 }
 
 export interface IConfirmEmailRequest {
-    email?: string;
-    token?: string;
+    email: string;
+    token: string;
 }
 
 export class ResendVerificationRequest implements IResendVerificationRequest {
-    email?: string;
+    email!: string;
 
     constructor(data?: IResendVerificationRequest) {
         if (data) {
@@ -1339,11 +1339,11 @@ export class ResendVerificationRequest implements IResendVerificationRequest {
 }
 
 export interface IResendVerificationRequest {
-    email?: string;
+    email: string;
 }
 
 export class GoogleLoginRequest implements IGoogleLoginRequest {
-    idToken?: string;
+    idToken!: string;
 
     constructor(data?: IGoogleLoginRequest) {
         if (data) {
@@ -1375,11 +1375,11 @@ export class GoogleLoginRequest implements IGoogleLoginRequest {
 }
 
 export interface IGoogleLoginRequest {
-    idToken?: string;
+    idToken: string;
 }
 
 export class FacebookLoginRequest implements IFacebookLoginRequest {
-    accessToken?: string;
+    accessToken!: string;
 
     constructor(data?: IFacebookLoginRequest) {
         if (data) {
@@ -1411,12 +1411,12 @@ export class FacebookLoginRequest implements IFacebookLoginRequest {
 }
 
 export interface IFacebookLoginRequest {
-    accessToken?: string;
+    accessToken: string;
 }
 
 export class VerifyTwoFactorRequest implements IVerifyTwoFactorRequest {
-    emailOrPhone?: string;
-    code?: string;
+    emailOrPhone!: string;
+    code!: string;
 
     constructor(data?: IVerifyTwoFactorRequest) {
         if (data) {
@@ -1450,13 +1450,13 @@ export class VerifyTwoFactorRequest implements IVerifyTwoFactorRequest {
 }
 
 export interface IVerifyTwoFactorRequest {
-    emailOrPhone?: string;
-    code?: string;
+    emailOrPhone: string;
+    code: string;
 }
 
 export class UpdateProfileRequest implements IUpdateProfileRequest {
-    name?: string;
-    phone?: string;
+    name!: string;
+    phone!: string;
     avatar?: string | undefined;
 
     constructor(data?: IUpdateProfileRequest) {
@@ -1493,8 +1493,8 @@ export class UpdateProfileRequest implements IUpdateProfileRequest {
 }
 
 export interface IUpdateProfileRequest {
-    name?: string;
-    phone?: string;
+    name: string;
+    phone: string;
     avatar?: string | undefined;
 }
 
@@ -1543,9 +1543,9 @@ export interface IUpdateNotificationPreferencesRequest {
 }
 
 export class ChangePasswordRequest implements IChangePasswordRequest {
-    currentPassword?: string;
-    newPassword?: string;
-    confirmNewPassword?: string;
+    currentPassword!: string;
+    newPassword!: string;
+    confirmNewPassword!: string;
 
     constructor(data?: IChangePasswordRequest) {
         if (data) {
@@ -1581,9 +1581,9 @@ export class ChangePasswordRequest implements IChangePasswordRequest {
 }
 
 export interface IChangePasswordRequest {
-    currentPassword?: string;
-    newPassword?: string;
-    confirmNewPassword?: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
 }
 
 export class SetTwoFactorRequest implements ISetTwoFactorRequest {
@@ -1804,11 +1804,11 @@ export interface ISortDTO {
 }
 
 export class CreateUserRequest implements ICreateUserRequest {
-    name?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-    userTypeId?: string;
+    name!: string;
+    email!: string;
+    phone!: string;
+    password!: string;
+    userTypeId!: string;
     theaterId?: string | undefined;
     status?: UserStatus;
 
@@ -1854,21 +1854,21 @@ export class CreateUserRequest implements ICreateUserRequest {
 }
 
 export interface ICreateUserRequest {
-    name?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-    userTypeId?: string;
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    userTypeId: string;
     theaterId?: string | undefined;
     status?: UserStatus;
 }
 
 export class UpdateUserRequest implements IUpdateUserRequest {
-    id?: string;
-    name?: string;
-    phone?: string;
+    id!: string;
+    name!: string;
+    phone!: string;
     avatar?: string | undefined;
-    userTypeId?: string;
+    userTypeId!: string;
     theaterId?: string | undefined;
     status?: UserStatus;
 
@@ -1914,11 +1914,11 @@ export class UpdateUserRequest implements IUpdateUserRequest {
 }
 
 export interface IUpdateUserRequest {
-    id?: string;
-    name?: string;
-    phone?: string;
+    id: string;
+    name: string;
+    phone: string;
     avatar?: string | undefined;
-    userTypeId?: string;
+    userTypeId: string;
     theaterId?: string | undefined;
     status?: UserStatus;
 }

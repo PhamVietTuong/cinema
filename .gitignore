@@ -17,3 +17,6 @@ cinemabe/Cinema/cinemabe/
 # Environment-specific secrets — connection strings, etc. (never commit)
 **/appsettings.Development.json
 **/appsettings.Production.json
+.claude/**
+QA-tests/
+CLAUDE.md
