@@ -5,7 +5,6 @@
   --st-premiere: var(--ad-secondary);
   --st-special:  #2dd4bf;
   --st-axis-w:   64px;
-  --st-drawer-w: 380px;
 }
 
 .st-page { max-width: 1500px; }
@@ -126,47 +125,12 @@
 .st-block.st-block--premiere { border-left-color: var(--st-premiere); }
 .st-block.st-block--special  { border-left-color: var(--st-special); }
 
-// ── Drawer ──────────────────────────────────────────────────────────────────
-.st-drawer-scrim {
-  position: fixed;
-  inset: 0;
-  background: rgba(21, 23, 29, 0.4);
-  backdrop-filter: blur(2px);
-  z-index: 40;
-}
-.st-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: var(--st-drawer-w);
-  max-width: 92vw;
-  display: flex;
-  flex-direction: column;
-  background: var(--ad-surface-1);
-  border-left: 1px solid var(--ad-glass-border-strong);
-  box-shadow: -24px 0 60px -20px rgba(0, 0, 0, 0.7);
-  transform: translateX(100%);
-  transition: transform 0.24s ease;
-  z-index: 41;
-
-  &.is-open { transform: translateX(0); }
-}
-.st-drawer-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 22px;
-  border-bottom: 1px solid var(--ad-glass-border);
-
-  .ad-card-title { margin: 0; }
-}
-.st-drawer-body {
+// ── Dialog form ─────────────────────────────────────────────────────────────
+// The shell (scrim, card, header) comes from app-modal; only the form body is local.
+.st-form-body {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 22px;
-  overflow-y: auto;
 }
 .st-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
@@ -235,7 +199,7 @@
   input:checked + .st-toggle-track::after { transform: translateX(18px); }
 }
 
-.st-drawer-actions {
+.st-form-actions {
   display: flex;
   align-items: center;
   gap: 12px;
