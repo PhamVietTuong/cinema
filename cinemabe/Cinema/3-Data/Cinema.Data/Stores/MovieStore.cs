@@ -43,6 +43,7 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .Include(m => m.AgeRestriction)
             .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
             .Include(m => m.ShowTimes).ThenInclude(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.Theater)
+            .Include(m => m.ShowTimes).ThenInclude(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.RoomType)
             .Include(m => m.Evaluations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id);

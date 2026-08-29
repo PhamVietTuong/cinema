@@ -7,7 +7,10 @@ import { ConfirmModalComponent } from '../../shared/confirm-modal.component';
 
 type Dto = CinemaServiceAgent.RoomTypeDTO;
 
-/** Screening-room-type management scoped to a single theater (2D/3D/IMAX/4DX…). */
+/**
+ * Room-class management scoped to a single theater (Standard/IMAX/4DX/Lagom…). A class carries the
+ * base-price tier plus whether its rooms can screen 3D and what a 3D screening adds per ticket.
+ */
 @Component({
   selector: 'app-theater-room-types',
   standalone: true,

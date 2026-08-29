@@ -9,12 +9,21 @@ export enum UserRole {
 // NOTE: display-label lookups for NSwag-generated enums (like ProjectionForm below)
 // belong in this file, not in individual feature components — keep them reusable.
 
-/** Display label for each ShowTime.ProjectionForm value. */
+/**
+ * Display label for each ShowTime.ProjectionForm value. This axis is the image dimension only.
+ * A room's class (IMAX, 4DX, Lagom…) is a separate axis carried by RoomType — the same IMAX hall
+ * screens both IMAX 2D and IMAX 3D — so the two are composed for display by screeningFormatLabel.
+ */
 export const ProjectionFormValues: { value: CinemaServiceAgent.ProjectionForm; name: string }[] = [
   { value: CinemaServiceAgent.ProjectionForm.TwoD, name: '2D' },
   { value: CinemaServiceAgent.ProjectionForm.ThreeD, name: '3D' },
-  { value: CinemaServiceAgent.ProjectionForm.IMAX, name: 'IMAX' },
 ];
+
+/** The label a customer sees for a screening: room class then dimension, e.g. "IMAX 2D". */
+export function screeningFormatLabel(roomTypeName?: string, form?: CinemaServiceAgent.ProjectionForm): string {
+  const dimension = ProjectionFormValues.find(x => x.value === form)?.name ?? '2D';
+  return roomTypeName ? `${roomTypeName} ${dimension}` : dimension;
+}
 
 /** Display label + timetable CSS class for each ShowTime.ShowTimeType value. */
 export const ShowTimeTypeValues: { value: CinemaServiceAgent.ShowTimeType; name: string; cls: string }[] = [

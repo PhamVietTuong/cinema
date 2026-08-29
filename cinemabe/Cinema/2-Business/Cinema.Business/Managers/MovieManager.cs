@@ -72,9 +72,10 @@ public class MovieManager : IMovieManager
             ShowTimeType   = s.ShowTimeType,
             Rooms = s.ShowTimeRooms.Select(sr => new ShowTimeRoomDTO
             {
-                RoomId      = sr.RoomId,
-                RoomName    = sr.Room?.Name,
-                TheaterName = sr.Room?.Theater?.Name,
+                RoomId       = sr.RoomId,
+                RoomName     = sr.Room?.Name,
+                RoomTypeName = sr.Room?.RoomType?.Name,
+                TheaterName  = sr.Room?.Theater?.Name,
                 BasePrice   = sr.BasePrice
             }).ToList()
         }).ToList();
@@ -123,6 +124,7 @@ public class MovieManager : IMovieManager
                     ProjectionForm = s.ProjectionForm,
                     RoomId         = sr?.RoomId ?? Guid.Empty,
                     RoomName       = sr?.Room?.Name ?? string.Empty,
+                    RoomTypeName   = sr?.Room?.RoomType?.Name ?? string.Empty,
                     TheaterName    = sr?.Room?.Theater?.Name ?? string.Empty,
                     AvailableSeats = Math.Max(0, capacity - booked),
                 });

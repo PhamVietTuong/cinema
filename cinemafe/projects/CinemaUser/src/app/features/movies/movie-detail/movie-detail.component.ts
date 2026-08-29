@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel } from 'CinemaLib';
 
 @Component({
   selector: 'app-movie-detail',
@@ -61,22 +61,22 @@ export class MovieDetailComponent implements OnInit {
     document.getElementById('showtimes')?.scrollIntoView({ behavior: 'smooth' });
   }
 
-  formatLabel(f?: number): string {
-    return f === 3 ? 'IMAX' : f === 2 ? '3D' : '2D';
-  }
-
-  /** Groups a movie's showtimes by projection format for the "Lịch Chiếu" section. */
+  /**
+   * Groups a movie's showtimes for the "Lich Chieu" section by the label a customer books against:
+   * the room class plus the dimension ("IMAX 2D", "IMAX 3D", "2D"). Those are two independent axes,
+   * so one hall can appear under more than one group across the day.
+   */
   groupByFormat(showTimes: any[] | undefined): { label: string; items: any[] }[] {
-    const map = new Map<number, any[]>();
+    const map = new Map<string, any[]>();
     for (const st of showTimes ?? []) {
-      const f = st.projectionForm ?? 1;
-      if (!map.has(f)) { map.set(f, []); }
-      map.get(f)!.push(st);
+      const label = screeningFormatLabel(st.roomTypeName, st.projectionForm);
+      if (!map.has(label)) { map.set(label, []); }
+      map.get(label)!.push(st);
     }
     return [...map.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([f, items]) => ({
-        label: this.formatLabel(f),
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([label, items]) => ({
+        label,
         items: items.sort((x, y) => new Date(x.startTime).getTime() - new Date(y.startTime).getTime()),
       }));
   }

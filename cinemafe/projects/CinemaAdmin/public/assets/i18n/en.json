@@ -321,6 +321,8 @@
       "namePlaceholder": "e.g. IMAX",
       "descLabel": "Equipment / Description",
       "descPlaceholder": "Laser screen, Dolby Atmos...",
+      "supportsThreeD": "3D capable",
+      "threeDSurcharge": "3D surcharge (per ticket)",
       "empty": "This theater has no room types yet."
     },
     "seatTypes": {

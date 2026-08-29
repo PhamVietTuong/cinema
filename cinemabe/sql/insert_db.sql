@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- insert_db.sql  --  Seed data (Guid primary keys)
 -- Run after create_db.sql to populate with initial/demo data
 -- ============================================================
@@ -108,6 +108,9 @@ INSERT INTO [Theater] ([Id], [Name], [Address], [City], [Phone], [Email], [IsAct
 (@Theater3, N'Cinema Vincom Royal City',N'72A Nguyen Trai Street, Thanh Xuan District',   N'Hanoi',            N'024-3795-9101', N'royalcity@cinema.vn',        1, 21.0016, 105.8126, GETUTCDATE());
 
 -- ── Room types (per theater) ──────────────────────────────────────────────────
+-- Room classes stay at the baseline column set here: insert_db.sql runs before
+-- `dotnet ef database update`, so SupportsThreeD / ThreeDSurcharge do not exist yet.
+-- The RoomTypeThreeDSupport migration adds those columns and fills them in for these classes.
 INSERT INTO [RoomType] ([Id], [TheaterId], [Name], [Description], [CreationTime])
 SELECT NEWID(), t.Id, rt.Name, rt.Description, GETUTCDATE()
 FROM [Theater] t
@@ -455,7 +458,7 @@ INSERT INTO [ShowTime] ([Id],[MovieId],[StartTime],[EndTime],[ProjectionForm],[S
 (@ST_DK1,  @MDarkKnight,   DATEADD(hour,14,@Today),                DATEADD(minute,212,DATEADD(hour,14,@Today)),                1,0,1,GETUTCDATE()),
 (@ST_DK2,  @MDarkKnight,   DATEADD(hour,19,DATEADD(day,1,@Today)), DATEADD(minute,212,DATEADD(hour,19,DATEADD(day,1,@Today))), 1,0,1,GETUTCDATE()),
 -- Interstellar (169 min) – IMAX
-(@ST_IS1,  @MInterstellar, DATEADD(hour,9,@Today),                 DATEADD(minute,229,DATEADD(hour,9,@Today)),                 3,1,1,GETUTCDATE()),
+(@ST_IS1,  @MInterstellar, DATEADD(hour,9,@Today),                 DATEADD(minute,229,DATEADD(hour,9,@Today)),                 1,1,1,GETUTCDATE()),
 (@ST_IS2,  @MInterstellar, DATEADD(hour,19,DATEADD(day,2,@Today)), DATEADD(minute,229,DATEADD(hour,19,DATEADD(day,2,@Today))), 1,0,1,GETUTCDATE()),
 -- Avengers Endgame (181 min)
 (@ST_Avg1, @MEndgame,      DATEADD(minute,1290,@Today),            DATEADD(minute,181,DATEADD(minute,1290,@Today)),            1,0,1,GETUTCDATE()),
@@ -467,7 +470,7 @@ INSERT INTO [ShowTime] ([Id],[MovieId],[StartTime],[EndTime],[ProjectionForm],[S
 (@ST_LK1,  @MLionKing,     DATEADD(hour,9,@Today),                 DATEADD(minute,178,DATEADD(hour,9,@Today)),                 1,0,1,GETUTCDATE()),
 (@ST_LK2,  @MLionKing,     DATEADD(hour,14,DATEADD(day,1,@Today)), DATEADD(minute,178,DATEADD(hour,14,DATEADD(day,1,@Today))), 1,0,1,GETUTCDATE()),
 -- Top Gun: Maverick (130 min) – IMAX
-(@ST_TG1,  @MTopGun,       DATEADD(hour,14,@Today),                DATEADD(minute,190,DATEADD(hour,14,@Today)),                3,0,1,GETUTCDATE()),
+(@ST_TG1,  @MTopGun,       DATEADD(hour,14,@Today),                DATEADD(minute,190,DATEADD(hour,14,@Today)),                1,0,1,GETUTCDATE()),
 (@ST_TG2,  @MTopGun,       DATEADD(hour,19,DATEADD(day,2,@Today)), DATEADD(minute,190,DATEADD(hour,19,DATEADD(day,2,@Today))), 2,0,1,GETUTCDATE()),
 -- Oppenheimer (180 min)
 (@ST_Opp1, @MOppenheimer,  DATEADD(hour,19,@Today),                DATEADD(minute,240,DATEADD(hour,19,@Today)),                1,1,1,GETUTCDATE()),

@@ -32,6 +32,7 @@ public class RoomTypeConfiguration : IEntityTypeConfiguration<RoomType>
     {
         b.HasKey(rt => rt.Id);
         b.Property(rt => rt.Name).IsRequired().HasMaxLength(100);
+        b.Property(rt => rt.ThreeDSurcharge).HasColumnType("float");
         b.HasOne(rt => rt.Theater).WithMany().HasForeignKey(rt => rt.TheaterId).OnDelete(DeleteBehavior.Cascade);
     }
 }

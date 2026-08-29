@@ -439,15 +439,21 @@ public class BookingManager : IBookingManager
     // isHoliday) when a matching row exists; otherwise it falls back to BasePrice × SeatType multiplier,
     // scaled by the holiday multiplier on holidays. The context is resolved once per showtime and reused
     // for every seat. All store lookups are null-guarded so the fallback holds when nothing is configured.
-    private sealed record SeatPricingContext(double BasePrice, IReadOnlyDictionary<Guid, double> MatrixBySeatType, double HolidayFactor);
+    // A 3D screening adds a flat per-ticket surcharge on top of whichever branch produced the price —
+    // the room class sets the base, the dimension is charged separately (an IMAX 3D ticket pays both).
+    private sealed record SeatPricingContext(
+        double BasePrice,
+        IReadOnlyDictionary<Guid, double> MatrixBySeatType,
+        double HolidayFactor,
+        double ThreeDSurcharge);
 
     private static double PriceSeat(SeatPricingContext ctx, Guid seatTypeId, double seatMultiplier)
     {
         if (ctx.MatrixBySeatType.TryGetValue(seatTypeId, out var explicitPrice))
         {
-            return explicitPrice;
+            return explicitPrice + ctx.ThreeDSurcharge;
         }
-        return ctx.BasePrice * seatMultiplier * ctx.HolidayFactor;
+        return (ctx.BasePrice * seatMultiplier * ctx.HolidayFactor) + ctx.ThreeDSurcharge;
     }
 
     private async Task<SeatPricingContext> BuildSeatPricingContextAsync(ShowTimeRoom? showTimeRoom)
@@ -456,14 +462,22 @@ public class BookingManager : IBookingManager
         var empty = new Dictionary<Guid, double>();
         if (showTimeRoom is null)
         {
-            return new SeatPricingContext(basePrice, empty, 1.0);
+            return new SeatPricingContext(basePrice, empty, 1.0, 0);
         }
 
         var room     = await _uow.RoomStore.GetByIdAsync(showTimeRoom.RoomId);
         var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeRoom.ShowTimeId);
         if (room is null || showTime is null)
         {
-            return new SeatPricingContext(basePrice, empty, 1.0);
+            return new SeatPricingContext(basePrice, empty, 1.0, 0);
+        }
+
+        // Only a 3D screening pays the surcharge, so only a 3D screening costs the extra lookup.
+        var threeDSurcharge = 0.0;
+        if (showTime.ProjectionForm == ProjectionForm.ThreeD)
+        {
+            var roomType = await _uow.RoomTypeStore.GetByIdAsync(room.RoomTypeId);
+            threeDSurcharge = roomType?.ThreeDSurcharge ?? 0;
         }
 
         var date      = DateOnly.FromDateTime(showTime.StartTime);
@@ -494,7 +508,7 @@ public class BookingManager : IBookingManager
             }
         }
 
-        return new SeatPricingContext(basePrice, matrix, holidayFactor);
+        return new SeatPricingContext(basePrice, matrix, holidayFactor, threeDSurcharge);
     }
 
     private static bool TimeInSlot(TimeOnly t, TimeSlot slot)

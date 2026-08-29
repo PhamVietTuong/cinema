@@ -15,6 +15,7 @@ public class ShowTimeDTO
     public bool IsActive { get; set; }
     public Guid? RoomId { get; set; }
     public string? RoomName { get; set; }
+    public string? RoomTypeName { get; set; }
     public int BasePrice { get; set; }
 }
 

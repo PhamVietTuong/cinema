@@ -8730,6 +8730,9 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("roomName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string RoomName { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("roomTypeName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string RoomTypeName { get; set; }
+
         [Newtonsoft.Json.JsonProperty("roomId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid RoomId { get; set; }
 
@@ -8745,8 +8748,6 @@ namespace Cinema.Service.Clients.Cinema
         TwoD = 1,
 
         ThreeD = 2,
-
-        IMAX = 3,
 
     }
 
@@ -9178,6 +9179,9 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("roomName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string RoomName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("roomTypeName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string RoomTypeName { get; set; }
 
         [Newtonsoft.Json.JsonProperty("theaterName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string TheaterName { get; set; }
@@ -10370,6 +10374,12 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Description { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("supportsThreeD", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool SupportsThreeD { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("threeDSurcharge", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public double ThreeDSurcharge { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -10383,6 +10393,12 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Description { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("supportsThreeD", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool SupportsThreeD { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("threeDSurcharge", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public double ThreeDSurcharge { get; set; }
 
     }
 
@@ -10400,6 +10416,12 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Description { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("supportsThreeD", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool SupportsThreeD { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("threeDSurcharge", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public double ThreeDSurcharge { get; set; }
 
     }
 
@@ -10455,6 +10477,9 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("roomName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string RoomName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("roomTypeName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string RoomTypeName { get; set; }
 
         [Newtonsoft.Json.JsonProperty("basePrice", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int BasePrice { get; set; }

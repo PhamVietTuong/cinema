@@ -321,6 +321,8 @@
       "namePlaceholder": "VD: IMAX",
       "descLabel": "Thiết Bị / Mô Tả",
       "descPlaceholder": "Màn hình laser, Dolby Atmos...",
+      "supportsThreeD": "Chiếu được 3D",
+      "threeDSurcharge": "Phụ thu 3D (đ/vé)",
       "empty": "Rạp này chưa có loại phòng nào."
     },
     "seatTypes": {
