@@ -34,7 +34,7 @@ describe('App', () => {
 
   it('exposes the auth observables', () => {
     const app = TestBed.createComponent(App).componentInstance;
-    expect(app.isAuth$).toBeDefined();
+    expect(app.isAdmin$).toBeDefined();
     expect(app.user$).toBeDefined();
   });
 
