@@ -702,123 +702,211 @@
       "LoginRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "emailOrPhone",
+          "password"
+        ],
         "properties": {
           "emailOrPhone": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 3
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
           }
         }
       },
       "RegisterRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "password",
+          "confirmPassword"
+        ],
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "maxLength": 256,
+            "minLength": 0
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "format": "phone",
+            "maxLength": 20,
+            "minLength": 8
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 8
           },
           "confirmPassword": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       },
       "ForgotPasswordRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "maxLength": 256,
+            "minLength": 0
           }
         }
       },
       "ResetPasswordRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "email",
+          "token",
+          "newPassword"
+        ],
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "maxLength": 256,
+            "minLength": 0
           },
           "token": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
           },
           "newPassword": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 8
           }
         }
       },
       "ConfirmEmailRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "email",
+          "token"
+        ],
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "maxLength": 256,
+            "minLength": 0
           },
           "token": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
           }
         }
       },
       "ResendVerificationRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "maxLength": 256,
+            "minLength": 0
           }
         }
       },
       "GoogleLoginRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "idToken"
+        ],
         "properties": {
           "idToken": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 0
           }
         }
       },
       "FacebookLoginRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "accessToken"
+        ],
         "properties": {
           "accessToken": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 0
           }
         }
       },
       "VerifyTwoFactorRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "emailOrPhone",
+          "code"
+        ],
         "properties": {
           "emailOrPhone": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 3
           },
           "code": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\d{6}$"
           }
         }
       },
       "UpdateProfileRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "name",
+          "phone"
+        ],
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "format": "phone",
+            "maxLength": 20,
+            "minLength": 8
           },
           "avatar": {
             "type": "string",
+            "maxLength": 512,
+            "minLength": 0,
             "nullable": true
           }
         }
@@ -841,15 +929,25 @@
       "ChangePasswordRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "currentPassword",
+          "newPassword",
+          "confirmNewPassword"
+        ],
         "properties": {
           "currentPassword": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
           },
           "newPassword": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 8
           },
           "confirmNewPassword": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       },
@@ -904,11 +1002,15 @@
         "properties": {
           "pageIndex": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
           },
           "pageSize": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 200.0,
+            "minimum": 0.0
           },
           "filters": {
             "type": "object",
@@ -942,22 +1044,40 @@
       "CreateUserRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "password",
+          "userTypeId"
+        ],
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "maxLength": 256,
+            "minLength": 0
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "format": "phone",
+            "maxLength": 20,
+            "minLength": 8
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 8
           },
           "userTypeId": {
             "type": "string",
-            "format": "guid"
+            "format": "guid",
+            "minLength": 1
           },
           "theaterId": {
             "type": "string",
@@ -972,24 +1092,39 @@
       "UpdateUserRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "userTypeId"
+        ],
         "properties": {
           "id": {
             "type": "string",
-            "format": "guid"
+            "format": "guid",
+            "minLength": 1
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "format": "phone",
+            "maxLength": 20,
+            "minLength": 8
           },
           "avatar": {
             "type": "string",
+            "maxLength": 512,
+            "minLength": 0,
             "nullable": true
           },
           "userTypeId": {
             "type": "string",
-            "format": "guid"
+            "format": "guid",
+            "minLength": 1
           },
           "theaterId": {
             "type": "string",

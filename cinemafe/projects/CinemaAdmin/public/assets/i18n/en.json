@@ -139,7 +139,7 @@
     "periodThisWeek": "This week",
     "period30Days": "30 days",
     "noRevenueData": "No revenue data yet.",
-    "topMovies": "Top Movies",
+    "topMovies": "Now Showing",
     "nowShowing": "Now showing",
     "noMovieData": "No movie data yet.",
     "recentInvoices": "Recent Orders",
@@ -481,7 +481,15 @@
     "timeTo": "To",
     "anyTimeHint": "Leave empty = any time",
     "nTheaters": "{{n}} theaters",
-    "days": { "sun": "Sun", "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu", "fri": "Fri", "sat": "Sat" },
+    "days": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
     "scopeShort": "Scope",
     "discount": "Discount",
     "validity": "Validity",
@@ -668,5 +676,15 @@
     "page": "Page {{index}}/{{total}}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "forbidden": {
+    "title": "Access denied",
+    "message": "This account is not an administrator. Please sign in with an admin account.",
+    "switchAccount": "Sign in with another account"
+  },
+  "errors": {
+    "network": "Cannot reach the server. Please check your network connection.",
+    "forbidden": "You do not have permission to perform this action.",
+    "server": "A server error occurred. Please try again later."
   }
 }

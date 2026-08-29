@@ -30,7 +30,7 @@ export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
 
   override ngOnInit(): void {
     super.ngOnInit();
-    this._svc.getRoomTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500, filters: { theaterId: this.theaterId } }))
+    this._svc.getRoomTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: { theaterId: this.theaterId } }))
       .subscribe(r => { this.roomTypes = r.results ?? []; this._cdr.markForCheck(); });
   }
 
@@ -80,7 +80,7 @@ export class TheaterRoomsComponent extends CatalogCrudBase<Dto> {
     this.mode = 'paint';
     this._pairFirst = null;
     this.seatsLoading = true;
-    this._svc.getSeatTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 500, filters: { theaterId: this.theaterId } }))
+    this._svc.getSeatTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: { theaterId: this.theaterId } }))
       .subscribe(r => {
         this.allSeatTypes = r.results ?? [];
         this.activeSeatTypeId = this.allSeatTypes[0]?.id ?? '';

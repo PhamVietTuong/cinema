@@ -27,6 +27,8 @@ public class MoMoGateway : IPaymentGateway
 
     public string Name => "MoMo";
 
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(PartnerCode) && !string.IsNullOrWhiteSpace(AccessKey) && !string.IsNullOrWhiteSpace(SecretKey);
+
     private string PartnerCode => _config["Payments:MoMo:PartnerCode"] ?? "";
     private string AccessKey   => _config["Payments:MoMo:AccessKey"]   ?? "";
     private string SecretKey   => _config["Payments:MoMo:SecretKey"]   ?? "";

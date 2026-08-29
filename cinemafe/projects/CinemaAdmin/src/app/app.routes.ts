@@ -13,6 +13,12 @@ export const routes: Routes = [
       }
     ]
   },
+  // Where adminGuard sends non-admins. Must stay outside the authGuard tree below,
+  // whose root redirects to /dashboard — routing there instead would loop forever.
+  {
+    path: 'forbidden',
+    loadComponent: () => import('./features/forbidden/forbidden.component').then(m => m.ForbiddenComponent)
+  },
   {
     path: '',
     canActivate: [authGuard],

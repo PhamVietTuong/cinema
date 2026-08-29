@@ -18,8 +18,6 @@
   padding: 22px 16px;
   background: var(--ad-chrome);
   border-right: 1px solid var(--ad-glass-border);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .brand {
@@ -75,7 +73,7 @@
   &.is-active {
     color: var(--ad-on);
     background: var(--ad-primary-soft);
-    border-color: rgba(225, 29, 52, 0.28);
+    border-color: var(--bo-action-ring);
     box-shadow: inset 3px 0 0 var(--ad-primary);
     mat-icon { color: var(--ad-primary-strong); }
   }
@@ -117,8 +115,6 @@
   padding: 0 32px;
   background: var(--ad-chrome-2);
   border-bottom: 1px solid var(--ad-glass-border);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 .topbar-title { margin: 0; font-size: 19px; font-weight: 700; color: var(--ad-on); }
 .topbar-right { display: flex; align-items: center; gap: 14px; }

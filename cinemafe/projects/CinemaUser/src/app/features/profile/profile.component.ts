@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService } from 'CinemaLib';
+import { Store } from '@ngrx/store';
+import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, profileUpdated } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 
@@ -22,6 +23,7 @@ export class ProfileComponent implements OnInit {
   private _cdr = inject(ChangeDetectorRef);
   private _translate = inject(TranslateService);
   private _toast = inject(ToastService);
+  private _store = inject(Store);
 
   avatarUploading = false;
   avatarErr = '';
@@ -115,7 +117,13 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: () => {
           this.profileMsg = this._translate.instant('profile.updateSuccess');
-          this._identity.getProfile().subscribe(u => { this.user = u; this._cdr.markForCheck(); });
+          this._identity.getProfile().subscribe(u => {
+            this.user = u;
+            // Refresh the cached auth user too, otherwise the header keeps showing the old
+            // name — and keeps showing it after a reload, since storage still holds the old copy.
+            this._store.dispatch(profileUpdated({ user: u }));
+            this._cdr.markForCheck();
+          });
           this._cdr.markForCheck();
         },
         error: e => { this.profileErr = this._err(e, this._translate.instant('profile.updateFailed')); this._cdr.markForCheck(); },

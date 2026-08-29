@@ -13,6 +13,11 @@ export const authReducer = createReducer(
   on(AuthActions.loginFailure, AuthActions.registerFailure, (state, { error }) => ({
     ...state, loading: false, error, awaitingTwoFactor: false
   })),
+  on(AuthActions.profileUpdated, (state, { user }) => {
+    // Persist too, or a reload would restore the pre-edit copy from storage.
+    TokenStorage.saveUser(user);
+    return { ...state, user: user as typeof state.user };
+  }),
   on(AuthActions.logout, () => ({ ...initialAuthState })),
   on(AuthActions.loadUserFromStorage, state => {
     const token = TokenStorage.getToken();

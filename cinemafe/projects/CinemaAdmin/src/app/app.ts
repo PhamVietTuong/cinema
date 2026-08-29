@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { filter, map, startWith } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { Router, NavigationEnd } from '@angular/router';
-import { selectIsAuthenticated, selectCurrentUser, loadUserFromStorage, logout, ThemeService } from 'CinemaLib';
+import { selectCurrentUser, loadUserFromStorage, logout, ThemeService } from 'CinemaLib';
 
 /** Route segment → i18n key. The key is resolved with the `translate` pipe in
  *  the template so the page title reacts to language switches too. */
@@ -32,7 +32,9 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   styleUrl: './app.scss',
 })
 export class App implements OnInit {
-  isAuth$: Observable<boolean>;
+  /** Drives the admin chrome. Gated on being an Admin, not merely signed in, so a customer
+   *  who lands on /forbidden isn't shown a sidebar full of pages they can't open. */
+  isAdmin$: Observable<boolean>;
   user$: Observable<any>;
   pageTitleKey$: Observable<string>;
 
@@ -43,7 +45,7 @@ export class App implements OnInit {
   readonly theme = inject(ThemeService);
 
   constructor(private _store: Store, private _router: Router) {
-    this.isAuth$ = this._store.select(selectIsAuthenticated);
+    this.isAdmin$ = this._store.select(selectCurrentUser).pipe(map(u => u?.userTypeName === 'Admin'));
     this.user$ = this._store.select(selectCurrentUser);
     const nav$ = this._router.events.pipe(filter(e => e instanceof NavigationEnd));
     // Close the mobile drawer whenever navigation completes.

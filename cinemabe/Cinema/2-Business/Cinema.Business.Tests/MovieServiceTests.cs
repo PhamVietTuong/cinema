@@ -24,12 +24,16 @@ public class MovieServiceTests
         var movieId = Guid.NewGuid();
         var movies  = new List<Movie> { new() { Id = movieId, Title = "Movie A" } };
         _uowMock.Setup(u => u.MovieStore.GetPagedAsync(null, (Guid?)null, 1, 12)).ReturnsAsync((movies, 1));
-        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(4.5);
+        // Ratings for the whole page come from one grouped lookup, not one call per movie.
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, double> { [movieId] = 4.5 });
 
         var result = await _sut.GetMoviesAsync(new PagingSearchDTO { PageIndex = 1, PageSize = 12 });
 
         result.TotalCount.Should().Be(1);
         result.Results.Should().HaveCount(1);
+        result.Results.Single().AverageRating.Should().Be(4.5);
+        _uowMock.Verify(u => u.MovieStore.GetAverageRatingAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
@@ -45,6 +49,10 @@ public class MovieServiceTests
         };
         _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
         _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(4.0);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
+            .ReturnsAsync(new Dictionary<(Guid, Guid), int>());
+        _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10))
+            .ReturnsAsync(new List<CommentView>());
 
         var result = await _sut.GetDetailAsync(movieId);
 

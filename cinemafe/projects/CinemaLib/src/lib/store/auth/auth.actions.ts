@@ -11,5 +11,8 @@ export const registerFailure = createAction('[Auth] Register Failure', props<{ e
 
 export const twoFactorRequired = createAction('[Auth] Two Factor Required');
 
+/** The signed-in user's own details changed (profile edit) — refresh the cached copy. */
+export const profileUpdated = createAction('[Auth] Profile Updated', props<{ user: unknown }>());
+
 export const logout = createAction('[Auth] Logout');
 export const loadUserFromStorage = createAction('[Auth] Load User From Storage');

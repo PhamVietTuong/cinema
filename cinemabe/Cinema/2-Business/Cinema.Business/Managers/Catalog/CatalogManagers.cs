@@ -434,6 +434,8 @@ public class ShowTimeManager(IApplicationUnitOfWork uow)
             search.Filters.GetGuid("movieId"),
             search.Filters.GetGuid("roomId"),
             search.Filters.GetBool("isActive"),
+            search.Filters.GetDateTime("from"),
+            search.Filters.GetDateTime("to"),
             page, pageSize);
 
         return new DefaultSearchResults<ShowTimeDTO>
@@ -454,11 +456,15 @@ public class ShowTimeManager(IApplicationUnitOfWork uow)
 
     public override async Task<ShowTimeDTO> CreateAsync(CreateShowTimeRequest request)
     {
+        ValidateWindow(request.StartTime, request.EndTime, mustBeFuture: true);
+
         var entity = request.ToNewEntity<CreateShowTimeRequest, ShowTime>();
         if (request.RoomId != Guid.Empty)
         {
             if (await Uow.ShowTimeStore.HasRoomOverlapAsync(request.RoomId, entity.StartTime, entity.EndTime, null))
+            {
                 throw new InvalidOperationException("This room already has a showtime overlapping that time window.");
+            }
             entity.ShowTimeRooms.Add(new ShowTimeRoom { RoomId = request.RoomId, BasePrice = request.BasePrice });
         }
         // Single SaveChanges inserts the showtime and its room together (atomic).
@@ -468,17 +474,40 @@ public class ShowTimeManager(IApplicationUnitOfWork uow)
 
     public override async Task<ShowTimeDTO> UpdateAsync(UpdateShowTimeRequest request)
     {
+        // Editing an existing showtime doesn't require a future start (an admin may be correcting
+        // the record of one that already screened), but the window must still make sense.
+        ValidateWindow(request.StartTime, request.EndTime, mustBeFuture: false);
+
         var entity = await Uow.ShowTimeStore.GetByIdWithRoomsAsync(request.Id)
                      ?? throw new KeyNotFoundException($"ShowTime {request.Id} not found.");
         entity.PatchEntity<ShowTime, UpdateShowTimeRequest>(request);
         entity.LastUpdatedTime = DateTime.UtcNow;
         if (request.RoomId != Guid.Empty &&
             await Uow.ShowTimeStore.HasRoomOverlapAsync(request.RoomId, entity.StartTime, entity.EndTime, entity.Id))
+        {
             throw new InvalidOperationException("This room already has a showtime overlapping that time window.");
+        }
         ApplyRoom(entity, request.RoomId, request.BasePrice);
         // The showtime patch and room change are saved in one transaction on the tracked graph.
         await Uow.SaveChangesAsync();
         return ToShowTimeDTO(await Uow.ShowTimeStore.GetByIdWithRoomsAsync(request.Id) ?? entity);
+    }
+
+    /// <summary>
+    /// Rejects nonsensical showtime windows. Without this a showtime could be saved ending before
+    /// it starts — which also slipped past the room-overlap check, since an inverted window
+    /// overlaps nothing — or scheduled into the past where nobody can book it.
+    /// </summary>
+    private static void ValidateWindow(DateTime startTime, DateTime endTime, bool mustBeFuture)
+    {
+        if (endTime <= startTime)
+        {
+            throw new InvalidOperationException("A showtime must end after it starts.");
+        }
+        if (mustBeFuture && startTime <= DateTime.Now)
+        {
+            throw new InvalidOperationException("A showtime cannot be scheduled in the past.");
+        }
     }
 
     /// <summary>

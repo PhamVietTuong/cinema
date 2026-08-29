@@ -4027,11 +4027,15 @@
         "properties": {
           "pageIndex": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
           },
           "pageSize": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 200.0,
+            "minimum": 0.0
           },
           "filters": {
             "type": "object",
@@ -6442,7 +6446,9 @@
           },
           "basePrice": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
           }
         }
       },
@@ -6481,7 +6487,9 @@
           },
           "basePrice": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
           }
         }
       },

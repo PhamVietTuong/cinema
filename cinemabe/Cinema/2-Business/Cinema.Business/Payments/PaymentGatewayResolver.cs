@@ -4,8 +4,12 @@ namespace Cinema.Business.Payments;
 
 /// <summary>
 /// Holds every registered gateway keyed by <see cref="IPaymentGateway.Name"/> and resolves one by name.
-/// The default provider comes from <c>Payments:Provider</c> config; when it names an unregistered/unknown
-/// provider the first registered gateway (Sandbox) is used, so dev never breaks.
+/// The default provider comes from <c>Payments:Provider</c> config.
+///
+/// Only gateways reporting <see cref="IPaymentGateway.IsConfigured"/> are selectable: a provider whose
+/// credentials are blank is skipped in favour of one that works. Without this, picking a payment method
+/// the deployment never configured (VNPay/MoMo/Stripe with empty settings) threw mid-checkout and left
+/// the customer with a pending invoice holding their seats.
 /// </summary>
 public class PaymentGatewayResolver : IPaymentGatewayResolver
 {
@@ -21,19 +25,25 @@ public class PaymentGatewayResolver : IPaymentGatewayResolver
             throw new InvalidOperationException("No payment gateways registered.");
         }
 
-        if (!string.IsNullOrWhiteSpace(defaultProvider) && _byName.TryGetValue(defaultProvider, out var configured))
+        if (!string.IsNullOrWhiteSpace(defaultProvider)
+            && _byName.TryGetValue(defaultProvider, out var configured)
+            && configured.IsConfigured)
         {
             Default = configured;
         }
         else
         {
-            Default = _byName.Values.First();
+            // Prefer any usable gateway; fall back to the first registered one so that, when nothing
+            // is configured, callers still get that provider's specific "not configured" message.
+            Default = _byName.Values.FirstOrDefault(g => g.IsConfigured) ?? _byName.Values.First();
         }
     }
 
     public IPaymentGateway Resolve(string? providerName)
     {
-        if (!string.IsNullOrWhiteSpace(providerName) && _byName.TryGetValue(providerName, out var gateway))
+        if (!string.IsNullOrWhiteSpace(providerName)
+            && _byName.TryGetValue(providerName, out var gateway)
+            && gateway.IsConfigured)
         {
             return gateway;
         }

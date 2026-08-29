@@ -180,6 +180,9 @@
   padding: 8px 20px 16px;
   border-top: 1px solid var(--mp-line);
 
+  // The switcher renders a Material button; align it with the plain rows around it.
+  .mobile-menu-lang { display: block; padding: 4px 0; }
+
   a, button {
     text-align: left;
     background: none;

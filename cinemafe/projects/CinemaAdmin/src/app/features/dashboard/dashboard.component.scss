@@ -1,77 +1,152 @@
+// "Box Office" — Dashboard
+//
+// This is the screen an operator leaves open all day, so it is built to be
+// scanned rather than admired: figures first, fixed-width digits so columns of
+// money line up, hairlines instead of shadows, and colour spent only where it
+// carries meaning. The four KPI icons used to be four different hues, which
+// encoded nothing — they are one neutral treatment now, and the numbers do the
+// talking.
+//
+// Written against the --bo-* tokens directly rather than the --ad-* compat
+// aliases in styles.scss; new and reworked pages should do the same.
+
 :host { display: block; }
 
-// KPI cards
+// ── KPI tiles ───────────────────────────────────────────────────────────────
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin-bottom: 22px;
+  gap: var(--cx-space-3);
+  margin-bottom: var(--cx-space-5);
 }
-.kpi { display: flex; flex-direction: column; gap: 14px; }
-.kpi-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.kpi { display: flex; flex-direction: column; gap: var(--cx-space-3); }
+.kpi-head { display: flex; align-items: center; justify-content: space-between; gap: var(--cx-space-3); }
+
+// One neutral treatment for all four. The icon labels the row; it does not
+// classify it, so it gets no colour of its own.
 .kpi-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; border-radius: var(--ad-r-md); flex: none;
-  mat-icon { font-size: 23px; width: 23px; height: 23px; }
-  &.i-violet { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
-  &.i-blue   { background: rgba(14, 165, 233, 0.12); color: var(--ad-info); }
-  &.i-orange { background: var(--ad-warn-soft); color: var(--ad-warn-ink); }
-  &.i-green  { background: var(--ad-success-soft); color: #15803d; }
+  width: 32px; height: 32px;
+  border-radius: var(--bo-r-sm);
+  background: var(--bo-panel-3);
+  color: var(--bo-muted);
+  flex: none;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+  &.i-violet, &.i-blue, &.i-orange, &.i-green {
+    background: var(--bo-panel-3);
+    color: var(--bo-muted);
+  }
 }
-.kpi-label { font-size: 13px; color: var(--ad-muted); }
-.kpi-value { font-family: var(--ad-font-head); font-size: 28px; font-weight: 700; color: var(--ad-on); line-height: 1.2; }
+.kpi-label {
+  font-size: var(--cx-text-xs);
+  font-weight: var(--cx-weight-semibold);
+  letter-spacing: var(--cx-track-caps);
+  text-transform: uppercase;
+  color: var(--bo-muted);
+}
+.kpi-value {
+  font-family: var(--bo-font-head);
+  font-size: 27px;
+  font-weight: var(--cx-weight-semibold);
+  letter-spacing: var(--cx-track-tight);
+  color: var(--bo-ink);
+  line-height: var(--cx-leading-tight);
+  font-variant-numeric: tabular-nums;
+}
 
-// Quick actions
-.quick-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 22px;
-  .ad-btn { text-decoration: none; } }
+// ── Quick actions ───────────────────────────────────────────────────────────
+.quick-actions {
+  display: flex; gap: var(--cx-space-2); flex-wrap: wrap; margin-bottom: var(--cx-space-5);
+  .ad-btn { text-decoration: none; }
+}
 
-// Two column
+// ── Two column ──────────────────────────────────────────────────────────────
 .two-col {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
-  gap: 18px;
-  margin-bottom: 22px;
+  gap: var(--cx-space-3);
+  margin-bottom: var(--cx-space-5);
 }
 
-// Bar chart
-.chart { display: flex; align-items: flex-end; gap: 14px; height: 200px; padding-top: 10px; }
-.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; height: 100%; justify-content: flex-end; }
+// ── Bar chart ───────────────────────────────────────────────────────────────
+// A faint baseline is enough structure to read heights against; the bars are a
+// flat fill because a gradient would imply a second variable that isn't there.
+.chart {
+  display: flex; align-items: flex-end; gap: var(--cx-space-3);
+  height: 200px; padding-top: var(--cx-space-3);
+  border-bottom: 1px solid var(--bo-rule);
+}
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--cx-space-2); height: 100%; justify-content: flex-end; }
 .bar {
   width: 100%;
-  max-width: 38px;
-  border-radius: 8px 8px 4px 4px;
-  background: linear-gradient(180deg, var(--ad-primary-strong), rgba(225, 29, 52, 0.25));
-  box-shadow: 0 -2px 16px -4px var(--ad-primary-glow);
-  transition: height 0.4s ease;
+  max-width: 34px;
+  border-radius: var(--bo-r-sm) var(--bo-r-sm) 0 0;
+  background: var(--bo-action);
+  transition: height var(--cx-dur-slow) var(--cx-ease);
 }
-.bar-day { font-size: 12px; color: var(--ad-muted); }
+.bar-day {
+  font-family: var(--bo-font-data);
+  font-size: var(--cx-text-xs);
+  color: var(--bo-muted);
+  font-variant-numeric: tabular-nums;
+}
 
-// Top movies
-.top-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.top-list li { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: var(--ad-r-md);
-  &:hover { background: var(--ad-glass); } }
-.rank { width: 20px; text-align: center; font-weight: 700; color: var(--ad-faint); font-size: 14px; }
+// ── Top movies ──────────────────────────────────────────────────────────────
+.top-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.top-list li {
+  display: flex; align-items: center; gap: var(--cx-space-3);
+  padding: var(--cx-space-2);
+  border-bottom: 1px solid var(--bo-rule-soft);
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: var(--bo-hover); }
+}
+.rank {
+  width: 20px; text-align: center;
+  font-family: var(--bo-font-data);
+  font-weight: var(--cx-weight-medium);
+  color: var(--bo-faint);
+  font-size: var(--cx-text-sm);
+  font-variant-numeric: tabular-nums;
+}
 .poster {
-  width: 38px; height: 52px; border-radius: 6px; flex: none;
-  background: var(--ad-surface-3) center/cover no-repeat;
+  width: 36px; height: 50px; border-radius: var(--bo-r-sm); flex: none;
+  background: var(--bo-panel-3) center/cover no-repeat;
+  border: 1px solid var(--bo-rule-soft);
   display: inline-flex; align-items: center; justify-content: center;
-  mat-icon { color: var(--ad-faint); font-size: 20px; width: 20px; height: 20px; }
+  mat-icon { color: var(--bo-faint); font-size: 19px; width: 19px; height: 19px; }
 }
 .top-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.top-title { font-weight: 600; font-size: 14px; color: var(--ad-on); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.top-sub { font-size: 12.5px; color: var(--ad-muted); }
-.top-rating { display: inline-flex; align-items: center; gap: 3px; color: #b9861f; font-weight: 600; font-size: 13px;
-  mat-icon { font-size: 16px; width: 16px; height: 16px; } }
+.top-title {
+  font-weight: var(--cx-weight-semibold); font-size: var(--cx-text-sm); color: var(--bo-ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.top-sub { font-size: var(--cx-text-xs); color: var(--bo-muted); font-variant-numeric: tabular-nums; }
+.top-rating {
+  display: inline-flex; align-items: center; gap: 3px;
+  color: var(--bo-ink-2);
+  font-weight: var(--cx-weight-semibold);
+  font-size: var(--cx-text-sm);
+  font-variant-numeric: tabular-nums;
 
-// Card header (chart + invoices): title left, control/link right
-.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.period-select { width: auto; height: 36px; padding: 0 32px 0 12px; font-size: 13px; }
-.see-all { font-size: 13px; font-weight: 600; color: var(--ad-primary-strong); text-decoration: none;
-  &:hover { text-decoration: underline; } }
+  // A star is conventionally amber — that's a rating reading as a rating, not decoration.
+  mat-icon { color: var(--bo-warn); font-size: 15px; width: 15px; height: 15px; }
+}
 
-// Invoices
-.invoices .card-head { padding: 20px 24px 0; margin-bottom: 0; }
-.invoices .ad-card-title { margin-bottom: 16px; }
+// ── Card header (chart + invoices): title left, control/link right ───────────
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--cx-space-3); margin-bottom: var(--cx-space-4); }
+.period-select { width: auto; height: 32px; padding: 0 30px 0 10px; font-size: var(--cx-text-xs); }
+.see-all {
+  font-size: var(--cx-text-sm); font-weight: var(--cx-weight-semibold);
+  color: var(--bo-action); text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+// ── Invoices ────────────────────────────────────────────────────────────────
+.invoices .card-head { padding: 18px 22px 0; margin-bottom: 0; }
+.invoices .ad-card-title { margin-bottom: var(--cx-space-4); }
 
 @media (max-width: 1100px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }

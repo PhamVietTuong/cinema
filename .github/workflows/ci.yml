@@ -21,10 +21,17 @@ jobs:
       - run: dotnet restore Cinema.sln
       - run: dotnet build Cinema.sln --no-restore -c Release
       # xUnit tests use Moq — no database required.
-      - run: dotnet test Cinema/2-Business/Cinema.Business.Tests --no-build -c Release --verbosity normal
+      - run: dotnet test Cinema/2-Business/Cinema.Business.Tests --no-build -c Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory TestResults
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: cinemabe/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: warn
 
   frontend:
-    name: Frontend (build)
+    name: Frontend (lint + test + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,6 +45,133 @@ jobs:
           cache-dependency-path: cinemafe/package-lock.json
       # --legacy-peer-deps: the workspace has a known Angular peer-version skew.
       - run: npm ci --legacy-peer-deps
+      # Fails on errors only. The config keeps the large pre-existing backlog
+      # (prefer-control-flow, a11y labels, prefer-inject) at warning level — see eslint.config.js.
+      - run: npm run lint
+      # CinemaLib must be built before the apps: the `CinemaLib` path maps to dist/.
       - run: npx ng build CinemaLib
+      - run: npx ng test CinemaLib   --watch=false --coverage --coverage-reporters lcovonly --coverage-reporters text-summary
+      - run: npx ng test CinemaUser  --watch=false
+      - run: npx ng test CinemaAdmin --watch=false
       - run: npx ng build CinemaUser --configuration production
       - run: npx ng build CinemaAdmin --configuration production
+      - name: Upload frontend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: cinemafe/coverage/**
+          if-no-files-found: warn
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    # Needs a real database, the API and both apps running, so it is slower than the other jobs.
+    timeout-minutes: 30
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: 'Cinema_CI_Pwd_123!'
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Cinema_CI_Pwd_123!' -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      SA_PASSWORD: 'Cinema_CI_Pwd_123!'
+      CINEMA_DB: 'Server=localhost,1433;Database=Cinema;User ID=sa;Password=Cinema_CI_Pwd_123!;TrustServerCertificate=True;MultipleActiveResultSets=true'
+      JWT__Secret: 'ci-only-signing-key-not-used-anywhere-else-0123456789'
+      CINEMA_USER_URL: 'http://localhost:4202'
+      CINEMA_ADMIN_URL: 'http://localhost:4201'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: 'npm'
+          cache-dependency-path: cinemafe/package-lock.json
+
+      - name: Install sqlcmd
+        run: |
+          curl -sSL https://packages.microsoft.com/keys/microsoft.asc \
+            | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" \
+            | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
+          echo "/opt/mssql-tools18/bin" >> "$GITHUB_PATH"
+
+      - name: Create and populate the database
+        working-directory: cinemabe
+        run: |
+          sqlcmd -C -S localhost,1433 -U sa -P "$SA_PASSWORD" -Q "CREATE DATABASE [Cinema];"
+          sqlcmd -C -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -i sql/create_db.sql
+          sqlcmd -C -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -i sql/insert_db.sql
+
+      - name: Seed the admin + customer accounts
+        working-directory: cinemabe
+        env:
+          ConnectionStrings__CinemaDatabase: ${{ env.CINEMA_DB }}
+        # The test project is dual-purpose: `dotnet run` seeds admin@cinema.vn / user@cinema.vn.
+        run: dotnet run --project Cinema/2-Business/Cinema.Business.Tests
+
+      - name: Start the Web API
+        working-directory: cinemabe
+        env:
+          ConnectionStrings__CinemaDatabase: ${{ env.CINEMA_DB }}
+          ASPNETCORE_URLS: 'http://localhost:5102'
+          AllowedOrigins__0: 'http://localhost:4202'
+          AllowedOrigins__1: 'http://localhost:4201'
+        run: |
+          dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost -c Release > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:5102/health > /dev/null; then echo "API up"; exit 0; fi
+            sleep 5
+          done
+          echo "API failed to start:"; cat "$RUNNER_TEMP/api.log"; exit 1
+
+      - name: Build and serve both apps
+        working-directory: cinemafe
+        run: |
+          npm ci --legacy-peer-deps
+          npx ng build CinemaLib
+          npx ng serve CinemaUser  --port 4202 --configuration development > "$RUNNER_TEMP/user.log" 2>&1 &
+          npx ng serve CinemaAdmin --port 4201 --configuration development > "$RUNNER_TEMP/admin.log" 2>&1 &
+          for port in 4202 4201; do
+            for i in $(seq 1 60); do
+              if curl -fsS "http://localhost:$port" > /dev/null; then echo "port $port up"; break; fi
+              if [ "$i" = "60" ]; then
+                echo "port $port failed to serve:"; cat "$RUNNER_TEMP"/*.log; exit 1
+              fi
+              sleep 5
+            done
+          done
+
+      - name: Run Playwright
+        working-directory: QA-tests/playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: QA-tests/playwright/playwright-report/**
+          if-no-files-found: warn
+
+      - name: Dump server logs on failure
+        if: failure()
+        run: |
+          echo '── api ──';   cat "$RUNNER_TEMP/api.log"   || true
+          echo '── user ──';  cat "$RUNNER_TEMP/user.log"  || true
+          echo '── admin ──'; cat "$RUNNER_TEMP/admin.log" || true

@@ -22,6 +22,8 @@ public class VnPayGateway : IPaymentGateway
 
     public string Name => "VNPay";
 
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(TmnCode) && !string.IsNullOrWhiteSpace(HashSecret);
+
     private string TmnCode    => _config["Payments:VnPay:TmnCode"]    ?? "";
     private string HashSecret => _config["Payments:VnPay:HashSecret"] ?? "";
     private string PayUrl     => _config["Payments:VnPay:PayUrl"]     ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";

@@ -490,3 +490,25 @@ BEGIN
 END
 
 PRINT 'upgrade_db.sql: completed.';
+
+-- ── Adopt EF Core migrations (baseline) ─────────────────────────────────────
+-- One-time step for databases created before migrations existed. Everything above this
+-- line brings the schema to the same shape as the InitialBaseline migration, so we stamp
+-- that migration as already applied rather than running it. From here on, schema changes
+-- come from `dotnet ef migrations add` and are applied with `dotnet ef database update`.
+PRINT 'upgrade: stamping EF Core migrations baseline...';
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '__EFMigrationsHistory')
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20260726064153_InitialBaseline')
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260726064153_InitialBaseline', N'9.0.0');
+END

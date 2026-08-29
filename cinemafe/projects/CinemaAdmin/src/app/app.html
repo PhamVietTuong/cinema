@@ -1,4 +1,4 @@
-<ng-container *ngIf="isAuth$ | async; else loginView">
+<ng-container *ngIf="isAdmin$ | async; else loginView">
   <div class="admin-shell" [class.menu-open]="menuOpen">
     <!-- Mobile drawer scrim -->
     <div class="sidebar-scrim" (click)="closeMenu()"></div>

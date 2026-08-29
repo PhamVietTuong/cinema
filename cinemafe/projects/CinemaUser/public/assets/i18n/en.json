@@ -457,5 +457,10 @@
     "viewShowtimes": "View Showtimes",
     "geoNotSupported": "Your browser does not support geolocation.",
     "geoFailed": "Could not get your location."
+  },
+  "errors": {
+    "network": "Cannot reach the server. Please check your network connection.",
+    "forbidden": "You do not have permission to perform this action.",
+    "server": "A server error occurred. Please try again later."
   }
 }

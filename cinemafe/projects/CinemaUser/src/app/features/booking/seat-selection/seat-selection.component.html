@@ -87,14 +87,13 @@
           <span>{{ 'booking.summary.subtotal' | translate:{ count: selectedSeats.length } }}</span>
           <span>{{ totalPrice | number:'1.0-0' }}đ</span>
         </div>
-        <div class="price-row muted">
-          <span>{{ 'booking.summary.onlineFee' | translate }}</span>
-          <span>10.000đ</span>
-        </div>
+        <!-- No online booking fee is added here: the server prices a booking as the sum of its
+             seats, so showing a 10.000d fee quoted a total the customer was never charged and
+             disagreed with the checkout page's figure. -->
         <div class="price-divider"></div>
         <div class="price-row total-row">
           <span>{{ 'booking.summary.total' | translate }}</span>
-          <span class="total-amount">{{ (totalPrice + 10000) | number:'1.0-0' }}đ</span>
+          <span class="total-amount">{{ totalPrice | number:'1.0-0' }}đ</span>
         </div>
 
         <button class="btn-primary-cta confirm-btn" (click)="proceedToCheckout()">

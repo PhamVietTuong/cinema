@@ -1554,10 +1554,10 @@ export interface ITicketItemDTO {
 export class CreateBookingRequest implements ICreateBookingRequest {
     showTimeId?: string;
     roomId?: string;
-    seats?: BookingSeatItem[];
+    seats!: BookingSeatItem[];
     foods?: BookingFoodItem[];
     discountCode?: string | undefined;
-    paymentMethod?: string;
+    paymentMethod!: string;
     pointsToRedeem?: number;
     connectionId?: string | undefined;
     giftCardCode?: string | undefined;
@@ -1568,6 +1568,9 @@ export class CreateBookingRequest implements ICreateBookingRequest {
                 if (data.hasOwnProperty(property))
                     (<any>this)[property] = (<any>data)[property];
             }
+        }
+        if (!data) {
+            this.seats = [];
         }
     }
 
@@ -1626,10 +1629,10 @@ export class CreateBookingRequest implements ICreateBookingRequest {
 export interface ICreateBookingRequest {
     showTimeId?: string;
     roomId?: string;
-    seats?: BookingSeatItem[];
+    seats: BookingSeatItem[];
     foods?: BookingFoodItem[];
     discountCode?: string | undefined;
-    paymentMethod?: string;
+    paymentMethod: string;
     pointsToRedeem?: number;
     connectionId?: string | undefined;
     giftCardCode?: string | undefined;

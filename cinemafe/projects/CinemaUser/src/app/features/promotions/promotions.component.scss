@@ -1,5 +1,5 @@
-// "Marquee" — Promotions Page (light premium cinema)
-// Tokens (from styles.scss): paper #edeef1 · card #fff · ink #15171d · red #e11d34 · gold #b9861f
+// "Night Screening" — Promotions Page
+// Tokens (from styles.scss): ground #07080b · panel #101319 · ink #e9edf3 · beam #59d9d2 (action) · gel #ff4e8a (premium)
 
 .page-header { background: var(--mp-paper-2); border-bottom: 1px solid var(--mp-line-2); padding: 40px 0; }
 .ph-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
@@ -36,7 +36,7 @@
 .promo-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
 .promo-code {
   display: inline-flex; align-items: center; gap: 10px;
-  border: 1px dashed rgba(225, 29, 52, 0.4); border-radius: 8px; padding: 6px 14px;
+  border: 1px dashed var(--ns-beam-line); border-radius: 8px; padding: 6px 14px;
   .code-label { font-size: 0.72rem; color: var(--mp-muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .code-val { font-family: var(--mp-font-display); font-weight: 700; color: var(--mp-red); letter-spacing: 0.06em; }
 }
@@ -44,9 +44,9 @@
   border: none; cursor: pointer;
   background: var(--mp-red); color: #fff;
   font-size: 0.82rem; font-weight: 700; padding: 9px 18px; border-radius: 8px;
-  box-shadow: 0 8px 22px -8px rgba(225, 29, 52, 0.55);
+  box-shadow: var(--ns-glow-beam);
   transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.16s ease;
-  &:hover { background: var(--mp-red-strong); box-shadow: 0 14px 30px -10px rgba(225, 29, 52, 0.55); transform: translateY(-2px); }
+  &:hover { background: var(--mp-red-strong); box-shadow: var(--ns-glow-beam); transform: translateY(-2px); }
 }
 
 // ── Feature banner ────────────────────────────────────────────────────────────
@@ -74,8 +74,27 @@
 .feature-desc { color: rgba(255, 255, 255, 0.85); margin: 0 0 18px; }
 .feature-btn { background: var(--mp-card); color: var(--mp-ink); }
 
-@media (max-width: 760px) {
+// The card is a fixed 120px colour panel beside its content, and it clips (overflow: hidden)
+// rather than wrapping. Two columns therefore need a genuinely wide viewport: at 768px each card
+// was ~370px, leaving ~230px for the text, which cut titles mid-word and hid the CTA entirely.
+@media (max-width: 1024px) {
   .promo-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
   .promo-page, .ph-inner { padding-left: 20px; padding-right: 20px; }
   .feature-content { padding: 24px 22px; }
+}
+
+// Below this a single column is still too narrow for the side-by-side layout, so stack it.
+@media (max-width: 560px) {
+  .promo-card { flex-direction: column; }
+  .promo-left {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+  }
+  .promo-perf { display: none; }
 }

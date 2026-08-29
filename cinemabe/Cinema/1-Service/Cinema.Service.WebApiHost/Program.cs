@@ -4,6 +4,7 @@ using Cinema.Data;
 using Cinema.Data.Contexts;
 using Cinema.Data.Services;
 using Cinema.Foundation.Logging;
+using Cinema.Service.WebApiHost.Helpers;
 using Cinema.Service.WebApiHost.Hubs;
 using Cinema.Service.WebApiHost.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -48,6 +49,9 @@ builder.Services.AddControllers();
 
 // SignalR
 builder.Services.AddSignalR();
+
+// Rate limiting for the unauthenticated identity endpoints
+builder.Services.AddCinemaRateLimiting();
 
 // Background job: expire abandoned unpaid bookings and free their seats
 builder.Services.AddHostedService<Cinema.Service.WebApiHost.Services.PendingBookingReaper>();
@@ -176,6 +180,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 // Serve uploaded images at /uploads/* from the on-disk uploads folder.
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "uploads");
 Directory.CreateDirectory(uploadsPath);

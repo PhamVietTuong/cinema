@@ -1933,9 +1933,11 @@ namespace Cinema.Service.Clients.Payment
     public partial class PagingSearchDTO
     {
         [Newtonsoft.Json.JsonProperty("pageIndex", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, 2147483647)]
         public int PageIndex { get; set; }
 
         [Newtonsoft.Json.JsonProperty("pageSize", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, 200)]
         public int PageSize { get; set; }
 
         [Newtonsoft.Json.JsonProperty("filters", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -2031,25 +2033,33 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("roomId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid RoomId { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("seats", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public IList<BookingSeatItem> Seats { get; set; }
+        [Newtonsoft.Json.JsonProperty("seats", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.MinLength(1)]
+        public IList<BookingSeatItem> Seats { get; set; } = new System.Collections.Generic.List<BookingSeatItem>();
 
         [Newtonsoft.Json.JsonProperty("foods", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public IList<BookingFoodItem> Foods { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discountCode", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.StringLength(64)]
         public string DiscountCode { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("paymentMethod", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("paymentMethod", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        [System.ComponentModel.DataAnnotations.StringLength(50)]
         public string PaymentMethod { get; set; }
 
         [Newtonsoft.Json.JsonProperty("pointsToRedeem", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, 2147483647)]
         public int PointsToRedeem { get; set; }
 
         [Newtonsoft.Json.JsonProperty("connectionId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.StringLength(128)]
         public string ConnectionId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("giftCardCode", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.StringLength(64)]
         public string GiftCardCode { get; set; }
 
     }
@@ -2069,6 +2079,7 @@ namespace Cinema.Service.Clients.Payment
         public System.Guid FoodAndDrinkId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("quantity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(1, 100)]
         public int Quantity { get; set; }
 
     }

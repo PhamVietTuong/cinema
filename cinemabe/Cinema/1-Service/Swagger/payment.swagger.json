@@ -927,11 +927,15 @@
         "properties": {
           "pageIndex": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
           },
           "pageSize": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 200.0,
+            "minimum": 0.0
           },
           "filters": {
             "type": "object",
@@ -1045,6 +1049,10 @@
       "CreateBookingRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "seats",
+          "paymentMethod"
+        ],
         "properties": {
           "showTimeId": {
             "type": "string",
@@ -1056,6 +1064,7 @@
           },
           "seats": {
             "type": "array",
+            "minItems": 1,
             "items": {
               "$ref": "#/components/schemas/BookingSeatItem"
             }
@@ -1068,21 +1077,31 @@
           },
           "discountCode": {
             "type": "string",
+            "maxLength": 64,
+            "minLength": 0,
             "nullable": true
           },
           "paymentMethod": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
           },
           "pointsToRedeem": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
           },
           "connectionId": {
             "type": "string",
+            "maxLength": 128,
+            "minLength": 0,
             "nullable": true
           },
           "giftCardCode": {
             "type": "string",
+            "maxLength": 64,
+            "minLength": 0,
             "nullable": true
           }
         }
@@ -1107,7 +1126,9 @@
           },
           "quantity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 100.0,
+            "minimum": 1.0
           }
         }
       },

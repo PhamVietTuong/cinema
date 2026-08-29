@@ -457,5 +457,10 @@
     "viewShowtimes": "Xem Lịch Chiếu",
     "geoNotSupported": "Trình duyệt không hỗ trợ định vị.",
     "geoFailed": "Không lấy được vị trí của bạn."
+  },
+  "errors": {
+    "network": "Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.",
+    "forbidden": "Bạn không có quyền thực hiện thao tác này.",
+    "server": "Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau."
   }
 }

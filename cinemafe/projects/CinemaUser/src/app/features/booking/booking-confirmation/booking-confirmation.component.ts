@@ -16,10 +16,13 @@ type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean };
 export class BookingConfirmationComponent implements OnInit, OnDestroy {
   seats: SelectableSeat[] = [];
 
-  /** Client-side seat-hold countdown. Seats are held ~5 minutes by the realtime lock; this warns the
-   * user to finish before it lapses. If it expires and someone else takes a seat, the booking is safely
-   * rejected server-side (active-seat unique index), so we warn rather than block. */
-  holdSecondsLeft = 5 * 60;
+  /** Client-side seat-hold countdown. By this page the booking already exists as a Pending invoice,
+   * so the seats are held until PendingBookingReaper sweeps it — keep this in step with that service's
+   * 15-minute hold window. (The realtime lock's 5 minutes governs seat *selection*, one step earlier;
+   * counting down from 5 here told the customer their seats were gone while they were still held.)
+   * If it does lapse and someone else takes a seat, the booking is rejected server-side by the
+   * active-seat unique index, so we warn rather than block. */
+  holdSecondsLeft = 15 * 60;
   holdExpired = false;
   private _holdTimer: any;
   showTimeId = '';

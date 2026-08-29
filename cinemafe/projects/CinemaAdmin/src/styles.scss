@@ -1,126 +1,198 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap');
+@use 'lib/theme/tokens';
 
 // ╔══════════════════════════════════════════════════════════════════════════╗
-// ║  Cinema Admin — global theme                                               ║
-// ║  Design system: "Marquee" (light cool-paper + white panels + ink type +   ║
-// ║  ticket-red action + marquee-gold accent). Matches the CinemaUser theme.   ║
+// ║  CinemaAdmin — global theme: "Box Office"                                 ║
+// ║                                                                          ║
+// ║  A precision instrument. The back office is read and operated for whole    ║
+// ║  shifts, so this direction spends nothing on atmosphere: hairline rules     ║
+// ║  instead of shadows, near-square corners, tabular figures wherever money   ║
+// ║  or time appears, and a single ultramarine reserved for the one action on  ║
+// ║  screen. Everything else that carries colour carries meaning — sold out,   ║
+// ║  low, refunded — never mood.                                              ║
+// ║                                                                          ║
+// ║  The one ornament is the ticket stub's dashed tear, used to separate a     ║
+// ║  page header from its contents.                                           ║
+// ║                                                                          ║
+// ║  Light is the identity and the default; [data-theme="dark"] is a designed  ║
+// ║  after-hours counterpart where the action colour brightens to survive the  ║
+// ║  darker ground.                                                           ║
+// ║                                                                          ║
+// ║  --bo-* is the token API. The --ad-* block is a compat layer for component ║
+// ║  SCSS written against the previous "Marquee" system — do not add to it.    ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
-// ── Design tokens ───────────────────────────────────────────────────────────
-// Light "Marquee" theme — same system as CinemaUser: cool-paper ground, white
-// panels, ink text, ticket-red action, marquee-gold premium accent.
 :root {
-  // Surfaces (light stack)
-  --ad-surface:        #edeef1;
-  --ad-surface-0:      #e7e9ee;
-  --ad-surface-1:      #ffffff;
-  --ad-surface-2:      #f7f8fa;
-  --ad-surface-3:      #eef0f3;
-  --ad-surface-4:      #dfe3ea;
+  // ── Surfaces ─────────────────────────────────────────────────────────────
+  --bo-paper:    #f6f7f9;   // page ground
+  --bo-paper-2:  #eef1f5;   // inset / recessed
+  --bo-panel:    #ffffff;   // cards, inputs, tables
+  --bo-panel-2:  #f9fafb;   // hover / raised
+  --bo-panel-3:  #f1f3f6;   // inert fills, avatars, chips
+  --bo-panel-4:  #e3e7ee;   // scrollbar thumb, strong fill
+  --bo-chrome:   #ffffff;   // sidebar / topbar — opaque, no blur
+  --bo-chrome-2: #f6f7f9;
 
-  // "Glass" → solid white panels on light
-  --ad-glass:          #ffffff;
-  --ad-glass-strong:   #f7f8fa;
-  --ad-glass-border:   rgba(21, 23, 29, 0.10);
-  --ad-glass-border-strong: rgba(21, 23, 29, 0.16);
+  // ── Ink ──────────────────────────────────────────────────────────────────
+  --bo-ink:    #101317;
+  --bo-ink-2:  #39424e;
+  --bo-muted:  #6b7481;
+  --bo-faint:  #97a0ad;
 
-  // Translucent app chrome (sidebar / topbar, sit over the page gradient)
-  --ad-chrome:         rgba(255, 255, 255, 0.90);
-  --ad-chrome-2:       rgba(255, 255, 255, 0.75);
+  // ── Rules. The primary structural device — this direction has no shadows. ─
+  --bo-rule:        rgba(16, 19, 23, 0.15);
+  --bo-rule-strong: rgba(16, 19, 23, 0.26);
+  --bo-rule-soft:   rgba(16, 19, 23, 0.08);
+  --bo-hover:       rgba(16, 19, 23, 0.028);
 
-  // Hairlines & row hover (softer than --ad-glass-border)
-  --ad-line-soft:      rgba(21, 23, 29, 0.06);
-  --ad-hover:          rgba(21, 23, 29, 0.025);
+  // ── Action. One colour, one job. ─────────────────────────────────────────
+  --bo-action:        #2145e6;
+  --bo-action-strong: #1836bd;
+  --bo-action-soft:   rgba(33, 69, 230, 0.10);
+  --bo-action-ring:   rgba(33, 69, 230, 0.26);
+  --bo-on-action:     #ffffff;
+  // Secondary emphasis — informational, never competing with the action.
+  --bo-second:        #0f766e;
 
-  // Text
-  --ad-on:             #15171d;
-  --ad-muted:          #6b7280;
-  --ad-faint:          #9aa1ad;
+  // ── Semantic. Legibility first: these sit on a 10% tint of themselves. ────
+  --bo-success:      #0f7a47;
+  --bo-success-soft: rgba(15, 122, 71, 0.10);
+  --bo-success-ink:  #0b5c36;
+  --bo-warn:         #9a5600;
+  --bo-warn-soft:    rgba(154, 86, 0, 0.10);
+  --bo-warn-ink:     #7c4500;
+  --bo-danger:       #b3261e;
+  --bo-danger-soft:  rgba(179, 38, 30, 0.09);
+  --bo-danger-ink:   #8c1d17;
+  --bo-info:         #0b5cad;
 
-  // Brand — ticket red (action) + marquee gold (premium)
-  --ad-primary:        #e11d34;
-  --ad-primary-strong: #c0142a;
-  --ad-primary-soft:   rgba(225, 29, 52, 0.10);
-  --ad-primary-glow:   rgba(225, 29, 52, 0.40);
-  --ad-on-primary:     #ffffff;
-  --ad-secondary:      #b9861f;
+  // ── Radius — near-square. A form control is not a pill. ──────────────────
+  --bo-r-sm:   3px;
+  --bo-r-md:   4px;
+  --bo-r-lg:   6px;
+  --bo-r-xl:   8px;
+  --bo-r-full: 9999px;
 
-  // Status (tuned for legibility on light)
-  --ad-success:        #16a34a;
-  --ad-success-soft:   rgba(22, 163, 74, 0.12);
-  --ad-warn:           #d97706;
-  --ad-warn-soft:      rgba(217, 119, 6, 0.12);
-  --ad-danger:         #dc2626;
-  --ad-danger-soft:    rgba(220, 38, 38, 0.10);
-  --ad-info:           #0ea5e9;
+  // ── Layout ───────────────────────────────────────────────────────────────
+  --bo-sidebar-w: 252px;
+  --bo-topbar-h:  60px;
 
-  // Status text on a *-soft tint (needs to flip in dark to stay legible)
-  --ad-success-ink:    #15803d;
-  --ad-warn-ink:       #b45309;
-  --ad-danger-ink:     #b91c1c;
+  // ── Type ─────────────────────────────────────────────────────────────────
+  // Inter Tight sets headings and figures tightly enough to pack a dense table
+  // header; Inter reads; JetBrains Mono aligns IDs, times and money.
+  --bo-font-head: 'Inter Tight', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --bo-font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --bo-font-data: 'JetBrains Mono', Consolas, ui-monospace, monospace;
 
-  --ad-outline:        rgba(21, 23, 29, 0.10);
-
-  // Radius
-  --ad-r-sm: 0.5rem;
-  --ad-r-md: 0.75rem;
-  --ad-r-lg: 1rem;
-  --ad-r-xl: 1.5rem;
-  --ad-r-full: 9999px;
-
-  --ad-sidebar-w: 260px;
-  --ad-topbar-h: 68px;
-
-  --ad-font-head: 'Bricolage Grotesque', 'Montserrat', 'Segoe UI', sans-serif;
-  --ad-font-body: 'Inter', 'Segoe UI', sans-serif;
-
-  // Tells the browser to render native widgets (scrollbars, form controls) light.
   color-scheme: light;
 }
 
-// ── Dark theme (toggled via [data-theme="dark"] on <html>) ──────────────────
+// ── "After hours" — the designed dark counterpart ───────────────────────────
+// Not an inversion: the ground picks up a slight blue bias so hairlines stay
+// visible, and the action brightens because ultramarine at #2145e6 disappears
+// against a dark ground.
 :root[data-theme="dark"] {
-  --ad-surface:        #0f1116;
-  --ad-surface-0:      #14171e;
-  --ad-surface-1:      #1b1e26;
-  --ad-surface-2:      #21252e;
-  --ad-surface-3:      #262b35;
-  --ad-surface-4:      #39404d;
+  --bo-paper:    #0d0f14;
+  --bo-paper-2:  #11141a;
+  --bo-panel:    #15181f;
+  --bo-panel-2:  #1b1f27;
+  --bo-panel-3:  #21262f;
+  --bo-panel-4:  #333a46;
+  --bo-chrome:   #11141a;
+  --bo-chrome-2: #0d0f14;
 
-  --ad-glass:          #1b1e26;
-  --ad-glass-strong:   #21252e;
-  --ad-glass-border:   rgba(255, 255, 255, 0.10);
-  --ad-glass-border-strong: rgba(255, 255, 255, 0.18);
+  --bo-ink:    #e7eaef;
+  --bo-ink-2:  #b9c1cc;
+  --bo-muted:  #8b95a3;
+  --bo-faint:  #646e7c;
 
-  --ad-chrome:         rgba(27, 30, 38, 0.90);
-  --ad-chrome-2:       rgba(20, 23, 30, 0.75);
+  --bo-rule:        rgba(255, 255, 255, 0.14);
+  --bo-rule-strong: rgba(255, 255, 255, 0.24);
+  --bo-rule-soft:   rgba(255, 255, 255, 0.07);
+  --bo-hover:       rgba(255, 255, 255, 0.035);
 
-  --ad-line-soft:      rgba(255, 255, 255, 0.07);
-  --ad-hover:          rgba(255, 255, 255, 0.04);
+  --bo-action:        #6f8dff;
+  --bo-action-strong: #8ea5ff;
+  --bo-action-soft:   rgba(111, 141, 255, 0.16);
+  --bo-action-ring:   rgba(111, 141, 255, 0.32);
+  --bo-on-action:     #060a1a;
+  --bo-second:        #2dd4bf;
 
-  --ad-on:             #e7e9ee;
-  --ad-muted:          #9aa1ad;
-  --ad-faint:          #6b7280;
-
-  --ad-primary-soft:   rgba(225, 29, 52, 0.16);
-  --ad-outline:        rgba(255, 255, 255, 0.12);
-
-  --ad-success-soft:   rgba(22, 163, 74, 0.18);
-  --ad-warn-soft:      rgba(217, 119, 6, 0.18);
-  --ad-danger-soft:    rgba(220, 38, 38, 0.18);
-  --ad-success-ink:    #4ade80;
-  --ad-warn-ink:       #fbbf24;
-  --ad-danger-ink:     #f87171;
+  --bo-success:      #4ade80;
+  --bo-success-soft: rgba(74, 222, 128, 0.16);
+  --bo-success-ink:  #6ee7a0;
+  --bo-warn:         #fbbf24;
+  --bo-warn-soft:    rgba(251, 191, 36, 0.16);
+  --bo-warn-ink:     #fcd34d;
+  --bo-danger:       #f87171;
+  --bo-danger-soft:  rgba(248, 113, 113, 0.15);
+  --bo-danger-ink:   #fca5a5;
+  --bo-info:         #60a5fa;
 
   color-scheme: dark;
 }
 
-:root[data-theme="dark"] body {
-  background-image:
-    radial-gradient(1200px 600px at 78% -10%, rgba(185, 134, 31, 0.12), transparent 60%),
-    radial-gradient(900px 500px at 0% 110%, rgba(225, 29, 52, 0.10), transparent 55%);
+// ── Compatibility layer ─────────────────────────────────────────────────────
+// Component stylesheets are written against the previous "Marquee" admin token
+// names. Aliasing them keeps ~15 feature stylesheets working untouched.
+//
+// Two aliases encode a deliberate design decision rather than a rename:
+//   --ad-primary-glow  → transparent. Box Office has no glow; the components
+//                        that ask for one now get nothing, which is correct.
+//   --ad-glass*        → opaque panels. There is no glass in this direction.
+:root {
+  --ad-surface:   var(--bo-paper);
+  --ad-surface-0: var(--bo-paper-2);
+  --ad-surface-1: var(--bo-panel);
+  --ad-surface-2: var(--bo-panel-2);
+  --ad-surface-3: var(--bo-panel-3);
+  --ad-surface-4: var(--bo-panel-4);
+
+  --ad-glass:               var(--bo-panel);
+  --ad-glass-strong:        var(--bo-panel-2);
+  --ad-glass-border:        var(--bo-rule);
+  --ad-glass-border-strong: var(--bo-rule-strong);
+
+  --ad-chrome:   var(--bo-chrome);
+  --ad-chrome-2: var(--bo-chrome-2);
+
+  --ad-line-soft: var(--bo-rule-soft);
+  --ad-outline:   var(--bo-rule);
+  --ad-hover:     var(--bo-hover);
+
+  --ad-on:    var(--bo-ink);
+  --ad-muted: var(--bo-muted);
+  --ad-faint: var(--bo-faint);
+
+  --ad-primary:        var(--bo-action);
+  --ad-primary-strong: var(--bo-action-strong);
+  --ad-primary-soft:   var(--bo-action-soft);
+  --ad-primary-glow:   transparent;
+  --ad-on-primary:     var(--bo-on-action);
+  --ad-secondary:      var(--bo-second);
+
+  --ad-success:      var(--bo-success);
+  --ad-success-soft: var(--bo-success-soft);
+  --ad-success-ink:  var(--bo-success-ink);
+  --ad-warn:         var(--bo-warn);
+  --ad-warn-soft:    var(--bo-warn-soft);
+  --ad-warn-ink:     var(--bo-warn-ink);
+  --ad-danger:       var(--bo-danger);
+  --ad-danger-soft:  var(--bo-danger-soft);
+  --ad-danger-ink:   var(--bo-danger-ink);
+  --ad-info:         var(--bo-info);
+
+  --ad-r-sm:   var(--bo-r-sm);
+  --ad-r-md:   var(--bo-r-md);
+  --ad-r-lg:   var(--bo-r-lg);
+  --ad-r-xl:   var(--bo-r-xl);
+  --ad-r-full: var(--bo-r-full);
+
+  --ad-sidebar-w: var(--bo-sidebar-w);
+  --ad-topbar-h:  var(--bo-topbar-h);
+
+  --ad-font-head: var(--bo-font-head);
+  --ad-font-body: var(--bo-font-body);
 }
-:root[data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background: #47505f; }
 
 // ── Reset / base ────────────────────────────────────────────────────────────
 *, *::before, *::after { box-sizing: border-box; }
@@ -129,77 +201,102 @@ html, body { height: 100%; }
 
 body {
   margin: 0;
-  font-family: var(--ad-font-body);
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--ad-on);
-  background-color: var(--ad-surface);
-  background-image:
-    radial-gradient(1200px 600px at 78% -10%, rgba(185, 134, 31, 0.10), transparent 60%),
-    radial-gradient(900px 500px at 0% 110%, rgba(225, 29, 52, 0.05), transparent 55%);
-  background-attachment: fixed;
+  font-family: var(--bo-font-body);
+  font-size: var(--cx-text-md);
+  line-height: var(--cx-leading);
+  color: var(--bo-ink);
+  // Flat ground. The previous theme washed two radial gradients over the page;
+  // an instrument does not need weather.
+  background-color: var(--bo-paper);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4 { font-family: var(--ad-font-head); }
+h1, h2, h3, h4 {
+  font-family: var(--bo-font-head);
+  letter-spacing: var(--cx-track-tight);
+}
+
+// Any figure that can end up in a column gets fixed-width digits.
+.ad-table td,
+.ad-table th,
+.ad-input,
+.ad-pagination,
+.kpi-value {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: var(--cx-focus-width) solid var(--bo-action);
+  outline-offset: var(--cx-focus-offset);
+}
+
+::selection {
+  background: var(--bo-action-soft);
+  color: var(--bo-ink);
+}
 
 // Scrollbar
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--ad-surface-4) transparent;
+  scrollbar-color: var(--bo-panel-4) transparent;
 }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb {
-  background: var(--ad-surface-4);
-  border-radius: var(--ad-r-full);
+  background: var(--bo-panel-4);
+  border-radius: var(--bo-r-full);
   border: 2px solid transparent;
   background-clip: padding-box;
+
+  &:hover { background: var(--bo-faint); }
 }
-*::-webkit-scrollbar-thumb:hover { background: #c2c8d2; }
 
 // ── Layout helpers ──────────────────────────────────────────────────────────
 .ad-page {
-  padding: 28px 32px 48px;
+  padding: 26px 32px 48px;
 }
 
+// The stub tear: the one ornament this direction allows, separating a page
+// header from the work below it.
 .ad-page-header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--cx-space-4);
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  padding-bottom: var(--cx-space-4);
+  margin-bottom: var(--cx-space-5);
+  border-bottom: 1px dashed var(--bo-rule);
 }
 
 .ad-h1 {
   margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ad-on);
+  font-size: 24px;
+  font-weight: var(--cx-weight-semibold);
+  letter-spacing: var(--cx-track-tight);
+  color: var(--bo-ink);
 }
-.ad-sub { margin: 6px 0 0; color: var(--ad-muted); font-size: 14px; }
+.ad-sub { margin: 5px 0 0; color: var(--bo-muted); font-size: var(--cx-text-sm); }
 
-.ad-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ad-toolbar { display: flex; align-items: center; gap: var(--cx-space-3); flex-wrap: wrap; }
 
-// ── Glass card ──────────────────────────────────────────────────────────────
+// ── Card — a ruled panel, not a floating slab ───────────────────────────────
 .ad-card {
-  background: var(--ad-glass);
-  border: 1px solid var(--ad-glass-border);
-  border-radius: var(--ad-r-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 22px 24px;
+  background: var(--bo-panel);
+  border: 1px solid var(--bo-rule);
+  border-radius: var(--bo-r-md);
+  padding: 20px 22px;
 }
 .ad-card--pad-0 { padding: 0; overflow: hidden; }
 
 .ad-card-title {
-  margin: 0 0 18px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ad-on);
-  font-family: var(--ad-font-head);
+  margin: 0 0 16px;
+  font-family: var(--bo-font-head);
+  font-size: 15px;
+  font-weight: var(--cx-weight-semibold);
+  letter-spacing: -0.01em;
+  color: var(--bo-ink);
 }
 
 // ── Buttons ─────────────────────────────────────────────────────────────────
@@ -207,38 +304,38 @@ h1, h2, h3, h4 { font-family: var(--ad-font-head); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 18px;
+  gap: var(--cx-space-2);
+  height: 38px;
+  padding: 0 16px;
   border: 1px solid transparent;
-  border-radius: var(--ad-r-sm);
-  font: 600 14px/1 var(--ad-font-body);
-  color: var(--ad-on);
+  border-radius: var(--bo-r-sm);
+  font: var(--cx-weight-semibold) var(--cx-text-sm) / 1 var(--bo-font-body);
+  color: var(--bo-ink);
   background: transparent;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
   white-space: nowrap;
+  transition: background var(--cx-dur) var(--cx-ease),
+              border-color var(--cx-dur) var(--cx-ease),
+              color var(--cx-dur) var(--cx-ease);
 
-  mat-icon { font-size: 19px; width: 19px; height: 19px; }
-  &:active { transform: translateY(1px); }
-  &:disabled { opacity: 0.55; cursor: not-allowed; }
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .ad-btn--primary {
-  background: var(--ad-primary);
-  color: var(--ad-on-primary);
-  box-shadow: 0 6px 20px -6px var(--ad-primary-glow);
-  &:hover:not(:disabled) { background: var(--ad-primary-strong); box-shadow: 0 10px 26px -6px var(--ad-primary-glow); }
+  background: var(--bo-action);
+  color: var(--bo-on-action);
+  &:hover:not(:disabled) { background: var(--bo-action-strong); }
 }
 .ad-btn--ghost {
-  background: var(--ad-glass);
-  border-color: var(--ad-glass-border);
-  &:hover:not(:disabled) { background: var(--ad-glass-strong); border-color: var(--ad-glass-border-strong); }
+  background: var(--bo-panel);
+  border-color: var(--bo-rule);
+  &:hover:not(:disabled) { background: var(--bo-panel-2); border-color: var(--bo-rule-strong); }
 }
 .ad-btn--danger {
-  background: var(--ad-danger-soft);
-  color: var(--ad-danger-ink);
-  border-color: rgba(220, 38, 38, 0.28);
-  &:hover:not(:disabled) { background: rgba(220, 38, 38, 0.16); }
+  background: var(--bo-danger-soft);
+  color: var(--bo-danger-ink);
+  border-color: rgba(179, 38, 30, 0.24);
+  &:hover:not(:disabled) { background: rgba(179, 38, 30, 0.15); }
 }
 .ad-btn--block { width: 100%; }
 
@@ -247,188 +344,197 @@ h1, h2, h3, h4 { font-family: var(--ad-font-head); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--ad-glass-border);
-  border-radius: var(--ad-r-sm);
-  background: var(--ad-glass);
-  color: var(--ad-muted);
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--bo-rule);
+  border-radius: var(--bo-r-sm);
+  background: var(--bo-panel);
+  color: var(--bo-muted);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color var(--cx-dur) var(--cx-ease),
+              border-color var(--cx-dur) var(--cx-ease),
+              background var(--cx-dur) var(--cx-ease);
 
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
-  &:hover { color: var(--ad-on); border-color: var(--ad-glass-border-strong); background: var(--ad-glass-strong); }
-  &.is-danger:hover { color: var(--ad-danger-ink); border-color: rgba(220, 38, 38, 0.4); background: var(--ad-danger-soft); }
-  &.is-primary:hover { color: var(--ad-primary-strong); border-color: rgba(225, 29, 52, 0.4); background: var(--ad-primary-soft); }
+  &:hover { color: var(--bo-ink); border-color: var(--bo-rule-strong); background: var(--bo-panel-2); }
+  &.is-danger:hover { color: var(--bo-danger-ink); border-color: rgba(179, 38, 30, 0.4); background: var(--bo-danger-soft); }
+  &.is-primary:hover { color: var(--bo-action); border-color: var(--bo-action-ring); background: var(--bo-action-soft); }
 }
 
 // ── Form controls ───────────────────────────────────────────────────────────
-.ad-field { display: flex; flex-direction: column; gap: 7px; }
+.ad-field { display: flex; flex-direction: column; gap: 6px; }
 .ad-label {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: var(--cx-text-xs);
+  font-weight: var(--cx-weight-semibold);
+  letter-spacing: var(--cx-track-caps);
   text-transform: uppercase;
-  color: var(--ad-muted);
+  color: var(--bo-muted);
 }
 .ad-input, .ad-select, textarea.ad-input {
   width: 100%;
-  height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--ad-glass-border);
-  border-radius: var(--ad-r-sm);
-  background: var(--ad-surface-1);
-  color: var(--ad-on);
-  font: 400 14px/1 var(--ad-font-body);
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--bo-rule);
+  border-radius: var(--bo-r-sm);
+  background: var(--bo-panel);
+  color: var(--bo-ink);
+  font: var(--cx-weight-regular) var(--cx-text-sm) / 1 var(--bo-font-body);
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color var(--cx-dur) var(--cx-ease), box-shadow var(--cx-dur) var(--cx-ease);
 
-  &::placeholder { color: var(--ad-faint); }
+  &::placeholder { color: var(--bo-faint); }
   &:focus {
-    border-color: var(--ad-primary);
-    box-shadow: 0 0 0 3px var(--ad-primary-soft);
+    border-color: var(--bo-action);
+    box-shadow: 0 0 0 3px var(--bo-action-soft);
   }
   // Highlight required/invalid fields once the user has interacted or attempted to save.
   &.ng-invalid.ng-touched {
-    border-color: var(--ad-danger);
-    box-shadow: 0 0 0 3px var(--ad-danger-soft);
+    border-color: var(--bo-danger);
+    box-shadow: 0 0 0 3px var(--bo-danger-soft);
   }
 }
-textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: vertical; }
+textarea.ad-input { height: auto; padding: 10px 12px; line-height: var(--cx-leading); resize: vertical; }
 
 // Inline validation message shown under an invalid field.
-.ad-field-err { display: block; margin-top: 6px; font-size: 12px; color: var(--ad-danger); }
+.ad-field-err { display: block; margin-top: 5px; font-size: var(--cx-text-xs); color: var(--bo-danger); }
 .ad-select { appearance: none; cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7481' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 38px;
+  background-position: right 10px center;
+  padding-right: 34px;
 }
-.ad-select option { background: var(--ad-surface-2); color: var(--ad-on); }
+.ad-select option { background: var(--bo-panel); color: var(--bo-ink); }
 
 // Search box (icon + input)
 .ad-search { position: relative; display: inline-flex; align-items: center; }
 .ad-search mat-icon {
-  position: absolute; left: 12px; color: var(--ad-faint);
-  font-size: 19px; width: 19px; height: 19px; pointer-events: none;
+  position: absolute; left: 11px; color: var(--bo-faint);
+  font-size: 18px; width: 18px; height: 18px; pointer-events: none;
 }
-.ad-search .ad-input { padding-left: 40px; min-width: 240px; }
+.ad-search .ad-input { padding-left: 36px; min-width: 240px; }
 
-// ── Table ───────────────────────────────────────────────────────────────────
+// ── Table — the centre of this direction ────────────────────────────────────
 .ad-table-wrap { overflow-x: auto; }
 .ad-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--cx-text-sm);
 
   thead th {
     text-align: left;
-    padding: 14px 18px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    padding: 11px 16px;
+    font-size: var(--cx-text-xs);
+    font-weight: var(--cx-weight-semibold);
+    letter-spacing: var(--cx-track-caps);
     text-transform: uppercase;
-    color: var(--ad-muted);
-    border-bottom: 1px solid var(--ad-glass-border);
+    color: var(--bo-muted);
+    background: var(--bo-panel-2);
+    border-bottom: 1px solid var(--bo-rule);
     white-space: nowrap;
   }
   tbody td {
-    padding: 14px 18px;
-    color: var(--ad-on);
-    border-bottom: 1px solid var(--ad-line-soft);
+    padding: 11px 16px;
+    color: var(--bo-ink-2);
+    border-bottom: 1px solid var(--bo-rule-soft);
     vertical-align: middle;
   }
-  tbody tr { transition: background 0.15s ease; }
-  tbody tr:hover { background: var(--ad-hover); }
+  tbody tr { transition: background var(--cx-dur-fast) var(--cx-ease); }
+  tbody tr:hover { background: var(--bo-hover); }
   tbody tr:last-child td { border-bottom: none; }
   .ad-td-actions { text-align: right; white-space: nowrap; }
-  .ad-td-actions .ad-icon-btn + .ad-icon-btn { margin-left: 6px; }
+  .ad-td-actions .ad-icon-btn + .ad-icon-btn { margin-left: 5px; }
 }
 
 // ── Pills / chips / badges ──────────────────────────────────────────────────
+// State is encoded twice — in the dot and in the word — so a row's condition
+// survives being skimmed, printed, or read by someone who can't separate hues.
 .ad-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 11px;
-  border-radius: var(--ad-r-full);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
-  background: var(--ad-surface-3);
-  color: var(--ad-muted);
+  padding: 3px 9px;
+  border-radius: var(--bo-r-sm);
+  font-size: var(--cx-text-xs);
+  font-weight: var(--cx-weight-semibold);
+  line-height: 1.5;
+  background: var(--bo-panel-3);
+  color: var(--bo-muted);
 
-  &::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  &::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
 }
-.ad-pill--success { background: var(--ad-success-soft); color: var(--ad-success-ink); }
-.ad-pill--warn    { background: var(--ad-warn-soft);    color: var(--ad-warn-ink); }
-.ad-pill--danger  { background: var(--ad-danger-soft);  color: var(--ad-danger-ink); }
-.ad-pill--violet  { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
-.ad-pill--neutral { background: var(--ad-surface-3);    color: var(--ad-muted); }
+.ad-pill--success { background: var(--bo-success-soft); color: var(--bo-success-ink); }
+.ad-pill--warn    { background: var(--bo-warn-soft);    color: var(--bo-warn-ink); }
+.ad-pill--danger  { background: var(--bo-danger-soft);  color: var(--bo-danger-ink); }
+.ad-pill--violet  { background: var(--bo-action-soft);  color: var(--bo-action); }
+.ad-pill--neutral { background: var(--bo-panel-3);      color: var(--bo-muted); }
 .ad-pill.no-dot::before { display: none; }
 
 .ad-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--ad-r-full);
-  background: var(--ad-glass);
-  border: 1px solid var(--ad-glass-border);
-  font-size: 13px;
-  color: var(--ad-on);
+  padding: 5px 11px;
+  border-radius: var(--bo-r-sm);
+  background: var(--bo-panel);
+  border: 1px solid var(--bo-rule);
+  font-size: var(--cx-text-sm);
+  color: var(--bo-ink);
 }
 
-// Avatar (initials)
+// Avatar (initials) — squared off, flat. A gradient disc would be the only
+// decorative object in the whole app.
 .ad-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--ad-primary), #a01028);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--bo-r-sm);
+  background: var(--bo-panel-3);
+  border: 1px solid var(--bo-rule);
+  color: var(--bo-ink-2);
+  font-family: var(--bo-font-head);
+  font-weight: var(--cx-weight-semibold);
+  font-size: var(--cx-text-sm);
   flex: none;
 }
 
 // ── Empty state ─────────────────────────────────────────────────────────────
 .ad-empty {
   text-align: center;
-  padding: 48px 20px;
-  color: var(--ad-muted);
+  padding: 44px 20px;
+  color: var(--bo-muted);
 
-  mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--ad-faint); margin-bottom: 8px; }
+  mat-icon { font-size: 36px; width: 36px; height: 36px; color: var(--bo-faint); margin-bottom: 6px; }
   p { margin: 6px 0 0; }
 }
 
 // ── Material tweaks (only for components we still use: spinner) ──────────────
 .mat-mdc-progress-spinner {
-  --mdc-circular-progress-active-indicator-color: var(--ad-on-primary);
+  --mdc-circular-progress-active-indicator-color: var(--bo-action);
 }
 
 // ── Shared catalog (lookup) CRUD form ────────────────────────────────────────
 .catalog-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: var(--cx-space-4);
 
   .full-span { grid-column: 1 / -1; }
-  .form-actions { display: flex; gap: 12px; }
+  .form-actions { display: flex; gap: var(--cx-space-3); }
   textarea.ad-input { resize: vertical; min-height: 96px; font-family: inherit; }
-  .ad-check { display: flex; align-items: center; gap: 8px; }
-  .ad-check input { width: 16px; height: 16px; }
+  .ad-check { display: flex; align-items: center; gap: var(--cx-space-2); }
+  .ad-check input { width: 16px; height: 16px; accent-color: var(--bo-action); }
 }
-.form-card { margin-bottom: 22px; }
+.form-card { margin-bottom: 20px; }
 
-// ── Admin modal popups (scrim + centered card, same pattern as the seat map) ──
+// ── Admin modal popups (scrim + centered card) ───────────────────────────────
+// The only place elevation is allowed: a modal has to read as detached from the
+// page, and a hairline alone won't carry that.
 .modal-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(21, 23, 29, 0.40);
-  backdrop-filter: blur(3px);
+  background: rgba(16, 19, 23, 0.42);
   z-index: 50;
 }
 .modal-card {
@@ -440,10 +546,10 @@ textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: 
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  background: var(--ad-surface-1);
-  border: 1px solid var(--ad-glass-border-strong);
-  border-radius: var(--ad-r-lg);
-  box-shadow: 0 30px 80px -24px rgba(0, 0, 0, 0.75);
+  background: var(--bo-panel);
+  border: 1px solid var(--bo-rule-strong);
+  border-radius: var(--bo-r-lg);
+  box-shadow: 0 24px 60px -20px rgba(16, 19, 23, 0.35);
   z-index: 51;
 }
 .modal-card--wide { width: min(720px, 94vw); }
@@ -452,21 +558,19 @@ textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: 
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--ad-glass-border);
+  gap: var(--cx-space-4);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--bo-rule);
 
-  .ad-card-title { margin: 0; display: flex; align-items: center; gap: 8px; }
-  .ad-card-title mat-icon.is-danger { color: var(--ad-danger); }
+  .ad-card-title { margin: 0; display: flex; align-items: center; gap: var(--cx-space-2); }
+  .ad-card-title mat-icon.is-danger { color: var(--bo-danger); }
 }
-.modal-body { padding: 22px; overflow-y: auto; }
-.modal-msg { margin: 0 0 20px; color: var(--ad-on); line-height: 1.5; }
+.modal-body { padding: 20px; overflow-y: auto; }
+.modal-msg { margin: 0 0 18px; color: var(--bo-ink-2); line-height: var(--cx-leading); }
 // Forms hosted inside a modal drop their own card chrome — the modal supplies it.
 .modal-card .ad-card {
   background: transparent;
   border: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   margin: 0;
   padding: 0;
 }
@@ -474,10 +578,10 @@ textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: 
 // Colour swatch used in the seat-type list
 .color-dot {
   display: inline-block;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1px solid var(--ad-glass-border-strong);
+  width: 16px;
+  height: 16px;
+  border-radius: var(--bo-r-sm);
+  border: 1px solid var(--bo-rule-strong);
   vertical-align: middle;
 }
 
@@ -486,37 +590,33 @@ textarea.ad-input { height: auto; padding: 12px 14px; line-height: 1.5; resize: 
   display: block;
   margin: 16px 14px 6px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: var(--cx-weight-semibold);
+  letter-spacing: var(--cx-track-caps);
   text-transform: uppercase;
-  color: var(--ad-muted);
-}
-
-@media (max-width: 720px) {
-  .catalog-form { grid-template-columns: 1fr; }
+  color: var(--bo-faint);
 }
 
 // ── Per-column filter row (inside the table head) ─────────────────────────────
 .ad-table thead tr.ad-filter-row th {
   padding-top: 0;
-  padding-bottom: 10px;
+  padding-bottom: 9px;
 }
 .ad-filter-input {
   width: 100%;
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--ad-glass-border);
-  border-radius: var(--ad-r-sm);
-  background: var(--ad-surface-1);
-  color: var(--ad-on);
-  font: 400 13px/1 var(--ad-font-body);
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--bo-rule);
+  border-radius: var(--bo-r-sm);
+  background: var(--bo-panel);
+  color: var(--bo-ink);
+  font: var(--cx-weight-regular) var(--cx-text-xs) / 1 var(--bo-font-body);
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color var(--cx-dur) var(--cx-ease), box-shadow var(--cx-dur) var(--cx-ease);
 
-  &::placeholder { color: var(--ad-faint); }
+  &::placeholder { color: var(--bo-faint); }
   &:focus {
-    border-color: var(--ad-primary);
-    box-shadow: 0 0 0 3px var(--ad-primary-soft);
+    border-color: var(--bo-action);
+    box-shadow: 0 0 0 3px var(--bo-action-soft);
   }
 }
 select.ad-filter-input { appearance: none; cursor: pointer; }
@@ -527,55 +627,55 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 18px;
-  padding: 14px 18px;
-  border-top: 1px solid var(--ad-glass-border);
-  color: var(--ad-muted);
-  font-size: 13px;
+  gap: var(--cx-space-4);
+  padding: 12px 16px;
+  border-top: 1px solid var(--bo-rule);
+  color: var(--bo-muted);
+  font-size: var(--cx-text-sm);
 
   .ad-pagination-info { margin-right: auto; }
 
   .ad-pagination-size {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--cx-space-2);
 
     .ad-label { margin: 0; }
-    .ad-input { width: auto; height: 32px; padding: 0 28px 0 10px; }
+    .ad-input { width: auto; height: 30px; padding: 0 26px 0 9px; }
   }
 
   .ad-pagination-nav {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--cx-space-2);
   }
 
-  .ad-pagination-page { min-width: 96px; text-align: center; color: var(--ad-on); }
+  .ad-pagination-page { min-width: 96px; text-align: center; color: var(--bo-ink); }
 }
 
 // ── Image upload (admin forms) ───────────────────────────────────────────────
 .img-upload-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 8px;
+  gap: var(--cx-space-3);
+  margin-top: var(--cx-space-2);
 
   label { cursor: pointer; }
 }
 .img-upload-status {
-  font-size: 13px;
-  color: var(--ad-muted);
+  font-size: var(--cx-text-sm);
+  color: var(--bo-muted);
 
-  &.err { color: var(--ad-danger); }
+  &.err { color: var(--bo-danger); }
 }
 .img-preview {
-  margin-top: 10px;
+  margin-top: var(--cx-space-3);
 
   img {
     max-width: 160px;
     max-height: 140px;
-    border-radius: var(--ad-r-sm);
-    border: 1px solid var(--ad-glass-border);
+    border-radius: var(--bo-r-sm);
+    border: 1px solid var(--bo-rule);
     display: block;
   }
 }
@@ -583,7 +683,7 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
 // ── Responsive (phones & small tablets) ───────────────────────────────────────
 @media (max-width: 768px) {
   .ad-page { padding: 18px 16px 36px; }
-  .ad-h1 { font-size: 22px; }
+  .ad-h1 { font-size: 21px; }
   .ad-page-header { align-items: stretch; }
   .ad-toolbar { width: 100%; }
   // Search grows to fill the row instead of forcing a fixed 240px width.
@@ -592,5 +692,9 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
   // Catalog create/edit forms collapse to a single column inside the modal.
   .catalog-form { grid-template-columns: 1fr; }
   // Pagination wraps neatly on narrow screens.
-  .ad-pagination { flex-wrap: wrap; gap: 12px; }
+  .ad-pagination { flex-wrap: wrap; gap: var(--cx-space-3); }
+}
+
+@media (max-width: 720px) {
+  .catalog-form { grid-template-columns: 1fr; }
 }

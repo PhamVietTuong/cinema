@@ -25,4 +25,18 @@ public class SeatStore : GenericStore<Seat>, ISeatStore
             .Select(it => it.SeatId)
             .Distinct()
             .ToListAsync();
+
+    public async Task<IReadOnlyDictionary<(Guid ShowTimeId, Guid RoomId), int>> GetBookedSeatCountsByMovieAsync(Guid movieId)
+    {
+        var rows = await Context.InvoiceTicket
+            .Where(it => it.ShowTimeRoom.ShowTime.MovieId == movieId &&
+                         (it.Invoice.Status == InvoiceStatus.Paid || it.Invoice.Status == InvoiceStatus.Pending))
+            .Select(it => new { it.ShowTimeId, it.RoomId, it.SeatId })
+            .Distinct()
+            .GroupBy(x => new { x.ShowTimeId, x.RoomId })
+            .Select(g => new { g.Key.ShowTimeId, g.Key.RoomId, Count = g.Count() })
+            .ToListAsync();
+
+        return rows.ToDictionary(r => (r.ShowTimeId, r.RoomId), r => r.Count);
+    }
 }

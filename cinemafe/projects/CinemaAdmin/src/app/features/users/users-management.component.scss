@@ -19,7 +19,7 @@
   mat-icon { font-size: 23px; width: 23px; height: 23px; }
   &.i-violet { background: var(--ad-primary-soft); color: var(--ad-primary-strong); }
   &.i-orange { background: var(--ad-warn-soft); color: var(--ad-warn-ink); }
-  &.i-green  { background: var(--ad-success-soft); color: #15803d; }
+  &.i-green  { background: var(--ad-success-soft); color: var(--bo-success-ink); }
 }
 
 .user-cell { display: flex; align-items: center; gap: 12px;

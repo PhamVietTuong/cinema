@@ -1,0 +1,65 @@
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║  Shared scale                                                              ║
+// ║                                                                            ║
+// ║  The part of the design system that does NOT change with visual direction.  ║
+// ║  CinemaUser runs "Night Screening" (dark, projector cyan); CinemaAdmin runs  ║
+// ║  "Box Office" (light, hairlines, ultramarine). They are not meant to look   ║
+// ║  alike — but they measure space, type and time identically, which is what   ║
+// ║  keeps them recognisable as one product.                                    ║
+// ║                                                                            ║
+// ║  Colour, radius and elevation are deliberately absent: those ARE the        ║
+// ║  direction. Each app defines its own in its styles.scss.                     ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
+:root {
+  // ── Space — 4px base, doubling once past the comfortable reading gap ──────
+  --cx-space-1: 4px;
+  --cx-space-2: 8px;
+  --cx-space-3: 12px;
+  --cx-space-4: 16px;
+  --cx-space-5: 24px;
+  --cx-space-6: 32px;
+  --cx-space-7: 48px;
+  --cx-space-8: 64px;
+
+  // ── Type scale — minor third off a 15px body ──────────────────────────────
+  --cx-text-xs:  0.75rem;
+  --cx-text-sm:  0.8125rem;
+  --cx-text-md:  0.9375rem;
+  --cx-text-lg:  1.125rem;
+  --cx-text-xl:  1.375rem;
+  --cx-text-2xl: 1.75rem;
+  --cx-text-3xl: 2.25rem;
+  --cx-text-4xl: 3rem;
+
+  --cx-leading-tight: 1.15;
+  --cx-leading-snug:  1.35;
+  --cx-leading:       1.55;
+
+  // Display headings tighten; uppercase labels need air or they read as noise.
+  --cx-track-tight: -0.02em;
+  --cx-track-caps:   0.09em;
+
+  --cx-weight-regular:  400;
+  --cx-weight-medium:   500;
+  --cx-weight-semibold: 600;
+  --cx-weight-bold:     700;
+
+  // ── Motion — one easing curve, three durations ────────────────────────────
+  --cx-dur-fast: 120ms;
+  --cx-dur:      180ms;
+  --cx-dur-slow: 320ms;
+  --cx-ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+
+  // ── Focus ring ───────────────────────────────────────────────────────────
+  --cx-focus-width:  2px;
+  --cx-focus-offset: 2px;
+}
+
+// Motion is decoration; never let it block someone who has opted out.
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cx-dur-fast: 0ms;
+    --cx-dur:      0ms;
+    --cx-dur-slow: 0ms;
+  }
+}

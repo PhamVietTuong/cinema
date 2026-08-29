@@ -324,16 +324,22 @@ public class BookingManager : IBookingManager
         {
             return false;
         }
+        // Fall back to the reference stored at initiation. The caller returning from a redirect
+        // doesn't necessarily carry it, and the server already knows which one it issued.
+        var reference = string.IsNullOrWhiteSpace(paymentReference)
+            ? invoice.PaymentReference ?? string.Empty
+            : paymentReference;
+
         // Verify with the invoice's provider (must succeed and the captured amount must match FinalAmount).
         // Only the dev Sandbox approves this synchronous path; real providers are callback-authoritative, so
         // this returns false for them and the invoice is instead finalized by HandlePaymentCallbackAsync.
-        var verification = await _gateways.Resolve(invoice.PaymentMethod).VerifyPaymentAsync(paymentReference, invoice.FinalAmount);
+        var verification = await _gateways.Resolve(invoice.PaymentMethod).VerifyPaymentAsync(reference, invoice.FinalAmount);
         if (!verification.Success)
         {
             return false;
         }
 
-        await FinalizePaidInvoiceAsync(invoice, paymentReference);
+        await FinalizePaidInvoiceAsync(invoice, reference);
         return true;
     }
 

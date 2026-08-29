@@ -27,7 +27,7 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
             .FirstOrDefaultAsync(sr => sr.ShowTimeId == showTimeId && sr.RoomId == roomId);
 
     public async Task<(IReadOnlyList<ShowTime> Items, int Total)> SearchAsync(
-        Guid? movieId, Guid? roomId, bool? isActive, int page, int pageSize)
+        Guid? movieId, Guid? roomId, bool? isActive, DateTime? from, DateTime? to, int page, int pageSize)
     {
         var query = DbSet
             .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room)
@@ -36,6 +36,8 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
         if (movieId.HasValue) { query = query.Where(s => s.MovieId == movieId.Value); }
         if (roomId.HasValue) { query = query.Where(s => s.ShowTimeRooms.Any(sr => sr.RoomId == roomId.Value)); }
         if (isActive.HasValue) { query = query.Where(s => s.IsActive == isActive.Value); }
+        if (from.HasValue) { query = query.Where(s => s.StartTime >= from.Value); }
+        if (to.HasValue) { query = query.Where(s => s.StartTime < to.Value); }
 
         var total = await query.CountAsync();
         var items = await query

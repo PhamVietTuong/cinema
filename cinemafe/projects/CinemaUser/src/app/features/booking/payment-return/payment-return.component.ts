@@ -45,7 +45,18 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
       this._cdr.markForCheck();
       return;
     }
-    this._poll();
+    // Ask the server to settle the invoice before polling. This is safe by design: ConfirmPayment
+    // is owner-scoped and defers to the gateway's VerifyPaymentAsync, which every real provider
+    // refuses — only the dev Sandbox approves, precisely so local dev needs no live callback.
+    // Without this nothing ever settles a Sandbox payment, so a booking sat Pending until the
+    // reaper cancelled it and no one could complete a purchase outside production.
+    this._payment.confirmPayment(PaymentServiceAgent.ConfirmPaymentRequest.fromJS({
+      invoiceId: this.invoiceId,
+      paymentReference: this._route.snapshot.queryParamMap.get('reference') ?? '',
+    })).subscribe({
+      next: () => this._poll(),
+      error: () => this._poll(),   // real providers reject; the gateway callback settles those
+    });
   }
 
   ngOnDestroy(): void {

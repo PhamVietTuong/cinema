@@ -31,4 +31,25 @@ public class CommentStore : GenericStore<Comment>, ICommentStore
 
     public async Task<IEnumerable<Comment>> GetRepliesAsync(Guid parentId)
         => await DbSet.Where(c => c.ParentId == parentId).ToListAsync();
+
+    public async Task<IReadOnlyList<CommentView>> GetRecentForMovieAsync(Guid movieId, int take)
+        => await DbSet
+            .Where(c => c.MovieId == movieId && c.ParentId == null && c.IsApproved)
+            .OrderByDescending(c => c.CreationTime)
+            .Take(take)
+            .Select(c => new CommentView(
+                c.Id,
+                c.Content,
+                c.ParentId,
+                c.CreationTime,
+                c.User.Name,
+                c.User.Avatar,
+                c.Replies
+                    .Where(r => r.IsApproved)
+                    .OrderBy(r => r.CreationTime)
+                    .Select(r => new CommentView(
+                        r.Id, r.Content, r.ParentId, r.CreationTime,
+                        r.User.Name, r.User.Avatar, new List<CommentView>()))
+                    .ToList()))
+            .ToListAsync();
 }

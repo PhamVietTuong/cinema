@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Cinema.Business.DTO.Requests;
 using Cinema.Data.Enums;
 
@@ -26,6 +27,8 @@ public class CreateShowTimeRequest
     public ShowTimeType ShowTimeType { get; set; } = ShowTimeType.Normal;
     public bool IsActive { get; set; } = true;
     public Guid RoomId { get; set; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "Base price cannot be negative.")]
     public int BasePrice { get; set; }
 }
 
@@ -39,5 +42,7 @@ public class UpdateShowTimeRequest : IHasId
     public ShowTimeType ShowTimeType { get; set; } = ShowTimeType.Normal;
     public bool IsActive { get; set; } = true;
     public Guid RoomId { get; set; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "Base price cannot be negative.")]
     public int BasePrice { get; set; }
 }

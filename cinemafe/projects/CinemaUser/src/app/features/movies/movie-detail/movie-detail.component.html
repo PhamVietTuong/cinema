@@ -77,7 +77,10 @@
             <a class="time-slot" *ngFor="let st of group.items"
                routerLink="/booking/seats"
                [queryParams]="{ showTimeId: st.id, roomId: st.roomId }"
-               [title]="st.theaterName + ' · ' + st.roomName">
+               [title]="(st.startTime | date:'EEEE dd/MM/yyyy HH:mm') + ' · ' + st.theaterName + ' · ' + st.roomName">
+              <!-- The date matters: a film's upcoming slots can span several days, and a bare
+                   HH:mm gave no way to tell which day a slot belonged to. -->
+              <span class="slot-date">{{ st.startTime | date:'dd/MM' }}</span>
               <span class="slot-time">{{ st.startTime | date:'HH:mm' }}</span>
               <span class="slot-seats">{{ 'movies.showtimes.seats' | translate:{ count: st.availableSeats } }}</span>
             </a>

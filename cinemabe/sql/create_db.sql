@@ -455,3 +455,28 @@ CREATE INDEX [IX_User_UserTypeId] ON [User] ([UserTypeId]);
 CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_ReminderLog_UserId_ShowTimeId] ON [ReminderLog] ([UserId], [ShowTimeId]);
 CREATE UNIQUE INDEX [IX_GiftCard_Code] ON [GiftCard] ([Code]);
+
+-- ============================================================
+-- EF Core migrations baseline
+-- ============================================================
+-- The schema above is the exact shape produced by the InitialBaseline migration
+-- (Cinema.Data/Migrations). Stamping the history table here marks this fresh database
+-- as already migrated, so `dotnet ef database update` applies only later migrations
+-- instead of trying to re-create everything.
+--
+-- Keep this row in sync with the InitialBaseline migration id if it is ever regenerated.
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '__EFMigrationsHistory')
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20260726064153_InitialBaseline')
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260726064153_InitialBaseline', N'9.0.0');
+END
