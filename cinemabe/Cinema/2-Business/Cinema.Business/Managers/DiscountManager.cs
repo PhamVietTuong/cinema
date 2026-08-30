@@ -27,17 +27,38 @@ public class DiscountManager : IDiscountManager
             || (e.Description ?? string.Empty).Contains(kw, StringComparison.OrdinalIgnoreCase);
     }
 
+    // Loaded with scope up-front (join rows can't be filtered by the generic IQueryable helpers),
+    // so filtering here stays in-memory — mirrors GetFilteredXQuery's shape, just over a List.
+    private static List<Discount> GetFilteredDiscountList(List<Discount> all, Dictionary<string, string>? filters)
+    {
+        if (filters == null)
+        {
+            return all;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    all = all.Where(e => Match(e, keyword)).ToList();
+                    break;
+            }
+        }
+        return all;
+    }
+
     // Overridden so the promotion's theater scope (join rows) is loaded and projected.
     public async Task<DefaultSearchResults<DiscountDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
-        var all = await _uow.DiscountStore.GetAllWithScopeAsync();
-
-        var keyword = search.Filters.GetString("keyword");
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            all = all.Where(e => Match(e, keyword)).ToList();
-        }
+        var all = GetFilteredDiscountList(await _uow.DiscountStore.GetAllWithScopeAsync(), search.Filters);
 
         var page = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize > 0 ? search.PageSize : 20;

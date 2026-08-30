@@ -29,6 +29,7 @@ public interface IGenericStore<Entity> where Entity : BaseEntity
     Task<List<Entity>> AllPageAsync(int pageIndex, int pageSize);
     Task<List<Entity>> AllPageAsync(IQueryable<Entity> query, int pageIndex, int pageSize);
     Task<int> CountAsync(Expression<Func<Entity, bool>> whereExpression);
+    Task<int> CountAsync(IQueryable<Entity> query);
     Task<int> CountIncludeAsync<Class>(string navigationPath, Expression<Func<Entity, bool>> whereExpression) where Class : class;
 
     // ── Include / filter helpers ──────────────────────────────────────────────

@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -23,17 +22,40 @@ public class AgeRestrictionManager : IAgeRestrictionManager
         return await _uow.AgeRestrictionStore.ExistsAsync(e => e.Id == id);
     }
 
+    private IQueryable<AgeRestriction> GetFilteredAgeRestrictionQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.AgeRestrictionStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    query = _uow.AgeRestrictionStore.FilterQuery(query, e => e.Code.Contains(keyword) || e.Description.Contains(keyword));
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<AgeRestrictionDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
-        var keyword = search.Filters.GetString("keyword");
 
-        Expression<Func<AgeRestriction, bool>> predicate = e =>
-            string.IsNullOrEmpty(keyword) || e.Code.Contains(keyword!) || e.Description.Contains(keyword!);
-
-        var total = await _uow.AgeRestrictionStore.CountAsync(predicate);
-        var items = await _uow.AgeRestrictionStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredAgeRestrictionQuery(search.Filters);
+        var total = await _uow.AgeRestrictionStore.CountAsync(query);
+        var items = await _uow.AgeRestrictionStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<AgeRestriction, AgeRestrictionDTO>(items, total, page, pageSize);
     }
 

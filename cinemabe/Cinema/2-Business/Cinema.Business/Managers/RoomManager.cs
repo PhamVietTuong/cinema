@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -24,23 +23,61 @@ public class RoomManager : IRoomManager
         return await _uow.RoomStore.ExistsAsync(e => e.Id == id);
     }
 
+    private IQueryable<Room> GetFilteredRoomQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.RoomStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    query = _uow.RoomStore.FilterQuery(query, e => e.Name.Contains(keyword));
+                    break;
+
+                case "theaterId":
+                    if (Guid.TryParse(filters[key], out var theaterId))
+                    {
+                        query = _uow.RoomStore.FilterQuery(query, e => e.TheaterId == theaterId);
+                    }
+                    break;
+
+                case "roomTypeId":
+                    if (Guid.TryParse(filters[key], out var roomTypeId))
+                    {
+                        query = _uow.RoomStore.FilterQuery(query, e => e.RoomTypeId == roomTypeId);
+                    }
+                    break;
+
+                case "status":
+                    if (Enum.TryParse<RoomStatus>(filters[key], true, out var status))
+                    {
+                        query = _uow.RoomStore.FilterQuery(query, e => e.Status == status);
+                    }
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<RoomDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
-        var keyword = search.Filters.GetString("keyword");
-        var theaterId = search.Filters.GetGuid("theaterId");
-        var roomTypeId = search.Filters.GetGuid("roomTypeId");
-        var status = search.Filters.GetEnum<RoomStatus>("status");
 
-        Expression<Func<Room, bool>> predicate = e =>
-            (string.IsNullOrEmpty(keyword) || e.Name.Contains(keyword!)) &&
-            (theaterId == null || e.TheaterId == theaterId) &&
-            (roomTypeId == null || e.RoomTypeId == roomTypeId) &&
-            (status == null || e.Status == status);
-
-        var total = await _uow.RoomStore.CountAsync(predicate);
-        var items = await _uow.RoomStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredRoomQuery(search.Filters);
+        var total = await _uow.RoomStore.CountAsync(query);
+        var items = await _uow.RoomStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<Room, RoomDTO>(items, total, page, pageSize);
     }
 

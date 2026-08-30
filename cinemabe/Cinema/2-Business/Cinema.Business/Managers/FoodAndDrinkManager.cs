@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -23,21 +22,54 @@ public class FoodAndDrinkManager : IFoodAndDrinkManager
         return await _uow.FoodAndDrinkStore.ExistsAsync(e => e.Id == id);
     }
 
+    private IQueryable<FoodAndDrink> GetFilteredFoodAndDrinkQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.FoodAndDrinkStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    query = _uow.FoodAndDrinkStore.FilterQuery(query, e => e.Name.Contains(keyword));
+                    break;
+
+                case "theaterId":
+                    if (Guid.TryParse(filters[key], out var theaterId))
+                    {
+                        query = _uow.FoodAndDrinkStore.FilterQuery(query, e => e.TheaterId == theaterId);
+                    }
+                    break;
+
+                case "isAvailable":
+                    if (bool.TryParse(filters[key], out var isAvailable))
+                    {
+                        query = _uow.FoodAndDrinkStore.FilterQuery(query, e => e.IsAvailable == isAvailable);
+                    }
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<FoodAndDrinkDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
-        var keyword = search.Filters.GetString("keyword");
-        var theaterId = search.Filters.GetGuid("theaterId");
-        var isAvailable = search.Filters.GetBool("isAvailable");
 
-        Expression<Func<FoodAndDrink, bool>> predicate = e =>
-            (string.IsNullOrEmpty(keyword) || e.Name.Contains(keyword!)) &&
-            (theaterId == null || e.TheaterId == theaterId) &&
-            (isAvailable == null || e.IsAvailable == isAvailable);
-
-        var total = await _uow.FoodAndDrinkStore.CountAsync(predicate);
-        var items = await _uow.FoodAndDrinkStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredFoodAndDrinkQuery(search.Filters);
+        var total = await _uow.FoodAndDrinkStore.CountAsync(query);
+        var items = await _uow.FoodAndDrinkStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<FoodAndDrink, FoodAndDrinkDTO>(items, total, page, pageSize);
     }
 

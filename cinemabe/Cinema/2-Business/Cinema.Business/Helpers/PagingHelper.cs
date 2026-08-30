@@ -16,8 +16,7 @@ public static class PagingHelper
     }
 
     /// <summary>Wraps a page of entities into the standard paged DTO result.</summary>
-    public static DefaultSearchResults<TDto> ToPagedResult<TEntity, TDto>(List<TEntity> items, int total, int page, int pageSize)
-        where TDto : new()
+    public static DefaultSearchResults<TDto> ToPagedResult<TEntity, TDto>(List<TEntity> items, int total, int page, int pageSize) where TDto : new()
     {
         return new DefaultSearchResults<TDto>
         {

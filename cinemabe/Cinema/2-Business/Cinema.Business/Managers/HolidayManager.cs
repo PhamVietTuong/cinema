@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -23,17 +22,40 @@ public class HolidayManager : IHolidayManager
         return await _uow.HolidayStore.ExistsAsync(e => e.Id == id);
     }
 
+    private IQueryable<Holiday> GetFilteredHolidayQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.HolidayStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    query = _uow.HolidayStore.FilterQuery(query, e => e.Name.Contains(keyword));
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<HolidayDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
-        var keyword = search.Filters.GetString("keyword");
 
-        Expression<Func<Holiday, bool>> predicate = e =>
-            string.IsNullOrEmpty(keyword) || e.Name.Contains(keyword!);
-
-        var total = await _uow.HolidayStore.CountAsync(predicate);
-        var items = await _uow.HolidayStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredHolidayQuery(search.Filters);
+        var total = await _uow.HolidayStore.CountAsync(query);
+        var items = await _uow.HolidayStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<Holiday, HolidayDTO>(items, total, page, pageSize);
     }
 

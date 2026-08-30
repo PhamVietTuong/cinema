@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -23,17 +22,40 @@ public class MemberShipManager : IMemberShipManager
         return await _uow.MemberShipStore.ExistsAsync(e => e.Id == id);
     }
 
+    private IQueryable<MemberShip> GetFilteredMemberShipQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.MemberShipStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    query = _uow.MemberShipStore.FilterQuery(query, e => e.Name.Contains(keyword));
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<MemberShipDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
-        var keyword = search.Filters.GetString("keyword");
 
-        Expression<Func<MemberShip, bool>> predicate = e =>
-            string.IsNullOrEmpty(keyword) || e.Name.Contains(keyword!);
-
-        var total = await _uow.MemberShipStore.CountAsync(predicate);
-        var items = await _uow.MemberShipStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredMemberShipQuery(search.Filters);
+        var total = await _uow.MemberShipStore.CountAsync(query);
+        var items = await _uow.MemberShipStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<MemberShip, MemberShipDTO>(items, total, page, pageSize);
     }
 

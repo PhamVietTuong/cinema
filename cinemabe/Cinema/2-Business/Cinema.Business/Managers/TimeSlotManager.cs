@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -23,19 +22,47 @@ public class TimeSlotManager : ITimeSlotManager
         return await _uow.TimeSlotStore.ExistsAsync(e => e.Id == id);
     }
 
+    private IQueryable<TimeSlot> GetFilteredTimeSlotQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.TimeSlotStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    query = _uow.TimeSlotStore.FilterQuery(query, e => e.Name.Contains(keyword));
+                    break;
+
+                case "theaterId":
+                    if (Guid.TryParse(filters[key], out var theaterId))
+                    {
+                        query = _uow.TimeSlotStore.FilterQuery(query, e => e.TheaterId == theaterId);
+                    }
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<TimeSlotDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
-        var keyword = search.Filters.GetString("keyword");
-        var theaterId = search.Filters.GetGuid("theaterId");
 
-        Expression<Func<TimeSlot, bool>> predicate = e =>
-            (string.IsNullOrEmpty(keyword) || e.Name.Contains(keyword!)) &&
-            (theaterId == null || e.TheaterId == theaterId);
-
-        var total = await _uow.TimeSlotStore.CountAsync(predicate);
-        var items = await _uow.TimeSlotStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredTimeSlotQuery(search.Filters);
+        var total = await _uow.TimeSlotStore.CountAsync(query);
+        var items = await _uow.TimeSlotStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<TimeSlot, TimeSlotDTO>(items, total, page, pageSize);
     }
 
