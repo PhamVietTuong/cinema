@@ -47,7 +47,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AgeRestriction");
+                    b.ToTable("AgeRestriction", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Comment", b =>
@@ -87,7 +87,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comment");
+                    b.ToTable("Comment", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Discount", b =>
@@ -161,7 +161,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("MovieId");
 
-                    b.ToTable("Discount");
+                    b.ToTable("Discount", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.DiscountTheater", b =>
@@ -189,7 +189,7 @@ namespace Cinema.Data.Migrations
                     b.HasIndex("DiscountId", "TheaterId")
                         .IsUnique();
 
-                    b.ToTable("DiscountTheater");
+                    b.ToTable("DiscountTheater", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.DiscountType", b =>
@@ -210,7 +210,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiscountType");
+                    b.ToTable("DiscountType", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Evaluation", b =>
@@ -245,7 +245,7 @@ namespace Cinema.Data.Migrations
                     b.HasIndex("MovieId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("Evaluation");
+                    b.ToTable("Evaluation", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.FoodAndDrink", b =>
@@ -284,7 +284,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("FoodAndDrink");
+                    b.ToTable("FoodAndDrink", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.GiftCard", b =>
@@ -324,7 +324,7 @@ namespace Cinema.Data.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("GiftCard");
+                    b.ToTable("GiftCard", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Holiday", b =>
@@ -351,7 +351,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Holiday");
+                    b.ToTable("Holiday", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Invoice", b =>
@@ -419,7 +419,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Invoice");
+                    b.ToTable("Invoice", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.InvoiceFoodAndDrink", b =>
@@ -443,7 +443,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("FoodAndDrinkId");
 
-                    b.ToTable("InvoiceFoodAndDrink");
+                    b.ToTable("InvoiceFoodAndDrink", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.InvoiceTicket", b =>
@@ -480,7 +480,7 @@ namespace Cinema.Data.Migrations
                         .IsUnique()
                         .HasFilter("[IsActive] = 1");
 
-                    b.ToTable("InvoiceTicket");
+                    b.ToTable("InvoiceTicket", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.MemberShip", b =>
@@ -510,7 +510,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MemberShip");
+                    b.ToTable("MemberShip", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Movie", b =>
@@ -575,7 +575,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("AgeRestrictionId");
 
-                    b.ToTable("Movie");
+                    b.ToTable("Movie", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.MovieType", b =>
@@ -596,7 +596,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MovieType");
+                    b.ToTable("MovieType", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.MovieTypeDetail", b =>
@@ -611,7 +611,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("MovieTypeId");
 
-                    b.ToTable("MovieTypeDetail");
+                    b.ToTable("MovieTypeDetail", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.News", b =>
@@ -648,7 +648,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("News");
+                    b.ToTable("News", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.ReminderLog", b =>
@@ -677,7 +677,7 @@ namespace Cinema.Data.Migrations
                     b.HasIndex("UserId", "ShowTimeId")
                         .IsUnique();
 
-                    b.ToTable("ReminderLog");
+                    b.ToTable("ReminderLog", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Room", b =>
@@ -718,7 +718,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("Room");
+                    b.ToTable("Room", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.RoomType", b =>
@@ -748,7 +748,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("RoomType");
+                    b.ToTable("RoomType", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Seat", b =>
@@ -792,7 +792,7 @@ namespace Cinema.Data.Migrations
                     b.HasIndex("RoomId", "RowName", "ColIndex")
                         .IsUnique();
 
-                    b.ToTable("Seat");
+                    b.ToTable("Seat", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.SeatType", b =>
@@ -829,7 +829,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("SeatType");
+                    b.ToTable("SeatType", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.ShowTime", b =>
@@ -866,7 +866,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("MovieId");
 
-                    b.ToTable("ShowTime");
+                    b.ToTable("ShowTime", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.ShowTimeRoom", b =>
@@ -884,7 +884,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("ShowTimeRoom");
+                    b.ToTable("ShowTimeRoom", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Theater", b =>
@@ -934,7 +934,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Theater");
+                    b.ToTable("Theater", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.TicketPrice", b =>
@@ -978,7 +978,7 @@ namespace Cinema.Data.Migrations
                     b.HasIndex("TheaterId", "RoomTypeId", "SeatTypeId", "TimeSlotId", "IsHoliday")
                         .IsUnique();
 
-                    b.ToTable("TicketPrice");
+                    b.ToTable("TicketPrice", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.TimeSlot", b =>
@@ -1015,7 +1015,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("TheaterId");
 
-                    b.ToTable("TimeSlot");
+                    b.ToTable("TimeSlot", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.User", b =>
@@ -1124,7 +1124,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasIndex("UserTypeId");
 
-                    b.ToTable("User");
+                    b.ToTable("User", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.UserType", b =>
@@ -1145,7 +1145,7 @@ namespace Cinema.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserType");
+                    b.ToTable("UserType", (string)null);
                 });
 
             modelBuilder.Entity("Cinema.Data.Entities.Comment", b =>

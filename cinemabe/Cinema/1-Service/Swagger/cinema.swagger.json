@@ -4123,6 +4123,9 @@
           "roomName": {
             "type": "string"
           },
+          "roomTypeName": {
+            "type": "string"
+          },
           "roomId": {
             "type": "string",
             "format": "guid"
@@ -4138,13 +4141,11 @@
         "description": "",
         "x-enumNames": [
           "TwoD",
-          "ThreeD",
-          "IMAX"
+          "ThreeD"
         ],
         "enum": [
           1,
-          2,
-          3
+          2
         ]
       },
       "CommentDTO": {
@@ -4704,6 +4705,10 @@
             "format": "guid"
           },
           "roomName": {
+            "type": "string",
+            "nullable": true
+          },
+          "roomTypeName": {
             "type": "string",
             "nullable": true
           },
@@ -6290,6 +6295,13 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "supportsThreeD": {
+            "type": "boolean"
+          },
+          "threeDSurcharge": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -6307,6 +6319,13 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "supportsThreeD": {
+            "type": "boolean"
+          },
+          "threeDSurcharge": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -6328,6 +6347,13 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "supportsThreeD": {
+            "type": "boolean"
+          },
+          "threeDSurcharge": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -6402,6 +6428,10 @@
             "nullable": true
           },
           "roomName": {
+            "type": "string",
+            "nullable": true
+          },
+          "roomTypeName": {
             "type": "string",
             "nullable": true
           },

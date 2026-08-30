@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -23,19 +22,47 @@ public class RoomTypeManager : IRoomTypeManager
         return await _uow.RoomTypeStore.ExistsAsync(e => e.Id == id);
     }
 
+    private IQueryable<RoomType> GetFilteredRoomTypeQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.RoomTypeStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    query = _uow.RoomTypeStore.FilterQuery(query, e => e.Name.Contains(keyword));
+                    break;
+
+                case "theaterId":
+                    if (Guid.TryParse(filters[key], out var theaterId))
+                    {
+                        query = _uow.RoomTypeStore.FilterQuery(query, e => e.TheaterId == theaterId);
+                    }
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<RoomTypeDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
-        var keyword = search.Filters.GetString("keyword");
-        var theaterId = search.Filters.GetGuid("theaterId");
 
-        Expression<Func<RoomType, bool>> predicate = e =>
-            (string.IsNullOrEmpty(keyword) || e.Name.Contains(keyword!)) &&
-            (theaterId == null || e.TheaterId == theaterId);
-
-        var total = await _uow.RoomTypeStore.CountAsync(predicate);
-        var items = await _uow.RoomTypeStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredRoomTypeQuery(search.Filters);
+        var total = await _uow.RoomTypeStore.CountAsync(query);
+        var items = await _uow.RoomTypeStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<RoomType, RoomTypeDTO>(items, total, page, pageSize);
     }
 

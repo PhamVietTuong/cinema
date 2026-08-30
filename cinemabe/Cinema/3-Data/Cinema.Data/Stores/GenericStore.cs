@@ -219,6 +219,11 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     public async Task<int> CountAsync(Expression<Func<Entity, bool>> whereExpression)
         => await DbSet.Where(whereExpression).CountAsync();
 
+    public async Task<int> CountAsync(IQueryable<Entity> query)
+    {
+        return await query.CountAsync();
+    }
+
     public async Task<int> CountIncludeAsync<Class>(string navigationPath, Expression<Func<Entity, bool>> whereExpression) where Class : class
         => await DbSet.Include(navigationPath).Where(whereExpression).CountAsync();
 

@@ -1,8 +1,10 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues, apiErrorMessage } from 'CinemaLib';
 import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
+import { ModalComponent } from '../../../shared/modal.component';
 
 type Dto = CinemaServiceAgent.ShowTimeDTO;
 
@@ -28,7 +30,7 @@ interface DayColumn {
 @Component({
   selector: 'app-show-times',
   standalone: true,
-  imports: [SharedModule, ConfirmModalComponent],
+  imports: [SharedModule, ConfirmModalComponent, ModalComponent],
   templateUrl: './show-times.component.html',
   styleUrl: './show-times.component.scss',
 })
@@ -36,6 +38,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _svc = inject(CinemaServiceAgent.HttpService);
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
+  private _translate = inject(TranslateService);
   private _destroy$ = new Subject<void>();
 
   confirmOpen = false;
@@ -51,16 +54,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   movies: CinemaServiceAgent.MovieDTO[] = [];
   rooms: CinemaServiceAgent.RoomDTO[] = [];
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
-  readonly projectionForms = [
-    { v: CinemaServiceAgent.ProjectionForm.TwoD, label: '2D' },
-    { v: CinemaServiceAgent.ProjectionForm.ThreeD, label: '3D' },
-    { v: CinemaServiceAgent.ProjectionForm.IMAX, label: 'IMAX' },
-  ];
-  readonly showTimeTypes = [
-    { v: CinemaServiceAgent.ShowTimeType.Normal, label: 'Thường', cls: 'st-block--normal' },
-    { v: CinemaServiceAgent.ShowTimeType.Premiere, label: 'Công Chiếu', cls: 'st-block--premiere' },
-    { v: CinemaServiceAgent.ShowTimeType.Special, label: 'Đặc Biệt', cls: 'st-block--special' },
-  ];
+  readonly projectionForms = ProjectionFormValues;
+  readonly showTimeTypes = ShowTimeTypeValues;
 
   // ── Week state ────────────────────────────────────────────────────────────────
   weekStart!: Date;               // Monday 00:00 of the visible week
@@ -69,20 +64,56 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
 
   private _showtimes: Dto[] = [];
 
-  // ── Drawer / form ─────────────────────────────────────────────────────────────
+  // ── Dialog / form ───────────────────────────────────────────────────────────
   showForm = false;
   editingId: string | null = null;
+
+  /**
+   * Why the API rejected the last save/delete. The error interceptor deliberately lets 400/404
+   * through untouched so the component can show them where the user can act on them — without
+   * this the request just failed silently and the dialog sat there looking idle.
+   */
+  formError: string | null = null;
+
+  /** Today as yyyy-MM-dd — the earliest date a new showtime may be scheduled on. */
+  get todayYmd(): string { return this._ymd(new Date()); }
+
+  /**
+   * Blocks scheduling a new showtime in the past. Editing stays unrestricted: an admin may be
+   * correcting the record of a screening that already ran, which is also what the API allows
+   * (ShowTimeManager only passes mustBeFuture on create).
+   */
+  private _notPastOnCreate = (control: AbstractControl): ValidationErrors | null => {
+    if (this.editingId || !control.value) { return null; }
+    return control.value < this.todayYmd ? { pastDate: true } : null;
+  };
+
   form: FormGroup = this._fb.group({
     movieId: ['', Validators.required],
-    date: ['', Validators.required],
+    date: ['', [Validators.required, this._notPastOnCreate]],
     start: ['', Validators.required],
     end: ['', Validators.required],
     projectionForm: [CinemaServiceAgent.ProjectionForm.TwoD, Validators.required],
     showTimeType: [CinemaServiceAgent.ShowTimeType.Normal, Validators.required],
+    theaterId: ['', Validators.required],
     roomId: ['', Validators.required],
     basePrice: [75000, [Validators.required, Validators.min(0)]],
     isActive: [true],
   });
+
+  /** Rooms of the picked theater. Empty until one is picked, so the two selects cascade. */
+  get roomsForTheater(): CinemaServiceAgent.RoomDTO[] {
+    const theaterId = this.form.value.theaterId;
+    return theaterId ? this.rooms.filter(r => r.theaterId === theaterId) : [];
+  }
+
+  /** A room belongs to exactly one theater, so switching theater invalidates the picked room. */
+  onTheaterChange(): void {
+    const roomId = this.form.value.roomId;
+    if (roomId && !this.roomsForTheater.some(r => r.id === roomId)) {
+      this.form.patchValue({ roomId: '' });
+    }
+  }
 
   ngOnInit(): void {
     this.weekStart = this._mondayOf(new Date());
@@ -157,7 +188,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       title: this.movieTitle(st.movieId),
       timeLabel: `${this._hm(start)} – ${this._hm(end)}`,
       formLabel: this.formLabel(st.projectionForm),
-      typeClass: this.showTimeTypes.find(t => t.v === st.showTimeType)?.cls ?? 'st-block--normal',
+      typeClass: this.showTimeTypes.find(t => t.value === st.showTimeType)?.cls ?? 'st-block--normal',
     };
   }
 
@@ -177,7 +208,11 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   // ── Create / edit / delete ──────────────────────────────────────────────────
   openCreate(): void {
     this.editingId = null;
-    const anchor = this._isThisWeek(new Date()) ? new Date() : this.weekStart;
+    // Anchor on the visible week, but never before today — a new showtime cannot be scheduled
+    // in the past, so pre-filling a past date from a back-navigated week would open the dialog
+    // already invalid.
+    const today = new Date();
+    const anchor = this._isThisWeek(today) || this.weekStart < today ? today : this.weekStart;
     this.form.reset({
       movieId: '',
       date: this._ymd(anchor),
@@ -185,6 +220,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       end: '',
       projectionForm: CinemaServiceAgent.ProjectionForm.TwoD,
       showTimeType: CinemaServiceAgent.ShowTimeType.Normal,
+      theaterId: '',
       roomId: '',
       basePrice: 75000,
       isActive: true,
@@ -204,6 +240,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       end: this._hm(end),
       projectionForm: st.projectionForm ?? CinemaServiceAgent.ProjectionForm.TwoD,
       showTimeType: st.showTimeType ?? CinemaServiceAgent.ShowTimeType.Normal,
+      // A showtime stores only its room; the theater is implied by it and drives the cascade.
+      theaterId: this.rooms.find(r => r.id === st.roomId)?.theaterId ?? '',
       roomId: st.roomId ?? '',
       basePrice: st.basePrice ?? 75000,
       isActive: st.isActive ?? true,
@@ -223,6 +261,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       endTime: `${v.date}T${v.end}:00Z`,
       projectionForm: v.projectionForm,
       showTimeType: v.showTimeType,
+      // theaterId is a UI-only cascade field; the API derives the theater from the room.
       roomId: v.roomId,
       basePrice: Number(v.basePrice),
       isActive: v.isActive,
@@ -230,7 +269,11 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
     const obs = this.editingId
       ? this._svc.updateShowTime(CinemaServiceAgent.UpdateShowTimeRequest.fromJS({ ...payload, id: this.editingId }))
       : this._svc.createShowTime(CinemaServiceAgent.CreateShowTimeRequest.fromJS(payload));
-    obs.pipe(takeUntil(this._destroy$)).subscribe(() => { this.cancel(); this.load(); });
+    this.formError = null;
+    obs.pipe(takeUntil(this._destroy$)).subscribe({
+      next: () => { this.cancel(); this.load(); },
+      error: e => { this._showError(e, 'showTimes.saveFailed'); },
+    });
   }
 
   deleteCurrent(): void {
@@ -242,19 +285,30 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
     const id = this.editingId;
     this.confirmOpen = false;
     if (id) {
-      this._svc.deleteShowTime(id).pipe(takeUntil(this._destroy$)).subscribe(() => { this.cancel(); this.load(); });
+      this.formError = null;
+      this._svc.deleteShowTime(id).pipe(takeUntil(this._destroy$)).subscribe({
+        next: () => { this.cancel(); this.load(); },
+        error: e => { this._showError(e, 'showTimes.deleteFailed'); },
+      });
     }
   }
 
   cancel(): void {
     this.showForm = false;
     this.editingId = null;
+    this.formError = null;
+  }
+
+  /** Zoneless app: nothing re-renders off an rxjs error callback without markForCheck. */
+  private _showError(err: unknown, fallbackKey: string): void {
+    this.formError = apiErrorMessage(err, this._translate.instant(fallbackKey));
+    this._cdr.markForCheck();
   }
 
   // ── Labels ────────────────────────────────────────────────────────────────────
   movieTitle(id?: string): string { return this.movies.find(m => m.id === id)?.title ?? '—'; }
   moviePoster(id?: string): string | undefined { return this.movies.find(m => m.id === id)?.posterUrl; }
-  formLabel(v?: CinemaServiceAgent.ProjectionForm): string { return this.projectionForms.find(x => x.v === v)?.label ?? '—'; }
+  formLabel(v?: CinemaServiceAgent.ProjectionForm): string { return this.projectionForms.find(x => x.value === v)?.name ?? '—'; }
   theaterName(id?: string): string { return this.theaters.find(t => t.id === id)?.name ?? '—'; }
   roomLabel(r: CinemaServiceAgent.RoomDTO): string { return `${this.theaterName(r.theaterId)} · ${r.name}`; }
 

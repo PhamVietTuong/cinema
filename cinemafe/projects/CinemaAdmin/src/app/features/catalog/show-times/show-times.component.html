@@ -67,15 +67,11 @@
   </div>
 </div>
 
-<!-- Add / Edit drawer -->
-<div class="st-drawer-scrim" *ngIf="showForm" (click)="cancel()"></div>
-<aside class="st-drawer" [class.is-open]="showForm">
-  <div class="st-drawer-head">
-    <h3 class="ad-card-title">{{ (editingId ? 'showTimes.editTitle' : 'showTimes.addShowTime') | translate }}</h3>
-    <button class="ad-icon-btn" type="button" (click)="cancel()" [title]="'common.close' | translate"><mat-icon>close</mat-icon></button>
-  </div>
-
-  <form class="st-drawer-body" [formGroup]="form" (ngSubmit)="save()">
+<!-- Add / Edit dialog -->
+<app-modal [open]="showForm" [wide]="true"
+           [title]="(editingId ? 'showTimes.editTitle' : 'showTimes.addShowTime') | translate"
+           (closed)="cancel()">
+  <form class="st-form-body" [formGroup]="form" (ngSubmit)="save()">
     <div class="ad-field">
       <label class="ad-label">{{ 'showTimes.movie' | translate }}</label>
       <select class="ad-input" formControlName="movieId">
@@ -89,7 +85,10 @@
 
     <div class="ad-field">
       <label class="ad-label">{{ 'showTimes.showDate' | translate }}</label>
-      <input class="ad-input" type="date" formControlName="date">
+      <input class="ad-input" type="date" formControlName="date" [min]="editingId ? null : todayYmd">
+      <span class="ad-field-err" *ngIf="form.get('date')?.touched && form.get('date')?.hasError('pastDate')">
+        {{ 'showTimes.dateInPast' | translate }}
+      </span>
     </div>
 
     <div class="st-row-2">
@@ -107,8 +106,8 @@
       <label class="ad-label">{{ 'showTimes.format' | translate }}</label>
       <div class="st-seg">
         <button *ngFor="let p of projectionForms" type="button"
-                class="st-seg-btn" [class.is-active]="form.value.projectionForm === p.v"
-                (click)="form.patchValue({ projectionForm: p.v })">{{ p.label }}</button>
+                class="st-seg-btn" [class.is-active]="form.value.projectionForm === p.value"
+                (click)="form.patchValue({ projectionForm: p.value })">{{ p.name }}</button>
       </div>
     </div>
 
@@ -116,23 +115,31 @@
       <label class="ad-label">{{ 'showTimes.showType' | translate }}</label>
       <div class="st-seg">
         <button *ngFor="let t of showTimeTypes" type="button"
-                class="st-seg-btn" [class.is-active]="form.value.showTimeType === t.v"
-                (click)="form.patchValue({ showTimeType: t.v })">{{ t.label }}</button>
+                class="st-seg-btn" [class.is-active]="form.value.showTimeType === t.value"
+                (click)="form.patchValue({ showTimeType: t.value })">{{ t.name }}</button>
       </div>
     </div>
 
     <div class="st-row-2">
       <div class="ad-field">
-        <label class="ad-label">{{ 'showTimes.room' | translate }}</label>
-        <select class="ad-input" formControlName="roomId">
-          <option value="">{{ 'showTimes.selectRoom' | translate }}</option>
-          <option *ngFor="let r of rooms" [ngValue]="r.id">{{ roomLabel(r) }}</option>
+        <label class="ad-label">{{ 'showTimes.theater' | translate }}</label>
+        <select class="ad-input" formControlName="theaterId" (change)="onTheaterChange()">
+          <option value="">{{ 'showTimes.selectTheater' | translate }}</option>
+          <option *ngFor="let t of theaters" [ngValue]="t.id">{{ t.name }}</option>
         </select>
       </div>
       <div class="ad-field">
-        <label class="ad-label">{{ 'showTimes.basePrice' | translate }}</label>
-        <input class="ad-input" type="number" min="0" step="1000" formControlName="basePrice">
+        <label class="ad-label">{{ 'showTimes.room' | translate }}</label>
+        <select class="ad-input" formControlName="roomId" [attr.disabled]="form.value.theaterId ? null : true">
+          <option value="">{{ 'showTimes.selectRoom' | translate }}</option>
+          <option *ngFor="let r of roomsForTheater" [ngValue]="r.id">{{ r.name }}</option>
+        </select>
       </div>
+    </div>
+
+    <div class="ad-field">
+      <label class="ad-label">{{ 'showTimes.basePrice' | translate }}</label>
+      <input class="ad-input" type="number" min="0" step="1000" formControlName="basePrice">
     </div>
 
     <label class="st-toggle">
@@ -141,13 +148,18 @@
       <span>{{ 'showTimes.onSale' | translate }}</span>
     </label>
 
-    <div class="st-drawer-actions">
+    <div class="st-form-error" *ngIf="formError">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ formError }}</span>
+    </div>
+
+    <div class="st-form-actions">
       <button class="ad-btn ad-btn--danger" type="button" *ngIf="editingId" (click)="deleteCurrent()"><mat-icon>delete</mat-icon> {{ 'common.delete' | translate }}</button>
       <span class="st-spacer"></span>
       <button class="ad-btn ad-btn--ghost" type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
       <button class="ad-btn ad-btn--primary" type="submit">{{ 'showTimes.saveShowTime' | translate }}</button>
     </div>
   </form>
-</aside>
+</app-modal>
 
 <app-confirm-modal [open]="confirmOpen" [message]="'showTimes.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>

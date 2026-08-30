@@ -8,6 +8,7 @@ public class ShowTimeSummaryDTO
     public ProjectionForm ProjectionForm { get; set; }
     public string TheaterName { get; set; } = string.Empty;
     public string RoomName { get; set; } = string.Empty;
+    public string RoomTypeName { get; set; } = string.Empty;
     public Guid RoomId { get; set; }
     public int AvailableSeats { get; set; }
 }

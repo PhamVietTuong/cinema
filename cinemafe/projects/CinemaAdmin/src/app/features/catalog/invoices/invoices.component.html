@@ -13,7 +13,7 @@
       <div class="ad-field">
         <label class="ad-label">{{ 'common.status' | translate }}</label>
         <select class="ad-input" formControlName="status">
-          <option *ngFor="let s of statuses" [ngValue]="s.v">{{ s.label | translate }}</option>
+          <option *ngFor="let s of statuses" [ngValue]="s.value">{{ s.name | translate }}</option>
         </select>
       </div>
       <div class="form-actions full-span">
@@ -39,7 +39,7 @@
             <th>
               <select class="ad-filter-input" [(ngModel)]="filters['status']" (ngModelChange)="onFilterChange()">
                 <option value="">{{ 'common.all' | translate }}</option>
-                <option *ngFor="let s of statuses" [value]="s.v">{{ s.label | translate }}</option>
+                <option *ngFor="let s of statuses" [value]="s.value">{{ s.name | translate }}</option>
               </select>
             </th>
             <th></th>

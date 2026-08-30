@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- upgrade_db.sql  —  Schema upgrade script
 -- Run this on an existing Cinema database when updating
 -- Add new ALTER TABLE / CREATE TABLE statements below.
@@ -488,6 +488,56 @@ BEGIN
     ALTER TABLE [Invoice] ADD [GiftCardAmount] float NOT NULL CONSTRAINT [DF_Invoice_GiftCardAmount] DEFAULT 0;
     PRINT 'Added [Invoice].[GiftCardAmount].';
 END
+
+-- ── Room class 3D capability + surcharge ────────────────────────────────────
+-- RoomType (the room's commercial class: Standard/IMAX/4DX/Lagom…) and ShowTime.ProjectionForm
+-- (the image dimension: 2D/3D) are independent axes. The class sets the base price; a 3D
+-- screening adds a flat surcharge on top, and a class without a 3D projector cannot host one
+-- at all. ProjectionForm accordingly drops its old IMAX member — that named a venue brand,
+-- which belongs to the class, not to the dimension.
+PRINT 'upgrade: applying room-class 3D capability...';
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+               WHERE TABLE_NAME = 'RoomType' AND COLUMN_NAME = 'SupportsThreeD')
+BEGIN
+    ALTER TABLE [RoomType] ADD [SupportsThreeD] bit NOT NULL CONSTRAINT [DF_RoomType_SupportsThreeD] DEFAULT 0;
+END
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+               WHERE TABLE_NAME = 'RoomType' AND COLUMN_NAME = 'ThreeDSurcharge')
+BEGIN
+    ALTER TABLE [RoomType] ADD [ThreeDSurcharge] float NOT NULL CONSTRAINT [DF_RoomType_ThreeDSurcharge] DEFAULT 0;
+END
+
+-- Normalise stored ProjectionForm to the surviving members (1 = 2D, 2 = 3D). Value 3 was the
+-- retired IMAX member; value 0 was never a member at all (the enum starts at 1) and appears
+-- where a create omitted the field, where it reads as an undefined enum and renders blank.
+UPDATE [ShowTime] SET [ProjectionForm] = 1 WHERE [ProjectionForm] NOT IN (1, 2);
+
+-- Backfill capability from evidence rather than from names: a class that already hosts a 3D
+-- showtime demonstrably has a 3D projector. Without this, every existing 3D showtime would fail
+-- the new room-class guard the moment an admin edited it.
+-- EXEC() defers name resolution so these can reference the columns added just above.
+EXEC('UPDATE rt
+      SET    rt.[SupportsThreeD] = 1
+      FROM   [RoomType] rt
+      WHERE  EXISTS (
+                 SELECT 1
+                 FROM   [Room] r
+                 JOIN   [ShowTimeRoom] sr ON sr.[RoomId] = r.[Id]
+                 JOIN   [ShowTime] st     ON st.[Id] = sr.[ShowTimeId]
+                 WHERE  r.[RoomTypeId] = rt.[Id]
+                   AND  st.[ProjectionForm] = 2
+             )');
+
+-- The class names the reference seed ships with are unambiguous, so give them working defaults.
+-- Surcharges are indicative VND figures; an operator adjusts them per theater afterwards.
+EXEC('UPDATE [RoomType]
+      SET    [SupportsThreeD] = 1,
+             [ThreeDSurcharge] = CASE [Name] WHEN N''3D'' THEN 30000 ELSE 40000 END
+      WHERE  [Name] IN (N''3D'', N''IMAX'', N''4DX'')
+        AND  [SupportsThreeD] = 0
+        AND  [ThreeDSurcharge] = 0');
 
 PRINT 'upgrade_db.sql: completed.';
 

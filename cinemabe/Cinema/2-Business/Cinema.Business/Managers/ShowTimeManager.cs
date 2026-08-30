@@ -4,6 +4,7 @@ using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 
 namespace Cinema.Business.Managers;
 
@@ -61,6 +62,7 @@ public class ShowTimeManager : IShowTimeManager
         var entity = request.ToNewEntity<CreateShowTimeRequest, ShowTime>();
         if (request.RoomId != Guid.Empty)
         {
+            await ValidateRoomSupportsFormatAsync(request.RoomId, entity.ProjectionForm);
             if (await _uow.ShowTimeStore.HasRoomOverlapAsync(request.RoomId, entity.StartTime, entity.EndTime, null))
             {
                 throw new InvalidOperationException("This room already has a showtime overlapping that time window.");
@@ -85,10 +87,13 @@ public class ShowTimeManager : IShowTimeManager
         }
         entity.PatchEntity<ShowTime, UpdateShowTimeRequest>(request);
         entity.LastUpdatedTime = DateTime.UtcNow;
-        if (request.RoomId != Guid.Empty &&
-            await _uow.ShowTimeStore.HasRoomOverlapAsync(request.RoomId, entity.StartTime, entity.EndTime, entity.Id))
+        if (request.RoomId != Guid.Empty)
         {
-            throw new InvalidOperationException("This room already has a showtime overlapping that time window.");
+            await ValidateRoomSupportsFormatAsync(request.RoomId, entity.ProjectionForm);
+            if (await _uow.ShowTimeStore.HasRoomOverlapAsync(request.RoomId, entity.StartTime, entity.EndTime, entity.Id))
+            {
+                throw new InvalidOperationException("This room already has a showtime overlapping that time window.");
+            }
         }
         ApplyRoom(entity, request.RoomId, request.BasePrice);
         // The showtime patch and room change are saved in one transaction on the tracked graph.
@@ -134,6 +139,33 @@ public class ShowTimeManager : IShowTimeManager
         entity.ShowTimeRooms.Add(new ShowTimeRoom { ShowTimeId = entity.Id, RoomId = roomId, BasePrice = basePrice });
     }
 
+    /// <summary>
+    /// Rejects a 3D screening booked into a room whose class has no 3D projector. The room class and
+    /// the screening dimension are independent axes, so nothing else stops the pairing — and it would
+    /// surface only at the door, after tickets were sold.
+    /// </summary>
+    private async Task ValidateRoomSupportsFormatAsync(Guid roomId, ProjectionForm form)
+    {
+        if (form != ProjectionForm.ThreeD)
+        {
+            return;
+        }
+
+        var room = await _uow.RoomStore.GetByIdAsync(roomId);
+        if (room == null)
+        {
+            throw new KeyNotFoundException($"Room {roomId} not found.");
+        }
+
+        var roomType = await _uow.RoomTypeStore.GetByIdAsync(room.RoomTypeId);
+        if (roomType == null || !roomType.SupportsThreeD)
+        {
+            throw new InvalidOperationException(
+                $"Room class '{roomType?.Name ?? "unknown"}' cannot screen 3D. "
+                + "Pick a 3D-capable room or set the showtime to 2D.");
+        }
+    }
+
     private static ShowTimeDTO ToShowTimeDTO(ShowTime s)
     {
         var dto = s.ToDTO<ShowTime, ShowTimeDTO>();
@@ -142,6 +174,7 @@ public class ShowTimeManager : IShowTimeManager
         {
             dto.RoomId = sr.RoomId;
             dto.RoomName = sr.Room?.Name;
+            dto.RoomTypeName = sr.Room?.RoomType?.Name;
             dto.BasePrice = sr.BasePrice;
         }
         return dto;

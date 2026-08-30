@@ -135,6 +135,78 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task GetSeatsAsync_AddsThreeDSurcharge_OnTopOfMatrixPrice()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var timeSlotId = Guid.NewGuid();
+        var seatType   = new SeatType { Id = SeatTypeId1, PriceMultiplier = 2 };
+        var seats      = new List<Seat> { new() { Id = SeatId1, RowName = "A", ColIndex = 1, SeatTypeId = SeatTypeId1, SeatType = seatType } };
+
+        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100 });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(RoomId1))
+            .ReturnsAsync(new Room { Id = RoomId1, TheaterId = theaterId, RoomTypeId = roomTypeId });
+        _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(ShowTimeId1))
+            .ReturnsAsync(new ShowTime
+            {
+                Id = ShowTimeId1,
+                StartTime = new DateTime(2026, 3, 2, 19, 0, 0),
+                ProjectionForm = ProjectionForm.ThreeD,
+            });
+        _uowMock.Setup(u => u.RoomTypeStore.GetByIdAsync(roomTypeId))
+            .ReturnsAsync(new RoomType { Id = roomTypeId, Name = "IMAX", SupportsThreeD = true, ThreeDSurcharge = 40 });
+        _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Holiday, bool>>>()))
+            .ReturnsAsync(new List<Holiday>());
+        _uowMock.Setup(u => u.TimeSlotStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<TimeSlot, bool>>>()))
+            .ReturnsAsync(new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" } });
+        _uowMock.Setup(u => u.TicketPriceStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<TicketPrice, bool>>>()))
+            .ReturnsAsync(new List<TicketPrice> { new() { SeatTypeId = SeatTypeId1, TimeSlotId = timeSlotId, IsHoliday = false, Price = 250 } });
+
+        var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
+
+        // The room class sets the base (matrix row 250), the dimension is charged on top (+40).
+        result.Results.First().Price.Should().Be(290);
+    }
+
+    [Fact]
+    public async Task GetSeatsAsync_SkipsThreeDSurcharge_WhenScreeningIsTwoD()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var seatType   = new SeatType { Id = SeatTypeId1, PriceMultiplier = 2 };
+        var seats      = new List<Seat> { new() { Id = SeatId1, RowName = "A", ColIndex = 1, SeatTypeId = SeatTypeId1, SeatType = seatType } };
+
+        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100 });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(RoomId1))
+            .ReturnsAsync(new Room { Id = RoomId1, TheaterId = theaterId, RoomTypeId = roomTypeId });
+        _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(ShowTimeId1))
+            .ReturnsAsync(new ShowTime
+            {
+                Id = ShowTimeId1,
+                StartTime = new DateTime(2026, 3, 2, 19, 0, 0),
+                ProjectionForm = ProjectionForm.TwoD,
+            });
+        _uowMock.Setup(u => u.RoomTypeStore.GetByIdAsync(roomTypeId))
+            .ReturnsAsync(new RoomType { Id = roomTypeId, Name = "IMAX", SupportsThreeD = true, ThreeDSurcharge = 40 });
+        _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Holiday, bool>>>()))
+            .ReturnsAsync(new List<Holiday>());
+        _uowMock.Setup(u => u.TimeSlotStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<TimeSlot, bool>>>()))
+            .ReturnsAsync(new List<TimeSlot>());
+
+        var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
+
+        // A 2D screening in an IMAX room pays the IMAX base only: 100 × 2, no surcharge.
+        result.Results.First().Price.Should().Be(200);
+        _uowMock.Verify(u => u.RoomTypeStore.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
     public void LockSeat_SeatBecomesLocked()
     {
         _sut.LockSeat(ShowTimeId1, RoomId1, SeatId10, "conn-abc");

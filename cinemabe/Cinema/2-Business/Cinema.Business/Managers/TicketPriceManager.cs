@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -23,27 +22,71 @@ public class TicketPriceManager : ITicketPriceManager
         return await _uow.TicketPriceStore.ExistsAsync(e => e.Id == id);
     }
 
+    // No free-text field on this entity — filters are all Guid foreign keys + the holiday flag.
+    private IQueryable<TicketPrice> GetFilteredTicketPriceQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.TicketPriceStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "theaterId":
+                    if (Guid.TryParse(filters[key], out var theaterId))
+                    {
+                        query = _uow.TicketPriceStore.FilterQuery(query, e => e.TheaterId == theaterId);
+                    }
+                    break;
+
+                case "roomTypeId":
+                    if (Guid.TryParse(filters[key], out var roomTypeId))
+                    {
+                        query = _uow.TicketPriceStore.FilterQuery(query, e => e.RoomTypeId == roomTypeId);
+                    }
+                    break;
+
+                case "seatTypeId":
+                    if (Guid.TryParse(filters[key], out var seatTypeId))
+                    {
+                        query = _uow.TicketPriceStore.FilterQuery(query, e => e.SeatTypeId == seatTypeId);
+                    }
+                    break;
+
+                case "timeSlotId":
+                    if (Guid.TryParse(filters[key], out var timeSlotId))
+                    {
+                        query = _uow.TicketPriceStore.FilterQuery(query, e => e.TimeSlotId == timeSlotId);
+                    }
+                    break;
+
+                case "isHoliday":
+                    if (bool.TryParse(filters[key], out var isHoliday))
+                    {
+                        query = _uow.TicketPriceStore.FilterQuery(query, e => e.IsHoliday == isHoliday);
+                    }
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<TicketPriceDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
-        // No free-text field on this entity — filters are all Guid foreign keys + the holiday flag.
-        var theaterId = search.Filters.GetGuid("theaterId");
-        var roomTypeId = search.Filters.GetGuid("roomTypeId");
-        var seatTypeId = search.Filters.GetGuid("seatTypeId");
-        var timeSlotId = search.Filters.GetGuid("timeSlotId");
-        var isHoliday = search.Filters.GetBool("isHoliday");
-
-        Expression<Func<TicketPrice, bool>> predicate = e =>
-            (theaterId == null || e.TheaterId == theaterId) &&
-            (roomTypeId == null || e.RoomTypeId == roomTypeId) &&
-            (seatTypeId == null || e.SeatTypeId == seatTypeId) &&
-            (timeSlotId == null || e.TimeSlotId == timeSlotId) &&
-            (isHoliday == null || e.IsHoliday == isHoliday);
-
-        var total = await _uow.TicketPriceStore.CountAsync(predicate);
-        var items = await _uow.TicketPriceStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredTicketPriceQuery(search.Filters);
+        var total = await _uow.TicketPriceStore.CountAsync(query);
+        var items = await _uow.TicketPriceStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<TicketPrice, TicketPriceDTO>(items, total, page, pageSize);
     }
 

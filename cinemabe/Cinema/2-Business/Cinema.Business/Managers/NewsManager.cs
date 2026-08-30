@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -23,19 +22,47 @@ public class NewsManager : INewsManager
         return await _uow.NewsStore.ExistsAsync(e => e.Id == id);
     }
 
+    private IQueryable<News> GetFilteredNewsQuery(Dictionary<string, string>? filters)
+    {
+        var query = _uow.NewsStore.GetQuery();
+        if (filters == null)
+        {
+            return query;
+        }
+
+        foreach (var key in filters.Keys)
+        {
+            if (string.IsNullOrEmpty(filters[key]))
+            {
+                continue;
+            }
+
+            switch (key)
+            {
+                case "keyword":
+                    var keyword = filters[key];
+                    query = _uow.NewsStore.FilterQuery(query, e => e.Title.Contains(keyword));
+                    break;
+
+                case "isPublished":
+                    if (bool.TryParse(filters[key], out var isPublished))
+                    {
+                        query = _uow.NewsStore.FilterQuery(query, e => e.IsPublished == isPublished);
+                    }
+                    break;
+            }
+        }
+        return query;
+    }
+
     public async Task<DefaultSearchResults<NewsDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
-        var keyword = search.Filters.GetString("keyword");
-        var isPublished = search.Filters.GetBool("isPublished");
 
-        Expression<Func<News, bool>> predicate = e =>
-            (string.IsNullOrEmpty(keyword) || e.Title.Contains(keyword!)) &&
-            (isPublished == null || e.IsPublished == isPublished);
-
-        var total = await _uow.NewsStore.CountAsync(predicate);
-        var items = await _uow.NewsStore.FindAllPageAsync(page - 1, pageSize, predicate);
+        var query = GetFilteredNewsQuery(search.Filters);
+        var total = await _uow.NewsStore.CountAsync(query);
+        var items = await _uow.NewsStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<News, NewsDTO>(items, total, page, pageSize);
     }
 

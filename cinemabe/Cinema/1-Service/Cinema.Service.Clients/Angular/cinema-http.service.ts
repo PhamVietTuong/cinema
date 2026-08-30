@@ -5972,6 +5972,7 @@ export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
     projectionForm?: ProjectionForm;
     theaterName?: string;
     roomName?: string;
+    roomTypeName?: string;
     roomId?: string;
     availableSeats?: number;
 
@@ -5992,6 +5993,7 @@ export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
             this.projectionForm = _data["projectionForm"];
             this.theaterName = _data["theaterName"];
             this.roomName = _data["roomName"];
+            this.roomTypeName = _data["roomTypeName"];
             this.roomId = _data["roomId"];
             this.availableSeats = _data["availableSeats"];
         }
@@ -6012,6 +6014,7 @@ export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
         data["projectionForm"] = this.projectionForm;
         data["theaterName"] = this.theaterName;
         data["roomName"] = this.roomName;
+        data["roomTypeName"] = this.roomTypeName;
         data["roomId"] = this.roomId;
         data["availableSeats"] = this.availableSeats;
         return data;
@@ -6025,6 +6028,7 @@ export interface IShowTimeSummaryDTO {
     projectionForm?: ProjectionForm;
     theaterName?: string;
     roomName?: string;
+    roomTypeName?: string;
     roomId?: string;
     availableSeats?: number;
 }
@@ -6032,7 +6036,6 @@ export interface IShowTimeSummaryDTO {
 export enum ProjectionForm {
     TwoD = 1,
     ThreeD = 2,
-    IMAX = 3,
 }
 
 export class CommentDTO implements ICommentDTO {
@@ -7095,6 +7098,7 @@ export enum ShowTimeType {
 export class ShowTimeRoomDTO implements IShowTimeRoomDTO {
     roomId?: string;
     roomName?: string | undefined;
+    roomTypeName?: string | undefined;
     theaterName?: string | undefined;
     basePrice?: number;
 
@@ -7111,6 +7115,7 @@ export class ShowTimeRoomDTO implements IShowTimeRoomDTO {
         if (_data) {
             this.roomId = _data["roomId"];
             this.roomName = _data["roomName"];
+            this.roomTypeName = _data["roomTypeName"];
             this.theaterName = _data["theaterName"];
             this.basePrice = _data["basePrice"];
         }
@@ -7127,6 +7132,7 @@ export class ShowTimeRoomDTO implements IShowTimeRoomDTO {
         data = typeof data === 'object' ? data : {};
         data["roomId"] = this.roomId;
         data["roomName"] = this.roomName;
+        data["roomTypeName"] = this.roomTypeName;
         data["theaterName"] = this.theaterName;
         data["basePrice"] = this.basePrice;
         return data;
@@ -7136,6 +7142,7 @@ export class ShowTimeRoomDTO implements IShowTimeRoomDTO {
 export interface IShowTimeRoomDTO {
     roomId?: string;
     roomName?: string | undefined;
+    roomTypeName?: string | undefined;
     theaterName?: string | undefined;
     basePrice?: number;
 }
@@ -10405,6 +10412,8 @@ export class RoomTypeDTO implements IRoomTypeDTO {
     theaterId?: string;
     name?: string;
     description?: string | undefined;
+    supportsThreeD?: boolean;
+    threeDSurcharge?: number;
 
     constructor(data?: IRoomTypeDTO) {
         if (data) {
@@ -10421,6 +10430,8 @@ export class RoomTypeDTO implements IRoomTypeDTO {
             this.theaterId = _data["theaterId"];
             this.name = _data["name"];
             this.description = _data["description"];
+            this.supportsThreeD = _data["supportsThreeD"];
+            this.threeDSurcharge = _data["threeDSurcharge"];
         }
     }
 
@@ -10437,6 +10448,8 @@ export class RoomTypeDTO implements IRoomTypeDTO {
         data["theaterId"] = this.theaterId;
         data["name"] = this.name;
         data["description"] = this.description;
+        data["supportsThreeD"] = this.supportsThreeD;
+        data["threeDSurcharge"] = this.threeDSurcharge;
         return data;
     }
 }
@@ -10446,12 +10459,16 @@ export interface IRoomTypeDTO {
     theaterId?: string;
     name?: string;
     description?: string | undefined;
+    supportsThreeD?: boolean;
+    threeDSurcharge?: number;
 }
 
 export class CreateRoomTypeRequest implements ICreateRoomTypeRequest {
     theaterId?: string;
     name?: string;
     description?: string | undefined;
+    supportsThreeD?: boolean;
+    threeDSurcharge?: number;
 
     constructor(data?: ICreateRoomTypeRequest) {
         if (data) {
@@ -10467,6 +10484,8 @@ export class CreateRoomTypeRequest implements ICreateRoomTypeRequest {
             this.theaterId = _data["theaterId"];
             this.name = _data["name"];
             this.description = _data["description"];
+            this.supportsThreeD = _data["supportsThreeD"];
+            this.threeDSurcharge = _data["threeDSurcharge"];
         }
     }
 
@@ -10482,6 +10501,8 @@ export class CreateRoomTypeRequest implements ICreateRoomTypeRequest {
         data["theaterId"] = this.theaterId;
         data["name"] = this.name;
         data["description"] = this.description;
+        data["supportsThreeD"] = this.supportsThreeD;
+        data["threeDSurcharge"] = this.threeDSurcharge;
         return data;
     }
 }
@@ -10490,6 +10511,8 @@ export interface ICreateRoomTypeRequest {
     theaterId?: string;
     name?: string;
     description?: string | undefined;
+    supportsThreeD?: boolean;
+    threeDSurcharge?: number;
 }
 
 export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
@@ -10497,6 +10520,8 @@ export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
     theaterId?: string;
     name?: string;
     description?: string | undefined;
+    supportsThreeD?: boolean;
+    threeDSurcharge?: number;
 
     constructor(data?: IUpdateRoomTypeRequest) {
         if (data) {
@@ -10513,6 +10538,8 @@ export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
             this.theaterId = _data["theaterId"];
             this.name = _data["name"];
             this.description = _data["description"];
+            this.supportsThreeD = _data["supportsThreeD"];
+            this.threeDSurcharge = _data["threeDSurcharge"];
         }
     }
 
@@ -10529,6 +10556,8 @@ export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
         data["theaterId"] = this.theaterId;
         data["name"] = this.name;
         data["description"] = this.description;
+        data["supportsThreeD"] = this.supportsThreeD;
+        data["threeDSurcharge"] = this.threeDSurcharge;
         return data;
     }
 }
@@ -10538,6 +10567,8 @@ export interface IUpdateRoomTypeRequest {
     theaterId?: string;
     name?: string;
     description?: string | undefined;
+    supportsThreeD?: boolean;
+    threeDSurcharge?: number;
 }
 
 export abstract class BaseSearchResultsOfShowTimeDTO implements IBaseSearchResultsOfShowTimeDTO {
@@ -10631,6 +10662,7 @@ export class ShowTimeDTO implements IShowTimeDTO {
     isActive?: boolean;
     roomId?: string | undefined;
     roomName?: string | undefined;
+    roomTypeName?: string | undefined;
     basePrice?: number;
 
     constructor(data?: IShowTimeDTO) {
@@ -10653,6 +10685,7 @@ export class ShowTimeDTO implements IShowTimeDTO {
             this.isActive = _data["isActive"];
             this.roomId = _data["roomId"];
             this.roomName = _data["roomName"];
+            this.roomTypeName = _data["roomTypeName"];
             this.basePrice = _data["basePrice"];
         }
     }
@@ -10675,6 +10708,7 @@ export class ShowTimeDTO implements IShowTimeDTO {
         data["isActive"] = this.isActive;
         data["roomId"] = this.roomId;
         data["roomName"] = this.roomName;
+        data["roomTypeName"] = this.roomTypeName;
         data["basePrice"] = this.basePrice;
         return data;
     }
@@ -10690,6 +10724,7 @@ export interface IShowTimeDTO {
     isActive?: boolean;
     roomId?: string | undefined;
     roomName?: string | undefined;
+    roomTypeName?: string | undefined;
     basePrice?: number;
 }
 
