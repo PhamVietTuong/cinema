@@ -1,10 +1,16 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { debounceTime, takeUntil } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
-import { CinemaServiceAgent, ToastService, apiErrorMessage } from 'CinemaLib';
-import { ImageUploadService } from '../../../../shared/image-upload.service';
+import { ChangeDetectorRef, Component } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  CinemaServiceAgent,
+  BaseTableComponent, TablePage, TableSearchCriteria,
+  DialogService,
+  showLoading, hideLoading, showSuccess, showException,
+} from 'CinemaLib';
+import { NewsDialog } from './news.dialog';
 
 type Dto = CinemaServiceAgent.NewsDTO;
 
@@ -13,207 +19,59 @@ type Dto = CinemaServiceAgent.NewsDTO;
   standalone: false,
   templateUrl: './news.component.html',
 })
-export class NewsManagementComponent implements OnInit, OnDestroy {
-  items: Dto[] = [];
-  totalCount = 0;
-  pageIndex = 1;
-  pageSize = 10;
-  readonly pageSizeOptions = [5, 10, 20, 50];
-  filters: Record<string, string> = {};
-
-  showForm = false;
-  editingId: string | null = null;
-  form: FormGroup;
-  private readonly _formDefaults: unknown;
-
-  confirmOpen = false;
-  private _pendingDeleteId: string | null = null;
-
-  uploading = false;
-  uploadError = '';
-
-  private readonly _filter$ = new Subject<void>();
-  private readonly _destroy$ = new Subject<void>();
-
+export class NewsManagementComponent extends BaseTableComponent {
   constructor(
+    cd: ChangeDetectorRef,
+    fb: FormBuilder,
+    router: Router,
+    store: Store<any>,
     private _svc: CinemaServiceAgent.HttpService,
-    private _fb: FormBuilder,
-    private _cdr: ChangeDetectorRef,
-    private _toast: ToastService,
-    private _translate: TranslateService,
-    private _upload: ImageUploadService,
+    private _dialog: MatDialog,
+    private _dialogService: DialogService,
   ) {
-    this.form = this._fb.group({
-      title: ['', Validators.required],
-      content: ['', Validators.required],
-      author: [''],
-      thumbnailUrl: [''],
-      isPublished: [false],
-      publishedAt: [''],
-    });
-    this._formDefaults = this.form.getRawValue();
+    super(cd, fb, router, store);
   }
 
-  ngOnInit(): void {
-    this._filter$.pipe(debounceTime(300), takeUntil(this._destroy$)).subscribe(() => {
-      this.pageIndex = 1;
-      this.load();
-    });
-    this.load();
+  protected override _createSearchForm(): void {
+    this.searchForm = this._formBuilder.group({ title: [''], author: [''], isPublished: [''] });
   }
 
-  ngOnDestroy(): void {
-    this._destroy$.next();
-    this._destroy$.complete();
-  }
-
-  load(): void {
-    this._svc.getNewsList(CinemaServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: this.pageIndex, pageSize: this.pageSize, filters: this._activeFilters(),
-    })).subscribe({
-      next: r => {
-        this.items = r.results ?? [];
-        this.totalCount = r.totalCount ?? 0;
-        this._cdr.markForCheck();
-      },
-    });
-  }
-
-  onFilterChange(): void {
-    this._filter$.next();
-  }
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.totalCount / this.pageSize));
-  }
-
-  get rangeStart(): number {
-    return this.totalCount === 0 ? 0 : (this.pageIndex - 1) * this.pageSize + 1;
-  }
-
-  get rangeEnd(): number {
-    return Math.min(this.pageIndex * this.pageSize, this.totalCount);
-  }
-
-  goToPage(page: number): void {
-    const target = Math.min(Math.max(1, page), this.totalPages);
-    if (target !== this.pageIndex) {
-      this.pageIndex = target;
-      this.load();
-    }
-  }
-
-  prevPage(): void {
-    this.goToPage(this.pageIndex - 1);
-  }
-
-  nextPage(): void {
-    this.goToPage(this.pageIndex + 1);
-  }
-
-  changePageSize(size: number): void {
-    this.pageSize = +size;
-    this.pageIndex = 1;
-    this.load();
+  protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {
+    return this._svc.getNewsList(CinemaServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: criteria.pageIndex, pageSize: criteria.pageSize, filters: criteria.filters,
+    }));
   }
 
   openCreate(): void {
-    this.editingId = null;
-    this.form.reset(this._formDefaults);
-    this.uploadError = '';
-    this.showForm = true;
+    this._dialog.open(NewsDialog, { width: '640px', data: { news: null } })
+      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this.editingId = item.id ?? null;
-    this.form.reset(this._formDefaults);
-    this.form.patchValue({
-      ...item,
-      publishedAt: item.publishedAt ? new Date(item.publishedAt).toISOString().split('T')[0] : '',
-    });
-    this.uploadError = '';
-    this.showForm = true;
-  }
-
-  save(): void {
-    if (!this.form.valid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const v = this.form.value;
-    const obs = this.editingId
-      ? this._svc.updateNews(CinemaServiceAgent.UpdateNewsRequest.fromJS({ ...v, id: this.editingId }))
-      : this._svc.createNews(CinemaServiceAgent.CreateNewsRequest.fromJS(v));
-    obs.subscribe({
-      next: () => {
-        this.load();
-        this.cancelEdit();
-      },
-      error: e => { this._toastError(e, 'common.saveFailed'); },
-    });
+    this._dialog.open(NewsDialog, { width: '640px', data: { news: item } })
+      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   delete(id?: string): void {
     if (!id) {
       return;
     }
-    this._pendingDeleteId = id;
-    this.confirmOpen = true;
-  }
-
-  confirmDelete(): void {
-    const id = this._pendingDeleteId;
-    this.confirmOpen = false;
-    this._pendingDeleteId = null;
-    if (id) {
-      this._svc.deleteNews(id).subscribe({
-        next: () => this.load(),
-        error: e => { this._toastError(e, 'common.deleteFailed'); },
+    this._dialogService.openConfirmDialog({ message: 'common.confirmDelete' })
+      .afterClosed().subscribe(confirmed => {
+        if (confirmed) {
+          this._deleteConfirmed(id);
+        }
       });
-    }
   }
 
-  cancelEdit(): void {
-    this.showForm = false;
-    this.editingId = null;
-    this.form.reset(this._formDefaults);
-    this.uploadError = '';
-  }
-
-  onPickImage(event: Event, controlName: string): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) {
-      return;
-    }
-    this.uploading = true;
-    this.uploadError = '';
-    this._upload.upload(file).subscribe({
-      next: url => {
-        this.form.patchValue({ [controlName]: url });
-        this.uploading = false;
-        this._cdr.markForCheck();
+  private _deleteConfirmed(id: string): void {
+    this._store.dispatch(showLoading());
+    this._svc.deleteNews(id).subscribe({
+      next: () => {
+        this._store.dispatch(showSuccess({}));
+        this.triggerSearch();
       },
-      error: () => {
-        this.uploadError = 'Tải ảnh thất bại.';
-        this.uploading = false;
-        this._cdr.markForCheck();
-      },
-    });
-  }
-
-  private _toastError(err: unknown, fallbackKey: string): void {
-    this._toast.error(apiErrorMessage(err, this._translate.instant(fallbackKey)));
-    this._cdr.markForCheck();
-  }
-
-  private _activeFilters(): Record<string, string> {
-    const out: Record<string, string> = {};
-    for (const key of Object.keys(this.filters)) {
-      const value = (this.filters[key] ?? '').trim();
-      if (value) {
-        out[key] = value;
-      }
-    }
-    return out;
+      error: error => this._store.dispatch(showException({ error })),
+    }).add(() => this._store.dispatch(hideLoading()));
   }
 }

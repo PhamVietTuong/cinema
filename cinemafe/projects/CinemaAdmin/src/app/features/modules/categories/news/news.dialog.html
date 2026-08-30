@@ -1,0 +1,68 @@
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'news.editTitle' : 'news.newTitle') | translate }}</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'news.headline' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="title" [placeholder]="'news.titlePlaceholder' | translate">
+        <mat-error *ngIf="form.controls['title'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'news.author' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="author" [placeholder]="'news.authorPlaceholder' | translate">
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'news.publishedAt' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="date" formControlName="publishedAt">
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'news.thumbnail' | translate }}</mat-label>
+      <div class="dialog-row-field">
+        <mat-form-field appearance="outline" class="dialog-row-field">
+          <input matInput formControlName="thumbnailUrl" [placeholder]="'news.thumbnailPlaceholder' | translate">
+        </mat-form-field>
+        <div class="img-upload-row">
+          <label class="ad-btn ad-btn--ghost">
+            <mat-icon>upload</mat-icon> {{ 'news.uploadImage' | translate }}
+            <input type="file" accept="image/*" hidden (change)="onPickImage($event, 'thumbnailUrl')">
+          </label>
+          <span class="img-upload-status" *ngIf="uploading">{{ 'common.loading' | translate }}</span>
+          <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
+        </div>
+        <div class="img-preview" *ngIf="form.value.thumbnailUrl">
+          <img [src]="form.value.thumbnailUrl" alt="">
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'news.content' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <textarea matInput formControlName="content" rows="5" [placeholder]="'news.contentPlaceholder' | translate"></textarea>
+        <mat-error *ngIf="form.controls['content'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-checkbox formControlName="isPublished">{{ 'news.published' | translate }}</mat-checkbox>
+    </div>
+  </mat-dialog-content>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+  </div>
+</form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

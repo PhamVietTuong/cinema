@@ -5,63 +5,79 @@
       <p class="ad-sub">{{ 'userTypes.subtitle' | translate }}</p>
     </div>
     <div class="ad-toolbar">
-      <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'common.add' | translate }}</button>
+      <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'common.add' | translate }}</button>
     </div>
   </div>
 
-  <app-modal [open]="showForm" (closed)="cancelEdit()">
-  <div class="ad-card form-card">
-    <h3 class="ad-card-title">{{ (editingId ? 'userTypes.editTitle' : 'userTypes.newTitle') | translate }}</h3>
-    <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
-      <div class="ad-field full-span">
-        <label class="ad-label">{{ 'userTypes.typeName' | translate }}</label>
-        <input class="ad-input" formControlName="name" [placeholder]="'userTypes.namePlaceholder' | translate">
-      </div>
-      <div class="form-actions full-span">
-        <button class="ad-btn ad-btn--primary" type="submit">{{ 'common.save' | translate }}</button>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
-      </div>
-    </form>
-  </div>
-  </app-modal>
-  <app-confirm-modal [open]="confirmOpen" [message]="'common.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'userTypes.typeName' | translate }}</mat-label>
+          <input matInput formControlName="name" (input)="onFilterChange()">
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
 
-  <div class="ad-card ad-card--pad-0">
-    <div class="ad-table-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr><th>{{ 'userTypes.typeName' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
-          <tr class="ad-filter-row">
-            <th><input class="ad-filter-input" [(ngModel)]="filters['name']" (input)="onFilterChange()" [placeholder]="'common.filter' | translate"></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let x of items">
-            <td><strong>{{ x.name }}</strong></td>
-            <td class="ad-td-actions">
-              <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-              <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="!items.length" class="ad-empty"><mat-icon>badge</mat-icon><p>{{ 'userTypes.empty' | translate }}</p></div>
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'userTypes.empty' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'userTypes.typeName' | translate" prop="name" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
     </div>
 
-    <div class="ad-pagination" *ngIf="totalCount > 0">
-      <span class="ad-pagination-info">{{ rangeStart }}–{{ rangeEnd }} / {{ totalCount }}</span>
-      <span class="ad-pagination-size">
-        <label class="ad-label">{{ 'userTypes.show' | translate }}</label>
-        <select class="ad-input" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
-          <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
-        </select>
-      </span>
-      <span class="ad-pagination-nav">
-        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" [title]="'userTypes.prev' | translate"><mat-icon>chevron_left</mat-icon></button>
-        <span class="ad-pagination-page">{{ 'userTypes.page' | translate:{ index: pageIndex, total: totalPages } }}</span>
-        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" [title]="'userTypes.next' | translate"><mat-icon>chevron_right</mat-icon></button>
-      </span>
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong></div>
+          <div class="ad-mobile-card-actions">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>badge</mat-icon><p>{{ 'userTypes.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
     </div>
-  </div>
+  </mat-card>
 </div>
