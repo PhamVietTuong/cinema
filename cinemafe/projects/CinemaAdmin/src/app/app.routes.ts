@@ -25,100 +25,36 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
-        path: 'dashboard',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
-      },
-      {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
       },
+
+      // ── Overview: dashboard, reports, movies, theaters, showtimes, users ────────
+      // All 7 pages below share one lazy module (OverviewModule) — this single
+      // pass-through entry (`path: ''`) loads it once; the module's OWN routes
+      // array then matches the real segment (dashboard, movies, theaters, ...).
       {
-        path: 'movies',
+        path: '',
         canActivate: [adminGuard],
-        loadComponent: () => import('./features/movies/movies-management.component').then(m => m.MoviesManagementComponent)
-      },
-      {
-        path: 'reports',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent)
-      },
-      {
-        path: 'theaters',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/theaters/theaters-management.component').then(m => m.TheatersManagementComponent)
-      },
-      {
-        path: 'theaters/:id',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/theaters/theater-detail.component').then(m => m.TheaterDetailComponent)
-      },
-      {
-        path: 'showtimes',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/show-times/show-times.component').then(m => m.ShowTimesManagementComponent)
-      },
-      {
-        path: 'discounts',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/discounts/discounts.component').then(m => m.DiscountsManagementComponent)
-      },
-      {
-        path: 'invoices',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/invoices/invoices.component').then(m => m.InvoicesManagementComponent)
-      },
-      {
-        path: 'users',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/users/users-management.component').then(m => m.UsersManagementComponent)
+        loadChildren: () => import('./features/modules/overview/overview.module').then(m => m.OverviewModule)
       },
 
       // ── Catalog (lookup) management ──────────────────────────────────────────
+      // All 7 pages below share one lazy module (CatalogAdminModule) — this single
+      // pass-through entry (`path: ''`) loads it once; the module's OWN routes
+      // array then matches the real segment (age-restrictions, movie-types, ...).
+      // Angular backtracks to the next sibling below if the module doesn't own
+      // the requested segment, so ordering here doesn't affect correctness.
       {
-        path: 'movie-types',
+        path: '',
         canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/movie-types/movie-types.component').then(m => m.MovieTypesManagementComponent)
+        loadChildren: () => import('./features/modules/categories/catalog-admin.module').then(m => m.CatalogAdminModule)
       },
+      // ── Operations ─────────────────────────────────────────────────────────────
       {
-        path: 'age-restrictions',
+        path: '',
         canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/age-restrictions/age-restrictions.component').then(m => m.AgeRestrictionsManagementComponent)
-      },
-      {
-        path: 'discount-types',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/discount-types/discount-types.component').then(m => m.DiscountTypesManagementComponent)
-      },
-      {
-        path: 'memberships',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/memberships/memberships.component').then(m => m.MembershipsManagementComponent)
-      },
-      {
-        path: 'user-types',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/user-types/user-types.component').then(m => m.UserTypesManagementComponent)
-      },
-      {
-        path: 'holidays',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/holidays/holidays.component').then(m => m.HolidaysManagementComponent)
-      },
-      {
-        path: 'news',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/news/news.component').then(m => m.NewsManagementComponent)
-      },
-      {
-        path: 'comments',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/comments/comments.component').then(m => m.CommentsModerationComponent)
-      },
-      {
-        path: 'gift-cards',
-        canActivate: [adminGuard],
-        loadComponent: () => import('./features/catalog/gift-cards/gift-cards.component').then(m => m.GiftCardsManagementComponent)
+        loadChildren: () => import('./features/modules/operations/operations.module').then(m => m.OperationsModule)
       }
     ]
   },
