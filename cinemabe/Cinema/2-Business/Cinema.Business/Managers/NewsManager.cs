@@ -44,6 +44,16 @@ public class NewsManager : INewsManager
                     query = _uow.NewsStore.FilterQuery(query, e => e.Title.Contains(keyword));
                     break;
 
+                case "title":
+                    var title = filters[key];
+                    query = _uow.NewsStore.FilterQuery(query, e => e.Title.Contains(title));
+                    break;
+
+                case "author":
+                    var author = filters[key];
+                    query = _uow.NewsStore.FilterQuery(query, e => e.Author != null && e.Author.Contains(author));
+                    break;
+
                 case "isPublished":
                     if (bool.TryParse(filters[key], out var isPublished))
                     {
@@ -55,12 +65,30 @@ public class NewsManager : INewsManager
         return query;
     }
 
+    private IQueryable<News> ApplySort(IQueryable<News> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "title" => _uow.NewsStore.OrderQuery(query, e => e.Title, sort.Ascending),
+            "author" => _uow.NewsStore.OrderQuery(query, e => e.Author, sort.Ascending),
+            "isPublished" => _uow.NewsStore.OrderQuery(query, e => e.IsPublished, sort.Ascending),
+            "publishedAt" => _uow.NewsStore.OrderQuery(query, e => e.PublishedAt, sort.Ascending),
+            _ => query,
+        };
+    }
+
     public async Task<DefaultSearchResults<NewsDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredNewsQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.NewsStore.CountAsync(query);
         var items = await _uow.NewsStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<News, NewsDTO>(items, total, page, pageSize);

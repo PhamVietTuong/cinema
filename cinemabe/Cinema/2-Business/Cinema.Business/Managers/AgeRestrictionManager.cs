@@ -43,9 +43,42 @@ public class AgeRestrictionManager : IAgeRestrictionManager
                     var keyword = filters[key];
                     query = _uow.AgeRestrictionStore.FilterQuery(query, e => e.Code.Contains(keyword) || e.Description.Contains(keyword));
                     break;
+
+                case "code":
+                    var code = filters[key];
+                    query = _uow.AgeRestrictionStore.FilterQuery(query, e => e.Code.Contains(code));
+                    break;
+
+                case "description":
+                    var description = filters[key];
+                    query = _uow.AgeRestrictionStore.FilterQuery(query, e => e.Description.Contains(description));
+                    break;
+
+                case "minAge":
+                    if (int.TryParse(filters[key], out var minAge))
+                    {
+                        query = _uow.AgeRestrictionStore.FilterQuery(query, e => e.MinAge == minAge);
+                    }
+                    break;
             }
         }
         return query;
+    }
+
+    private IQueryable<AgeRestriction> ApplySort(IQueryable<AgeRestriction> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "code" => _uow.AgeRestrictionStore.OrderQuery(query, e => e.Code, sort.Ascending),
+            "description" => _uow.AgeRestrictionStore.OrderQuery(query, e => e.Description, sort.Ascending),
+            "minAge" => _uow.AgeRestrictionStore.OrderQuery(query, e => e.MinAge, sort.Ascending),
+            _ => query,
+        };
     }
 
     public async Task<DefaultSearchResults<AgeRestrictionDTO>> GetAsync(PagingSearchDTO search)
@@ -54,6 +87,7 @@ public class AgeRestrictionManager : IAgeRestrictionManager
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredAgeRestrictionQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.AgeRestrictionStore.CountAsync(query);
         var items = await _uow.AgeRestrictionStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<AgeRestriction, AgeRestrictionDTO>(items, total, page, pageSize);

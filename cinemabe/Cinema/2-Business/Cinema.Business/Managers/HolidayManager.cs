@@ -43,9 +43,44 @@ public class HolidayManager : IHolidayManager
                     var keyword = filters[key];
                     query = _uow.HolidayStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
+
+                case "name":
+                    var name = filters[key];
+                    query = _uow.HolidayStore.FilterQuery(query, e => e.Name.Contains(name));
+                    break;
+
+                case "date":
+                    if (DateOnly.TryParse(filters[key], out var date))
+                    {
+                        query = _uow.HolidayStore.FilterQuery(query, e => e.Date == date);
+                    }
+                    break;
+
+                case "priceMultiplier":
+                    if (double.TryParse(filters[key], out var priceMultiplier))
+                    {
+                        query = _uow.HolidayStore.FilterQuery(query, e => e.PriceMultiplier == priceMultiplier);
+                    }
+                    break;
             }
         }
         return query;
+    }
+
+    private IQueryable<Holiday> ApplySort(IQueryable<Holiday> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "name" => _uow.HolidayStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            "date" => _uow.HolidayStore.OrderQuery(query, e => e.Date, sort.Ascending),
+            "priceMultiplier" => _uow.HolidayStore.OrderQuery(query, e => e.PriceMultiplier, sort.Ascending),
+            _ => query,
+        };
     }
 
     public async Task<DefaultSearchResults<HolidayDTO>> GetAsync(PagingSearchDTO search)
@@ -54,6 +89,7 @@ public class HolidayManager : IHolidayManager
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredHolidayQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.HolidayStore.CountAsync(query);
         var items = await _uow.HolidayStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<Holiday, HolidayDTO>(items, total, page, pageSize);
