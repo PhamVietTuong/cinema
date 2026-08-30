@@ -3,6 +3,7 @@
  */
 
 export * from './lib/tokens';
+export * from './lib/cinema-lib';
 export * from './lib/shared.module';
 export * from './lib/models';
 export * from './lib/interfaces/cinema.model';
@@ -13,3 +14,4 @@ export * from './lib/guards';
 export * from './lib/interceptors';
 export * from './lib/store';
 export * from './lib/svg/cinema-svg-icons';
+export * from './lib/components';

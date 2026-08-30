@@ -1,0 +1,121 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'discounts.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'discounts.subtitle' | translate }}</p>
+    </div>
+    <div class="ad-toolbar">
+      <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'common.add' | translate }}</button>
+    </div>
+  </div>
+
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.code' | translate }}</mat-label>
+          <input matInput formControlName="code" (input)="onFilterChange()">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'discounts.percent' | translate }}</mat-label>
+          <input matInput formControlName="percent" (input)="onFilterChange()">
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'discounts.empty' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'common.code' | translate" prop="code" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.code || ('discounts.autoApplyShort' | translate) }}</strong></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.type' | translate" prop="discountTypeId" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ typeName(row.discountTypeId) }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'discounts.scopeShort' | translate" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ scopeLabel(row) }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'discounts.discount' | translate" prop="percent" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.percent }}%</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'discounts.validity' | translate" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ (row.startDate | date:'dd/MM/yy') }} – {{ (row.endDate | date:'dd/MM/yy') }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.status' | translate" prop="isActive" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span class="ad-pill" [class.ad-pill--success]="row.isActive" [class.ad-pill--neutral]="!row.isActive">
+              {{ (row.isActive ? 'discounts.statusActive' : 'discounts.statusInactive') | translate }}
+            </span>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.code || ('discounts.autoApplyShort' | translate) }}</strong></div>
+          <div class="ad-mobile-card-row"><span>{{ 'common.type' | translate }}</span><span>{{ typeName(row.discountTypeId) }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'discounts.scopeShort' | translate }}</span><span>{{ scopeLabel(row) }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'discounts.discount' | translate }}</span><span>{{ row.percent }}%</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'discounts.validity' | translate }}</span><span>{{ (row.startDate | date:'dd/MM/yy') }} – {{ (row.endDate | date:'dd/MM/yy') }}</span></div>
+          <div class="ad-mobile-card-row">
+            <span>{{ 'common.status' | translate }}</span>
+            <span class="ad-pill" [class.ad-pill--success]="row.isActive" [class.ad-pill--neutral]="!row.isActive">
+              {{ (row.isActive ? 'discounts.statusActive' : 'discounts.statusInactive') | translate }}
+            </span>
+          </div>
+          <div class="ad-mobile-card-actions">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>sell</mat-icon><p>{{ 'discounts.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
+    </div>
+  </mat-card>
+</div>

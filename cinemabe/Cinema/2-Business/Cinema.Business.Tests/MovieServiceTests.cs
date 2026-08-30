@@ -23,7 +23,7 @@ public class MovieServiceTests
     {
         var movieId = Guid.NewGuid();
         var movies  = new List<Movie> { new() { Id = movieId, Title = "Movie A" } };
-        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(null, (Guid?)null, 1, 12)).ReturnsAsync((movies, 1));
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(null, null, (Guid?)null, 1, 12)).ReturnsAsync((movies, 1));
         // Ratings for the whole page come from one grouped lookup, not one call per movie.
         _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new Dictionary<Guid, double> { [movieId] = 4.5 });

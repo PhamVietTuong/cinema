@@ -1,0 +1,101 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'ageRestrictions.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'ageRestrictions.subtitle' | translate }}</p>
+    </div>
+    <div class="ad-toolbar">
+      <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'common.add' | translate }}</button>
+    </div>
+  </div>
+
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.code' | translate }}</mat-label>
+          <input matInput formControlName="code" (input)="onFilterChange()">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.description' | translate }}</mat-label>
+          <input matInput formControlName="description" (input)="onFilterChange()">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'ageRestrictions.minAge' | translate }}</mat-label>
+          <input matInput formControlName="minAge" (input)="onFilterChange()">
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'ageRestrictions.empty' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'common.code' | translate" prop="code" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.code }}</strong></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.description' | translate" prop="description" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.description || '—' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'ageRestrictions.minAge' | translate" prop="minAge" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.minAge }}+</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.code }}</strong></div>
+          <div class="ad-mobile-card-row"><span>{{ 'common.description' | translate }}</span><span>{{ row.description || '—' }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'ageRestrictions.minAge' | translate }}</span><span>{{ row.minAge }}+</span></div>
+          <div class="ad-mobile-card-actions">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>shield</mat-icon><p>{{ 'ageRestrictions.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
+    </div>
+  </mat-card>
+</div>

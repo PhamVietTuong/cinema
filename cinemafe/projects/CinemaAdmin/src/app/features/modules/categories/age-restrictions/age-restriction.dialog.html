@@ -1,0 +1,38 @@
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'ageRestrictions.editTitle' : 'ageRestrictions.newTitle') | translate }}</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'common.code' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="code" [placeholder]="'ageRestrictions.codePlaceholder' | translate">
+        <mat-error *ngIf="form.controls['code'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'ageRestrictions.minAge' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="number" formControlName="minAge" placeholder="18">
+        <mat-error *ngIf="form.controls['minAge'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'common.description' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="description" [placeholder]="'ageRestrictions.descriptionPlaceholder' | translate">
+        <mat-error *ngIf="form.controls['description'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+  </div>
+</form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

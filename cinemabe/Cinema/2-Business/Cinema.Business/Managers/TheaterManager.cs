@@ -19,7 +19,21 @@ public class TheaterManager : ITheaterManager
 
     public async Task<DefaultSearchResults<TheaterDTO>> GetTheatersAsync(PagingSearchDTO search)
     {
+        var name = search.Filters.GetString("name");
+        var city = search.Filters.GetString("city");
+
         var theaters = (await _uow.TheaterStore.GetTheatersWithRoomsAsync()).Select(ToTheaterDTO).ToList();
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            theaters = theaters.Where(t => t.Name != null && t.Name.Contains(name, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            theaters = theaters.Where(t => t.City != null && t.City.Contains(city, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
         var page     = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize  > 0 ? search.PageSize  : theaters.Count;
         var paged    = theaters.Skip((page - 1) * pageSize).Take(pageSize).ToList();

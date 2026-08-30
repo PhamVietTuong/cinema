@@ -43,9 +43,28 @@ public class MovieTypeManager : IMovieTypeManager
                     var keyword = filters[key];
                     query = _uow.MovieTypeStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
+
+                case "name":
+                    var name = filters[key];
+                    query = _uow.MovieTypeStore.FilterQuery(query, e => e.Name.Contains(name));
+                    break;
             }
         }
         return query;
+    }
+
+    private IQueryable<MovieType> ApplySort(IQueryable<MovieType> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "name" => _uow.MovieTypeStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            _ => query,
+        };
     }
 
     public async Task<DefaultSearchResults<MovieTypeDTO>> GetAsync(PagingSearchDTO search)
@@ -54,6 +73,7 @@ public class MovieTypeManager : IMovieTypeManager
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredMovieTypeQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.MovieTypeStore.CountAsync(query);
         var items = await _uow.MovieTypeStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<MovieType, MovieTypeDTO>(items, total, page, pageSize);

@@ -1,0 +1,29 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .snackbar-text {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  .snackbar-close {
+    cursor: pointer;
+  }
+
+  .success {
+    .snackbar-icon, .snackbar-text { color: #2e7d32; }
+  }
+
+  .error {
+    .snackbar-icon, .snackbar-text { color: #c62828; }
+  }
+}

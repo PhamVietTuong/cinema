@@ -7,7 +7,7 @@ import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import {
-  SharedModule,
+  CinemaLibModule,
   authReducer, moviesReducer,
   AuthEffects, MoviesEffects,
   authInterceptor, errorInterceptor,
@@ -27,7 +27,7 @@ import { ChatbotComponent } from './shared/chatbot/chatbot.component';
     BrowserModule,
     BrowserAnimationsModule,
     RouterModule.forRoot(routes),
-    SharedModule,
+    CinemaLibModule,
     ChatbotComponent,
     StoreModule.forRoot({ auth: authReducer, movies: moviesReducer }),
     EffectsModule.forRoot([AuthEffects, MoviesEffects]),

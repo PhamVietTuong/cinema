@@ -1,0 +1,74 @@
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'theaters.form.editTitle' : 'theaters.form.createTitle') | translate }}</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'theaters.form.nameLabel' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="name" [placeholder]="'theaters.form.namePlaceholder' | translate">
+        <mat-error *ngIf="form.controls['name'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'theaters.form.cityLabel' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="city" [placeholder]="'theaters.form.cityPlaceholder' | translate">
+        <mat-error *ngIf="form.controls['city'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'theaters.form.addressLabel' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="address" [placeholder]="'theaters.form.addressPlaceholder' | translate">
+        <mat-error *ngIf="form.controls['address'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'theaters.form.phoneLabel' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="phone" placeholder="0123456789">
+        <mat-error *ngIf="form.controls['phone'].hasError('pattern')">{{ 'theaters.form.phoneInvalid' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'theaters.form.emailLabel' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="email" placeholder="rap@cinema.vn">
+        <mat-error *ngIf="form.controls['email'].hasError('email')">{{ 'theaters.form.emailInvalid' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'theaters.form.imageLabel' | translate }}</mat-label>
+      <div class="dialog-row-field">
+        <mat-form-field appearance="outline" class="dialog-row-field">
+          <input matInput formControlName="imageUrl" [placeholder]="'theaters.form.imagePlaceholder' | translate">
+        </mat-form-field>
+        <div class="img-upload-row">
+          <label class="ad-btn ad-btn--ghost">
+            <mat-icon>upload</mat-icon> {{ 'theaters.form.uploadImage' | translate }}
+            <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
+          </label>
+          <span class="img-upload-status" *ngIf="uploading">{{ 'theaters.form.uploading' | translate }}</span>
+          <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError }}</span>
+        </div>
+        <div class="img-preview" *ngIf="form.value.imageUrl">
+          <img [src]="form.value.imageUrl" alt="">
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+  </div>
+</form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

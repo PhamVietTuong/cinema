@@ -43,9 +43,45 @@ public class MemberShipManager : IMemberShipManager
                     var keyword = filters[key];
                     query = _uow.MemberShipStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
+
+                case "name":
+                    var name = filters[key];
+                    query = _uow.MemberShipStore.FilterQuery(query, e => e.Name.Contains(name));
+                    break;
+
+                case "minPoints":
+                    if (int.TryParse(filters[key], out var minPoints))
+                    {
+                        query = _uow.MemberShipStore.FilterQuery(query, e => e.MinPoints == minPoints);
+                    }
+                    break;
+
+                case "discountPercent":
+                    if (double.TryParse(filters[key], out var discountPercent))
+                    {
+                        query = _uow.MemberShipStore.FilterQuery(query, e => e.DiscountPercent == discountPercent);
+                    }
+                    break;
             }
         }
         return query;
+    }
+
+    private IQueryable<MemberShip> ApplySort(IQueryable<MemberShip> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "name" => _uow.MemberShipStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            "minPoints" => _uow.MemberShipStore.OrderQuery(query, e => e.MinPoints, sort.Ascending),
+            "maxPoints" => _uow.MemberShipStore.OrderQuery(query, e => e.MaxPoints, sort.Ascending),
+            "discountPercent" => _uow.MemberShipStore.OrderQuery(query, e => e.DiscountPercent, sort.Ascending),
+            _ => query,
+        };
     }
 
     public async Task<DefaultSearchResults<MemberShipDTO>> GetAsync(PagingSearchDTO search)
@@ -54,6 +90,7 @@ public class MemberShipManager : IMemberShipManager
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredMemberShipQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.MemberShipStore.CountAsync(query);
         var items = await _uow.MemberShipStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<MemberShip, MemberShipDTO>(items, total, page, pageSize);
