@@ -4,7 +4,7 @@ namespace Cinema.Data.Contracts;
 
 public interface IMovieStore : IGenericStore<Movie>
 {
-    Task<(IEnumerable<Movie> Items, int Total)> GetPagedAsync(string? search, Guid? movieTypeId, int page, int pageSize);
+    Task<(IEnumerable<Movie> Items, int Total)> GetPagedAsync(string? search, string? director, Guid? movieTypeId, int page, int pageSize);
     Task<Movie?> GetDetailAsync(Guid id);
     Task<Movie?> GetForUpdateAsync(Guid id);
     Task<IEnumerable<Movie>> GetNowShowingAsync();

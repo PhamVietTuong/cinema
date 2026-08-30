@@ -49,16 +49,46 @@ public class DiscountManager : IDiscountManager
                     var keyword = filters[key];
                     all = all.Where(e => Match(e, keyword)).ToList();
                     break;
+
+                case "code":
+                    var code = filters[key];
+                    all = all.Where(e => (e.Code ?? string.Empty).Contains(code, StringComparison.OrdinalIgnoreCase)).ToList();
+                    break;
+
+                case "percent":
+                    if (double.TryParse(filters[key], out var percent))
+                    {
+                        all = all.Where(e => e.Percent == percent).ToList();
+                    }
+                    break;
             }
         }
         return all;
+    }
+
+    private static List<Discount> ApplySort(List<Discount> all, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return all;
+        }
+
+        IOrderedEnumerable<Discount> ordered = sort.Field switch
+        {
+            "code" => sort.Ascending ? all.OrderBy(e => e.Code) : all.OrderByDescending(e => e.Code),
+            "description" => sort.Ascending ? all.OrderBy(e => e.Description) : all.OrderByDescending(e => e.Description),
+            "percent" => sort.Ascending ? all.OrderBy(e => e.Percent) : all.OrderByDescending(e => e.Percent),
+            "isActive" => sort.Ascending ? all.OrderBy(e => e.IsActive) : all.OrderByDescending(e => e.IsActive),
+            _ => null!,
+        };
+        return ordered?.ToList() ?? all;
     }
 
     // Overridden so the promotion's theater scope (join rows) is loaded and projected.
     public async Task<DefaultSearchResults<DiscountDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
-        var all = GetFilteredDiscountList(await _uow.DiscountStore.GetAllWithScopeAsync(), search.Filters);
+        var all = ApplySort(GetFilteredDiscountList(await _uow.DiscountStore.GetAllWithScopeAsync(), search.Filters), search.Sort);
 
         var page = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize > 0 ? search.PageSize : 20;

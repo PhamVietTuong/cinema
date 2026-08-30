@@ -10,7 +10,7 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
     public MovieStore(CinemaContext db) : base(db) { }
 
     public async Task<(IEnumerable<Movie> Items, int Total)> GetPagedAsync(
-        string? search, Guid? movieTypeId, int page, int pageSize)
+        string? search, string? director, Guid? movieTypeId, int page, int pageSize)
     {
         var q = DbSet
             .Include(m => m.AgeRestriction)
@@ -20,6 +20,11 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
         if (!string.IsNullOrWhiteSpace(search))
         {
             q = q.Where(m => m.Title.Contains(search) || (m.Director != null && m.Director.Contains(search)) || (m.Cast != null && m.Cast.Contains(search)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(director))
+        {
+            q = q.Where(m => m.Director != null && m.Director.Contains(director));
         }
 
         if (movieTypeId.HasValue)

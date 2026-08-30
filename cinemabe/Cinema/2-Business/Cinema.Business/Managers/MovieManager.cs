@@ -19,12 +19,13 @@ public class MovieManager : IMovieManager
 
     public async Task<DefaultSearchResults<MovieDTO>> GetMoviesAsync(PagingSearchDTO search)
     {
-        var searchText  = search.Filters.GetString("search");
+        var searchText  = search.Filters.GetString("search") ?? search.Filters.GetString("title");
+        var director    = search.Filters.GetString("director");
         var movieTypeId = search.Filters.GetGuid("movieTypeId");
         var page        = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize    = search.PageSize  > 0 ? search.PageSize  : 12;
 
-        var (items, total) = await _uow.MovieStore.GetPagedAsync(searchText, movieTypeId, page, pageSize);
+        var (items, total) = await _uow.MovieStore.GetPagedAsync(searchText, director, movieTypeId, page, pageSize);
         var dtos = items.Select(ToMovieDTO).ToList();
 
         // One grouped query for the whole page. Querying per movie made this endpoint issue
