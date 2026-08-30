@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
 import {
   CinemaServiceAgent,
   BaseTableComponent, TablePage, TableSearchCriteria,
@@ -29,7 +28,6 @@ export class AgeRestrictionsManagementComponent extends BaseTableComponent {
     private _svc: CinemaServiceAgent.HttpService,
     private _dialog: MatDialog,
     private _dialogService: DialogService,
-    private _translate: TranslateService,
   ) {
     super(cd, fb, router, store);
   }
@@ -58,7 +56,7 @@ export class AgeRestrictionsManagementComponent extends BaseTableComponent {
     if (!id) {
       return;
     }
-    this._dialogService.openConfirmDialog({ message: this._translate.instant('common.confirmDelete') })
+    this._dialogService.openConfirmDialog({ message: 'common.confirmDelete' })
       .afterClosed().subscribe(confirmed => {
         if (confirmed) {
           this._deleteConfirmed(id);

@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 
 export interface ConfirmDialogData {
-  /** Already-translated message body. */
+  /** i18n key for the message body — translated inside the dialog, not by the caller. */
   message: string;
   /** i18n key; defaults to 'common.confirm'. */
   title?: string;
