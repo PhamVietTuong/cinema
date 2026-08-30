@@ -1,15 +1,16 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { SharedModule } from 'CinemaLib';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ModalComponent } from '../../../shared/modal.component';
 import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
 
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ReportsComponent } from './reports/reports.component';
 import { MoviesManagementComponent } from './movies/movies-management.component';
-import { MovieFormComponent } from './movies/movie-form.component';
+import { MovieDialog } from './movies/movie.dialog';
 import { TheatersManagementComponent } from './theaters/theaters-management.component';
-import { TheaterFormComponent } from './theaters/theater-form.component';
+import { TheaterDialog } from './theaters/theater.dialog';
 import { TheaterDetailComponent } from './theaters/theater-detail.component';
 import { TheaterRoomsComponent } from './theaters/theater-rooms.component';
 import { TheaterRoomTypesComponent } from './theaters/theater-room-types.component';
@@ -19,7 +20,7 @@ import { TheaterTimeSlotsComponent } from './theaters/theater-time-slots.compone
 import { TheaterTicketPricesComponent } from './theaters/theater-ticket-prices.component';
 import { ShowTimesManagementComponent } from './show-times/show-times.component';
 import { UsersManagementComponent } from './users/users-management.component';
-import { UserFormComponent } from './users/user-form.component';
+import { UserDialog } from './users/user.dialog';
 
 /**
  * Overview admin pages — dashboard, reports, movies, theaters, showtimes and
@@ -46,13 +47,27 @@ const routes: Routes = [
   declarations: [
     DashboardComponent,
     ReportsComponent,
-    MoviesManagementComponent, MovieFormComponent,
-    TheatersManagementComponent, TheaterFormComponent, TheaterDetailComponent,
-    TheaterRoomsComponent, TheaterRoomTypesComponent, TheaterSeatTypesComponent,
-    TheaterFoodComponent, TheaterTimeSlotsComponent, TheaterTicketPricesComponent,
+    MoviesManagementComponent,
+    MovieDialog,
+    TheatersManagementComponent,
+    TheaterDialog,
+    TheaterDetailComponent,
+    TheaterRoomsComponent,
+    TheaterRoomTypesComponent,
+    TheaterSeatTypesComponent,
+    TheaterFoodComponent,
+    TheaterTimeSlotsComponent,
+    TheaterTicketPricesComponent,
     ShowTimesManagementComponent,
-    UsersManagementComponent, UserFormComponent,
+    UsersManagementComponent,
+    UserDialog,
   ],
-  imports: [SharedModule, ModalComponent, ConfirmModalComponent, RouterModule.forChild(routes)],
+  imports: [
+    SharedModule,
+    NgxDatatableModule,
+    ModalComponent,
+    ConfirmModalComponent,
+    RouterModule.forChild(routes),
+  ],
 })
 export class OverviewModule {}

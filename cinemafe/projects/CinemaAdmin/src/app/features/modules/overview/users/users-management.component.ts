@@ -1,5 +1,18 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
-import { IdentityServiceAgent, UserRole } from 'CinemaLib';
+import { ChangeDetectorRef, Component } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  IdentityServiceAgent,
+  UserRole,
+  BaseTableComponent, TablePage, TableSearchCriteria,
+  DialogService,
+  showLoading, hideLoading, showSuccess, showException,
+} from 'CinemaLib';
+import { UserDialog } from './user.dialog';
 
 interface UserRow {
   id?: string;
@@ -16,32 +29,34 @@ interface UserRow {
   selector: 'app-users-management',
   standalone: false,
   templateUrl: './users-management.component.html',
-  styleUrl: './users-management.component.scss'
 })
-export class UsersManagementComponent implements OnInit {
-  private _identity = inject(IdentityServiceAgent.HttpService);
-  private _cdr = inject(ChangeDetectorRef);
-
+export class UsersManagementComponent extends BaseTableComponent {
   readonly UserRole = UserRole;
   readonly roles: UserRole[] = [UserRole.Admin, UserRole.Customer];
 
-  search = '';
-  filterRole: '' | UserRole = '';
-  users: UserRow[] = [];
+  constructor(
+    cd: ChangeDetectorRef,
+    fb: FormBuilder,
+    router: Router,
+    store: Store<any>,
+    private _identity: IdentityServiceAgent.HttpService,
+    private _dialog: MatDialog,
+    private _dialogService: DialogService,
+  ) {
+    super(cd, fb, router, store);
+  }
 
-  showForm = false;
-  editing: IdentityServiceAgent.UserDTO | null = null;
-  confirmOpen = false;
-  private _pendingDeleteId: string | null = null;
+  protected override _createSearchForm(): void {
+    this.searchForm = this._formBuilder.group({ search: [''], role: [''] });
+  }
 
-  ngOnInit(): void { this.load(); }
-
-  load(): void {
-    this._identity.getUsers(IdentityServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
-      .subscribe({
-        next: r => { this.users = (r.results ?? []).map(u => this._toRow(u)); this._cdr.markForCheck(); },
-        error: () => { this.users = []; this._cdr.markForCheck(); },
-      });
+  protected _search(criteria: TableSearchCriteria): Observable<TablePage<UserRow>> {
+    return this._identity.getUsers(IdentityServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: criteria.pageIndex, pageSize: criteria.pageSize, filters: criteria.filters,
+    })).pipe(map(r => ({
+      results: (r.results ?? []).map(u => this._toRow(u)),
+      totalCount: r.totalCount,
+    })));
   }
 
   private _toRow(u: IdentityServiceAgent.UserDTO): UserRow {
@@ -57,32 +72,37 @@ export class UsersManagementComponent implements OnInit {
     };
   }
 
-  get total(): number { return this.users.length; }
-  get adminCount(): number { return this.users.filter(u => u.role === UserRole.Admin).length; }
-  get customerCount(): number { return this.users.filter(u => u.role === UserRole.Customer).length; }
-
-  get filtered(): UserRow[] {
-    const q = this.search.trim().toLowerCase();
-    return this.users.filter(u =>
-      (!this.filterRole || u.role === this.filterRole) &&
-      (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+  openCreate(): void {
+    this._dialog.open(UserDialog, { width: '480px', data: { user: null } })
+      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
-  openCreate(): void { this.editing = null; this.showForm = true; }
-  editUser(row: UserRow): void { this.editing = row.dto; this.showForm = true; }
-  onSaved(): void { this.load(); }
+  edit(row: UserRow): void {
+    this._dialog.open(UserDialog, { width: '480px', data: { user: row.dto } })
+      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+  }
 
   delete(id?: string): void {
-    if (!id) { return; }
-    this._pendingDeleteId = id;
-    this.confirmOpen = true;
+    if (!id) {
+      return;
+    }
+    this._dialogService.openConfirmDialog({ message: 'common.confirmDelete' })
+      .afterClosed().subscribe(confirmed => {
+        if (confirmed) {
+          this._deleteConfirmed(id);
+        }
+      });
   }
 
-  confirmDelete(): void {
-    const id = this._pendingDeleteId;
-    this.confirmOpen = false;
-    this._pendingDeleteId = null;
-    if (id) { this._identity.deleteUser(id).subscribe(() => this.load()); }
+  private _deleteConfirmed(id: string): void {
+    this._store.dispatch(showLoading());
+    this._identity.deleteUser(id).subscribe({
+      next: () => {
+        this._store.dispatch(showSuccess({}));
+        this.triggerSearch();
+      },
+      error: error => this._store.dispatch(showException({ error })),
+    }).add(() => this._store.dispatch(hideLoading()));
   }
 
   initials(name: string): string {

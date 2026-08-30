@@ -6,61 +6,110 @@
     </div>
   </div>
 
-  <app-confirm-modal [open]="confirmOpen" [message]="'comments.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.status' | translate }}</mat-label>
+          <mat-select formControlName="approved" (selectionChange)="onFilterChange()">
+            <mat-option value="">{{ 'common.all' | translate }}</mat-option>
+            <mat-option value="true">{{ 'comments.statusApproved' | translate }}</mat-option>
+            <mat-option value="false">{{ 'comments.statusHidden' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
 
-  <div class="ad-card ad-card--pad-0">
-    <div class="ad-table-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr><th>{{ 'comments.movie' | translate }}</th><th>{{ 'comments.user' | translate }}</th><th>{{ 'comments.content' | translate }}</th><th>{{ 'common.status' | translate }}</th><th>{{ 'common.createdAt' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
-          <tr class="ad-filter-row">
-            <th></th>
-            <th></th>
-            <th></th>
-            <th>
-              <select class="ad-filter-input" [(ngModel)]="filters['approved']" (ngModelChange)="onFilterChange()">
-                <option value="">{{ 'common.all' | translate }}</option>
-                <option value="true">{{ 'comments.statusApproved' | translate }}</option>
-                <option value="false">{{ 'comments.statusHidden' | translate }}</option>
-              </select>
-            </th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let x of items">
-            <td>{{ x.movieTitle || '—' }}</td>
-            <td>{{ x.userName || '—' }}</td>
-            <td class="ad-cell-wrap">{{ x.content }}</td>
-            <td>
-              <span class="ad-pill" [ngClass]="x.isApproved ? 'ad-pill--success' : 'ad-pill--warn'">{{ (x.isApproved ? 'comments.statusApproved' : 'comments.statusHidden') | translate }}</span>
-            </td>
-            <td>{{ x.creationTime | date:'dd/MM/yy HH:mm' }}</td>
-            <td class="ad-td-actions">
-              <button *ngIf="!x.isApproved" class="ad-icon-btn is-primary" (click)="moderate(x.id, true)" [title]="'comments.approve' | translate"><mat-icon>check_circle</mat-icon></button>
-              <button *ngIf="x.isApproved" class="ad-icon-btn" (click)="moderate(x.id, false)" [title]="'comments.hide' | translate"><mat-icon>visibility_off</mat-icon></button>
-              <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="!items.length" class="ad-empty"><mat-icon>forum</mat-icon><p>{{ 'comments.empty' | translate }}</p></div>
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'comments.empty' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'comments.movie' | translate" prop="movieTitle" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.movieTitle || '—' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'comments.user' | translate" prop="userName" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.userName || '—' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'comments.content' | translate" prop="content" [sortable]="false" [width]="320">
+          <ng-template let-row="row" ngx-datatable-cell-template><span class="ad-cell-wrap">{{ row.content }}</span></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.status' | translate" prop="isApproved" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span class="ad-pill" [ngClass]="row.isApproved ? 'ad-pill--success' : 'ad-pill--warn'">
+              {{ (row.isApproved ? 'comments.statusApproved' : 'comments.statusHidden') | translate }}
+            </span>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.createdAt' | translate" prop="creationTime" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.creationTime | date:'dd/MM/yy HH:mm' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="170" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button *ngIf="!row.isApproved" mat-icon-button (click)="moderate(row.id, true)" [matTooltip]="'comments.approve' | translate"><mat-icon>check_circle</mat-icon></button>
+              <button *ngIf="row.isApproved" mat-icon-button (click)="moderate(row.id, false)" [matTooltip]="'comments.hide' | translate"><mat-icon>visibility_off</mat-icon></button>
+              <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
     </div>
 
-    <div class="ad-pagination" *ngIf="totalCount > 0">
-      <span class="ad-pagination-info">{{ rangeStart }}–{{ rangeEnd }} / {{ totalCount }}</span>
-      <span class="ad-pagination-size">
-        <label class="ad-label">{{ 'comments.perPage' | translate }}</label>
-        <select class="ad-input" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
-          <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
-        </select>
-      </span>
-      <span class="ad-pagination-nav">
-        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" [title]="'comments.prev' | translate"><mat-icon>chevron_left</mat-icon></button>
-        <span class="ad-pagination-page">{{ 'comments.pageInfo' | translate:{ current: pageIndex, total: totalPages } }}</span>
-        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" [title]="'comments.next' | translate"><mat-icon>chevron_right</mat-icon></button>
-      </span>
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.movieTitle || '—' }}</strong></div>
+          <div class="ad-mobile-card-row"><span>{{ 'comments.user' | translate }}</span><span>{{ row.userName || '—' }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'comments.content' | translate }}</span><span class="ad-cell-wrap">{{ row.content }}</span></div>
+          <div class="ad-mobile-card-row">
+            <span>{{ 'common.status' | translate }}</span>
+            <span class="ad-pill" [ngClass]="row.isApproved ? 'ad-pill--success' : 'ad-pill--warn'">
+              {{ (row.isApproved ? 'comments.statusApproved' : 'comments.statusHidden') | translate }}
+            </span>
+          </div>
+          <div class="ad-mobile-card-row"><span>{{ 'common.createdAt' | translate }}</span><span>{{ row.creationTime | date:'dd/MM/yy HH:mm' }}</span></div>
+          <div class="ad-mobile-card-actions">
+            <button *ngIf="!row.isApproved" mat-icon-button (click)="moderate(row.id, true)" [matTooltip]="'comments.approve' | translate"><mat-icon>check_circle</mat-icon></button>
+            <button *ngIf="row.isApproved" mat-icon-button (click)="moderate(row.id, false)" [matTooltip]="'comments.hide' | translate"><mat-icon>visibility_off</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>forum</mat-icon><p>{{ 'comments.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
     </div>
-  </div>
+  </mat-card>
 </div>

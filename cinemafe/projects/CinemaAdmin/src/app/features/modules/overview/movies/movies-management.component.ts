@@ -1,57 +1,77 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { CinemaServiceAgent } from 'CinemaLib';
+import { ChangeDetectorRef, Component } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  CinemaServiceAgent,
+  BaseTableComponent, TablePage, TableSearchCriteria,
+  DialogService,
+  showLoading, hideLoading, showSuccess, showException,
+} from 'CinemaLib';
+import { MovieDialog } from './movie.dialog';
+
+type Dto = CinemaServiceAgent.MovieDTO;
 
 @Component({
   selector: 'app-movies-management',
   standalone: false,
   templateUrl: './movies-management.component.html',
-  styleUrl: './movies-management.component.scss'
 })
-export class MoviesManagementComponent implements OnInit {
-  movies: CinemaServiceAgent.MovieDTO[] = [];
-  search = '';
-  showForm = false;
-  editing: CinemaServiceAgent.MovieDTO | null = null;
-
-  confirmOpen = false;
-  private _pendingDeleteId: string | null = null;
-
+export class MoviesManagementComponent extends BaseTableComponent {
   constructor(
-    private _cinemaService: CinemaServiceAgent.HttpService,
-    private _cdr: ChangeDetectorRef,
-  ) {}
-
-  ngOnInit(): void { this.loadMovies(); }
-
-  get filtered(): CinemaServiceAgent.MovieDTO[] {
-    const q = this.search.trim().toLowerCase();
-    if (!q) return this.movies;
-    return this.movies.filter(m =>
-      (m.title ?? '').toLowerCase().includes(q) ||
-      (m.director ?? '').toLowerCase().includes(q));
+    cd: ChangeDetectorRef,
+    fb: FormBuilder,
+    router: Router,
+    store: Store<any>,
+    private _svc: CinemaServiceAgent.HttpService,
+    private _dialog: MatDialog,
+    private _dialogService: DialogService,
+  ) {
+    super(cd, fb, router, store);
   }
 
-  loadMovies(): void {
-    this._cinemaService.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
-      .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });
+  protected override _createSearchForm(): void {
+    this.searchForm = this._formBuilder.group({ title: [''], director: [''] });
   }
 
-  openCreate(): void { this.editing = null; this.showForm = true; }
-
-  editMovie(movie: CinemaServiceAgent.MovieDTO): void { this.editing = movie; this.showForm = true; }
-
-  onSaved(): void { this.loadMovies(); }
-
-  deleteMovie(id?: string): void {
-    if (!id) { return; }
-    this._pendingDeleteId = id;
-    this.confirmOpen = true;
+  protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {
+    return this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: criteria.pageIndex, pageSize: criteria.pageSize, filters: criteria.filters,
+    }));
   }
 
-  confirmDelete(): void {
-    const id = this._pendingDeleteId;
-    this.confirmOpen = false;
-    this._pendingDeleteId = null;
-    if (id) { this._cinemaService.deleteMovie(id).subscribe(() => this.loadMovies()); }
+  openCreate(): void {
+    this._dialog.open(MovieDialog, { width: '640px', data: { movie: null } })
+      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+  }
+
+  edit(item: Dto): void {
+    this._dialog.open(MovieDialog, { width: '640px', data: { movie: item } })
+      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+  }
+
+  delete(id?: string): void {
+    if (!id) {
+      return;
+    }
+    this._dialogService.openConfirmDialog({ message: 'common.confirmDelete' })
+      .afterClosed().subscribe(confirmed => {
+        if (confirmed) {
+          this._deleteConfirmed(id);
+        }
+      });
+  }
+
+  private _deleteConfirmed(id: string): void {
+    this._store.dispatch(showLoading());
+    this._svc.deleteMovie(id).subscribe({
+      next: () => {
+        this._store.dispatch(showSuccess({}));
+        this.triggerSearch();
+      },
+      error: error => this._store.dispatch(showException({ error })),
+    }).add(() => this._store.dispatch(hideLoading()));
   }
 }

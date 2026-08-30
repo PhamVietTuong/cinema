@@ -5,65 +5,118 @@
       <p class="ad-sub">{{ 'users.list.subtitle' | translate }}</p>
     </div>
     <div class="ad-toolbar">
-      <span class="ad-search">
-        <mat-icon>search</mat-icon>
-        <input class="ad-input" [(ngModel)]="search" [placeholder]="'users.list.searchPlaceholder' | translate">
-      </span>
-      <select class="ad-select role-filter" [(ngModel)]="filterRole">
-        <option [ngValue]="''">{{ 'users.list.allRoles' | translate }}</option>
-        <option *ngFor="let r of roles" [ngValue]="r">{{ r }}</option>
-      </select>
-      <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>person_add</mat-icon> {{ 'users.list.addUser' | translate }}</button>
+      <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>person_add</mat-icon> {{ 'users.list.addUser' | translate }}</button>
     </div>
   </div>
 
-  <!-- Stat chips -->
-  <div class="stat-chips">
-    <div class="ad-card stat">
-      <span class="stat-icon i-violet"><mat-icon>group</mat-icon></span>
-      <div><span class="stat-value">{{ total }}</span><span class="stat-label">{{ 'users.list.totalUsers' | translate }}</span></div>
-    </div>
-    <div class="ad-card stat">
-      <span class="stat-icon i-orange"><mat-icon>shield</mat-icon></span>
-      <div><span class="stat-value">{{ adminCount }}</span><span class="stat-label">{{ 'users.list.admins' | translate }}</span></div>
-    </div>
-    <div class="ad-card stat">
-      <span class="stat-icon i-green"><mat-icon>person</mat-icon></span>
-      <div><span class="stat-value">{{ customerCount }}</span><span class="stat-label">{{ 'users.list.customers' | translate }}</span></div>
-    </div>
-  </div>
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.name' | translate }}</mat-label>
+          <input matInput formControlName="search" (input)="onFilterChange()">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'users.form.role' | translate }}</mat-label>
+          <mat-select formControlName="role" (selectionChange)="onFilterChange()">
+            <mat-option value="">{{ 'users.list.allRoles' | translate }}</mat-option>
+            <mat-option *ngFor="let r of roles" [value]="r">{{ r }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
 
-  <!-- Table -->
-  <div class="ad-card ad-card--pad-0">
-    <div class="ad-table-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr><th>{{ 'common.name' | translate }}</th><th>{{ 'users.form.email' | translate }}</th><th>{{ 'users.form.phone' | translate }}</th><th>{{ 'users.form.role' | translate }}</th><th>{{ 'common.status' | translate }}</th><th>{{ 'users.list.joinedDate' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let u of filtered">
-            <td>
-              <div class="user-cell">
-                <span class="ad-avatar">{{ initials(u.name) }}</span>
-                <strong>{{ u.name }}</strong>
-              </div>
-            </td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.phone }}</td>
-            <td><span class="ad-pill no-dot" [class.ad-pill--violet]="u.role === UserRole.Admin" [class.ad-pill--neutral]="u.role !== UserRole.Admin">{{ u.role }}</span></td>
-            <td><span class="ad-pill" [class.ad-pill--success]="u.active" [class.ad-pill--danger]="!u.active">{{ (u.active ? 'users.status.active' : 'users.status.locked') | translate }}</span></td>
-            <td>{{ u.joined }}</td>
-            <td class="ad-td-actions">
-              <button class="ad-icon-btn is-primary" (click)="editUser(u)" [title]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-              <button class="ad-icon-btn is-danger" (click)="delete(u.id)" [title]="'users.list.lockAccount' | translate"><mat-icon>delete</mat-icon></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="!filtered.length" class="ad-empty"><mat-icon>group_off</mat-icon><p>{{ 'users.list.empty' | translate }}</p></div>
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'users.list.empty' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'common.name' | translate" prop="name" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="user-cell">
+              <span class="ad-avatar">{{ initials(row.name) }}</span>
+              <strong>{{ row.name }}</strong>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'users.form.email' | translate" prop="email" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.email }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'users.form.phone' | translate" prop="phone" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.phone }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'users.form.role' | translate" prop="role" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span class="ad-pill no-dot" [class.ad-pill--violet]="row.role === UserRole.Admin" [class.ad-pill--neutral]="row.role !== UserRole.Admin">{{ row.role }}</span>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.status' | translate" prop="active" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span class="ad-pill" [class.ad-pill--success]="row.active" [class.ad-pill--danger]="!row.active">{{ (row.active ? 'users.status.active' : 'users.status.locked') | translate }}</span>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'users.list.lockAccount' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
     </div>
-  </div>
+
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title">
+            <span class="ad-avatar">{{ initials(row.name) }}</span>
+            <strong>{{ row.name }}</strong>
+          </div>
+          <div class="ad-mobile-card-row"><span>{{ 'users.form.email' | translate }}</span><span>{{ row.email }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'users.form.phone' | translate }}</span><span>{{ row.phone }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'users.form.role' | translate }}</span><span>{{ row.role }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'common.status' | translate }}</span><span>{{ (row.active ? 'users.status.active' : 'users.status.locked') | translate }}</span></div>
+          <div class="ad-mobile-card-actions">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'users.list.lockAccount' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>group</mat-icon><p>{{ 'users.list.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
+    </div>
+  </mat-card>
 </div>
-
-<app-user-form [open]="showForm" [user]="editing" (saved)="onSaved()" (closed)="showForm = false"></app-user-form>
-<app-confirm-modal [open]="confirmOpen" [title]="'users.list.lockTitle' | translate" [message]="'users.list.lockMessage' | translate" [confirmText]="'users.list.lockConfirm' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>

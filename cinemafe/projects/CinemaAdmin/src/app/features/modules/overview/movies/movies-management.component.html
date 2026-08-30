@@ -5,47 +5,105 @@
       <p class="ad-sub">{{ 'movies.list.subtitle' | translate }}</p>
     </div>
     <div class="ad-toolbar">
-      <span class="ad-search">
-        <mat-icon>search</mat-icon>
-        <input class="ad-input" [(ngModel)]="search" [placeholder]="'movies.list.searchPlaceholder' | translate">
-      </span>
-      <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'movies.list.addMovie' | translate }}</button>
+      <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'movies.list.addMovie' | translate }}</button>
     </div>
   </div>
 
-  <!-- Table -->
-  <div class="ad-card ad-card--pad-0">
-    <div class="ad-table-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr><th>{{ 'movies.list.colTitle' | translate }}</th><th>{{ 'movies.list.colDirector' | translate }}</th><th>{{ 'movies.list.colDuration' | translate }}</th><th>{{ 'movies.list.colLanguage' | translate }}</th><th>{{ 'movies.list.colReleaseDate' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let m of filtered">
-            <td>
-              <div class="movie-cell">
-                <span class="poster" [style.background-image]="m.posterUrl ? 'url(' + m.posterUrl + ')' : null">
-                  <mat-icon *ngIf="!m.posterUrl">movie</mat-icon>
-                </span>
-                <strong>{{ m.title }}</strong>
-              </div>
-            </td>
-            <td>{{ m.director || '—' }}</td>
-            <td>{{ 'movies.list.durationMinutes' | translate:{ n: m.duration } }}</td>
-            <td>{{ m.language || '—' }}</td>
-            <td>{{ m.releaseDate | date:'dd/MM/yyyy' }}</td>
-            <td class="ad-td-actions">
-              <button class="ad-icon-btn is-primary" (click)="editMovie(m)" [title]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-              <button class="ad-icon-btn is-danger" (click)="deleteMovie(m.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="!filtered.length" class="ad-empty"><mat-icon>movie</mat-icon><p>{{ 'movies.list.empty' | translate }}</p></div>
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'movies.form.title' | translate }}</mat-label>
+          <input matInput formControlName="title" (input)="onFilterChange()">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'movies.form.director' | translate }}</mat-label>
+          <input matInput formControlName="director" (input)="onFilterChange()">
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'movies.list.empty' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'movies.list.colTitle' | translate" prop="title" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="movie-cell">
+              <span class="poster" [style.background-image]="row.posterUrl ? 'url(' + row.posterUrl + ')' : null">
+                <mat-icon *ngIf="!row.posterUrl">movie</mat-icon>
+              </span>
+              <strong>{{ row.title }}</strong>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'movies.list.colDirector' | translate" prop="director" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.director || '—' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'movies.list.colDuration' | translate" prop="duration" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ 'movies.list.durationMinutes' | translate:{ n: row.duration } }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'movies.list.colReleaseDate' | translate" prop="releaseDate" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.releaseDate | date:'dd/MM/yyyy' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
     </div>
-  </div>
+
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.title }}</strong></div>
+          <div class="ad-mobile-card-row"><span>{{ 'movies.list.colDirector' | translate }}</span><span>{{ row.director || '—' }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'movies.list.colDuration' | translate }}</span><span>{{ 'movies.list.durationMinutes' | translate:{ n: row.duration } }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'movies.list.colReleaseDate' | translate }}</span><span>{{ row.releaseDate | date:'dd/MM/yyyy' }}</span></div>
+          <div class="ad-mobile-card-actions">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>movie</mat-icon><p>{{ 'movies.list.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
+    </div>
+  </mat-card>
 </div>
-
-<!-- Create / edit form (separate component) + delete confirmation, shown as popups -->
-<app-movie-form [open]="showForm" [movie]="editing" (saved)="onSaved()" (closed)="showForm = false"></app-movie-form>
-<app-confirm-modal [open]="confirmOpen" [message]="'movies.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>

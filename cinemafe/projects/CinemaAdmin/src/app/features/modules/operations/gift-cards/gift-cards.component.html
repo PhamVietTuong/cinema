@@ -5,82 +5,108 @@
       <p class="ad-sub">{{ 'giftCards.subtitle' | translate }}</p>
     </div>
     <div class="ad-toolbar">
-      <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>card_giftcard</mat-icon> {{ 'giftCards.issue' | translate }}</button>
+      <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>card_giftcard</mat-icon> {{ 'giftCards.issue' | translate }}</button>
     </div>
   </div>
 
-  <app-modal [open]="showForm" (closed)="cancelEdit()">
-  <div class="ad-card form-card">
-    <h3 class="ad-card-title">{{ 'giftCards.issueTitle' | translate }}</h3>
-    <form [formGroup]="form" (ngSubmit)="issue()" class="catalog-form">
-      <div class="ad-field">
-        <label class="ad-label">{{ 'giftCards.amount' | translate }}</label>
-        <input class="ad-input" type="number" min="1" formControlName="amount" placeholder="200000">
-      </div>
-      <div class="ad-field">
-        <label class="ad-label">{{ 'giftCards.expiry' | translate }}</label>
-        <input class="ad-input" type="date" formControlName="expiresAt">
-      </div>
-      <div class="ad-field full-span">
-        <label class="ad-label">{{ 'giftCards.recipient' | translate }}</label>
-        <input class="ad-input" type="email" formControlName="issuedToEmail" [placeholder]="'giftCards.recipientPlaceholder' | translate">
-      </div>
-      <div class="form-actions full-span">
-        <button class="ad-btn ad-btn--primary" type="submit">{{ 'giftCards.issue' | translate }}</button>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
-      </div>
-    </form>
-  </div>
-  </app-modal>
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.code' | translate }}</mat-label>
+          <input matInput formControlName="keyword" (input)="onFilterChange()">
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
 
-  <div class="ad-card ad-card--pad-0">
-    <div class="ad-table-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr><th>{{ 'common.code' | translate }}</th><th>{{ 'giftCards.balance' | translate }}</th><th>{{ 'giftCards.initial' | translate }}</th><th>{{ 'common.status' | translate }}</th><th>{{ 'giftCards.expiry' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
-          <tr class="ad-filter-row">
-            <th><input class="ad-filter-input" [(ngModel)]="filters['keyword']" (input)="onFilterChange()" [placeholder]="'common.filter' | translate"></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let x of items">
-            <td><strong>{{ x.code }}</strong></td>
-            <td>{{ x.balance | number:'1.0-0' }}đ</td>
-            <td>{{ x.initialBalance | number:'1.0-0' }}đ</td>
-            <td>
-              <span class="ad-pill" [class.ad-pill--success]="x.isActive" [class.ad-pill--neutral]="!x.isActive">
-                {{ (x.isActive ? 'giftCards.statusActive' : 'giftCards.statusInactive') | translate }}
-              </span>
-            </td>
-            <td>{{ x.expiresAt ? (x.expiresAt | date:'dd/MM/yy') : ('giftCards.noExpiry' | translate) }}</td>
-            <td class="ad-td-actions">
-              <button *ngIf="!x.isActive" class="ad-icon-btn is-primary" (click)="toggleActive(x)" [title]="'giftCards.enable' | translate"><mat-icon>check_circle</mat-icon></button>
-              <button *ngIf="x.isActive" class="ad-icon-btn" (click)="toggleActive(x)" [title]="'giftCards.disable' | translate"><mat-icon>block</mat-icon></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="!items.length" class="ad-empty"><mat-icon>card_giftcard</mat-icon><p>{{ 'giftCards.empty' | translate }}</p></div>
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'giftCards.empty' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'common.code' | translate" prop="code" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.code }}</strong></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'giftCards.balance' | translate" prop="balance" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.balance | number:'1.0-0' }}đ</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'giftCards.initial' | translate" prop="initialBalance" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.initialBalance | number:'1.0-0' }}đ</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.status' | translate" prop="isActive" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span class="ad-pill" [class.ad-pill--success]="row.isActive" [class.ad-pill--neutral]="!row.isActive">
+              {{ (row.isActive ? 'giftCards.statusActive' : 'giftCards.statusInactive') | translate }}
+            </span>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'giftCards.expiry' | translate" prop="expiresAt" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.expiresAt ? (row.expiresAt | date:'dd/MM/yy') : ('giftCards.noExpiry' | translate) }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button *ngIf="!row.isActive" mat-icon-button (click)="toggleActive(row)" [matTooltip]="'giftCards.enable' | translate"><mat-icon>check_circle</mat-icon></button>
+              <button *ngIf="row.isActive" mat-icon-button (click)="toggleActive(row)" [matTooltip]="'giftCards.disable' | translate"><mat-icon>block</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
     </div>
 
-    <div class="ad-pagination" *ngIf="totalCount > 0">
-      <span class="ad-pagination-info">{{ rangeStart }}–{{ rangeEnd }} / {{ totalCount }}</span>
-      <span class="ad-pagination-size">
-        <label class="ad-label">{{ 'giftCards.perPage' | translate }}</label>
-        <select class="ad-input" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
-          <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
-        </select>
-      </span>
-      <span class="ad-pagination-nav">
-        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" [title]="'giftCards.prev' | translate"><mat-icon>chevron_left</mat-icon></button>
-        <span class="ad-pagination-page">{{ 'giftCards.pageInfo' | translate:{ current: pageIndex, total: totalPages } }}</span>
-        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" [title]="'giftCards.next' | translate"><mat-icon>chevron_right</mat-icon></button>
-      </span>
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.code }}</strong></div>
+          <div class="ad-mobile-card-row"><span>{{ 'giftCards.balance' | translate }}</span><span>{{ row.balance | number:'1.0-0' }}đ</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'giftCards.initial' | translate }}</span><span>{{ row.initialBalance | number:'1.0-0' }}đ</span></div>
+          <div class="ad-mobile-card-row">
+            <span>{{ 'common.status' | translate }}</span>
+            <span class="ad-pill" [class.ad-pill--success]="row.isActive" [class.ad-pill--neutral]="!row.isActive">
+              {{ (row.isActive ? 'giftCards.statusActive' : 'giftCards.statusInactive') | translate }}
+            </span>
+          </div>
+          <div class="ad-mobile-card-row"><span>{{ 'giftCards.expiry' | translate }}</span><span>{{ row.expiresAt ? (row.expiresAt | date:'dd/MM/yy') : ('giftCards.noExpiry' | translate) }}</span></div>
+          <div class="ad-mobile-card-actions">
+            <button *ngIf="!row.isActive" mat-icon-button (click)="toggleActive(row)" [matTooltip]="'giftCards.enable' | translate"><mat-icon>check_circle</mat-icon></button>
+            <button *ngIf="row.isActive" mat-icon-button (click)="toggleActive(row)" [matTooltip]="'giftCards.disable' | translate"><mat-icon>block</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>card_giftcard</mat-icon><p>{{ 'giftCards.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
     </div>
-  </div>
+  </mat-card>
 </div>

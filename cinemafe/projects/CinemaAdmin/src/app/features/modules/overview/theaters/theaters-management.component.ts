@@ -1,43 +1,55 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CinemaServiceAgent } from 'CinemaLib';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  CinemaServiceAgent,
+  BaseTableComponent, TablePage, TableSearchCriteria,
+} from 'CinemaLib';
+import { TheaterDialog } from './theater.dialog';
+
+type Dto = CinemaServiceAgent.TheaterDTO;
 
 @Component({
   selector: 'app-theaters-management',
   standalone: false,
   templateUrl: './theaters-management.component.html',
-  styleUrl: './theaters-management.component.scss'
 })
-export class TheatersManagementComponent implements OnInit {
-  theaters: CinemaServiceAgent.TheaterDTO[] = [];
-  search = '';
-  showForm = false;
-  editing: CinemaServiceAgent.TheaterDTO | null = null;
-
+export class TheatersManagementComponent extends BaseTableComponent {
   constructor(
-    private _cinemaService: CinemaServiceAgent.HttpService,
-    private _cdr: ChangeDetectorRef,
-    private _router: Router,
-  ) {}
-
-  ngOnInit(): void { this.loadTheaters(); }
-
-  get filtered(): CinemaServiceAgent.TheaterDTO[] {
-    const q = this.search.trim().toLowerCase();
-    if (!q) return this.theaters;
-    return this.theaters.filter(t =>
-      (t.name ?? '').toLowerCase().includes(q) ||
-      (t.city ?? '').toLowerCase().includes(q));
+    cd: ChangeDetectorRef,
+    fb: FormBuilder,
+    router: Router,
+    store: Store<any>,
+    private _svc: CinemaServiceAgent.HttpService,
+    private _dialog: MatDialog,
+  ) {
+    super(cd, fb, router, store);
   }
 
-  loadTheaters(): void {
-    this._cinemaService.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
-      .subscribe(t => { this.theaters = t.results ?? []; this._cdr.markForCheck(); });
+  protected override _createSearchForm(): void {
+    this.searchForm = this._formBuilder.group({ name: [''], city: [''] });
   }
 
-  openCreate(): void { this.editing = null; this.showForm = true; }
+  protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {
+    return this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: criteria.pageIndex, pageSize: criteria.pageSize, filters: criteria.filters,
+    }));
+  }
 
-  openDetail(t: CinemaServiceAgent.TheaterDTO): void { this._router.navigate(['/theaters', t.id]); }
+  openCreate(): void {
+    this._dialog.open(TheaterDialog, { width: '480px', data: { theater: null } })
+      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+  }
 
-  onSaved(): void { this.loadTheaters(); }
+  edit(item: Dto): void {
+    this._dialog.open(TheaterDialog, { width: '480px', data: { theater: item } })
+      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+  }
+
+  openDetail(item: Dto): void {
+    this._router.navigate(['/theaters', item.id]);
+  }
 }

@@ -1,8 +1,16 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { ChangeDetectorRef, Component } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { CinemaServiceAgent, ToastService } from 'CinemaLib';
+import {
+  CinemaServiceAgent,
+  BaseTableComponent, TablePage, TableSearchCriteria,
+  DialogService,
+  ToastService,
+  showLoading, hideLoading, showSuccess, showException,
+} from 'CinemaLib';
 
 type Dto = CinemaServiceAgent.CommentModerationDTO;
 
@@ -11,98 +19,40 @@ type Dto = CinemaServiceAgent.CommentModerationDTO;
   standalone: false,
   templateUrl: './comments.component.html',
 })
-export class CommentsModerationComponent implements OnInit, OnDestroy {
-  items: Dto[] = [];
-  totalCount = 0;
-  pageIndex = 1;
-  pageSize = 10;
-  readonly pageSizeOptions = [5, 10, 20, 50];
-  filters: Record<string, string> = {};
-
-  confirmOpen = false;
-  private _pendingDeleteId: string | null = null;
-
-  private readonly _filter$ = new Subject<void>();
-  private readonly _destroy$ = new Subject<void>();
-
+export class CommentsModerationComponent extends BaseTableComponent {
   constructor(
+    cd: ChangeDetectorRef,
+    fb: FormBuilder,
+    router: Router,
+    store: Store<any>,
     private _svc: CinemaServiceAgent.HttpService,
-    private _cdr: ChangeDetectorRef,
+    private _dialogService: DialogService,
     private _toast: ToastService,
     private _translate: TranslateService,
-  ) {}
-
-  ngOnInit(): void {
-    this._filter$.pipe(debounceTime(300), takeUntil(this._destroy$)).subscribe(() => {
-      this.pageIndex = 1;
-      this.load();
-    });
-    this.load();
+  ) {
+    super(cd, fb, router, store);
   }
 
-  ngOnDestroy(): void {
-    this._destroy$.next();
-    this._destroy$.complete();
+  protected override _createSearchForm(): void {
+    this.searchForm = this._formBuilder.group({ approved: [''] });
   }
 
-  load(): void {
-    this._svc.getCommentsForModeration(CinemaServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: this.pageIndex, pageSize: this.pageSize, filters: this._activeFilters(),
-    })).subscribe({
-      next: r => {
-        this.items = r.results ?? [];
-        this.totalCount = r.totalCount ?? 0;
-        this._cdr.markForCheck();
-      },
-    });
-  }
-
-  onFilterChange(): void {
-    this._filter$.next();
-  }
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.totalCount / this.pageSize));
-  }
-
-  get rangeStart(): number {
-    return this.totalCount === 0 ? 0 : (this.pageIndex - 1) * this.pageSize + 1;
-  }
-
-  get rangeEnd(): number {
-    return Math.min(this.pageIndex * this.pageSize, this.totalCount);
-  }
-
-  goToPage(page: number): void {
-    const target = Math.min(Math.max(1, page), this.totalPages);
-    if (target !== this.pageIndex) {
-      this.pageIndex = target;
-      this.load();
-    }
-  }
-
-  prevPage(): void {
-    this.goToPage(this.pageIndex - 1);
-  }
-
-  nextPage(): void {
-    this.goToPage(this.pageIndex + 1);
-  }
-
-  changePageSize(size: number): void {
-    this.pageSize = +size;
-    this.pageIndex = 1;
-    this.load();
+  protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {
+    return this._svc.getCommentsForModeration(CinemaServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: criteria.pageIndex, pageSize: criteria.pageSize, filters: criteria.filters,
+    }));
   }
 
   /** Approve (show) or hide a comment, then reload the current page. */
   moderate(id?: string, approved?: boolean): void {
-    if (!id) { return; }
+    if (!id) {
+      return;
+    }
     this._svc.moderateComment(CinemaServiceAgent.ModerateCommentRequest.fromJS({ commentId: id, approved }))
       .subscribe({
         next: () => {
           this._toast.success(this._translate.instant(approved ? 'comments.approveSuccess' : 'comments.hideSuccess'));
-          this.load();
+          this.triggerSearch();
         },
         error: e => {
           this._toast.error(this._err(e, this._translate.instant('comments.moderateFailed')));
@@ -114,35 +64,27 @@ export class CommentsModerationComponent implements OnInit, OnDestroy {
     if (!id) {
       return;
     }
-    this._pendingDeleteId = id;
-    this.confirmOpen = true;
+    this._dialogService.openConfirmDialog({ message: 'comments.confirmDelete' })
+      .afterClosed().subscribe(confirmed => {
+        if (confirmed) {
+          this._deleteConfirmed(id);
+        }
+      });
   }
 
-  confirmDelete(): void {
-    const id = this._pendingDeleteId;
-    this.confirmOpen = false;
-    this._pendingDeleteId = null;
-    if (id) {
-      this._svc.deleteComment(CinemaServiceAgent.DeleteCommentRequest.fromJS({ commentId: id })).subscribe({
-        next: () => this.load(),
-        error: e => { this._toast.error(this._err(e, this._translate.instant('common.deleteFailed'))); },
-      });
-    }
+  private _deleteConfirmed(id: string): void {
+    this._store.dispatch(showLoading());
+    this._svc.deleteComment(CinemaServiceAgent.DeleteCommentRequest.fromJS({ commentId: id })).subscribe({
+      next: () => {
+        this._store.dispatch(showSuccess({}));
+        this.triggerSearch();
+      },
+      error: error => this._store.dispatch(showException({ error })),
+    }).add(() => this._store.dispatch(hideLoading()));
   }
 
   private _err(e: any, fallback: string): string {
     const x = e?.error;
     return (typeof x === 'string' && x) ? x : (x?.error || x?.message || fallback);
-  }
-
-  private _activeFilters(): Record<string, string> {
-    const out: Record<string, string> = {};
-    for (const key of Object.keys(this.filters)) {
-      const value = (this.filters[key] ?? '').trim();
-      if (value) {
-        out[key] = value;
-      }
-    }
-    return out;
   }
 }

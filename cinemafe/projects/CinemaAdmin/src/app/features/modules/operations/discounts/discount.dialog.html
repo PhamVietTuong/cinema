@@ -1,0 +1,131 @@
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'discounts.editTitle' : 'discounts.newTitle') | translate }}</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'common.code' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="code" [placeholder]="'discounts.codePlaceholder' | translate">
+        <mat-error *ngIf="form.controls['code'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.discountType' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <mat-select formControlName="discountTypeId" [placeholder]="'discounts.selectType' | translate">
+          <mat-option *ngFor="let t of discountTypes" [value]="t.id">{{ t.name }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.controls['discountTypeId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.percent' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="number" formControlName="percent" placeholder="25">
+        <mat-error *ngIf="form.controls['percent'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.maxDiscount' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="number" formControlName="maxDiscountAmount" placeholder="50000">
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'common.startDate' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="date" formControlName="startDate">
+        <mat-error *ngIf="form.controls['startDate'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'common.endDate' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="date" formControlName="endDate">
+        <mat-error *ngIf="form.controls['endDate'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.maxUsage' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="number" formControlName="maxUsage" placeholder="100">
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.movieScope' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <mat-select formControlName="movieId">
+          <mat-option [value]="null">{{ 'discounts.anyMovie' | translate }}</mat-option>
+          <mat-option *ngFor="let m of movies" [value]="m.id">{{ m.title }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'common.description' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput formControlName="description" [placeholder]="'discounts.descriptionPlaceholder' | translate">
+      </mat-form-field>
+    </div>
+
+    <!-- ── Promotion scope ── -->
+    <div class="dialog-row">
+      <mat-checkbox formControlName="autoApply" (change)="onAutoApplyChange()">{{ 'discounts.autoApply' | translate }}</mat-checkbox>
+      <small class="ad-hint">{{ 'discounts.autoApplyHint' | translate }}</small>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.scope' | translate }}</mat-label>
+      <div class="dialog-row-field">
+        <mat-checkbox formControlName="applyToAllTheaters" (change)="onApplyToAllChange()">{{ 'discounts.applyToAll' | translate }}</mat-checkbox>
+        <div class="scope-checklist" *ngIf="!form.value.applyToAllTheaters">
+          <mat-checkbox *ngFor="let t of theaters" [checked]="isTheaterSelected(t.id)" (change)="toggleTheater(t.id)">{{ t.name }}</mat-checkbox>
+          <p *ngIf="!theaters.length" class="ad-hint">—</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.daysOfWeek' | translate }} <small class="ad-hint">{{ 'discounts.anyDayHint' | translate }}</small></mat-label>
+      <div class="dialog-row-field">
+        <div class="scope-days">
+          <mat-checkbox *ngFor="let d of weekDays" [checked]="isDaySelected(d.value)" (change)="toggleDay(d.value)">{{ 'discounts.days.' + d.key | translate }}</mat-checkbox>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.timeFrom' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="time" formControlName="startTimeOfDay">
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-label class="dialog-row-label">{{ 'discounts.timeTo' | translate }}</mat-label>
+      <mat-form-field appearance="outline" class="dialog-row-field">
+        <input matInput type="time" formControlName="endTimeOfDay">
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row">
+      <mat-checkbox formControlName="isActive">{{ 'discounts.activeLabel' | translate }}</mat-checkbox>
+    </div>
+  </mat-dialog-content>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+  </div>
+</form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

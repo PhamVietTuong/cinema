@@ -1,13 +1,16 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { SharedModule } from 'CinemaLib';
-import { ModalComponent } from '../../../shared/modal.component';
-import { ConfirmModalComponent } from '../../../shared/confirm-modal.component';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { DiscountsManagementComponent } from './discounts/discounts.component';
+import { DiscountDialog } from './discounts/discount.dialog';
 import { InvoicesManagementComponent } from './invoices/invoices.component';
+import { InvoiceStatusDialog } from './invoices/invoice-status.dialog';
 import { CommentsModerationComponent } from './comments/comments.component';
 import { GiftCardsManagementComponent } from './gift-cards/gift-cards.component';
+import { GiftCardDialog } from './gift-cards/gift-card.dialog';
 
 /**
  * "Vận Hành" (Operations) admin pages: discount codes, invoices, comment
@@ -26,10 +29,18 @@ const routes: Routes = [
 @NgModule({
   declarations: [
     DiscountsManagementComponent,
+    DiscountDialog,
     InvoicesManagementComponent,
+    InvoiceStatusDialog,
     CommentsModerationComponent,
     GiftCardsManagementComponent,
+    GiftCardDialog,
   ],
-  imports: [SharedModule, ModalComponent, ConfirmModalComponent, RouterModule.forChild(routes)],
+  imports: [
+    SharedModule,
+    NgxDatatableModule,
+    MatCheckboxModule,
+    RouterModule.forChild(routes),
+  ],
 })
 export class OperationsModule {}

@@ -6,78 +6,110 @@
     </div>
   </div>
 
-  <app-modal [open]="showForm" (closed)="cancelEdit()">
-  <div class="ad-card form-card">
-    <h3 class="ad-card-title">{{ 'invoices.editTitle' | translate }}</h3>
-    <form [formGroup]="form" (ngSubmit)="save()" class="catalog-form">
-      <div class="ad-field">
-        <label class="ad-label">{{ 'common.status' | translate }}</label>
-        <select class="ad-input" formControlName="status">
-          <option *ngFor="let s of statuses" [ngValue]="s.value">{{ s.name | translate }}</option>
-        </select>
-      </div>
-      <div class="form-actions full-span">
-        <button class="ad-btn ad-btn--primary" type="submit">{{ 'common.save' | translate }}</button>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
-      </div>
-    </form>
-  </div>
-  </app-modal>
-  <app-confirm-modal [open]="confirmOpen" [message]="'common.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
-  <app-confirm-modal [open]="refundConfirmOpen" [title]="'invoices.refund' | translate" [message]="'invoices.confirmRefund' | translate" [confirmText]="'invoices.refund' | translate" (confirmed)="confirmRefund()" (closed)="refundConfirmOpen = false"></app-confirm-modal>
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.status' | translate }}</mat-label>
+          <mat-select formControlName="status" (selectionChange)="onFilterChange()">
+            <mat-option value="">{{ 'common.all' | translate }}</mat-option>
+            <mat-option *ngFor="let s of statuses" [value]="s.value">{{ s.name | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
 
-  <div class="ad-card ad-card--pad-0">
-    <div class="ad-table-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr><th>{{ 'invoices.invoiceCode' | translate }}</th><th>{{ 'invoices.customer' | translate }}</th><th>{{ 'invoices.total' | translate }}</th><th>{{ 'invoices.finalAmount' | translate }}</th><th>{{ 'common.status' | translate }}</th><th>{{ 'common.createdAt' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
-          <tr class="ad-filter-row">
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th>
-              <select class="ad-filter-input" [(ngModel)]="filters['status']" (ngModelChange)="onFilterChange()">
-                <option value="">{{ 'common.all' | translate }}</option>
-                <option *ngFor="let s of statuses" [value]="s.value">{{ s.name | translate }}</option>
-              </select>
-            </th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let x of items">
-            <td><strong>{{ x.code }}</strong></td>
-            <td>{{ x.userName || x.userEmail || '—' }}</td>
-            <td>{{ x.totalAmount | number:'1.0-0' }}đ</td>
-            <td>{{ x.finalAmount | number:'1.0-0' }}đ</td>
-            <td><span class="ad-pill" [ngClass]="statusClass(x.status)">{{ statusLabel(x.status) | translate }}</span></td>
-            <td>{{ x.creationTime | date:'dd/MM/yy HH:mm' }}</td>
-            <td class="ad-td-actions">
-              <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'invoices.changeStatus' | translate"><mat-icon>edit</mat-icon></button>
-              <button *ngIf="x.status === InvoiceStatus.Paid" class="ad-icon-btn" (click)="refund(x.id)" [title]="'invoices.refund' | translate"><mat-icon>undo</mat-icon></button>
-              <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="!items.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>{{ 'invoices.empty' | translate }}</p></div>
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'invoices.empty' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'invoices.invoiceCode' | translate" prop="code" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.code }}</strong></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'invoices.customer' | translate" prop="userName" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.userName || row.userEmail || '—' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'invoices.total' | translate" prop="totalAmount" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.totalAmount | number:'1.0-0' }}đ</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'invoices.finalAmount' | translate" prop="finalAmount" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.finalAmount | number:'1.0-0' }}đ</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.status' | translate" prop="status" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span class="ad-pill" [ngClass]="statusClass(row.status)">{{ statusLabel(row.status) | translate }}</span>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.createdAt' | translate" prop="creationTime" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.creationTime | date:'dd/MM/yy HH:mm' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="180" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'invoices.changeStatus' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button *ngIf="row.status === InvoiceStatus.Paid" (click)="refund(row.id)" [matTooltip]="'invoices.refund' | translate"><mat-icon>undo</mat-icon></button>
+              <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
     </div>
 
-    <div class="ad-pagination" *ngIf="totalCount > 0">
-      <span class="ad-pagination-info">{{ rangeStart }}–{{ rangeEnd }} / {{ totalCount }}</span>
-      <span class="ad-pagination-size">
-        <label class="ad-label">{{ 'invoices.perPage' | translate }}</label>
-        <select class="ad-input" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
-          <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
-        </select>
-      </span>
-      <span class="ad-pagination-nav">
-        <button class="ad-icon-btn" type="button" (click)="prevPage()" [disabled]="pageIndex <= 1" [title]="'invoices.prev' | translate"><mat-icon>chevron_left</mat-icon></button>
-        <span class="ad-pagination-page">{{ 'invoices.pageInfo' | translate:{ current: pageIndex, total: totalPages } }}</span>
-        <button class="ad-icon-btn" type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages" [title]="'invoices.next' | translate"><mat-icon>chevron_right</mat-icon></button>
-      </span>
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.code }}</strong></div>
+          <div class="ad-mobile-card-row"><span>{{ 'invoices.customer' | translate }}</span><span>{{ row.userName || row.userEmail || '—' }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'invoices.total' | translate }}</span><span>{{ row.totalAmount | number:'1.0-0' }}đ</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'invoices.finalAmount' | translate }}</span><span>{{ row.finalAmount | number:'1.0-0' }}đ</span></div>
+          <div class="ad-mobile-card-row">
+            <span>{{ 'common.status' | translate }}</span>
+            <span class="ad-pill" [ngClass]="statusClass(row.status)">{{ statusLabel(row.status) | translate }}</span>
+          </div>
+          <div class="ad-mobile-card-row"><span>{{ 'common.createdAt' | translate }}</span><span>{{ row.creationTime | date:'dd/MM/yy HH:mm' }}</span></div>
+          <div class="ad-mobile-card-actions">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'invoices.changeStatus' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button *ngIf="row.status === InvoiceStatus.Paid" (click)="refund(row.id)" [matTooltip]="'invoices.refund' | translate"><mat-icon>undo</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>{{ 'invoices.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
     </div>
-  </div>
+  </mat-card>
 </div>

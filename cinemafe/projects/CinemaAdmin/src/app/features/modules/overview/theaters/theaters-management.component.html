@@ -5,48 +5,93 @@
       <p class="ad-sub">{{ 'theaters.mgmt.subtitle' | translate }}</p>
     </div>
     <div class="ad-toolbar">
-      <span class="ad-search">
-        <mat-icon>search</mat-icon>
-        <input class="ad-input" [(ngModel)]="search" [placeholder]="'theaters.mgmt.searchPlaceholder' | translate">
-      </span>
-      <button class="ad-btn ad-btn--primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'theaters.mgmt.addTheater' | translate }}</button>
+      <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'theaters.mgmt.addTheater' | translate }}</button>
     </div>
   </div>
 
-  <!-- Table -->
-  <div class="ad-card ad-card--pad-0">
-    <div class="ad-table-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr><th>{{ 'theaters.mgmt.colImage' | translate }}</th><th>{{ 'theaters.mgmt.colName' | translate }}</th><th>{{ 'theaters.mgmt.colCity' | translate }}</th><th>{{ 'theaters.mgmt.colAddress' | translate }}</th><th>{{ 'theaters.mgmt.colRoomCount' | translate }}</th><th>{{ 'common.status' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let t of filtered">
-            <td>
-              <span class="theater-thumb">
-                <img *ngIf="t.imageUrl" [src]="t.imageUrl" [alt]="t.name">
-                <mat-icon *ngIf="!t.imageUrl">theaters</mat-icon>
-              </span>
-            </td>
-            <td><strong>{{ t.name }}</strong></td>
-            <td>{{ t.city || '—' }}</td>
-            <td class="addr">{{ t.address || '—' }}</td>
-            <td>{{ 'theaters.mgmt.roomsUnit' | translate:{ n: (t.roomCount ?? 0) } }}</td>
-            <td>
-              <span class="ad-pill" [class.ad-pill--success]="t.isActive" [class.ad-pill--neutral]="!t.isActive">
-                {{ (t.isActive ? 'common.active' : 'theaters.mgmt.statusPaused') | translate }}
-              </span>
-            </td>
-            <td class="ad-td-actions">
-              <button class="ad-icon-btn is-primary" (click)="openDetail(t)" [title]="'theaters.mgmt.detailTitle' | translate"><mat-icon>chevron_right</mat-icon></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="!filtered.length" class="ad-empty"><mat-icon>theaters</mat-icon><p>{{ 'theaters.mgmt.emptyText' | translate }}</p></div>
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'theaters.mgmt.colName' | translate }}</mat-label>
+          <input matInput formControlName="name" (input)="onFilterChange()">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'theaters.mgmt.colCity' | translate }}</mat-label>
+          <input matInput formControlName="city" (input)="onFilterChange()">
+        </mat-form-field>
+      </form>
+      <p class="ad-filter-total">{{ 'common.totalEntries' | translate }}: {{ total }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'theaters.mgmt.emptyText' | translate, totalMessage: '', selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'theaters.mgmt.colName' | translate" prop="name" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'theaters.mgmt.colCity' | translate" prop="city" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.city || '—' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'theaters.mgmt.colAddress' | translate" prop="address" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.address || '—' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="openDetail(row)" [matTooltip]="'theaters.mgmt.detailTitle' | translate"><mat-icon>chevron_right</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
     </div>
-  </div>
+
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong></div>
+          <div class="ad-mobile-card-row"><span>{{ 'theaters.mgmt.colCity' | translate }}</span><span>{{ row.city || '—' }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'theaters.mgmt.colAddress' | translate }}</span><span>{{ row.address || '—' }}</span></div>
+          <div class="ad-mobile-card-actions">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="openDetail(row)" [matTooltip]="'theaters.mgmt.detailTitle' | translate"><mat-icon>chevron_right</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>theaters</mat-icon><p>{{ 'theaters.mgmt.emptyText' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
+    </div>
+  </mat-card>
 </div>
-
-<!-- Create / edit form (separate component), shown as a popup -->
-<app-theater-form [open]="showForm" [theater]="editing" (saved)="onSaved()" (closed)="showForm = false"></app-theater-form>
