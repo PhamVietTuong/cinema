@@ -4,9 +4,11 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
 import {
   CinemaServiceAgent,
   BaseTableComponent, TablePage, TableSearchCriteria,
+  DialogService,
   showLoading, hideLoading, showSuccess, showException,
 } from 'CinemaLib';
 import { AgeRestrictionDialog } from './age-restriction.dialog';
@@ -19,9 +21,6 @@ type Dto = CinemaServiceAgent.AgeRestrictionDTO;
   templateUrl: './age-restrictions.component.html',
 })
 export class AgeRestrictionsManagementComponent extends BaseTableComponent {
-  confirmOpen = false;
-  private _pendingDeleteId: string | null = null;
-
   constructor(
     cd: ChangeDetectorRef,
     fb: FormBuilder,
@@ -29,6 +28,8 @@ export class AgeRestrictionsManagementComponent extends BaseTableComponent {
     store: Store<any>,
     private _svc: CinemaServiceAgent.HttpService,
     private _dialog: MatDialog,
+    private _dialogService: DialogService,
+    private _translate: TranslateService,
   ) {
     super(cd, fb, router, store);
   }
@@ -57,18 +58,15 @@ export class AgeRestrictionsManagementComponent extends BaseTableComponent {
     if (!id) {
       return;
     }
-    this._pendingDeleteId = id;
-    this.confirmOpen = true;
+    this._dialogService.openConfirmDialog({ message: this._translate.instant('common.confirmDelete') })
+      .afterClosed().subscribe(confirmed => {
+        if (confirmed) {
+          this._deleteConfirmed(id);
+        }
+      });
   }
 
-  confirmDelete(): void {
-    const id = this._pendingDeleteId;
-    this.confirmOpen = false;
-    this._pendingDeleteId = null;
-    if (!id) {
-      return;
-    }
-
+  private _deleteConfirmed(id: string): void {
     this._store.dispatch(showLoading());
     this._svc.deleteAgeRestriction(id).subscribe({
       next: () => {

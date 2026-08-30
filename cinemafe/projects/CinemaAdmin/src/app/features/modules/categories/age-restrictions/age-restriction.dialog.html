@@ -1,9 +1,4 @@
-<div class="dialog-header">
-  <div mat-dialog-title class="dialog-header-title">{{ (editingId ? 'ageRestrictions.editTitle' : 'ageRestrictions.newTitle') | translate }}</div>
-  <button mat-icon-button type="button" (click)="cancel()">
-    <mat-icon>close</mat-icon>
-  </button>
-</div>
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'ageRestrictions.editTitle' : 'ageRestrictions.newTitle') | translate }}</div>
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
@@ -37,3 +32,7 @@
     <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
   </div>
 </form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

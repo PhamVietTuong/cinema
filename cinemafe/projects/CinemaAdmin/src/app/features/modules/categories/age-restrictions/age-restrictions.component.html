@@ -9,9 +9,6 @@
     </div>
   </div>
 
-  <!-- Create/edit opens app-age-restriction-dialog via MatDialog (see openCreate/edit); delete confirmation stays inline. -->
-  <app-confirm-modal [open]="confirmOpen" [message]="'common.confirmDelete' | translate" (confirmed)="confirmDelete()" (closed)="confirmOpen = false"></app-confirm-modal>
-
   <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
   <mat-card class="ad-filter-card">
     <mat-card-content>

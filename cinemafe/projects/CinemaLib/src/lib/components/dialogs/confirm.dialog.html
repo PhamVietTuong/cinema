@@ -1,0 +1,14 @@
+<div mat-dialog-title class="dialog-title">{{ (data.title || 'common.confirm') | translate }}</div>
+
+<mat-dialog-content>
+  <p>{{ data.message }}</p>
+</mat-dialog-content>
+
+<div mat-dialog-actions class="dialog-actions">
+  <button mat-raised-button type="button" (click)="cancel()">{{ (data.cancelText || 'common.cancel') | translate }}</button>
+  <button mat-raised-button color="primary" type="button" (click)="confirm()">{{ (data.confirmText || 'common.confirm') | translate }}</button>
+</div>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>
