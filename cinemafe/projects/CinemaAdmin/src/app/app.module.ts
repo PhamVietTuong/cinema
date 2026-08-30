@@ -7,9 +7,9 @@ import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import {
-  SharedModule,
-  authReducer, moviesReducer,
-  AuthEffects, MoviesEffects,
+  CinemaLibModule,
+  authReducer, moviesReducer, searchReducer, loadingReducer,
+  AuthEffects, MoviesEffects, NotificationEffects,
   authInterceptor, errorInterceptor,
   API_BASE_URL, HUB_BASE_URL,
   CinemaServiceAgent, IdentityServiceAgent, PaymentServiceAgent,
@@ -27,9 +27,9 @@ import { App } from './app';
     BrowserModule,
     BrowserAnimationsModule,
     RouterModule.forRoot(routes),
-    SharedModule,
-    StoreModule.forRoot({ auth: authReducer, movies: moviesReducer }),
-    EffectsModule.forRoot([AuthEffects, MoviesEffects]),
+    CinemaLibModule,
+    StoreModule.forRoot({ auth: authReducer, movies: moviesReducer, searchState: searchReducer, loading: loadingReducer }),
+    EffectsModule.forRoot([AuthEffects, MoviesEffects, NotificationEffects]),
     StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: environment.production }),
   ],
   providers: [
