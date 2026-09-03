@@ -55,12 +55,27 @@ public class RoomTypeManager : IRoomTypeManager
         return query;
     }
 
+    private IQueryable<RoomType> ApplySort(IQueryable<RoomType> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "name" => _uow.RoomTypeStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            _ => query,
+        };
+    }
+
     public async Task<DefaultSearchResults<RoomTypeDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredRoomTypeQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.RoomTypeStore.CountAsync(query);
         var items = await _uow.RoomTypeStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<RoomType, RoomTypeDTO>(items, total, page, pageSize);

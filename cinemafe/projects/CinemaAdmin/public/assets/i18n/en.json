@@ -105,7 +105,10 @@
     "startDate": "Start Date",
     "endDate": "End Date",
     "createdAt": "Created At",
-    "none": "None"
+    "none": "None",
+    "filters": "Filters",
+    "totalEntries": "Total entries",
+    "required": "This field is required."
   },
   "login": {
     "heroTitleLine1": "Admin",

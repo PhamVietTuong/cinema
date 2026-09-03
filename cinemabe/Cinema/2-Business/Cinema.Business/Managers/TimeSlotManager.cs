@@ -55,12 +55,27 @@ public class TimeSlotManager : ITimeSlotManager
         return query;
     }
 
+    private IQueryable<TimeSlot> ApplySort(IQueryable<TimeSlot> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "name" => _uow.TimeSlotStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            _ => query,
+        };
+    }
+
     public async Task<DefaultSearchResults<TimeSlotDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredTimeSlotQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.TimeSlotStore.CountAsync(query);
         var items = await _uow.TimeSlotStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<TimeSlot, TimeSlotDTO>(items, total, page, pageSize);

@@ -70,12 +70,28 @@ public class RoomManager : IRoomManager
         return query;
     }
 
+    private IQueryable<Room> ApplySort(IQueryable<Room> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "name" => _uow.RoomStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            "status" => _uow.RoomStore.OrderQuery(query, e => e.Status, sort.Ascending),
+            _ => query,
+        };
+    }
+
     public async Task<DefaultSearchResults<RoomDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredRoomQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.RoomStore.CountAsync(query);
         var items = await _uow.RoomStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<Room, RoomDTO>(items, total, page, pageSize);

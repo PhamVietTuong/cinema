@@ -20,3 +20,5 @@ cinemabe/Cinema/cinemabe/
 .claude/**
 QA-tests/
 CLAUDE.md
+.playwright-mcp/
+pagelist.txt

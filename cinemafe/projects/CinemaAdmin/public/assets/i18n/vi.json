@@ -105,7 +105,10 @@
     "startDate": "Ngày Bắt Đầu",
     "endDate": "Ngày Kết Thúc",
     "createdAt": "Ngày Tạo",
-    "none": "Không có"
+    "none": "Không có",
+    "filters": "Bộ Lọc",
+    "totalEntries": "Tổng số",
+    "required": "Trường này là bắt buộc."
   },
   "login": {
     "heroTitleLine1": "Bảng Điều Khiển",

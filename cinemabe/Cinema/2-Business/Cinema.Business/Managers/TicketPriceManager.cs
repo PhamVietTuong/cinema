@@ -79,12 +79,27 @@ public class TicketPriceManager : ITicketPriceManager
         return query;
     }
 
+    private IQueryable<TicketPrice> ApplySort(IQueryable<TicketPrice> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "isHoliday" => _uow.TicketPriceStore.OrderQuery(query, e => e.IsHoliday, sort.Ascending),
+            _ => query,
+        };
+    }
+
     public async Task<DefaultSearchResults<TicketPriceDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredTicketPriceQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.TicketPriceStore.CountAsync(query);
         var items = await _uow.TicketPriceStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<TicketPrice, TicketPriceDTO>(items, total, page, pageSize);

@@ -55,12 +55,27 @@ public class SeatTypeManager : ISeatTypeManager
         return query;
     }
 
+    private IQueryable<SeatType> ApplySort(IQueryable<SeatType> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "name" => _uow.SeatTypeStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            _ => query,
+        };
+    }
+
     public async Task<DefaultSearchResults<SeatTypeDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredSeatTypeQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.SeatTypeStore.CountAsync(query);
         var items = await _uow.SeatTypeStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<SeatType, SeatTypeDTO>(items, total, page, pageSize);

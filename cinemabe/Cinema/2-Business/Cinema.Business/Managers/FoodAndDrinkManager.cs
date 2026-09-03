@@ -62,12 +62,28 @@ public class FoodAndDrinkManager : IFoodAndDrinkManager
         return query;
     }
 
+    private IQueryable<FoodAndDrink> ApplySort(IQueryable<FoodAndDrink> query, SortDTO? sort)
+    {
+        if (sort == null || string.IsNullOrEmpty(sort.Field))
+        {
+            return query;
+        }
+
+        return sort.Field switch
+        {
+            "name" => _uow.FoodAndDrinkStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            "isAvailable" => _uow.FoodAndDrinkStore.OrderQuery(query, e => e.IsAvailable, sort.Ascending),
+            _ => query,
+        };
+    }
+
     public async Task<DefaultSearchResults<FoodAndDrinkDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredFoodAndDrinkQuery(search.Filters);
+        query = ApplySort(query, search.Sort);
         var total = await _uow.FoodAndDrinkStore.CountAsync(query);
         var items = await _uow.FoodAndDrinkStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<FoodAndDrink, FoodAndDrinkDTO>(items, total, page, pageSize);
