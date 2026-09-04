@@ -280,7 +280,8 @@
       "tabSeatTypes": "Loại Ghế",
       "tabFood": "Đồ Ăn & Thức Uống",
       "tabTimeSlots": "Khung Giờ",
-      "tabTicketPrices": "Giá Vé"
+      "tabTicketPrices": "Giá Vé",
+      "tabPatronCategories": "Đối Tượng Vé"
     },
     "rooms": {
       "subtitle": "Phòng chiếu và sơ đồ ghế (số hàng × số cột).",
@@ -342,6 +343,18 @@
       "descPlaceholder": "Ghế đôi, vị trí trung tâm...",
       "color": "Màu",
       "empty": "Rạp này chưa có loại ghế nào."
+    },
+    "patronCategories": {
+      "subtitle": "Đối tượng giá vé theo từng ghế (Người lớn/Học sinh-Sinh viên/Người cao tuổi/Trẻ em), kiểm tra trực tiếp tại rạp.",
+      "add": "Thêm Đối Tượng",
+      "editTitle": "Chỉnh Sửa Đối Tượng",
+      "newTitle": "Đối Tượng Mới",
+      "nameLabel": "Tên Đối Tượng",
+      "namePlaceholder": "VD: Sinh viên",
+      "discountLabel": "Giảm Giá %",
+      "activeLabel": "Đang Hoạt Động",
+      "descPlaceholder": "Yêu cầu xuất trình thẻ sinh viên hợp lệ tại quầy...",
+      "empty": "Rạp này chưa có đối tượng vé nào."
     },
     "food": {
       "subtitle": "Bắp, nước và combo bán tại rạp này.",

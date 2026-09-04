@@ -280,7 +280,8 @@
       "tabSeatTypes": "Seat Types",
       "tabFood": "Food & Drinks",
       "tabTimeSlots": "Time Slots",
-      "tabTicketPrices": "Ticket Prices"
+      "tabTicketPrices": "Ticket Prices",
+      "tabPatronCategories": "Patron Categories"
     },
     "rooms": {
       "subtitle": "Screening rooms and seat maps (rows × columns).",
@@ -342,6 +343,18 @@
       "descPlaceholder": "Double seat, center position...",
       "color": "Color",
       "empty": "This theater has no seat types yet."
+    },
+    "patronCategories": {
+      "subtitle": "Per-seat pricing categories (Adult/Student/Senior/Child), checked visually at the theater.",
+      "add": "Add Category",
+      "editTitle": "Edit Category",
+      "newTitle": "New Category",
+      "nameLabel": "Category Name",
+      "namePlaceholder": "e.g. Student",
+      "discountLabel": "Discount %",
+      "activeLabel": "Active",
+      "descPlaceholder": "Requires a valid student ID at the door...",
+      "empty": "This theater has no patron categories yet."
     },
     "food": {
       "subtitle": "Popcorn, drinks and combos sold at this theater.",

@@ -27,6 +27,7 @@ public interface IApplicationUnitOfWork : IDisposable
     ITicketPriceStore TicketPriceStore { get; }
     IReminderLogStore ReminderLogStore { get; }
     IGiftCardStore GiftCardStore { get; }
+    IPatronCategoryStore PatronCategoryStore { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

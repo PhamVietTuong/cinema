@@ -131,6 +131,17 @@ CROSS JOIN (VALUES
     (N'Couple',   N'Double-width loveseat (booked as a linked pair)', N'#EC4899', 2.0)
 ) AS s(Name, Description, Color, PriceMultiplier);
 
+-- ── Patron categories (per theater) ───────────────────────────────────────────
+INSERT INTO [PatronCategory] ([Id], [TheaterId], [Name], [DiscountPercent], [IsActive], [CreationTime])
+SELECT NEWID(), t.Id, c.Name, c.DiscountPercent, 1, GETUTCDATE()
+FROM [Theater] t
+CROSS JOIN (VALUES
+    (N'Adult',   0),
+    (N'Student', 25),
+    (N'Senior',  30),
+    (N'Child',   40)
+) AS c(Name, DiscountPercent);
+
 -- ── Food & drinks (per theater) ───────────────────────────────────────────────
 INSERT INTO [FoodAndDrink] ([Id], [TheaterId], [Name], [Price], [Description], [IsAvailable], [CreationTime])
 SELECT NEWID(), t.Id, f.Name, f.Price, f.Description, f.IsAvailable, GETUTCDATE()

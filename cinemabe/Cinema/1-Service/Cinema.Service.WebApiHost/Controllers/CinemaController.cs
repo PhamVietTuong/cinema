@@ -37,6 +37,7 @@ public class CinemaController : ApiControllerBase
     private readonly IInvoiceAdminManager        _invoices;
     private readonly ITimeSlotManager            _timeSlots;
     private readonly ITicketPriceManager         _ticketPrices;
+    private readonly IPatronCategoryManager      _patronCategories;
     private readonly IWebHostEnvironment         _env;
 
     public CinemaController(
@@ -59,6 +60,7 @@ public class CinemaController : ApiControllerBase
         IInvoiceAdminManager invoices,
         ITimeSlotManager timeSlots,
         ITicketPriceManager ticketPrices,
+        IPatronCategoryManager patronCategories,
         IWebHostEnvironment env)
     {
         _movieManager    = movieManager;
@@ -80,6 +82,7 @@ public class CinemaController : ApiControllerBase
         _invoices            = invoices;
         _timeSlots           = timeSlots;
         _ticketPrices        = ticketPrices;
+        _patronCategories    = patronCategories;
         _env                 = env;
     }
 
@@ -695,6 +698,61 @@ public class CinemaController : ApiControllerBase
             return notFound;
         }
         return await RunNoContent(nameof(DeleteSeatType), () => _seatTypes.DeleteAsync(id));
+    }
+    #endregion
+
+    #region PatronCategory
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<PatronCategoryDTO>), 200)]
+    public Task<IActionResult> GetPatronCategories([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetPatronCategories), () => _patronCategories.GetAsync(search));
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
+    public async Task<IActionResult> GetPatronCategory([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _patronCategories.ExistsAsync(id), nameof(GetPatronCategory), nameof(PatronCategory), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(GetPatronCategory), () => _patronCategories.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
+    public Task<IActionResult> CreatePatronCategory([FromBody] CreatePatronCategoryRequest request)
+    {
+        return Run(nameof(CreatePatronCategory), () => _patronCategories.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
+    public async Task<IActionResult> UpdatePatronCategory([FromBody] UpdatePatronCategoryRequest request)
+    {
+        var notFound = await EnsureExistsAsync(() => _patronCategories.ExistsAsync(request.Id), nameof(UpdatePatronCategory), nameof(PatronCategory), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(UpdatePatronCategory), () => _patronCategories.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeletePatronCategory([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _patronCategories.ExistsAsync(id), nameof(DeletePatronCategory), nameof(PatronCategory), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await RunNoContent(nameof(DeletePatronCategory), () => _patronCategories.DeleteAsync(id));
     }
     #endregion
 

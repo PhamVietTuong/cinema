@@ -6,6 +6,11 @@ public class InvoiceTicket
     public Guid RoomId { get; set; }
     public Guid SeatId { get; set; }
     public double Price { get; set; }
+    /// <summary>Snapshot of the patron category applied at booking time (no FK, like Invoice.GiftCardId) —
+    /// stays truthful for reprints/gate check-in/reports even if the category is later renamed or deleted.</summary>
+    public Guid? PatronCategoryId { get; set; }
+    public string? PatronCategoryName { get; set; }
+    public double PatronDiscountPercent { get; set; }
     public string? QrCode { get; set; }
     public bool IsUsed { get; set; } = false;
     /// <summary>Whether this ticket still holds its seat. True while the booking is Pending/Paid; set false

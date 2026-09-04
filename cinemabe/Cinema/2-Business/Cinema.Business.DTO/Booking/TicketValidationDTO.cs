@@ -7,5 +7,6 @@ public class TicketValidationDTO
     public string MovieTitle { get; set; } = string.Empty;
     public string RoomName { get; set; } = string.Empty;
     public DateTime ShowTime { get; set; }
+    public string PatronCategory { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
 }
