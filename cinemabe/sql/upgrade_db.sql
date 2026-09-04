@@ -237,7 +237,7 @@ BEGIN
         [SeatTypeId] uniqueidentifier NOT NULL,
         [TimeSlotId] uniqueidentifier NOT NULL,
         [IsHoliday] bit NOT NULL,
-        [Price] float NOT NULL,
+        [PriceMultiplier] float NOT NULL DEFAULT 1,
         [CreationTime] datetime NOT NULL,
         [LastUpdatedTime] datetime NULL,
         CONSTRAINT [PK_TicketPrice] PRIMARY KEY ([Id]),
@@ -538,6 +538,31 @@ EXEC('UPDATE [RoomType]
       WHERE  [Name] IN (N''3D'', N''IMAX'', N''4DX'')
         AND  [SupportsThreeD] = 0
         AND  [ThreeDSurcharge] = 0');
+
+-- ── TicketPrice.Price becomes a multiplier ──────────────────────────────────
+-- TicketPrice used to hold an absolute VND amount that fully replaced ShowTimeRoom.BasePrice
+-- whenever a matching row existed — which let a generic time-slot row silently undercut a
+-- movie-specific price (e.g. a premiere's bumped-up BasePrice). It now holds a factor applied
+-- to BasePrice instead, mirroring SeatType.PriceMultiplier / Holiday.PriceMultiplier.
+PRINT 'upgrade: converting TicketPrice.Price to PriceMultiplier...';
+
+IF COL_LENGTH('TicketPrice', 'Price') IS NOT NULL AND COL_LENGTH('TicketPrice', 'PriceMultiplier') IS NULL
+BEGIN
+    EXEC sp_rename 'TicketPrice.Price', 'PriceMultiplier', 'COLUMN';
+END
+
+-- Rows created before this change hold absolute VND amounts (e.g. 22222, 80000) — not valid
+-- multipliers, and no multiplier can be inferred from an absolute price. Reset any such leftover
+-- row to its seat type's own multiplier (reproducing what the fallback pricing branch already
+-- charged); an operator must re-enter the intended time-slot premium for these afterward. A
+-- plausible multiplier (<=10) is left untouched.
+IF COL_LENGTH('TicketPrice', 'PriceMultiplier') IS NOT NULL
+BEGIN
+    EXEC('UPDATE p SET p.[PriceMultiplier] = st.[PriceMultiplier]
+          FROM   [TicketPrice] p
+          JOIN   [SeatType] st ON st.[Id] = p.[SeatTypeId]
+          WHERE  p.[PriceMultiplier] > 10');
+END
 
 PRINT 'upgrade_db.sql: completed.';
 

@@ -10,7 +10,8 @@ public class TicketPriceDTO
     public Guid SeatTypeId { get; set; }
     public Guid TimeSlotId { get; set; }
     public bool IsHoliday { get; set; }
-    public double Price { get; set; }
+    /// <summary>Factor applied to the showtime's BasePrice, not an absolute amount.</summary>
+    public double PriceMultiplier { get; set; } = 1;
 }
 
 public class CreateTicketPriceRequest
@@ -20,7 +21,8 @@ public class CreateTicketPriceRequest
     public Guid SeatTypeId { get; set; }
     public Guid TimeSlotId { get; set; }
     public bool IsHoliday { get; set; }
-    public double Price { get; set; }
+    /// <summary>Factor applied to the showtime's BasePrice, not an absolute amount.</summary>
+    public double PriceMultiplier { get; set; } = 1;
 }
 
 public class UpdateTicketPriceRequest : IHasId
@@ -31,5 +33,6 @@ public class UpdateTicketPriceRequest : IHasId
     public Guid SeatTypeId { get; set; }
     public Guid TimeSlotId { get; set; }
     public bool IsHoliday { get; set; }
-    public double Price { get; set; }
+    /// <summary>Factor applied to the showtime's BasePrice, not an absolute amount.</summary>
+    public double PriceMultiplier { get; set; } = 1;
 }

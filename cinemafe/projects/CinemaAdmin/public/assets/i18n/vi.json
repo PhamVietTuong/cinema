@@ -362,7 +362,7 @@
       "empty": "Rạp này chưa có món nào."
     },
     "ticketPrices": {
-      "subtitle": "Giá vé theo loại ghế × khung giờ × ngày lễ.",
+      "subtitle": "Hệ số giá theo loại ghế × khung giờ × ngày lễ, áp dụng lên giá vé gốc của suất chiếu.",
       "add": "Thêm Giá Vé",
       "prereq": "Cần có ít nhất một loại phòng, một loại ghế và một khung giờ trước khi thêm giá vé.",
       "editTitle": "Chỉnh Sửa Giá Vé",
@@ -373,7 +373,8 @@
       "selectSeatType": "— Chọn loại ghế —",
       "timeSlotLabel": "Khung Giờ",
       "selectTimeSlot": "— Chọn khung giờ —",
-      "priceLabel": "Giá (đ)",
+      "multiplierLabel": "Hệ số (×)",
+      "multiplierHint": "Áp dụng lên giá vé gốc của suất chiếu, ví dụ 1.2 = +20%.",
       "applyHoliday": "Áp dụng ngày lễ",
       "holiday": "Ngày Lễ",
       "regularDay": "Ngày Thường",

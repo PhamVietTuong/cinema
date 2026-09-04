@@ -1,8 +1,9 @@
 namespace Cinema.Data.Entities;
 
 /// <summary>
-/// An explicit ticket price for a (theater, seat type, time slot, holiday?) combination.
-/// The full price of a ticket is read directly from the matching row.
+/// A pricing factor for a (theater, room type, seat type, time slot, holiday?) combination.
+/// Applied to the showtime's BasePrice — mirrors SeatType.PriceMultiplier and Holiday.PriceMultiplier
+/// rather than replacing BasePrice outright, so a movie-specific base price is never undercut.
 /// </summary>
 public class TicketPrice : BaseEntity
 {
@@ -21,5 +22,5 @@ public class TicketPrice : BaseEntity
     /// <summary>Whether this price applies on holidays (true) or on normal days (false).</summary>
     public bool IsHoliday { get; set; }
 
-    public double Price { get; set; }
+    public double PriceMultiplier { get; set; } = 1;
 }

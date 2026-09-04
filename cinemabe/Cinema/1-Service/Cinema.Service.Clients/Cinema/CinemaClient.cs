@@ -9581,8 +9581,8 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("isHoliday", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsHoliday { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double Price { get; set; }
+        [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public double PriceMultiplier { get; set; }
 
     }
 
@@ -9604,8 +9604,8 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("isHoliday", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsHoliday { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double Price { get; set; }
+        [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public double PriceMultiplier { get; set; }
 
     }
 
@@ -9630,8 +9630,8 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("isHoliday", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsHoliday { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double Price { get; set; }
+        [Newtonsoft.Json.JsonProperty("priceMultiplier", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public double PriceMultiplier { get; set; }
 
     }
 

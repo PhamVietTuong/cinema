@@ -89,8 +89,17 @@ public class TicketPriceManager : ITicketPriceManager
         return sort.Field switch
         {
             "isHoliday" => _uow.TicketPriceStore.OrderQuery(query, e => e.IsHoliday, sort.Ascending),
+            "priceMultiplier" => _uow.TicketPriceStore.OrderQuery(query, e => e.PriceMultiplier, sort.Ascending),
             _ => query,
         };
+    }
+
+    private static void ValidateMultiplier(double priceMultiplier)
+    {
+        if (priceMultiplier <= 0)
+        {
+            throw new InvalidOperationException($"{nameof(TicketPrice.PriceMultiplier)} must be greater than 0.");
+        }
     }
 
     public async Task<DefaultSearchResults<TicketPriceDTO>> GetAsync(PagingSearchDTO search)
@@ -117,6 +126,7 @@ public class TicketPriceManager : ITicketPriceManager
 
     public async Task<TicketPriceDTO> CreateAsync(CreateTicketPriceRequest request)
     {
+        ValidateMultiplier(request.PriceMultiplier);
         var entity = request.ToNewEntity<CreateTicketPriceRequest, TicketPrice>();
         await _uow.TicketPriceStore.CreateAsync(entity);
         return entity.ToDTO<TicketPrice, TicketPriceDTO>();
@@ -124,6 +134,7 @@ public class TicketPriceManager : ITicketPriceManager
 
     public async Task<TicketPriceDTO> UpdateAsync(UpdateTicketPriceRequest request)
     {
+        ValidateMultiplier(request.PriceMultiplier);
         var entity = await _uow.TicketPriceStore.GetByIdAsync(request.Id);
         if (entity == null)
         {

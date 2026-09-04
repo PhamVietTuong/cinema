@@ -362,7 +362,7 @@
       "empty": "This theater has no items yet."
     },
     "ticketPrices": {
-      "subtitle": "Ticket price by seat type × time slot × holiday.",
+      "subtitle": "Pricing multiplier by seat type × time slot × holiday, applied to the showtime's base price.",
       "add": "Add Ticket Price",
       "prereq": "You need at least one room type, one seat type and one time slot before adding ticket prices.",
       "editTitle": "Edit Ticket Price",
@@ -373,7 +373,8 @@
       "selectSeatType": "— Select seat type —",
       "timeSlotLabel": "Time Slot",
       "selectTimeSlot": "— Select time slot —",
-      "priceLabel": "Price (đ)",
+      "multiplierLabel": "Multiplier (×)",
+      "multiplierHint": "Applied to the showtime's base price, e.g. 1.2 = +20%.",
       "applyHoliday": "Apply holiday",
       "holiday": "Holiday",
       "regularDay": "Regular Day",

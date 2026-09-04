@@ -35,8 +35,9 @@
       </select>
     </div>
     <div class="ad-field">
-      <label class="ad-label">{{ 'theaters.ticketPrices.priceLabel' | translate }}</label>
-      <input class="ad-input" type="number" formControlName="price" placeholder="70000">
+      <label class="ad-label">{{ 'theaters.ticketPrices.multiplierLabel' | translate }}</label>
+      <input class="ad-input" type="number" step="0.05" min="0.01" formControlName="priceMultiplier" placeholder="1.2">
+      <p class="ad-hint">{{ 'theaters.ticketPrices.multiplierHint' | translate }}</p>
     </div>
     <div class="ad-field">
       <label class="ad-check"><input type="checkbox" formControlName="isHoliday"> {{ 'theaters.ticketPrices.applyHoliday' | translate }}</label>
@@ -54,7 +55,7 @@
   <div class="ad-table-wrap">
     <table class="ad-table">
       <thead>
-        <tr><th>{{ 'theaters.ticketPrices.roomTypeLabel' | translate }}</th><th>{{ 'theaters.ticketPrices.seatTypeLabel' | translate }}</th><th>{{ 'theaters.ticketPrices.timeSlotLabel' | translate }}</th><th>{{ 'common.date' | translate }}</th><th>{{ 'common.price' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
+        <tr><th>{{ 'theaters.ticketPrices.roomTypeLabel' | translate }}</th><th>{{ 'theaters.ticketPrices.seatTypeLabel' | translate }}</th><th>{{ 'theaters.ticketPrices.timeSlotLabel' | translate }}</th><th>{{ 'common.date' | translate }}</th><th>{{ 'theaters.ticketPrices.multiplierLabel' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
       </thead>
       <tbody>
         <tr *ngFor="let x of items">
@@ -66,7 +67,7 @@
               {{ x.isHoliday ? ('theaters.ticketPrices.holiday' | translate) : ('theaters.ticketPrices.regularDay' | translate) }}
             </span>
           </td>
-          <td>{{ x.price | number:'1.0-0' }}đ</td>
+          <td>{{ x.priceMultiplier | number:'1.1-2' }}×</td>
           <td class="ad-td-actions">
             <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
             <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>

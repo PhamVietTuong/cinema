@@ -377,7 +377,10 @@ CREATE TABLE [TicketPrice] (
     [SeatTypeId] uniqueidentifier NOT NULL,
     [TimeSlotId] uniqueidentifier NOT NULL,
     [IsHoliday] bit NOT NULL,
-    [Price] float NOT NULL,
+    -- Factor applied to the showtime's BasePrice (mirrors SeatType.PriceMultiplier /
+    -- Holiday.PriceMultiplier) — not an absolute amount, so a movie-specific base price is
+    -- never undercut by a generic time-slot row.
+    [PriceMultiplier] float NOT NULL DEFAULT 1,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_TicketPrice] PRIMARY KEY ([Id]),

@@ -220,6 +220,14 @@ public class RoomManager : IRoomManager
         // and saving once persists every assignment in a single round-trip.
         var seats = (await _uow.SeatStore.FindAsync(s => s.RoomId == request.RoomId))
             .ToDictionary(s => s.Id);
+
+        // A SeatGroupId links exactly two seats into a double seat. Anything else
+        // (an orphan or a group of 3+) is invalid data and must not be persisted.
+        var groupSizes = request.Seats
+            .Where(item => item.SeatGroupId.HasValue)
+            .GroupBy(item => item.SeatGroupId!.Value)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         foreach (var item in request.Seats)
         {
             if (!seats.TryGetValue(item.SeatId, out var seat))
@@ -227,7 +235,9 @@ public class RoomManager : IRoomManager
                 continue;
             }
             seat.SeatTypeId  = item.SeatTypeId;
-            seat.SeatGroupId = item.SeatGroupId;
+            seat.SeatGroupId = item.SeatGroupId.HasValue && groupSizes[item.SeatGroupId.Value] == 2
+                ? item.SeatGroupId
+                : null;
             seat.IsActive    = item.IsActive;
         }
         await _uow.SaveChangesAsync();

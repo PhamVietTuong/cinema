@@ -8328,7 +8328,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
-    price?: number;
+    priceMultiplier?: number;
 
     constructor(data?: ITicketPriceDTO) {
         if (data) {
@@ -8347,7 +8347,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
             this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
-            this.price = _data["price"];
+            this.priceMultiplier = _data["priceMultiplier"];
         }
     }
 
@@ -8366,7 +8366,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
         data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
-        data["price"] = this.price;
+        data["priceMultiplier"] = this.priceMultiplier;
         return data;
     }
 }
@@ -8378,7 +8378,7 @@ export interface ITicketPriceDTO {
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
-    price?: number;
+    priceMultiplier?: number;
 }
 
 export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
@@ -8387,7 +8387,7 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
-    price?: number;
+    priceMultiplier?: number;
 
     constructor(data?: ICreateTicketPriceRequest) {
         if (data) {
@@ -8405,7 +8405,7 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
             this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
-            this.price = _data["price"];
+            this.priceMultiplier = _data["priceMultiplier"];
         }
     }
 
@@ -8423,7 +8423,7 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
         data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
-        data["price"] = this.price;
+        data["priceMultiplier"] = this.priceMultiplier;
         return data;
     }
 }
@@ -8434,7 +8434,7 @@ export interface ICreateTicketPriceRequest {
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
-    price?: number;
+    priceMultiplier?: number;
 }
 
 export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
@@ -8444,7 +8444,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
-    price?: number;
+    priceMultiplier?: number;
 
     constructor(data?: IUpdateTicketPriceRequest) {
         if (data) {
@@ -8463,7 +8463,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
             this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
-            this.price = _data["price"];
+            this.priceMultiplier = _data["priceMultiplier"];
         }
     }
 
@@ -8482,7 +8482,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
         data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
-        data["price"] = this.price;
+        data["priceMultiplier"] = this.priceMultiplier;
         return data;
     }
 }
@@ -8494,7 +8494,7 @@ export interface IUpdateTicketPriceRequest {
     seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
-    price?: number;
+    priceMultiplier?: number;
 }
 
 export abstract class BaseSearchResultsOfUserTypeDTO implements IBaseSearchResultsOfUserTypeDTO {
