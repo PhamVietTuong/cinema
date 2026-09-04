@@ -61,6 +61,11 @@ export interface IHttpService {
     createSeatType(request: CreateSeatTypeRequest): Observable<SeatTypeDTO>;
     updateSeatType(request: UpdateSeatTypeRequest): Observable<SeatTypeDTO>;
     deleteSeatType(id?: string | undefined): Observable<void>;
+    getPatronCategories(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPatronCategoryDTO>;
+    getPatronCategory(id?: string | undefined): Observable<PatronCategoryDTO>;
+    createPatronCategory(request: CreatePatronCategoryRequest): Observable<PatronCategoryDTO>;
+    updatePatronCategory(request: UpdatePatronCategoryRequest): Observable<PatronCategoryDTO>;
+    deletePatronCategory(id?: string | undefined): Observable<void>;
     getTimeSlots(search: PagingSearchDTO): Observable<DefaultSearchResultsOfTimeSlotDTO>;
     getTimeSlot(id?: string | undefined): Observable<TimeSlotDTO>;
     createTimeSlot(request: CreateTimeSlotRequest): Observable<TimeSlotDTO>;
@@ -2246,6 +2251,262 @@ export class HttpService implements IHttpService {
     }
 
     protected processDeleteSeatType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPatronCategories(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPatronCategoryDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPatronCategories";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPatronCategories(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPatronCategories(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfPatronCategoryDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfPatronCategoryDTO>;
+        }));
+    }
+
+    protected processGetPatronCategories(response: HttpResponseBase): Observable<DefaultSearchResultsOfPatronCategoryDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfPatronCategoryDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPatronCategory(id?: string | undefined): Observable<PatronCategoryDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPatronCategory?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPatronCategory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPatronCategory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PatronCategoryDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PatronCategoryDTO>;
+        }));
+    }
+
+    protected processGetPatronCategory(response: HttpResponseBase): Observable<PatronCategoryDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PatronCategoryDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createPatronCategory(request: CreatePatronCategoryRequest): Observable<PatronCategoryDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreatePatronCategory";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreatePatronCategory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreatePatronCategory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PatronCategoryDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PatronCategoryDTO>;
+        }));
+    }
+
+    protected processCreatePatronCategory(response: HttpResponseBase): Observable<PatronCategoryDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PatronCategoryDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updatePatronCategory(request: UpdatePatronCategoryRequest): Observable<PatronCategoryDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdatePatronCategory";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdatePatronCategory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdatePatronCategory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PatronCategoryDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PatronCategoryDTO>;
+        }));
+    }
+
+    protected processUpdatePatronCategory(response: HttpResponseBase): Observable<PatronCategoryDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PatronCategoryDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deletePatronCategory(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeletePatronCategory?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeletePatronCategory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeletePatronCategory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeletePatronCategory(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -8005,6 +8266,251 @@ export interface IUpdateSeatTypeRequest {
     description?: string | undefined;
     color?: string;
     priceMultiplier?: number;
+}
+
+export abstract class BaseSearchResultsOfPatronCategoryDTO implements IBaseSearchResultsOfPatronCategoryDTO {
+    results?: PatronCategoryDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfPatronCategoryDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(PatronCategoryDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfPatronCategoryDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfPatronCategoryDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfPatronCategoryDTO {
+    results?: PatronCategoryDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfPatronCategoryDTO extends BaseSearchResultsOfPatronCategoryDTO implements IDefaultSearchResultsOfPatronCategoryDTO {
+
+    constructor(data?: IDefaultSearchResultsOfPatronCategoryDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfPatronCategoryDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfPatronCategoryDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfPatronCategoryDTO extends IBaseSearchResultsOfPatronCategoryDTO {
+}
+
+export class PatronCategoryDTO implements IPatronCategoryDTO {
+    id?: string;
+    theaterId?: string;
+    name?: string;
+    description?: string | undefined;
+    discountPercent?: number;
+    isActive?: boolean;
+
+    constructor(data?: IPatronCategoryDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.theaterId = _data["theaterId"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+            this.discountPercent = _data["discountPercent"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): PatronCategoryDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PatronCategoryDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["theaterId"] = this.theaterId;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        data["discountPercent"] = this.discountPercent;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IPatronCategoryDTO {
+    id?: string;
+    theaterId?: string;
+    name?: string;
+    description?: string | undefined;
+    discountPercent?: number;
+    isActive?: boolean;
+}
+
+export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest {
+    theaterId?: string;
+    name!: string;
+    description?: string | undefined;
+    discountPercent?: number;
+    isActive?: boolean;
+
+    constructor(data?: ICreatePatronCategoryRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+            this.discountPercent = _data["discountPercent"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): CreatePatronCategoryRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreatePatronCategoryRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        data["discountPercent"] = this.discountPercent;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface ICreatePatronCategoryRequest {
+    theaterId?: string;
+    name: string;
+    description?: string | undefined;
+    discountPercent?: number;
+    isActive?: boolean;
+}
+
+export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest {
+    id?: string;
+    theaterId?: string;
+    name!: string;
+    description?: string | undefined;
+    discountPercent?: number;
+    isActive?: boolean;
+
+    constructor(data?: IUpdatePatronCategoryRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.theaterId = _data["theaterId"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+            this.discountPercent = _data["discountPercent"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): UpdatePatronCategoryRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdatePatronCategoryRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["theaterId"] = this.theaterId;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        data["discountPercent"] = this.discountPercent;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IUpdatePatronCategoryRequest {
+    id?: string;
+    theaterId?: string;
+    name: string;
+    description?: string | undefined;
+    discountPercent?: number;
+    isActive?: boolean;
 }
 
 export abstract class BaseSearchResultsOfTimeSlotDTO implements IBaseSearchResultsOfTimeSlotDTO {

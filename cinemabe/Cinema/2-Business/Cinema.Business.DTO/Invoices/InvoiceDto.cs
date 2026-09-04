@@ -26,6 +26,8 @@ public class InvoiceTicketDTO
     public string SeatLabel { get; set; } = string.Empty;
     public string SeatType { get; set; } = string.Empty;
     public double Price { get; set; }
+    public string? PatronCategoryName { get; set; }
+    public double PatronDiscountPercent { get; set; }
     public string? QrCode { get; set; }
     public bool IsUsed { get; set; }
 }

@@ -564,6 +564,57 @@ BEGIN
           WHERE  p.[PriceMultiplier] > 10');
 END
 
+-- ── per-ticket patron category pricing (Adult/Student/Senior/Child) ─────────
+-- A per-theater lookup, chosen per seat at checkout, mirroring how SeatType/TicketPrice already
+-- scale a showtime's BasePrice. InvoiceTicket keeps a name+percent snapshot (no FK, like
+-- Invoice.GiftCardId) so historical tickets stay truthful if a category is later renamed/deleted.
+PRINT 'upgrade: adding PatronCategory...';
+
+IF OBJECT_ID('PatronCategory', 'U') IS NULL
+BEGIN
+    CREATE TABLE [PatronCategory] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [Name] nvarchar(100) NOT NULL,
+        [Description] nvarchar(max) NULL,
+        [DiscountPercent] float NOT NULL DEFAULT 0,
+        [IsActive] bit NOT NULL DEFAULT 1,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_PatronCategory] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_PatronCategory_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_PatronCategory_TheaterId] ON [PatronCategory] ([TheaterId]);
+    PRINT 'Created [PatronCategory].';
+END
+
+IF COL_LENGTH('[InvoiceTicket]', 'PatronCategoryId') IS NULL
+BEGIN
+    ALTER TABLE [InvoiceTicket] ADD [PatronCategoryId] uniqueidentifier NULL;
+    PRINT 'Added [InvoiceTicket].[PatronCategoryId].';
+END
+IF COL_LENGTH('[InvoiceTicket]', 'PatronCategoryName') IS NULL
+BEGIN
+    ALTER TABLE [InvoiceTicket] ADD [PatronCategoryName] nvarchar(100) NULL;
+    PRINT 'Added [InvoiceTicket].[PatronCategoryName].';
+END
+IF COL_LENGTH('[InvoiceTicket]', 'PatronDiscountPercent') IS NULL
+BEGIN
+    ALTER TABLE [InvoiceTicket] ADD [PatronDiscountPercent] float NOT NULL CONSTRAINT [DF_InvoiceTicket_PatronDiscountPercent] DEFAULT 0;
+    PRINT 'Added [InvoiceTicket].[PatronDiscountPercent].';
+END
+
+-- Seed the four default categories for every theater that has none yet (idempotent: a theater
+-- that already has at least one row — including one an admin has since customised — is skipped).
+IF OBJECT_ID('PatronCategory', 'U') IS NOT NULL
+BEGIN
+    INSERT INTO [PatronCategory] ([Id], [TheaterId], [Name], [DiscountPercent], [IsActive], [CreationTime])
+    SELECT NEWID(), t.[Id], v.[Name], v.[DiscountPercent], 1, GETUTCDATE()
+    FROM   [Theater] t
+    CROSS JOIN (VALUES (N'Adult', 0), (N'Student', 25), (N'Senior', 30), (N'Child', 40)) AS v([Name], [DiscountPercent])
+    WHERE  NOT EXISTS (SELECT 1 FROM [PatronCategory] pc WHERE pc.[TheaterId] = t.[Id]);
+END
+
 PRINT 'upgrade_db.sql: completed.';
 
 -- ── Adopt EF Core migrations (baseline) ─────────────────────────────────────

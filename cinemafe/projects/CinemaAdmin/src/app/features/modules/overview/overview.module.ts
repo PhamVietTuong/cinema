@@ -15,6 +15,7 @@ import { TheaterDetailComponent } from './theaters/theater-detail.component';
 import { TheaterRoomsComponent } from './theaters/theater-rooms.component';
 import { TheaterRoomTypesComponent } from './theaters/theater-room-types.component';
 import { TheaterSeatTypesComponent } from './theaters/theater-seat-types.component';
+import { TheaterPatronCategoriesComponent } from './theaters/theater-patron-categories.component';
 import { TheaterFoodComponent } from './theaters/theater-food.component';
 import { TheaterTimeSlotsComponent } from './theaters/theater-time-slots.component';
 import { TheaterTicketPricesComponent } from './theaters/theater-ticket-prices.component';
@@ -55,6 +56,7 @@ const routes: Routes = [
     TheaterRoomsComponent,
     TheaterRoomTypesComponent,
     TheaterSeatTypesComponent,
+    TheaterPatronCategoriesComponent,
     TheaterFoodComponent,
     TheaterTimeSlotsComponent,
     TheaterTicketPricesComponent,

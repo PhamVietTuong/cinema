@@ -19,6 +19,7 @@ public class CinemaContext : DbContext
     public DbSet<RoomType> RoomType => Set<RoomType>();
     public DbSet<Seat> Seat => Set<Seat>();
     public DbSet<SeatType> SeatType => Set<SeatType>();
+    public DbSet<PatronCategory> PatronCategory => Set<PatronCategory>();
     public DbSet<ShowTime> ShowTime => Set<ShowTime>();
     public DbSet<ShowTimeRoom> ShowTimeRoom => Set<ShowTimeRoom>();
     public DbSet<Invoice> Invoice => Set<Invoice>();

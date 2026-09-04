@@ -1040,6 +1040,13 @@
             "type": "number",
             "format": "double"
           },
+          "patronCategory": {
+            "type": "string"
+          },
+          "patronDiscountPercent": {
+            "type": "number",
+            "format": "double"
+          },
           "qrCode": {
             "type": "string",
             "nullable": true
@@ -1113,6 +1120,11 @@
           "seatId": {
             "type": "string",
             "format": "guid"
+          },
+          "patronCategoryId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           }
         }
       },
@@ -1385,6 +1397,9 @@
             "type": "string",
             "format": "date-time"
           },
+          "patronCategory": {
+            "type": "string"
+          },
           "message": {
             "type": "string"
           }
@@ -1518,6 +1533,14 @@
             "type": "string"
           },
           "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "patronCategoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "patronDiscountPercent": {
             "type": "number",
             "format": "double"
           },

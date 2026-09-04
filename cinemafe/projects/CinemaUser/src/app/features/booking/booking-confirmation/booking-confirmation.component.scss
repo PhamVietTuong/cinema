@@ -134,7 +134,14 @@
   font-weight: 700; color: var(--mp-red);
 }
 .seat-entry-type { font-size: 0.72rem; color: var(--mp-muted); }
-.seat-entry-price { font-size: 0.875rem; font-weight: 600; color: var(--mp-ink); }
+.seat-entry-category {
+  font-size: 0.72rem; padding: 2px 6px; margin-top: 2px; width: fit-content;
+}
+.seat-entry-price { font-size: 0.875rem; font-weight: 600; color: var(--mp-ink); text-align: right; }
+.seat-entry-price-strike {
+  font-size: 0.72rem; font-weight: 400; color: var(--mp-muted);
+  text-decoration: line-through; margin-right: 6px;
+}
 
 .summary-divider { border: none; border-top: 1px solid var(--mp-line-2); margin: 14px 0; }
 .summary-row {

@@ -94,5 +94,10 @@
         <app-theater-ticket-prices [theaterId]="theaterId"></app-theater-ticket-prices>
       </div>
     </mat-tab>
+    <mat-tab [label]="'theaters.detail.tabPatronCategories' | translate">
+      <div class="tab-body">
+        <app-theater-patron-categories [theaterId]="theaterId"></app-theater-patron-categories>
+      </div>
+    </mat-tab>
   </mat-tab-group>
 </div>

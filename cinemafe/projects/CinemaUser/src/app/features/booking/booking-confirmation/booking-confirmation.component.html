@@ -110,8 +110,15 @@
             <div class="seat-entry-info">
               <span class="seat-entry-code">{{ s.rowName }}{{ s.colIndex }}</span>
               <span class="seat-entry-type">{{ s.seatTypeName }}</span>
+              <select class="field-input seat-entry-category" *ngIf="patronCategories.length"
+                      [ngModel]="categoryBySeat[s.id!]" (ngModelChange)="onCategoryChange(s.id!, $event)">
+                <option *ngFor="let c of patronCategories" [value]="c.id">{{ c.name }} (-{{ c.discountPercent }}%)</option>
+              </select>
             </div>
-            <span class="seat-entry-price">{{ s.price | number:'1.0-0' }}đ</span>
+            <span class="seat-entry-price">
+              <span class="seat-entry-price-strike" *ngIf="seatPrice(s) !== s.price">{{ s.price | number:'1.0-0' }}đ</span>
+              {{ seatPrice(s) | number:'1.0-0' }}đ
+            </span>
           </div>
         </div>
 

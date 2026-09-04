@@ -1507,6 +1507,8 @@ export class TicketItemDTO implements ITicketItemDTO {
     seatLabel?: string;
     seatType?: string;
     price?: number;
+    patronCategory?: string;
+    patronDiscountPercent?: number;
     qrCode?: string | undefined;
 
     constructor(data?: ITicketItemDTO) {
@@ -1523,6 +1525,8 @@ export class TicketItemDTO implements ITicketItemDTO {
             this.seatLabel = _data["seatLabel"];
             this.seatType = _data["seatType"];
             this.price = _data["price"];
+            this.patronCategory = _data["patronCategory"];
+            this.patronDiscountPercent = _data["patronDiscountPercent"];
             this.qrCode = _data["qrCode"];
         }
     }
@@ -1539,6 +1543,8 @@ export class TicketItemDTO implements ITicketItemDTO {
         data["seatLabel"] = this.seatLabel;
         data["seatType"] = this.seatType;
         data["price"] = this.price;
+        data["patronCategory"] = this.patronCategory;
+        data["patronDiscountPercent"] = this.patronDiscountPercent;
         data["qrCode"] = this.qrCode;
         return data;
     }
@@ -1548,6 +1554,8 @@ export interface ITicketItemDTO {
     seatLabel?: string;
     seatType?: string;
     price?: number;
+    patronCategory?: string;
+    patronDiscountPercent?: number;
     qrCode?: string | undefined;
 }
 
@@ -1640,6 +1648,7 @@ export interface ICreateBookingRequest {
 
 export class BookingSeatItem implements IBookingSeatItem {
     seatId?: string;
+    patronCategoryId?: string | undefined;
 
     constructor(data?: IBookingSeatItem) {
         if (data) {
@@ -1653,6 +1662,7 @@ export class BookingSeatItem implements IBookingSeatItem {
     init(_data?: any) {
         if (_data) {
             this.seatId = _data["seatId"];
+            this.patronCategoryId = _data["patronCategoryId"];
         }
     }
 
@@ -1666,12 +1676,14 @@ export class BookingSeatItem implements IBookingSeatItem {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["seatId"] = this.seatId;
+        data["patronCategoryId"] = this.patronCategoryId;
         return data;
     }
 }
 
 export interface IBookingSeatItem {
     seatId?: string;
+    patronCategoryId?: string | undefined;
 }
 
 export class BookingFoodItem implements IBookingFoodItem {
@@ -2298,6 +2310,7 @@ export class TicketValidationDTO implements ITicketValidationDTO {
     movieTitle?: string;
     roomName?: string;
     showTime?: Date;
+    patronCategory?: string;
     message?: string;
 
     constructor(data?: ITicketValidationDTO) {
@@ -2317,6 +2330,7 @@ export class TicketValidationDTO implements ITicketValidationDTO {
             this.movieTitle = _data["movieTitle"];
             this.roomName = _data["roomName"];
             this.showTime = _data["showTime"] ? new Date(_data["showTime"].toString()) : <any>undefined;
+            this.patronCategory = _data["patronCategory"];
             this.message = _data["message"];
         }
     }
@@ -2336,6 +2350,7 @@ export class TicketValidationDTO implements ITicketValidationDTO {
         data["movieTitle"] = this.movieTitle;
         data["roomName"] = this.roomName;
         data["showTime"] = this.showTime ? this.showTime.toISOString() : <any>undefined;
+        data["patronCategory"] = this.patronCategory;
         data["message"] = this.message;
         return data;
     }
@@ -2348,6 +2363,7 @@ export interface ITicketValidationDTO {
     movieTitle?: string;
     roomName?: string;
     showTime?: Date;
+    patronCategory?: string;
     message?: string;
 }
 
@@ -2576,6 +2592,8 @@ export class InvoiceTicketDTO implements IInvoiceTicketDTO {
     seatLabel?: string;
     seatType?: string;
     price?: number;
+    patronCategoryName?: string | undefined;
+    patronDiscountPercent?: number;
     qrCode?: string | undefined;
     isUsed?: boolean;
 
@@ -2597,6 +2615,8 @@ export class InvoiceTicketDTO implements IInvoiceTicketDTO {
             this.seatLabel = _data["seatLabel"];
             this.seatType = _data["seatType"];
             this.price = _data["price"];
+            this.patronCategoryName = _data["patronCategoryName"];
+            this.patronDiscountPercent = _data["patronDiscountPercent"];
             this.qrCode = _data["qrCode"];
             this.isUsed = _data["isUsed"];
         }
@@ -2618,6 +2638,8 @@ export class InvoiceTicketDTO implements IInvoiceTicketDTO {
         data["seatLabel"] = this.seatLabel;
         data["seatType"] = this.seatType;
         data["price"] = this.price;
+        data["patronCategoryName"] = this.patronCategoryName;
+        data["patronDiscountPercent"] = this.patronDiscountPercent;
         data["qrCode"] = this.qrCode;
         data["isUsed"] = this.isUsed;
         return data;
@@ -2632,6 +2654,8 @@ export interface IInvoiceTicketDTO {
     seatLabel?: string;
     seatType?: string;
     price?: number;
+    patronCategoryName?: string | undefined;
+    patronDiscountPercent?: number;
     qrCode?: string | undefined;
     isUsed?: boolean;
 }

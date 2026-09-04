@@ -88,6 +88,19 @@ CREATE TABLE [SeatType] (
     CONSTRAINT [PK_SeatType] PRIMARY KEY ([Id])
 );
 
+-- Per-theater patron pricing category (Adult/Student/Senior/Child), chosen per seat at checkout.
+CREATE TABLE [PatronCategory] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [Description] nvarchar(max) NULL,
+    [DiscountPercent] float NOT NULL DEFAULT 0,
+    [IsActive] bit NOT NULL DEFAULT 1,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_PatronCategory] PRIMARY KEY ([Id])
+);
+
 CREATE TABLE [Theater] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [Name] nvarchar(200) NOT NULL,
@@ -349,6 +362,11 @@ CREATE TABLE [InvoiceTicket] (
     [RoomId] uniqueidentifier NOT NULL,
     [SeatId] uniqueidentifier NOT NULL,
     [Price] float NOT NULL,
+    -- Snapshot of the patron category applied at booking time (no FK, like Invoice.GiftCardId) so
+    -- reprints/gate check-in/reports stay truthful even if the category is later renamed or deleted.
+    [PatronCategoryId] uniqueidentifier NULL,
+    [PatronCategoryName] nvarchar(100) NULL,
+    [PatronDiscountPercent] float NOT NULL DEFAULT 0,
     [QrCode] nvarchar(max) NULL,
     [IsUsed] bit NOT NULL,
     [IsActive] bit NOT NULL DEFAULT 1,
@@ -392,8 +410,9 @@ CREATE TABLE [TicketPrice] (
 
 -- Deferred FKs: SeatType and FoodAndDrink are created before Theater, so their
 -- theater FK is added here once both tables exist.
-ALTER TABLE [SeatType]     ADD CONSTRAINT [FK_SeatType_Theater_TheaterId]     FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
-ALTER TABLE [FoodAndDrink] ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
+ALTER TABLE [SeatType]       ADD CONSTRAINT [FK_SeatType_Theater_TheaterId]       FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
+ALTER TABLE [FoodAndDrink]   ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId]   FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
+ALTER TABLE [PatronCategory] ADD CONSTRAINT [FK_PatronCategory_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 
 -- Showtime reminders already sent (persists dedup across restarts).
 CREATE TABLE [ReminderLog] (
@@ -447,6 +466,7 @@ CREATE UNIQUE INDEX [IX_Seat_RoomId_RowName_ColIndex] ON [Seat] ([RoomId], [RowN
 CREATE INDEX [IX_Seat_SeatTypeId] ON [Seat] ([SeatTypeId]);
 CREATE INDEX [IX_Seat_SeatGroupId] ON [Seat] ([SeatGroupId]);
 CREATE INDEX [IX_SeatType_TheaterId] ON [SeatType] ([TheaterId]);
+CREATE INDEX [IX_PatronCategory_TheaterId] ON [PatronCategory] ([TheaterId]);
 CREATE INDEX [IX_TimeSlot_TheaterId] ON [TimeSlot] ([TheaterId]);
 CREATE INDEX [IX_TicketPrice_RoomTypeId] ON [TicketPrice] ([RoomTypeId]);
 CREATE INDEX [IX_TicketPrice_SeatTypeId] ON [TicketPrice] ([SeatTypeId]);

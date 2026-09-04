@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IDiscountTypeManager, DiscountTypeManager>();
         services.AddScoped<IMovieTypeManager, MovieTypeManager>();
         services.AddScoped<ISeatTypeManager, SeatTypeManager>();
+        services.AddScoped<IPatronCategoryManager, PatronCategoryManager>();
         services.AddScoped<IUserTypeManager, UserTypeManager>();
         services.AddScoped<IMemberShipManager, MemberShipManager>();
         services.AddScoped<IHolidayManager, HolidayManager>();

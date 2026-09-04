@@ -46,6 +46,11 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
   giftCardMessage = '';
   giftCardChecking = false;
 
+  /** Patron categories (Adult/Student/Senior/Child) available at this theater, and the category
+   * chosen per seat (seatId -> categoryId). Self-reported; checked visually at the theater. */
+  patronCategories: CinemaServiceAgent.PatronCategoryDTO[] = [];
+  categoryBySeat: Record<string, string> = {};
+
   /** 1 loyalty point == 1000 VND when redeemed. */
   static readonly POINT_VALUE = 1000;
   /** Available loyalty-points balance for the signed-in user. */
@@ -66,7 +71,24 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
   ) {}
 
   get totalPrice(): number {
-    return this.seats.reduce((sum, s) => sum + (s.price ?? 0), 0);
+    return this.seats.reduce((sum, s) => sum + this.seatPrice(s), 0);
+  }
+
+  /** This seat's price after its chosen patron category's discount — mirrors the server's
+   * ApplyPatronDiscount (percent off, floored at 0, rounded to 2dp) so the total shown here
+   * matches what CreateBooking persists. */
+  seatPrice(seat: SelectableSeat): number {
+    const base = seat.price ?? 0;
+    const pct = this.categoryFor(seat.id!)?.discountPercent ?? 0;
+    return Math.round(Math.max(0, base * (1 - pct / 100)) * 100) / 100;
+  }
+
+  categoryFor(seatId: string): CinemaServiceAgent.PatronCategoryDTO | undefined {
+    return this.patronCategories.find(c => c.id === this.categoryBySeat[seatId]);
+  }
+
+  onCategoryChange(seatId: string, categoryId: string): void {
+    this.categoryBySeat[seatId] = categoryId;
   }
 
   get foodTotal(): number {
@@ -112,7 +134,8 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
       next: u => { this.pointsBalance = u.points ?? 0; this._cdr.markForCheck(); },
       error: () => this._cdr.markForCheck(),
     });
-    // Load this theater's concessions so the customer can add combos to the order.
+    // Load this theater's concessions and patron categories so the customer can add combos and
+    // pick a per-seat pricing category (Adult/Student/Senior/Child) on the order.
     if (this.roomId) {
       this._cinemaService.getRoom(this.roomId).subscribe(room => {
         if (!room?.theaterId) { return; }
@@ -120,6 +143,19 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
           { pageIndex: 1, pageSize: 100, filters: { theaterId: room.theaterId } }))
           .subscribe(r => {
             this.foods = (r.results ?? []).filter(f => f.isAvailable);
+            this._cdr.markForCheck();
+          });
+        this._cinemaService.getPatronCategories(CinemaServiceAgent.PagingSearchDTO.fromJS(
+          { pageIndex: 1, pageSize: 100, filters: { theaterId: room.theaterId, isActive: 'true' } }))
+          .subscribe(r => {
+            this.patronCategories = (r.results ?? []).slice().sort((a, b) => (a.discountPercent ?? 0) - (b.discountPercent ?? 0));
+            // Default every seat to the lowest-discount category (Adult / full price).
+            const defaultId = this.patronCategories[0]?.id;
+            if (defaultId) {
+              for (const s of this.seats) {
+                this.categoryBySeat[s.id!] = defaultId;
+              }
+            }
             this._cdr.markForCheck();
           });
       });
@@ -201,8 +237,11 @@ export class BookingConfirmationComponent implements OnInit, OnDestroy {
     const request = PaymentServiceAgent.CreateBookingRequest.fromJS({
       showTimeId: this.showTimeId,
       roomId: this.roomId,
-      // Price is derived server-side from each seat's type multiplier — no ticket type needed.
-      seats: this.seats.map(s => PaymentServiceAgent.BookingSeatItem.fromJS({ seatId: s.id })),
+      // Price is derived server-side from each seat's type multiplier and its chosen patron category.
+      seats: this.seats.map(s => PaymentServiceAgent.BookingSeatItem.fromJS({
+        seatId: s.id,
+        patronCategoryId: this.categoryBySeat[s.id!] || undefined,
+      })),
       foods,
       discountCode: this.discountCode.trim() || undefined,
       giftCardCode: this.giftCardCode.trim() || undefined,

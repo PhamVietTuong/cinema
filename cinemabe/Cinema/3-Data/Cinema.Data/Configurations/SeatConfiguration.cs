@@ -27,3 +27,14 @@ public class SeatTypeConfiguration : IEntityTypeConfiguration<SeatType>
         b.HasOne(s => s.Theater).WithMany().HasForeignKey(s => s.TheaterId).OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+public class PatronCategoryConfiguration : IEntityTypeConfiguration<PatronCategory>
+{
+    public void Configure(EntityTypeBuilder<PatronCategory> b)
+    {
+        b.HasKey(c => c.Id);
+        b.Property(c => c.Name).IsRequired().HasMaxLength(100);
+        b.Property(c => c.DiscountPercent).HasColumnType("float");
+        b.HasOne(c => c.Theater).WithMany().HasForeignKey(c => c.TheaterId).OnDelete(DeleteBehavior.Cascade);
+    }
+}

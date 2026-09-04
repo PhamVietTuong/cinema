@@ -42,6 +42,10 @@ public class BookingSeatItem
 {
     [NotEmptyGuid]
     public Guid SeatId { get; set; }
+
+    /// <summary>Self-reported patron category for this seat (Adult/Student/Senior/Child); null = full
+    /// price. Checked visually (ID/student card) at the theater, not verified by this system.</summary>
+    public Guid? PatronCategoryId { get; set; }
 }
 
 public class BookingFoodItem

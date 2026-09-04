@@ -2019,6 +2019,12 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double Price { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("patronCategory", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string PatronCategory { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("patronDiscountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public double PatronDiscountPercent { get; set; }
+
         [Newtonsoft.Json.JsonProperty("qrCode", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string QrCode { get; set; }
 
@@ -2069,6 +2075,9 @@ namespace Cinema.Service.Clients.Payment
     {
         [Newtonsoft.Json.JsonProperty("seatId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid SeatId { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("patronCategoryId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Guid? PatronCategoryId { get; set; }
 
     }
 
@@ -2291,6 +2300,9 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("showTime", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.DateTime ShowTime { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("patronCategory", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string PatronCategory { get; set; }
+
         [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Message { get; set; }
 
@@ -2394,6 +2406,12 @@ namespace Cinema.Service.Clients.Payment
 
         [Newtonsoft.Json.JsonProperty("price", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double Price { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("patronCategoryName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string PatronCategoryName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("patronDiscountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public double PatronDiscountPercent { get; set; }
 
         [Newtonsoft.Json.JsonProperty("qrCode", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string QrCode { get; set; }
