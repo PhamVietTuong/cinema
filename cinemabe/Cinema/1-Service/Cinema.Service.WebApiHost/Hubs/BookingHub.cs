@@ -48,7 +48,7 @@ public class BookingHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-    private static string RoomGroup(Guid showTimeId, Guid roomId)
+    public static string RoomGroup(Guid showTimeId, Guid roomId)
     {
         return $"room-{showTimeId}-{roomId}";
     }

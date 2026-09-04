@@ -25,6 +25,7 @@ export class BookingHubService implements OnDestroy {
   seatLocked$ = new Subject<SeatLockEvent>();
   seatUnlocked$ = new Subject<string>();
   seatLockFailed$ = new Subject<SeatLockFailedEvent>();
+  seatBooked$ = new Subject<string[]>();
   connected$ = new BehaviorSubject<boolean>(false);
 
   /** ConnectionId of the live hub connection, used to ignore our own broadcasts. */
@@ -50,6 +51,9 @@ export class BookingHubService implements OnDestroy {
 
     this.connection.on('SeatLockFailed', (seatId: string, message: string) =>
       this.seatLockFailed$.next({ seatId, message }));
+
+    this.connection.on('SeatBooked', (seatIds: string[]) =>
+      this.seatBooked$.next(seatIds));
 
     // Re-join the room group after an automatic reconnect (a reconnect uses a new
     // connection that is no longer a member of the group).

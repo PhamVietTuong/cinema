@@ -61,6 +61,8 @@ export class SeatSelectionComponent implements OnInit, OnDestroy {
     this._subs.add(this._hub.seatUnlocked$.subscribe(seatId => this._setLocked(seatId, false)));
     // Our lock attempt lost the race — revert the optimistic selection.
     this._subs.add(this._hub.seatLockFailed$.subscribe(e => this._setLocked(e.seatId, true)));
+    // Someone completed a booking — those seats are now permanently unavailable.
+    this._subs.add(this._hub.seatBooked$.subscribe(seatIds => this._setBooked(seatIds)));
 
     this._hub.startConnection(this.showTimeId, this.roomId).catch(() => { /* degrade to non-realtime */ });
   }
@@ -86,7 +88,14 @@ export class SeatSelectionComponent implements OnInit, OnDestroy {
   /** The seat plus any others sharing its group id (a double seat); just the seat itself otherwise. */
   private _groupOf(seat: SelectableSeat): SelectableSeat[] {
     if (!seat.seatGroupId) return [seat];
-    return this.seats.filter(s => s.seatGroupId === seat.seatGroupId);
+    const group = this.seats.filter(s => s.seatGroupId === seat.seatGroupId);
+    // A valid double seat links exactly two seats. Anything else is corrupt data —
+    // fall back to treating the seat as standalone instead of locking the whole group.
+    if (group.length !== 2) {
+      console.warn(`Seat ${seat.id} has an invalid seatGroupId shared by ${group.length} seats; ignoring grouping.`);
+      return [seat];
+    }
+    return group;
   }
 
   /** Apply a lock/unlock event to the matching seat, deselecting it if we held it. */
@@ -99,6 +108,20 @@ export class SeatSelectionComponent implements OnInit, OnDestroy {
       this.selectedSeats = this.selectedSeats.filter(s => s.id !== seatId);
     }
     // SignalR event fires outside Angular — re-render the affected seat.
+    this._cdr.markForCheck();
+  }
+
+  /** Mark seats as booked (someone else completed checkout), deselecting any we held. */
+  private _setBooked(seatIds: string[]): void {
+    for (const seatId of seatIds) {
+      const seat = this.seats.find(s => s.id === seatId);
+      if (!seat) continue;
+      seat.status = PaymentServiceAgent.SeatStatus.Occupied;
+      seat.isLocked = false;
+      seat.isSelected = false;
+    }
+    this.selectedSeats = this.selectedSeats.filter(s => !seatIds.includes(s.id!));
+    // SignalR event fires outside Angular — re-render the affected seats.
     this._cdr.markForCheck();
   }
 

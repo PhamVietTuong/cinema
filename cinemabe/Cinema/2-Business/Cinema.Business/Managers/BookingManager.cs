@@ -28,13 +28,15 @@ public class BookingManager : IBookingManager
     private readonly IPaymentGatewayResolver _gateways;
     private readonly INotificationService _notifications;
     private readonly ISmsNotificationService _sms;
+    private readonly ISeatNotificationService _seatNotifications;
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications)
     {
         _uow = uow;
         _gateways = gateways;
         _notifications = notifications;
         _sms = sms;
+        _seatNotifications = seatNotifications;
     }
 
     public async Task<DefaultSearchResults<SeatDTO>> GetSeatsAsync(PagingSearchDTO search)
@@ -120,8 +122,9 @@ public class BookingManager : IBookingManager
                     throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
                 }
 
-                // Price from the ticket-price matrix (theater/roomType/seatType/timeSlot/holiday), falling
-                // back to base price × the seat type's multiplier (× holiday factor). See BuildSeatPricingContextAsync.
+                // Price is BasePrice scaled by the ticket-price matrix multiplier (theater/roomType/seatType/
+                // timeSlot/holiday) when a row matches, falling back to BasePrice × the seat type's multiplier
+                // × holiday factor otherwise. See BuildSeatPricingContextAsync.
                 var seatType   = await _uow.SeatTypeStore.GetByIdAsync(seat.SeatTypeId);
                 var multiplier = seatType?.PriceMultiplier ?? 1;
                 var price      = PriceSeat(pricing, seat.SeatTypeId, multiplier);
@@ -237,6 +240,18 @@ public class BookingManager : IBookingManager
 
             await _uow.InvoiceStore.CreateAsync(invoice);
             await _uow.CommitTransactionAsync();
+
+            // Clear the booker's own advisory locks on the seats just booked (SeatBooked below supersedes
+            // them; emitting SeatUnlocked first would briefly flash the seat as available to other viewers)
+            // and tell everyone else in the room these seats are now unavailable.
+            if (!string.IsNullOrEmpty(request.ConnectionId))
+            {
+                foreach (var seatItem in request.Seats)
+                {
+                    UnlockSeat(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId);
+                }
+            }
+            await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId, request.RoomId, request.Seats.Select(s => s.SeatId).ToList());
 
             return new BookingResultDTO
             {
@@ -435,23 +450,28 @@ public class BookingManager : IBookingManager
     }
 
     // ── Seat pricing ────────────────────────────────────────────────────────────
-    // A seat's price comes from the ticket-price matrix (theater × roomType × seatType × timeSlot ×
-    // isHoliday) when a matching row exists; otherwise it falls back to BasePrice × SeatType multiplier,
-    // scaled by the holiday multiplier on holidays. The context is resolved once per showtime and reused
-    // for every seat. All store lookups are null-guarded so the fallback holds when nothing is configured.
-    // A 3D screening adds a flat per-ticket surcharge on top of whichever branch produced the price —
-    // the room class sets the base, the dimension is charged separately (an IMAX 3D ticket pays both).
+    // A seat's price is always anchored on the showtime's own BasePrice (which reflects the movie/format
+    // being screened) — nothing is allowed to replace it outright, only scale it. When a ticket-price
+    // matrix row (theater × roomType × seatType × timeSlot × isHoliday) matches, its PriceMultiplier scales
+    // BasePrice instead of SeatType.PriceMultiplier — the matrix row is already seat-type-scoped, so
+    // applying both would double-count the seat premium. It's already holiday-scoped too, so the holiday
+    // factor is also skipped in that branch; only the fallback (BasePrice × SeatType multiplier) applies
+    // the holiday factor, since there the holiday-ness hasn't been priced in yet. The context is resolved
+    // once per showtime and reused for every seat; all store lookups are null-guarded so the fallback
+    // holds when nothing is configured. A 3D screening adds a flat per-ticket surcharge on top of
+    // whichever branch produced the price — the room class sets the base, the dimension is charged
+    // separately (an IMAX 3D ticket pays both).
     private sealed record SeatPricingContext(
         double BasePrice,
-        IReadOnlyDictionary<Guid, double> MatrixBySeatType,
+        IReadOnlyDictionary<Guid, double> MultiplierBySeatType,
         double HolidayFactor,
         double ThreeDSurcharge);
 
     private static double PriceSeat(SeatPricingContext ctx, Guid seatTypeId, double seatMultiplier)
     {
-        if (ctx.MatrixBySeatType.TryGetValue(seatTypeId, out var explicitPrice))
+        if (ctx.MultiplierBySeatType.TryGetValue(seatTypeId, out var matrixMultiplier))
         {
-            return explicitPrice + ctx.ThreeDSurcharge;
+            return (ctx.BasePrice * matrixMultiplier) + ctx.ThreeDSurcharge;
         }
         return (ctx.BasePrice * seatMultiplier * ctx.HolidayFactor) + ctx.ThreeDSurcharge;
     }
@@ -493,7 +513,7 @@ public class BookingManager : IBookingManager
         var slots = await _uow.TimeSlotStore.FindAsync(t => t.TheaterId == room.TheaterId) ?? Enumerable.Empty<TimeSlot>();
         var slot  = slots.FirstOrDefault(s => TimeInSlot(timeOfDay, s));
 
-        var matrix = new Dictionary<Guid, double>();
+        var multipliers = new Dictionary<Guid, double>();
         if (slot is not null)
         {
             var rows = await _uow.TicketPriceStore.FindAsync(tp =>
@@ -504,11 +524,11 @@ public class BookingManager : IBookingManager
                        ?? Enumerable.Empty<TicketPrice>();
             foreach (var r in rows)
             {
-                matrix[r.SeatTypeId] = r.Price;
+                multipliers[r.SeatTypeId] = r.PriceMultiplier;
             }
         }
 
-        return new SeatPricingContext(basePrice, matrix, holidayFactor, threeDSurcharge);
+        return new SeatPricingContext(basePrice, multipliers, holidayFactor, threeDSurcharge);
     }
 
     private static bool TimeInSlot(TimeOnly t, TimeSlot slot)
