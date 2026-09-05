@@ -21,6 +21,26 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
             .OrderBy(s => s.StartTime)
             .ToListAsync();
 
+    public async Task<IReadOnlyList<MovieScheduleRow>> GetMovieScheduleAsync(Guid movieId, DateTime fromInclusive, DateTime toExclusive)
+        => await Context.ShowTimeRoom
+            .AsNoTracking()
+            .Where(sr => sr.ShowTime.MovieId == movieId &&
+                         sr.ShowTime.IsActive &&
+                         sr.ShowTime.StartTime >= fromInclusive &&
+                         sr.ShowTime.StartTime < toExclusive)
+            .OrderBy(sr => sr.ShowTime.StartTime)
+            .Select(sr => new MovieScheduleRow(
+                sr.ShowTimeId,
+                sr.ShowTime.StartTime,
+                sr.ShowTime.EndTime,
+                sr.ShowTime.ProjectionForm,
+                sr.RoomId,
+                sr.Room.Name,
+                sr.Room.RoomType.Name,
+                sr.Room.Theater.Name,
+                sr.Room.TotalRows * sr.Room.TotalColumns))
+            .ToListAsync();
+
     public async Task<ShowTimeRoom?> GetShowTimeRoomAsync(Guid showTimeId, Guid roomId)
         => await Context.ShowTimeRoom
             .Include(sr => sr.ShowTime).ThenInclude(s => s.Movie)

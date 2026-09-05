@@ -63,11 +63,11 @@ export const routes: Routes = [
     children: [
       {
         path: 'seats',
-        loadComponent: () => import('./features/booking/seat-selection/seat-selection.component').then(m => m.SeatSelectionComponent)
+        loadComponent: () => import('./features/booking/booking-page/booking-page.component').then(m => m.BookingPageComponent)
       },
       {
-        path: 'confirmation',
-        loadComponent: () => import('./features/booking/booking-confirmation/booking-confirmation.component').then(m => m.BookingConfirmationComponent)
+        path: 'checkout',
+        loadComponent: () => import('./features/booking/booking-checkout/booking-checkout.component').then(m => m.BookingCheckoutComponent)
       },
       {
         path: 'payment-return',

@@ -12,6 +12,10 @@ public class MovieManager : IMovieManager
 {
     private readonly IApplicationUnitOfWork _uow;
 
+    /// <summary>The movie-detail page shows today + the next 3 days; its date tabs slice this window
+    /// entirely client-side (no re-fetch per tab), so the response must cover exactly it.</summary>
+    private const int ScheduleWindowDays = 4;
+
     public MovieManager(IApplicationUnitOfWork uow)
     {
         _uow = uow;
@@ -101,37 +105,36 @@ public class MovieManager : IMovieManager
         ApplyMovieComputedFields(movie, dto);
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
         dto.AgeRestrictionMinAge      = movie.AgeRestriction?.MinAge ?? 0;
-        // Flatten each showtime's rooms into the summary list the detail page renders.
+        // Bounded schedule window (today + next ScheduleWindowDays-1 more days): the detail page's
+        // date tabs slice this client-side with no further requests, and "now" (not just "today")
+        // excludes screenings that have already started — the detail page's showtimes are booking
+        // links, so a screening that already started must not be clickable.
+        var now  = DateTime.Now;
+        var from = now;
+        var to   = DateTime.Today.AddDays(ScheduleWindowDays);
+        var scheduleRows = await _uow.ShowTimeStore.GetMovieScheduleAsync(id, from, to);
+
         // AvailableSeats = room capacity minus seats already booked (Pending/Paid) for that showtime.
         // Booked counts come from one grouped query for the whole movie — querying per showtime-room
         // turned a public page into 1 + N round-trips as a film's schedule grew.
         var bookedCounts = await _uow.SeatStore.GetBookedSeatCountsByMovieAsync(id);
-        var summaries = new List<ShowTimeSummaryDTO>();
-        // Only screenings that haven't started yet: the detail page's showtimes are booking links,
-        // and it previously listed past ones (labelled with a time but no date) right alongside
-        // upcoming ones, so a customer could click through and book a screening that had ended.
-        var now = DateTime.Now;
-        foreach (var s in movie.ShowTimes.Where(s => s.IsActive && s.StartTime > now))
+        var summaries = scheduleRows.Select(row =>
         {
-            foreach (var sr in s.ShowTimeRooms.DefaultIfEmpty())
+            var booked = bookedCounts.TryGetValue((row.ShowTimeId, row.RoomId), out var n) ? n : 0;
+            return new ShowTimeSummaryDTO
             {
-                var capacity = (sr?.Room?.TotalRows ?? 0) * (sr?.Room?.TotalColumns ?? 0);
-                var booked   = sr != null && bookedCounts.TryGetValue((s.Id, sr.RoomId), out var n) ? n : 0;
-                summaries.Add(new ShowTimeSummaryDTO
-                {
-                    Id             = s.Id,
-                    StartTime      = s.StartTime,
-                    EndTime        = s.EndTime,
-                    ProjectionForm = s.ProjectionForm,
-                    RoomId         = sr?.RoomId ?? Guid.Empty,
-                    RoomName       = sr?.Room?.Name ?? string.Empty,
-                    RoomTypeName   = sr?.Room?.RoomType?.Name ?? string.Empty,
-                    TheaterName    = sr?.Room?.Theater?.Name ?? string.Empty,
-                    AvailableSeats = Math.Max(0, capacity - booked),
-                });
-            }
-        }
-        dto.ShowTimes = summaries.OrderBy(x => x.StartTime).ToList();
+                Id             = row.ShowTimeId,
+                StartTime      = row.StartTime,
+                EndTime        = row.EndTime,
+                ProjectionForm = row.ProjectionForm,
+                RoomId         = row.RoomId,
+                RoomName       = row.RoomName,
+                RoomTypeName   = row.RoomTypeName,
+                TheaterName    = row.TheaterName,
+                AvailableSeats = Math.Max(0, row.Capacity - booked),
+            };
+        }).ToList();
+        dto.ShowTimes = summaries;
         dto.AverageRating             = await _uow.MovieStore.GetAverageRatingAsync(id);
         dto.RatingCount               = movie.Evaluations.Count;
         dto.RecentComments = (await _uow.CommentStore.GetRecentForMovieAsync(id, 10))

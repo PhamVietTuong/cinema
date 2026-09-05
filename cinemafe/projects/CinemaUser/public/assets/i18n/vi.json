@@ -138,8 +138,27 @@
       "home": "Trang Chủ",
       "movies": "Phim"
     },
+    "page": {
+      "title": "Đặt Vé Xem Phim"
+    },
+    "tickets": {
+      "title": "Loại Vé",
+      "hint": "Chọn số lượng cho từng loại vé — số lượng này quyết định số ghế bạn có thể chọn.",
+      "progress": "Đã chọn {{selected}}/{{total}} ghế",
+      "continueCta": "Tiếp Tục Thanh Toán",
+      "selectMore": "Chọn thêm {{count}} ghế để tiếp tục",
+      "capReached": "Bạn đã chọn đủ số vé — tăng số lượng để chọn thêm",
+      "notEnoughForDouble": "Không đủ vé cho ghế đôi — tăng số lượng để chọn ghế này",
+      "removedByQuantityChange": "Đã bỏ chọn (bạn đã giảm số lượng): {{seats}}"
+    },
+    "checkout": {
+      "backToSeats": "Quay lại chọn ghế"
+    },
+    "panel": {
+      "title": "Đặt vé",
+      "close": "Đóng"
+    },
     "seats": {
-      "title": "Chọn Chỗ Ngồi",
       "screen": "MÀN HÌNH",
       "legendAvailable": "Ghế Trống",
       "legendSelected": "Đang Chọn",
@@ -147,12 +166,10 @@
       "legendVip": "Ghế VIP",
       "selectedTitle": "Ghế Đã Chọn",
       "empty": "Chưa chọn ghế",
-      "confirmCta": "XÁC NHẬN ĐẶT VÉ"
+      "notAvailableForCategory": "Không khả dụng cho loại vé này"
     },
     "summary": {
       "subtotal": "Tạm tính ({{count}} ghế)",
-      "onlineFee": "Phí đặt vé online",
-      "total": "Tổng cộng",
       "orderTitle": "Tóm Tắt Đơn Hàng",
       "tickets": "Vé ({{count}} ghế)",
       "discountCode": "Mã Giảm Giá",
@@ -329,7 +346,11 @@
     },
     "showtimes": {
       "seats": "{{count}} ghế",
-      "empty": "Hiện chưa có lịch chiếu cho phim này. Vui lòng quay lại sau."
+      "empty": "Hiện chưa có lịch chiếu cho phim này. Vui lòng quay lại sau.",
+      "emptyForDate": "Không có suất chiếu trong ngày này. Vui lòng chọn ngày khác.",
+      "today": "Hôm nay",
+      "tomorrow": "Ngày mai",
+      "showtimeCount": "{{count}} suất chiếu"
     }
   },
   "profile": {

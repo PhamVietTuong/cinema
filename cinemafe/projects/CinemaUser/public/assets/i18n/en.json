@@ -138,8 +138,27 @@
       "home": "Home",
       "movies": "Movies"
     },
+    "page": {
+      "title": "Book Your Tickets"
+    },
+    "tickets": {
+      "title": "Ticket Type",
+      "hint": "Choose how many of each ticket type you need — this sets how many seats you can select.",
+      "progress": "{{selected}} of {{total}} seats selected",
+      "continueCta": "Continue to Checkout",
+      "selectMore": "Select {{count}} more seat(s) to continue",
+      "capReached": "You've selected all your tickets — increase a quantity to add more",
+      "notEnoughForDouble": "Not enough tickets left for a double seat — increase a quantity to select it",
+      "removedByQuantityChange": "Deselected (you reduced the quantity): {{seats}}"
+    },
+    "checkout": {
+      "backToSeats": "Back to seats"
+    },
+    "panel": {
+      "title": "Book tickets",
+      "close": "Close"
+    },
     "seats": {
-      "title": "Select Seats",
       "screen": "SCREEN",
       "legendAvailable": "Available",
       "legendSelected": "Selected",
@@ -147,12 +166,10 @@
       "legendVip": "VIP Seat",
       "selectedTitle": "Selected Seats",
       "empty": "No seats selected",
-      "confirmCta": "CONFIRM BOOKING"
+      "notAvailableForCategory": "Not available for this ticket type"
     },
     "summary": {
       "subtotal": "Subtotal ({{count}} seats)",
-      "onlineFee": "Online booking fee",
-      "total": "Total",
       "orderTitle": "Order Summary",
       "tickets": "Tickets ({{count}} seats)",
       "discountCode": "Discount Code",
@@ -329,7 +346,11 @@
     },
     "showtimes": {
       "seats": "{{count}} seats",
-      "empty": "No showtimes for this movie yet. Please check back later."
+      "empty": "No showtimes for this movie yet. Please check back later.",
+      "emptyForDate": "No showtimes on this date. Try another day.",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "showtimeCount": "{{count}} showtimes"
     }
   },
   "profile": {

@@ -42,13 +42,15 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
     // ICommentStore.GetRecentForMovieAsync. Joining them in multiplied every showtime row by every
     // comment row by every evaluation row, and dragged each commenter's full User record — password
     // hash and reset tokens included — into memory just to render a public page.
+    // ShowTimes are likewise NOT included here: the detail page only needs a bounded (today + next 3
+    // days) schedule window, loaded separately and untracked by IShowTimeStore.GetMovieScheduleAsync.
+    // Including every future ShowTime x Room here made this an unbounded query that grew with every
+    // theater/showtime added to the movie.
     // AsSplitQuery keeps the remaining collections from cross-joining each other.
     public async Task<Movie?> GetDetailAsync(Guid id)
         => await DbSet
             .Include(m => m.AgeRestriction)
             .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
-            .Include(m => m.ShowTimes).ThenInclude(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.Theater)
-            .Include(m => m.ShowTimes).ThenInclude(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.RoomType)
             .Include(m => m.Evaluations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id);

@@ -1,0 +1,159 @@
+<!-- ── EMBEDDED HEADER (inline panel on movie-detail only) ────────────────── -->
+<div class="panel-header" *ngIf="embedded">
+  <span class="panel-title">{{ 'booking.panel.title' | translate }} · {{ headerLabel }}</span>
+  <button type="button" class="panel-close" (click)="cancel()" [title]="'booking.panel.close' | translate">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<!-- Real-time seat-lock countdown — shown while at least one selected seat's lock is still held -->
+<div class="hold-banner" [class.expired]="holdExpired" *ngIf="holdActive && !holdExpired">
+  <mat-icon>timer</mat-icon>
+  <span>{{ 'booking.holdTimer' | translate:{ time: holdCountdown } }}</span>
+</div>
+<div class="hold-banner expired" *ngIf="holdActive && holdExpired">
+  <mat-icon>timer_off</mat-icon>
+  <span>{{ 'booking.holdExpired' | translate }}</span>
+</div>
+
+<!-- ── STEP 1: TICKET QUANTITIES ─────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="form-card">
+    <h3 class="card-title"><i class="fas fa-ticket-alt"></i> {{ 'booking.tickets.title' | translate }}</h3>
+    <p class="card-hint">{{ 'booking.tickets.hint' | translate }}</p>
+    <div class="option-grid">
+      <div class="option-card mag-card" *ngFor="let c of patronCategories" [class.active]="ticketQty[c.id!] > 0">
+        <div class="mag-card-stripe"></div>
+        <div class="mag-card-chip"></div>
+        <div class="option-info">
+          <span class="option-name">{{ c.name }}</span>
+          <span class="category-discount" *ngIf="c.discountPercent">-{{ c.discountPercent }}%</span>
+        </div>
+        <div class="option-qty">
+          <button type="button" (click)="decTicket(c)" [disabled]="!ticketQty[c.id!]">−</button>
+          <span>{{ ticketQty[c.id!] || 0 }}</span>
+          <button type="button" (click)="incTicket(c)" [disabled]="totalTickets >= maxTickets">+</button>
+        </div>
+      </div>
+    </div>
+    <p class="ticket-progress" *ngIf="totalTickets > 0">
+      {{ 'booking.tickets.progress' | translate:{ selected: selectedSeats.length, total: totalTickets } }}
+    </p>
+    <p class="category-warning" *ngIf="categoryWarning">{{ categoryWarning }}</p>
+  </div>
+</div>
+
+<!-- ── STEP 2: SEATS ─────────────────────────────────────────────────────── -->
+<div class="seat-page">
+  <div class="seat-area">
+    <div *ngIf="loadingSeats" class="spinner-wrap">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <ng-container *ngIf="!loadingSeats">
+      <div class="screen-wrap">
+        <div class="screen-arc"></div>
+        <span class="screen-label">{{ 'booking.seats.screen' | translate }}</span>
+      </div>
+
+      <div class="seat-grid" [class.not-ready]="totalTickets === 0">
+        <div class="seat-row" *ngFor="let row of rows">
+          <div class="row-label">{{ row }}</div>
+          <div *ngFor="let seat of getSeatsByRow(row)"
+               class="seat"
+               [class.unavailable-category]="seat.isAllowedForPatronCategory === false"
+               [class.not-selectable]="seat.isAllowedForPatronCategory !== false && seat.isSelectable === false"
+               [title]="seat.isAllowedForPatronCategory === false ? ('booking.seats.notAvailableForCategory' | translate) : (seat.isSelectable === false ? ('booking.tickets.capReached' | translate) : '')"
+               [ngClass]="{
+                 'available': seat.status === SeatStatus.Available && !seat.isSelected && !seat.isLocked && seat.isAllowedForPatronCategory !== false,
+                 'selected':  seat.isSelected,
+                 'occupied':  seat.status === SeatStatus.Occupied,
+                 'locked':    seat.isLocked || seat.status === SeatStatus.Reserved,
+                 'vip':       seat.seatTypeName === 'VIP'
+               }"
+               (click)="toggleSeat(seat)">{{ seat.rowName }}{{ seat.colIndex }}</div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="legend-item">
+          <span class="legend-dot available"></span> {{ 'booking.seats.legendAvailable' | translate }}
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot selected"></span> {{ 'booking.seats.legendSelected' | translate }}
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot occupied"></span> {{ 'booking.seats.legendOccupied' | translate }}
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot vip available"></span> {{ 'booking.seats.legendVip' | translate }}
+        </span>
+        <span class="legend-item" *ngIf="totalTickets > 0">
+          <span class="legend-dot unavailable-category"></span> {{ 'booking.seats.notAvailableForCategory' | translate }}
+        </span>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- ── SIDEBAR: selected seats running total ─────────────────────────── -->
+  <div class="sidebar">
+    <div class="sidebar-card">
+      <h3 class="sidebar-title">{{ 'booking.seats.selectedTitle' | translate }}</h3>
+
+      <div *ngIf="selectedSeats.length === 0" class="empty-seats">
+        <i class="fas fa-chair"></i>
+        <p>{{ 'booking.seats.empty' | translate }}</p>
+      </div>
+
+      <div class="selected-list">
+        <div class="selected-item" *ngFor="let s of selectedSeats">
+          <div class="selected-seat-name">
+            <span class="seat-code">{{ s.rowName }}{{ s.colIndex }}</span>
+            <span class="seat-type">{{ s.seatTypeName }} · {{ categoryForSeat(s.id!)?.name }}</span>
+          </div>
+          <span class="seat-price">
+            <span class="seat-entry-price-strike" *ngIf="seatPrice(s) !== s.price">{{ s.price | number:'1.0-0' }}đ</span>
+            {{ seatPrice(s) | number:'1.0-0' }}đ
+          </span>
+        </div>
+      </div>
+
+      <ng-container *ngIf="selectedSeats.length > 0">
+        <div class="price-divider"></div>
+        <div class="price-row total-row">
+          <span>{{ 'booking.summary.subtotal' | translate:{ count: selectedSeats.length } }}</span>
+          <span class="total-amount">{{ totalPrice | number:'1.0-0' }}đ</span>
+        </div>
+      </ng-container>
+
+      <button class="btn-primary-cta confirm-btn" [disabled]="!canProceed" (click)="proceedToCheckout()">
+        {{ 'booking.tickets.continueCta' | translate }}
+      </button>
+      <p class="select-more-hint" *ngIf="totalTickets > 0 && remainingTickets > 0">
+        {{ 'booking.tickets.selectMore' | translate:{ count: remainingTickets } }}
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 3: SNACKS (visible immediately, no seat-selection gate) ──────── -->
+<div class="section-wrap" *ngIf="foods.length">
+  <div class="form-card">
+    <h3 class="card-title"><i class="fas fa-utensils"></i> {{ 'booking.confirm.concessions' | translate }}</h3>
+    <div class="option-grid">
+      <div class="option-card mag-card" *ngFor="let f of foods" [class.active]="foodQty[f.id!] > 0">
+        <div class="mag-card-stripe"></div>
+        <div class="mag-card-chip"></div>
+        <div class="option-info">
+          <span class="option-name">{{ f.name }}</span>
+          <span class="option-price">{{ f.price | number:'1.0-0' }}đ</span>
+        </div>
+        <div class="option-qty">
+          <button type="button" (click)="decFood(f)" [disabled]="!foodQty[f.id!]">−</button>
+          <span>{{ foodQty[f.id!] || 0 }}</span>
+          <button type="button" (click)="incFood(f)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

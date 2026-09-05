@@ -1,4 +1,4 @@
-// "Night Screening" — Booking Confirmation / Checkout
+// "Midnight Premium" — Booking page 2/2: payment / checkout.
 // Tokens (from styles.scss): ground #07080b · panel #101319 · ink #e9edf3 · beam #59d9d2 (action) · gel #ff4e8a (premium)
 
 // ── Page Header ───────────────────────────────────────────────────────────────
@@ -21,13 +21,11 @@
   font-weight: 700; color: var(--mp-ink); margin: 0;
 }
 
-// ── Checkout Layout ───────────────────────────────────────────────────────────
 .checkout-page {
-  max-width: 1100px; margin: 0 auto; padding: 40px;
+  max-width: 1100px; margin: 0 auto; padding: 0 40px 40px;
   display: grid; grid-template-columns: 1fr 360px; gap: 32px; align-items: start;
 }
 
-// ── Form Cards ────────────────────────────────────────────────────────────────
 .form-card {
   background: var(--mp-card);
   border: 1px solid var(--mp-line-2);
@@ -43,7 +41,6 @@
   i { margin-right: 8px; color: var(--mp-red); }
 }
 
-// ── Method Tabs ───────────────────────────────────────────────────────────────
 .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .method-card {
   display: flex; align-items: center; gap: 10px;
@@ -65,20 +62,6 @@
   }
 }
 
-// ── Card Preview ──────────────────────────────────────────────────────────────
-.card-preview {
-  background: linear-gradient(135deg, var(--mp-gold-card-1) 0%, var(--mp-gold-card-2) 100%);
-  border: 1px solid var(--mp-gold-soft);
-  border-radius: 12px; padding: 20px; margin-bottom: 20px;
-}
-.card-chip { color: var(--mp-gold); font-size: 1.25rem; margin-bottom: 12px; }
-.card-number-preview {
-  font-family: var(--mp-font-display); font-size: 1.1rem; font-weight: 600;
-  color: var(--mp-ink); letter-spacing: 0.15em; margin-bottom: 12px;
-}
-.card-meta { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--mp-muted); }
-
-// ── Form Fields ───────────────────────────────────────────────────────────────
 .field-group { margin-bottom: 16px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field-label {
@@ -94,24 +77,20 @@
   &:focus { border-color: var(--mp-red); box-shadow: 0 0 0 3px var(--mp-red-soft); }
 }
 
-// ── QR / Cash placeholders ────────────────────────────────────────────────────
 .qr-placeholder {
   width: 120px; height: 120px; margin: 0 auto 16px;
   background: var(--mp-paper-2); border: 2px dashed var(--mp-line);
   border-radius: 12px; display: flex; align-items: center; justify-content: center;
   font-size: 3rem; color: var(--mp-muted); opacity: 0.7;
 }
-.cash-icon { font-size: 3rem; color: var(--mp-gold); margin-bottom: 12px; display: block; }
 .qr-note { font-size: 0.85rem; color: var(--mp-muted); margin: 0; line-height: 1.6; }
 
-// ── Error ─────────────────────────────────────────────────────────────────────
 .error-banner {
   background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: 10px; padding: 12px 16px; color: var(--mp-danger);
   font-size: 0.875rem; i { margin-right: 8px; }
 }
 
-// ── Summary Card ──────────────────────────────────────────────────────────────
 .summary-card {
   background: var(--mp-card);
   border: 1px solid var(--mp-line-2);
@@ -134,9 +113,6 @@
   font-weight: 700; color: var(--mp-red);
 }
 .seat-entry-type { font-size: 0.72rem; color: var(--mp-muted); }
-.seat-entry-category {
-  font-size: 0.72rem; padding: 2px 6px; margin-top: 2px; width: fit-content;
-}
 .seat-entry-price { font-size: 0.875rem; font-weight: 600; color: var(--mp-ink); text-align: right; }
 .seat-entry-price-strike {
   font-size: 0.72rem; font-weight: 400; color: var(--mp-muted);
@@ -147,10 +123,9 @@
 .summary-row {
   display: flex; justify-content: space-between;
   font-size: 0.875rem; color: var(--mp-ink); margin-bottom: 8px;
-  &.muted { color: var(--mp-muted); font-size: 0.82rem; }
   &.total { font-weight: 600; margin-top: 4px; }
 }
-.total-amount {
+.summary-col .total-amount {
   font-family: var(--mp-font-display); font-size: 1.15rem;
   font-weight: 700; color: var(--mp-red);
 }
@@ -162,6 +137,40 @@
 .secure-note {
   text-align: center; font-size: 0.75rem; color: var(--mp-muted);
   margin: 12px 0 0; i { margin-right: 4px; }
+}
+
+.discount-note { display: block; margin-top: 6px; font-size: 0.8rem; opacity: 0.65; }
+.discount-note.gift-card-valid { color: var(--mp-green, #2e7d32); opacity: 1; }
+.discount-note.gift-card-invalid { color: var(--mp-red); opacity: 1; }
+
+.gift-card-row { display: flex; gap: 8px; align-items: stretch; }
+.gift-card-row .field-input { flex: 1; }
+.gift-card-apply {
+  flex: 0 0 auto; padding: 0 16px; border-radius: 10px;
+  border: 1.5px solid var(--mp-line); background: var(--mp-card);
+  color: var(--mp-ink); font-family: var(--mp-font-body); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  &:hover:not(:disabled) { border-color: var(--mp-red); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.hold-banner {
+  display: flex; align-items: center; gap: 8px;
+  margin: 16px 40px 0; padding: 10px 14px; border-radius: 10px;
+  font-size: 0.9rem; font-weight: 600;
+  background: var(--mp-gold-soft); color: var(--mp-ink);
+  border: 1px solid var(--mp-gold);
+}
+.hold-banner mat-icon { font-size: 20px; width: 20px; height: 20px; }
+.hold-banner.expired {
+  background: var(--mp-faint); border-color: var(--mp-danger); color: var(--mp-danger);
+}
+
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 16px 40px 0; font-size: 0.85rem; color: var(--mp-muted); cursor: pointer;
+  background: none; border: none; padding: 0;
+  &:hover { color: var(--mp-red); }
 }
 
 // ── Success Page ──────────────────────────────────────────────────────────────
@@ -190,7 +199,6 @@
 }
 .success-sub { font-size: 0.9rem; color: var(--mp-muted); margin: 0 0 36px; }
 
-// ── Ticket Card ───────────────────────────────────────────────────────────────
 .ticket-card {
   background: var(--mp-card);
   border: 1px solid var(--mp-gold-soft);
@@ -256,55 +264,13 @@
 }
 .qr-instruction { font-size: 0.8rem; color: var(--mp-muted); margin: 0; }
 
-// ── Success Actions ───────────────────────────────────────────────────────────
 .success-actions {
   display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
 }
 
 @media (max-width: 900px) {
-  .checkout-page { grid-template-columns: 1fr; padding: 24px 20px; }
+  .checkout-page { grid-template-columns: 1fr; padding: 0 20px 24px; }
   .summary-card { position: static; }
-}
-
-/* Concessions / combo picker */
-.combo-list { display: flex; flex-direction: column; gap: 10px; }
-.combo-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.combo-info { display: flex; flex-direction: column; }
-.combo-name { font-weight: 600; }
-.combo-price { font-size: 0.85rem; opacity: 0.7; }
-.combo-qty { display: inline-flex; align-items: center; gap: 12px; }
-.combo-qty button {
-  width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.06);
-  color: inherit; font-size: 1.1rem; line-height: 1;
-}
-.combo-qty button:disabled { opacity: 0.4; cursor: default; }
-.combo-qty span { min-width: 18px; text-align: center; font-weight: 700; }
-.discount-note { display: block; margin-top: 6px; font-size: 0.8rem; opacity: 0.65; }
-.discount-note.gift-card-valid { color: var(--mp-green, #2e7d32); opacity: 1; }
-.discount-note.gift-card-invalid { color: var(--mp-red); opacity: 1; }
-
-/* Gift-card code input + apply button */
-.gift-card-row { display: flex; gap: 8px; align-items: stretch; }
-.gift-card-row .field-input { flex: 1; }
-.gift-card-apply {
-  flex: 0 0 auto; padding: 0 16px; border-radius: 10px;
-  border: 1.5px solid var(--mp-line); background: var(--mp-card);
-  color: var(--mp-ink); font-family: var(--mp-font-body); font-size: 0.85rem; font-weight: 600;
-  cursor: pointer; transition: border-color 0.2s, background 0.2s;
-  &:hover:not(:disabled) { border-color: var(--mp-red); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-/* Seat-hold countdown banner */
-.hold-banner {
-  display: flex; align-items: center; gap: 8px;
-  margin: 0 0 16px; padding: 10px 14px; border-radius: 10px;
-  font-size: 0.9rem; font-weight: 600;
-  background: var(--mp-gold-soft); color: var(--mp-ink);
-  border: 1px solid var(--mp-gold);
-}
-.hold-banner mat-icon { font-size: 20px; width: 20px; height: 20px; }
-.hold-banner.expired {
-  background: var(--mp-faint); border-color: var(--mp-danger); color: var(--mp-danger);
+  .hold-banner, .back-link { margin-left: 20px; margin-right: 20px; }
+  .page-header-inner { padding: 0 20px; }
 }

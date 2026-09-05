@@ -1,0 +1,13 @@
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
+<div class="page-header">
+  <div class="page-header-inner">
+    <nav class="breadcrumb">
+      <a routerLink="/">{{ 'booking.breadcrumb.home' | translate }}</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>{{ 'booking.page.title' | translate }}</span>
+    </nav>
+    <h1 class="page-title">{{ 'booking.page.title' | translate }}</h1>
+  </div>
+</div>
+
+<app-booking-selection [showTimeId]="showTimeId" [roomId]="roomId"></app-booking-selection>

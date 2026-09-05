@@ -14,6 +14,10 @@
     </div>
   </div>
 
+  <button type="button" class="back-link" (click)="backToSeats()">
+    <i class="fas fa-arrow-left"></i> {{ 'booking.checkout.backToSeats' | translate }}
+  </button>
+
   <!-- Seat-hold countdown -->
   <div class="hold-banner" [class.expired]="holdExpired" *ngIf="!holdExpired">
     <mat-icon>timer</mat-icon>
@@ -29,7 +33,6 @@
     <!-- Left: Payment Form -->
     <div class="payment-form-col">
 
-      <!-- Payment Methods -->
       <div class="form-card">
         <h3 class="card-title"><i class="fas fa-credit-card"></i> {{ 'booking.confirm.paymentMethod' | translate }}</h3>
         <div class="method-grid">
@@ -48,25 +51,6 @@
         </div>
       </div>
 
-      <!-- Concessions / combos (this theater's menu) -->
-      <div class="form-card" *ngIf="foods.length">
-        <h3 class="card-title"><i class="fas fa-utensils"></i> {{ 'booking.confirm.concessions' | translate }}</h3>
-        <div class="combo-list">
-          <div class="combo-row" *ngFor="let f of foods">
-            <div class="combo-info">
-              <span class="combo-name">{{ f.name }}</span>
-              <span class="combo-price">{{ f.price | number:'1.0-0' }}đ</span>
-            </div>
-            <div class="combo-qty">
-              <button type="button" (click)="decFood(f)" [disabled]="!foodQty[f.id!]">−</button>
-              <span>{{ foodQty[f.id!] || 0 }}</span>
-              <button type="button" (click)="incFood(f)">+</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card form (shown for card) -->
       <div class="form-card" *ngIf="paymentMethod === 'Card'">
         <h3 class="card-title">{{ 'booking.confirm.creditDebit' | translate }}</h3>
         <div class="field-group">
@@ -89,7 +73,6 @@
         </div>
       </div>
 
-      <!-- E-wallet note -->
       <div class="form-card center" *ngIf="paymentMethod !== 'Card'">
         <div class="qr-placeholder"><i class="fas fa-qrcode"></i></div>
         <p class="qr-note">{{ 'booking.confirm.qrNote' | translate:{ app: paymentMethod === 'Momo' ? 'MoMo' : paymentMethod === 'ApplePay' ? 'Apple Pay' : 'Google Pay' } }}</p>
@@ -108,16 +91,12 @@
         <div class="seat-list">
           <div class="seat-entry" *ngFor="let s of seats">
             <div class="seat-entry-info">
-              <span class="seat-entry-code">{{ s.rowName }}{{ s.colIndex }}</span>
-              <span class="seat-entry-type">{{ s.seatTypeName }}</span>
-              <select class="field-input seat-entry-category" *ngIf="patronCategories.length"
-                      [ngModel]="categoryBySeat[s.id!]" (ngModelChange)="onCategoryChange(s.id!, $event)">
-                <option *ngFor="let c of patronCategories" [value]="c.id">{{ c.name }} (-{{ c.discountPercent }}%)</option>
-              </select>
+              <span class="seat-entry-code">{{ s.label }}</span>
+              <span class="seat-entry-type">{{ s.seatTypeName }} · {{ s.patronCategoryName }}</span>
             </div>
             <span class="seat-entry-price">
-              <span class="seat-entry-price-strike" *ngIf="seatPrice(s) !== s.price">{{ s.price | number:'1.0-0' }}đ</span>
-              {{ seatPrice(s) | number:'1.0-0' }}đ
+              <span class="seat-entry-price-strike" *ngIf="s.price !== s.basePrice">{{ s.basePrice | number:'1.0-0' }}đ</span>
+              {{ s.price | number:'1.0-0' }}đ
             </span>
           </div>
         </div>
@@ -128,9 +107,9 @@
           <span>{{ 'booking.summary.tickets' | translate:{ count: seats.length } }}</span>
           <span>{{ totalPrice | number:'1.0-0' }}đ</span>
         </div>
-        <div class="summary-row" *ngFor="let f of selectedFoods">
-          <span>{{ f.name }} × {{ foodQty[f.id!] }}</span>
-          <span>{{ (f.price || 0) * foodQty[f.id!] | number:'1.0-0' }}đ</span>
+        <div class="summary-row" *ngFor="let f of foods">
+          <span>{{ f.name }} × {{ f.quantity }}</span>
+          <span>{{ f.unitPrice * f.quantity | number:'1.0-0' }}đ</span>
         </div>
 
         <div class="summary-divider"></div>
@@ -199,7 +178,6 @@
   <div class="success-page">
     <div class="success-glow"></div>
 
-    <!-- Check icon -->
     <div class="success-icon-wrap">
       <div class="success-icon">
         <i class="fas fa-check"></i>
@@ -208,7 +186,6 @@
     <h2 class="success-title">{{ 'booking.success.title' | translate }}</h2>
     <p class="success-sub">{{ 'booking.success.subtitle' | translate }}</p>
 
-    <!-- Ticket Card -->
     <div class="ticket-card">
       <div class="ticket-top">
         <div class="ticket-brand">
@@ -222,7 +199,7 @@
         <div class="ticket-seats">
           <div class="ticket-detail-label">{{ 'booking.success.seatsLabel' | translate }}</div>
           <div class="ticket-seats-row">
-            <span class="ticket-seat-chip" *ngFor="let s of seats">{{ s.rowName }}{{ s.colIndex }}</span>
+            <span class="ticket-seat-chip" *ngFor="let s of seats">{{ s.label }}</span>
           </div>
         </div>
         <div class="ticket-total-wrap">
@@ -240,7 +217,6 @@
         <div class="perf-right"></div>
       </div>
 
-      <!-- QR -->
       <div class="ticket-qr-section">
         <div class="qr-box">
           <img *ngIf="qrDataUrl" [src]="qrDataUrl" alt="E-ticket QR" width="160" height="160">
@@ -250,7 +226,6 @@
       </div>
     </div>
 
-    <!-- Actions -->
     <div class="success-actions">
       <button class="btn-primary-cta" (click)="goProfile()">
         <i class="fas fa-ticket-alt"></i> {{ 'booking.success.viewTickets' | translate }}

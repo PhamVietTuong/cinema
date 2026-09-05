@@ -68,25 +68,49 @@
     <section class="md-section" id="showtimes">
       <h2 class="md-title">{{ 'movies.detail.showtimesTitle' | translate }}</h2>
 
-      <div class="format-list" *ngIf="movie.showTimes?.length; else noShowtimes">
-        <div class="format-card" *ngFor="let group of groupByFormat(movie.showTimes)">
-          <div class="format-head">
-            <span class="format-badge">{{ group.label }}</span>
-          </div>
-          <div class="slot-row">
-            <a class="time-slot" *ngFor="let st of group.items"
-               routerLink="/booking/seats"
-               [queryParams]="{ showTimeId: st.id, roomId: st.roomId }"
-               [title]="(st.startTime | date:'EEEE dd/MM/yyyy HH:mm') + ' · ' + st.theaterName + ' · ' + st.roomName">
-              <!-- The date matters: a film's upcoming slots can span several days, and a bare
-                   HH:mm gave no way to tell which day a slot belonged to. -->
-              <span class="slot-date">{{ st.startTime | date:'dd/MM' }}</span>
-              <span class="slot-time">{{ st.startTime | date:'HH:mm' }}</span>
-              <span class="slot-seats">{{ 'movies.showtimes.seats' | translate:{ count: st.availableSeats } }}</span>
-            </a>
+      <ng-container *ngIf="movie.showTimes?.length; else noShowtimes">
+        <div class="date-strip">
+          <button type="button" class="date-tab" *ngFor="let t of dateTabs; let i = index"
+                  [class.active]="t.key === selectedDateKey" (click)="selectDate(t.key)">
+            <span class="date-tab-label">{{ i === 0 ? ('movies.showtimes.today' | translate) : i === 1 ? ('movies.showtimes.tomorrow' | translate) : (t.date | date:'EEE')  }}</span>
+            <span class="date-tab-date">{{ t.date | date:'dd/MM' }}</span>
+            <span class="date-tab-count">{{ 'movies.showtimes.showtimeCount' | translate:{ count: countForDate(movie.showTimes, t.key) } }}</span>
+          </button>
+        </div>
+
+        <div class="cinema-list" *ngIf="groupByTheater(movie.showTimes, selectedDateKey).length; else noShowtimesForDate">
+          <div class="cinema-card" *ngFor="let cinema of groupByTheater(movie.showTimes, selectedDateKey)">
+            <h3 class="cinema-name">{{ cinema.theaterName }}</h3>
+            <div class="format-card" *ngFor="let group of cinema.formats">
+              <div class="format-head">
+                <span class="format-badge">{{ group.label }}</span>
+              </div>
+              <div class="slot-row">
+                <button type="button" class="time-slot" *ngFor="let st of group.items"
+                   [class.active]="st.id === selectedShowTimeId"
+                   (click)="selectShowTime(st)"
+                   [title]="(st.startTime | date:'EEEE dd/MM/yyyy HH:mm') + ' · ' + st.theaterName + ' · ' + st.roomName">
+                  <span class="slot-time">{{ st.startTime | date:'HH:mm' }}</span>
+                  <span class="slot-seats">{{ 'movies.showtimes.seats' | translate:{ count: st.availableSeats } }}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+        <ng-template #noShowtimesForDate>
+          <p class="md-text">{{ 'movies.showtimes.emptyForDate' | translate }}</p>
+        </ng-template>
+
+        <div id="inline-booking" class="inline-booking" *ngIf="selectedShowTimeId">
+          <app-booking-selection
+            [embedded]="true"
+            [showTimeId]="selectedShowTimeId"
+            [roomId]="selectedRoomId"
+            [headerLabel]="selectedShowTimeLabel"
+            (closed)="closeBookingPanel()">
+          </app-booking-selection>
+        </div>
+      </ng-container>
       <ng-template #noShowtimes>
         <p class="md-text">{{ 'movies.showtimes.empty' | translate }}</p>
       </ng-template>

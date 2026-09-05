@@ -3,6 +3,7 @@ using Cinema.Business.DTO.Requests;
 using Cinema.Business.Managers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 using FluentAssertions;
 using Moq;
 
@@ -49,6 +50,8 @@ public class MovieServiceTests
         };
         _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
         _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(4.0);
+        _uowMock.Setup(u => u.ShowTimeStore.GetMovieScheduleAsync(movieId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<MovieScheduleRow>());
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
             .ReturnsAsync(new Dictionary<(Guid, Guid), int>());
         _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10))
@@ -59,6 +62,63 @@ public class MovieServiceTests
         result.Should().NotBeNull();
         result.Id.Should().Be(movieId);
         result.AverageRating.Should().Be(4.0);
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_RequestsFourDayWindowFromNow()
+    {
+        var movieId = Guid.NewGuid();
+        var movie   = new Movie { Id = movieId, Title = "Test Movie", Evaluations = new List<Evaluation>() };
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(0);
+        _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10)).ReturnsAsync(new List<CommentView>());
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
+            .ReturnsAsync(new Dictionary<(Guid, Guid), int>());
+
+        DateTime capturedFrom = default, capturedTo = default;
+        _uowMock.Setup(u => u.ShowTimeStore.GetMovieScheduleAsync(movieId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .Callback<Guid, DateTime, DateTime>((_, from, to) => { capturedFrom = from; capturedTo = to; })
+            .ReturnsAsync(new List<MovieScheduleRow>());
+
+        await _sut.GetDetailAsync(movieId);
+
+        capturedFrom.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(2));
+        capturedTo.Should().Be(DateTime.Today.AddDays(4));
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_MapsScheduleRowsToSummaries_SubtractingBookedSeats()
+    {
+        var movieId  = Guid.NewGuid();
+        var showTime = Guid.NewGuid();
+        var roomA    = Guid.NewGuid();
+        var roomB    = Guid.NewGuid();
+        var movie    = new Movie { Id = movieId, Title = "Test Movie", Evaluations = new List<Evaluation>() };
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(0);
+        _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10)).ReturnsAsync(new List<CommentView>());
+
+        var rows = new List<MovieScheduleRow>
+        {
+            new(showTime, DateTime.Today.AddHours(20), DateTime.Today.AddHours(22), ProjectionForm.TwoD,
+                roomA, "Room A", "Standard", "Cinema One", 100),
+            new(showTime, DateTime.Today.AddHours(20), DateTime.Today.AddHours(22), ProjectionForm.ThreeD,
+                roomB, "Room B", "IMAX", "Cinema Two", 50),
+        };
+        _uowMock.Setup(u => u.ShowTimeStore.GetMovieScheduleAsync(movieId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(rows);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
+            .ReturnsAsync(new Dictionary<(Guid, Guid), int> { [(showTime, roomA)] = 30 });
+
+        var result = await _sut.GetDetailAsync(movieId);
+
+        result.ShowTimes.Should().HaveCount(2);
+        var a = result.ShowTimes.Single(x => x.RoomId == roomA);
+        a.TheaterName.Should().Be("Cinema One");
+        a.AvailableSeats.Should().Be(70);
+        var b = result.ShowTimes.Single(x => x.RoomId == roomB);
+        b.TheaterName.Should().Be("Cinema Two");
+        b.AvailableSeats.Should().Be(50);
     }
 
     [Fact]

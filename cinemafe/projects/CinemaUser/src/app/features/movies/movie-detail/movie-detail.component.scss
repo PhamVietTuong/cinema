@@ -58,8 +58,26 @@
 .md-text { color: var(--mp-ink-2); line-height: 1.7; margin: 0 0 16px; max-width: 860px; }
 .md-facts { display: flex; flex-wrap: wrap; gap: 24px; color: var(--mp-muted); font-size: 0.9rem; b { color: var(--mp-ink); font-weight: 600; } }
 
+// Date strip (today + next 3 days)
+.date-strip { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.date-tab {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 84px; padding: 10px 14px; border-radius: 12px; cursor: pointer;
+  background: var(--mp-card); border: 1.5px solid var(--mp-line); color: var(--mp-ink);
+  transition: border-color 0.15s ease, background 0.15s ease;
+  &:hover:not(.active) { border-color: var(--mp-line-3); }
+  &.active { background: var(--mp-red-soft); border-color: var(--mp-red); }
+}
+.date-tab-label { font-family: var(--mp-font-display); font-weight: 700; font-size: 0.9rem; text-transform: capitalize; }
+.date-tab-date { font-size: 0.75rem; color: var(--mp-muted); }
+.date-tab-count { font-size: 0.68rem; color: var(--mp-muted); }
+
+// Cinemas for the selected date
+.cinema-list { display: flex; flex-direction: column; gap: 24px; }
+.cinema-card { display: flex; flex-direction: column; gap: 12px; }
+.cinema-name { font-family: var(--mp-font-display); font-size: 1.05rem; font-weight: 700; color: var(--mp-ink); margin: 0; }
+
 // Showtimes by format
-.format-list { display: flex; flex-direction: column; gap: 16px; }
 .format-card { background: var(--mp-card); border: 1px solid var(--mp-line-2); border-radius: 14px; padding: 20px 22px; box-shadow: var(--mp-shadow-sm); }
 .format-head { margin-bottom: 16px; }
 .format-badge {
@@ -69,13 +87,21 @@
 .slot-row { display: flex; flex-wrap: wrap; gap: 12px; }
 .time-slot {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  min-width: 84px; padding: 10px 16px; border-radius: 10px;
-  background: var(--mp-card); border: 1px solid var(--mp-line); text-decoration: none;
+  min-width: 84px; padding: 10px 16px; border-radius: 10px; cursor: pointer;
+  background: var(--mp-card); border: 1px solid var(--mp-line);
+  font-family: inherit; // button reset — this was an <a>, now a <button>
   transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   &:hover { transform: translateY(-2px); border-color: var(--mp-red); background: var(--mp-red-soft); }
-  .slot-date { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; color: var(--mp-muted); }
+  &.active { border-color: var(--mp-red); background: var(--mp-red-soft); box-shadow: 0 0 0 2px var(--mp-red-soft); }
   .slot-time { font-family: var(--mp-font-display); font-weight: 700; color: var(--mp-ink); font-size: 1rem; }
   .slot-seats { font-size: 0.7rem; color: var(--mp-muted); }
+}
+
+// Inline booking panel (BookingSelectionComponent, embedded mode)
+.inline-booking {
+  margin-top: 24px; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--mp-line-2); background: var(--ns-ground, #07080b);
+  scroll-margin-top: 90px; // keeps the smooth-scroll target clear of any sticky header
 }
 
 // Cast

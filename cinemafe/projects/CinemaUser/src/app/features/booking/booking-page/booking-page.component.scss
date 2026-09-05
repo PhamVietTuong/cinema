@@ -1,0 +1,27 @@
+// "Night Screening" — page header for the routed /booking/seats page. Everything below the header
+// (ticket quantities, seat map, snacks) lives in booking-selection.component.scss, shared with the
+// inline panel embedded on the movie-detail page.
+
+.page-header {
+  background: var(--ns-ground-2);
+  border-bottom: 1px solid var(--ns-line-2);
+  padding: 20px 0;
+}
+.page-header-inner {
+  max-width: 1280px; margin: 0 auto; padding: 0 40px;
+}
+.breadcrumb {
+  display: flex; align-items: center; gap: var(--cx-space-2);
+  font-size: var(--cx-text-xs); color: var(--ns-muted); margin-bottom: 6px;
+  a { color: var(--ns-muted); transition: color var(--cx-dur) var(--cx-ease); &:hover { color: var(--ns-beam); } }
+  i { font-size: 0.65rem; }
+}
+.page-title {
+  font-family: var(--ns-font-display); font-size: var(--cx-text-xl);
+  font-weight: var(--cx-weight-bold); color: var(--ns-ink); margin: 0;
+  letter-spacing: var(--cx-track-tight);
+}
+
+@media (max-width: 900px) {
+  .page-header-inner { padding-left: 20px; padding-right: 20px; }
+}
