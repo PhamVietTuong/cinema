@@ -354,7 +354,10 @@
       "discountLabel": "Giảm Giá %",
       "activeLabel": "Đang Hoạt Động",
       "descPlaceholder": "Yêu cầu xuất trình thẻ sinh viên hợp lệ tại quầy...",
-      "empty": "Rạp này chưa có đối tượng vé nào."
+      "empty": "Rạp này chưa có đối tượng vé nào.",
+      "allowedSeatTypesLabel": "Loại Ghế Được Phép",
+      "allowedSeatTypesHint": "Để trống để cho phép tất cả loại ghế.",
+      "allSeatTypes": "Tất cả"
     },
     "food": {
       "subtitle": "Bắp, nước và combo bán tại rạp này.",

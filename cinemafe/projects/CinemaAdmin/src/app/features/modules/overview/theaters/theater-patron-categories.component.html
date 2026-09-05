@@ -25,6 +25,16 @@
       <label class="ad-label">{{ 'common.description' | translate }}</label>
       <input class="ad-input" formControlName="description" [placeholder]="'theaters.patronCategories.descPlaceholder' | translate">
     </div>
+    <div class="ad-field full-span">
+      <label class="ad-label">{{ 'theaters.patronCategories.allowedSeatTypesLabel' | translate }}</label>
+      <p class="ad-sub">{{ 'theaters.patronCategories.allowedSeatTypesHint' | translate }}</p>
+      <div class="ad-checkbox-list">
+        <label class="ad-label" *ngFor="let st of seatTypes">
+          <input type="checkbox" [checked]="isSeatTypeSelected(st.id)" (change)="toggleSeatType(st.id)">
+          {{ st.name }}
+        </label>
+      </div>
+    </div>
     <div class="form-actions full-span">
       <button class="ad-btn ad-btn--primary" type="submit">{{ 'common.save' | translate }}</button>
       <button class="ad-btn ad-btn--ghost" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
@@ -38,7 +48,7 @@
   <div class="ad-table-wrap">
     <table class="ad-table">
       <thead>
-        <tr><th>{{ 'theaters.patronCategories.nameLabel' | translate }}</th><th>{{ 'theaters.patronCategories.discountLabel' | translate }}</th><th>{{ 'theaters.patronCategories.activeLabel' | translate }}</th><th>{{ 'common.description' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
+        <tr><th>{{ 'theaters.patronCategories.nameLabel' | translate }}</th><th>{{ 'theaters.patronCategories.discountLabel' | translate }}</th><th>{{ 'theaters.patronCategories.activeLabel' | translate }}</th><th>{{ 'common.description' | translate }}</th><th>{{ 'theaters.patronCategories.allowedSeatTypesLabel' | translate }}</th><th class="ad-td-actions">{{ 'common.actions' | translate }}</th></tr>
       </thead>
       <tbody>
         <tr *ngFor="let x of items">
@@ -46,6 +56,7 @@
           <td>{{ x.discountPercent }}%</td>
           <td>{{ x.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</td>
           <td>{{ x.description || '—' }}</td>
+          <td>{{ allowedSeatTypeNames(x) ?? ('theaters.patronCategories.allSeatTypes' | translate) }}</td>
           <td class="ad-td-actions">
             <button class="ad-icon-btn is-primary" (click)="edit(x)" [title]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
             <button class="ad-icon-btn" (click)="delete(x.id)" [title]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>

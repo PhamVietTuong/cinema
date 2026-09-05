@@ -15,11 +15,13 @@ export class TheaterPatronCategoriesComponent implements OnInit {
   @Input({ required: true }) theaterId!: string;
 
   items: Dto[] = [];
+  seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
 
   showForm = false;
   editingId: string | null = null;
   form: FormGroup;
   private readonly _formDefaults: unknown;
+  selectedSeatTypeIds: string[] = [];
 
   confirmOpen = false;
   private _pendingDeleteId: string | null = null;
@@ -40,6 +42,12 @@ export class TheaterPatronCategoriesComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this._svc.getSeatTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: 1, pageSize: 100, filters: { theaterId: this.theaterId },
+    })).subscribe(r => {
+      this.seatTypes = r.results ?? [];
+      this._cdr.markForCheck();
+    });
   }
 
   load(): void {
@@ -51,9 +59,34 @@ export class TheaterPatronCategoriesComponent implements OnInit {
     });
   }
 
+  /** Null means unrestricted (all seat types) — the template renders a translated "All" label. */
+  allowedSeatTypeNames(item: Dto): string | null {
+    if (!item.allowedSeatTypeIds?.length) {
+      return null;
+    }
+    return this.seatTypes
+      .filter(st => item.allowedSeatTypeIds!.includes(st.id!))
+      .map(st => st.name)
+      .join(', ');
+  }
+
+  isSeatTypeSelected(seatTypeId?: string): boolean {
+    return !!seatTypeId && this.selectedSeatTypeIds.includes(seatTypeId);
+  }
+
+  toggleSeatType(seatTypeId?: string): void {
+    if (!seatTypeId) {
+      return;
+    }
+    this.selectedSeatTypeIds = this.isSeatTypeSelected(seatTypeId)
+      ? this.selectedSeatTypeIds.filter(id => id !== seatTypeId)
+      : [...this.selectedSeatTypeIds, seatTypeId];
+  }
+
   openCreate(): void {
     this.editingId = null;
     this.form.reset(this._formDefaults);
+    this.selectedSeatTypeIds = [];
     this.showForm = true;
   }
 
@@ -61,6 +94,7 @@ export class TheaterPatronCategoriesComponent implements OnInit {
     this.editingId = item.id ?? null;
     this.form.reset(this._formDefaults);
     this.form.patchValue(item);
+    this.selectedSeatTypeIds = [...(item.allowedSeatTypeIds ?? [])];
     this.showForm = true;
   }
 
@@ -71,8 +105,8 @@ export class TheaterPatronCategoriesComponent implements OnInit {
     }
     const v = this.form.value;
     const obs = this.editingId
-      ? this._svc.updatePatronCategory(CinemaServiceAgent.UpdatePatronCategoryRequest.fromJS({ ...v, id: this.editingId, theaterId: this.theaterId }))
-      : this._svc.createPatronCategory(CinemaServiceAgent.CreatePatronCategoryRequest.fromJS({ ...v, theaterId: this.theaterId }));
+      ? this._svc.updatePatronCategory(CinemaServiceAgent.UpdatePatronCategoryRequest.fromJS({ ...v, id: this.editingId, theaterId: this.theaterId, allowedSeatTypeIds: this.selectedSeatTypeIds }))
+      : this._svc.createPatronCategory(CinemaServiceAgent.CreatePatronCategoryRequest.fromJS({ ...v, theaterId: this.theaterId, allowedSeatTypeIds: this.selectedSeatTypeIds }));
     obs.subscribe(() => {
       this.load();
       this.cancelEdit();
@@ -100,5 +134,6 @@ export class TheaterPatronCategoriesComponent implements OnInit {
     this.showForm = false;
     this.editingId = null;
     this.form.reset(this._formDefaults);
+    this.selectedSeatTypeIds = [];
   }
 }

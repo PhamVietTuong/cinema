@@ -354,7 +354,10 @@
       "discountLabel": "Discount %",
       "activeLabel": "Active",
       "descPlaceholder": "Requires a valid student ID at the door...",
-      "empty": "This theater has no patron categories yet."
+      "empty": "This theater has no patron categories yet.",
+      "allowedSeatTypesLabel": "Allowed Seat Types",
+      "allowedSeatTypesHint": "Leave empty to allow all seat types.",
+      "allSeatTypes": "All"
     },
     "food": {
       "subtitle": "Popcorn, drinks and combos sold at this theater.",
