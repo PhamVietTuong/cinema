@@ -8356,6 +8356,7 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
     description?: string | undefined;
     discountPercent?: number;
     isActive?: boolean;
+    allowedSeatTypeIds?: string[];
 
     constructor(data?: IPatronCategoryDTO) {
         if (data) {
@@ -8374,6 +8375,11 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
             this.description = _data["description"];
             this.discountPercent = _data["discountPercent"];
             this.isActive = _data["isActive"];
+            if (Array.isArray(_data["allowedSeatTypeIds"])) {
+                this.allowedSeatTypeIds = [] as any;
+                for (let item of _data["allowedSeatTypeIds"])
+                    this.allowedSeatTypeIds!.push(item);
+            }
         }
     }
 
@@ -8392,6 +8398,11 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
         data["description"] = this.description;
         data["discountPercent"] = this.discountPercent;
         data["isActive"] = this.isActive;
+        if (Array.isArray(this.allowedSeatTypeIds)) {
+            data["allowedSeatTypeIds"] = [];
+            for (let item of this.allowedSeatTypeIds)
+                data["allowedSeatTypeIds"].push(item);
+        }
         return data;
     }
 }
@@ -8403,6 +8414,7 @@ export interface IPatronCategoryDTO {
     description?: string | undefined;
     discountPercent?: number;
     isActive?: boolean;
+    allowedSeatTypeIds?: string[];
 }
 
 export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest {
@@ -8411,6 +8423,7 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
     description?: string | undefined;
     discountPercent?: number;
     isActive?: boolean;
+    allowedSeatTypeIds?: string[];
 
     constructor(data?: ICreatePatronCategoryRequest) {
         if (data) {
@@ -8428,6 +8441,11 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
             this.description = _data["description"];
             this.discountPercent = _data["discountPercent"];
             this.isActive = _data["isActive"];
+            if (Array.isArray(_data["allowedSeatTypeIds"])) {
+                this.allowedSeatTypeIds = [] as any;
+                for (let item of _data["allowedSeatTypeIds"])
+                    this.allowedSeatTypeIds!.push(item);
+            }
         }
     }
 
@@ -8445,6 +8463,11 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
         data["description"] = this.description;
         data["discountPercent"] = this.discountPercent;
         data["isActive"] = this.isActive;
+        if (Array.isArray(this.allowedSeatTypeIds)) {
+            data["allowedSeatTypeIds"] = [];
+            for (let item of this.allowedSeatTypeIds)
+                data["allowedSeatTypeIds"].push(item);
+        }
         return data;
     }
 }
@@ -8455,6 +8478,7 @@ export interface ICreatePatronCategoryRequest {
     description?: string | undefined;
     discountPercent?: number;
     isActive?: boolean;
+    allowedSeatTypeIds?: string[];
 }
 
 export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest {
@@ -8464,6 +8488,7 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
     description?: string | undefined;
     discountPercent?: number;
     isActive?: boolean;
+    allowedSeatTypeIds?: string[];
 
     constructor(data?: IUpdatePatronCategoryRequest) {
         if (data) {
@@ -8482,6 +8507,11 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
             this.description = _data["description"];
             this.discountPercent = _data["discountPercent"];
             this.isActive = _data["isActive"];
+            if (Array.isArray(_data["allowedSeatTypeIds"])) {
+                this.allowedSeatTypeIds = [] as any;
+                for (let item of _data["allowedSeatTypeIds"])
+                    this.allowedSeatTypeIds!.push(item);
+            }
         }
     }
 
@@ -8500,6 +8530,11 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
         data["description"] = this.description;
         data["discountPercent"] = this.discountPercent;
         data["isActive"] = this.isActive;
+        if (Array.isArray(this.allowedSeatTypeIds)) {
+            data["allowedSeatTypeIds"] = [];
+            for (let item of this.allowedSeatTypeIds)
+                data["allowedSeatTypeIds"].push(item);
+        }
         return data;
     }
 }
@@ -8511,6 +8546,7 @@ export interface IUpdatePatronCategoryRequest {
     description?: string | undefined;
     discountPercent?: number;
     isActive?: boolean;
+    allowedSeatTypeIds?: string[];
 }
 
 export abstract class BaseSearchResultsOfTimeSlotDTO implements IBaseSearchResultsOfTimeSlotDTO {

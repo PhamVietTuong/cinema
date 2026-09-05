@@ -49,6 +49,10 @@ public class BookingManager : IBookingManager
         var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId);
         var pricing      = await BuildSeatPricingContextAsync(showTimeRoom);
 
+        // The client assigns each seat its own patron category locally (from ticket-quantity "slots")
+        // and computes IsAllowedForPatronCategory itself from each category's allowedSeatTypeIds
+        // (avoids a seat re-fetch on every quantity change) — this response always reports the
+        // unfiltered/unrestricted default of true.
         var dtos = seats.Select(s =>
         {
             var key      = SeatKey(showTimeId, roomId, s.Id);
@@ -65,7 +69,7 @@ public class BookingManager : IBookingManager
                 Status        = isBooked ? SeatStatus.Occupied : isLocked ? SeatStatus.Reserved : SeatStatus.Available,
                 Price         = PriceSeat(pricing, s.SeatTypeId, s.SeatType?.PriceMultiplier ?? 1),
                 IsLocked      = isLocked && !isBooked,
-                SeatGroupId   = s.SeatGroupId
+                SeatGroupId   = s.SeatGroupId,
             };
         }).ToList();
 
@@ -94,6 +98,7 @@ public class BookingManager : IBookingManager
             }
             var pricing = await BuildSeatPricingContextAsync(showTimeRoom);
             var patronCategories = await LoadPatronCategoriesAsync(request.RoomId, request.Seats);
+            var allowedSeatTypesByCategory = await LoadAllowedSeatTypesAsync(patronCategories.Keys);
 
             var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
 
@@ -142,6 +147,15 @@ public class BookingManager : IBookingManager
                     if (!patronCategories.TryGetValue(patronCategoryId, out category) || !category.IsActive)
                     {
                         throw new InvalidOperationException("Selected patron category is invalid or unavailable.");
+                    }
+
+                    // Server-side enforcement of the seat-type gate — the client's greyed-out seat map is
+                    // cosmetic only. Empty allowed-set = category is unrestricted.
+                    if (allowedSeatTypesByCategory.TryGetValue(patronCategoryId, out var allowedSeatTypeIds)
+                        && allowedSeatTypeIds.Count > 0
+                        && !allowedSeatTypeIds.Contains(seat.SeatTypeId))
+                    {
+                        throw new InvalidOperationException($"Seat {seatItem.SeatId} is not available for the selected patron category.");
                     }
                 }
                 var price = ApplyPatronDiscount(basePrice, category?.DiscountPercent ?? 0);
@@ -532,6 +546,22 @@ public class BookingManager : IBookingManager
 
         var categories = await _uow.PatronCategoryStore.FindAsync(c => c.TheaterId == room.TheaterId && ids.Contains(c.Id));
         return (categories ?? Enumerable.Empty<PatronCategory>()).ToDictionary(c => c.Id);
+    }
+
+    /// <summary>Batches the seat-type gate for the given patron category ids into one query. A category
+    /// absent from the result, or mapped to an empty set, is unrestricted.</summary>
+    private async Task<Dictionary<Guid, HashSet<Guid>>> LoadAllowedSeatTypesAsync(IEnumerable<Guid> patronCategoryIds)
+    {
+        var ids = patronCategoryIds.ToList();
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, HashSet<Guid>>();
+        }
+
+        var rows = await _uow.PatronCategorySeatTypeStore.FindByPatronCategoriesAsync(ids);
+        return rows
+            .GroupBy(r => r.PatronCategoryId)
+            .ToDictionary(g => g.Key, g => g.Select(r => r.SeatTypeId).ToHashSet());
     }
 
     private async Task<SeatPricingContext> BuildSeatPricingContextAsync(ShowTimeRoom? showTimeRoom)

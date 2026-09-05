@@ -1251,6 +1251,7 @@ export class SeatDTO implements ISeatDTO {
     status?: SeatStatus;
     price?: number;
     isLocked?: boolean;
+    isAllowedForPatronCategory?: boolean;
     seatGroupId?: string | undefined;
 
     constructor(data?: ISeatDTO) {
@@ -1273,6 +1274,7 @@ export class SeatDTO implements ISeatDTO {
             this.status = _data["status"];
             this.price = _data["price"];
             this.isLocked = _data["isLocked"];
+            this.isAllowedForPatronCategory = _data["isAllowedForPatronCategory"];
             this.seatGroupId = _data["seatGroupId"];
         }
     }
@@ -1295,6 +1297,7 @@ export class SeatDTO implements ISeatDTO {
         data["status"] = this.status;
         data["price"] = this.price;
         data["isLocked"] = this.isLocked;
+        data["isAllowedForPatronCategory"] = this.isAllowedForPatronCategory;
         data["seatGroupId"] = this.seatGroupId;
         return data;
     }
@@ -1310,6 +1313,7 @@ export interface ISeatDTO {
     status?: SeatStatus;
     price?: number;
     isLocked?: boolean;
+    isAllowedForPatronCategory?: boolean;
     seatGroupId?: string | undefined;
 }
 

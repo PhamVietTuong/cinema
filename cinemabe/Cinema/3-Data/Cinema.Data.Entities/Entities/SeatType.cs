@@ -17,4 +17,5 @@ public class SeatType : BaseEntity
     public double PriceMultiplier { get; set; } = 1;
 
     public ICollection<Seat> Seats { get; set; } = new List<Seat>();
+    public ICollection<PatronCategorySeatType> AllowedForPatronCategories { get; set; } = new List<PatronCategorySeatType>();
 }

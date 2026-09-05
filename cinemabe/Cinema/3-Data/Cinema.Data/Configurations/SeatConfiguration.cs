@@ -38,3 +38,14 @@ public class PatronCategoryConfiguration : IEntityTypeConfiguration<PatronCatego
         b.HasOne(c => c.Theater).WithMany().HasForeignKey(c => c.TheaterId).OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+public class PatronCategorySeatTypeConfiguration : IEntityTypeConfiguration<PatronCategorySeatType>
+{
+    public void Configure(EntityTypeBuilder<PatronCategorySeatType> b)
+    {
+        b.HasKey(x => new { x.PatronCategoryId, x.SeatTypeId });
+        b.HasIndex(x => x.SeatTypeId);
+        b.HasOne(x => x.PatronCategory).WithMany(c => c.AllowedSeatTypes).HasForeignKey(x => x.PatronCategoryId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(x => x.SeatType).WithMany(s => s.AllowedForPatronCategories).HasForeignKey(x => x.SeatTypeId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

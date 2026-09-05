@@ -5315,6 +5315,13 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "allowedSeatTypeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
           }
         }
       },
@@ -5346,6 +5353,13 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "allowedSeatTypeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
           }
         }
       },
@@ -5381,6 +5395,13 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "allowedSeatTypeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
           }
         }
       },

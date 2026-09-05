@@ -112,6 +112,19 @@ public class SeatTypeManager : ISeatTypeManager
 
     public async Task DeleteAsync(Guid id)
     {
-        await _uow.SeatTypeStore.DeleteAsync(id);
+        // Two separate SaveChanges calls — wrap in one transaction so a failed seat-type delete (e.g.
+        // still referenced by a Seat) can't leave every category's gating configuration silently wiped.
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            await _uow.PatronCategorySeatTypeStore.DeleteBySeatTypeAsync(id);
+            await _uow.SeatTypeStore.DeleteAsync(id);
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
     }
 }

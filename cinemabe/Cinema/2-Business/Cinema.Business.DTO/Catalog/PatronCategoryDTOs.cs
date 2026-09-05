@@ -11,6 +11,9 @@ public class PatronCategoryDTO
     public string? Description { get; set; }
     public double DiscountPercent { get; set; }
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Seat types this category may book. Empty = unrestricted (may book any seat type).</summary>
+    public List<Guid> AllowedSeatTypeIds { get; set; } = new();
 }
 
 public class CreatePatronCategoryRequest
@@ -27,6 +30,9 @@ public class CreatePatronCategoryRequest
     public double DiscountPercent { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Seat types this category may book. Empty = unrestricted.</summary>
+    public List<Guid> AllowedSeatTypeIds { get; set; } = new();
 }
 
 public class UpdatePatronCategoryRequest : IHasId
@@ -44,4 +50,7 @@ public class UpdatePatronCategoryRequest : IHasId
     public double DiscountPercent { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Seat types this category may book. Empty = unrestricted.</summary>
+    public List<Guid> AllowedSeatTypeIds { get; set; } = new();
 }

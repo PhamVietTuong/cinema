@@ -615,6 +615,21 @@ BEGIN
     WHERE  NOT EXISTS (SELECT 1 FROM [PatronCategory] pc WHERE pc.[TheaterId] = t.[Id]);
 END
 
+-- Gates which SeatTypes a PatronCategory may book. No rows for a category = unrestricted, so
+-- shipping this table does not change behaviour for any existing category.
+IF OBJECT_ID('PatronCategorySeatType', 'U') IS NULL
+BEGIN
+    CREATE TABLE [PatronCategorySeatType] (
+        [PatronCategoryId] uniqueidentifier NOT NULL,
+        [SeatTypeId] uniqueidentifier NOT NULL,
+        CONSTRAINT [PK_PatronCategorySeatType] PRIMARY KEY ([PatronCategoryId], [SeatTypeId]),
+        CONSTRAINT [FK_PatronCategorySeatType_PatronCategory_PatronCategoryId] FOREIGN KEY ([PatronCategoryId]) REFERENCES [PatronCategory] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_PatronCategorySeatType_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_PatronCategorySeatType_SeatTypeId] ON [PatronCategorySeatType] ([SeatTypeId]);
+    PRINT 'Created [PatronCategorySeatType].';
+END
+
 PRINT 'upgrade_db.sql: completed.';
 
 -- ── Adopt EF Core migrations (baseline) ─────────────────────────────────────

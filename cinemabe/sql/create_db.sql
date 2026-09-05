@@ -414,6 +414,15 @@ ALTER TABLE [SeatType]       ADD CONSTRAINT [FK_SeatType_Theater_TheaterId]     
 ALTER TABLE [FoodAndDrink]   ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId]   FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 ALTER TABLE [PatronCategory] ADD CONSTRAINT [FK_PatronCategory_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 
+-- Gates which SeatTypes a PatronCategory may book. No rows for a category = unrestricted.
+CREATE TABLE [PatronCategorySeatType] (
+    [PatronCategoryId] uniqueidentifier NOT NULL,
+    [SeatTypeId] uniqueidentifier NOT NULL,
+    CONSTRAINT [PK_PatronCategorySeatType] PRIMARY KEY ([PatronCategoryId], [SeatTypeId]),
+    CONSTRAINT [FK_PatronCategorySeatType_PatronCategory_PatronCategoryId] FOREIGN KEY ([PatronCategoryId]) REFERENCES [PatronCategory] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_PatronCategorySeatType_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION
+);
+
 -- Showtime reminders already sent (persists dedup across restarts).
 CREATE TABLE [ReminderLog] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
@@ -467,6 +476,7 @@ CREATE INDEX [IX_Seat_SeatTypeId] ON [Seat] ([SeatTypeId]);
 CREATE INDEX [IX_Seat_SeatGroupId] ON [Seat] ([SeatGroupId]);
 CREATE INDEX [IX_SeatType_TheaterId] ON [SeatType] ([TheaterId]);
 CREATE INDEX [IX_PatronCategory_TheaterId] ON [PatronCategory] ([TheaterId]);
+CREATE INDEX [IX_PatronCategorySeatType_SeatTypeId] ON [PatronCategorySeatType] ([SeatTypeId]);
 CREATE INDEX [IX_TimeSlot_TheaterId] ON [TimeSlot] ([TheaterId]);
 CREATE INDEX [IX_TicketPrice_RoomTypeId] ON [TicketPrice] ([RoomTypeId]);
 CREATE INDEX [IX_TicketPrice_SeatTypeId] ON [TicketPrice] ([SeatTypeId]);

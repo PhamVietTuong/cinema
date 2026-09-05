@@ -1912,6 +1912,9 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("isLocked", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsLocked { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("isAllowedForPatronCategory", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool IsAllowedForPatronCategory { get; set; }
+
         [Newtonsoft.Json.JsonProperty("seatGroupId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid? SeatGroupId { get; set; }
 

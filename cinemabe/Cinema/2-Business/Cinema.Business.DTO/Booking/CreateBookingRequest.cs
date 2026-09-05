@@ -44,7 +44,10 @@ public class BookingSeatItem
     public Guid SeatId { get; set; }
 
     /// <summary>Self-reported patron category for this seat (Adult/Student/Senior/Child); null = full
-    /// price. Checked visually (ID/student card) at the theater, not verified by this system.</summary>
+    /// price. Checked visually (ID/student card) at the theater, not verified by this system.
+    /// The category's seat-type allow-list (PatronCategorySeatType) is enforced server-side only when
+    /// this is set — omitting it books any seat type at full price. That's intentional: the gate is a
+    /// pricing-category restriction, not a standalone access-control rule on the seat itself.</summary>
     public Guid? PatronCategoryId { get; set; }
 }
 

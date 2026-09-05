@@ -900,6 +900,9 @@
           "isLocked": {
             "type": "boolean"
           },
+          "isAllowedForPatronCategory": {
+            "type": "boolean"
+          },
           "seatGroupId": {
             "type": "string",
             "format": "guid",

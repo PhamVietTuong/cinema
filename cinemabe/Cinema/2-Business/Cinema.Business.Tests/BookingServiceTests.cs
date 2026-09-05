@@ -35,6 +35,11 @@ public class BookingServiceTests
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
         _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService(), new DevLogSmsNotificationService(), _seatNotificationsMock.Object);
+
+        // Default: no seat-type gating rows for any category (unrestricted). Tests that care about
+        // gating override this with a specific setup.
+        _uowMock.Setup(u => u.PatronCategorySeatTypeStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<PatronCategorySeatType>());
     }
 
     private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId)
@@ -481,6 +486,66 @@ public class BookingServiceTests
 
         await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*patron category*");
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_RejectsSeatTypeNotAllowedForPatronCategory()
+    {
+        var theaterId   = Guid.NewGuid();
+        var roomTypeId  = Guid.NewGuid();
+        var vipTypeId   = Guid.NewGuid();
+        var standardId  = Guid.NewGuid();
+        var seat        = Guid.NewGuid();
+        var studentId   = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 100);
+        _uowMock.Setup(u => u.SeatTypeStore.GetByIdAsync(vipTypeId)).ReturnsAsync(new SeatType { Id = vipTypeId, PriceMultiplier = 1.5 });
+        _uowMock.Setup(u => u.SeatStore.GetByIdAsync(seat)).ReturnsAsync(new Seat { Id = seat, RowName = "E", ColIndex = 1, SeatTypeId = vipTypeId });
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(new List<PatronCategory> { new() { Id = studentId, TheaterId = theaterId, Name = "Student", DiscountPercent = 25, IsActive = true } });
+        // Student may only book Standard seats — this booking targets a VIP seat.
+        _uowMock.Setup(u => u.PatronCategorySeatTypeStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<PatronCategorySeatType> { new() { PatronCategoryId = studentId, SeatTypeId = standardId } });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = seat, PatronCategoryId = studentId } },
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*not available for the selected patron category*");
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AllowsSeatTypeWhenCategoryIsUnrestricted()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var vipTypeId  = Guid.NewGuid();
+        var seat       = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 100);
+        _uowMock.Setup(u => u.SeatTypeStore.GetByIdAsync(vipTypeId)).ReturnsAsync(new SeatType { Id = vipTypeId, PriceMultiplier = 1.5 });
+        _uowMock.Setup(u => u.SeatStore.GetByIdAsync(seat)).ReturnsAsync(new Seat { Id = seat, RowName = "F", ColIndex = 1, SeatTypeId = vipTypeId });
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, Name = "Adult", DiscountPercent = 0, IsActive = true } });
+        // Adult has no rows in PatronCategorySeatType — unrestricted, so the VIP seat is allowed.
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = seat, PatronCategoryId = adultId } },
+            PaymentMethod = "Sandbox",
+        };
+
+        var result = await _sut.CreateBookingAsync(Guid.NewGuid(), request);
+
+        result.Tickets.Single().Price.Should().Be(150);
     }
 
     [Fact]
