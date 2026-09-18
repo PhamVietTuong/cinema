@@ -4299,7 +4299,14 @@
           "projectionForm": {
             "$ref": "#/components/schemas/ProjectionForm"
           },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
           "theaterName": {
+            "type": "string"
+          },
+          "theaterAddress": {
             "type": "string"
           },
           "roomName": {

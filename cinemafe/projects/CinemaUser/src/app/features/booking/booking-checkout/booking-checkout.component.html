@@ -22,10 +22,12 @@
   <div class="hold-banner" [class.expired]="holdExpired" *ngIf="!holdExpired">
     <mat-icon>timer</mat-icon>
     <span>{{ 'booking.holdTimer' | translate:{ time: holdCountdown } }}</span>
+    <div class="hold-bar" [style.width.%]="holdProgressPercent"></div>
   </div>
   <div class="hold-banner expired" *ngIf="holdExpired">
     <mat-icon>timer_off</mat-icon>
     <span>{{ 'booking.holdExpired' | translate }}</span>
+    <div class="hold-bar"></div>
   </div>
 
   <div class="checkout-page">
@@ -158,7 +160,7 @@
           <span>−{{ pointsDiscount | number:'1.0-0' }}đ</span>
         </div>
 
-        <div class="summary-row total">
+        <div class="total-block">
           <span>{{ 'booking.summary.grandTotal' | translate }}</span>
           <span class="total-amount">{{ finalTotal | number:'1.0-0' }}đ</span>
         </div>

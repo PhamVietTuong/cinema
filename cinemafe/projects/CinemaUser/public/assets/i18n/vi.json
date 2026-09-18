@@ -323,15 +323,15 @@
       "language": "Ngôn ngữ:",
       "showtimesTitle": "Lịch Chiếu & Suất Diễn",
       "castTitle": "Diễn Viên & Đoàn Phim",
-      "reviewsTitle": "Đánh Giá Tiêu Biểu",
-      "writeReviewTitle": "Viết Đánh Giá",
-      "reviewPlaceholder": "Cảm nhận của bạn về phim (không bắt buộc)...",
-      "submitRating": "Gửi Đánh Giá",
-      "commentPlaceholder": "Viết bình luận...",
+      "commentsTitle": "Bình Luận",
+      "commentPlaceholder": "Tham gia cuộc thảo luận...",
       "submitComment": "Gửi Bình Luận",
-      "loginPromptBefore": "Vui lòng",
-      "loginPromptLink": "đăng nhập",
-      "loginPromptAfter": "để đánh giá và bình luận."
+      "loginToComment": "Đăng Nhập Để Bình Luận",
+      "noCommentsYet": "Chưa có bình luận nào. Hãy là người đầu tiên!",
+      "noRatingsYet": "Chưa có đánh giá",
+      "ratingSaved": "Cảm ơn! Đánh giá của bạn đã được lưu.",
+      "commentPosted": "Đã đăng bình luận.",
+      "rateThisMovie": "Đánh giá phim này"
     },
     "showtimes": {
       "seats": "{{count}} ghế",

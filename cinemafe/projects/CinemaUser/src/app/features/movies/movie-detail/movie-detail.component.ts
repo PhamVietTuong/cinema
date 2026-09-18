@@ -3,7 +3,8 @@ import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel } from 'CinemaLib';
+import { TranslateService } from '@ngx-translate/core';
+import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, ToastService } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../booking/booking-selection/booking-selection.component';
 
 @Component({
@@ -19,11 +20,12 @@ export class MovieDetailComponent implements OnInit {
   isAuthenticated$: Observable<boolean>;
 
   movieId = '';
-  /** Star rating the user is about to submit (1–10; 0 = none picked). */
+  /** The current user's rating, once submitted (1–10; 0 = none submitted yet this session). */
   myScore = 0;
-  myReview = '';
+  /** Hovered star while picking a rating in the hero widget; 0 when not hovering. */
+  hoverScore = 0;
   newComment = '';
-  readonly stars = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  readonly heroStars = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   /** Today + the next 3 days — the movie-detail response already covers exactly this window
    * (MovieManager.GetDetailAsync), so switching tabs is a client-side filter, no re-fetch. */
@@ -41,6 +43,8 @@ export class MovieDetailComponent implements OnInit {
     private _route: ActivatedRoute,
     private _router: Router,
     private _cdr: ChangeDetectorRef,
+    private _translate: TranslateService,
+    private _toast: ToastService,
   ) {
     this.movie$ = this._store.select(selectSelectedMovie);
     this.loading$ = this._store.select(selectMoviesLoading);
@@ -122,35 +126,78 @@ export class MovieDetailComponent implements OnInit {
   }
 
   /**
-   * Groups a movie's showtimes, for the selected date only, by cinema (theater), sorted
-   * alphabetically; within each cinema, sub-grouped by screening format via groupByFormat.
+   * Groups a movie's showtimes, for the selected date only, by cinema (theater id — not name, so two
+   * distinct theaters that happen to share a display name never collapse into one group), sorted by
+   * theater name; within each cinema, sub-grouped by screening format via groupByFormat. Each group
+   * also carries the theater's name/address, read off its first showtime (every showtime in a group
+   * shares the same theater).
    */
-  groupByTheater(showTimes: any[] | undefined, key: string): { theaterName: string; formats: { label: string; items: any[] }[] }[] {
+  groupByTheater(showTimes: any[] | undefined, key: string):
+    { theaterId: string; theaterName: string; theaterAddress: string; formats: { label: string; items: any[] }[] }[] {
     const forDate = (showTimes ?? []).filter(st => this.toDateKey(st.startTime) === key);
     const map = new Map<string, any[]>();
     for (const st of forDate) {
-      const name = st.theaterName ?? '';
-      if (!map.has(name)) { map.set(name, []); }
-      map.get(name)!.push(st);
+      const id = st.theaterId ?? '';
+      if (!map.has(id)) { map.set(id, []); }
+      map.get(id)!.push(st);
     }
     return [...map.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([theaterName, items]) => ({ theaterName, formats: this.groupByFormat(items) }));
+      .map(([theaterId, items]) => ({
+        theaterId,
+        theaterName: items[0].theaterName ?? '',
+        theaterAddress: items[0].theaterAddress ?? '',
+        formats: this.groupByFormat(items),
+      }))
+      .sort((a, b) => a.theaterName.localeCompare(b.theaterName));
   }
 
-  setScore(n: number): void { this.myScore = n; }
+  /** Score to paint in the hero widget: the real average once rated, else a full 10/10 default. */
+  displayScore(movie: any): number {
+    return movie.ratingCount > 0 ? movie.averageRating : 10;
+  }
 
-  submitRating(): void {
-    if (this.myScore < 1) { return; }
-    this._store.dispatch(rateMovie({ movieId: this.movieId, score: this.myScore, review: this.myReview.trim() || undefined }));
-    this.myReview = '';
+  onHeroStarHover(score: number): void {
+    this.hoverScore = score;
+    this._cdr.markForCheck();
+  }
+
+  onHeroStarLeave(): void {
+    this.hoverScore = 0;
+    this._cdr.markForCheck();
+  }
+
+  /** Submits immediately on star click — no separate confirm button. RateMovieAsync is an upsert,
+   * so re-clicking just updates this user's existing rating rather than adding a duplicate. */
+  rateFromHero(score: number): void {
+    this.isAuthenticated$.pipe(take(1)).subscribe(isAuthenticated => {
+      if (!isAuthenticated) {
+        this._router.navigate(['/auth/login'], { queryParams: { returnUrl: '/movies/' + this.movieId } });
+        return;
+      }
+      this._store.dispatch(rateMovie({ movieId: this.movieId, score, review: undefined }));
+      this.myScore = score;
+      this._toast.success(this._translate.instant('movies.detail.ratingSaved'));
+      this._cdr.markForCheck();
+    });
+  }
+
+  commentCount(movie: any): number {
+    return (movie.recentComments ?? []).reduce((n: number, c: any) => n + 1 + (c.replies?.length ?? 0), 0);
   }
 
   submitComment(): void {
     const content = this.newComment.trim();
     if (!content) { return; }
-    this._store.dispatch(addComment({ movieId: this.movieId, content }));
-    this.newComment = '';
+    this.isAuthenticated$.pipe(take(1)).subscribe(isAuthenticated => {
+      if (!isAuthenticated) {
+        this._router.navigate(['/auth/login'], { queryParams: { returnUrl: '/movies/' + this.movieId } });
+        return;
+      }
+      this._store.dispatch(addComment({ movieId: this.movieId, content }));
+      this.newComment = '';
+      this._toast.success(this._translate.instant('movies.detail.commentPosted'));
+      this._cdr.markForCheck();
+    });
   }
 
   getCastMembers(cast: string | undefined): string[] {

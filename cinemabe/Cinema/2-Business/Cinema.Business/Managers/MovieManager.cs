@@ -130,7 +130,9 @@ public class MovieManager : IMovieManager
                 RoomId         = row.RoomId,
                 RoomName       = row.RoomName,
                 RoomTypeName   = row.RoomTypeName,
+                TheaterId      = row.TheaterId,
                 TheaterName    = row.TheaterName,
+                TheaterAddress = row.TheaterAddress,
                 AvailableSeats = Math.Max(0, row.Capacity - booked),
             };
         }).ToList();

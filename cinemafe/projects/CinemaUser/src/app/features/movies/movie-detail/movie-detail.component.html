@@ -1,4 +1,4 @@
-<div *ngIf="loading$ | async" class="spinner-wrap">
+<div *ngIf="(loading$ | async) && !(movie$ | async)" class="spinner-wrap">
   <mat-spinner diameter="48"></mat-spinner>
 </div>
 
@@ -20,7 +20,7 @@
         <h1 class="hero-title">{{ movie.title }}</h1>
 
         <div class="hero-meta">
-          <span class="meta-star"><mat-icon>star</mat-icon> {{ movie.averageRating | number:'1.1-1' }}</span>
+          <span class="meta-star"><mat-icon>star</mat-icon> {{ displayScore(movie) | number:'1.1-1' }}</span>
           <span class="sep">·</span>
           <span>{{ movie.duration }} phút</span>
           <span class="sep">·</span>
@@ -39,13 +39,19 @@
 
       <div class="hero-score">
         <div class="score-ring">
-          <span class="score-pct">{{ (movie.averageRating * 10) | number:'1.0-0' }}%</span>
+          <span class="score-pct">{{ (displayScore(movie) * 10) | number:'1.0-0' }}%</span>
           <span class="score-label">Audience<br>Score</span>
         </div>
-        <div class="score-stars">
-          <mat-icon *ngFor="let i of [1,2,3,4,5]" [class.lit]="i <= (movie.averageRating / 2)">star</mat-icon>
+        <div class="score-stars" (mouseleave)="onHeroStarLeave()">
+          <button type="button" class="score-star" *ngFor="let s of heroStars"
+                  [class.on]="s <= (hoverScore || myScore || displayScore(movie))"
+                  (mouseenter)="onHeroStarHover(s)"
+                  (click)="rateFromHero(s)"
+                  [attr.aria-label]="(('movies.detail.rateThisMovie' | translate) + ' ' + s + '/10')"
+                  [title]="s + '/10'">★</button>
         </div>
-        <span class="score-count">{{ 'movies.detail.ratingCount' | translate:{ count: (movie.ratingCount | number) } }}</span>
+        <span class="score-count" *ngIf="movie.ratingCount > 0; else noRatingsYet">{{ 'movies.detail.ratingCount' | translate:{ count: (movie.ratingCount | number) } }}</span>
+        <ng-template #noRatingsYet><span class="score-count">{{ 'movies.detail.noRatingsYet' | translate }}</span></ng-template>
       </div>
     </div>
   </section>
@@ -80,7 +86,13 @@
 
         <div class="cinema-list" *ngIf="groupByTheater(movie.showTimes, selectedDateKey).length; else noShowtimesForDate">
           <div class="cinema-card" *ngFor="let cinema of groupByTheater(movie.showTimes, selectedDateKey)">
-            <h3 class="cinema-name">{{ cinema.theaterName }}</h3>
+            <div class="cinema-head">
+              <mat-icon class="cinema-pin" aria-hidden="true">location_on</mat-icon>
+              <div class="cinema-head-text">
+                <h3 class="cinema-name">{{ cinema.theaterName }}</h3>
+                <p class="cinema-address" *ngIf="cinema.theaterAddress">{{ cinema.theaterAddress }}</p>
+              </div>
+            </div>
             <div class="format-card" *ngFor="let group of cinema.formats">
               <div class="format-head">
                 <span class="format-badge">{{ group.label }}</span>
@@ -127,59 +139,57 @@
       </div>
     </section>
 
-    <!-- Reviews -->
-    <section class="md-section" *ngIf="movie.recentComments?.length">
-      <h2 class="md-title">{{ 'movies.detail.reviewsTitle' | translate }}</h2>
-      <div class="review-grid">
-        <div class="review-card" *ngFor="let c of movie.recentComments">
-          <div class="review-head">
-            <span class="review-avatar">
-              <img *ngIf="c.userAvatar" [src]="c.userAvatar" alt="">
-              <span *ngIf="!c.userAvatar">{{ getInitials(c.userName || 'U') }}</span>
-            </span>
-            <div>
-              <div class="review-name">{{ c.userName }}</div>
-              <div class="review-date">{{ c.creationTime | date:'dd/MM/yyyy' }}</div>
-            </div>
-          </div>
-          <p class="review-text">{{ c.content }}</p>
-          <div class="review-replies" *ngIf="c.replies?.length">
-            <div class="review-reply" *ngFor="let r of c.replies">
-              <strong>{{ r.userName }}:</strong> {{ r.content }}
-            </div>
+    <!-- Comments -->
+    <section class="md-section">
+      <div class="md-title-row">
+        <h2 class="md-title-flush">{{ 'movies.detail.commentsTitle' | translate }}</h2>
+        <span class="comment-badge">{{ commentCount(movie) }}</span>
+      </div>
+
+      <div class="comment-composer">
+        <div class="composer-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="composer-body">
+          <textarea class="comment-input" [(ngModel)]="newComment" rows="3"
+                    [readonly]="!(isAuthenticated$ | async)"
+                    [placeholder]="'movies.detail.commentPlaceholder' | translate"></textarea>
+          <div class="composer-actions">
+            <ng-container *ngIf="(isAuthenticated$ | async); else loginToComment">
+              <button type="button" class="composer-btn" [disabled]="!newComment.trim()" (click)="submitComment()">{{ 'movies.detail.submitComment' | translate }}</button>
+            </ng-container>
+            <ng-template #loginToComment>
+              <a class="composer-btn" routerLink="/auth/login" [queryParams]="{ returnUrl: '/movies/' + movieId }">{{ 'movies.detail.loginToComment' | translate }}</a>
+            </ng-template>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Write a review / comment -->
-    <section class="md-section">
-      <h2 class="md-title">{{ 'movies.detail.writeReviewTitle' | translate }}</h2>
-
-      <ng-container *ngIf="(isAuthenticated$ | async); else loginToReview">
-        <div class="rate-box">
-          <div class="rate-stars">
-            <button type="button" class="rate-star" *ngFor="let s of stars"
-                    [class.on]="s <= myScore" (click)="setScore(s)" [title]="s + '/10'">★</button>
-            <span class="rate-score" *ngIf="myScore">{{ myScore }}/10</span>
+      <div class="comment-list" *ngIf="movie.recentComments?.length; else noComments">
+        <ng-container *ngFor="let c of movie.recentComments">
+          <div class="comment-row">
+            <span class="comment-avatar">
+              <img *ngIf="c.userAvatar" [src]="c.userAvatar" alt="">
+              <span *ngIf="!c.userAvatar">{{ getInitials(c.userName || 'U') }}</span>
+            </span>
+            <div class="comment-card">
+              <span class="comment-name">{{ c.userName }}</span><span class="comment-time">{{ c.creationTime | date:'HH:mm dd/MM/yyyy' }}</span>
+              <p class="comment-text">{{ c.content }}</p>
+            </div>
           </div>
-          <mat-form-field appearance="outline">
-            <textarea matInput [(ngModel)]="myReview" rows="2" [placeholder]="'movies.detail.reviewPlaceholder' | translate"></textarea>
-          </mat-form-field>
-          <button mat-raised-button type="button" [disabled]="myScore < 1" (click)="submitRating()">{{ 'movies.detail.submitRating' | translate }}</button>
-        </div>
-
-        <div class="rate-box">
-          <mat-form-field appearance="outline">
-            <textarea matInput [(ngModel)]="newComment" rows="2" [placeholder]="'movies.detail.commentPlaceholder' | translate"></textarea>
-          </mat-form-field>
-          <button mat-raised-button type="button" [disabled]="!newComment.trim()" (click)="submitComment()">{{ 'movies.detail.submitComment' | translate }}</button>
-        </div>
-      </ng-container>
-
-      <ng-template #loginToReview>
-        <p class="md-text">{{ 'movies.detail.loginPromptBefore' | translate }} <a routerLink="/auth/login">{{ 'movies.detail.loginPromptLink' | translate }}</a> {{ 'movies.detail.loginPromptAfter' | translate }}</p>
-      </ng-template>
+          <div class="comment-row is-reply" *ngFor="let r of c.replies">
+            <span class="comment-avatar">
+              <img *ngIf="r.userAvatar" [src]="r.userAvatar" alt="">
+              <span *ngIf="!r.userAvatar">{{ getInitials(r.userName || 'U') }}</span>
+            </span>
+            <div class="comment-card">
+              <span class="comment-name">{{ r.userName }}</span><span class="comment-time">{{ r.creationTime | date:'HH:mm dd/MM/yyyy' }}</span>
+              <p class="comment-text">{{ r.content }}</p>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+      <ng-template #noComments><p class="md-text">{{ 'movies.detail.noCommentsYet' | translate }}</p></ng-template>
     </section>
 
   </div>

@@ -9121,8 +9121,14 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("projectionForm", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public ProjectionForm ProjectionForm { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("theaterId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Guid TheaterId { get; set; }
+
         [Newtonsoft.Json.JsonProperty("theaterName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string TheaterName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("theaterAddress", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string TheaterAddress { get; set; }
 
         [Newtonsoft.Json.JsonProperty("roomName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string RoomName { get; set; }

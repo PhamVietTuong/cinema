@@ -20,10 +20,14 @@
 
     <!-- Toolbar: choose mode + (in paint mode) the seat type to apply -->
     <div class="seatmap-toolbar">
-      <mat-button-toggle-group [value]="mode" (change)="setMode($event.value)">
-        <mat-button-toggle value="paint"><mat-icon>format_paint</mat-icon> {{ 'theaters.rooms.assignSeatType' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="pair"><mat-icon>link</mat-icon> {{ 'theaters.rooms.doubleSeat' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <mat-button-toggle-group [value]="mode" (change)="setMode($event.value)">
+            <mat-button-toggle value="paint"><mat-icon>format_paint</mat-icon> {{ 'theaters.rooms.assignSeatType' | translate }}</mat-button-toggle>
+            <mat-button-toggle value="pair"><mat-icon>link</mat-icon> {{ 'theaters.rooms.doubleSeat' | translate }}</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+      </div>
 
       <div class="palette" *ngIf="mode === 'paint'">
         <button type="button" class="palette-chip" *ngFor="let t of allSeatTypes"

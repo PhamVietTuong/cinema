@@ -80,6 +80,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
 
   foods: CinemaServiceAgent.FoodAndDrinkDTO[] = [];
   foodQty: Record<string, number> = {};
+  /** Ids of foods whose imageUrl failed to load — stops re-rendering a broken <img> and shows the fallback instead. */
+  private _foodImgFailed = new Set<string>();
 
   private _subs = new Subscription();
   private _navigatingToCheckout = false;
@@ -244,6 +246,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this.patronCategories = [];
     this.foods = [];
     this.foodQty = {};
+    this._foodImgFailed.clear();
     this.categoryWarning = '';
     this._seatLockedAt = {};
     this._theaterId = '';
@@ -583,6 +586,23 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   }
   decFood(f: CinemaServiceAgent.FoodAndDrinkDTO): void {
     this.foodQty[f.id!] = Math.max(0, (this.foodQty[f.id!] ?? 0) - 1);
+  }
+
+  /** True when this food has no usable imageUrl, or its image already failed to load — the template
+   * uses this as the single source of truth so the <img> and the fallback block are never both shown. */
+  foodImgHidden(food: CinemaServiceAgent.FoodAndDrinkDTO): boolean {
+    if (!food.imageUrl || !food.imageUrl.trim()) {
+      return true;
+    }
+    return this._foodImgFailed.has(food.id!);
+  }
+
+  onFoodImgError(food: CinemaServiceAgent.FoodAndDrinkDTO): void {
+    if (!food.id) {
+      return;
+    }
+    this._foodImgFailed.add(food.id);
+    this._cdr.markForCheck();
   }
 
   proceedToCheckout(): void {

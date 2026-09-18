@@ -13,7 +13,9 @@ public record MovieScheduleRow(
     Guid RoomId,
     string RoomName,
     string RoomTypeName,
+    Guid TheaterId,
     string TheaterName,
+    string TheaterAddress,
     int Capacity);
 
 public interface IShowTimeStore : IGenericStore<ShowTime>

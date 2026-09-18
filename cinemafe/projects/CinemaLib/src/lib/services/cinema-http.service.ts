@@ -6231,7 +6231,9 @@ export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
     startTime?: Date;
     endTime?: Date;
     projectionForm?: ProjectionForm;
+    theaterId?: string;
     theaterName?: string;
+    theaterAddress?: string;
     roomName?: string;
     roomTypeName?: string;
     roomId?: string;
@@ -6252,7 +6254,9 @@ export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
             this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : <any>undefined;
             this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : <any>undefined;
             this.projectionForm = _data["projectionForm"];
+            this.theaterId = _data["theaterId"];
             this.theaterName = _data["theaterName"];
+            this.theaterAddress = _data["theaterAddress"];
             this.roomName = _data["roomName"];
             this.roomTypeName = _data["roomTypeName"];
             this.roomId = _data["roomId"];
@@ -6273,7 +6277,9 @@ export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
         data["startTime"] = this.startTime ? this.startTime.toISOString() : <any>undefined;
         data["endTime"] = this.endTime ? this.endTime.toISOString() : <any>undefined;
         data["projectionForm"] = this.projectionForm;
+        data["theaterId"] = this.theaterId;
         data["theaterName"] = this.theaterName;
+        data["theaterAddress"] = this.theaterAddress;
         data["roomName"] = this.roomName;
         data["roomTypeName"] = this.roomTypeName;
         data["roomId"] = this.roomId;
@@ -6287,7 +6293,9 @@ export interface IShowTimeSummaryDTO {
     startTime?: Date;
     endTime?: Date;
     projectionForm?: ProjectionForm;
+    theaterId?: string;
     theaterName?: string;
+    theaterAddress?: string;
     roomName?: string;
     roomTypeName?: string;
     roomId?: string;

@@ -21,7 +21,7 @@
   <div class="form-card">
     <h3 class="card-title"><i class="fas fa-ticket-alt"></i> {{ 'booking.tickets.title' | translate }}</h3>
     <p class="card-hint">{{ 'booking.tickets.hint' | translate }}</p>
-    <div class="option-grid">
+    <div class="option-grid ticket-grid">
       <div class="option-card mag-card" *ngFor="let c of patronCategories" [class.active]="ticketQty[c.id!] > 0">
         <div class="mag-card-stripe"></div>
         <div class="mag-card-chip"></div>
@@ -140,18 +140,22 @@
 <div class="section-wrap" *ngIf="foods.length">
   <div class="form-card">
     <h3 class="card-title"><i class="fas fa-utensils"></i> {{ 'booking.confirm.concessions' | translate }}</h3>
-    <div class="option-grid">
-      <div class="option-card mag-card" *ngFor="let f of foods" [class.active]="foodQty[f.id!] > 0">
-        <div class="mag-card-stripe"></div>
-        <div class="mag-card-chip"></div>
-        <div class="option-info">
-          <span class="option-name">{{ f.name }}</span>
-          <span class="option-price">{{ f.price | number:'1.0-0' }}đ</span>
+    <div class="option-grid food-grid">
+      <div class="option-card food-card" *ngFor="let f of foods" [class.active]="foodQty[f.id!] > 0">
+        <div class="food-media">
+          <img *ngIf="!foodImgHidden(f)" [src]="f.imageUrl" [alt]="f.name" loading="lazy" (error)="onFoodImgError(f)">
+          <div class="food-media-fallback" *ngIf="foodImgHidden(f)" aria-hidden="true"><mat-icon>restaurant</mat-icon></div>
         </div>
-        <div class="option-qty">
-          <button type="button" (click)="decFood(f)" [disabled]="!foodQty[f.id!]">−</button>
-          <span>{{ foodQty[f.id!] || 0 }}</span>
-          <button type="button" (click)="incFood(f)">+</button>
+        <div class="food-body">
+          <div class="option-info">
+            <span class="option-name">{{ f.name }}</span>
+            <span class="option-price">{{ f.price | number:'1.0-0' }}đ</span>
+          </div>
+          <div class="option-qty">
+            <button type="button" (click)="decFood(f)" [disabled]="!foodQty[f.id!]">−</button>
+            <span>{{ foodQty[f.id!] || 0 }}</span>
+            <button type="button" (click)="incFood(f)">+</button>
+          </div>
         </div>
       </div>
     </div>

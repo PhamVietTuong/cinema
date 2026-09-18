@@ -45,7 +45,14 @@
   .score-pct { font-family: var(--ml-font-head); font-size: 1.6rem; font-weight: 600; color: var(--ml-action-strong); line-height: 1; }
   .score-label { font-size: 0.62rem; color: var(--ml-muted); text-align: center; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
 }
-.score-stars { color: var(--ml-action-strong); font-size: 0.85rem; i { opacity: 0.3; &.lit { opacity: 1; } } }
+.score-stars { display: flex; gap: 3px; }
+.score-star {
+  background: none; border: none; cursor: pointer; padding: 0 1px;
+  color: var(--ml-faint); font-size: 1.1rem; line-height: 1;
+  transition: color 0.12s ease, transform 0.12s ease;
+  &:hover { transform: scale(1.18); }
+  &.on { color: var(--ml-action-strong); }
+}
 .score-count { font-size: 0.78rem; color: var(--ml-muted); }
 
 // ── Body ────────────────────────────────────────────────────────────────────
@@ -76,7 +83,11 @@
 // Cinemas for the selected date
 .cinema-list { display: flex; flex-direction: column; gap: 24px; }
 .cinema-card { display: flex; flex-direction: column; gap: 12px; }
+.cinema-head { display: flex; align-items: flex-start; gap: 10px; }
+.cinema-pin { font-size: 20px; width: 20px; height: 20px; color: var(--ml-action); margin-top: 1px; flex: none; }
+.cinema-head-text { min-width: 0; }
 .cinema-name { font-family: var(--ml-font-head); font-size: 1.05rem; font-weight: 600; color: var(--ml-ink); margin: 0; }
+.cinema-address { margin: 2px 0 0; font-size: 0.8rem; line-height: 1.4; color: var(--ml-muted); max-width: 560px; }
 
 // Showtimes by format
 .format-card { background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-lg); padding: 20px 22px; }
@@ -117,66 +128,59 @@
 }
 .cast-name { font-size: 0.82rem; color: var(--ml-ink); margin: 0; line-height: 1.3; }
 
-// Reviews
-.review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
-.review-card { background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-lg); padding: 20px; }
-.review-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.review-avatar {
-  width: 42px; height: 42px; border-radius: 50%; overflow: hidden; flex: none;
+// Comments
+.md-title-row { display: flex; align-items: center; gap: 10px; margin: 0 0 20px; padding-left: 14px; border-left: 3px solid var(--ml-action); }
+.md-title-flush {
+  font-family: var(--ml-font-head); font-size: 1.3rem; font-weight: 600; text-transform: uppercase; color: var(--ml-ink); margin: 0;
+}
+.comment-badge {
+  background: var(--ml-action); color: var(--ml-on-action); border-radius: var(--ml-r-full);
+  font-size: 0.74rem; font-weight: 700; padding: 2px 10px; font-variant-numeric: tabular-nums;
+}
+
+.comment-composer { display: flex; gap: 14px; margin-bottom: 16px; }
+.composer-avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center; color: var(--ml-muted); border: 2px solid var(--ml-muted);
+  svg { width: 22px; height: 22px; }
+}
+.composer-body { flex: 1; min-width: 0; }
+.comment-input {
+  width: 100%; min-height: 72px; resize: vertical;
+  background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-lg);
+  color: var(--ml-ink); font: 400 0.9rem/1.5 var(--ml-font-body); padding: 12px 14px;
+  &::placeholder { color: var(--ml-muted); }
+  &:focus { outline: none; border-color: var(--ml-action); box-shadow: 0 0 0 3px var(--ml-action-soft); }
+}
+.composer-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.composer-btn {
+  font-family: var(--ml-font-head); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.02em;
+  background: var(--ml-action); color: var(--ml-on-action); border: none; border-radius: var(--ml-r-full);
+  padding: 9px 20px; cursor: pointer; text-decoration: none; display: inline-block;
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
+.comment-list { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
+.comment-row { display: flex; gap: 12px; }
+.comment-row.is-reply { margin-left: 48px; }
+.comment-avatar {
+  width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex: none;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--ml-panel-3); color: var(--ml-ink-2); font-weight: 600; font-size: 0.9rem;
+  background: var(--ml-action); color: var(--ml-on-action); font-family: var(--ml-font-head); font-weight: 700; font-size: 0.82rem;
   img { width: 100%; height: 100%; object-fit: cover; }
 }
-.review-name { font-weight: 600; color: var(--ml-ink); font-size: 0.92rem; }
-.review-date { font-size: 0.76rem; color: var(--ml-muted); }
-.review-text { color: var(--ml-ink-2); line-height: 1.6; margin: 0; font-size: 0.9rem; }
+.is-reply .comment-avatar { width: 30px; height: 30px; font-size: 0.7rem; }
+.comment-card { flex: 1; min-width: 0; background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-lg); padding: 12px 16px; }
+.comment-name { color: var(--ml-action-strong); font-weight: 700; font-size: 0.88rem; }
+.comment-time { color: var(--ml-muted); font-size: 0.74rem; margin-left: 8px; font-variant-numeric: tabular-nums; }
+.comment-text { color: var(--ml-ink); line-height: 1.6; margin: 6px 0 0; font-size: 0.88rem; }
+
+@media (max-width: 760px) {
+  .comment-row.is-reply { margin-left: 22px; }
+}
 
 @media (max-width: 760px) {
   .hero-title { font-size: 2.1rem; }
   .hero-inner, .md-body { padding-left: 20px; padding-right: 20px; }
 }
 
-/* ── Review / comment submission ─────────────────────────────────────────── */
-.rate-box {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  max-width: 640px;
-}
-.rate-stars { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.rate-star {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
-  color: var(--ml-faint);
-  transition: color 0.12s ease, transform 0.12s ease;
-  padding: 0 1px;
-  &:hover { transform: scale(1.15); }
-  &.on { color: var(--ml-action); }
-}
-.rate-score { margin-left: 8px; font-weight: 700; color: var(--ml-action-strong); }
-.rate-input {
-  width: 100%;
-  resize: vertical;
-  border-radius: var(--ml-r-sm);
-  border: 1px solid var(--ml-rule);
-  background: var(--ml-panel);
-  color: inherit;
-  padding: 10px 12px;
-  font: inherit;
-
-  &:focus { outline: none; border-color: var(--ml-action); box-shadow: 0 0 0 3px var(--ml-action-soft); }
-}
-.review-replies {
-  margin-top: 10px;
-  padding-left: 12px;
-  border-left: 2px solid var(--ml-rule);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.review-reply { font-size: 0.9rem; color: var(--ml-ink-2); }

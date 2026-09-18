@@ -39,9 +39,53 @@
   mat-icon { margin-right: 8px; color: var(--ml-action-strong); vertical-align: -5px; }
 }
 
-.method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+// Selected-state fix: default mat-button-toggle "checked" tint reads too flat to scan at a
+// glance, so we push a stronger fill and add an explicit corner checkmark badge — no borders,
+// per design. overflow/border here override Material's own group-level appearance-standard
+// border and clipping (the badge is deliberately positioned outside each tile's box).
+.method-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  overflow: visible !important;
+  border: none !important;
 
-.field-group { margin-bottom: 16px; }
+  ::ng-deep .mat-button-toggle {
+    position: relative; overflow: visible;
+    border-radius: var(--ml-r-lg) !important;
+    border: none !important;
+    background: var(--ml-panel-2);
+    transition: background 0.15s;
+  }
+  // Material centers label-content children via `vertical-align: middle`, but it also force-sets
+  // `.mat-icon svg { vertical-align: top }` — which the custom `svg-icon` component (Apple/Google
+  // Pay) isn't matched by, so its icon and the mat-icon ones (MoMo/Card) sit at different
+  // baselines. Flex layout sidesteps vertical-align entirely instead of fighting it rule-by-rule.
+  ::ng-deep .mat-button-toggle-label-content {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  ::ng-deep .mat-button-toggle-label-content svg-icon,
+  ::ng-deep .mat-button-toggle-label-content mat-icon {
+    flex-shrink: 0; width: 20px; height: 20px; font-size: 20px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  ::ng-deep .mat-button-toggle:not(.mat-button-toggle-checked):hover {
+    background: var(--ml-action-soft);
+  }
+  ::ng-deep .mat-button-toggle-checked {
+    background: var(--ml-action-soft) !important;
+  }
+  ::ng-deep .mat-button-toggle-checked::after {
+    content: '\2713';
+    position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--ml-action-strong); color: var(--ml-on-action, #fff);
+    display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); z-index: 1;
+  }
+}
+
+.field-group { margin-bottom: 12px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
 .qr-placeholder {
@@ -89,14 +133,22 @@
 .summary-row {
   display: flex; justify-content: space-between;
   font-size: 0.875rem; color: var(--ml-ink); margin-bottom: 8px;
-  &.total { font-weight: 600; margin-top: 4px; }
 }
-.summary-col .total-amount {
-  font-family: var(--ml-font-head); font-size: 1.15rem;
+
+// The grand total previously rendered as a plain text row above the CTA and read as
+// low-priority — give it its own tinted block so it registers before the pay button.
+.total-block {
+  display: flex; justify-content: space-between; align-items: baseline;
+  background: var(--ml-action-soft); border: 1px solid var(--ml-action-ring);
+  border-radius: var(--ml-r-md); padding: 12px 14px; margin: 14px 0;
+  font-weight: 600; color: var(--ml-ink);
+}
+.total-amount {
+  font-family: var(--ml-font-head); font-size: 1.3rem;
   font-weight: 600; color: var(--ml-action-strong);
 }
 .confirm-btn {
-  width: 100%; justify-content: center; margin-top: 20px;
+  width: 100%; justify-content: center; margin-top: 4px;
   font-size: 0.85rem; letter-spacing: 0.04em;
   ::ng-deep .mat-mdc-progress-spinner circle { stroke: var(--ml-on-action) !important; }
 }
@@ -121,16 +173,24 @@
 }
 
 // Same warn-then-danger pattern as the seat-selection step's countdown.
+// Was a thin single-line strip that was easy to scroll past — now full-width with a
+// draining progress bar along the bottom edge so the countdown stays visually urgent.
 .hold-banner {
+  position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 8px;
-  margin: 16px 40px 0; padding: 10px 14px; border-radius: var(--ml-r-sm);
+  margin: 16px 40px 0; padding: 12px 16px; border-radius: var(--ml-r-md);
   font-size: 0.9rem; font-weight: 600;
   background: var(--ml-warn-soft); color: var(--ml-warn-ink);
   border: 1px solid var(--ml-warn);
 }
 .hold-banner mat-icon { font-size: 20px; width: 20px; height: 20px; }
+.hold-banner .hold-bar {
+  position: absolute; left: 0; bottom: 0; height: 3px; background: var(--ml-warn);
+  transition: width 1s linear;
+}
 .hold-banner.expired {
   background: var(--ml-danger-soft); border-color: var(--ml-danger); color: var(--ml-danger-ink);
+  .hold-bar { background: var(--ml-danger); width: 100%; }
 }
 
 .back-link {

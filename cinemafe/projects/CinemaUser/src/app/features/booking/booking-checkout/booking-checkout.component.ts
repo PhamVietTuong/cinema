@@ -23,12 +23,15 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   showTimeId = '';
   roomId = '';
 
+  // Mirrors PendingBookingReaper's hold window server-side.
+  private static readonly HOLD_SECONDS = 15 * 60;
+
   /** Client-side seat-hold countdown, started on arrival here — this mirrors
    * PendingBookingReaper's 15-minute hold window, which only begins once the booking exists as a
    * Pending invoice (i.e. from this page onward). The SignalR seat lock, started on page 1 and
    * carried over by NOT stopping the hub connection during navigation, is what protects the seats
    * up to this point. */
-  holdSecondsLeft = 15 * 60;
+  holdSecondsLeft = BookingCheckoutComponent.HOLD_SECONDS;
   holdExpired = false;
   private _holdTimer: any;
 
@@ -142,6 +145,10 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     const m = Math.floor(this.holdSecondsLeft / 60);
     const s = this.holdSecondsLeft % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  get holdProgressPercent(): number {
+    return (this.holdSecondsLeft / BookingCheckoutComponent.HOLD_SECONDS) * 100;
   }
 
   clampPoints(): void {

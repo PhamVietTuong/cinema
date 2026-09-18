@@ -37,7 +37,9 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
                 sr.RoomId,
                 sr.Room.Name,
                 sr.Room.RoomType.Name,
+                sr.Room.TheaterId,
                 sr.Room.Theater.Name,
+                sr.Room.Theater.Address,
                 sr.Room.TotalRows * sr.Room.TotalColumns))
             .ToListAsync();
 

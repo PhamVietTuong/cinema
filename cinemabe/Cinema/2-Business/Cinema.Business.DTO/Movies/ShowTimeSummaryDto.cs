@@ -6,7 +6,9 @@ public class ShowTimeSummaryDTO
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public ProjectionForm ProjectionForm { get; set; }
+    public Guid TheaterId { get; set; }
     public string TheaterName { get; set; } = string.Empty;
+    public string TheaterAddress { get; set; } = string.Empty;
     public string RoomName { get; set; } = string.Empty;
     public string RoomTypeName { get; set; } = string.Empty;
     public Guid RoomId { get; set; }

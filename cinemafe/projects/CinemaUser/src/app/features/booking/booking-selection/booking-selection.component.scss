@@ -273,6 +273,16 @@
 .option-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--cx-space-3);
 }
+// Ticket-type tiles: cap the track width and center the row instead of letting a handful of
+// categories (Adult/Student/...) stretch edge-to-edge across the card.
+.option-grid.ticket-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 180px));
+  justify-content: center;
+}
+// Snack/combo tiles: wider tracks to fit the image + text row layout.
+.option-grid.food-grid {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
 .option-card {
   position: relative; overflow: hidden;
   display: flex; flex-direction: column; justify-content: space-between; gap: var(--cx-space-4);
@@ -317,6 +327,28 @@
 .option-qty button:disabled { opacity: 0.4; cursor: default; }
 .option-qty span { min-width: 16px; text-align: center; font-weight: 700; color: var(--ml-ink); }
 .ticket-progress { font-size: var(--cx-text-xs); color: var(--ml-muted); margin: var(--cx-space-3) 0 0; }
+
+// Snack/combo tiles: a square product-photo thumbnail on the left, name/price/stepper on the right
+// (no mag-stripe/chip decoration — that look stays ticket-only).
+.food-card {
+  flex-direction: row; align-items: flex-start; gap: var(--cx-space-3);
+  min-height: 0; padding: 12px;
+}
+.food-media {
+  width: 96px; height: 96px; flex: none; overflow: hidden;
+  border-radius: var(--ml-r-sm); background: var(--ml-panel-2);
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+.food-media-fallback {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  color: var(--ml-faint);
+  mat-icon { font-size: 1.7rem; width: 1.7rem; height: 1.7rem; }
+}
+.food-body {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: space-between; gap: var(--cx-space-2);
+}
 
 .confirm-btn {
   width: 100%; justify-content: center; margin-top: var(--cx-space-5);

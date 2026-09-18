@@ -6,7 +6,9 @@ const showTime = (over: Partial<any>): any => ({
   id: 'st-1',
   roomId: 'room-1',
   startTime: '2026-01-01T20:00:00',
+  theaterId: 'theater-1',
   theaterName: 'Cinema One',
+  theaterAddress: '1 Main St',
   roomName: 'Room A',
   roomTypeName: 'Standard',
   projectionForm: 0,
@@ -23,7 +25,9 @@ describe('MovieDetailComponent', () => {
     const route = { snapshot: { paramMap: { get: () => 'movie-1' } } };
     router = { navigate: vi.fn() };
     const cdr = { markForCheck: vi.fn() };
-    return new MovieDetailComponent(store as never, route as never, router as never, cdr as never);
+    const translate = { instant: (key: string) => key };
+    const toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
+    return new MovieDetailComponent(store as never, route as never, router as never, cdr as never, translate as never, toast as never);
   };
 
   describe('buildDateTabs', () => {
@@ -50,18 +54,45 @@ describe('MovieDetailComponent', () => {
       const tomorrow = c.dateTabs[1].key;
       const todayIso = `${today}T20:00:00`;
       const showTimes = [
-        showTime({ id: 's1', theaterName: 'Zeta Cinema', startTime: `${today}T18:00:00` }),
-        showTime({ id: 's2', theaterName: 'Alpha Cinema', startTime: `${today}T21:00:00` }),
-        showTime({ id: 's3', theaterName: 'Alpha Cinema', startTime: todayIso }),
-        showTime({ id: 's4', theaterName: 'Alpha Cinema', startTime: `${tomorrow}T10:00:00` }),
+        showTime({ id: 's1', theaterId: 'zeta-id', theaterName: 'Zeta Cinema', theaterAddress: '9 Zeta Rd', startTime: `${today}T18:00:00` }),
+        showTime({ id: 's2', theaterId: 'alpha-id', theaterName: 'Alpha Cinema', theaterAddress: '1 Alpha St', startTime: `${today}T21:00:00` }),
+        showTime({ id: 's3', theaterId: 'alpha-id', theaterName: 'Alpha Cinema', theaterAddress: '1 Alpha St', startTime: todayIso }),
+        showTime({ id: 's4', theaterId: 'alpha-id', theaterName: 'Alpha Cinema', theaterAddress: '1 Alpha St', startTime: `${tomorrow}T10:00:00` }),
       ];
 
       const groups = c.groupByTheater(showTimes, today);
 
       expect(groups.map(g => g.theaterName)).toEqual(['Alpha Cinema', 'Zeta Cinema']);
+      expect(groups.map(g => g.theaterAddress)).toEqual(['1 Alpha St', '9 Zeta Rd']);
       const alpha = groups.find(g => g.theaterName === 'Alpha Cinema')!;
       const times = alpha.formats.flatMap(f => f.items.map((i: any) => i.id));
       expect(times).toEqual(['s3', 's2']); // ascending by time, tomorrow's s4 excluded
+    });
+
+    it('keeps two distinct theaters that share a display name as separate groups', () => {
+      const c = build();
+      c.ngOnInit();
+      const today = c.dateTabs[0].key;
+      const showTimes = [
+        showTime({ id: 's1', theaterId: 'branch-a', theaterName: 'Cinema Plaza', theaterAddress: '1 Branch A', startTime: `${today}T18:00:00` }),
+        showTime({ id: 's2', theaterId: 'branch-b', theaterName: 'Cinema Plaza', theaterAddress: '2 Branch B', startTime: `${today}T19:00:00` }),
+      ];
+
+      const groups = c.groupByTheater(showTimes, today);
+
+      expect(groups).toHaveLength(2);
+      expect(groups.map(g => g.theaterAddress).sort()).toEqual(['1 Branch A', '2 Branch B']);
+    });
+
+    it('defaults theaterAddress to an empty string when missing', () => {
+      const c = build();
+      c.ngOnInit();
+      const today = c.dateTabs[0].key;
+      const showTimes = [showTime({ id: 's1', theaterAddress: undefined, startTime: `${today}T18:00:00` })];
+
+      const groups = c.groupByTheater(showTimes, today);
+
+      expect(groups[0].theaterAddress).toBe('');
     });
 
     it('assigns a 23:30 local showtime to its own local day, not the next day', () => {

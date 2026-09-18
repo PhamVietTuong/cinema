@@ -89,10 +89,12 @@ public class MovieServiceTests
     [Fact]
     public async Task GetDetailAsync_MapsScheduleRowsToSummaries_SubtractingBookedSeats()
     {
-        var movieId  = Guid.NewGuid();
-        var showTime = Guid.NewGuid();
-        var roomA    = Guid.NewGuid();
-        var roomB    = Guid.NewGuid();
+        var movieId   = Guid.NewGuid();
+        var showTime  = Guid.NewGuid();
+        var roomA     = Guid.NewGuid();
+        var roomB     = Guid.NewGuid();
+        var theaterA  = Guid.NewGuid();
+        var theaterB  = Guid.NewGuid();
         var movie    = new Movie { Id = movieId, Title = "Test Movie", Evaluations = new List<Evaluation>() };
         _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
         _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(0);
@@ -101,9 +103,9 @@ public class MovieServiceTests
         var rows = new List<MovieScheduleRow>
         {
             new(showTime, DateTime.Today.AddHours(20), DateTime.Today.AddHours(22), ProjectionForm.TwoD,
-                roomA, "Room A", "Standard", "Cinema One", 100),
+                roomA, "Room A", "Standard", theaterA, "Cinema One", "1 Alpha St, District 1", 100),
             new(showTime, DateTime.Today.AddHours(20), DateTime.Today.AddHours(22), ProjectionForm.ThreeD,
-                roomB, "Room B", "IMAX", "Cinema Two", 50),
+                roomB, "Room B", "IMAX", theaterB, "Cinema Two", "2 Beta Rd, District 3", 50),
         };
         _uowMock.Setup(u => u.ShowTimeStore.GetMovieScheduleAsync(movieId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(rows);
@@ -114,10 +116,14 @@ public class MovieServiceTests
 
         result.ShowTimes.Should().HaveCount(2);
         var a = result.ShowTimes.Single(x => x.RoomId == roomA);
+        a.TheaterId.Should().Be(theaterA);
         a.TheaterName.Should().Be("Cinema One");
+        a.TheaterAddress.Should().Be("1 Alpha St, District 1");
         a.AvailableSeats.Should().Be(70);
         var b = result.ShowTimes.Single(x => x.RoomId == roomB);
+        b.TheaterId.Should().Be(theaterB);
         b.TheaterName.Should().Be("Cinema Two");
+        b.TheaterAddress.Should().Be("2 Beta Rd, District 3");
         b.AvailableSeats.Should().Be(50);
     }
 

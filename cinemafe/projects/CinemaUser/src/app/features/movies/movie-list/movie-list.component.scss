@@ -7,7 +7,10 @@
 .page-title { font-family: var(--ml-font-head); font-size: 1.7rem; font-weight: 600; text-transform: uppercase; color: var(--ml-ink); margin: 0; }
 .page-sub { color: var(--ml-muted); margin: 8px 0 0; max-width: 520px; font-size: 0.9rem; }
 
-.filter-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 22px; flex-wrap: wrap; }
+.filter-row {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 22px; flex-wrap: nowrap;
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+}
 .tabs { display: inline-flex; gap: 6px; background: var(--ml-panel-2); border: 1px solid var(--ml-rule); padding: 5px; border-radius: var(--ml-r-md); }
 .tab {
   border: none; background: transparent; color: var(--ml-muted);
