@@ -412,7 +412,8 @@
       "theaterPrice": "Giá mặc định của rạp",
       "overrideLabel": "Giá ghi đè",
       "clearOverride": "Xóa ghi đè",
-      "empty": "Rạp này chưa có đối tượng vé nào."
+      "empty": "Rạp này chưa có đối tượng vé nào.",
+      "restrictionWarning": "Chỉ cần lưu một giá ở đây sẽ giới hạn loại phòng này CHỈ còn các đối tượng được liệt kê bên dưới — đối tượng nào để trống sẽ không được áp dụng cho loại phòng này, dù đối tượng đó vẫn tồn tại chung cho cả rạp. Để trống tất cả để loại phòng này vẫn áp dụng cho mọi đối tượng."
     }
   },
   "users": {

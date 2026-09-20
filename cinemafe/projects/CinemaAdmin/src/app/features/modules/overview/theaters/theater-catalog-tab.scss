@@ -11,6 +11,14 @@
 .ad-checkbox-list { display: flex; flex-wrap: wrap; gap: 8px 20px; }
 .ad-checkbox-list label { display: flex; align-items: center; gap: 6px; font-weight: normal; }
 
+.ad-warning-banner {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 12px; margin-bottom: 16px; border-radius: var(--ml-r-sm, 6px);
+  background: var(--ml-warn-soft); color: var(--ml-warn-ink);
+  font-size: 0.85rem; line-height: 1.4;
+  mat-icon { font-size: 20px; width: 20px; height: 20px; flex: none; }
+}
+
 @media (max-width: 720px) {
   .catalog-form { grid-template-columns: 1fr; }
 }

@@ -428,8 +428,10 @@ ALTER TABLE [SeatType]       ADD CONSTRAINT [FK_SeatType_Theater_TheaterId]     
 ALTER TABLE [FoodAndDrink]   ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId]   FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 ALTER TABLE [PatronCategory] ADD CONSTRAINT [FK_PatronCategory_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 
--- Per-RoomType override of a PatronCategory row's Price. No row for a (RoomType, PatronCategory) pair
--- means that RoomType uses the theater-wide PatronCategory.Price — Price is NOT NULL, so "not
+-- Per-RoomType override of a PatronCategory row's Price. Also doubles as the RoomType's eligibility
+-- gate: zero rows for a RoomType = unrestricted (every theater-wide category is bookable there at its
+-- default price); ANY row = restricted to exactly the categories that have one (e.g. an auditorium
+-- seeded with only Adult/Student rows won't offer Senior/Child at all). Price is NOT NULL, so "not
 -- overridden" has exactly one encoding (absence of a row), never a null value.
 CREATE TABLE [RoomTypePatronCategoryPrice] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),

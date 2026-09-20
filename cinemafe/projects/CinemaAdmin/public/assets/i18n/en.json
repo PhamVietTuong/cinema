@@ -412,7 +412,8 @@
       "theaterPrice": "Theater default",
       "overrideLabel": "Override price",
       "clearOverride": "Clear override",
-      "empty": "This theater has no patron categories yet."
+      "empty": "This theater has no patron categories yet.",
+      "restrictionWarning": "Saving even one price here restricts this room type to ONLY the categories listed below — any category left blank will not be offered in this room type at all, even if it exists theater-wide. Leave everything blank to keep this room type open to every category."
     }
   },
   "users": {

@@ -234,6 +234,77 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task GetShowTimePricesAsync_RoomTypeWithAnyOverrideRow_RestrictsToOnlyThoseCategories()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+        var studentId  = Guid.NewGuid();
+        var childId    = Guid.NewGuid();
+
+        SetupPricingContext(
+            theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            startTime: new DateTime(2026, 3, 2, 19, 0, 0), projectionForm: ProjectionForm.TwoD,
+            categories: new List<PatronCategory>
+            {
+                new() { Id = adultId,   TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult",   Price = 90000, IsActive = true },
+                new() { Id = studentId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Student", Price = 65000, IsActive = true },
+                new() { Id = childId,   TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Child",   Price = 50000, IsActive = true },
+            },
+            kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        // This room type has override rows for Adult and Student only — Child has none, so even
+        // though Child exists theater-wide, this room type must not offer it at all.
+        _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<RoomTypePatronCategoryPrice>
+            {
+                new() { RoomTypeId = roomTypeId, PatronCategoryId = adultId,   Price = 90000 },
+                new() { RoomTypeId = roomTypeId, PatronCategoryId = studentId, Price = 65000 },
+            });
+
+        var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
+
+        result.Select(r => r.PatronCategoryName).Should().BeEquivalentTo(new[] { "Adult", "Student" });
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_RejectsCategoryNotOverriddenForARestrictedRoomType()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+        var childId    = Guid.NewGuid();
+        var seat       = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(new List<PatronCategory>
+            {
+                new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 90000, IsActive = true },
+                new() { Id = childId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Child", Price = 50000, IsActive = true },
+            });
+        // Restricted room type: only Adult has an override row, so Child is not offered here at all.
+        _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<RoomTypePatronCategoryPrice> { new() { RoomTypeId = roomTypeId, PatronCategoryId = adultId, Price = 90000 } });
+        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RowName = "H", ColIndex = 1 } });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = seat, PatronCategoryId = childId } },
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*patron category*");
+    }
+
+    [Fact]
     public async Task GetShowTimePricesAsync_DoublePrice_IndependentlyConfigured_NotDerivedFromStandard()
     {
         var theaterId    = Guid.NewGuid();

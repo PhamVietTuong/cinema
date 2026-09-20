@@ -586,15 +586,26 @@ public class BookingManager : IBookingManager
         var categoryList = categories.ToList();
         var categoryIds  = categoryList.Select(c => c.Id).ToList();
 
-        var overrideByCategory = categoryIds.Count == 0
-            ? new Dictionary<Guid, double>()
+        var overridesForRoomType = categoryIds.Count == 0
+            ? new List<RoomTypePatronCategoryPrice>()
             : (await _uow.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(categoryIds))
                 .Where(o => o.RoomTypeId == room.RoomTypeId)
-                .ToDictionary(o => o.PatronCategoryId, o => o.Price);
+                .ToList();
+        var overrideByCategory = overridesForRoomType.ToDictionary(o => o.PatronCategoryId, o => o.Price);
+        // Same "empty = unrestricted, any row = restricted" pattern as the old PatronCategorySeatType
+        // gate: a RoomType with zero override rows offers every theater-wide category at its default
+        // price; a RoomType with ANY override row is restricted to exactly the categories that have
+        // one (e.g. "this IMAX hall only accepts Adult and Student") — a category with no row for
+        // THIS room type isn't offered here at all, even though it exists theater-wide.
+        var isRoomTypeRestricted = overridesForRoomType.Count > 0;
 
         var byCategoryId = new Dictionary<Guid, ResolvedCategory>();
         foreach (var c in categoryList)
         {
+            if (isRoomTypeRestricted && !overrideByCategory.ContainsKey(c.Id))
+            {
+                continue;
+            }
             var resolvedBase = overrideByCategory.TryGetValue(c.Id, out var overridePrice) ? overridePrice : c.Price;
             var price = Math.Round(resolvedBase * (timeFactor ?? 1.0) * holidayFactor + threeDSurcharge + showTimeRoom.BasePrice, 2);
             var kind  = kindBySeatTypeId.TryGetValue(c.SeatTypeId, out var k) ? k : SeatKind.Standard;

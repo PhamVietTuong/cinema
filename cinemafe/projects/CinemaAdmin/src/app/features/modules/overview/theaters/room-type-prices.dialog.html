@@ -4,6 +4,11 @@
 </div>
 
 <mat-dialog-content>
+  <div class="ad-warning-banner">
+    <mat-icon>warning</mat-icon>
+    <span>{{ 'theaters.roomTypePrices.restrictionWarning' | translate }}</span>
+  </div>
+
   <div *ngIf="loading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'common.loading' | translate }}</p></div>
 
   <ng-container *ngIf="!loading">
