@@ -23,5 +23,11 @@ public class RoomType : BaseEntity
     /// <summary>Flat amount added per ticket when the screening is 3D, on top of the room class base price.</summary>
     public double ThreeDSurcharge { get; set; }
 
+    /// <summary>
+    /// Minutes of exclusive room time reserved between the end of one screening and the start of the
+    /// next in a room of this class, for audience seating and cleanup. 0 = no buffer required.
+    /// </summary>
+    public int TurnoverBufferMinutes { get; set; }
+
     public ICollection<Room> Rooms { get; set; } = new List<Room>();
 }

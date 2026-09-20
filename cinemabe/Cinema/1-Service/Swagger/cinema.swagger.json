@@ -4384,7 +4384,9 @@
           },
           "duration": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 600.0,
+            "minimum": 1.0
           },
           "releaseDate": {
             "type": "string",
@@ -4448,7 +4450,9 @@
           },
           "duration": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "maximum": 600.0,
+            "minimum": 1.0
           },
           "releaseDate": {
             "type": "string",
@@ -6642,6 +6646,10 @@
           "threeDSurcharge": {
             "type": "number",
             "format": "double"
+          },
+          "turnoverBufferMinutes": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6666,6 +6674,10 @@
           "threeDSurcharge": {
             "type": "number",
             "format": "double"
+          },
+          "turnoverBufferMinutes": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6694,6 +6706,10 @@
           "threeDSurcharge": {
             "type": "number",
             "format": "double"
+          },
+          "turnoverBufferMinutes": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6776,6 +6792,10 @@
             "nullable": true
           },
           "basePrice": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "turnoverBufferMinutes": {
             "type": "integer",
             "format": "int32"
           }

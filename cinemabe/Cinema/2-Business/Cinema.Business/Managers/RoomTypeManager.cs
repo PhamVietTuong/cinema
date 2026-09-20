@@ -93,6 +93,7 @@ public class RoomTypeManager : IRoomTypeManager
 
     public async Task<RoomTypeDTO> CreateAsync(CreateRoomTypeRequest request)
     {
+        ValidateTurnoverBuffer(request.TurnoverBufferMinutes);
         var entity = request.ToNewEntity<CreateRoomTypeRequest, RoomType>();
         await _uow.RoomTypeStore.CreateAsync(entity);
         return entity.ToDTO<RoomType, RoomTypeDTO>();
@@ -100,6 +101,7 @@ public class RoomTypeManager : IRoomTypeManager
 
     public async Task<RoomTypeDTO> UpdateAsync(UpdateRoomTypeRequest request)
     {
+        ValidateTurnoverBuffer(request.TurnoverBufferMinutes);
         var entity = await _uow.RoomTypeStore.GetByIdAsync(request.Id);
         if (entity == null)
         {
@@ -113,5 +115,22 @@ public class RoomTypeManager : IRoomTypeManager
     public async Task DeleteAsync(Guid id)
     {
         await _uow.RoomTypeStore.DeleteAsync(id);
+    }
+
+    private const int MaxTurnoverBufferMinutes = 240;
+
+    /// <summary>
+    /// Rejects a nonsensical buffer before it reaches the room-overlap check: a negative value
+    /// would shrink the exclusion window and let real overlaps through, and an absurdly large one
+    /// would block scheduling for the whole day. The Angular form's min validator alone doesn't
+    /// stop a direct API call.
+    /// </summary>
+    private static void ValidateTurnoverBuffer(int turnoverBufferMinutes)
+    {
+        if (turnoverBufferMinutes < 0 || turnoverBufferMinutes > MaxTurnoverBufferMinutes)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(RoomType.TurnoverBufferMinutes)} must be between 0 and {MaxTurnoverBufferMinutes} minutes.");
+        }
     }
 }

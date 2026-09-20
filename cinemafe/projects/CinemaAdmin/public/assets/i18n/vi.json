@@ -171,6 +171,7 @@
       "cast": "Diễn Viên",
       "castPlaceholder": "Danh sách diễn viên",
       "duration": "Thời Lượng (phút)",
+      "durationRange": "Thời lượng phải từ 1 đến 600 phút.",
       "language": "Ngôn Ngữ",
       "languagePlaceholder": "VD: Tiếng Anh",
       "subtitle": "Phụ Đề",
@@ -330,6 +331,8 @@
       "descPlaceholder": "Màn hình laser, Dolby Atmos...",
       "supportsThreeD": "Chiếu được 3D",
       "threeDSurcharge": "Phụ thu 3D (đ/vé)",
+      "turnoverBufferMinutes": "Thời gian dọn dẹp giữa suất (phút)",
+      "turnoverBufferHint": "Số phút tối thiểu giữa các suất chiếu trong loại phòng này, để khán giả vào chỗ và dọn dẹp.",
       "empty": "Rạp này chưa có loại phòng nào."
     },
     "seatTypes": {
@@ -692,7 +695,11 @@
     "basePrice": "Giá Vé Cơ Bản (đ)",
     "onSale": "Mở bán",
     "saveShowTime": "Lưu Suất Chiếu",
-    "confirmDelete": "Bạn có chắc muốn xóa suất chiếu này?"
+    "confirmDelete": "Bạn có chắc muốn xóa suất chiếu này?",
+    "runtimeHint": "Thời lượng {{minutes}} phút",
+    "endsNextDay": "Kết thúc vào ngày hôm sau",
+    "turnoverBuffer": "Thời gian dọn dẹp",
+    "turnoverBufferTooltip": "{{minutes}} phút dọn dẹp giữa suất"
   },
   "userTypes": {
     "title": "Quản Lý Loại Người Dùng",

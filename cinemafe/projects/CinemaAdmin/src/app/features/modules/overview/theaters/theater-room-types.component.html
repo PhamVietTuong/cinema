@@ -38,6 +38,10 @@
         <ng-template let-row="row" ngx-datatable-cell-template>{{ row.supportsThreeD ? (row.threeDSurcharge | number) : '—' }}</ng-template>
       </ngx-datatable-column>
 
+      <ngx-datatable-column [name]="'theaters.roomTypes.turnoverBufferMinutes' | translate" prop="turnoverBufferMinutes" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.turnoverBufferMinutes || '—' }}</ng-template>
+      </ngx-datatable-column>
+
       <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="ad-td-actions ad-td-actions--mat">
@@ -64,6 +68,7 @@
         <div class="ad-mobile-card-row"><span>{{ 'theaters.roomTypes.descLabel' | translate }}</span><span>{{ row.description || '—' }}</span></div>
         <div class="ad-mobile-card-row"><span>{{ 'theaters.roomTypes.supportsThreeD' | translate }}</span><span>{{ row.supportsThreeD ? ('common.yes' | translate) : ('common.no' | translate) }}</span></div>
         <div class="ad-mobile-card-row"><span>{{ 'theaters.roomTypes.threeDSurcharge' | translate }}</span><span>{{ row.supportsThreeD ? (row.threeDSurcharge | number) : '—' }}</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'theaters.roomTypes.turnoverBufferMinutes' | translate }}</span><span>{{ row.turnoverBufferMinutes || '—' }}</span></div>
         <div class="ad-mobile-card-actions">
           <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
           <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>

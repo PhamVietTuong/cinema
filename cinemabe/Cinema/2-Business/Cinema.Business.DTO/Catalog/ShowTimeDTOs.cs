@@ -17,6 +17,10 @@ public class ShowTimeDTO
     public string? RoomName { get; set; }
     public string? RoomTypeName { get; set; }
     public int BasePrice { get; set; }
+
+    /// <summary>Minutes of turnover reserved after this showtime, copied from the assigned room's
+    /// class. 0 when no room is assigned or the room's class has no buffer configured.</summary>
+    public int TurnoverBufferMinutes { get; set; }
 }
 
 public class CreateShowTimeRequest

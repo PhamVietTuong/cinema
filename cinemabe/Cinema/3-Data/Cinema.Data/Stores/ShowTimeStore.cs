@@ -78,11 +78,19 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
             .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.RoomType)
             .FirstOrDefaultAsync(s => s.Id == id);
 
-    public async Task<bool> HasRoomOverlapAsync(Guid roomId, DateTime startTime, DateTime endTime, Guid? excludeShowTimeId)
+    public async Task<bool> HasRoomOverlapAsync(Guid roomId, DateTime startTime, DateTime endTime, int bufferMinutes, Guid? excludeShowTimeId)
+    {
+        // Expand the candidate window on both sides by the buffer before comparing, so the room stays
+        // exclusively reserved for `bufferMinutes` between the end of one showtime and the start of the
+        // next. Computed here, not inside the predicate, so EF doesn't translate AddMinutes per row.
+        var windowStart = startTime.AddMinutes(-bufferMinutes);
+        var windowEnd = endTime.AddMinutes(bufferMinutes);
+
         // Two intervals overlap iff each starts before the other ends.
-        => await DbSet.AnyAsync(s =>
+        return await DbSet.AnyAsync(s =>
             s.IsActive &&
             (excludeShowTimeId == null || s.Id != excludeShowTimeId) &&
             s.ShowTimeRooms.Any(sr => sr.RoomId == roomId) &&
-            s.StartTime < endTime && startTime < s.EndTime);
+            s.StartTime < windowEnd && windowStart < s.EndTime);
+    }
 }

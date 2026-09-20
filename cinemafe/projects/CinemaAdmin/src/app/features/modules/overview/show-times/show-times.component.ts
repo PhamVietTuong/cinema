@@ -15,6 +15,9 @@ interface PlacedBlock {
   timeLabel: string; // "14:30 – 16:45"
   formLabel: string; // 2D / 3D / IMAX
   typeClass: string; // st-block--normal | --premiere | --special
+  bufferTop: number;     // px from the top of the grid body; equals top + height
+  bufferHeight: number;  // px; 0 when the room's class has no turnover buffer (renders nothing)
+  bufferMinutes: number; // the configured buffer, for the tooltip (even when bufferHeight is clipped)
 }
 
 interface DayColumn {
@@ -124,14 +127,27 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _place(st: Dto, start: Date, end: Date): PlacedBlock {
     const top = Math.max(0, (this._hoursFromStart(start)) * this.rowHeight);
     const rawHeight = (this._hoursFromStart(end) - this._hoursFromStart(start)) * this.rowHeight;
+    const height = Math.max(28, rawHeight);
+
+    // rowHeight is 60px/hour, i.e. exactly 1px per minute, so the buffer's minute count doubles
+    // as its pixel height. Anchored to the block's rendered bottom (top + height), not recomputed
+    // from st.endTime, so it stays glued to the block even when height was clamped to the 28px
+    // minimum or the showtime crosses midnight.
+    const bufferMinutes = st.turnoverBufferMinutes ?? 0;
+    const bufferTop = top + height;
+    const bufferHeight = bufferMinutes > 0 ? Math.max(0, Math.min(bufferMinutes, this.gridHeight - bufferTop)) : 0;
+
     return {
       st,
       top,
-      height: Math.max(28, rawHeight),
+      height,
       title: this.movieTitle(st.movieId),
       timeLabel: `${this._hm(start)} – ${this._hm(end)}`,
       formLabel: this.formLabel(st.projectionForm),
       typeClass: this.showTimeTypes.find(t => t.value === st.showTimeType)?.cls ?? 'st-block--normal',
+      bufferTop,
+      bufferHeight,
+      bufferMinutes,
     };
   }
 

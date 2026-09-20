@@ -40,7 +40,7 @@ export class MovieDialog implements OnInit {
     this.form = this._fb.group({
       title: [data.movie?.title ?? '', Validators.required],
       description: [data.movie?.description ?? '', Validators.required],
-      duration: [data.movie?.duration ?? 0, [Validators.required, Validators.min(1)]],
+      duration: [data.movie?.duration ?? 0, [Validators.required, Validators.min(1), Validators.max(600)]],
       releaseDate: [this._toDateInput(data.movie?.releaseDate), Validators.required],
       endDate: [this._toDateInput(data.movie?.endDate)],
       director: [data.movie?.director ?? ''],

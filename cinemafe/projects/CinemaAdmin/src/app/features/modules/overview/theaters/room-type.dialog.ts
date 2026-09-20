@@ -34,6 +34,7 @@ export class RoomTypeDialog {
       description: [_data.roomType?.description ?? ''],
       supportsThreeD: [_data.roomType?.supportsThreeD ?? false],
       threeDSurcharge: [_data.roomType?.threeDSurcharge ?? 0, [Validators.min(0)]],
+      turnoverBufferMinutes: [_data.roomType?.turnoverBufferMinutes ?? 0, [Validators.min(0), Validators.max(240)]],
     });
   }
 

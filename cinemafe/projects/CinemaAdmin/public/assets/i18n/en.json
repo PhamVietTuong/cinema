@@ -171,6 +171,7 @@
       "cast": "Cast",
       "castPlaceholder": "List of actors",
       "duration": "Duration (minutes)",
+      "durationRange": "Duration must be between 1 and 600 minutes.",
       "language": "Language",
       "languagePlaceholder": "e.g. English",
       "subtitle": "Subtitle",
@@ -330,6 +331,8 @@
       "descPlaceholder": "Laser screen, Dolby Atmos...",
       "supportsThreeD": "3D capable",
       "threeDSurcharge": "3D surcharge (per ticket)",
+      "turnoverBufferMinutes": "Turnover buffer (minutes)",
+      "turnoverBufferHint": "Minimum minutes required between showtimes in this room class, for seating and cleanup.",
       "empty": "This theater has no room types yet."
     },
     "seatTypes": {
@@ -692,7 +695,11 @@
     "basePrice": "Base Ticket Price (₫)",
     "onSale": "On sale",
     "saveShowTime": "Save Showtime",
-    "confirmDelete": "Are you sure you want to delete this showtime?"
+    "confirmDelete": "Are you sure you want to delete this showtime?",
+    "runtimeHint": "Runs {{minutes}} min",
+    "endsNextDay": "Ends the next day",
+    "turnoverBuffer": "Turnover buffer",
+    "turnoverBufferTooltip": "{{minutes}} min turnover buffer"
   },
   "userTypes": {
     "title": "User Type Management",

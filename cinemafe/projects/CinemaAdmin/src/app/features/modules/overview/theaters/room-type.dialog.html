@@ -36,6 +36,17 @@
         <span class="dlg-switch-label" id="rt-supportsThreeD-lbl">{{ 'theaters.roomTypes.supportsThreeD' | translate }}</span>
         <mat-slide-toggle formControlName="supportsThreeD" aria-labelledby="rt-supportsThreeD-lbl"></mat-slide-toggle>
       </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="rt-turnoverBufferMinutes">{{ 'theaters.roomTypes.turnoverBufferMinutes' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="rt-turnoverBufferMinutes" type="number" min="0" max="240" formControlName="turnoverBufferMinutes" placeholder="0">
+            <mat-hint>{{ 'theaters.roomTypes.turnoverBufferHint' | translate }}</mat-hint>
+            <mat-error *ngIf="form.controls['turnoverBufferMinutes'].hasError('min') || form.controls['turnoverBufferMinutes'].hasError('max')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
     </div>
   </mat-dialog-content>
 

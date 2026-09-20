@@ -5,6 +5,7 @@
   --st-premiere: var(--ad-secondary);
   --st-special:  var(--ml-warn);
   --st-axis-w:   64px;
+  --st-buffer-hatch: var(--ad-faint);
 }
 
 .st-page { max-width: 1500px; }
@@ -36,6 +37,10 @@
 .st-dot.st-block--normal   { background: var(--st-normal); }
 .st-dot.st-block--premiere { background: var(--st-premiere); }
 .st-dot.st-block--special  { background: var(--st-special); }
+.st-dot--buffer {
+  background: repeating-linear-gradient(45deg, var(--st-buffer-hatch), var(--st-buffer-hatch) 2px, transparent 2px, transparent 5px);
+  border: 1px solid var(--ad-line-soft);
+}
 
 // ── Board / grid ──────────────────────────────────────────────────────────────
 .st-board { overflow: auto; }
@@ -133,4 +138,19 @@
 .st-block.st-block--normal   { border-left-color: var(--st-normal); }
 .st-block.st-block--premiere { border-left-color: var(--st-premiere); }
 .st-block.st-block--special  { border-left-color: var(--st-special); }
+
+// Turnover buffer — room-state, not a showtime type, so it gets a texture rather than a 4th hue.
+// Non-interactive: sits behind blocks (z-index 0 vs. the block's hover z-index 2) and never
+// intercepts a click; the tooltip (native `title`) is its only affordance.
+.st-buffer {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 0;
+  border: 1px solid var(--ad-line-soft);
+  border-radius: 0 0 var(--ad-r-sm) var(--ad-r-sm);
+  background: repeating-linear-gradient(45deg, var(--st-buffer-hatch), var(--st-buffer-hatch) 2px, transparent 2px, transparent 5px);
+  background-color: var(--ad-surface-2);
+  cursor: default;
+}
 

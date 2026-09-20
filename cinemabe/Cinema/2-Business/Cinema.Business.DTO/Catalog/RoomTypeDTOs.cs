@@ -10,6 +10,7 @@ public class RoomTypeDTO
     public string? Description { get; set; }
     public bool SupportsThreeD { get; set; }
     public double ThreeDSurcharge { get; set; }
+    public int TurnoverBufferMinutes { get; set; }
 }
 
 public class CreateRoomTypeRequest
@@ -19,6 +20,7 @@ public class CreateRoomTypeRequest
     public string? Description { get; set; }
     public bool SupportsThreeD { get; set; }
     public double ThreeDSurcharge { get; set; }
+    public int TurnoverBufferMinutes { get; set; }
 }
 
 public class UpdateRoomTypeRequest : IHasId
@@ -29,4 +31,5 @@ public class UpdateRoomTypeRequest : IHasId
     public string? Description { get; set; }
     public bool SupportsThreeD { get; set; }
     public double ThreeDSurcharge { get; set; }
+    public int TurnoverBufferMinutes { get; set; }
 }

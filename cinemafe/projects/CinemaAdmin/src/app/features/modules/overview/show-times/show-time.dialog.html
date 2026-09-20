@@ -7,10 +7,11 @@
         <div class="dlg-field">
           <label class="dlg-label" id="sh-movieId-lbl">{{ 'showTimes.movie' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="movieId" panelClass="dlg-select-panel" aria-labelledby="sh-movieId-lbl" [placeholder]="'showTimes.selectMovie' | translate">
+            <mat-select formControlName="movieId" (selectionChange)="onMovieOrStartChange()" panelClass="dlg-select-panel" aria-labelledby="sh-movieId-lbl" [placeholder]="'showTimes.selectMovie' | translate">
               <mat-option *ngFor="let m of data.movies" [value]="m.id">{{ m.title }}</mat-option>
             </mat-select>
             <mat-error *ngIf="form.controls['movieId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+            <mat-hint *ngIf="selectedMovieDuration">{{ 'showTimes.runtimeHint' | translate: { minutes: selectedMovieDuration } }}</mat-hint>
           </mat-form-field>
           <div class="st-poster" *ngIf="moviePoster(form.value.movieId) as poster">
             <img [src]="poster" alt="">
@@ -30,13 +31,14 @@
         <div class="dlg-field">
           <label class="dlg-label" for="sh-start">{{ 'showTimes.startTime' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput id="sh-start" type="time" formControlName="start">
+            <input matInput id="sh-start" type="time" formControlName="start" (change)="onMovieOrStartChange()">
           </mat-form-field>
         </div>
         <div class="dlg-field">
           <label class="dlg-label" for="sh-end">{{ 'showTimes.endTime' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput id="sh-end" type="time" formControlName="end">
+            <input matInput id="sh-end" type="time" formControlName="end" (input)="onEndInput()">
+            <mat-hint *ngIf="endIsNextDay">{{ 'showTimes.endsNextDay' | translate }}</mat-hint>
           </mat-form-field>
         </div>
       </div>

@@ -28,6 +28,7 @@
     <span class="st-legend-item"><i class="st-dot st-block--normal"></i> {{ 'showTimes.typeNormal' | translate }}</span>
     <span class="st-legend-item"><i class="st-dot st-block--premiere"></i> {{ 'showTimes.typePremiere' | translate }}</span>
     <span class="st-legend-item"><i class="st-dot st-block--special"></i> {{ 'showTimes.typeSpecial' | translate }}</span>
+    <span class="st-legend-item"><i class="st-dot st-dot--buffer"></i> {{ 'showTimes.turnoverBuffer' | translate }}</span>
   </div>
 
   <!-- Timetable -->
@@ -50,6 +51,17 @@
       <!-- Day columns -->
       <div class="st-col" *ngFor="let d of days" [class.is-today]="d.isToday" [style.height.px]="gridHeight">
         <div class="st-line" *ngFor="let h of hours" [style.height.px]="rowHeight"></div>
+
+        <ng-container *ngFor="let b of d.blocks">
+          <div
+            *ngIf="b.bufferHeight > 0"
+            class="st-buffer"
+            aria-hidden="true"
+            [style.top.px]="b.bufferTop"
+            [style.height.px]="b.bufferHeight"
+            [title]="'showTimes.turnoverBufferTooltip' | translate: { minutes: b.bufferMinutes }">
+          </div>
+        </ng-container>
 
         <button
           *ngFor="let b of d.blocks"

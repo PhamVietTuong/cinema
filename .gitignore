@@ -22,3 +22,4 @@ QA-tests/
 CLAUDE.md
 .playwright-mcp/
 pagelist.txt
+tasks/

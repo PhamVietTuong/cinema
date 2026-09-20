@@ -630,6 +630,16 @@ BEGIN
     PRINT 'Created [PatronCategorySeatType].';
 END
 
+-- ── Room class turnover buffer ──────────────────────────────────────────────
+-- Minutes of exclusive room time reserved between the end of one screening and the start of
+-- the next in a room of this class, for audience seating and cleanup. Defaults to 0 (no buffer)
+-- so existing back-to-back schedules stay valid until an operator opts a class in.
+IF COL_LENGTH('[RoomType]', 'TurnoverBufferMinutes') IS NULL
+BEGIN
+    ALTER TABLE [RoomType] ADD [TurnoverBufferMinutes] int NOT NULL CONSTRAINT [DF_RoomType_TurnoverBufferMinutes] DEFAULT 0;
+    PRINT 'Added [RoomType].[TurnoverBufferMinutes].';
+END
+
 PRINT 'upgrade_db.sql: completed.';
 
 -- ── Adopt EF Core migrations (baseline) ─────────────────────────────────────

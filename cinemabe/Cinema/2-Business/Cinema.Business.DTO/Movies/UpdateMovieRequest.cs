@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Cinema.Business.DTO.Movies;
 
 public class UpdateMovieRequest
@@ -5,6 +7,8 @@ public class UpdateMovieRequest
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+
+    [Range(1, 600, ErrorMessage = "Duration must be between 1 and 600 minutes.")]
     public int Duration { get; set; }
     public DateOnly ReleaseDate { get; set; }
     public DateOnly? EndDate { get; set; }

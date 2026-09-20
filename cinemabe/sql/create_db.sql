@@ -127,6 +127,9 @@ CREATE TABLE [RoomType] (
     -- interior brand that may or may not have a 3D projector.
     [SupportsThreeD] bit NOT NULL DEFAULT 0,
     [ThreeDSurcharge] float NOT NULL DEFAULT 0,
+    -- Minutes of exclusive room time reserved between the end of one screening and the start of
+    -- the next, for audience seating and cleanup. 0 = no buffer required.
+    [TurnoverBufferMinutes] int NOT NULL DEFAULT 0,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_RoomType] PRIMARY KEY ([Id]),

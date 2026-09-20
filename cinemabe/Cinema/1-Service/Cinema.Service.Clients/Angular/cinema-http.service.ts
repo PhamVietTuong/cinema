@@ -10964,6 +10964,7 @@ export class RoomTypeDTO implements IRoomTypeDTO {
     description?: string | undefined;
     supportsThreeD?: boolean;
     threeDSurcharge?: number;
+    turnoverBufferMinutes?: number;
 
     constructor(data?: IRoomTypeDTO) {
         if (data) {
@@ -10982,6 +10983,7 @@ export class RoomTypeDTO implements IRoomTypeDTO {
             this.description = _data["description"];
             this.supportsThreeD = _data["supportsThreeD"];
             this.threeDSurcharge = _data["threeDSurcharge"];
+            this.turnoverBufferMinutes = _data["turnoverBufferMinutes"];
         }
     }
 
@@ -11000,6 +11002,7 @@ export class RoomTypeDTO implements IRoomTypeDTO {
         data["description"] = this.description;
         data["supportsThreeD"] = this.supportsThreeD;
         data["threeDSurcharge"] = this.threeDSurcharge;
+        data["turnoverBufferMinutes"] = this.turnoverBufferMinutes;
         return data;
     }
 }
@@ -11011,6 +11014,7 @@ export interface IRoomTypeDTO {
     description?: string | undefined;
     supportsThreeD?: boolean;
     threeDSurcharge?: number;
+    turnoverBufferMinutes?: number;
 }
 
 export class CreateRoomTypeRequest implements ICreateRoomTypeRequest {
@@ -11019,6 +11023,7 @@ export class CreateRoomTypeRequest implements ICreateRoomTypeRequest {
     description?: string | undefined;
     supportsThreeD?: boolean;
     threeDSurcharge?: number;
+    turnoverBufferMinutes?: number;
 
     constructor(data?: ICreateRoomTypeRequest) {
         if (data) {
@@ -11036,6 +11041,7 @@ export class CreateRoomTypeRequest implements ICreateRoomTypeRequest {
             this.description = _data["description"];
             this.supportsThreeD = _data["supportsThreeD"];
             this.threeDSurcharge = _data["threeDSurcharge"];
+            this.turnoverBufferMinutes = _data["turnoverBufferMinutes"];
         }
     }
 
@@ -11053,6 +11059,7 @@ export class CreateRoomTypeRequest implements ICreateRoomTypeRequest {
         data["description"] = this.description;
         data["supportsThreeD"] = this.supportsThreeD;
         data["threeDSurcharge"] = this.threeDSurcharge;
+        data["turnoverBufferMinutes"] = this.turnoverBufferMinutes;
         return data;
     }
 }
@@ -11063,6 +11070,7 @@ export interface ICreateRoomTypeRequest {
     description?: string | undefined;
     supportsThreeD?: boolean;
     threeDSurcharge?: number;
+    turnoverBufferMinutes?: number;
 }
 
 export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
@@ -11072,6 +11080,7 @@ export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
     description?: string | undefined;
     supportsThreeD?: boolean;
     threeDSurcharge?: number;
+    turnoverBufferMinutes?: number;
 
     constructor(data?: IUpdateRoomTypeRequest) {
         if (data) {
@@ -11090,6 +11099,7 @@ export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
             this.description = _data["description"];
             this.supportsThreeD = _data["supportsThreeD"];
             this.threeDSurcharge = _data["threeDSurcharge"];
+            this.turnoverBufferMinutes = _data["turnoverBufferMinutes"];
         }
     }
 
@@ -11108,6 +11118,7 @@ export class UpdateRoomTypeRequest implements IUpdateRoomTypeRequest {
         data["description"] = this.description;
         data["supportsThreeD"] = this.supportsThreeD;
         data["threeDSurcharge"] = this.threeDSurcharge;
+        data["turnoverBufferMinutes"] = this.turnoverBufferMinutes;
         return data;
     }
 }
@@ -11119,6 +11130,7 @@ export interface IUpdateRoomTypeRequest {
     description?: string | undefined;
     supportsThreeD?: boolean;
     threeDSurcharge?: number;
+    turnoverBufferMinutes?: number;
 }
 
 export abstract class BaseSearchResultsOfShowTimeDTO implements IBaseSearchResultsOfShowTimeDTO {
@@ -11214,6 +11226,7 @@ export class ShowTimeDTO implements IShowTimeDTO {
     roomName?: string | undefined;
     roomTypeName?: string | undefined;
     basePrice?: number;
+    turnoverBufferMinutes?: number;
 
     constructor(data?: IShowTimeDTO) {
         if (data) {
@@ -11237,6 +11250,7 @@ export class ShowTimeDTO implements IShowTimeDTO {
             this.roomName = _data["roomName"];
             this.roomTypeName = _data["roomTypeName"];
             this.basePrice = _data["basePrice"];
+            this.turnoverBufferMinutes = _data["turnoverBufferMinutes"];
         }
     }
 
@@ -11260,6 +11274,7 @@ export class ShowTimeDTO implements IShowTimeDTO {
         data["roomName"] = this.roomName;
         data["roomTypeName"] = this.roomTypeName;
         data["basePrice"] = this.basePrice;
+        data["turnoverBufferMinutes"] = this.turnoverBufferMinutes;
         return data;
     }
 }
@@ -11276,6 +11291,7 @@ export interface IShowTimeDTO {
     roomName?: string | undefined;
     roomTypeName?: string | undefined;
     basePrice?: number;
+    turnoverBufferMinutes?: number;
 }
 
 export class CreateShowTimeRequest implements ICreateShowTimeRequest {
