@@ -111,154 +111,76 @@ public class PatronCategoryManager : IPatronCategoryManager
         return dtos;
     }
 
-    public async Task<List<PatronCategoryDTO>> CreateAsync(CreatePatronCategoryRequest request)
+    public async Task<PatronCategoryDTO> CreateAsync(CreatePatronCategoryRequest request)
     {
-        ValidatePrices(request.Prices);
-        await ValidateSeatTypesAsync(request.TheaterId, request.Prices);
+        await ValidateSeatTypeAsync(request.TheaterId, request.SeatTypeId);
+        await EnsureNotDuplicateAsync(request.TheaterId, request.Name, request.SeatTypeId, excludeId: null);
 
-        var created = new List<PatronCategory>();
-        await _uow.BeginTransactionAsync();
-        try
+        var entity = new PatronCategory
         {
-            foreach (var item in request.Prices)
-            {
-                var entity = new PatronCategory
-                {
-                    TheaterId   = request.TheaterId,
-                    SeatTypeId  = item.SeatTypeId,
-                    Name        = request.Name,
-                    Description = request.Description,
-                    Price       = item.Price,
-                    IsActive    = request.IsActive,
-                };
-                await _uow.PatronCategoryStore.CreateAsync(entity);
-                created.Add(entity);
-            }
-            await _uow.CommitTransactionAsync();
-        }
-        catch
-        {
-            await _uow.RollbackTransactionAsync();
-            throw;
-        }
+            TheaterId   = request.TheaterId,
+            SeatTypeId  = request.SeatTypeId,
+            Name        = request.Name,
+            Description = request.Description,
+            Price       = request.Price,
+            IsActive    = request.IsActive,
+        };
+        await _uow.PatronCategoryStore.CreateAsync(entity);
 
-        var dtos = created.Select(e => e.ToDTO<PatronCategory, PatronCategoryDTO>()).ToList();
-        await AttachSeatTypeInfoAsync(dtos);
-        return dtos;
+        var dto = entity.ToDTO<PatronCategory, PatronCategoryDTO>();
+        await AttachSeatTypeInfoAsync(new[] { dto });
+        return dto;
     }
 
-    public async Task<List<PatronCategoryDTO>> UpdateAsync(UpdatePatronCategoryRequest request)
+    public async Task<PatronCategoryDTO> UpdateAsync(UpdatePatronCategoryRequest request)
     {
-        var anchor = await _uow.PatronCategoryStore.GetByIdAsync(request.Id);
-        if (anchor == null)
+        var entity = await _uow.PatronCategoryStore.GetByIdAsync(request.Id);
+        if (entity == null)
         {
             throw new KeyNotFoundException($"PatronCategory {request.Id} not found.");
         }
-        ValidatePrices(request.Prices);
-        await ValidateSeatTypesAsync(request.TheaterId, request.Prices);
+        await ValidateSeatTypeAsync(entity.TheaterId, request.SeatTypeId);
+        await EnsureNotDuplicateAsync(entity.TheaterId, request.Name, request.SeatTypeId, excludeId: entity.Id);
 
-        var siblings = (await _uow.PatronCategoryStore.FindAsync(
-            c => c.TheaterId == anchor.TheaterId && c.Name == anchor.Name)).ToList();
-        var bySeatType = siblings.ToDictionary(s => s.SeatTypeId);
-        var keepSeatTypeIds = request.Prices.Select(p => p.SeatTypeId).ToHashSet();
+        entity.Name        = request.Name;
+        entity.Description = request.Description;
+        entity.SeatTypeId  = request.SeatTypeId;
+        entity.Price       = request.Price;
+        entity.IsActive    = request.IsActive;
+        await _uow.PatronCategoryStore.UpdateAsync(entity);
 
-        var result = new List<PatronCategory>();
-        await _uow.BeginTransactionAsync();
-        try
-        {
-            foreach (var item in request.Prices)
-            {
-                if (bySeatType.TryGetValue(item.SeatTypeId, out var existing))
-                {
-                    existing.Name        = request.Name;
-                    existing.Description = request.Description;
-                    existing.Price       = item.Price;
-                    existing.IsActive    = request.IsActive;
-                    await _uow.PatronCategoryStore.UpdateAsync(existing);
-                    result.Add(existing);
-                }
-                else
-                {
-                    var created = new PatronCategory
-                    {
-                        TheaterId   = request.TheaterId,
-                        SeatTypeId  = item.SeatTypeId,
-                        Name        = request.Name,
-                        Description = request.Description,
-                        Price       = item.Price,
-                        IsActive    = request.IsActive,
-                    };
-                    await _uow.PatronCategoryStore.CreateAsync(created);
-                    result.Add(created);
-                }
-            }
-
-            // A sibling row for a seat kind no longer in Prices means the category should no longer be
-            // able to book that kind — remove the row (its RoomTypePatronCategoryPrice overrides cascade).
-            foreach (var stale in siblings.Where(s => !keepSeatTypeIds.Contains(s.SeatTypeId)))
-            {
-                await _uow.PatronCategoryStore.DeleteAsync(stale);
-            }
-
-            await _uow.CommitTransactionAsync();
-        }
-        catch
-        {
-            await _uow.RollbackTransactionAsync();
-            throw;
-        }
-
-        var dtos = result.Select(e => e.ToDTO<PatronCategory, PatronCategoryDTO>()).ToList();
-        await AttachSeatTypeInfoAsync(dtos);
-        return dtos;
+        var dto = entity.ToDTO<PatronCategory, PatronCategoryDTO>();
+        await AttachSeatTypeInfoAsync(new[] { dto });
+        return dto;
     }
 
     public async Task DeleteAsync(Guid id)
     {
-        var anchor = await _uow.PatronCategoryStore.GetByIdAsync(id);
-        if (anchor == null)
+        var entity = await _uow.PatronCategoryStore.GetByIdAsync(id);
+        if (entity == null)
         {
             throw new KeyNotFoundException($"PatronCategory {id} not found.");
         }
-        var siblings = await _uow.PatronCategoryStore.FindAsync(
-            c => c.TheaterId == anchor.TheaterId && c.Name == anchor.Name);
+        await _uow.PatronCategoryStore.DeleteAsync(entity);
+    }
 
-        await _uow.BeginTransactionAsync();
-        try
+    private async Task ValidateSeatTypeAsync(Guid theaterId, Guid seatTypeId)
+    {
+        var exists = await _uow.SeatTypeStore.ExistsAsync(st => st.Id == seatTypeId && st.TheaterId == theaterId);
+        if (!exists)
         {
-            foreach (var sibling in siblings)
-            {
-                await _uow.PatronCategoryStore.DeleteAsync(sibling);
-            }
-            await _uow.CommitTransactionAsync();
-        }
-        catch
-        {
-            await _uow.RollbackTransactionAsync();
-            throw;
+            throw new InvalidOperationException("The seat kind does not belong to this theater.");
         }
     }
 
-    private static void ValidatePrices(List<PatronCategoryPriceItem> prices)
+    private async Task EnsureNotDuplicateAsync(Guid theaterId, string name, Guid seatTypeId, Guid? excludeId)
     {
-        if (prices.Count == 0)
+        var duplicate = await _uow.PatronCategoryStore.ExistsAsync(c =>
+            c.TheaterId == theaterId && c.Name == name && c.SeatTypeId == seatTypeId &&
+            (excludeId == null || c.Id != excludeId));
+        if (duplicate)
         {
-            throw new InvalidOperationException("At least one seat-kind price is required.");
-        }
-        if (prices.Select(p => p.SeatTypeId).Distinct().Count() != prices.Count)
-        {
-            throw new InvalidOperationException("Each seat kind may appear only once.");
-        }
-    }
-
-    private async Task ValidateSeatTypesAsync(Guid theaterId, List<PatronCategoryPriceItem> prices)
-    {
-        var ids = prices.Select(p => p.SeatTypeId).Distinct().ToList();
-        var validCount = await _uow.SeatTypeStore.CountAsync(
-            _uow.SeatTypeStore.GetQuery().Where(st => ids.Contains(st.Id) && st.TheaterId == theaterId));
-        if (validCount != ids.Count)
-        {
-            throw new InvalidOperationException("One or more seat kinds do not belong to this theater.");
+            throw new InvalidOperationException("A category with this name already exists for this seat kind.");
         }
     }
 

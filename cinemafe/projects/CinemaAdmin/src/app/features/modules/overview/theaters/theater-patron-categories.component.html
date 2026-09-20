@@ -4,59 +4,53 @@
 </div>
 
 <mat-card class="ad-card--pad-0">
-  <!-- Desktop / tablet: plain table (dataset is small and grouped, no server-side paging). -->
+  <!-- Desktop / tablet: plain table (dataset is small, no server-side paging). -->
   <div class="ad-table-wrap ad-desktop-only">
     <table class="ad-table">
       <thead>
         <tr>
           <th>{{ 'theaters.patronCategories.nameLabel' | translate }}</th>
-          <th *ngFor="let st of seatTypes">{{ st.name }}</th>
+          <th>{{ 'theaters.patronCategories.seatKindLabel' | translate }}</th>
+          <th>{{ 'theaters.patronCategories.priceLabel' | translate }}</th>
           <th>{{ 'theaters.patronCategories.activeLabel' | translate }}</th>
           <th>{{ 'common.description' | translate }}</th>
           <th>{{ 'common.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let group of groups">
-          <td><strong>{{ group.name }}</strong></td>
-          <td *ngFor="let st of seatTypes">
-            <ng-container *ngIf="priceFor(group, st) as price; else notAvailable">{{ price | number:'1.0-0' }}đ</ng-container>
-            <ng-template #notAvailable>—</ng-template>
-          </td>
-          <td>{{ group.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</td>
-          <td>{{ group.description || '—' }}</td>
+        <tr *ngFor="let row of rows">
+          <td><strong>{{ row.name }}</strong></td>
+          <td>{{ row.seatTypeName }}</td>
+          <td>{{ row.price | number:'1.0-0' }}đ</td>
+          <td>{{ row.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</td>
+          <td>{{ row.description || '—' }}</td>
           <td>
             <div class="ad-td-actions ad-td-actions--mat">
-              <button mat-icon-button (click)="edit(group)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button (click)="delete(group)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="delete(row)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
             </div>
           </td>
         </tr>
       </tbody>
     </table>
-    <div *ngIf="!groups.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
+    <div *ngIf="!rows.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
   </div>
 
   <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
   <div class="ad-mobile-only">
-    <mat-card class="ad-mobile-card" *ngFor="let group of groups" appearance="outlined">
+    <mat-card class="ad-mobile-card" *ngFor="let row of rows" appearance="outlined">
       <mat-card-content>
-        <div class="ad-mobile-card-title"><strong>{{ group.name }}</strong></div>
-        <div class="ad-mobile-card-row" *ngFor="let st of seatTypes">
-          <span>{{ st.name }}</span>
-          <span>
-            <ng-container *ngIf="priceFor(group, st) as price; else notAvailableMobile">{{ price | number:'1.0-0' }}đ</ng-container>
-            <ng-template #notAvailableMobile>—</ng-template>
-          </span>
-        </div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.activeLabel' | translate }}</span><span>{{ group.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</span></div>
-        <div class="ad-mobile-card-row"><span>{{ 'common.description' | translate }}</span><span>{{ group.description || '—' }}</span></div>
+        <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong></div>
+        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.seatKindLabel' | translate }}</span><span>{{ row.seatTypeName }}</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.priceLabel' | translate }}</span><span>{{ row.price | number:'1.0-0' }}đ</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.activeLabel' | translate }}</span><span>{{ row.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'common.description' | translate }}</span><span>{{ row.description || '—' }}</span></div>
         <div class="ad-mobile-card-actions">
-          <button mat-icon-button (click)="edit(group)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button (click)="delete(group)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button (click)="delete(row)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
         </div>
       </mat-card-content>
     </mat-card>
-    <div *ngIf="!groups.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
+    <div *ngIf="!rows.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
   </div>
 </mat-card>

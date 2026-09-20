@@ -62,8 +62,8 @@ export interface IHttpService {
     getPatronCategories(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPatronCategoryDTO>;
     getPatronCategoriesByTheater(theaterId?: string | undefined): Observable<PatronCategoryDTO[]>;
     getPatronCategory(id?: string | undefined): Observable<PatronCategoryDTO>;
-    createPatronCategory(request: CreatePatronCategoryRequest): Observable<PatronCategoryDTO[]>;
-    updatePatronCategory(request: UpdatePatronCategoryRequest): Observable<PatronCategoryDTO[]>;
+    createPatronCategory(request: CreatePatronCategoryRequest): Observable<PatronCategoryDTO>;
+    updatePatronCategory(request: UpdatePatronCategoryRequest): Observable<PatronCategoryDTO>;
     deletePatronCategory(id?: string | undefined): Observable<void>;
     getTimeSlots(search: PagingSearchDTO): Observable<DefaultSearchResultsOfTimeSlotDTO>;
     getTimeSlot(id?: string | undefined): Observable<TimeSlotDTO>;
@@ -2333,7 +2333,7 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
-    createPatronCategory(request: CreatePatronCategoryRequest): Observable<PatronCategoryDTO[]> {
+    createPatronCategory(request: CreatePatronCategoryRequest): Observable<PatronCategoryDTO> {
         let url_ = this.baseUrl + "/api/Cinema/CreatePatronCategory";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -2356,14 +2356,14 @@ export class HttpService implements IHttpService {
                 try {
                     return this.processCreatePatronCategory(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<PatronCategoryDTO[]>;
+                    return _observableThrow(e) as any as Observable<PatronCategoryDTO>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<PatronCategoryDTO[]>;
+                return _observableThrow(response_) as any as Observable<PatronCategoryDTO>;
         }));
     }
 
-    protected processCreatePatronCategory(response: HttpResponseBase): Observable<PatronCategoryDTO[]> {
+    protected processCreatePatronCategory(response: HttpResponseBase): Observable<PatronCategoryDTO> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2374,14 +2374,7 @@ export class HttpService implements IHttpService {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(PatronCategoryDTO.fromJS(item));
-            }
-            else {
-                result200 = <any>null;
-            }
+            result200 = PatronCategoryDTO.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -2392,7 +2385,7 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
-    updatePatronCategory(request: UpdatePatronCategoryRequest): Observable<PatronCategoryDTO[]> {
+    updatePatronCategory(request: UpdatePatronCategoryRequest): Observable<PatronCategoryDTO> {
         let url_ = this.baseUrl + "/api/Cinema/UpdatePatronCategory";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -2415,14 +2408,14 @@ export class HttpService implements IHttpService {
                 try {
                     return this.processUpdatePatronCategory(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<PatronCategoryDTO[]>;
+                    return _observableThrow(e) as any as Observable<PatronCategoryDTO>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<PatronCategoryDTO[]>;
+                return _observableThrow(response_) as any as Observable<PatronCategoryDTO>;
         }));
     }
 
-    protected processUpdatePatronCategory(response: HttpResponseBase): Observable<PatronCategoryDTO[]> {
+    protected processUpdatePatronCategory(response: HttpResponseBase): Observable<PatronCategoryDTO> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2433,14 +2426,7 @@ export class HttpService implements IHttpService {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(PatronCategoryDTO.fromJS(item));
-            }
-            else {
-                result200 = <any>null;
-            }
+            result200 = PatronCategoryDTO.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -8460,7 +8446,8 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
     name!: string;
     description?: string | undefined;
     isActive?: boolean;
-    prices?: PatronCategoryPriceItem[];
+    seatTypeId?: string;
+    price?: number;
 
     constructor(data?: ICreatePatronCategoryRequest) {
         if (data) {
@@ -8477,11 +8464,8 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
             this.name = _data["name"];
             this.description = _data["description"];
             this.isActive = _data["isActive"];
-            if (Array.isArray(_data["prices"])) {
-                this.prices = [] as any;
-                for (let item of _data["prices"])
-                    this.prices!.push(PatronCategoryPriceItem.fromJS(item));
-            }
+            this.seatTypeId = _data["seatTypeId"];
+            this.price = _data["price"];
         }
     }
 
@@ -8498,11 +8482,8 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
         data["name"] = this.name;
         data["description"] = this.description;
         data["isActive"] = this.isActive;
-        if (Array.isArray(this.prices)) {
-            data["prices"] = [];
-            for (let item of this.prices)
-                data["prices"].push(item.toJSON());
-        }
+        data["seatTypeId"] = this.seatTypeId;
+        data["price"] = this.price;
         return data;
     }
 }
@@ -8512,56 +8493,17 @@ export interface ICreatePatronCategoryRequest {
     name: string;
     description?: string | undefined;
     isActive?: boolean;
-    prices?: PatronCategoryPriceItem[];
-}
-
-export class PatronCategoryPriceItem implements IPatronCategoryPriceItem {
-    seatTypeId?: string;
-    price?: number;
-
-    constructor(data?: IPatronCategoryPriceItem) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.seatTypeId = _data["seatTypeId"];
-            this.price = _data["price"];
-        }
-    }
-
-    static fromJS(data: any): PatronCategoryPriceItem {
-        data = typeof data === 'object' ? data : {};
-        let result = new PatronCategoryPriceItem();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["seatTypeId"] = this.seatTypeId;
-        data["price"] = this.price;
-        return data;
-    }
-}
-
-export interface IPatronCategoryPriceItem {
     seatTypeId?: string;
     price?: number;
 }
 
 export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest {
     id?: string;
-    theaterId?: string;
     name!: string;
     description?: string | undefined;
     isActive?: boolean;
-    prices?: PatronCategoryPriceItem[];
+    seatTypeId?: string;
+    price?: number;
 
     constructor(data?: IUpdatePatronCategoryRequest) {
         if (data) {
@@ -8575,15 +8517,11 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.theaterId = _data["theaterId"];
             this.name = _data["name"];
             this.description = _data["description"];
             this.isActive = _data["isActive"];
-            if (Array.isArray(_data["prices"])) {
-                this.prices = [] as any;
-                for (let item of _data["prices"])
-                    this.prices!.push(PatronCategoryPriceItem.fromJS(item));
-            }
+            this.seatTypeId = _data["seatTypeId"];
+            this.price = _data["price"];
         }
     }
 
@@ -8597,26 +8535,22 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["theaterId"] = this.theaterId;
         data["name"] = this.name;
         data["description"] = this.description;
         data["isActive"] = this.isActive;
-        if (Array.isArray(this.prices)) {
-            data["prices"] = [];
-            for (let item of this.prices)
-                data["prices"].push(item.toJSON());
-        }
+        data["seatTypeId"] = this.seatTypeId;
+        data["price"] = this.price;
         return data;
     }
 }
 
 export interface IUpdatePatronCategoryRequest {
     id?: string;
-    theaterId?: string;
     name: string;
     description?: string | undefined;
     isActive?: boolean;
-    prices?: PatronCategoryPriceItem[];
+    seatTypeId?: string;
+    price?: number;
 }
 
 export abstract class BaseSearchResultsOfTimeSlotDTO implements IBaseSearchResultsOfTimeSlotDTO {

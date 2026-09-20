@@ -345,7 +345,7 @@
       "empty": "This theater has no seat types yet."
     },
     "patronCategories": {
-      "subtitle": "Per-seat-kind pricing categories (Adult/Student/Senior/Child), checked visually at the theater.",
+      "subtitle": "One independent pricing row per category and seat kind (e.g. Adult / Standard). Rows are never merged — editing or deleting one never affects another.",
       "add": "Add Category",
       "editTitle": "Edit Category",
       "newTitle": "New Category",
@@ -354,8 +354,8 @@
       "activeLabel": "Active",
       "descPlaceholder": "Requires a valid student ID at the door...",
       "empty": "This theater has no patron categories yet.",
-      "pricesLabel": "Prices by seat kind",
-      "pricesHint": "Uncheck a seat kind to make it unavailable for this category entirely.",
+      "seatKindLabel": "Seat kind",
+      "priceLabel": "Price",
       "pricePlaceholder": "90000"
     },
     "food": {

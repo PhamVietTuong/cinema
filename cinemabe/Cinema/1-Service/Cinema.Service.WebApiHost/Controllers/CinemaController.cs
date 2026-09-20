@@ -714,7 +714,7 @@ public class CinemaController : ApiControllerBase
 
     [Authorize(Roles = _adminRole)]
     [HttpPost]
-    [ProducesResponseType(typeof(List<PatronCategoryDTO>), 200)]
+    [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
     public Task<IActionResult> CreatePatronCategory([FromBody] CreatePatronCategoryRequest request)
     {
         return Run(nameof(CreatePatronCategory), () => _patronCategories.CreateAsync(request));
@@ -722,7 +722,7 @@ public class CinemaController : ApiControllerBase
 
     [Authorize(Roles = _adminRole)]
     [HttpPut]
-    [ProducesResponseType(typeof(List<PatronCategoryDTO>), 200)]
+    [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
     public async Task<IActionResult> UpdatePatronCategory([FromBody] UpdatePatronCategoryRequest request)
     {
         var notFound = await EnsureExistsAsync(() => _patronCategories.ExistsAsync(request.Id), nameof(UpdatePatronCategory), nameof(PatronCategory), request.Id);

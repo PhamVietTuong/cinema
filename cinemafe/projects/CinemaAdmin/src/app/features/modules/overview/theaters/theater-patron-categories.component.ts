@@ -10,18 +10,10 @@ import { PatronCategoryDialog } from './patron-category.dialog';
 
 type Dto = CinemaServiceAgent.PatronCategoryDTO;
 
-/** One logical category (e.g. "Adult") grouping its per-seat-kind rows (Standard/Double). */
-export interface PatronCategoryGroup {
-  name: string;
-  description?: string;
-  isActive: boolean;
-  rows: Dto[];
-}
-
-/** Patron-category pricing management scoped to a single theater. Each logical category (Adult/
- * Student/...) is stored as one row per seat kind (Standard/Double) — this tab groups them back
- * together for display and editing. The dataset is small (a handful of categories x 2 kinds), so
- * it's loaded in full rather than paged. */
+/** Patron-category pricing management scoped to a single theater. Each PatronCategory row is an
+ * independent (Name, seat kind) pricing entry — rows are never grouped, merged, or cascaded by
+ * Name; editing/deleting one row never affects another. The dataset is small (a handful of rows),
+ * so it's loaded in full rather than paged. */
 @Component({
   selector: 'app-theater-patron-categories',
   standalone: false,
@@ -32,7 +24,7 @@ export class TheaterPatronCategoriesComponent implements OnInit {
   @Input({ required: true }) theaterId!: string;
 
   seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
-  groups: PatronCategoryGroup[] = [];
+  rows: Dto[] = [];
   loading = false;
 
   constructor(
@@ -58,7 +50,8 @@ export class TheaterPatronCategoriesComponent implements OnInit {
     this._cd.markForCheck();
     this._svc.getPatronCategoriesByTheater(this.theaterId).subscribe({
       next: rows => {
-        this.groups = this._groupByName(rows ?? []);
+        this.rows = (rows ?? []).sort((a, b) =>
+          (a.name ?? '').localeCompare(b.name ?? '') || (a.kind ?? 0) - (b.kind ?? 0));
         this.loading = false;
         this._cd.markForCheck();
       },
@@ -69,49 +62,21 @@ export class TheaterPatronCategoriesComponent implements OnInit {
     });
   }
 
-  private _groupByName(rows: Dto[]): PatronCategoryGroup[] {
-    const byName = new Map<string, Dto[]>();
-    for (const row of rows) {
-      const key = row.name ?? '';
-      const list = byName.get(key) ?? [];
-      list.push(row);
-      byName.set(key, list);
-    }
-    return Array.from(byName.entries())
-      .map(([name, groupRows]) => ({
-        name,
-        description: groupRows[0]?.description,
-        isActive: groupRows[0]?.isActive ?? true,
-        rows: groupRows,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  /** Null means this category has no row for that seat kind (cannot book it at all). */
-  priceFor(group: PatronCategoryGroup, seatType: CinemaServiceAgent.SeatTypeDTO): number | null {
-    const row = group.rows.find(r => r.seatTypeId === seatType.id);
-    return row ? (row.price ?? 0) : null;
-  }
-
   openCreate(): void {
-    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, categoryRows: null } })
+    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, category: null } })
       .afterClosed().subscribe(saved => { if (saved) { this._load(); } });
   }
 
-  edit(group: PatronCategoryGroup): void {
-    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, categoryRows: group.rows } })
+  edit(row: Dto): void {
+    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, category: row } })
       .afterClosed().subscribe(saved => { if (saved) { this._load(); } });
   }
 
-  delete(group: PatronCategoryGroup): void {
-    const id = group.rows[0]?.id;
-    if (!id) {
-      return;
-    }
+  delete(row: Dto): void {
     this._dialogService.openConfirmDialog({ message: 'common.confirmDelete' })
       .afterClosed().subscribe(confirmed => {
         if (confirmed) {
-          this._deleteConfirmed(id);
+          this._deleteConfirmed(row.id!);
         }
       });
   }

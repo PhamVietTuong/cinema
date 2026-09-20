@@ -14,13 +14,12 @@ public interface IPatronCategoryManager
     /// RoomType price-override editor to list the categories it can override.</summary>
     Task<List<PatronCategoryDTO>>                 GetByTheaterAsync(Guid theaterId);
 
-    /// <summary>Creates a whole logical category (one row per Prices entry) transactionally.</summary>
-    Task<List<PatronCategoryDTO>>                 CreateAsync(CreatePatronCategoryRequest request);
+    /// <summary>Creates one independent pricing row.</summary>
+    Task<PatronCategoryDTO>                       CreateAsync(CreatePatronCategoryRequest request);
 
-    /// <summary>Replaces every row of a logical category (identified by any one of its sibling ids) to
-    /// match the given Prices list — renaming, adding, or removing seat kinds as needed.</summary>
-    Task<List<PatronCategoryDTO>>                 UpdateAsync(UpdatePatronCategoryRequest request);
+    /// <summary>Updates exactly the row with this Id — never touches rows sharing its Name.</summary>
+    Task<PatronCategoryDTO>                       UpdateAsync(UpdatePatronCategoryRequest request);
 
-    /// <summary>Deletes every row sharing the logical category (all its seat kinds).</summary>
+    /// <summary>Deletes exactly this row.</summary>
     Task                                          DeleteAsync(Guid id);
 }

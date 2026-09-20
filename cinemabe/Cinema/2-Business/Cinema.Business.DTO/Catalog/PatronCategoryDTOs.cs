@@ -4,9 +4,9 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Business.DTO.Catalog;
 
-/// <summary>One row = one (logical category, seat kind) pair, e.g. Adult/Standard, Adult/Double.
-/// Omitting a seat kind for a category means that category cannot book that kind of seat at all —
-/// this is the entire eligibility rule.</summary>
+/// <summary>One independent pricing row = (Name, seat kind). Rows sharing a Name are unrelated; the
+/// Name is a display label only. Omitting a seat kind for a category means that category cannot book
+/// that kind of seat at all — this is the entire eligibility rule.</summary>
 public class PatronCategoryDTO
 {
     public Guid Id { get; set; }
@@ -24,18 +24,7 @@ public class PatronCategoryDTO
     public bool IsActive { get; set; } = true;
 }
 
-/// <summary>One (SeatTypeId, Price) entry per seat kind the category may book. A kind omitted from
-/// this list means the category cannot book that kind at all.</summary>
-public class PatronCategoryPriceItem
-{
-    public Guid SeatTypeId { get; set; }
-
-    [Range(0, double.MaxValue)]
-    public double Price { get; set; }
-}
-
-/// <summary>Creates/replaces a whole logical category (e.g. "Adult") across all its seat-kind rows in
-/// one call. Id/UpdateAsync always operate on every row sharing (TheaterId, Name).</summary>
+/// <summary>Creates one independent pricing row.</summary>
 public class CreatePatronCategoryRequest
 {
     public Guid TheaterId { get; set; }
@@ -48,14 +37,16 @@ public class CreatePatronCategoryRequest
 
     public bool IsActive { get; set; } = true;
 
-    /// <summary>At least one entry required.</summary>
-    public List<PatronCategoryPriceItem> Prices { get; set; } = new();
+    public Guid SeatTypeId { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public double Price { get; set; }
 }
 
+/// <summary>Updates exactly the row with this Id — never touches rows sharing its Name.</summary>
 public class UpdatePatronCategoryRequest : IHasId
 {
     public Guid Id { get; set; }
-    public Guid TheaterId { get; set; }
 
     [Required]
     [StringLength(100)]
@@ -65,6 +56,8 @@ public class UpdatePatronCategoryRequest : IHasId
 
     public bool IsActive { get; set; } = true;
 
-    /// <summary>At least one entry required.</summary>
-    public List<PatronCategoryPriceItem> Prices { get; set; } = new();
+    public Guid SeatTypeId { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public double Price { get; set; }
 }

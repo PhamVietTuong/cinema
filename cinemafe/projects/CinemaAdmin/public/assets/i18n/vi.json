@@ -345,7 +345,7 @@
       "empty": "Rạp này chưa có loại ghế nào."
     },
     "patronCategories": {
-      "subtitle": "Đối tượng giá vé theo từng loại ghế (Người lớn/Học sinh-Sinh viên/Người cao tuổi/Trẻ em), kiểm tra trực tiếp tại rạp.",
+      "subtitle": "Mỗi dòng giá là một cặp Đối Tượng + Loại Ghế độc lập (VD: Người lớn / Standard). Các dòng không bao giờ được gộp — sửa hoặc xóa một dòng không ảnh hưởng dòng khác.",
       "add": "Thêm Đối Tượng",
       "editTitle": "Chỉnh Sửa Đối Tượng",
       "newTitle": "Đối Tượng Mới",
@@ -354,8 +354,8 @@
       "activeLabel": "Đang Hoạt Động",
       "descPlaceholder": "Yêu cầu xuất trình thẻ sinh viên hợp lệ tại quầy...",
       "empty": "Rạp này chưa có đối tượng vé nào.",
-      "pricesLabel": "Giá theo loại ghế",
-      "pricesHint": "Bỏ chọn một loại ghế để đối tượng này không thể đặt loại ghế đó.",
+      "seatKindLabel": "Loại Ghế",
+      "priceLabel": "Giá",
       "pricePlaceholder": "90000"
     },
     "food": {

@@ -1607,10 +1607,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PatronCategoryDTO"
-                  }
+                  "$ref": "#/components/schemas/PatronCategoryDTO"
                 }
               }
             }
@@ -1649,10 +1646,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PatronCategoryDTO"
-                  }
+                  "$ref": "#/components/schemas/PatronCategoryDTO"
                 }
               }
             }
@@ -5393,18 +5387,6 @@
           "isActive": {
             "type": "boolean"
           },
-          "prices": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PatronCategoryPriceItem"
-            }
-          }
-        }
-      },
-      "PatronCategoryPriceItem": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
           "seatTypeId": {
             "type": "string",
             "format": "guid"
@@ -5427,10 +5409,6 @@
             "type": "string",
             "format": "guid"
           },
-          "theaterId": {
-            "type": "string",
-            "format": "guid"
-          },
           "name": {
             "type": "string",
             "maxLength": 100,
@@ -5443,11 +5421,14 @@
           "isActive": {
             "type": "boolean"
           },
-          "prices": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PatronCategoryPriceItem"
-            }
+          "seatTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0.0
           }
         }
       },

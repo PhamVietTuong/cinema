@@ -27,22 +27,24 @@
         </div>
       </div>
 
-      <div class="dlg-row">
+      <div class="dlg-row dlg-row--2">
         <div class="dlg-field">
-          <label class="dlg-label">{{ 'theaters.patronCategories.pricesLabel' | translate }}</label>
-          <p class="ad-sub">{{ 'theaters.patronCategories.pricesHint' | translate }}</p>
-          <div class="ad-checkbox-list" [formArrayName]="'prices'">
-            <div class="dlg-row dlg-row--2" *ngFor="let priceGroup of prices.controls; let i = index" [formGroupName]="i">
-              <label class="ad-label">
-                <input type="checkbox" formControlName="enabled">
-                {{ seatTypes[i].name }}
-              </label>
-              <mat-form-field appearance="outline" subscriptSizing="dynamic" *ngIf="priceGroup.get('enabled')?.value">
-                <input matInput type="number" step="1000" min="0" formControlName="price" [placeholder]="'theaters.patronCategories.pricePlaceholder' | translate">
-                <span matTextSuffix>đ</span>
-              </mat-form-field>
-            </div>
-          </div>
+          <label class="dlg-label" for="pc-seatType">{{ 'theaters.patronCategories.seatKindLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select id="pc-seatType" formControlName="seatTypeId">
+              <mat-option *ngFor="let st of seatTypes" [value]="st.id">{{ st.name }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.controls['seatTypeId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+        <div class="dlg-field">
+          <label class="dlg-label" for="pc-price">{{ 'theaters.patronCategories.priceLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pc-price" type="number" step="1000" min="0" formControlName="price" [placeholder]="'theaters.patronCategories.pricePlaceholder' | translate">
+            <span matTextSuffix>đ</span>
+            <mat-error *ngIf="form.controls['price'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+            <mat-error *ngIf="form.controls['price'].hasError('min')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
         </div>
       </div>
     </div>
