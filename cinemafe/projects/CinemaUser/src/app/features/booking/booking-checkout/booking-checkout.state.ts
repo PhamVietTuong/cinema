@@ -6,13 +6,14 @@
 export interface BookingCheckoutSeat {
   seatId: string;
   label: string;
-  seatTypeName: string;
+  /** "Standard" or "Double". */
+  seatKind: string;
+  /** The seat's "from" price shown on the seat map before a category was resolved. */
   basePrice: number;
-  /** Price after the assigned patron category's discount. */
+  /** The resolved patron-category price actually charged (server-authoritative). */
   price: number;
   patronCategoryId: string;
   patronCategoryName: string;
-  discountPercent: number;
 }
 
 export interface BookingCheckoutFood {

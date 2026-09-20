@@ -308,8 +308,6 @@
       "gridSize": "Seat grid: {{rows}} rows × {{cols}} columns",
       "row": "Row",
       "column": "Column",
-      "assignSeatType": "Assign Seat Type",
-      "doubleSeat": "Double Seat",
       "pairHint": "Pick 2 adjacent seats to pair them into a double seat. Click a paired seat to unpair.",
       "screen": "SCREEN",
       "noSeats": "This room has no seats yet. Make sure seat types exist before creating the room.",
@@ -333,35 +331,32 @@
       "threeDSurcharge": "3D surcharge (per ticket)",
       "turnoverBufferMinutes": "Turnover buffer (minutes)",
       "turnoverBufferHint": "Minimum minutes required between showtimes in this room class, for seating and cleanup.",
-      "empty": "This theater has no room types yet."
+      "empty": "This theater has no room types yet.",
+      "discountsTooltip": "Patron category prices for this room type"
     },
     "seatTypes": {
-      "subtitle": "Seat classes for this theater (ticket price = base price × multiplier).",
-      "add": "Add Seat Type",
+      "subtitle": "Seat classes for this theater — Standard and Double are fixed; only name, color and description are editable.",
       "editTitle": "Edit Seat Type",
-      "newTitle": "New Seat Type",
       "nameLabel": "Seat Type Name",
       "namePlaceholder": "e.g. VIP",
       "colorLabel": "Display Color",
-      "multiplierLabel": "Price Multiplier",
       "descPlaceholder": "Double seat, center position...",
       "color": "Color",
       "empty": "This theater has no seat types yet."
     },
     "patronCategories": {
-      "subtitle": "Per-seat pricing categories (Adult/Student/Senior/Child), checked visually at the theater.",
+      "subtitle": "Per-seat-kind pricing categories (Adult/Student/Senior/Child), checked visually at the theater.",
       "add": "Add Category",
       "editTitle": "Edit Category",
       "newTitle": "New Category",
       "nameLabel": "Category Name",
       "namePlaceholder": "e.g. Student",
-      "discountLabel": "Discount %",
       "activeLabel": "Active",
       "descPlaceholder": "Requires a valid student ID at the door...",
       "empty": "This theater has no patron categories yet.",
-      "allowedSeatTypesLabel": "Allowed Seat Types",
-      "allowedSeatTypesHint": "Leave empty to allow all seat types.",
-      "allSeatTypes": "All"
+      "pricesLabel": "Prices by seat kind",
+      "pricesHint": "Uncheck a seat kind to make it unavailable for this category entirely.",
+      "pricePlaceholder": "90000"
     },
     "food": {
       "subtitle": "Popcorn, drinks and combos sold at this theater.",
@@ -382,15 +377,13 @@
       "empty": "This theater has no items yet."
     },
     "ticketPrices": {
-      "subtitle": "Pricing multiplier by seat type × time slot × holiday, applied to the showtime's base price.",
+      "subtitle": "Pricing multiplier by room type × time slot × holiday, applied to the resolved patron-category price.",
       "add": "Add Ticket Price",
-      "prereq": "You need at least one room type, one seat type and one time slot before adding ticket prices.",
+      "prereq": "You need at least one room type and one time slot before adding ticket prices.",
       "editTitle": "Edit Ticket Price",
       "newTitle": "New Ticket Price",
       "roomTypeLabel": "Room Type",
       "selectRoomType": "— Select room type —",
-      "seatTypeLabel": "Seat Type",
-      "selectSeatType": "— Select seat type —",
       "timeSlotLabel": "Time Slot",
       "selectTimeSlot": "— Select time slot —",
       "multiplierLabel": "Multiplier (×)",
@@ -412,6 +405,14 @@
       "startColumn": "Start",
       "endColumn": "End",
       "empty": "This theater has no time slots yet."
+    },
+    "roomTypePrices": {
+      "title": "Patron Category Prices",
+      "subtitle": "Override the theater-wide price for this room type. Leave blank to use the default.",
+      "theaterPrice": "Theater default",
+      "overrideLabel": "Override price",
+      "clearOverride": "Clear override",
+      "empty": "This theater has no patron categories yet."
     }
   },
   "users": {

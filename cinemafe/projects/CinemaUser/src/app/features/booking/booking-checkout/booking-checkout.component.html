@@ -94,7 +94,7 @@
           <div class="seat-entry" *ngFor="let s of seats">
             <div class="seat-entry-info">
               <span class="seat-entry-code">{{ s.label }}</span>
-              <span class="seat-entry-type">{{ s.seatTypeName }} · {{ s.patronCategoryName }}</span>
+              <span class="seat-entry-type">{{ seatKindLabel(s) | translate }} · {{ s.patronCategoryName }}</span>
             </div>
             <span class="seat-entry-price">
               <span class="seat-entry-price-strike" *ngIf="s.price !== s.basePrice">{{ s.basePrice | number:'1.0-0' }}đ</span>

@@ -150,7 +150,8 @@
       "selectMore": "Chọn thêm {{count}} ghế để tiếp tục",
       "capReached": "Bạn đã chọn đủ số vé — tăng số lượng để chọn thêm",
       "notEnoughForDouble": "Không đủ vé cho ghế đôi — tăng số lượng để chọn ghế này",
-      "removedByQuantityChange": "Đã bỏ chọn (bạn đã giảm số lượng): {{seats}}"
+      "removedByQuantityChange": "Đã bỏ chọn (bạn đã giảm số lượng): {{seats}}",
+      "doublePrice": "Ghế đôi: {{price}}đ"
     },
     "checkout": {
       "backToSeats": "Quay lại chọn ghế"
@@ -164,10 +165,12 @@
       "legendAvailable": "Ghế Trống",
       "legendSelected": "Đang Chọn",
       "legendOccupied": "Đã Bán",
-      "legendVip": "Ghế VIP",
       "selectedTitle": "Ghế Đã Chọn",
       "empty": "Chưa chọn ghế",
-      "notAvailableForCategory": "Không khả dụng cho loại vé này"
+      "notAvailableForCategory": "Không khả dụng cho loại vé này",
+      "legendDouble": "Ghế Đôi",
+      "kindStandard": "Ghế Thường",
+      "kindDouble": "Ghế Đôi"
     },
     "summary": {
       "subtotal": "Tạm tính ({{count}} ghế)",

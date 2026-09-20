@@ -1,21 +1,14 @@
-<div mat-dialog-title class="dialog-title">{{ (editingId ? 'theaters.patronCategories.editTitle' : 'theaters.patronCategories.newTitle') | translate }}</div>
+<div mat-dialog-title class="dialog-title">{{ (isEditing ? 'theaters.patronCategories.editTitle' : 'theaters.patronCategories.newTitle') | translate }}</div>
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
     <div class="dlg-grid">
-      <div class="dlg-row dlg-row--2">
+      <div class="dlg-row">
         <div class="dlg-field">
           <label class="dlg-label" for="pc-name">{{ 'theaters.patronCategories.nameLabel' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput id="pc-name" formControlName="name" [placeholder]="'theaters.patronCategories.namePlaceholder' | translate">
             <mat-error *ngIf="form.controls['name'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
-        </div>
-        <div class="dlg-field">
-          <label class="dlg-label" for="pc-discountPercent">{{ 'theaters.patronCategories.discountLabel' | translate }}</label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput id="pc-discountPercent" type="number" step="1" min="0" max="100" formControlName="discountPercent" placeholder="0">
-            <mat-error *ngIf="form.controls['discountPercent'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
           </mat-form-field>
         </div>
       </div>
@@ -36,13 +29,19 @@
 
       <div class="dlg-row">
         <div class="dlg-field">
-          <label class="dlg-label">{{ 'theaters.patronCategories.allowedSeatTypesLabel' | translate }}</label>
-          <p class="ad-sub">{{ 'theaters.patronCategories.allowedSeatTypesHint' | translate }}</p>
-          <div class="ad-checkbox-list">
-            <label class="ad-label" *ngFor="let st of seatTypes">
-              <input type="checkbox" [checked]="isSeatTypeSelected(st.id)" (change)="toggleSeatType(st.id)">
-              {{ st.name }}
-            </label>
+          <label class="dlg-label">{{ 'theaters.patronCategories.pricesLabel' | translate }}</label>
+          <p class="ad-sub">{{ 'theaters.patronCategories.pricesHint' | translate }}</p>
+          <div class="ad-checkbox-list" [formArrayName]="'prices'">
+            <div class="dlg-row dlg-row--2" *ngFor="let priceGroup of prices.controls; let i = index" [formGroupName]="i">
+              <label class="ad-label">
+                <input type="checkbox" formControlName="enabled">
+                {{ seatTypes[i].name }}
+              </label>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" *ngIf="priceGroup.get('enabled')?.value">
+                <input matInput type="number" step="1000" min="0" formControlName="price" [placeholder]="'theaters.patronCategories.pricePlaceholder' | translate">
+                <span matTextSuffix>đ</span>
+              </mat-form-field>
+            </div>
           </div>
         </div>
       </div>

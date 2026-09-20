@@ -32,6 +32,20 @@ export const ShowTimeTypeValues: { value: CinemaServiceAgent.ShowTimeType; name:
   { value: CinemaServiceAgent.ShowTimeType.Special, name: 'Đặc Biệt', cls: 'st-block--special' },
 ];
 
+/**
+ * i18n-key label for a seat's kind (Standard/Double). Keyed by the boolean `isDouble` rather than
+ * the generated SeatKind enum, since NSwag emits a separate SeatKind type per client namespace
+ * (CinemaServiceAgent vs PaymentServiceAgent) — comparing by boolean sidesteps that mismatch.
+ */
+export const SeatKindValues: { isDouble: boolean; name: string }[] = [
+  { isDouble: false, name: 'booking.seats.kindStandard' },
+  { isDouble: true, name: 'booking.seats.kindDouble' },
+];
+
+export function seatKindLabel(isDouble?: boolean): string {
+  return SeatKindValues.find(v => v.isDouble === !!isDouble)?.name ?? SeatKindValues[0].name;
+}
+
 /** i18n-key label for each Room.RoomStatus value. */
 export const RoomStatusValues: { value: CinemaServiceAgent.RoomStatus; name: string }[] = [
   { value: CinemaServiceAgent.RoomStatus.Active, name: 'theaters.rooms.statusActive' },

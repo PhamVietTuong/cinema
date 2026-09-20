@@ -1,5 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException } from 'CinemaLib';
@@ -8,11 +8,15 @@ type Dto = CinemaServiceAgent.PatronCategoryDTO;
 
 export interface PatronCategoryDialogData {
   theaterId: string;
-  patronCategory: Dto | null;
   seatTypes: CinemaServiceAgent.SeatTypeDTO[];
+  /** All rows sharing this logical category (one per enabled seat kind), or null when creating. */
+  categoryRows: Dto[] | null;
 }
 
-/** Create/edit form for a theater's patron category (Adult/Student/Senior/Child), opened via MatDialog. Resolves `true` on save, `false` on cancel. */
+/** Create/edit form for a theater's patron category (Adult/Student/Senior/Child). A logical
+ * category is one row per seat kind it may book (Standard/Double) — disabling a kind here deletes
+ * its row entirely, which is the entire eligibility rule (no separate allow-list). Resolves `true`
+ * on save, `false` on cancel. */
 @Component({
   selector: 'app-patron-category-dialog',
   standalone: false,
@@ -20,10 +24,9 @@ export interface PatronCategoryDialogData {
   styleUrls: ['./theater-catalog-tab.scss'],
 })
 export class PatronCategoryDialog {
-  readonly editingId: string | null;
+  readonly isEditing: boolean;
   readonly seatTypes: CinemaServiceAgent.SeatTypeDTO[];
   form: FormGroup;
-  selectedSeatTypeIds: string[];
 
   constructor(
     private _svc: CinemaServiceAgent.HttpService,
@@ -32,39 +35,53 @@ export class PatronCategoryDialog {
     private _dialogRef: MatDialogRef<PatronCategoryDialog, boolean>,
     @Inject(MAT_DIALOG_DATA) private _data: PatronCategoryDialogData,
   ) {
-    this.editingId = _data.patronCategory?.id ?? null;
-    this.seatTypes = _data.seatTypes;
-    this.selectedSeatTypeIds = [...(_data.patronCategory?.allowedSeatTypeIds ?? [])];
+    this.isEditing = !!this._data.categoryRows?.length;
+    this.seatTypes = this._data.seatTypes;
+    const anchor = this._data.categoryRows?.[0];
+
     this.form = this._fb.group({
-      name: [_data.patronCategory?.name ?? '', Validators.required],
-      discountPercent: [_data.patronCategory?.discountPercent ?? 0, [Validators.required, Validators.min(0), Validators.max(100)]],
-      isActive: [_data.patronCategory?.isActive ?? true],
-      description: [_data.patronCategory?.description ?? ''],
+      name: [anchor?.name ?? '', Validators.required],
+      description: [anchor?.description ?? ''],
+      isActive: [anchor?.isActive ?? true],
+      prices: this._fb.array(this.seatTypes.map(st => {
+        const row = this._data.categoryRows?.find(r => r.seatTypeId === st.id);
+        return this._fb.group({
+          seatTypeId: [st.id],
+          enabled: [!!row],
+          price: [row?.price ?? null, [Validators.min(0)]],
+        });
+      })),
     });
   }
 
-  isSeatTypeSelected(seatTypeId?: string): boolean {
-    return !!seatTypeId && this.selectedSeatTypeIds.includes(seatTypeId);
-  }
-
-  toggleSeatType(seatTypeId?: string): void {
-    if (!seatTypeId) {
-      return;
-    }
-    this.selectedSeatTypeIds = this.isSeatTypeSelected(seatTypeId)
-      ? this.selectedSeatTypeIds.filter(id => id !== seatTypeId)
-      : [...this.selectedSeatTypeIds, seatTypeId];
+  get prices(): FormArray {
+    return this.form.get('prices') as FormArray;
   }
 
   save(): void {
-    if (!this.form.valid) {
+    if (this.form.controls['name'].invalid) {
       this.form.markAllAsTouched();
       return;
     }
+
+    const priceRows = this.prices.value as { seatTypeId: string; enabled: boolean; price: number | null }[];
+    const enabledRows = priceRows.filter(p => p.enabled);
+    if (!enabledRows.length || enabledRows.some(p => p.price == null || p.price < 0)) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
     const v = this.form.value;
-    const obs = this.editingId
-      ? this._svc.updatePatronCategory(CinemaServiceAgent.UpdatePatronCategoryRequest.fromJS({ ...v, id: this.editingId, theaterId: this._data.theaterId, allowedSeatTypeIds: this.selectedSeatTypeIds }))
-      : this._svc.createPatronCategory(CinemaServiceAgent.CreatePatronCategoryRequest.fromJS({ ...v, theaterId: this._data.theaterId, allowedSeatTypeIds: this.selectedSeatTypeIds }));
+    const prices = enabledRows.map(p => CinemaServiceAgent.PatronCategoryPriceItem.fromJS({ seatTypeId: p.seatTypeId, price: p.price }));
+    const anchorId = this._data.categoryRows?.[0]?.id;
+
+    const obs = anchorId
+      ? this._svc.updatePatronCategory(CinemaServiceAgent.UpdatePatronCategoryRequest.fromJS({
+          id: anchorId, theaterId: this._data.theaterId, name: v.name, description: v.description, isActive: v.isActive, prices,
+        }))
+      : this._svc.createPatronCategory(CinemaServiceAgent.CreatePatronCategoryRequest.fromJS({
+          theaterId: this._data.theaterId, name: v.name, description: v.description, isActive: v.isActive, prices,
+        }));
 
     this._store.dispatch(showLoading());
     obs.subscribe({

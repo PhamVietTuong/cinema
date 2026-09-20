@@ -4,86 +4,59 @@
 </div>
 
 <mat-card class="ad-card--pad-0">
-  <!-- Desktop / tablet: ngx-datatable grid. -->
+  <!-- Desktop / tablet: plain table (dataset is small and grouped, no server-side paging). -->
   <div class="ad-table-wrap ad-desktop-only">
-    <ngx-datatable
-      class="material ad-datatable"
-      [rows]="pageRows"
-      [columnMode]="'force'"
-      [headerHeight]="44"
-      [footerHeight]="50"
-      [rowHeight]="'auto'"
-      [externalPaging]="true"
-      [externalSorting]="true"
-      [count]="total"
-      [offset]="pageOffset"
-      [limit]="pageSize"
-      [loadingIndicator]="loadingIndicator"
-      [messages]="{ emptyMessage: 'theaters.patronCategories.empty' | translate, selectedMessage: '' }"
-      (page)="onChangePage($event)">
-
-      <ngx-datatable-column [name]="'theaters.patronCategories.nameLabel' | translate" prop="name" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
-      </ngx-datatable-column>
-
-      <ngx-datatable-column [name]="'theaters.patronCategories.discountLabel' | translate" prop="discountPercent" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.discountPercent }}%</ng-template>
-      </ngx-datatable-column>
-
-      <ngx-datatable-column [name]="'theaters.patronCategories.activeLabel' | translate" prop="isActive" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</ng-template>
-      </ngx-datatable-column>
-
-      <ngx-datatable-column [name]="'common.description' | translate" prop="description" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.description || '—' }}</ng-template>
-      </ngx-datatable-column>
-
-      <ngx-datatable-column [name]="'theaters.patronCategories.allowedSeatTypesLabel' | translate" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>{{ allowedSeatTypeNames(row) ?? ('theaters.patronCategories.allSeatTypes' | translate) }}</ng-template>
-      </ngx-datatable-column>
-
-      <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="ad-td-actions ad-td-actions--mat">
-            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-
-      <ngx-datatable-footer>
-        <ng-template ngx-datatable-footer-template>
-          <div class="page-count">{{ 'common.totalEntries' | translate }} {{ total }}</div>
-          <ngx-datatable-pager *ngIf="total > pageSize"></ngx-datatable-pager>
-        </ng-template>
-      </ngx-datatable-footer>
-    </ngx-datatable>
+    <table class="ad-table">
+      <thead>
+        <tr>
+          <th>{{ 'theaters.patronCategories.nameLabel' | translate }}</th>
+          <th *ngFor="let st of seatTypes">{{ st.name }}</th>
+          <th>{{ 'theaters.patronCategories.activeLabel' | translate }}</th>
+          <th>{{ 'common.description' | translate }}</th>
+          <th>{{ 'common.actions' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let group of groups">
+          <td><strong>{{ group.name }}</strong></td>
+          <td *ngFor="let st of seatTypes">
+            <ng-container *ngIf="priceFor(group, st) as price; else notAvailable">{{ price | number:'1.0-0' }}đ</ng-container>
+            <ng-template #notAvailable>—</ng-template>
+          </td>
+          <td>{{ group.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</td>
+          <td>{{ group.description || '—' }}</td>
+          <td>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(group)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="delete(group)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="!groups.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
   </div>
 
   <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
   <div class="ad-mobile-only">
-    <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+    <mat-card class="ad-mobile-card" *ngFor="let group of groups" appearance="outlined">
       <mat-card-content>
-        <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong></div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.discountLabel' | translate }}</span><span>{{ row.discountPercent }}%</span></div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.activeLabel' | translate }}</span><span>{{ row.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</span></div>
-        <div class="ad-mobile-card-row"><span>{{ 'common.description' | translate }}</span><span>{{ row.description || '—' }}</span></div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.allowedSeatTypesLabel' | translate }}</span><span>{{ allowedSeatTypeNames(row) ?? ('theaters.patronCategories.allSeatTypes' | translate) }}</span></div>
+        <div class="ad-mobile-card-title"><strong>{{ group.name }}</strong></div>
+        <div class="ad-mobile-card-row" *ngFor="let st of seatTypes">
+          <span>{{ st.name }}</span>
+          <span>
+            <ng-container *ngIf="priceFor(group, st) as price; else notAvailableMobile">{{ price | number:'1.0-0' }}đ</ng-container>
+            <ng-template #notAvailableMobile>—</ng-template>
+          </span>
+        </div>
+        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.activeLabel' | translate }}</span><span>{{ group.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'common.description' | translate }}</span><span>{{ group.description || '—' }}</span></div>
         <div class="ad-mobile-card-actions">
-          <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          <button mat-icon-button (click)="edit(group)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button (click)="delete(group)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
         </div>
       </mat-card-content>
     </mat-card>
-    <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
-
-    <mat-paginator
-      *ngIf="total > 0"
-      [length]="total"
-      [pageSize]="pageSize"
-      [pageIndex]="pageOffset"
-      [hidePageSize]="true"
-      (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
-    </mat-paginator>
+    <div *ngIf="!groups.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
   </div>
 </mat-card>

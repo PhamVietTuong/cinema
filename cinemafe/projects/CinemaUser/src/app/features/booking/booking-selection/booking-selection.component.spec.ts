@@ -1,27 +1,30 @@
 import { Subject, of } from 'rxjs';
 import { BookingSelectionComponent } from './booking-selection.component';
-import { PaymentServiceAgent, CinemaServiceAgent } from 'CinemaLib';
+import { PaymentServiceAgent } from 'CinemaLib';
 
 type Seat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean };
+type PriceRow = PaymentServiceAgent.ShowTimePriceDTO;
 
 const seat = (over: Partial<Seat>): Seat => ({
   id: 'seat-1',
   rowName: 'A',
   colIndex: 1,
-  seatTypeId: 'standard',
+  isDouble: false,
   price: 100000,
   status: PaymentServiceAgent.SeatStatus.Available,
   isLocked: false,
   ...over,
 } as Seat);
 
-const category = (over: Partial<CinemaServiceAgent.PatronCategoryDTO>): CinemaServiceAgent.PatronCategoryDTO => ({
-  id: 'cat-adult',
-  name: 'Adult',
-  discountPercent: 0,
-  allowedSeatTypeIds: [],
+/** One bookable (category, seat kind) row — the unit `showTimePrices` returns. */
+const priceRow = (over: Partial<PriceRow>): PriceRow => ({
+  patronCategoryId: 'cat-adult-standard',
+  patronCategoryName: 'Adult',
+  seatTypeId: 'seat-type-standard',
+  isDouble: false,
+  price: 100000,
   ...over,
-} as CinemaServiceAgent.PatronCategoryDTO);
+} as PriceRow);
 
 describe('BookingSelectionComponent', () => {
   let component: BookingSelectionComponent;
@@ -37,12 +40,12 @@ describe('BookingSelectionComponent', () => {
     startConnection: ReturnType<typeof vi.fn>;
     stopConnection: ReturnType<typeof vi.fn>;
   };
-  let payment: { getSeats: ReturnType<typeof vi.fn> };
-  let cinema: { getRoom: ReturnType<typeof vi.fn>; getFoodAndDrinks: ReturnType<typeof vi.fn>; getPatronCategories: ReturnType<typeof vi.fn> };
+  let payment: { getSeats: ReturnType<typeof vi.fn>; getShowTimePrices: ReturnType<typeof vi.fn> };
+  let cinema: { getRoom: ReturnType<typeof vi.fn>; getFoodAndDrinks: ReturnType<typeof vi.fn> };
 
   /** Builds the component targeting st-1/room-1 by default, mirroring the first @Input binding
    * Angular would apply before the initial ngOnChanges/ngOnInit pass. */
-  const build = (seats: Seat[], categories: CinemaServiceAgent.PatronCategoryDTO[] = [category({})]) => {
+  const build = (seats: Seat[], rows: PriceRow[] = [priceRow({})]) => {
     hub = {
       seatLocked$: new Subject(),
       seatUnlocked$: new Subject(),
@@ -54,11 +57,13 @@ describe('BookingSelectionComponent', () => {
       startConnection: vi.fn().mockResolvedValue(undefined),
       stopConnection: vi.fn().mockResolvedValue(undefined),
     };
-    payment = { getSeats: vi.fn().mockReturnValue(of({ results: seats })) };
+    payment = {
+      getSeats: vi.fn().mockReturnValue(of({ results: seats })),
+      getShowTimePrices: vi.fn().mockReturnValue(of(rows)),
+    };
     cinema = {
       getRoom: vi.fn().mockReturnValue(of({ theaterId: 'theater-1' })),
       getFoodAndDrinks: vi.fn().mockReturnValue(of({ results: [] })),
-      getPatronCategories: vi.fn().mockReturnValue(of({ results: categories })),
     };
     router = { navigate: vi.fn().mockResolvedValue(true) };
 
@@ -101,14 +106,14 @@ describe('BookingSelectionComponent', () => {
 
     it('starts with zero ticket quantities and an empty seat cap', () => {
       expect(component.totalTickets).toBe(0);
-      expect(component.ticketQty['cat-adult']).toBe(0);
+      expect(component.ticketQty['Adult']).toBe(0);
     });
   });
 
   describe('ticket quantities', () => {
     it('increments/decrements build and shrink the slot list', () => {
       component = build([seat({ id: 's1' })]);
-      const adult = component.patronCategories[0];
+      const adult = component.categoryGroups[0];
 
       component.incTicket(adult);
       component.incTicket(adult);
@@ -120,13 +125,13 @@ describe('BookingSelectionComponent', () => {
 
     it('caps the running total at MAX_TICKETS across categories', () => {
       component = build([seat({ id: 's1' })], [
-        category({ id: 'cat-a' }),
-        category({ id: 'cat-b', name: 'Student' }),
+        priceRow({ patronCategoryId: 'cat-a', patronCategoryName: 'Adult' }),
+        priceRow({ patronCategoryId: 'cat-b', patronCategoryName: 'Student' }),
       ]);
-      const [a, b] = component.patronCategories;
+      const [a, b] = component.categoryGroups;
 
-      component.setTicketQty(a.id!, 6);
-      component.setTicketQty(b.id!, 6);
+      component.setTicketQty(a.name, 6);
+      component.setTicketQty(b.name, 6);
 
       expect(component.totalTickets).toBe(BookingSelectionComponent.MAX_TICKETS);
     });
@@ -143,8 +148,8 @@ describe('BookingSelectionComponent', () => {
     });
 
     it('selects a free seat and locks it on the hub', () => {
-      component = build([seat({ id: 's1', price: 90000 })]);
-      component.incTicket(component.patronCategories[0]);
+      component = build([seat({ id: 's1', price: 90000 })], [priceRow({ price: 90000 })]);
+      component.incTicket(component.categoryGroups[0]);
 
       component.toggleSeat(component.seats[0]);
 
@@ -158,7 +163,7 @@ describe('BookingSelectionComponent', () => {
         seat({ id: 's1', colIndex: 1 }),
         seat({ id: 's2', colIndex: 2 }),
       ]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       component.toggleSeat(component.seats[1]);
@@ -169,7 +174,7 @@ describe('BookingSelectionComponent', () => {
 
     it('ignores an occupied seat', () => {
       component = build([seat({ id: 's1', status: PaymentServiceAgent.SeatStatus.Occupied })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
 
       component.toggleSeat(component.seats[0]);
 
@@ -179,7 +184,7 @@ describe('BookingSelectionComponent', () => {
 
     it('ignores a seat another viewer is holding', () => {
       component = build([seat({ id: 's1', isLocked: true })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
 
       component.toggleSeat(component.seats[0]);
 
@@ -188,8 +193,8 @@ describe('BookingSelectionComponent', () => {
     });
 
     it('deselecting releases the lock, drops the price and frees the slot', () => {
-      component = build([seat({ id: 's1', price: 90000 })]);
-      component.incTicket(component.patronCategories[0]);
+      component = build([seat({ id: 's1', price: 90000 })], [priceRow({ price: 90000 })]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       component.toggleSeat(component.seats[0]);
@@ -200,33 +205,37 @@ describe('BookingSelectionComponent', () => {
       expect(component.remainingTickets).toBe(1);
     });
 
-    it('assigns the most-constrained matching category first', () => {
+    it('only assigns a double seat to a category that has a Double row', () => {
       component = build(
         [
-          seat({ id: 'standard-seat', colIndex: 1, seatTypeId: 'standard' }),
-          seat({ id: 'vip-seat', colIndex: 2, seatTypeId: 'vip' }),
+          seat({ id: 'standard-seat', colIndex: 1, isDouble: false }),
+          seat({ id: 'double-seat', colIndex: 2, isDouble: true }),
         ],
         [
-          category({ id: 'cat-adult', name: 'Adult', allowedSeatTypeIds: [] }),
-          category({ id: 'cat-child', name: 'Child', allowedSeatTypeIds: ['standard'] }),
+          priceRow({ patronCategoryId: 'adult-std', patronCategoryName: 'Adult', isDouble: false, price: 100000 }),
+          priceRow({ patronCategoryId: 'adult-dbl', patronCategoryName: 'Adult', isDouble: true, price: 170000 }),
+          priceRow({ patronCategoryId: 'child-std', patronCategoryName: 'Child', isDouble: false, price: 50000 }),
         ],
       );
-      component.incTicket(component.patronCategories.find(c => c.id === 'cat-adult')!);
-      component.incTicket(component.patronCategories.find(c => c.id === 'cat-child')!);
+      component.incTicket(component.categoryGroups.find(g => g.name === 'Adult')!);
+      component.incTicket(component.categoryGroups.find(g => g.name === 'Child')!);
 
+      // Only Adult has a Double row, so the double seat must go to Adult even though Child's slot
+      // was declared second.
+      component.toggleSeat(component.seats.find(s => s.id === 'double-seat')!);
       component.toggleSeat(component.seats.find(s => s.id === 'standard-seat')!);
-      component.toggleSeat(component.seats.find(s => s.id === 'vip-seat')!);
 
-      expect(component.categoryForSeat('standard-seat')?.id).toBe('cat-child');
-      expect(component.categoryForSeat('vip-seat')?.id).toBe('cat-adult');
+      expect(component.categoryForSeat('double-seat')?.patronCategoryName).toBe('Adult');
+      expect(component.categoryForSeat('double-seat')?.price).toBe(170000);
+      expect(component.categoryForSeat('standard-seat')?.patronCategoryName).toBe('Child');
     });
 
-    it('marks a seat unavailable when no chosen category allows its type', () => {
+    it('marks a seat unavailable when no chosen category has a row for its kind', () => {
       component = build(
-        [seat({ id: 'vip-seat', seatTypeId: 'vip' })],
-        [category({ id: 'cat-child', name: 'Child', allowedSeatTypeIds: ['standard'] })],
+        [seat({ id: 'double-seat', isDouble: true })],
+        [priceRow({ patronCategoryId: 'child-std', patronCategoryName: 'Child', isDouble: false })],
       );
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
 
       expect(component.seats[0].isAllowedForPatronCategory).toBe(false);
       component.toggleSeat(component.seats[0]);
@@ -235,15 +244,18 @@ describe('BookingSelectionComponent', () => {
 
     describe('double seats (shared seatGroupId)', () => {
       beforeEach(() => {
-        component = build([
-          seat({ id: 'd1', colIndex: 1, seatGroupId: 'g1', price: 80000 }),
-          seat({ id: 'd2', colIndex: 2, seatGroupId: 'g1', price: 80000 }),
-        ]);
+        component = build(
+          [
+            seat({ id: 'd1', colIndex: 1, seatGroupId: 'g1', isDouble: true, price: 80000 }),
+            seat({ id: 'd2', colIndex: 2, seatGroupId: 'g1', isDouble: true, price: 80000 }),
+          ],
+          [priceRow({ isDouble: true, price: 80000 })],
+        );
       });
 
       it('selects and locks both halves together, consuming two slots', () => {
-        component.incTicket(component.patronCategories[0]);
-        component.incTicket(component.patronCategories[0]);
+        component.incTicket(component.categoryGroups[0]);
+        component.incTicket(component.categoryGroups[0]);
 
         component.toggleSeat(component.seats[0]);
 
@@ -253,7 +265,7 @@ describe('BookingSelectionComponent', () => {
       });
 
       it('refuses the pair when only one ticket remains', () => {
-        component.incTicket(component.patronCategories[0]);
+        component.incTicket(component.categoryGroups[0]);
 
         component.toggleSeat(component.seats[0]);
 
@@ -262,8 +274,8 @@ describe('BookingSelectionComponent', () => {
       });
 
       it('refuses the pair when either half is unavailable', () => {
-        component.incTicket(component.patronCategories[0]);
-        component.incTicket(component.patronCategories[0]);
+        component.incTicket(component.categoryGroups[0]);
+        component.incTicket(component.categoryGroups[0]);
         component.seats[1].status = PaymentServiceAgent.SeatStatus.Occupied;
 
         component.toggleSeat(component.seats[0]);
@@ -279,11 +291,11 @@ describe('BookingSelectionComponent', () => {
       component = build(
         [seat({ id: 's1', colIndex: 1 }), seat({ id: 's2', colIndex: 2 })],
         [
-          category({ id: 'cat-a', allowedSeatTypeIds: [] }),
-          category({ id: 'cat-b', name: 'Student', allowedSeatTypeIds: [] }),
+          priceRow({ patronCategoryId: 'cat-a', patronCategoryName: 'Adult' }),
+          priceRow({ patronCategoryId: 'cat-b', patronCategoryName: 'Student' }),
         ],
       );
-      const [a, b] = component.patronCategories;
+      const [a, b] = component.categoryGroups;
       component.incTicket(a);
       component.incTicket(b);
       component.toggleSeat(component.seats[0]);
@@ -298,11 +310,14 @@ describe('BookingSelectionComponent', () => {
     });
 
     it('releases a whole double seat together, never splitting the pair', () => {
-      component = build([
-        seat({ id: 'd1', colIndex: 1, seatGroupId: 'g1' }),
-        seat({ id: 'd2', colIndex: 2, seatGroupId: 'g1' }),
-      ]);
-      const adult = component.patronCategories[0];
+      component = build(
+        [
+          seat({ id: 'd1', colIndex: 1, seatGroupId: 'g1', isDouble: true }),
+          seat({ id: 'd2', colIndex: 2, seatGroupId: 'g1', isDouble: true }),
+        ],
+        [priceRow({ isDouble: true })],
+      );
+      const adult = component.categoryGroups[0];
       component.incTicket(adult);
       component.incTicket(adult);
       component.toggleSeat(component.seats[0]);
@@ -319,7 +334,7 @@ describe('BookingSelectionComponent', () => {
   describe('live lock events', () => {
     beforeEach(() => {
       component = build([seat({ id: 's1' }), seat({ id: 's2', colIndex: 2 })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
     });
 
     it("another viewer's lock disables the seat and frees its slot", () => {
@@ -362,8 +377,8 @@ describe('BookingSelectionComponent', () => {
   describe('proceedToCheckout', () => {
     it('does nothing while seats are still needed', () => {
       component = build([seat({ id: 's1' }), seat({ id: 's2', colIndex: 2 })]);
-      component.incTicket(component.patronCategories[0]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       component.proceedToCheckout();
@@ -372,8 +387,8 @@ describe('BookingSelectionComponent', () => {
     });
 
     it('navigates with a flat, per-seat-category state once every slot is filled', () => {
-      component = build([seat({ id: 's1', price: 90000 })]);
-      component.incTicket(component.patronCategories[0]);
+      component = build([seat({ id: 's1', price: 90000 })], [priceRow({ price: 90000 })]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       component.proceedToCheckout();
@@ -383,8 +398,8 @@ describe('BookingSelectionComponent', () => {
           showTimeId: 'st-1',
           roomId: 'room-1',
           seats: [{
-            seatId: 's1', label: 'A1', seatTypeName: '', basePrice: 90000, price: 90000,
-            patronCategoryId: 'cat-adult', patronCategoryName: 'Adult', discountPercent: 0,
+            seatId: 's1', label: 'A1', seatKind: 'Standard', basePrice: 90000, price: 90000,
+            patronCategoryId: 'cat-adult-standard', patronCategoryName: 'Adult',
           }],
           foods: [],
         },
@@ -394,7 +409,7 @@ describe('BookingSelectionComponent', () => {
 
     it('does not stop the hub connection afterwards, but a plain destroy does', () => {
       component = build([seat({ id: 's1' })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
       component.proceedToCheckout();
 
@@ -406,7 +421,7 @@ describe('BookingSelectionComponent', () => {
     it('re-arms the disconnect safety net when navigation is rejected (e.g. a guard throws)', async () => {
       component = build([seat({ id: 's1' })]);
       router.navigate.mockRejectedValue(new Error('chunk load failed'));
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       component.proceedToCheckout();
@@ -445,7 +460,7 @@ describe('BookingSelectionComponent', () => {
 
     it('starts at 5:00 when a seat is selected and ticks down', () => {
       component = build([seat({ id: 's1' })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
 
       component.toggleSeat(component.seats[0]);
 
@@ -460,7 +475,7 @@ describe('BookingSelectionComponent', () => {
 
     it('flips to expired once 5 minutes have elapsed', () => {
       component = build([seat({ id: 's1' })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       vi.advanceTimersByTime(5 * 60 * 1000 + 1000);
@@ -474,8 +489,8 @@ describe('BookingSelectionComponent', () => {
         seat({ id: 's1', colIndex: 1 }),
         seat({ id: 's2', colIndex: 2 }),
       ]);
-      component.incTicket(component.patronCategories[0]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       vi.advanceTimersByTime(60_000);
@@ -487,7 +502,7 @@ describe('BookingSelectionComponent', () => {
 
     it('goes inactive again once every held seat is deselected', () => {
       component = build([seat({ id: 's1' })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       component.toggleSeat(component.seats[0]);
@@ -499,7 +514,7 @@ describe('BookingSelectionComponent', () => {
   describe('switching showtimes (inline-panel re-targeting)', () => {
     it('releases every selected seat of the old showtime, then stops, then starts the new connection, in order', async () => {
       component = build([seat({ id: 's1' })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
       const callOrder: string[] = [];
       hub.unlockSeat.mockImplementation((...args: unknown[]) => { callOrder.push('unlock:' + args[2]); return Promise.resolve(); });
@@ -518,7 +533,7 @@ describe('BookingSelectionComponent', () => {
 
     it('resets slots/quantities/selection/food and refetches everything for the new target', async () => {
       component = build([seat({ id: 's1' })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
       payment.getSeats.mockReturnValue(of({ results: [seat({ id: 's2', roomId: 'room-2' } as never)] }));
 
@@ -529,11 +544,11 @@ describe('BookingSelectionComponent', () => {
 
       expect(component.selectedSeats).toEqual([]);
       expect(component.slots).toEqual([]);
-      expect(component.ticketQty).toEqual({ 'cat-adult': 0 });
+      expect(component.ticketQty).toEqual({ 'Adult': 0 });
       expect(component.holdActive).toBe(false);
       expect(payment.getSeats).toHaveBeenCalledTimes(2);
       expect(cinema.getRoom).toHaveBeenCalledWith('room-2');
-      expect(cinema.getPatronCategories).toHaveBeenCalledTimes(2);
+      expect(payment.getShowTimePrices).toHaveBeenCalledTimes(2);
       expect(cinema.getFoodAndDrinks).toHaveBeenCalledTimes(2);
     });
 
@@ -556,11 +571,11 @@ describe('BookingSelectionComponent', () => {
           }
           return of({ results: [seat({ id: 'fresh-seat' })] });
         }),
+        getShowTimePrices: vi.fn().mockReturnValue(of([priceRow({})])),
       };
       cinema = {
         getRoom: vi.fn().mockReturnValue(of({ theaterId: 'theater-1' })),
         getFoodAndDrinks: vi.fn().mockReturnValue(of({ results: [] })),
-        getPatronCategories: vi.fn().mockReturnValue(of({ results: [category({})] })),
       };
       router = { navigate: vi.fn().mockResolvedValue(true) };
       const cdr = { markForCheck: vi.fn() };
@@ -585,14 +600,14 @@ describe('BookingSelectionComponent', () => {
 
     it('wires hub-event subscriptions exactly once across two switches', async () => {
       component = build([seat({ id: 's1' })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       component.showTimeId = 'st-2';
       component.roomId = 'room-2';
       component.ngOnChanges();
       await Promise.resolve().then(() => Promise.resolve()).then(() => Promise.resolve());
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
 
       component.showTimeId = 'st-3';
@@ -609,7 +624,7 @@ describe('BookingSelectionComponent', () => {
   describe('cancel', () => {
     it('unlocks selected seats, stops the connection, resets state, and emits closed', async () => {
       component = build([seat({ id: 's1' })]);
-      component.incTicket(component.patronCategories[0]);
+      component.incTicket(component.categoryGroups[0]);
       component.toggleSeat(component.seats[0]);
       const closedSpy = vi.fn();
       component.closed.subscribe(closedSpy);
@@ -620,7 +635,7 @@ describe('BookingSelectionComponent', () => {
       expect(hub.unlockSeat).toHaveBeenCalledWith('st-1', 'room-1', 's1');
       expect(hub.stopConnection).toHaveBeenCalled();
       expect(component.selectedSeats).toEqual([]);
-      expect(component.patronCategories).toEqual([]);
+      expect(component.showTimePrices).toEqual([]);
       expect(closedSpy).toHaveBeenCalled();
     });
   });

@@ -1,16 +1,27 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import { BookingCheckoutState } from '../booking-checkout/booking-checkout.state';
 
-type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean; isSelectable?: boolean };
+type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean; isSelectable?: boolean; isAllowedForPatronCategory?: boolean };
+type ShowTimePriceDTO = PaymentServiceAgent.ShowTimePriceDTO;
 
-/** One ticket the customer is buying: a category and, once a seat is picked for it, that seat's id. */
+/** One ticket the customer is buying: a logical category (by name — e.g. "Adult") and, once a seat
+ * is picked for it, that seat's id. The category isn't kind-specific until a seat is assigned: a
+ * "2 Adult" order could end up as 2 Standard tickets, or 1 Standard + 1 Double, depending on which
+ * seats get clicked — resolved at click time against `showTimePrices`. */
 interface TicketSlot {
-  categoryId: string;
+  categoryName: string;
   seatId: string | null;
+}
+
+/** All ShowTimePriceDTO rows sharing a logical category name (1 row if only Standard is offered, 2
+ * if Double is too). */
+interface CategoryGroup {
+  name: string;
+  rows: ShowTimePriceDTO[];
 }
 
 /**
@@ -46,6 +57,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   selectedSeats: SelectableSeat[] = [];
   loadingSeats = true;
   SeatStatus = PaymentServiceAgent.SeatStatus;
+  readonly seatKindLabel = seatKindLabel;
   private _theaterId = '';
   /** Which showTimeId/roomId the currently-loaded seats/locks belong to — distinct from the
    * @Input values, which Angular has already updated to the NEW target by the time a switch away
@@ -70,13 +82,42 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   private _seatLockedAt: Record<string, number> = {};
   private _holdTimer: any;
 
-  /** Patron categories (Adult/Student/Senior/Child) available at this theater, and the quantity
-   * chosen per category. Quantities build `slots` — one entry per ticket, in category-declared
-   * order — each of which is filled by exactly one seat click. */
-  patronCategories: CinemaServiceAgent.PatronCategoryDTO[] = [];
+  /** The resolved price list for this showtime+room: one row per (patron category, seat kind)
+   * combination actually bookable here (all pricing factors already applied server-side). Grouped
+   * by name into `categoryGroups` for the quantity picker. Quantities build `slots` — one entry per
+   * ticket, in category-declared order — each of which is filled by exactly one seat click. */
+  showTimePrices: ShowTimePriceDTO[] = [];
   ticketQty: Record<string, number> = {};
   slots: TicketSlot[] = [];
   categoryWarning = '';
+
+  get categoryGroups(): CategoryGroup[] {
+    const byName = new Map<string, ShowTimePriceDTO[]>();
+    for (const row of this.showTimePrices) {
+      const list = byName.get(row.patronCategoryName!) ?? [];
+      list.push(row);
+      byName.set(row.patronCategoryName!, list);
+    }
+    return Array.from(byName.entries())
+      .map(([name, rows]) => ({ name, rows: rows.sort((a, b) => (a.isDouble ? 1 : 0) - (b.isDouble ? 1 : 0)) }))
+      .sort((a, b) => (a.rows[0].price ?? 0) - (b.rows[0].price ?? 0));
+  }
+
+  /** The Standard-kind price for a group, shown as the picker's headline price. Falls back to
+   * whatever kind exists if a category somehow has no Standard row. */
+  headlinePrice(group: CategoryGroup): number {
+    return group.rows.find(r => !r.isDouble)?.price ?? group.rows[0]?.price ?? 0;
+  }
+
+  /** The Double-kind price for a group, or null when this category has no Double row (cannot book
+   * a double seat at all). */
+  doublePrice(group: CategoryGroup): number | null {
+    return group.rows.find(r => r.isDouble)?.price ?? null;
+  }
+
+  private _rowFor(categoryName: string, isDouble: boolean): ShowTimePriceDTO | undefined {
+    return this.showTimePrices.find(r => r.patronCategoryName === categoryName && !!r.isDouble === isDouble);
+  }
 
   foods: CinemaServiceAgent.FoodAndDrinkDTO[] = [];
   foodQty: Record<string, number> = {};
@@ -119,20 +160,21 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     return this.totalTickets > 0 && this.remainingTickets === 0;
   }
 
-  categoryForSeat(seatId: string): CinemaServiceAgent.PatronCategoryDTO | undefined {
+/** The resolved (patron category × seat kind) row pricing the given seat, once a slot has claimed
+   * it — the seat's kind is fixed (derived from isDouble), so this is a straight lookup. */
+  categoryForSeat(seatId: string): ShowTimePriceDTO | undefined {
     const slot = this.slots.find(sl => sl.seatId === seatId);
-    if (!slot) {
+    const seat = this.seats.find(s => s.id === seatId);
+    if (!slot || !seat) {
       return undefined;
     }
-    return this.patronCategories.find(c => c.id === slot.categoryId);
+    return this._rowFor(slot.categoryName, !!seat.isDouble);
   }
 
-  /** This seat's price after its assigned category's discount — mirrors the server's
-   * ApplyPatronDiscount (percent off, floored at 0, rounded to 2dp). */
+  /** The server-resolved final price for this seat once a category has claimed it. Falls back to
+   * the seat's own "from" price when nothing has claimed it yet (shouldn't normally be displayed). */
   seatPrice(seat: SelectableSeat): number {
-    const base = seat.price ?? 0;
-    const pct = this.categoryForSeat(seat.id!)?.discountPercent ?? 0;
-    return Math.round(Math.max(0, base * (1 - pct / 100)) * 100) / 100;
+    return this.categoryForSeat(seat.id!)?.price ?? seat.price ?? 0;
   }
 
   get totalPrice(): number {
@@ -243,7 +285,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this.selectedSeats = [];
     this.slots = [];
     this.ticketQty = {};
-    this.patronCategories = [];
+    this.showTimePrices = [];
     this.foods = [];
     this.foodQty = {};
     this._foodImgFailed.clear();
@@ -297,16 +339,6 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
               this.foods = (r.results ?? []).filter(f => f.isAvailable);
               this._cdr.markForCheck();
             });
-          this._cinemaService.getPatronCategories(CinemaServiceAgent.PagingSearchDTO.fromJS(
-            { pageIndex: 1, pageSize: 100, filters: { theaterId: room.theaterId, isActive: 'true' } }))
-            .subscribe(r => {
-              if (seq !== this._loadSeq) { return; }
-              this.patronCategories = (r.results ?? []).slice().sort((a, b) => (a.discountPercent ?? 0) - (b.discountPercent ?? 0));
-              for (const c of this.patronCategories) {
-                this.ticketQty[c.id!] = 0;
-              }
-              this._cdr.markForCheck();
-            });
         },
         error: () => {
           if (seq !== this._loadSeq) { return; }
@@ -315,36 +347,51 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       });
     }
 
+    this._paymentService.getShowTimePrices(this.showTimeId, this.roomId).subscribe({
+      next: rows => {
+        if (seq !== this._loadSeq) { return; }
+        this.showTimePrices = rows ?? [];
+        for (const group of this.categoryGroups) {
+          this.ticketQty[group.name] = 0;
+        }
+        this._cdr.markForCheck();
+      },
+      error: () => {
+        if (seq !== this._loadSeq) { return; }
+        this._cdr.markForCheck();
+      },
+    });
+
     this._hub.startConnection(this.showTimeId, this.roomId).catch(() => { /* degrade to non-realtime */ });
   }
 
-  incTicket(c: CinemaServiceAgent.PatronCategoryDTO): void {
-    this.setTicketQty(c.id!, (this.ticketQty[c.id!] ?? 0) + 1);
+  incTicket(group: CategoryGroup): void {
+    this.setTicketQty(group.name, (this.ticketQty[group.name] ?? 0) + 1);
   }
 
-  decTicket(c: CinemaServiceAgent.PatronCategoryDTO): void {
-    this.setTicketQty(c.id!, Math.max(0, (this.ticketQty[c.id!] ?? 0) - 1));
+  decTicket(group: CategoryGroup): void {
+    this.setTicketQty(group.name, Math.max(0, (this.ticketQty[group.name] ?? 0) - 1));
   }
 
-  setTicketQty(categoryId: string, qty: number): void {
-    const prev = this.ticketQty[categoryId] ?? 0;
+  setTicketQty(categoryName: string, qty: number): void {
+    const prev = this.ticketQty[categoryName] ?? 0;
     const otherTotal = this.slots.length - prev;
     const clamped = Math.max(0, Math.min(qty, BookingSelectionComponent.MAX_TICKETS - otherTotal));
     if (clamped === prev) {
       return;
     }
-    this.ticketQty[categoryId] = clamped;
+    this.ticketQty[categoryName] = clamped;
 
     if (clamped > prev) {
       for (let i = prev; i < clamped; i++) {
-        this.slots.push({ categoryId, seatId: null });
+        this.slots.push({ categoryName, seatId: null });
       }
       this.categoryWarning = '';
     } else {
       const diff = prev - clamped;
       const forThisCategory = this.slots
         .map((slot, index) => ({ slot, index }))
-        .filter(x => x.slot.categoryId === categoryId);
+        .filter(x => x.slot.categoryName === categoryName);
       // Free (unassigned) slots go first; assigned slots are freed last-declared-first.
       const removable = [
         ...forThisCategory.filter(x => x.slot.seatId === null).map(x => x.index),
@@ -395,31 +442,21 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this._refreshHoldTimer();
   }
 
-  /** True iff this category's allow-list (empty = unrestricted) permits the given seat type. */
-  private _categoryAllows(categoryId: string, seatTypeId: string): boolean {
-    const category = this.patronCategories.find(c => c.id === categoryId);
-    const allowed = category?.allowedSeatTypeIds ?? [];
-    return allowed.length === 0 || allowed.includes(seatTypeId);
+  /** True iff this category has a row for the given seat kind at all — the entire eligibility rule
+   * (no separate allow-list): a category with no Double row simply cannot book a double seat. */
+  private _categoryAllowsKind(categoryName: string, isDouble: boolean): boolean {
+    return !!this._rowFor(categoryName, isDouble);
   }
 
-  /** Picks the best free slot for a seat of this type: the most-constrained matching category
-   * (narrowest allow-list) first, so a restricted slot is never left unfilled in favor of an
-   * unrestricted one. Returns -1 when no free slot's category allows this seat type. */
-  private _bestSlotFor(seatTypeId: string, exclude: Set<number>): number {
+  /** Picks the first free slot whose category has a row for this seat kind. Returns -1 when no free
+   * slot's category can book this kind at all. */
+  private _bestSlotFor(isDouble: boolean, exclude: Set<number>): number {
     let bestIndex = -1;
-    let bestRank = Infinity;
     this.slots.forEach((slot, index) => {
-      if (slot.seatId !== null || exclude.has(index)) {
+      if (bestIndex !== -1 || slot.seatId !== null || exclude.has(index)) {
         return;
       }
-      if (!this._categoryAllows(slot.categoryId, seatTypeId)) {
-        return;
-      }
-      const category = this.patronCategories.find(c => c.id === slot.categoryId);
-      const allowedLen = category?.allowedSeatTypeIds?.length ?? 0;
-      const rank = allowedLen === 0 ? Infinity : allowedLen;
-      if (bestIndex === -1 || rank < bestRank) {
-        bestRank = rank;
+      if (this._categoryAllowsKind(slot.categoryName, isDouble)) {
         bestIndex = index;
       }
     });
@@ -427,15 +464,15 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /** Recomputes each seat's isAllowedForPatronCategory (does ANY chosen ticket's category allow
-   * this seat type at all) and isSelectable (is there currently a FREE slot for it). */
+   * this seat's kind at all) and isSelectable (is there currently a FREE slot for it). */
   private _applyGate(): void {
     if (this.seats.length === 0) {
       return;
     }
     for (const seat of this.seats) {
-      const seatTypeId = seat.seatTypeId!;
-      const allowedByAny = this.slots.length === 0 || this.slots.some(sl => this._categoryAllows(sl.categoryId, seatTypeId));
-      const hasFreeMatch = this.slots.some(sl => sl.seatId === null && this._categoryAllows(sl.categoryId, seatTypeId));
+      const isDouble = !!seat.isDouble;
+      const allowedByAny = this.slots.length === 0 || this.slots.some(sl => this._categoryAllowsKind(sl.categoryName, isDouble));
+      const hasFreeMatch = this.slots.some(sl => sl.seatId === null && this._categoryAllowsKind(sl.categoryName, isDouble));
       seat.isAllowedForPatronCategory = allowedByAny;
       seat.isSelectable = seat.status === PaymentServiceAgent.SeatStatus.Available && !seat.isLocked && allowedByAny && (!!seat.isSelected || hasFreeMatch);
     }
@@ -457,7 +494,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       const claimed = new Set<number>();
       const assignments: { seat: SelectableSeat; slotIndex: number }[] = [];
       for (const s of group) {
-        const slotIndex = this._bestSlotFor(s.seatTypeId!, claimed);
+        const slotIndex = this._bestSlotFor(!!s.isDouble, claimed);
         if (slotIndex === -1) {
           this.categoryWarning = this._translate.instant(
             group.length > 1 ? 'booking.tickets.notEnoughForDouble' : 'booking.tickets.capReached'
@@ -618,12 +655,11 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         return {
           seatId: s.id!,
           label: `${s.rowName}${s.colIndex}`,
-          seatTypeName: s.seatTypeName ?? '',
+          seatKind: s.isDouble ? 'Double' : 'Standard',
           basePrice: s.price ?? 0,
           price: this.seatPrice(s),
-          patronCategoryId: category?.id ?? '',
-          patronCategoryName: category?.name ?? '',
-          discountPercent: category?.discountPercent ?? 0,
+          patronCategoryId: category?.patronCategoryId ?? '',
+          patronCategoryName: category?.patronCategoryName ?? '',
         };
       }),
       foods: this.selectedFoods.map(f => ({

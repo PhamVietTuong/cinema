@@ -150,7 +150,8 @@
       "selectMore": "Select {{count}} more seat(s) to continue",
       "capReached": "You've selected all your tickets — increase a quantity to add more",
       "notEnoughForDouble": "Not enough tickets left for a double seat — increase a quantity to select it",
-      "removedByQuantityChange": "Deselected (you reduced the quantity): {{seats}}"
+      "removedByQuantityChange": "Deselected (you reduced the quantity): {{seats}}",
+      "doublePrice": "Double: {{price}}đ"
     },
     "checkout": {
       "backToSeats": "Back to seats"
@@ -164,10 +165,12 @@
       "legendAvailable": "Available",
       "legendSelected": "Selected",
       "legendOccupied": "Sold",
-      "legendVip": "VIP Seat",
       "selectedTitle": "Selected Seats",
       "empty": "No seats selected",
-      "notAvailableForCategory": "Not available for this ticket type"
+      "notAvailableForCategory": "Not available for this ticket type",
+      "legendDouble": "Double Seat",
+      "kindStandard": "Standard",
+      "kindDouble": "Double"
     },
     "summary": {
       "subtotal": "Subtotal ({{count}} seats)",

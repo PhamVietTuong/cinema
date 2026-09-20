@@ -8,17 +8,19 @@ type Dto = CinemaServiceAgent.SeatTypeDTO;
 
 export interface SeatTypeDialogData {
   theaterId: string;
-  seatType: Dto | null;
+  seatType: Dto;
 }
 
-/** Create/edit form for a theater's seat type, opened via MatDialog. Resolves `true` on save, `false` on cancel. */
+/** Edit form for a theater's fixed Standard/Double seat type, opened via MatDialog. Only
+ * Name/Description/Color are editable — Kind is fixed and there is no create/delete. Resolves
+ * `true` on save, `false` on cancel. */
 @Component({
   selector: 'app-seat-type-dialog',
   standalone: false,
   templateUrl: './seat-type.dialog.html',
 })
 export class SeatTypeDialog {
-  readonly editingId: string | null;
+  readonly editingId: string;
   form: FormGroup;
 
   constructor(
@@ -28,12 +30,11 @@ export class SeatTypeDialog {
     private _dialogRef: MatDialogRef<SeatTypeDialog, boolean>,
     @Inject(MAT_DIALOG_DATA) private _data: SeatTypeDialogData,
   ) {
-    this.editingId = _data.seatType?.id ?? null;
+    this.editingId = _data.seatType.id!;
     this.form = this._fb.group({
-      name: [_data.seatType?.name ?? '', Validators.required],
-      color: [_data.seatType?.color ?? '#808080', Validators.required],
-      priceMultiplier: [_data.seatType?.priceMultiplier ?? 1, [Validators.required, Validators.min(0.1)]],
-      description: [_data.seatType?.description ?? ''],
+      name: [_data.seatType.name ?? '', Validators.required],
+      color: [_data.seatType.color ?? '#808080', Validators.required],
+      description: [_data.seatType.description ?? ''],
     });
   }
 
@@ -43,9 +44,7 @@ export class SeatTypeDialog {
       return;
     }
     const v = this.form.value;
-    const obs = this.editingId
-      ? this._svc.updateSeatType(CinemaServiceAgent.UpdateSeatTypeRequest.fromJS({ ...v, id: this.editingId, theaterId: this._data.theaterId }))
-      : this._svc.createSeatType(CinemaServiceAgent.CreateSeatTypeRequest.fromJS({ ...v, theaterId: this._data.theaterId }));
+    const obs = this._svc.updateSeatType(CinemaServiceAgent.UpdateSeatTypeRequest.fromJS({ ...v, id: this.editingId, theaterId: this._data.theaterId }));
 
     this._store.dispatch(showLoading());
     obs.subscribe({

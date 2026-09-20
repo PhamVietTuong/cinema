@@ -1,6 +1,5 @@
 <div class="tab-toolbar">
   <p class="ad-sub">{{ 'theaters.seatTypes.subtitle' | translate }}</p>
-  <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'theaters.seatTypes.add' | translate }}</button>
 </div>
 
 <mat-card class="ad-card--pad-0">
@@ -30,19 +29,14 @@
         <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
       </ngx-datatable-column>
 
-      <ngx-datatable-column [name]="'theaters.seatTypes.multiplierLabel' | translate" prop="priceMultiplier" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>×{{ row.priceMultiplier | number:'1.0-2' }}</ng-template>
-      </ngx-datatable-column>
-
       <ngx-datatable-column [name]="'common.description' | translate" prop="description" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>{{ row.description || '—' }}</ng-template>
       </ngx-datatable-column>
 
-      <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+      <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="90" [canAutoResize]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="ad-td-actions ad-td-actions--mat">
             <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -61,11 +55,9 @@
     <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
       <mat-card-content>
         <div class="ad-mobile-card-title"><span class="color-dot" [style.background]="row.color"></span> <strong>{{ row.name }}</strong></div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.seatTypes.multiplierLabel' | translate }}</span><span>×{{ row.priceMultiplier | number:'1.0-2' }}</span></div>
         <div class="ad-mobile-card-row"><span>{{ 'common.description' | translate }}</span><span>{{ row.description || '—' }}</span></div>
         <div class="ad-mobile-card-actions">
           <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
         </div>
       </mat-card-content>
     </mat-card>

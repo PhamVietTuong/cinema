@@ -1,0 +1,41 @@
+<div mat-dialog-title class="dialog-title">
+  {{ 'theaters.roomTypePrices.title' | translate }} · {{ roomType.name }}
+  <p class="ad-sub">{{ 'theaters.roomTypePrices.subtitle' | translate }}</p>
+</div>
+
+<mat-dialog-content>
+  <div *ngIf="loading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'common.loading' | translate }}</p></div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="!rows.length" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.roomTypePrices.empty' | translate }}</p></div>
+
+    <div class="dlg-grid" *ngIf="rows.length">
+      <div class="dlg-row dlg-row--2" *ngFor="let row of rows">
+        <div class="dlg-field">
+          <label class="dlg-label">{{ row.patronCategoryName }}</label>
+          <p class="ad-sub">{{ 'theaters.roomTypePrices.theaterPrice' | translate }}: {{ row.defaultPrice | number:'1.0-0' }}đ</p>
+        </div>
+        <div class="dlg-field">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" step="1000" min="0" [(ngModel)]="row.overridePrice" [placeholder]="'theaters.roomTypePrices.overrideLabel' | translate">
+            <span matTextSuffix>đ</span>
+            <button mat-icon-button matSuffix type="button" *ngIf="row.overridePrice !== null" (click)="clearOverride(row)" [matTooltip]="'theaters.roomTypePrices.clearOverride' | translate">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</mat-dialog-content>
+
+<div mat-dialog-actions class="dialog-actions">
+  <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+  <button mat-raised-button color="primary" type="button" [disabled]="saving || loading" (click)="save()">
+    {{ saving ? ('theaters.rooms.saving' | translate) : ('common.save' | translate) }}
+  </button>
+</div>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

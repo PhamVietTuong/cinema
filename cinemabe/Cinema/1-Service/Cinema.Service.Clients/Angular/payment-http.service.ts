@@ -21,6 +21,7 @@ export const PAYMENT_BASE_URL = new InjectionToken<string>('PAYMENT_BASE_URL');
 
 export interface IHttpService {
     getSeats(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSeatDTO>;
+    getShowTimePrices(showTimeId?: string | undefined, roomId?: string | undefined): Observable<ShowTimePriceDTO[]>;
     createBooking(request: CreateBookingRequest): Observable<BookingResultDTO>;
     confirmPayment(request: ConfirmPaymentRequest): Observable<void>;
     cancelBooking(request: CancelBookingRequest): Observable<void>;
@@ -95,6 +96,69 @@ export class HttpService implements IHttpService {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = DefaultSearchResultsOfSeatDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getShowTimePrices(showTimeId?: string | undefined, roomId?: string | undefined): Observable<ShowTimePriceDTO[]> {
+        let url_ = this.baseUrl + "/api/Payment/GetShowTimePrices?";
+        if (showTimeId === null)
+            throw new Error("The parameter 'showTimeId' cannot be null.");
+        else if (showTimeId !== undefined)
+            url_ += "showTimeId=" + encodeURIComponent("" + showTimeId) + "&";
+        if (roomId === null)
+            throw new Error("The parameter 'roomId' cannot be null.");
+        else if (roomId !== undefined)
+            url_ += "roomId=" + encodeURIComponent("" + roomId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetShowTimePrices(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetShowTimePrices(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ShowTimePriceDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ShowTimePriceDTO[]>;
+        }));
+    }
+
+    protected processGetShowTimePrices(response: HttpResponseBase): Observable<ShowTimePriceDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ShowTimePriceDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -1245,13 +1309,10 @@ export class SeatDTO implements ISeatDTO {
     id?: string;
     rowName?: string;
     colIndex?: number;
-    seatTypeId?: string;
-    seatTypeName?: string;
-    seatTypeColor?: string;
+    isDouble?: boolean;
     status?: SeatStatus;
     price?: number;
     isLocked?: boolean;
-    isAllowedForPatronCategory?: boolean;
     seatGroupId?: string | undefined;
 
     constructor(data?: ISeatDTO) {
@@ -1268,13 +1329,10 @@ export class SeatDTO implements ISeatDTO {
             this.id = _data["id"];
             this.rowName = _data["rowName"];
             this.colIndex = _data["colIndex"];
-            this.seatTypeId = _data["seatTypeId"];
-            this.seatTypeName = _data["seatTypeName"];
-            this.seatTypeColor = _data["seatTypeColor"];
+            this.isDouble = _data["isDouble"];
             this.status = _data["status"];
             this.price = _data["price"];
             this.isLocked = _data["isLocked"];
-            this.isAllowedForPatronCategory = _data["isAllowedForPatronCategory"];
             this.seatGroupId = _data["seatGroupId"];
         }
     }
@@ -1291,13 +1349,10 @@ export class SeatDTO implements ISeatDTO {
         data["id"] = this.id;
         data["rowName"] = this.rowName;
         data["colIndex"] = this.colIndex;
-        data["seatTypeId"] = this.seatTypeId;
-        data["seatTypeName"] = this.seatTypeName;
-        data["seatTypeColor"] = this.seatTypeColor;
+        data["isDouble"] = this.isDouble;
         data["status"] = this.status;
         data["price"] = this.price;
         data["isLocked"] = this.isLocked;
-        data["isAllowedForPatronCategory"] = this.isAllowedForPatronCategory;
         data["seatGroupId"] = this.seatGroupId;
         return data;
     }
@@ -1307,13 +1362,10 @@ export interface ISeatDTO {
     id?: string;
     rowName?: string;
     colIndex?: number;
-    seatTypeId?: string;
-    seatTypeName?: string;
-    seatTypeColor?: string;
+    isDouble?: boolean;
     status?: SeatStatus;
     price?: number;
     isLocked?: boolean;
-    isAllowedForPatronCategory?: boolean;
     seatGroupId?: string | undefined;
 }
 
@@ -1423,6 +1475,67 @@ export interface ISortDTO {
     ascending?: boolean;
 }
 
+export class ShowTimePriceDTO implements IShowTimePriceDTO {
+    patronCategoryId?: string;
+    patronCategoryName?: string;
+    seatTypeId?: string;
+    kind?: SeatKind;
+    isDouble?: boolean;
+    price?: number;
+
+    constructor(data?: IShowTimePriceDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.patronCategoryId = _data["patronCategoryId"];
+            this.patronCategoryName = _data["patronCategoryName"];
+            this.seatTypeId = _data["seatTypeId"];
+            this.kind = _data["kind"];
+            this.isDouble = _data["isDouble"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): ShowTimePriceDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ShowTimePriceDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["patronCategoryId"] = this.patronCategoryId;
+        data["patronCategoryName"] = this.patronCategoryName;
+        data["seatTypeId"] = this.seatTypeId;
+        data["kind"] = this.kind;
+        data["isDouble"] = this.isDouble;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface IShowTimePriceDTO {
+    patronCategoryId?: string;
+    patronCategoryName?: string;
+    seatTypeId?: string;
+    kind?: SeatKind;
+    isDouble?: boolean;
+    price?: number;
+}
+
+export enum SeatKind {
+    Standard = 0,
+    Double = 1,
+}
+
 export class BookingResultDTO implements IBookingResultDTO {
     invoiceId?: string;
     invoiceCode?: string;
@@ -1512,7 +1625,6 @@ export class TicketItemDTO implements ITicketItemDTO {
     seatType?: string;
     price?: number;
     patronCategory?: string;
-    patronDiscountPercent?: number;
     qrCode?: string | undefined;
 
     constructor(data?: ITicketItemDTO) {
@@ -1530,7 +1642,6 @@ export class TicketItemDTO implements ITicketItemDTO {
             this.seatType = _data["seatType"];
             this.price = _data["price"];
             this.patronCategory = _data["patronCategory"];
-            this.patronDiscountPercent = _data["patronDiscountPercent"];
             this.qrCode = _data["qrCode"];
         }
     }
@@ -1548,7 +1659,6 @@ export class TicketItemDTO implements ITicketItemDTO {
         data["seatType"] = this.seatType;
         data["price"] = this.price;
         data["patronCategory"] = this.patronCategory;
-        data["patronDiscountPercent"] = this.patronDiscountPercent;
         data["qrCode"] = this.qrCode;
         return data;
     }
@@ -1559,7 +1669,6 @@ export interface ITicketItemDTO {
     seatType?: string;
     price?: number;
     patronCategory?: string;
-    patronDiscountPercent?: number;
     qrCode?: string | undefined;
 }
 

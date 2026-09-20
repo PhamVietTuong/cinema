@@ -43,6 +43,54 @@
         ]
       }
     },
+    "/api/Payment/GetShowTimePrices": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "Payment_GetShowTimePrices",
+        "parameters": [
+          {
+            "name": "showTimeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "roomId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShowTimePriceDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Payment/CreateBooking": {
       "post": {
         "tags": [
@@ -880,15 +928,8 @@
             "type": "integer",
             "format": "int32"
           },
-          "seatTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "seatTypeName": {
-            "type": "string"
-          },
-          "seatTypeColor": {
-            "type": "string"
+          "isDouble": {
+            "type": "boolean"
           },
           "status": {
             "$ref": "#/components/schemas/SeatStatus"
@@ -898,9 +939,6 @@
             "format": "double"
           },
           "isLocked": {
-            "type": "boolean"
-          },
-          "isAllowedForPatronCategory": {
             "type": "boolean"
           },
           "seatGroupId": {
@@ -968,6 +1006,45 @@
             "type": "boolean"
           }
         }
+      },
+      "ShowTimePriceDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "patronCategoryId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "patronCategoryName": {
+            "type": "string"
+          },
+          "seatTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SeatKind"
+          },
+          "isDouble": {
+            "type": "boolean"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "SeatKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Standard",
+          "Double"
+        ],
+        "enum": [
+          0,
+          1
+        ]
       },
       "BookingResultDTO": {
         "type": "object",
@@ -1045,10 +1122,6 @@
           },
           "patronCategory": {
             "type": "string"
-          },
-          "patronDiscountPercent": {
-            "type": "number",
-            "format": "double"
           },
           "qrCode": {
             "type": "string",

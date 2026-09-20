@@ -18,25 +18,9 @@
       </div>
     </div>
 
-    <!-- Toolbar: choose mode + (in paint mode) the seat type to apply -->
+    <!-- Click a seat to start pairing it; click another to complete a double seat; click a paired seat to unpair it. -->
     <div class="seatmap-toolbar">
-      <div class="dlg-row">
-        <div class="dlg-field">
-          <mat-button-toggle-group [value]="mode" (change)="setMode($event.value)">
-            <mat-button-toggle value="paint"><mat-icon>format_paint</mat-icon> {{ 'theaters.rooms.assignSeatType' | translate }}</mat-button-toggle>
-            <mat-button-toggle value="pair"><mat-icon>link</mat-icon> {{ 'theaters.rooms.doubleSeat' | translate }}</mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
-      </div>
-
-      <div class="palette" *ngIf="mode === 'paint'">
-        <button type="button" class="palette-chip" *ngFor="let t of allSeatTypes"
-                [class.is-active]="t.id === activeSeatTypeId"
-                [style.--sc]="t.color" (click)="activeSeatTypeId = t.id!">
-          <span class="palette-dot"></span>{{ t.name }} <small>×{{ t.priceMultiplier | number:'1.0-2' }}</small>
-        </button>
-      </div>
-      <p class="ad-sub" *ngIf="mode === 'pair'">{{ 'theaters.rooms.pairHint' | translate }}</p>
+      <p class="ad-sub">{{ 'theaters.rooms.pairHint' | translate }}</p>
     </div>
 
     <div class="screen-wrap">
@@ -49,19 +33,19 @@
         <div class="row-label">{{ row }}</div>
         <div *ngFor="let s of seatsInRow(row)"
              class="seat editable"
-             [style.--sc]="s.seatTypeColor || '#8fa3bf'"
+             [style.--sc]="colorFor(s)"
              [class.paired]="s.seatGroupId"
              [class.pending]="isPairPending(s)"
              (click)="onSeatClick(s)"
-             [title]="row + s.colIndex + ' · ' + s.seatTypeName + (s.seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : '')">{{ s.colIndex }}<mat-icon *ngIf="s.seatGroupId" class="pair-badge">link</mat-icon></div>
+             [title]="row + s.colIndex + ' · ' + nameFor(s) + (s.seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : '')">{{ s.colIndex }}<mat-icon *ngIf="s.seatGroupId" class="pair-badge">link</mat-icon></div>
       </div>
     </div>
     <ng-template #noSeats>
       <div class="ad-empty"><mat-icon>event_seat</mat-icon><p>{{ 'theaters.rooms.noSeats' | translate }}</p></div>
     </ng-template>
 
-    <div class="legend" *ngIf="allSeatTypes.length">
-      <span class="legend-item" *ngFor="let t of allSeatTypes">
+    <div class="legend" *ngIf="seatTypes.length">
+      <span class="legend-item" *ngFor="let t of seatTypes">
         <span class="legend-dot" [style.background]="t.color"></span> {{ t.name }}
       </span>
     </div>

@@ -13,8 +13,8 @@ describe('BookingCheckoutComponent', () => {
     showTimeId: 'st-1',
     roomId: 'room-1',
     seats: [
-      { seatId: 's1', label: 'A1', seatTypeName: 'Standard', basePrice: 100000, price: 100000, patronCategoryId: 'cat-adult', patronCategoryName: 'Adult', discountPercent: 0 },
-      { seatId: 's2', label: 'A2', seatTypeName: 'Standard', basePrice: 100000, price: 75000, patronCategoryId: 'cat-student', patronCategoryName: 'Student', discountPercent: 25 },
+      { seatId: 's1', label: 'A1', seatKind: 'Standard', basePrice: 100000, price: 100000, patronCategoryId: 'cat-adult', patronCategoryName: 'Adult' },
+      { seatId: 's2', label: 'A2', seatKind: 'Standard', basePrice: 100000, price: 75000, patronCategoryId: 'cat-student', patronCategoryName: 'Student' },
     ],
     foods: [{ foodAndDrinkId: 'f1', name: 'Popcorn', unitPrice: 50000, quantity: 2 }],
   };

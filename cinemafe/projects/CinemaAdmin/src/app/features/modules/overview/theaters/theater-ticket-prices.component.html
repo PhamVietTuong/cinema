@@ -1,11 +1,11 @@
 <div class="tab-toolbar">
   <p class="ad-sub">{{ 'theaters.ticketPrices.subtitle' | translate }}</p>
-  <button mat-raised-button color="primary" (click)="openCreate()" [disabled]="!roomTypes.length || !seatTypes.length || !timeSlots.length">
+  <button mat-raised-button color="primary" (click)="openCreate()" [disabled]="!roomTypes.length || !timeSlots.length">
     <mat-icon>add</mat-icon> {{ 'theaters.ticketPrices.add' | translate }}
   </button>
 </div>
 
-<p class="ad-sub" *ngIf="!roomTypes.length || !seatTypes.length || !timeSlots.length">
+<p class="ad-sub" *ngIf="!roomTypes.length || !timeSlots.length">
   {{ 'theaters.ticketPrices.prereq' | translate }}
 </p>
 
@@ -30,10 +30,6 @@
 
       <ngx-datatable-column [name]="'theaters.ticketPrices.roomTypeLabel' | translate" prop="roomTypeId" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ roomTypeName(row.roomTypeId) }}</strong></ng-template>
-      </ngx-datatable-column>
-
-      <ngx-datatable-column [name]="'theaters.ticketPrices.seatTypeLabel' | translate" prop="seatTypeId" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>{{ seatTypeName(row.seatTypeId) }}</ng-template>
       </ngx-datatable-column>
 
       <ngx-datatable-column [name]="'theaters.ticketPrices.timeSlotLabel' | translate" prop="timeSlotId" [sortable]="false">
@@ -75,7 +71,6 @@
     <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
       <mat-card-content>
         <div class="ad-mobile-card-title"><strong>{{ roomTypeName(row.roomTypeId) }}</strong></div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.ticketPrices.seatTypeLabel' | translate }}</span><span>{{ seatTypeName(row.seatTypeId) }}</span></div>
         <div class="ad-mobile-card-row"><span>{{ 'theaters.ticketPrices.timeSlotLabel' | translate }}</span><span>{{ timeSlotName(row.timeSlotId) }}</span></div>
         <div class="ad-mobile-card-row">
           <span>{{ 'common.date' | translate }}</span>

@@ -1,4 +1,4 @@
-<div mat-dialog-title class="dialog-title">{{ (editingId ? 'theaters.seatTypes.editTitle' : 'theaters.seatTypes.newTitle') | translate }}</div>
+<div mat-dialog-title class="dialog-title">{{ 'theaters.seatTypes.editTitle' | translate }}</div>
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
@@ -13,18 +13,10 @@
         </div>
       </div>
 
-      <div class="dlg-row dlg-row--2">
+      <div class="dlg-row">
         <div class="dlg-field">
           <label class="dlg-label" for="stp-color">{{ 'theaters.seatTypes.colorLabel' | translate }}</label>
           <input type="color" id="stp-color" formControlName="color">
-        </div>
-        <div class="dlg-field">
-          <label class="dlg-label" for="stp-priceMultiplier">{{ 'theaters.seatTypes.multiplierLabel' | translate }}</label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput id="stp-priceMultiplier" type="number" step="0.1" min="0.1" formControlName="priceMultiplier" placeholder="1.0">
-            <mat-error *ngIf="form.controls['priceMultiplier'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
-            <mat-error *ngIf="form.controls['priceMultiplier'].hasError('min')">{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
         </div>
       </div>
 

@@ -308,8 +308,6 @@
       "gridSize": "Lưới ghế: {{rows}} hàng × {{cols}} cột",
       "row": "Hàng",
       "column": "Cột",
-      "assignSeatType": "Gán Loại Ghế",
-      "doubleSeat": "Ghế Đôi",
       "pairHint": "Chọn 2 ghế cạnh nhau để ghép thành ghế đôi. Bấm vào ghế đã ghép để hủy.",
       "screen": "MÀN HÌNH",
       "noSeats": "Phòng này chưa có ghế nào. Hãy kiểm tra đã có loại ghế trước khi tạo phòng.",
@@ -333,35 +331,32 @@
       "threeDSurcharge": "Phụ thu 3D (đ/vé)",
       "turnoverBufferMinutes": "Thời gian dọn dẹp giữa suất (phút)",
       "turnoverBufferHint": "Số phút tối thiểu giữa các suất chiếu trong loại phòng này, để khán giả vào chỗ và dọn dẹp.",
-      "empty": "Rạp này chưa có loại phòng nào."
+      "empty": "Rạp này chưa có loại phòng nào.",
+      "discountsTooltip": "Giá đối tượng vé cho loại phòng này"
     },
     "seatTypes": {
-      "subtitle": "Các hạng ghế của rạp này (giá vé = giá gốc × hệ số).",
-      "add": "Thêm Loại Ghế",
+      "subtitle": "Hạng ghế của rạp này — Thường và Đôi là cố định; chỉ có thể chỉnh tên, màu và mô tả.",
       "editTitle": "Chỉnh Sửa Loại Ghế",
-      "newTitle": "Loại Ghế Mới",
       "nameLabel": "Tên Loại Ghế",
       "namePlaceholder": "VD: VIP",
       "colorLabel": "Màu Hiển Thị",
-      "multiplierLabel": "Hệ Số Giá",
       "descPlaceholder": "Ghế đôi, vị trí trung tâm...",
       "color": "Màu",
       "empty": "Rạp này chưa có loại ghế nào."
     },
     "patronCategories": {
-      "subtitle": "Đối tượng giá vé theo từng ghế (Người lớn/Học sinh-Sinh viên/Người cao tuổi/Trẻ em), kiểm tra trực tiếp tại rạp.",
+      "subtitle": "Đối tượng giá vé theo từng loại ghế (Người lớn/Học sinh-Sinh viên/Người cao tuổi/Trẻ em), kiểm tra trực tiếp tại rạp.",
       "add": "Thêm Đối Tượng",
       "editTitle": "Chỉnh Sửa Đối Tượng",
       "newTitle": "Đối Tượng Mới",
       "nameLabel": "Tên Đối Tượng",
       "namePlaceholder": "VD: Sinh viên",
-      "discountLabel": "Giảm Giá %",
       "activeLabel": "Đang Hoạt Động",
       "descPlaceholder": "Yêu cầu xuất trình thẻ sinh viên hợp lệ tại quầy...",
       "empty": "Rạp này chưa có đối tượng vé nào.",
-      "allowedSeatTypesLabel": "Loại Ghế Được Phép",
-      "allowedSeatTypesHint": "Để trống để cho phép tất cả loại ghế.",
-      "allSeatTypes": "Tất cả"
+      "pricesLabel": "Giá theo loại ghế",
+      "pricesHint": "Bỏ chọn một loại ghế để đối tượng này không thể đặt loại ghế đó.",
+      "pricePlaceholder": "90000"
     },
     "food": {
       "subtitle": "Bắp, nước và combo bán tại rạp này.",
@@ -382,15 +377,13 @@
       "empty": "Rạp này chưa có món nào."
     },
     "ticketPrices": {
-      "subtitle": "Hệ số giá theo loại ghế × khung giờ × ngày lễ, áp dụng lên giá vé gốc của suất chiếu.",
+      "subtitle": "Hệ số giá theo loại phòng × khung giờ × ngày lễ, áp dụng lên giá đối tượng vé đã tính.",
       "add": "Thêm Giá Vé",
-      "prereq": "Cần có ít nhất một loại phòng, một loại ghế và một khung giờ trước khi thêm giá vé.",
+      "prereq": "Cần có ít nhất một loại phòng và một khung giờ trước khi thêm giá vé.",
       "editTitle": "Chỉnh Sửa Giá Vé",
       "newTitle": "Giá Vé Mới",
       "roomTypeLabel": "Loại Phòng",
       "selectRoomType": "— Chọn loại phòng —",
-      "seatTypeLabel": "Loại Ghế",
-      "selectSeatType": "— Chọn loại ghế —",
       "timeSlotLabel": "Khung Giờ",
       "selectTimeSlot": "— Chọn khung giờ —",
       "multiplierLabel": "Hệ số (×)",
@@ -412,6 +405,14 @@
       "startColumn": "Bắt Đầu",
       "endColumn": "Kết Thúc",
       "empty": "Rạp này chưa có khung giờ nào."
+    },
+    "roomTypePrices": {
+      "title": "Giá Theo Đối Tượng",
+      "subtitle": "Ghi đè giá chung của rạp cho loại phòng này. Để trống để dùng giá mặc định.",
+      "theaterPrice": "Giá mặc định của rạp",
+      "overrideLabel": "Giá ghi đè",
+      "clearOverride": "Xóa ghi đè",
+      "empty": "Rạp này chưa có đối tượng vé nào."
     }
   },
   "users": {

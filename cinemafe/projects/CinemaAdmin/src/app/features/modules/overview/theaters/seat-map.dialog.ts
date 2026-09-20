@@ -8,7 +8,9 @@ export interface SeatMapDialogData {
   room: CinemaServiceAgent.RoomDTO;
 }
 
-/** Seat-map editor for a room: grid resize, paint seat types, pair/unpair double seats. Resolves `true` if the map was saved. */
+/** Seat-map editor for a room: grid resize, pair/unpair double seats. A seat has no stored kind of
+ * its own — Standard vs Double is derived from whether it's paired. Resolves `true` if the map was
+ * saved. */
 @Component({
   selector: 'app-seat-map-dialog',
   standalone: false,
@@ -18,13 +20,10 @@ export interface SeatMapDialogData {
 export class SeatMapDialog {
   room: CinemaServiceAgent.RoomDTO;
   seats: CinemaServiceAgent.RoomSeatDTO[] = [];
-  allSeatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
+  seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
   seatsLoading = false;
   saving = false;
   resizing = false;
-  /** Editor mode: paint a seat type onto seats, or pair/unpair double seats. */
-  mode: 'paint' | 'pair' = 'paint';
-  activeSeatTypeId = '';
   /** True once a save has actually persisted, so the dialog resolves `true` on close. */
   private _saved = false;
   /** First seat picked while pairing; the next click completes the pair. */
@@ -40,8 +39,7 @@ export class SeatMapDialog {
     this.seatsLoading = true;
     this._svc.getSeatTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: { theaterId: data.theaterId } }))
       .subscribe(r => {
-        this.allSeatTypes = r.results ?? [];
-        this.activeSeatTypeId = this.allSeatTypes[0]?.id ?? '';
+        this.seatTypes = (r.results ?? []).sort((a, b) => (a.kind ?? 0) - (b.kind ?? 0));
         this._cdr.markForCheck();
       });
     this._svc.getRoomSeatMap(this.room.id!).subscribe({
@@ -54,7 +52,15 @@ export class SeatMapDialog {
     this._dialogRef.close(this._saved);
   }
 
-  setMode(m: 'paint' | 'pair'): void { this.mode = m; this._pairFirst = null; }
+  colorFor(seat: CinemaServiceAgent.RoomSeatDTO): string {
+    const kind = seat.isDouble ? CinemaServiceAgent.SeatKind.Double : CinemaServiceAgent.SeatKind.Standard;
+    return this.seatTypes.find(t => t.kind === kind)?.color ?? '#8fa3bf';
+  }
+
+  nameFor(seat: CinemaServiceAgent.RoomSeatDTO): string {
+    const kind = seat.isDouble ? CinemaServiceAgent.SeatKind.Double : CinemaServiceAgent.SeatKind.Standard;
+    return this.seatTypes.find(t => t.kind === kind)?.name ?? '';
+  }
 
   // ── Grid resize: add/remove rows or columns, preserving existing seats ──────────
   addRow(): void { this.resizeGrid(1, 0); }
@@ -85,22 +91,12 @@ export class SeatMapDialog {
       });
   }
 
-  /** Click handler: paint the active seat type, or pair/unpair two seats. */
+  /** Click handler: pair/unpair two seats into a double seat. */
   onSeatClick(seat: CinemaServiceAgent.RoomSeatDTO): void {
-    if (this.mode === 'paint') {
-      const t = this.allSeatTypes.find(x => x.id === this.activeSeatTypeId);
-      if (!t) { return; }
-      seat.seatTypeId = t.id;
-      seat.seatTypeName = t.name;
-      seat.seatTypeColor = t.color;
-      seat.priceMultiplier = t.priceMultiplier;
-      return;
-    }
-
-    // Pair mode: clicking a grouped seat unpairs the whole group.
+    // Clicking a grouped seat unpairs the whole group.
     if (seat.seatGroupId) {
       const gid = seat.seatGroupId;
-      this.seats.filter(s => s.seatGroupId === gid).forEach(s => s.seatGroupId = undefined);
+      this.seats.filter(s => s.seatGroupId === gid).forEach(s => { s.seatGroupId = undefined; s.isDouble = false; });
       this._pairFirst = null;
       return;
     }
@@ -109,7 +105,9 @@ export class SeatMapDialog {
     // Complete a new pair (a "double seat") by giving both the same fresh group id.
     const gid = crypto.randomUUID();
     this._pairFirst.seatGroupId = gid;
+    this._pairFirst.isDouble = true;
     seat.seatGroupId = gid;
+    seat.isDouble = true;
     this._pairFirst = null;
   }
 
@@ -121,7 +119,6 @@ export class SeatMapDialog {
       roomId: this.room.id,
       seats: this.seats.map(s => ({
         seatId: s.id,
-        seatTypeId: s.seatTypeId,
         seatGroupId: s.seatGroupId,
         isActive: s.isActive,
       })),

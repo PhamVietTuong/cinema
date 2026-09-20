@@ -10,7 +10,6 @@ export interface TicketPriceDialogData {
   theaterId: string;
   ticketPrice: Dto | null;
   roomTypes: CinemaServiceAgent.RoomTypeDTO[];
-  seatTypes: CinemaServiceAgent.SeatTypeDTO[];
   timeSlots: CinemaServiceAgent.TimeSlotDTO[];
 }
 
@@ -24,7 +23,6 @@ export class TicketPriceDialog {
   readonly editingId: string | null;
   form: FormGroup;
   readonly roomTypes: CinemaServiceAgent.RoomTypeDTO[];
-  readonly seatTypes: CinemaServiceAgent.SeatTypeDTO[];
   readonly timeSlots: CinemaServiceAgent.TimeSlotDTO[];
 
   constructor(
@@ -35,12 +33,10 @@ export class TicketPriceDialog {
     @Inject(MAT_DIALOG_DATA) private _data: TicketPriceDialogData,
   ) {
     this.roomTypes = _data.roomTypes;
-    this.seatTypes = _data.seatTypes;
     this.timeSlots = _data.timeSlots;
     this.editingId = _data.ticketPrice?.id ?? null;
     this.form = this._fb.group({
       roomTypeId: [_data.ticketPrice?.roomTypeId ?? '', Validators.required],
-      seatTypeId: [_data.ticketPrice?.seatTypeId ?? '', Validators.required],
       timeSlotId: [_data.ticketPrice?.timeSlotId ?? '', Validators.required],
       isHoliday: [_data.ticketPrice?.isHoliday ?? false],
       priceMultiplier: [_data.ticketPrice?.priceMultiplier ?? 1, [Validators.required, Validators.min(0.01)]],

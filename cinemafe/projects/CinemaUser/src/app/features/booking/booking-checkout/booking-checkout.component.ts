@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, BookingHubService } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState } from './booking-checkout.state';
@@ -18,6 +18,10 @@ import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState } from '
   styleUrl: './booking-checkout.component.scss'
 })
 export class BookingCheckoutComponent implements OnInit, OnDestroy {
+  seatKindLabel(seat: BookingCheckoutSeat): string {
+    return seatKindLabel(seat.seatKind === 'Double');
+  }
+
   seats: BookingCheckoutSeat[] = [];
   foods: BookingCheckoutFood[] = [];
   showTimeId = '';

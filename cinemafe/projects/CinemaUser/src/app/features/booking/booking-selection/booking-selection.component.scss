@@ -3,9 +3,9 @@
 // movie-detail page (this file's .panel-header, shown only when [embedded]="true").
 //
 // CSS-only reskin — the [ngClass] seat-state map in the template (available / selected / occupied /
-// locked / vip / unavailable-category / not-selectable) is untouched; only how each state looks
-// changes here. VIP can no longer use gold (gold now means "selected" everywhere in this direction),
-// so it gets the secondary teal instead — see the .vip rules below.
+// locked / double / unavailable-category / not-selectable) is untouched; only how each state looks
+// changes here. Double (paired) seats use the secondary teal, not gold (gold means "selected"
+// everywhere in this direction) — see the .double rules below.
 
 // ── Embedded panel header (movie-detail inline booking only) ──────────────────
 .panel-header {
@@ -161,18 +161,18 @@
     cursor: not-allowed;
   }
 
-  // VIP — the secondary teal, not gold (gold already means "selected" in this direction).
-  &.vip.available {
+  // Double (paired) seat — the secondary teal, not gold (gold already means "selected" in this direction).
+  &.double.available {
     background: var(--ml-success-soft);
     border-color: var(--ml-second);
     color: var(--ml-second);
 
     &:hover { background: color-mix(in srgb, var(--ml-second) 22%, transparent); border-color: var(--ml-second); }
   }
-  &.vip.selected {
+  &.double.selected {
     background: var(--ml-second);
     // A gold border/ring — the same cue every other selected seat gets — keeps "selected"
-    // instantly readable regardless of seat type; teal fill still says "this one's VIP".
+    // instantly readable regardless of seat kind. Teal fill still says "this one's a double".
     border-color: var(--ml-action);
     // var(--ml-paper) flips light/dark opposite to --ml-second's own lightness, so it stays
     // legible on the solid fill in both themes without a dedicated "on-second" token.
@@ -192,7 +192,7 @@
   &.available { background: var(--ml-seat-empty); }
   &.selected  { background: var(--ml-action); }
   &.occupied  { background: var(--ml-seat-taken); }
-  &.vip.available { background: var(--ml-success-soft); border: 1px solid var(--ml-second); }
+  &.double.available { background: var(--ml-success-soft); border: 1px solid var(--ml-second); }
   &.unavailable-category { background: var(--ml-seat-empty); opacity: 0.35; }
 }
 
@@ -313,6 +313,11 @@
 .option-info { display: flex; flex-direction: column; gap: 2px; }
 .option-name { font-weight: 600; color: var(--ml-ink); font-size: var(--cx-text-sm); }
 .option-price { font-size: 0.85rem; opacity: 0.75; color: var(--ml-muted); }
+.option-double-price {
+  align-self: flex-start; margin-top: 2px; padding: 1px 7px; border-radius: var(--ml-r-sm);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em;
+  background: var(--ml-success-soft); color: var(--ml-success-ink);
+}
 .category-discount {
   align-self: flex-start; margin-top: 2px; padding: 1px 7px; border-radius: var(--ml-r-sm);
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em;

@@ -1,12 +1,8 @@
-import { ChangeDetectorRef, Component, Input } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
-import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { Store } from '@ngrx/store';
 import {
   CinemaServiceAgent,
-  BaseTableComponent, TablePage, TableSearchCriteria,
   DialogService,
   showLoading, hideLoading, showSuccess, showException,
 } from 'CinemaLib';
@@ -14,69 +10,101 @@ import { PatronCategoryDialog } from './patron-category.dialog';
 
 type Dto = CinemaServiceAgent.PatronCategoryDTO;
 
-/** Patron-category (Adult/Student/Senior/Child) pricing management scoped to a single theater. */
+/** One logical category (e.g. "Adult") grouping its per-seat-kind rows (Standard/Double). */
+export interface PatronCategoryGroup {
+  name: string;
+  description?: string;
+  isActive: boolean;
+  rows: Dto[];
+}
+
+/** Patron-category pricing management scoped to a single theater. Each logical category (Adult/
+ * Student/...) is stored as one row per seat kind (Standard/Double) — this tab groups them back
+ * together for display and editing. The dataset is small (a handful of categories x 2 kinds), so
+ * it's loaded in full rather than paged. */
 @Component({
   selector: 'app-theater-patron-categories',
   standalone: false,
   templateUrl: './theater-patron-categories.component.html',
   styleUrls: ['./theater-catalog-tab.scss'],
 })
-export class TheaterPatronCategoriesComponent extends BaseTableComponent<Dto> {
+export class TheaterPatronCategoriesComponent implements OnInit {
   @Input({ required: true }) theaterId!: string;
 
   seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
+  groups: PatronCategoryGroup[] = [];
+  loading = false;
 
   constructor(
-    cd: ChangeDetectorRef,
-    fb: FormBuilder,
-    router: Router,
-    store: Store<any>,
+    private _cd: ChangeDetectorRef,
     private _svc: CinemaServiceAgent.HttpService,
     private _dialog: MatDialog,
     private _dialogService: DialogService,
-  ) {
-    super(cd, fb, router, store);
-  }
+    private _store: Store<any>,
+  ) {}
 
-  override ngOnInit(): void {
-    super.ngOnInit();
+  ngOnInit(): void {
     this._svc.getSeatTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: 1, pageSize: 100, filters: { theaterId: this.theaterId },
     })).subscribe(r => {
-      this.seatTypes = r.results ?? [];
+      this.seatTypes = (r.results ?? []).sort((a, b) => (a.kind ?? 0) - (b.kind ?? 0));
       this._cd.markForCheck();
+    });
+    this._load();
+  }
+
+  private _load(): void {
+    this.loading = true;
+    this._cd.markForCheck();
+    this._svc.getPatronCategoriesByTheater(this.theaterId).subscribe({
+      next: rows => {
+        this.groups = this._groupByName(rows ?? []);
+        this.loading = false;
+        this._cd.markForCheck();
+      },
+      error: () => {
+        this.loading = false;
+        this._cd.markForCheck();
+      },
     });
   }
 
-  protected override _createSearchForm(): void {
-    this.searchForm = this._formBuilder.group({});
+  private _groupByName(rows: Dto[]): PatronCategoryGroup[] {
+    const byName = new Map<string, Dto[]>();
+    for (const row of rows) {
+      const key = row.name ?? '';
+      const list = byName.get(key) ?? [];
+      list.push(row);
+      byName.set(key, list);
+    }
+    return Array.from(byName.entries())
+      .map(([name, groupRows]) => ({
+        name,
+        description: groupRows[0]?.description,
+        isActive: groupRows[0]?.isActive ?? true,
+        rows: groupRows,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {
-    return this._svc.getPatronCategories(CinemaServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: criteria.pageIndex, pageSize: criteria.pageSize, filters: criteria.filters,
-    }));
-  }
-
-  protected override _extraFilters(): Record<string, unknown> {
-    return { theaterId: this.theaterId };
-  }
-
-  protected override _searchStateKey(): string {
-    return this._router.url + '#patronCategories';
+  /** Null means this category has no row for that seat kind (cannot book it at all). */
+  priceFor(group: PatronCategoryGroup, seatType: CinemaServiceAgent.SeatTypeDTO): number | null {
+    const row = group.rows.find(r => r.seatTypeId === seatType.id);
+    return row ? (row.price ?? 0) : null;
   }
 
   openCreate(): void {
-    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, patronCategory: null, seatTypes: this.seatTypes } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, categoryRows: null } })
+      .afterClosed().subscribe(saved => { if (saved) { this._load(); } });
   }
 
-  edit(item: Dto): void {
-    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, patronCategory: item, seatTypes: this.seatTypes } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+  edit(group: PatronCategoryGroup): void {
+    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, categoryRows: group.rows } })
+      .afterClosed().subscribe(saved => { if (saved) { this._load(); } });
   }
 
-  delete(id?: string): void {
+  delete(group: PatronCategoryGroup): void {
+    const id = group.rows[0]?.id;
     if (!id) {
       return;
     }
@@ -93,20 +121,9 @@ export class TheaterPatronCategoriesComponent extends BaseTableComponent<Dto> {
     this._svc.deletePatronCategory(id).subscribe({
       next: () => {
         this._store.dispatch(showSuccess({}));
-        this.triggerSearch();
+        this._load();
       },
       error: error => this._store.dispatch(showException({ error })),
     }).add(() => this._store.dispatch(hideLoading()));
-  }
-
-  /** Null means unrestricted (all seat types) — the template renders a translated "All" label. */
-  allowedSeatTypeNames(item: Dto): string | null {
-    if (!item.allowedSeatTypeIds?.length) {
-      return null;
-    }
-    return this.seatTypes
-      .filter(st => item.allowedSeatTypeIds!.includes(st.id!))
-      .map(st => st.name)
-      .join(', ');
   }
 }
