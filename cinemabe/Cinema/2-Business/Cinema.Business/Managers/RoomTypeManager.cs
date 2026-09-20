@@ -114,7 +114,20 @@ public class RoomTypeManager : IRoomTypeManager
 
     public async Task DeleteAsync(Guid id)
     {
-        await _uow.RoomTypeStore.DeleteAsync(id);
+        // RoomTypePatronCategoryPrice's FK to RoomType is NO ACTION (both parents already cascade
+        // from Theater, so only one leg may cascade) — clean up its override rows first.
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            await _uow.RoomTypePatronCategoryPriceStore.DeleteByRoomTypeAsync(id);
+            await _uow.RoomTypeStore.DeleteAsync(id);
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
     }
 
     private const int MaxTurnoverBufferMinutes = 240;

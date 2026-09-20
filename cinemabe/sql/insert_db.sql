@@ -59,15 +59,6 @@ INSERT INTO [MovieType] ([Id], [Name], [CreationTime]) VALUES
 (@MTRomance,   N'Romance',   GETUTCDATE()),
 (@MTThriller,  N'Thriller',  GETUTCDATE());
 
--- ── Seat Types ────────────────────────────────────────────────────────────────
-DECLARE @STStandard uniqueidentifier = NEWID();
-DECLARE @STVIP      uniqueidentifier = NEWID();
-DECLARE @STCouple   uniqueidentifier = NEWID();
-
--- Seat types are per-theater now; they are seeded after the theaters exist (below).
--- @STStandard/@STVIP/@STCouple are reused as scratch vars, reassigned per theater
--- right before that theater's seats are generated.
-
 -- ── Discount Types ────────────────────────────────────────────────────────────
 DECLARE @DTPromotional uniqueidentifier = NEWID();
 DECLARE @DTSeasonal    uniqueidentifier = NEWID();
@@ -121,26 +112,33 @@ CROSS JOIN (VALUES
     (N'4DX',  N'Motion seats + environmental effects',  1, 40000)
 ) AS rt(Name, Description, SupportsThreeD, ThreeDSurcharge);
 
--- ── Seat types (3 per theater) ────────────────────────────────────────────────
-INSERT INTO [SeatType] ([Id], [TheaterId], [Name], [Description], [Color], [PriceMultiplier], [CreationTime])
-SELECT NEWID(), t.Id, s.Name, s.Description, s.Color, s.PriceMultiplier, GETUTCDATE()
+-- ── Seat types (exactly 2 per theater — Kind is the machine-readable identity, Name is display
+-- text only, no pricing lives here anymore) ────────────────────────────────────
+INSERT INTO [SeatType] ([Id], [TheaterId], [Kind], [Name], [Description], [Color], [CreationTime])
+SELECT NEWID(), t.Id, s.Kind, s.Name, s.Description, s.Color, GETUTCDATE()
 FROM [Theater] t
 CROSS JOIN (VALUES
-    (N'Standard', N'Regular cinema seat',        N'#3B82F6', 1.0),
-    (N'VIP',      N'Extra wide, reclining seat', N'#F59E0B', 1.5),
-    (N'Couple',   N'Double-width loveseat (booked as a linked pair)', N'#EC4899', 2.0)
-) AS s(Name, Description, Color, PriceMultiplier);
+    (0, N'Standard', N'Regular cinema seat',                          N'#3B82F6'),
+    (1, N'Double',   N'Double-width loveseat (booked as a linked pair)', N'#EC4899')
+) AS s(Kind, Name, Description, Color);
 
--- ── Patron categories (per theater) ───────────────────────────────────────────
-INSERT INTO [PatronCategory] ([Id], [TheaterId], [Name], [DiscountPercent], [IsActive], [CreationTime])
-SELECT NEWID(), t.Id, c.Name, c.DiscountPercent, 1, GETUTCDATE()
+-- ── Patron categories (per theater, one row per (name, seat kind) combination) ──
+-- Price is absolute VND, independently configured per seat kind — a Double row is never computed
+-- from Standard. Student/Child deliberately have NO Double row: this is what makes double seats
+-- unavailable to those categories (the entire eligibility rule is "does a row exist").
+INSERT INTO [PatronCategory] ([Id], [TheaterId], [SeatTypeId], [Name], [Price], [IsActive], [CreationTime])
+SELECT NEWID(), t.Id, st.Id, c.Name, c.Price, 1, GETUTCDATE()
 FROM [Theater] t
+JOIN [SeatType] st ON st.TheaterId = t.Id
 CROSS JOIN (VALUES
-    (N'Adult',   0),
-    (N'Student', 25),
-    (N'Senior',  30),
-    (N'Child',   40)
-) AS c(Name, DiscountPercent);
+    (N'Adult',   0, 90000),
+    (N'Adult',   1, 170000),
+    (N'Student', 0, 65000),
+    (N'Senior',  0, 60000),
+    (N'Senior',  1, 115000),
+    (N'Child',   0, 50000)
+) AS c(Name, Kind, Price)
+WHERE st.Kind = c.Kind;
 
 -- ── Food & drinks (per theater) ───────────────────────────────────────────────
 INSERT INTO [FoodAndDrink] ([Id], [TheaterId], [Name], [Price], [Description], [IsAvailable], [CreationTime])
@@ -167,20 +165,28 @@ CROSS JOIN (VALUES
     (N'Tối',   N'17:00', N'23:00')
 ) AS s(Name, StartTime, EndTime);
 
--- ── Ticket prices (room type × seat type × time slot × holiday, per theater) ──
--- Explicit price = base 70,000đ × seat multiplier × time-slot factor × room-type
--- factor × holiday factor, rounded to the nearest 1,000đ.
-INSERT INTO [TicketPrice] ([Id], [TheaterId], [RoomTypeId], [SeatTypeId], [TimeSlotId], [IsHoliday], [Price], [CreationTime])
-SELECT NEWID(), st.TheaterId, rt.Id, st.Id, ts.Id, h.IsHoliday,
-       CAST(ROUND(70000 * st.PriceMultiplier
-            * CASE ts.Name WHEN N'Tối' THEN 1.2 WHEN N'Sáng' THEN 0.9 ELSE 1.0 END
-            * CASE rt.Name WHEN N'IMAX' THEN 1.5 WHEN N'4DX' THEN 1.8 WHEN N'3D' THEN 1.2 ELSE 1.0 END
-            * CASE WHEN h.IsHoliday = 1 THEN 1.2 ELSE 1.0 END, -3) AS float),
+-- ── Ticket prices (room type × time slot × holiday, per theater) ──────────────
+-- A pure multiplier on the resolved PatronCategory price now (no seat-kind dimension — that lives
+-- on PatronCategory itself): time-slot factor × room-type factor × holiday factor.
+INSERT INTO [TicketPrice] ([Id], [TheaterId], [RoomTypeId], [TimeSlotId], [IsHoliday], [PriceMultiplier], [CreationTime])
+SELECT NEWID(), rt.TheaterId, rt.Id, ts.Id, h.IsHoliday,
+       CASE ts.Name WHEN N'Tối' THEN 1.2 WHEN N'Sáng' THEN 0.9 ELSE 1.0 END
+       * CASE rt.Name WHEN N'IMAX' THEN 1.5 WHEN N'4DX' THEN 1.8 WHEN N'3D' THEN 1.2 ELSE 1.0 END
+       * CASE WHEN h.IsHoliday = 1 THEN 1.2 ELSE 1.0 END,
        GETUTCDATE()
-FROM [SeatType] st
-JOIN [TimeSlot] ts ON ts.TheaterId = st.TheaterId
-JOIN [RoomType] rt ON rt.TheaterId = st.TheaterId
+FROM [RoomType] rt
+JOIN [TimeSlot] ts ON ts.TheaterId = rt.TheaterId
 CROSS JOIN (VALUES (CAST(0 AS bit)), (CAST(1 AS bit))) AS h(IsHoliday);
+
+-- ── RoomType-level PatronCategory price overrides (demo) ──────────────────────
+-- IMAX and 4DX charge Adult more than the theater-wide price, showing the override in action.
+INSERT INTO [RoomTypePatronCategoryPrice] ([Id], [RoomTypeId], [PatronCategoryId], [Price], [CreationTime])
+SELECT NEWID(), rt.Id, pc.Id,
+       CASE WHEN pc.Price >= 100000 THEN ROUND(pc.Price * 1.3, -3) ELSE ROUND(pc.Price * 1.5, -3) END,
+       GETUTCDATE()
+FROM [RoomType] rt
+JOIN [PatronCategory] pc ON pc.TheaterId = rt.TheaterId AND pc.Name = N'Adult'
+WHERE rt.Name IN (N'IMAX', N'4DX');
 
 -- ── Rooms ─────────────────────────────────────────────────────────────────────
 -- Theater 1: 4 rooms (incl. IMAX)
@@ -217,92 +223,69 @@ FROM (VALUES
 ) AS r(Id, Name, TheaterId, TypeName, Rows, Cols);
 
 -- ── Seats (cross-join approach — no cursor) ───────────────────────────────────
+-- A seat has no stored kind of its own — Standard vs Double is derived from SeatGroupId at read
+-- time. Every seat starts ungrouped (Standard) except Theater 1 / Room 3, cols 9-10 of each row,
+-- seeded as real linked pairs (Double) to demonstrate the pairing/pricing end-to-end.
 
--- Point the scratch seat-type vars at Theater 1's own seat types.
-SET @STStandard = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater1 AND Name = N'Standard');
-SET @STVIP      = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater1 AND Name = N'VIP');
-SET @STCouple   = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater1 AND Name = N'Couple');
-
--- Theater 1 – Room 1  (8 rows × 12 cols, rows A-B = VIP)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T1R1, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6),('G',7),('H',8)) AS r(RowLetter, RowNum)
+-- Theater 1 – Room 1  (8 rows × 12 cols)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T1R1, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F'),('G'),('H')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12)) AS c(ColNum);
 
--- Theater 1 – Room 2  (8 rows × 12 cols, rows A-B = VIP)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T1R2, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6),('G',7),('H',8)) AS r(RowLetter, RowNum)
+-- Theater 1 – Room 2  (8 rows × 12 cols)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T1R2, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F'),('G'),('H')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12)) AS c(ColNum);
 
--- Theater 1 – Room 3  (6 rows × 10 cols, row A = VIP, last col pairs = Couple)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
+-- Theater 1 – Room 3  (6 rows × 10 cols, cols 9-10 of each row = a linked Double pair)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatGroupId],[IsActive],[CreationTime])
 SELECT NEWID(), @T1R3, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum = 1 THEN @STVIP
-            WHEN c.ColNum IN (9,10) THEN @STCouple
-            ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6)) AS r(RowLetter, RowNum)
+       CASE WHEN c.ColNum IN (9,10) THEN r.PairGroupId ELSE NULL END, 1, GETUTCDATE()
+FROM (VALUES ('A',NEWID()),('B',NEWID()),('C',NEWID()),('D',NEWID()),('E',NEWID()),('F',NEWID())) AS r(RowLetter, PairGroupId)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS c(ColNum);
 
--- Theater 1 – IMAX Hall  (10 rows × 14 cols, rows A-C = VIP)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T1R4, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 3 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6),('G',7),('H',8),('I',9),('J',10)) AS r(RowLetter, RowNum)
+-- Theater 1 – IMAX Hall  (10 rows × 14 cols)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T1R4, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F'),('G'),('H'),('I'),('J')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14)) AS c(ColNum);
 
--- Point the scratch seat-type vars at Theater 2's own seat types.
-SET @STStandard = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater2 AND Name = N'Standard');
-SET @STVIP      = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater2 AND Name = N'VIP');
-SET @STCouple   = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater2 AND Name = N'Couple');
-
--- Theater 2 – Room 1  (8 rows × 12 cols, rows A-B = VIP)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T2R1, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6),('G',7),('H',8)) AS r(RowLetter, RowNum)
+-- Theater 2 – Room 1  (8 rows × 12 cols)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T2R1, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F'),('G'),('H')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12)) AS c(ColNum);
 
--- Theater 2 – Room 2  (8 rows × 12 cols, rows A-B = VIP)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T2R2, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6),('G',7),('H',8)) AS r(RowLetter, RowNum)
+-- Theater 2 – Room 2  (8 rows × 12 cols)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T2R2, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F'),('G'),('H')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12)) AS c(ColNum);
 
 -- Theater 2 – Room 3  (6 rows × 10 cols)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T2R3, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6)) AS r(RowLetter, RowNum)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T2R3, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS c(ColNum);
 
--- Point the scratch seat-type vars at Theater 3's own seat types.
-SET @STStandard = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater3 AND Name = N'Standard');
-SET @STVIP      = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater3 AND Name = N'VIP');
-SET @STCouple   = (SELECT Id FROM [SeatType] WHERE TheaterId = @Theater3 AND Name = N'Couple');
-
--- Theater 3 – Room 1  (8 rows × 12 cols, rows A-B = VIP)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T3R1, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6),('G',7),('H',8)) AS r(RowLetter, RowNum)
+-- Theater 3 – Room 1  (8 rows × 12 cols)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T3R1, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F'),('G'),('H')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12)) AS c(ColNum);
 
--- Theater 3 – Room 2  (8 rows × 12 cols, rows A-B = VIP)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T3R2, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6),('G',7),('H',8)) AS r(RowLetter, RowNum)
+-- Theater 3 – Room 2  (8 rows × 12 cols)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T3R2, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F'),('G'),('H')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12)) AS c(ColNum);
 
 -- Theater 3 – Room 3  (6 rows × 10 cols)
-INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[SeatTypeId],[IsActive],[CreationTime])
-SELECT NEWID(), @T3R3, r.RowLetter, c.ColNum,
-       CASE WHEN r.RowNum <= 2 THEN @STVIP ELSE @STStandard END, 1, GETUTCDATE()
-FROM (VALUES ('A',1),('B',2),('C',3),('D',4),('E',5),('F',6)) AS r(RowLetter, RowNum)
+INSERT INTO [Seat] ([Id],[RoomId],[RowName],[ColIndex],[IsActive],[CreationTime])
+SELECT NEWID(), @T3R3, r.RowLetter, c.ColNum, 1, GETUTCDATE()
+FROM (VALUES ('A'),('B'),('C'),('D'),('E'),('F')) AS r(RowLetter)
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS c(ColNum);
 
 -- ── Movies ────────────────────────────────────────────────────────────────────

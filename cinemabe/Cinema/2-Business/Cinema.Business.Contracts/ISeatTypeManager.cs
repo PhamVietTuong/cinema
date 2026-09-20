@@ -9,7 +9,9 @@ public interface ISeatTypeManager
     Task<DefaultSearchResults<SeatTypeDTO>> GetAsync(PagingSearchDTO search);
     Task<bool>                              ExistsAsync(Guid id);
     Task<SeatTypeDTO>                       GetByIdAsync(Guid id);
-    Task<SeatTypeDTO>                       CreateAsync(CreateSeatTypeRequest request);
     Task<SeatTypeDTO>                       UpdateAsync(UpdateSeatTypeRequest request);
-    Task                                    DeleteAsync(Guid id);
+
+    /// <summary>Idempotently creates the theater's fixed Standard + Double rows if they don't already
+    /// exist. Called when a theater is created — there is no other way to create a SeatType row.</summary>
+    Task EnsureDefaultsAsync(Guid theaterId);
 }

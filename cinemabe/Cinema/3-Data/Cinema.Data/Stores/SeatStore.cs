@@ -12,10 +12,15 @@ public class SeatStore : GenericStore<Seat>, ISeatStore
 
     public async Task<IEnumerable<Seat>> GetByRoomAsync(Guid roomId)
         => await DbSet
-            .Include(s => s.SeatType)
             .Where(s => s.RoomId == roomId && s.IsActive)
             .OrderBy(s => s.RowName).ThenBy(s => s.ColIndex)
             .ToListAsync();
+
+    public async Task<IReadOnlyDictionary<Guid, Seat>> GetByIdsAsync(IReadOnlyCollection<Guid> ids)
+        => await DbSet
+            .AsNoTracking()
+            .Where(s => ids.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id);
 
     public async Task<IEnumerable<Guid>> GetBookedSeatIdsAsync(Guid showTimeId, Guid roomId)
         => await Context.InvoiceTicket

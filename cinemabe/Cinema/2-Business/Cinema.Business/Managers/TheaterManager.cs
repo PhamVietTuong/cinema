@@ -11,10 +11,12 @@ namespace Cinema.Business.Managers;
 public class TheaterManager : ITheaterManager
 {
     private readonly IApplicationUnitOfWork _uow;
+    private readonly ISeatTypeManager _seatTypes;
 
-    public TheaterManager(IApplicationUnitOfWork uow)
+    public TheaterManager(IApplicationUnitOfWork uow, ISeatTypeManager seatTypes)
     {
         _uow = uow;
+        _seatTypes = seatTypes;
     }
 
     public async Task<DefaultSearchResults<TheaterDTO>> GetTheatersAsync(PagingSearchDTO search)
@@ -75,6 +77,7 @@ public class TheaterManager : ITheaterManager
     {
         var theater = request.ToNewEntity<CreateTheaterRequest, Theater>();
         await _uow.TheaterStore.CreateAsync(theater);
+        await _seatTypes.EnsureDefaultsAsync(theater.Id);
         return ToTheaterDTO(theater);
     }
 

@@ -5,6 +5,7 @@ namespace Cinema.Data.Contracts;
 public interface ISeatStore : IGenericStore<Seat>
 {
     Task<IEnumerable<Seat>> GetByRoomAsync(Guid roomId);
+    Task<IReadOnlyDictionary<Guid, Seat>> GetByIdsAsync(IReadOnlyCollection<Guid> ids);
     Task<IEnumerable<Guid>> GetBookedSeatIdsAsync(Guid showTimeId, Guid roomId);
 
     /// <summary>Booked-seat counts for every showtime of a movie, keyed by (ShowTimeId, RoomId).

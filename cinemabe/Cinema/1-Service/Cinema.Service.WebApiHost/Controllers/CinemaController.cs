@@ -38,6 +38,7 @@ public class CinemaController : ApiControllerBase
     private readonly ITimeSlotManager            _timeSlots;
     private readonly ITicketPriceManager         _ticketPrices;
     private readonly IPatronCategoryManager      _patronCategories;
+    private readonly IRoomTypePatronCategoryPriceManager _roomTypePatronCategoryPrices;
     private readonly IWebHostEnvironment         _env;
 
     public CinemaController(
@@ -61,6 +62,7 @@ public class CinemaController : ApiControllerBase
         ITimeSlotManager timeSlots,
         ITicketPriceManager ticketPrices,
         IPatronCategoryManager patronCategories,
+        IRoomTypePatronCategoryPriceManager roomTypePatronCategoryPrices,
         IWebHostEnvironment env)
     {
         _movieManager    = movieManager;
@@ -83,6 +85,7 @@ public class CinemaController : ApiControllerBase
         _timeSlots           = timeSlots;
         _ticketPrices        = ticketPrices;
         _patronCategories    = patronCategories;
+        _roomTypePatronCategoryPrices = roomTypePatronCategoryPrices;
         _env                 = env;
     }
 
@@ -666,14 +669,8 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetSeatType), () => _seatTypes.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(typeof(SeatTypeDTO), 200)]
-    public Task<IActionResult> CreateSeatType([FromBody] CreateSeatTypeRequest request)
-    {
-        return Run(nameof(CreateSeatType), () => _seatTypes.CreateAsync(request));
-    }
-
+    // SeatType has no create/delete action — a theater always has exactly Standard + Double, seeded on
+    // theater creation (ISeatTypeManager.EnsureDefaultsAsync). Only Name/Description/Color are editable.
     [Authorize(Roles = _adminRole)]
     [HttpPut]
     [ProducesResponseType(typeof(SeatTypeDTO), 200)]
@@ -686,19 +683,6 @@ public class CinemaController : ApiControllerBase
         }
         return await Run(nameof(UpdateSeatType), () => _seatTypes.UpdateAsync(request));
     }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpDelete]
-    [ProducesResponseType(204)]
-    public async Task<IActionResult> DeleteSeatType([FromQuery] Guid id)
-    {
-        var notFound = await EnsureExistsAsync(() => _seatTypes.ExistsAsync(id), nameof(DeleteSeatType), nameof(SeatType), id);
-        if (notFound != null)
-        {
-            return notFound;
-        }
-        return await RunNoContent(nameof(DeleteSeatType), () => _seatTypes.DeleteAsync(id));
-    }
     #endregion
 
     #region PatronCategory
@@ -707,6 +691,13 @@ public class CinemaController : ApiControllerBase
     public Task<IActionResult> GetPatronCategories([FromBody] PagingSearchDTO search)
     {
         return Run(nameof(GetPatronCategories), () => _patronCategories.GetAsync(search));
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(List<PatronCategoryDTO>), 200)]
+    public Task<IActionResult> GetPatronCategoriesByTheater([FromQuery] Guid theaterId)
+    {
+        return Run(nameof(GetPatronCategoriesByTheater), () => _patronCategories.GetByTheaterAsync(theaterId));
     }
 
     [HttpGet]
@@ -723,7 +714,7 @@ public class CinemaController : ApiControllerBase
 
     [Authorize(Roles = _adminRole)]
     [HttpPost]
-    [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
+    [ProducesResponseType(typeof(List<PatronCategoryDTO>), 200)]
     public Task<IActionResult> CreatePatronCategory([FromBody] CreatePatronCategoryRequest request)
     {
         return Run(nameof(CreatePatronCategory), () => _patronCategories.CreateAsync(request));
@@ -731,7 +722,7 @@ public class CinemaController : ApiControllerBase
 
     [Authorize(Roles = _adminRole)]
     [HttpPut]
-    [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
+    [ProducesResponseType(typeof(List<PatronCategoryDTO>), 200)]
     public async Task<IActionResult> UpdatePatronCategory([FromBody] UpdatePatronCategoryRequest request)
     {
         var notFound = await EnsureExistsAsync(() => _patronCategories.ExistsAsync(request.Id), nameof(UpdatePatronCategory), nameof(PatronCategory), request.Id);
@@ -1304,6 +1295,22 @@ public class CinemaController : ApiControllerBase
             return notFound;
         }
         return await RunNoContent(nameof(DeleteRoomType), () => _roomTypes.DeleteAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(List<RoomTypePatronCategoryPriceDTO>), 200)]
+    public Task<IActionResult> GetRoomTypePatronCategoryPrices([FromQuery] Guid roomTypeId)
+    {
+        return Run(nameof(GetRoomTypePatronCategoryPrices), () => _roomTypePatronCategoryPrices.GetByRoomTypeAsync(roomTypeId));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public Task<IActionResult> SaveRoomTypePatronCategoryPrices([FromBody] SaveRoomTypePatronCategoryPricesRequest request)
+    {
+        return RunNoContent(nameof(SaveRoomTypePatronCategoryPrices), () => _roomTypePatronCategoryPrices.SaveAsync(request));
     }
     #endregion
 

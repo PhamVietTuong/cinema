@@ -13,7 +13,6 @@ public class SeatConfiguration : IEntityTypeConfiguration<Seat>
         b.HasIndex(s => new { s.RoomId, s.RowName, s.ColIndex }).IsUnique();
         b.HasIndex(s => s.SeatGroupId);
         b.HasOne(s => s.Room).WithMany(r => r.Seats).HasForeignKey(s => s.RoomId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(s => s.SeatType).WithMany(st => st.Seats).HasForeignKey(s => s.SeatTypeId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -23,7 +22,7 @@ public class SeatTypeConfiguration : IEntityTypeConfiguration<SeatType>
     {
         b.HasKey(s => s.Id);
         b.Property(s => s.Name).IsRequired().HasMaxLength(100);
-        b.Property(s => s.PriceMultiplier).HasColumnType("float");
+        b.HasIndex(s => new { s.TheaterId, s.Kind }).IsUnique();
         b.HasOne(s => s.Theater).WithMany().HasForeignKey(s => s.TheaterId).OnDelete(DeleteBehavior.Cascade);
     }
 }
@@ -34,18 +33,25 @@ public class PatronCategoryConfiguration : IEntityTypeConfiguration<PatronCatego
     {
         b.HasKey(c => c.Id);
         b.Property(c => c.Name).IsRequired().HasMaxLength(100);
-        b.Property(c => c.DiscountPercent).HasColumnType("float");
+        b.Property(c => c.Price).HasColumnType("float");
+        b.HasIndex(c => new { c.TheaterId, c.Name, c.SeatTypeId }).IsUnique();
         b.HasOne(c => c.Theater).WithMany().HasForeignKey(c => c.TheaterId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(c => c.SeatType).WithMany(s => s.PatronCategories).HasForeignKey(c => c.SeatTypeId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 
-public class PatronCategorySeatTypeConfiguration : IEntityTypeConfiguration<PatronCategorySeatType>
+public class RoomTypePatronCategoryPriceConfiguration : IEntityTypeConfiguration<RoomTypePatronCategoryPrice>
 {
-    public void Configure(EntityTypeBuilder<PatronCategorySeatType> b)
+    public void Configure(EntityTypeBuilder<RoomTypePatronCategoryPrice> b)
     {
-        b.HasKey(x => new { x.PatronCategoryId, x.SeatTypeId });
-        b.HasIndex(x => x.SeatTypeId);
-        b.HasOne(x => x.PatronCategory).WithMany(c => c.AllowedSeatTypes).HasForeignKey(x => x.PatronCategoryId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(x => x.SeatType).WithMany(s => s.AllowedForPatronCategories).HasForeignKey(x => x.SeatTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Price).HasColumnType("float");
+        b.HasIndex(x => new { x.RoomTypeId, x.PatronCategoryId }).IsUnique();
+        b.HasIndex(x => x.PatronCategoryId);
+        // Both RoomType and PatronCategory already cascade from Theater, so only one leg here may
+        // cascade or SQL Server rejects multiple cascade paths. PatronCategory cascades (it "owns"
+        // the price being overridden); RoomType deletes are cleaned up explicitly by RoomTypeManager.
+        b.HasOne(x => x.RoomType).WithMany(rt => rt.PatronCategoryPrices).HasForeignKey(x => x.RoomTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.PatronCategory).WithMany(c => c.RoomTypePrices).HasForeignKey(x => x.PatronCategoryId).OnDelete(DeleteBehavior.Cascade);
     }
 }

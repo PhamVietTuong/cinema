@@ -640,6 +640,212 @@ BEGIN
     PRINT 'Added [RoomType].[TurnoverBufferMinutes].';
 END
 
+-- ── PatronCategory-driven seat pricing (remove SeatType.PriceMultiplier) ────────────
+-- SeatType becomes a fixed 2-rows-per-theater lookup (Standard/Double, matched by a new [Kind]
+-- column, never by [Name]) with no pricing of its own. PatronCategory becomes one row per
+-- (theater, logical category name, seat kind) — e.g. Adult/Standard and Adult/Double are two rows
+-- sharing the name "Adult" — with an absolute, independently-configured [Price] replacing
+-- [DiscountPercent]. Omitting a seat kind for a category is now the entire eligibility rule; the
+-- PatronCategorySeatType gate table is dropped. TicketPrice drops its seat-kind dimension (it is
+-- now a pure time-of-day/holiday multiplier on the resolved PatronCategory price). A new
+-- RoomTypePatronCategoryPrice table lets a RoomType override a category's price.
+--
+-- Every current referencer of [SeatType].[Id] (Seat.SeatTypeId, TicketPrice.SeatTypeId,
+-- PatronCategorySeatType) is dropped in this same migration, so SeatType rows are re-seeded from
+-- scratch rather than preserved/remapped — nothing downstream keeps pointing at an old row.
+PRINT 'upgrade: applying PatronCategory-driven seat pricing...';
+
+-- 1) Pair up legacy double/couple seats that were never actually grouped, before SeatTypeId is
+--    dropped from [Seat] — otherwise their "double" status disappears with no replacement. Pairs
+--    seats two-at-a-time by ascending ColIndex within each (RoomId, RowName); an odd seat out is
+--    left ungrouped (becomes Standard).
+IF COL_LENGTH('[Seat]', 'SeatTypeId') IS NOT NULL
+BEGIN
+    ;WITH DoubleSeats AS (
+        SELECT s.[Id], s.[RoomId], s.[RowName],
+               ROW_NUMBER() OVER (PARTITION BY s.[RoomId], s.[RowName] ORDER BY s.[ColIndex]) AS rn
+        FROM   [Seat] s
+        JOIN   [SeatType] st ON st.[Id] = s.[SeatTypeId]
+        WHERE  s.[SeatGroupId] IS NULL
+               AND (st.[Name] = N'Couple' OR st.[Name] = N'Double')
+    ),
+    Pairs AS (
+        SELECT [Id], [RoomId], [RowName], (rn - 1) / 2 AS PairIndex
+        FROM   DoubleSeats
+    ),
+    PairGroups AS (
+        SELECT [RoomId], [RowName], PairIndex, NEWID() AS GroupId, COUNT(*) AS SeatsInPair
+        FROM   Pairs
+        GROUP BY [RoomId], [RowName], PairIndex
+    )
+    UPDATE s SET s.[SeatGroupId] = pg.GroupId
+    FROM   [Seat] s
+    JOIN   Pairs p ON p.[Id] = s.[Id]
+    JOIN   PairGroups pg ON pg.[RoomId] = p.[RoomId] AND pg.[RowName] = p.[RowName] AND pg.PairIndex = p.PairIndex
+    WHERE  pg.SeatsInPair = 2;
+    PRINT 'Paired legacy double/couple seats by row adjacency (an odd trailing seat is left Standard).';
+END
+
+-- 2) Drop [Seat].[SeatTypeId] — a seat's kind is derived from [SeatGroupId] from now on.
+IF OBJECT_ID('FK_Seat_SeatType_SeatTypeId', 'F') IS NOT NULL
+    ALTER TABLE [Seat] DROP CONSTRAINT [FK_Seat_SeatType_SeatTypeId];
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Seat_SeatTypeId' AND object_id = OBJECT_ID('Seat'))
+    DROP INDEX [IX_Seat_SeatTypeId] ON [Seat];
+IF COL_LENGTH('[Seat]', 'SeatTypeId') IS NOT NULL
+BEGIN
+    ALTER TABLE [Seat] DROP COLUMN [SeatTypeId];
+    PRINT 'Dropped [Seat].[SeatTypeId].';
+END
+
+-- 3) Drop the old seat-type eligibility gate — eligibility is now "a PatronCategory row exists".
+IF OBJECT_ID('PatronCategorySeatType', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE [PatronCategorySeatType];
+    PRINT 'Dropped [PatronCategorySeatType].';
+END
+
+-- 4) Re-key [TicketPrice] to drop its seat-kind dimension. Collapse the (now-duplicate) rows per
+--    remaining key down to one, preferring the row that used to price the Standard seat type.
+IF COL_LENGTH('[TicketPrice]', 'SeatTypeId') IS NOT NULL
+BEGIN
+    ;WITH Ranked AS (
+        SELECT p.[Id],
+               ROW_NUMBER() OVER (
+                   PARTITION BY p.[TheaterId], p.[RoomTypeId], p.[TimeSlotId], p.[IsHoliday]
+                   ORDER BY CASE WHEN st.[Name] = N'Standard' THEN 0 ELSE 1 END, p.[PriceMultiplier] ASC
+               ) AS rn
+        FROM   [TicketPrice] p
+        LEFT JOIN [SeatType] st ON st.[Id] = p.[SeatTypeId]
+    )
+    DELETE p FROM [TicketPrice] p JOIN Ranked r ON r.[Id] = p.[Id] WHERE r.rn > 1;
+
+    IF OBJECT_ID('FK_TicketPrice_SeatType_SeatTypeId', 'F') IS NOT NULL
+        ALTER TABLE [TicketPrice] DROP CONSTRAINT [FK_TicketPrice_SeatType_SeatTypeId];
+    IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TicketPrice_SeatTypeId' AND object_id = OBJECT_ID('TicketPrice'))
+        DROP INDEX [IX_TicketPrice_SeatTypeId] ON [TicketPrice];
+    IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TicketPrice_TheaterId_RoomTypeId_SeatTypeId_TimeSlotId_IsHoliday' AND object_id = OBJECT_ID('TicketPrice'))
+        DROP INDEX [IX_TicketPrice_TheaterId_RoomTypeId_SeatTypeId_TimeSlotId_IsHoliday] ON [TicketPrice];
+    ALTER TABLE [TicketPrice] DROP COLUMN [SeatTypeId];
+    CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [RoomTypeId], [TimeSlotId], [IsHoliday]);
+    PRINT 'Re-keyed [TicketPrice] to drop [SeatTypeId].';
+END
+
+-- 5) [PatronCategory]: add [SeatTypeId] + [Price], backfilling [Price] from the old
+--    [DiscountPercent] against a 70 000 VND reference base (matches the seed data's existing
+--    reference price) — REVIEW EVERY BACKFILLED PRICE BEFORE GOING LIVE, this is a guess, not a
+--    real price list. Each existing row becomes 2 rows: one for Standard, one for Double (roughly
+--    1.9x the Standard price, matching the old "Couple" seat-type multiplier).
+IF COL_LENGTH('[PatronCategory]', 'Price') IS NULL
+BEGIN
+    ALTER TABLE [PatronCategory] ADD [Price] float NOT NULL CONSTRAINT [DF_PatronCategory_Price] DEFAULT 0;
+    PRINT 'Added [PatronCategory].[Price].';
+END
+IF COL_LENGTH('[PatronCategory]', 'DiscountPercent') IS NOT NULL
+BEGIN
+    DECLARE @ReferenceBasePrice float = 70000;
+    EXEC('UPDATE [PatronCategory] SET [Price] = ROUND(' + CAST(@ReferenceBasePrice AS nvarchar(20)) + ' * (1 - [DiscountPercent] / 100.0), -3)');
+    PRINT 'REVIEW REQUIRED: PatronCategory.Price backfilled from DiscountPercent against a 70 000 VND reference — verify every value before going live.';
+END
+
+IF COL_LENGTH('[PatronCategory]', 'SeatTypeId') IS NULL
+BEGIN
+    ALTER TABLE [PatronCategory] ADD [SeatTypeId] uniqueidentifier NULL;
+    PRINT 'Added [PatronCategory].[SeatTypeId].';
+END
+
+-- 6) Reseed [SeatType] as a fixed 2-rows-per-theater lookup. Nothing references the old rows any
+--    more (step 2-4 dropped every FK into this table except the one being added in step 5), so the
+--    table is cleared and rebuilt rather than migrated row-by-row.
+IF COL_LENGTH('[SeatType]', 'Kind') IS NULL
+BEGIN
+    DELETE FROM [SeatType];
+    ALTER TABLE [SeatType] ADD [Kind] int NOT NULL CONSTRAINT [DF_SeatType_Kind] DEFAULT 0;
+    -- [Kind] was just added above in this same batch — EXEC defers name resolution to execution time.
+    EXEC('INSERT INTO [SeatType] ([Id], [TheaterId], [Kind], [Name], [Color], [CreationTime])
+          SELECT NEWID(), t.[Id], 0, N''Standard'', N''#3B82F6'', GETUTCDATE() FROM [Theater] t
+          UNION ALL
+          SELECT NEWID(), t.[Id], 1, N''Double'', N''#EC4899'', GETUTCDATE() FROM [Theater] t');
+    PRINT 'Reseeded [SeatType] as a fixed Standard/Double lookup per theater.';
+END
+IF COL_LENGTH('[SeatType]', 'PriceMultiplier') IS NOT NULL
+BEGIN
+    DECLARE @seatTypeDefault sysname;
+    SELECT @seatTypeDefault = dc.[name] FROM sys.default_constraints dc
+        JOIN sys.columns c ON c.default_object_id = dc.object_id
+        WHERE dc.parent_object_id = OBJECT_ID('SeatType') AND c.name = 'PriceMultiplier';
+    IF @seatTypeDefault IS NOT NULL
+        EXEC('ALTER TABLE [SeatType] DROP CONSTRAINT [' + @seatTypeDefault + ']');
+    ALTER TABLE [SeatType] DROP COLUMN [PriceMultiplier];
+    PRINT 'Dropped [SeatType].[PriceMultiplier].';
+END
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_SeatType_TheaterId' AND object_id = OBJECT_ID('SeatType'))
+    DROP INDEX [IX_SeatType_TheaterId] ON [SeatType];
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_SeatType_TheaterId_Kind' AND object_id = OBJECT_ID('SeatType'))
+    CREATE UNIQUE INDEX [IX_SeatType_TheaterId_Kind] ON [SeatType] ([TheaterId], [Kind]);
+
+-- 7) Point every PatronCategory row at its theater's Standard SeatType, then duplicate each row for
+--    Double (~1.9x the Standard price). Must run after step 6 reseeds [SeatType]. [SeatTypeId] and
+--    [Price] were both added earlier in this same batch, so — per this file's own convention — the
+--    statements referencing them are run via EXEC() to defer name resolution to execution time.
+EXEC('UPDATE pc SET pc.[SeatTypeId] = st.[Id]
+      FROM   [PatronCategory] pc
+      JOIN   [SeatType] st ON st.[TheaterId] = pc.[TheaterId] AND st.[Kind] = 0
+      WHERE  pc.[SeatTypeId] IS NULL');
+
+EXEC('INSERT INTO [PatronCategory] ([Id], [TheaterId], [SeatTypeId], [Name], [Description], [Price], [IsActive], [CreationTime])
+      SELECT NEWID(), pc.[TheaterId], stDouble.[Id], pc.[Name], pc.[Description], ROUND(pc.[Price] * 1.9, -3), pc.[IsActive], GETUTCDATE()
+      FROM   [PatronCategory] pc
+      JOIN   [SeatType] stStandard ON stStandard.[Id] = pc.[SeatTypeId] AND stStandard.[Kind] = 0
+      JOIN   [SeatType] stDouble   ON stDouble.[TheaterId] = pc.[TheaterId] AND stDouble.[Kind] = 1
+      WHERE  NOT EXISTS (
+          SELECT 1 FROM [PatronCategory] pc2
+          WHERE  pc2.[TheaterId] = pc.[TheaterId] AND pc2.[Name] = pc.[Name] AND pc2.[SeatTypeId] = stDouble.[Id]
+      )');
+PRINT 'REVIEW REQUIRED: duplicated every PatronCategory row for the Double seat kind at ~1.9x the Standard price — verify before going live.';
+
+ALTER TABLE [PatronCategory] ALTER COLUMN [SeatTypeId] uniqueidentifier NOT NULL;
+
+IF COL_LENGTH('[PatronCategory]', 'DiscountPercent') IS NOT NULL
+BEGIN
+    DECLARE @patronCategoryDefault sysname;
+    SELECT @patronCategoryDefault = dc.[name] FROM sys.default_constraints dc
+        JOIN sys.columns c ON c.default_object_id = dc.object_id
+        WHERE dc.parent_object_id = OBJECT_ID('PatronCategory') AND c.name = 'DiscountPercent';
+    IF @patronCategoryDefault IS NOT NULL
+        EXEC('ALTER TABLE [PatronCategory] DROP CONSTRAINT [' + @patronCategoryDefault + ']');
+    ALTER TABLE [PatronCategory] DROP COLUMN [DiscountPercent];
+    PRINT 'Dropped [PatronCategory].[DiscountPercent].';
+END
+
+IF OBJECT_ID('FK_PatronCategory_SeatType_SeatTypeId', 'F') IS NULL
+    ALTER TABLE [PatronCategory] ADD CONSTRAINT [FK_PatronCategory_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION;
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PatronCategory_SeatTypeId' AND object_id = OBJECT_ID('PatronCategory'))
+    CREATE INDEX [IX_PatronCategory_SeatTypeId] ON [PatronCategory] ([SeatTypeId]);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PatronCategory_TheaterId_Name_SeatTypeId' AND object_id = OBJECT_ID('PatronCategory'))
+    CREATE UNIQUE INDEX [IX_PatronCategory_TheaterId_Name_SeatTypeId] ON [PatronCategory] ([TheaterId], [Name], [SeatTypeId]);
+
+-- 8) New per-RoomType price override table. Starts empty — no row = the theater-wide PatronCategory
+--    price applies, so this is a zero-impact addition.
+IF OBJECT_ID('RoomTypePatronCategoryPrice', 'U') IS NULL
+BEGIN
+    CREATE TABLE [RoomTypePatronCategoryPrice] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [RoomTypeId] uniqueidentifier NOT NULL,
+        [PatronCategoryId] uniqueidentifier NOT NULL,
+        [Price] float NOT NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_RoomTypePatronCategoryPrice] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_RoomTypePatronCategoryPrice_RoomType_RoomTypeId] FOREIGN KEY ([RoomTypeId]) REFERENCES [RoomType] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_RoomTypePatronCategoryPrice_PatronCategory_PatronCategoryId] FOREIGN KEY ([PatronCategoryId]) REFERENCES [PatronCategory] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_RoomTypePatronCategoryPrice_PatronCategoryId] ON [RoomTypePatronCategoryPrice] ([PatronCategoryId]);
+    CREATE UNIQUE INDEX [IX_RoomTypePatronCategoryPrice_RoomTypeId_PatronCategoryId] ON [RoomTypePatronCategoryPrice] ([RoomTypeId], [PatronCategoryId]);
+    PRINT 'Created [RoomTypePatronCategoryPrice].';
+END
+
+PRINT 'upgrade: PatronCategory-driven seat pricing applied.';
+
 PRINT 'upgrade_db.sql: completed.';
 
 -- ── Adopt EF Core migrations (baseline) ─────────────────────────────────────

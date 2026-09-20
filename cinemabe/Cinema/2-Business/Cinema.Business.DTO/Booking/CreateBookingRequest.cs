@@ -43,11 +43,11 @@ public class BookingSeatItem
     [NotEmptyGuid]
     public Guid SeatId { get; set; }
 
-    /// <summary>Self-reported patron category for this seat (Adult/Student/Senior/Child); null = full
-    /// price. Checked visually (ID/student card) at the theater, not verified by this system.
-    /// The category's seat-type allow-list (PatronCategorySeatType) is enforced server-side only when
-    /// this is set — omitting it books any seat type at full price. That's intentional: the gate is a
-    /// pricing-category restriction, not a standalone access-control rule on the seat itself.</summary>
+    /// <summary>Self-reported patron category for this seat (Adult/Student/Senior/Child) — REQUIRED,
+    /// since PatronCategory.Price is now the only source of a ticket's price. Checked visually
+    /// (ID/student card) at the theater, not verified by this system. The category's own seat kind
+    /// (Standard/Double) must match the seat being booked, or the booking is rejected — this is the
+    /// entire eligibility rule (a category with no row for a kind simply cannot book that kind).</summary>
     public Guid? PatronCategoryId { get; set; }
 }
 

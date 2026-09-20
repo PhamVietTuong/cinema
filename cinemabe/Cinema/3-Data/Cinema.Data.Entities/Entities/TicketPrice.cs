@@ -1,9 +1,9 @@
 namespace Cinema.Data.Entities;
 
 /// <summary>
-/// A pricing factor for a (theater, room type, seat type, time slot, holiday?) combination.
-/// Applied to the showtime's BasePrice — mirrors SeatType.PriceMultiplier and Holiday.PriceMultiplier
-/// rather than replacing BasePrice outright, so a movie-specific base price is never undercut.
+/// A time-of-day/holiday pricing factor for a (theater, room type, time slot, holiday?) combination.
+/// Multiplies the resolved PatronCategory price (see BookingManager's pricing formula) — this table no
+/// longer carries a seat-kind dimension, since PatronCategory now owns the per-seat-kind price.
 /// </summary>
 public class TicketPrice : BaseEntity
 {
@@ -12,9 +12,6 @@ public class TicketPrice : BaseEntity
 
     public Guid RoomTypeId { get; set; }
     public RoomType RoomType { get; set; } = null!;
-
-    public Guid SeatTypeId { get; set; }
-    public SeatType SeatType { get; set; } = null!;
 
     public Guid TimeSlotId { get; set; }
     public TimeSlot TimeSlot { get; set; } = null!;

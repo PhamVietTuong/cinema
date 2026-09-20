@@ -48,6 +48,23 @@ public class PaymentController : ApiControllerBase
         }
     }
 
+    [AllowAnonymous]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<ShowTimePriceDTO>), 200)]
+    public async Task<IActionResult> GetShowTimePrices([FromQuery] Guid showTimeId, [FromQuery] Guid roomId)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetShowTimePrices being awakened to process request...");
+        try
+        {
+            var result = await _bookingManager.GetShowTimePricesAsync(showTimeId, roomId);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetShowTimePrices));
+        }
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(BookingResultDTO), 200)]
     public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)

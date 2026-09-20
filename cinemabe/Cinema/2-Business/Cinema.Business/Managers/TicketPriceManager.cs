@@ -54,13 +54,6 @@ public class TicketPriceManager : ITicketPriceManager
                     }
                     break;
 
-                case "seatTypeId":
-                    if (Guid.TryParse(filters[key], out var seatTypeId))
-                    {
-                        query = _uow.TicketPriceStore.FilterQuery(query, e => e.SeatTypeId == seatTypeId);
-                    }
-                    break;
-
                 case "timeSlotId":
                     if (Guid.TryParse(filters[key], out var timeSlotId))
                     {

@@ -6,6 +6,9 @@ namespace Cinema.Business.Contracts;
 public interface IBookingManager
 {
     Task<DefaultSearchResults<SeatDTO>> GetSeatsAsync(PagingSearchDTO search);
+    /// <summary>The resolved price list for a showtime+room: one entry per active PatronCategory of the
+    /// theater, with all pricing factors applied. Drives the booking UI's quantity picker directly.</summary>
+    Task<List<ShowTimePriceDTO>>        GetShowTimePricesAsync(Guid showTimeId, Guid roomId);
     Task<BookingResultDTO>              CreateBookingAsync(Guid userId, CreateBookingRequest request);
     /// <summary>Starts a payment for the owner's Pending invoice via the chosen provider; returns the redirect/checkout info.</summary>
     Task<PaymentInitiationDTO?>         InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl);

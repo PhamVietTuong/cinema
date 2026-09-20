@@ -35,16 +35,14 @@ public class UpdateRoomRequest : IHasId
     public RoomStatus Status { get; set; } = RoomStatus.Active;
 }
 
-// ── Seat-map editor (assign seat types + group double seats) ───────────────────
+// ── Seat-map editor (group/ungroup double seats) ───────────────────
 public class RoomSeatDTO
 {
     public Guid Id { get; set; }
     public string RowName { get; set; } = string.Empty;
     public int ColIndex { get; set; }
-    public Guid SeatTypeId { get; set; }
-    public string SeatTypeName { get; set; } = string.Empty;
-    public string SeatTypeColor { get; set; } = "#808080";
-    public double PriceMultiplier { get; set; } = 1;
+    /// <summary>Derived from SeatGroupId being set — a seat has no stored kind of its own.</summary>
+    public bool IsDouble { get; set; }
     public Guid? SeatGroupId { get; set; }
     public bool IsActive { get; set; } = true;
 }
@@ -70,7 +68,6 @@ public class ResizeSeatGridRequest
 public class SeatAssignmentItem
 {
     public Guid SeatId { get; set; }
-    public Guid SeatTypeId { get; set; }
     public Guid? SeatGroupId { get; set; }
     public bool IsActive { get; set; } = true;
 }
