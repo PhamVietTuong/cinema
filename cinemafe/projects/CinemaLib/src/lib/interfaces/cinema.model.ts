@@ -33,7 +33,7 @@ export const ShowTimeTypeValues: { value: CinemaServiceAgent.ShowTimeType; name:
 ];
 
 /**
- * i18n-key label for a seat's kind (Standard/Double). Keyed by the boolean `isDouble` rather than
+ * i18n-key label for a seat's kind (Single/Double). Keyed by the boolean `isDouble` rather than
  * the generated SeatKind enum, since NSwag emits a separate SeatKind type per client namespace
  * (CinemaServiceAgent vs PaymentServiceAgent) — comparing by boolean sidesteps that mismatch.
  */

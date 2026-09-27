@@ -1,16 +1,12 @@
 namespace Cinema.Data.Entities;
 
 /// <summary>
-/// A per-RoomType override of a PatronCategory row's Price (e.g. a Deluxe RoomType charges more for
-/// Adult/Standard than the theater-wide PatronCategory.Price). There is no separate NULL-price
-/// encoding for "not overridden", only the absence of a row.
-///
-/// This also doubles as the RoomType's eligibility gate: a RoomType with ZERO rows here is
-/// unrestricted (every theater-wide PatronCategory is bookable there at its default price); a
-/// RoomType with ANY row here is restricted to exactly the categories that have one — e.g. an
-/// auditorium seeded with only Adult and Student rows will not offer Senior/Child at all, even
-/// though those categories exist theater-wide. Same "empty = unrestricted, any row = restricted"
-/// pattern the old PatronCategorySeatType gate used.
+/// A RoomType's patron-category allow-list: a RoomType offers EXACTLY the categories that have a row
+/// here, at that row's Price (e.g. Room Type 1 = Adult Standard + Child Standard; Room Type 2 = Child
+/// Double + Child Standard + Senior Standard). Zero rows means the RoomType offers nothing — there is
+/// no fallback to the theater-wide PatronCategory.Price. RoomTypeManager.CreateAsync seeds a new
+/// RoomType with one row per active theater-wide PatronCategory so it starts bookable; the admin then
+/// removes the ones that shouldn't be offered there.
 /// </summary>
 public class RoomTypePatronCategoryPrice : BaseEntity
 {

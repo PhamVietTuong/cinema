@@ -113,7 +113,7 @@ public class SeatTypeManager : ISeatTypeManager
             {
                 TheaterId = theaterId,
                 Kind      = SeatKind.Standard,
-                Name      = "Standard",
+                Name      = "Single",
                 Color     = "#3B82F6",
             });
         }

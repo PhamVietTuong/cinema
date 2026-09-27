@@ -308,7 +308,8 @@
       "gridSize": "Seat grid: {{rows}} rows × {{cols}} columns",
       "row": "Row",
       "column": "Column",
-      "pairHint": "Pick 2 adjacent seats to pair them into a double seat. Click a paired seat to unpair.",
+      "pairHint": "Pick a seat type below, then click seats to apply it. Applying Double pairs with an adjacent seat automatically; applying Single on a paired seat unpairs it.",
+      "noAdjacentSeat": "No free adjacent seat in this row to pair with.",
       "screen": "SCREEN",
       "noSeats": "This room has no seats yet. Make sure seat types exist before creating the room.",
       "saving": "Saving…",
@@ -335,7 +336,7 @@
       "discountsTooltip": "Patron category prices for this room type"
     },
     "seatTypes": {
-      "subtitle": "Seat classes for this theater — Standard and Double are fixed; only name, color and description are editable.",
+      "subtitle": "Seat classes for this theater — Single and Double are fixed; only name, color and description are editable.",
       "editTitle": "Edit Seat Type",
       "nameLabel": "Seat Type Name",
       "namePlaceholder": "e.g. VIP",
@@ -345,7 +346,7 @@
       "empty": "This theater has no seat types yet."
     },
     "patronCategories": {
-      "subtitle": "One independent pricing row per category and seat kind (e.g. Adult / Standard). Rows are never merged — editing or deleting one never affects another.",
+      "subtitle": "One independent pricing row per category and seat kind (e.g. Adult / Single). Rows are never merged — editing or deleting one never affects another.",
       "add": "Add Category",
       "editTitle": "Edit Category",
       "newTitle": "New Category",
@@ -408,12 +409,14 @@
     },
     "roomTypePrices": {
       "title": "Patron Category Prices",
-      "subtitle": "Override the theater-wide price for this room type. Leave blank to use the default.",
+      "subtitle": "Choose which ticket categories this room type offers, and optionally charge a different price than the theater default.",
       "theaterPrice": "Theater default",
-      "overrideLabel": "Override price",
-      "clearOverride": "Clear override",
-      "empty": "This theater has no patron categories yet.",
-      "restrictionWarning": "Saving even one price here restricts this room type to ONLY the categories listed below — any category left blank will not be offered in this room type at all, even if it exists theater-wide. Leave everything blank to keep this room type open to every category."
+      "overrideLabel": "Price in this room type",
+      "addCategory": "Add Category",
+      "removeCategory": "Remove from this room type",
+      "empty": "No category is offered in this room type yet.",
+      "restrictionWarning": "Only the categories added below are offered in this room type. Any category not added here is not sold in this room type, even though it exists theater-wide.",
+      "noneIncludedWarning": "No category has been added: this room type will not be bookable at all until you add at least one."
     }
   },
   "users": {

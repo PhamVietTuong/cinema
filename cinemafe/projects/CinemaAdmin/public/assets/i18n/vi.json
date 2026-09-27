@@ -308,7 +308,8 @@
       "gridSize": "Lưới ghế: {{rows}} hàng × {{cols}} cột",
       "row": "Hàng",
       "column": "Cột",
-      "pairHint": "Chọn 2 ghế cạnh nhau để ghép thành ghế đôi. Bấm vào ghế đã ghép để hủy.",
+      "pairHint": "Chọn loại ghế bên dưới, sau đó bấm vào ghế để áp dụng. Áp dụng Ghế Đôi sẽ tự động ghép với ghế liền kề; áp dụng Ghế Đơn trên một ghế đã ghép sẽ hủy ghép.",
+      "noAdjacentSeat": "Không còn ghế trống liền kề trong hàng này để ghép.",
       "screen": "MÀN HÌNH",
       "noSeats": "Phòng này chưa có ghế nào. Hãy kiểm tra đã có loại ghế trước khi tạo phòng.",
       "saving": "Đang lưu…",
@@ -335,7 +336,7 @@
       "discountsTooltip": "Giá đối tượng vé cho loại phòng này"
     },
     "seatTypes": {
-      "subtitle": "Hạng ghế của rạp này — Thường và Đôi là cố định; chỉ có thể chỉnh tên, màu và mô tả.",
+      "subtitle": "Hạng ghế của rạp này — Đơn và Đôi là cố định; chỉ có thể chỉnh tên, màu và mô tả.",
       "editTitle": "Chỉnh Sửa Loại Ghế",
       "nameLabel": "Tên Loại Ghế",
       "namePlaceholder": "VD: VIP",
@@ -345,7 +346,7 @@
       "empty": "Rạp này chưa có loại ghế nào."
     },
     "patronCategories": {
-      "subtitle": "Mỗi dòng giá là một cặp Đối Tượng + Loại Ghế độc lập (VD: Người lớn / Standard). Các dòng không bao giờ được gộp — sửa hoặc xóa một dòng không ảnh hưởng dòng khác.",
+      "subtitle": "Mỗi dòng giá là một cặp Đối Tượng + Loại Ghế độc lập (VD: Người lớn / Đơn). Các dòng không bao giờ được gộp — sửa hoặc xóa một dòng không ảnh hưởng dòng khác.",
       "add": "Thêm Đối Tượng",
       "editTitle": "Chỉnh Sửa Đối Tượng",
       "newTitle": "Đối Tượng Mới",
@@ -408,12 +409,14 @@
     },
     "roomTypePrices": {
       "title": "Giá Theo Đối Tượng",
-      "subtitle": "Ghi đè giá chung của rạp cho loại phòng này. Để trống để dùng giá mặc định.",
+      "subtitle": "Chọn những đối tượng vé mà loại phòng này áp dụng, và có thể đặt giá khác với giá chung của rạp.",
       "theaterPrice": "Giá mặc định của rạp",
-      "overrideLabel": "Giá ghi đè",
-      "clearOverride": "Xóa ghi đè",
-      "empty": "Rạp này chưa có đối tượng vé nào.",
-      "restrictionWarning": "Chỉ cần lưu một giá ở đây sẽ giới hạn loại phòng này CHỈ còn các đối tượng được liệt kê bên dưới — đối tượng nào để trống sẽ không được áp dụng cho loại phòng này, dù đối tượng đó vẫn tồn tại chung cho cả rạp. Để trống tất cả để loại phòng này vẫn áp dụng cho mọi đối tượng."
+      "overrideLabel": "Giá tại loại phòng này",
+      "addCategory": "Thêm Đối Tượng",
+      "removeCategory": "Bỏ khỏi loại phòng này",
+      "empty": "Loại phòng này chưa áp dụng cho đối tượng nào.",
+      "restrictionWarning": "Chỉ những đối tượng được thêm bên dưới mới được áp dụng cho loại phòng này. Đối tượng chưa được thêm sẽ không được bán ở đây, dù vẫn tồn tại chung cho cả rạp.",
+      "noneIncludedWarning": "Chưa thêm đối tượng nào: loại phòng này sẽ không thể đặt vé cho đến khi bạn thêm ít nhất một đối tượng."
     }
   },
   "users": {

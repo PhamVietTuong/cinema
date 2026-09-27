@@ -6750,6 +6750,9 @@
             "type": "number",
             "format": "double"
           },
+          "isIncluded": {
+            "type": "boolean"
+          },
           "price": {
             "type": "number",
             "format": "double"
@@ -6779,6 +6782,9 @@
           "patronCategoryId": {
             "type": "string",
             "format": "guid"
+          },
+          "included": {
+            "type": "boolean"
           },
           "price": {
             "type": "number",

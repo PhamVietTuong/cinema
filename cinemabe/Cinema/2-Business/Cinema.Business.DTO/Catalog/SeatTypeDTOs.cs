@@ -13,7 +13,7 @@ public class SeatTypeDTO
     public string Color { get; set; } = "#808080";
 }
 
-/// <summary>SeatType rows are fixed (exactly Standard + Double per theater, seeded on theater
+/// <summary>SeatType rows are fixed (exactly Single + Double per theater, seeded on theater
 /// creation) — only Name/Description/Color can be edited, never Kind, and there is no create/delete.</summary>
 public class UpdateSeatTypeRequest : IHasId
 {

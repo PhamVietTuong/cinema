@@ -183,7 +183,11 @@ public class BookingManager : IBookingManager
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is not available for the selected patron category.");
                 }
 
-                var price = category.Price;
+                // A Double seat is one bookable unit priced once as a whole (category.Price is that
+                // whole-seat price) but is still two physical Seat rows, each needing its own
+                // InvoiceTicket for occupancy/refund tracking — split the price across the pair so
+                // the two halves sum to the single price the customer was quoted for one seat.
+                var price = seatKind == SeatKind.Double ? category.Price / 2 : category.Price;
                 ticketTotal += price;
 
                 // Unguessable per-ticket token; encoded as the e-ticket QR and checked at the gate.
@@ -203,7 +207,7 @@ public class BookingManager : IBookingManager
                 ticketItems.Add(new TicketItemDTO
                 {
                     SeatLabel      = $"{seat.RowName}{seat.ColIndex}",
-                    SeatType       = seatKind == SeatKind.Double ? "Double" : "Standard",
+                    SeatType       = seatKind == SeatKind.Double ? "Double" : "Single",
                     Price          = price,
                     PatronCategory = category.Name,
                     QrCode         = qr,
@@ -592,22 +596,17 @@ public class BookingManager : IBookingManager
                 .Where(o => o.RoomTypeId == room.RoomTypeId)
                 .ToList();
         var overrideByCategory = overridesForRoomType.ToDictionary(o => o.PatronCategoryId, o => o.Price);
-        // Same "empty = unrestricted, any row = restricted" pattern as the old PatronCategorySeatType
-        // gate: a RoomType with zero override rows offers every theater-wide category at its default
-        // price; a RoomType with ANY override row is restricted to exactly the categories that have
-        // one (e.g. "this IMAX hall only accepts Adult and Student") — a category with no row for
-        // THIS room type isn't offered here at all, even though it exists theater-wide.
-        var isRoomTypeRestricted = overridesForRoomType.Count > 0;
-
+        // RoomTypePatronCategoryPrice is a per-RoomType allow-list: a RoomType offers exactly the
+        // categories that have a row here, at that row's price. Zero rows means the RoomType offers
+        // nothing — there is no "unrestricted" fallback to the theater-wide PatronCategory.Price.
         var byCategoryId = new Dictionary<Guid, ResolvedCategory>();
         foreach (var c in categoryList)
         {
-            if (isRoomTypeRestricted && !overrideByCategory.ContainsKey(c.Id))
+            if (!overrideByCategory.TryGetValue(c.Id, out var roomTypePrice))
             {
                 continue;
             }
-            var resolvedBase = overrideByCategory.TryGetValue(c.Id, out var overridePrice) ? overridePrice : c.Price;
-            var price = Math.Round(resolvedBase * (timeFactor ?? 1.0) * holidayFactor + threeDSurcharge + showTimeRoom.BasePrice, 2);
+            var price = Math.Round(roomTypePrice * (timeFactor ?? 1.0) * holidayFactor + threeDSurcharge + showTimeRoom.BasePrice, 2);
             var kind  = kindBySeatTypeId.TryGetValue(c.SeatTypeId, out var k) ? k : SeatKind.Standard;
             byCategoryId[c.Id] = new ResolvedCategory(c.Id, c.Name, c.SeatTypeId, kind, price);
         }

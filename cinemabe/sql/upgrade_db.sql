@@ -712,6 +712,9 @@ BEGIN
         SELECT p.[Id],
                ROW_NUMBER() OVER (
                    PARTITION BY p.[TheaterId], p.[RoomTypeId], p.[TimeSlotId], p.[IsHoliday]
+                   -- Matches the pre-rename legacy SeatType.Name ("Standard", now displayed as "Single")
+                   -- that existed in the DB at the time this historical migration step ran — do not
+                   -- "fix" this to the new name, it would break already-applied upgrades.
                    ORDER BY CASE WHEN st.[Name] = N'Standard' THEN 0 ELSE 1 END, p.[PriceMultiplier] ASC
                ) AS rn
         FROM   [TicketPrice] p
@@ -743,7 +746,8 @@ END
 IF COL_LENGTH('[PatronCategory]', 'DiscountPercent') IS NOT NULL
 BEGIN
     DECLARE @ReferenceBasePrice float = 70000;
-    EXEC('UPDATE [PatronCategory] SET [Price] = ROUND(' + CAST(@ReferenceBasePrice AS nvarchar(20)) + ' * (1 - [DiscountPercent] / 100.0), -3)');
+    DECLARE @backfillSql nvarchar(max) = 'UPDATE [PatronCategory] SET [Price] = ROUND(' + CAST(@ReferenceBasePrice AS nvarchar(20)) + ' * (1 - [DiscountPercent] / 100.0), -3)';
+    EXEC(@backfillSql);
     PRINT 'REVIEW REQUIRED: PatronCategory.Price backfilled from DiscountPercent against a 70 000 VND reference — verify every value before going live.';
 END
 
@@ -762,10 +766,10 @@ BEGIN
     ALTER TABLE [SeatType] ADD [Kind] int NOT NULL CONSTRAINT [DF_SeatType_Kind] DEFAULT 0;
     -- [Kind] was just added above in this same batch — EXEC defers name resolution to execution time.
     EXEC('INSERT INTO [SeatType] ([Id], [TheaterId], [Kind], [Name], [Color], [CreationTime])
-          SELECT NEWID(), t.[Id], 0, N''Standard'', N''#3B82F6'', GETUTCDATE() FROM [Theater] t
+          SELECT NEWID(), t.[Id], 0, N''Single'', N''#3B82F6'', GETUTCDATE() FROM [Theater] t
           UNION ALL
           SELECT NEWID(), t.[Id], 1, N''Double'', N''#EC4899'', GETUTCDATE() FROM [Theater] t');
-    PRINT 'Reseeded [SeatType] as a fixed Standard/Double lookup per theater.';
+    PRINT 'Reseeded [SeatType] as a fixed Single/Double lookup per theater.';
 END
 IF COL_LENGTH('[SeatType]', 'PriceMultiplier') IS NOT NULL
 BEGIN
@@ -824,8 +828,8 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PatronCategory_SeatTyp
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PatronCategory_TheaterId_Name_SeatTypeId' AND object_id = OBJECT_ID('PatronCategory'))
     CREATE UNIQUE INDEX [IX_PatronCategory_TheaterId_Name_SeatTypeId] ON [PatronCategory] ([TheaterId], [Name], [SeatTypeId]);
 
--- 8) New per-RoomType price override table. Starts empty — no row = the theater-wide PatronCategory
---    price applies, so this is a zero-impact addition.
+-- 8) New per-RoomType allow-list/price table. Fresh-create path (section 9 below back-fills rows
+--    for existing RoomTypes so the table is never left in a "zero rows" state on an upgraded DB).
 IF OBJECT_ID('RoomTypePatronCategoryPrice', 'U') IS NULL
 BEGIN
     CREATE TABLE [RoomTypePatronCategoryPrice] (
@@ -845,6 +849,28 @@ BEGIN
 END
 
 PRINT 'upgrade: PatronCategory-driven seat pricing applied.';
+
+-- 9) RoomTypePatronCategoryPrice becomes the sole source of truth for what a RoomType offers: a
+--    RoomType with zero rows now offers NOTHING (previously it fell back to "every theater-wide
+--    category, at the theater price"). Back-fill one row per active PatronCategory, at that
+--    category's current price, for every RoomType that has zero rows today, so already-configured
+--    RoomTypes keep behaving exactly as they did before this change. RoomTypes that already have
+--    at least one row (a curated allow-list) are left untouched.
+EXEC('INSERT INTO [RoomTypePatronCategoryPrice] ([Id], [RoomTypeId], [PatronCategoryId], [Price], [CreationTime])
+SELECT NEWID(), rt.[Id], pc.[Id], pc.[Price], GETUTCDATE()
+FROM [RoomType] rt
+INNER JOIN [PatronCategory] pc ON pc.[TheaterId] = rt.[TheaterId] AND pc.[IsActive] = 1
+WHERE NOT EXISTS (SELECT 1 FROM [RoomTypePatronCategoryPrice] x WHERE x.[RoomTypeId] = rt.[Id])');
+PRINT 'upgrade: back-filled RoomTypePatronCategoryPrice allow-list rows for previously-unrestricted room types.';
+
+-- 10) Rename the seat-kind display label "Standard" -> "Single" (Kind=0). Idempotent and
+--     conditional on the exact untouched default name, so a theater that already customized its
+--     Kind=0 SeatType.Name (e.g. to "VIP") is left alone; re-running this block is a no-op.
+IF COL_LENGTH('[SeatType]', 'Kind') IS NOT NULL
+BEGIN
+    UPDATE [SeatType] SET [Name] = N'Single', [LastUpdatedTime] = GETUTCDATE() WHERE [Kind] = 0 AND [Name] = N'Standard';
+    PRINT 'upgrade: renamed default Kind=0 SeatType rows from "Standard" to "Single".';
+END
 
 PRINT 'upgrade_db.sql: completed.';
 

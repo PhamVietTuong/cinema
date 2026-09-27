@@ -428,11 +428,12 @@ ALTER TABLE [SeatType]       ADD CONSTRAINT [FK_SeatType_Theater_TheaterId]     
 ALTER TABLE [FoodAndDrink]   ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId]   FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 ALTER TABLE [PatronCategory] ADD CONSTRAINT [FK_PatronCategory_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
 
--- Per-RoomType override of a PatronCategory row's Price. Also doubles as the RoomType's eligibility
--- gate: zero rows for a RoomType = unrestricted (every theater-wide category is bookable there at its
--- default price); ANY row = restricted to exactly the categories that have one (e.g. an auditorium
--- seeded with only Adult/Student rows won't offer Senior/Child at all). Price is NOT NULL, so "not
--- overridden" has exactly one encoding (absence of a row), never a null value.
+-- A RoomType's patron-category allow-list: a RoomType offers EXACTLY the categories that have a row
+-- here, at that row's Price. Zero rows means the RoomType offers nothing — there is no "unrestricted,
+-- falls back to the theater-wide default" state. (e.g. Room Type 1 = Adult Standard + Child Standard;
+-- Room Type 2 = Child Double + Child Standard + Senior Standard.) RoomTypeManager.CreateAsync seeds a
+-- new RoomType with one row per active theater-wide PatronCategory so it's bookable immediately; the
+-- admin then removes the ones that shouldn't be offered there.
 CREATE TABLE [RoomTypePatronCategoryPrice] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [RoomTypeId] uniqueidentifier NOT NULL,

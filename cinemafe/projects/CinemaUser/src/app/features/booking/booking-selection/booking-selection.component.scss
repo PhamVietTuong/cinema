@@ -232,8 +232,6 @@
   font-family: var(--ml-font-data); font-size: var(--cx-text-sm);
   color: var(--ml-ink); font-variant-numeric: tabular-nums;
 }
-.seat-entry-price-strike { text-decoration: line-through; color: var(--ml-faint); margin-right: 6px; }
-
 .price-divider { border: none; border-top: 1px dashed var(--ml-rule); margin: var(--cx-space-4) 0; }
 .price-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -313,7 +311,7 @@
 .option-info { display: flex; flex-direction: column; gap: 2px; }
 .option-name { font-weight: 600; color: var(--ml-ink); font-size: var(--cx-text-sm); }
 .option-price { font-size: 0.85rem; opacity: 0.75; color: var(--ml-muted); }
-.option-double-price {
+.option-kind-badge {
   align-self: flex-start; margin-top: 2px; padding: 1px 7px; border-radius: var(--ml-r-sm);
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em;
   background: var(--ml-success-soft); color: var(--ml-success-ink);

@@ -22,18 +22,18 @@
     <h3 class="card-title"><i class="fas fa-ticket-alt"></i> {{ 'booking.tickets.title' | translate }}</h3>
     <p class="card-hint">{{ 'booking.tickets.hint' | translate }}</p>
     <div class="option-grid ticket-grid">
-      <div class="option-card mag-card" *ngFor="let group of categoryGroups" [class.active]="ticketQty[group.name] > 0">
+      <div class="option-card mag-card" *ngFor="let row of priceRows" [class.active]="ticketQty[row.patronCategoryId!] > 0">
         <div class="mag-card-stripe"></div>
         <div class="mag-card-chip"></div>
         <div class="option-info">
-          <span class="option-name">{{ group.name }}</span>
-          <span class="option-price">{{ headlinePrice(group) | number:'1.0-0' }}đ</span>
-          <span class="option-double-price" *ngIf="doublePrice(group) as dp">{{ 'booking.tickets.doublePrice' | translate:{ price: (dp | number:'1.0-0') } }}</span>
+          <span class="option-name">{{ row.patronCategoryName }}</span>
+          <span class="option-kind-badge">{{ seatKindLabel(row.isDouble) | translate }}</span>
+          <span class="option-price">{{ row.price | number:'1.0-0' }}đ</span>
         </div>
         <div class="option-qty">
-          <button type="button" (click)="decTicket(group)" [disabled]="!ticketQty[group.name]">−</button>
-          <span>{{ ticketQty[group.name] || 0 }}</span>
-          <button type="button" (click)="incTicket(group)" [disabled]="totalTickets >= maxTickets">+</button>
+          <button type="button" (click)="decTicket(row)" [disabled]="!ticketQty[row.patronCategoryId!]">−</button>
+          <span>{{ ticketQty[row.patronCategoryId!] || 0 }}</span>
+          <button type="button" (click)="incTicket(row)" [disabled]="!canIncrement(row)">+</button>
         </div>
       </div>
     </div>
@@ -107,15 +107,12 @@
       </div>
 
       <div class="selected-list">
-        <div class="selected-item" *ngFor="let s of selectedSeats">
+        <div class="selected-item" *ngFor="let t of selectedTickets">
           <div class="selected-seat-name">
-            <span class="seat-code">{{ s.rowName }}{{ s.colIndex }}</span>
-            <span class="seat-type">{{ seatKindLabel(s.isDouble) | translate }} · {{ categoryForSeat(s.id!)?.patronCategoryName }}</span>
+            <span class="seat-code">{{ t.label }}</span>
+            <span class="seat-type">{{ seatKindLabel(t.isDouble) | translate }} · {{ t.categoryName }}</span>
           </div>
-          <span class="seat-price">
-            <span class="seat-entry-price-strike" *ngIf="seatPrice(s) !== s.price">{{ s.price | number:'1.0-0' }}đ</span>
-            {{ seatPrice(s) | number:'1.0-0' }}đ
-          </span>
+          <span class="seat-price">{{ t.price | number:'1.0-0' }}đ</span>
         </div>
       </div>
 

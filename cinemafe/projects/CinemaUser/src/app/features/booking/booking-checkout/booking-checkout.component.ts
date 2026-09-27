@@ -18,7 +18,7 @@ import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState } from '
   styleUrl: './booking-checkout.component.scss'
 })
 export class BookingCheckoutComponent implements OnInit, OnDestroy {
-  seatKindLabel(seat: BookingCheckoutSeat): string {
+  seatKindLabel(seat: { seatKind: string }): string {
     return seatKindLabel(seat.seatKind === 'Double');
   }
 
@@ -69,6 +69,27 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
 
   get totalPrice(): number {
     return this.seats.reduce((sum, s) => sum + s.price, 0);
+  }
+
+  /** One display line per ticket: a Double pair's two halved prices are summed back into the
+   * single whole-seat price the customer was quoted, instead of showing two confusing half lines. */
+  get ticketLines(): { label: string; seatKind: string; categoryName: string; price: number }[] {
+    const groups = new Map<string, BookingCheckoutSeat[]>();
+    for (const s of this.seats) {
+      const key = s.seatGroupId ?? s.seatId;
+      const group = groups.get(key);
+      if (group) {
+        group.push(s);
+      } else {
+        groups.set(key, [s]);
+      }
+    }
+    return [...groups.values()].map(group => ({
+      label: group.map(s => s.label).join('-'),
+      seatKind: group[0].seatKind,
+      categoryName: group[0].patronCategoryName,
+      price: group.reduce((sum, s) => sum + s.price, 0),
+    }));
   }
 
   get foodTotal(): number {

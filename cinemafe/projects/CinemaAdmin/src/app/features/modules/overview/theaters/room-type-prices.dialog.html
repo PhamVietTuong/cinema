@@ -4,32 +4,40 @@
 </div>
 
 <mat-dialog-content>
-  <div class="ad-warning-banner">
+  <p class="ad-sub">{{ 'theaters.roomTypePrices.restrictionWarning' | translate }}</p>
+  <div class="ad-warning-banner" *ngIf="hasNoIncluded">
     <mat-icon>warning</mat-icon>
-    <span>{{ 'theaters.roomTypePrices.restrictionWarning' | translate }}</span>
+    <span>{{ 'theaters.roomTypePrices.noneIncludedWarning' | translate }}</span>
   </div>
 
   <div *ngIf="loading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'common.loading' | translate }}</p></div>
 
   <ng-container *ngIf="!loading">
-    <div *ngIf="!rows.length" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.roomTypePrices.empty' | translate }}</p></div>
+    <div class="rtp-add-bar">
+      <button mat-stroked-button type="button" [matMenuTriggerFor]="addMenu" [disabled]="!availableToAdd.length">
+        <mat-icon>add</mat-icon> {{ 'theaters.roomTypePrices.addCategory' | translate }}
+      </button>
+      <mat-menu #addMenu="matMenu">
+        <button mat-menu-item type="button" *ngFor="let c of availableToAdd" (click)="addCategory(c.patronCategoryId)">
+          {{ c.patronCategoryName }}
+        </button>
+      </mat-menu>
+    </div>
 
-    <div class="dlg-grid" *ngIf="rows.length">
-      <div class="dlg-row dlg-row--2" *ngFor="let row of rows">
-        <div class="dlg-field">
-          <label class="dlg-label">{{ row.patronCategoryName }}</label>
-          <p class="ad-sub">{{ 'theaters.roomTypePrices.theaterPrice' | translate }}: {{ row.defaultPrice | number:'1.0-0' }}đ</p>
-        </div>
-        <div class="dlg-field">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput type="number" step="1000" min="0" [(ngModel)]="row.overridePrice" [placeholder]="'theaters.roomTypePrices.overrideLabel' | translate">
-            <span matTextSuffix>đ</span>
-            <button mat-icon-button matSuffix type="button" *ngIf="row.overridePrice !== null" (click)="clearOverride(row)" [matTooltip]="'theaters.roomTypePrices.clearOverride' | translate">
-              <mat-icon>close</mat-icon>
-            </button>
-          </mat-form-field>
-        </div>
+    <div *ngIf="!includedRows.length" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.roomTypePrices.empty' | translate }}</p></div>
+
+    <div class="rtp-item" *ngFor="let row of includedRows">
+      <div class="rtp-item-name">
+        <div>{{ row.patronCategoryName }}</div>
+        <p class="ad-sub">{{ 'theaters.roomTypePrices.theaterPrice' | translate }}: {{ row.defaultPrice | number:'1.0-0' }}đ</p>
       </div>
+      <mat-form-field class="rtp-item-price" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" step="1000" min="0" [(ngModel)]="row.price" [placeholder]="'theaters.roomTypePrices.overrideLabel' | translate">
+        <span matTextSuffix>đ</span>
+      </mat-form-field>
+      <button mat-icon-button type="button" (click)="removeCategory(row)" [matTooltip]="'theaters.roomTypePrices.removeCategory' | translate">
+        <mat-icon>delete</mat-icon>
+      </button>
     </div>
   </ng-container>
 </mat-dialog-content>

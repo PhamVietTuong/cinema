@@ -118,13 +118,13 @@ INSERT INTO [SeatType] ([Id], [TheaterId], [Kind], [Name], [Description], [Color
 SELECT NEWID(), t.Id, s.Kind, s.Name, s.Description, s.Color, GETUTCDATE()
 FROM [Theater] t
 CROSS JOIN (VALUES
-    (0, N'Standard', N'Regular cinema seat',                          N'#3B82F6'),
+    (0, N'Single',   N'Regular cinema seat',                          N'#3B82F6'),
     (1, N'Double',   N'Double-width loveseat (booked as a linked pair)', N'#EC4899')
 ) AS s(Kind, Name, Description, Color);
 
 -- ── Patron categories (per theater, one row per (name, seat kind) combination) ──
 -- Price is absolute VND, independently configured per seat kind — a Double row is never computed
--- from Standard. Student/Child deliberately have NO Double row: this is what makes double seats
+-- from Single. Student/Child deliberately have NO Double row: this is what makes double seats
 -- unavailable to those categories (the entire eligibility rule is "does a row exist").
 INSERT INTO [PatronCategory] ([Id], [TheaterId], [SeatTypeId], [Name], [Price], [IsActive], [CreationTime])
 SELECT NEWID(), t.Id, st.Id, c.Name, c.Price, 1, GETUTCDATE()
@@ -178,15 +178,23 @@ FROM [RoomType] rt
 JOIN [TimeSlot] ts ON ts.TheaterId = rt.TheaterId
 CROSS JOIN (VALUES (CAST(0 AS bit)), (CAST(1 AS bit))) AS h(IsHoliday);
 
--- ── RoomType-level PatronCategory price overrides (demo) ──────────────────────
--- IMAX and 4DX charge Adult more than the theater-wide price, showing the override in action.
+-- ── RoomType patron-category allow-list (demo) ─────────────────────────────────
+-- A RoomType only offers the categories that have a row here, so every room type gets one row per
+-- active theater-wide category at that category's default price (mirrors RoomTypeManager.CreateAsync
+-- seeding a new room type "fully open" for the admin to then curate down).
 INSERT INTO [RoomTypePatronCategoryPrice] ([Id], [RoomTypeId], [PatronCategoryId], [Price], [CreationTime])
-SELECT NEWID(), rt.Id, pc.Id,
-       CASE WHEN pc.Price >= 100000 THEN ROUND(pc.Price * 1.3, -3) ELSE ROUND(pc.Price * 1.5, -3) END,
-       GETUTCDATE()
+SELECT NEWID(), rt.Id, pc.Id, pc.Price, GETUTCDATE()
 FROM [RoomType] rt
-JOIN [PatronCategory] pc ON pc.TheaterId = rt.TheaterId AND pc.Name = N'Adult'
-WHERE rt.Name IN (N'IMAX', N'4DX');
+JOIN [PatronCategory] pc ON pc.TheaterId = rt.TheaterId AND pc.IsActive = 1;
+
+-- IMAX and 4DX charge Adult more than the theater-wide price, showing the per-room-type override
+-- in action on top of the allow-list above.
+UPDATE x
+SET x.Price = CASE WHEN pc.Price >= 100000 THEN ROUND(pc.Price * 1.3, -3) ELSE ROUND(pc.Price * 1.5, -3) END
+FROM [RoomTypePatronCategoryPrice] x
+JOIN [RoomType] rt ON rt.Id = x.RoomTypeId
+JOIN [PatronCategory] pc ON pc.Id = x.PatronCategoryId
+WHERE rt.Name IN (N'IMAX', N'4DX') AND pc.Name = N'Adult';
 
 -- ── Rooms ─────────────────────────────────────────────────────────────────────
 -- Theater 1: 4 rooms (incl. IMAX)

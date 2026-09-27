@@ -11,6 +11,15 @@
 .ad-checkbox-list { display: flex; flex-wrap: wrap; gap: 8px 20px; }
 .ad-checkbox-list label { display: flex; align-items: center; gap: 6px; font-weight: normal; }
 
+.rtp-add-bar { margin-bottom: 12px; }
+.rtp-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid var(--ad-glass-border-strong);
+  &:last-child { border-bottom: none; }
+}
+.rtp-item-name { flex: 1 1 auto; min-width: 0; }
+.rtp-item-price { flex: 0 0 160px; }
+
 .ad-warning-banner {
   display: flex; align-items: flex-start; gap: 8px;
   padding: 10px 12px; margin-bottom: 16px; border-radius: var(--ml-r-sm, 6px);

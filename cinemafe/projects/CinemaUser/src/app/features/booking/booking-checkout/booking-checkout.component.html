@@ -91,15 +91,12 @@
         <h3 class="summary-title">{{ 'booking.summary.orderTitle' | translate }}</h3>
 
         <div class="seat-list">
-          <div class="seat-entry" *ngFor="let s of seats">
+          <div class="seat-entry" *ngFor="let t of ticketLines">
             <div class="seat-entry-info">
-              <span class="seat-entry-code">{{ s.label }}</span>
-              <span class="seat-entry-type">{{ seatKindLabel(s) | translate }} · {{ s.patronCategoryName }}</span>
+              <span class="seat-entry-code">{{ t.label }}</span>
+              <span class="seat-entry-type">{{ seatKindLabel(t) | translate }} · {{ t.categoryName }}</span>
             </div>
-            <span class="seat-entry-price">
-              <span class="seat-entry-price-strike" *ngIf="s.price !== s.basePrice">{{ s.basePrice | number:'1.0-0' }}đ</span>
-              {{ s.price | number:'1.0-0' }}đ
-            </span>
+            <span class="seat-entry-price">{{ t.price | number:'1.0-0' }}đ</span>
           </div>
         </div>
 

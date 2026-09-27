@@ -144,14 +144,12 @@
     },
     "tickets": {
       "title": "Ticket Type",
-      "hint": "Choose how many of each ticket type you need — this sets how many seats you can select.",
+      "hint": "Choose how many of each ticket type you need — this sets how many seats you can select. A Double ticket books one couple seat.",
       "progress": "{{selected}} of {{total}} seats selected",
       "continueCta": "Continue to Checkout",
       "selectMore": "Select {{count}} more seat(s) to continue",
       "capReached": "You've selected all your tickets — increase a quantity to add more",
-      "notEnoughForDouble": "Not enough tickets left for a double seat — increase a quantity to select it",
-      "removedByQuantityChange": "Deselected (you reduced the quantity): {{seats}}",
-      "doublePrice": "Double: {{price}}đ"
+      "removedByQuantityChange": "Deselected (you reduced the quantity): {{seats}}"
     },
     "checkout": {
       "backToSeats": "Back to seats"
@@ -169,7 +167,7 @@
       "empty": "No seats selected",
       "notAvailableForCategory": "Not available for this ticket type",
       "legendDouble": "Double Seat",
-      "kindStandard": "Standard",
+      "kindStandard": "Single",
       "kindDouble": "Double"
     },
     "summary": {

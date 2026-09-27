@@ -4,15 +4,15 @@ namespace Cinema.Business.Contracts;
 
 public interface IRoomTypePatronCategoryPriceManager
 {
-    /// <summary>One row per PatronCategory row of the RoomType's theater, with the theater-wide price
-    /// (DefaultPrice) and, where one exists, the RoomType-specific override (Price defaults to
-    /// DefaultPrice when no override row exists).</summary>
+    /// <summary>One row per PatronCategory of the RoomType's theater, with IsIncluded showing whether
+    /// it's in this RoomType's allow-list and Price giving the effective price either way (the row's
+    /// price when included, else the theater default, so the UI can pre-fill the input).</summary>
     Task<List<RoomTypePatronCategoryPriceDTO>> GetByRoomTypeAsync(Guid roomTypeId);
 
-    /// <summary>Replaces the whole override set for a RoomType: a null Price on an item deletes any
-    /// existing override for that category. WARNING: this set also gates eligibility for bookings —
-    /// leaving it empty keeps the RoomType unrestricted (every theater-wide category bookable at its
-    /// default price), but saving even one entry restricts the RoomType to exactly the categories
-    /// saved here (see RoomTypePatronCategoryPrice's doc comment).</summary>
+    /// <summary>Applies each item: Included=false deletes any existing row for that category;
+    /// Included=true upserts a row at Price, or at the category's current theater default when Price
+    /// is null. Only touches the categories present in Items — a RoomType offers EXACTLY the
+    /// categories with a row, so saving zero included items leaves the RoomType offering nothing
+    /// (see RoomTypePatronCategoryPrice's doc comment). This is a legitimate, allowed state.</summary>
     Task SaveAsync(SaveRoomTypePatronCategoryPricesRequest request);
 }

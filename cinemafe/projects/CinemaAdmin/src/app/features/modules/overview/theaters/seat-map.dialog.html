@@ -18,9 +18,18 @@
       </div>
     </div>
 
-    <!-- Click a seat to start pairing it; click another to complete a double seat; click a paired seat to unpair it. -->
+    <!-- Pick a seat type here, then click seats to apply it; Double auto-pairs with an adjacent seat. -->
     <div class="seatmap-toolbar">
       <p class="ad-sub">{{ 'theaters.rooms.pairHint' | translate }}</p>
+      <div class="palette">
+        <span class="palette-chip" [class.is-active]="!activeIsDouble" [style.--sc]="colorForKind(false)" (click)="activeIsDouble = false">
+          <span class="palette-dot"></span> {{ seatTypeName(false) }}
+        </span>
+        <span class="palette-chip" [class.is-active]="activeIsDouble" [style.--sc]="colorForKind(true)" (click)="activeIsDouble = true">
+          <span class="palette-dot"></span> {{ seatTypeName(true) }}
+        </span>
+      </div>
+      <p class="ad-sub seatmap-error" *ngIf="pairError">{{ 'theaters.rooms.noAdjacentSeat' | translate }}</p>
     </div>
 
     <div class="screen-wrap">
@@ -35,7 +44,6 @@
              class="seat editable"
              [style.--sc]="colorFor(s)"
              [class.paired]="s.seatGroupId"
-             [class.pending]="isPairPending(s)"
              (click)="onSeatClick(s)"
              [title]="row + s.colIndex + ' · ' + nameFor(s) + (s.seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : '')">{{ s.colIndex }}<mat-icon *ngIf="s.seatGroupId" class="pair-badge">link</mat-icon></div>
       </div>

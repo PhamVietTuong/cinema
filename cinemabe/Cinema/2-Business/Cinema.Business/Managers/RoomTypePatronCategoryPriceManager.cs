@@ -22,7 +22,7 @@ public class RoomTypePatronCategoryPriceManager : IRoomTypePatronCategoryPriceMa
             throw new KeyNotFoundException($"RoomType {roomTypeId} not found.");
         }
 
-        var categories = (await _uow.PatronCategoryStore.FindAsync(c => c.TheaterId == roomType.TheaterId)).ToList();
+        var categories = (await _uow.PatronCategoryStore.FindAsync(c => c.TheaterId == roomType.TheaterId && c.IsActive)).ToList();
         var seatTypeIds = categories.Select(c => c.SeatTypeId).Distinct().ToList();
         var seatTypes = seatTypeIds.Count == 0
             ? new Dictionary<Guid, SeatType>()
@@ -49,6 +49,7 @@ public class RoomTypePatronCategoryPriceManager : IRoomTypePatronCategoryPriceMa
                 SeatTypeName     = seatType?.Name ?? string.Empty,
                 Kind             = seatType?.Kind ?? default,
                 DefaultPrice     = c.Price,
+                IsIncluded       = hasOverride,
                 Price            = hasOverride ? over!.Price : c.Price,
             };
         }).ToList();
@@ -63,42 +64,57 @@ public class RoomTypePatronCategoryPriceManager : IRoomTypePatronCategoryPriceMa
         }
 
         var categoryIds = request.Items.Select(i => i.PatronCategoryId).Distinct().ToList();
-        var validCount = await _uow.PatronCategoryStore.CountAsync(
-            _uow.PatronCategoryStore.GetQuery().Where(c => categoryIds.Contains(c.Id) && c.TheaterId == roomType.TheaterId));
-        if (validCount != categoryIds.Count)
+        var categoriesById = (await _uow.PatronCategoryStore.FindAsync(c => categoryIds.Contains(c.Id) && c.TheaterId == roomType.TheaterId))
+            .ToDictionary(c => c.Id, c => c.Price);
+        if (categoriesById.Count != categoryIds.Count)
         {
             throw new InvalidOperationException("One or more patron categories do not belong to this room type's theater.");
+        }
+        if (request.Items.Any(i => i.Included && i.Price is < 0))
+        {
+            throw new InvalidOperationException("Price must not be negative.");
         }
 
         var existing = (await _uow.RoomTypePatronCategoryPriceStore.FindByRoomTypeAsync(request.RoomTypeId))
             .ToDictionary(o => o.PatronCategoryId);
 
-        foreach (var item in request.Items)
+        await _uow.BeginTransactionAsync();
+        try
         {
-            var hasExisting = existing.TryGetValue(item.PatronCategoryId, out var current);
-            if (item.Price is null)
+            foreach (var item in request.Items)
             {
+                var hasExisting = existing.TryGetValue(item.PatronCategoryId, out var current);
+                if (!item.Included)
+                {
+                    if (hasExisting)
+                    {
+                        await _uow.RoomTypePatronCategoryPriceStore.DeleteAsync(current!);
+                    }
+                    continue;
+                }
+
+                var price = item.Price ?? categoriesById[item.PatronCategoryId];
                 if (hasExisting)
                 {
-                    await _uow.RoomTypePatronCategoryPriceStore.DeleteAsync(current!);
+                    current!.Price = price;
+                    await _uow.RoomTypePatronCategoryPriceStore.UpdateAsync(current);
                 }
-                continue;
-            }
-
-            if (hasExisting)
-            {
-                current!.Price = item.Price.Value;
-                await _uow.RoomTypePatronCategoryPriceStore.UpdateAsync(current);
-            }
-            else
-            {
-                await _uow.RoomTypePatronCategoryPriceStore.CreateAsync(new RoomTypePatronCategoryPrice
+                else
                 {
-                    RoomTypeId       = request.RoomTypeId,
-                    PatronCategoryId = item.PatronCategoryId,
-                    Price            = item.Price.Value,
-                });
+                    await _uow.RoomTypePatronCategoryPriceStore.CreateAsync(new RoomTypePatronCategoryPrice
+                    {
+                        RoomTypeId       = request.RoomTypeId,
+                        PatronCategoryId = item.PatronCategoryId,
+                        Price            = price,
+                    });
+                }
             }
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
         }
     }
 }

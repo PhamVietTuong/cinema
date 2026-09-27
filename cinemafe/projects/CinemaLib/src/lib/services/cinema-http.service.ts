@@ -11126,6 +11126,7 @@ export class RoomTypePatronCategoryPriceDTO implements IRoomTypePatronCategoryPr
     seatTypeName?: string;
     kind?: SeatKind;
     defaultPrice?: number;
+    isIncluded?: boolean;
     price?: number;
 
     constructor(data?: IRoomTypePatronCategoryPriceDTO) {
@@ -11147,6 +11148,7 @@ export class RoomTypePatronCategoryPriceDTO implements IRoomTypePatronCategoryPr
             this.seatTypeName = _data["seatTypeName"];
             this.kind = _data["kind"];
             this.defaultPrice = _data["defaultPrice"];
+            this.isIncluded = _data["isIncluded"];
             this.price = _data["price"];
         }
     }
@@ -11168,6 +11170,7 @@ export class RoomTypePatronCategoryPriceDTO implements IRoomTypePatronCategoryPr
         data["seatTypeName"] = this.seatTypeName;
         data["kind"] = this.kind;
         data["defaultPrice"] = this.defaultPrice;
+        data["isIncluded"] = this.isIncluded;
         data["price"] = this.price;
         return data;
     }
@@ -11182,6 +11185,7 @@ export interface IRoomTypePatronCategoryPriceDTO {
     seatTypeName?: string;
     kind?: SeatKind;
     defaultPrice?: number;
+    isIncluded?: boolean;
     price?: number;
 }
 
@@ -11235,6 +11239,7 @@ export interface ISaveRoomTypePatronCategoryPricesRequest {
 
 export class SaveRoomTypePatronCategoryPriceItem implements ISaveRoomTypePatronCategoryPriceItem {
     patronCategoryId?: string;
+    included?: boolean;
     price?: number | undefined;
 
     constructor(data?: ISaveRoomTypePatronCategoryPriceItem) {
@@ -11249,6 +11254,7 @@ export class SaveRoomTypePatronCategoryPriceItem implements ISaveRoomTypePatronC
     init(_data?: any) {
         if (_data) {
             this.patronCategoryId = _data["patronCategoryId"];
+            this.included = _data["included"];
             this.price = _data["price"];
         }
     }
@@ -11263,6 +11269,7 @@ export class SaveRoomTypePatronCategoryPriceItem implements ISaveRoomTypePatronC
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["patronCategoryId"] = this.patronCategoryId;
+        data["included"] = this.included;
         data["price"] = this.price;
         return data;
     }
@@ -11270,6 +11277,7 @@ export class SaveRoomTypePatronCategoryPriceItem implements ISaveRoomTypePatronC
 
 export interface ISaveRoomTypePatronCategoryPriceItem {
     patronCategoryId?: string;
+    included?: boolean;
     price?: number | undefined;
 }
 

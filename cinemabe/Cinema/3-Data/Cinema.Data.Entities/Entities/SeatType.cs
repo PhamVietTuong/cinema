@@ -1,7 +1,7 @@
 namespace Cinema.Data.Entities;
 
 /// <summary>
-/// A per-theater seat kind: exactly two rows per theater, Standard and Double (couple seat), matched
+/// A per-theater seat kind: exactly two rows per theater, Single and Double (couple seat), matched
 /// by <see cref="Kind"/> — never by <see cref="Name"/>, which is display text only and may be renamed.
 /// Carries no pricing; pricing lives on <see cref="PatronCategory"/> instead.
 /// </summary>

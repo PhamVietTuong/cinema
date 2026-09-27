@@ -107,6 +107,21 @@ public class BookingServiceTests
 
     // ── Full pricing formula (via GetShowTimePricesAsync) ───────────────────────
 
+    /// <summary>RoomTypePatronCategoryPrice is now the RoomType's allow-list: a category with no row
+    /// is not offered there at all. This sets up "every given category is included, at its own
+    /// theater-wide Price" so tests that aren't specifically exercising the allow-list can still book
+    /// any category, matching the old "unrestricted" default behavior.</summary>
+    private void AllowAllCategories(Guid roomTypeId, IEnumerable<PatronCategory> categories)
+    {
+        _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(categories.Select(c => new RoomTypePatronCategoryPrice
+            {
+                RoomTypeId       = roomTypeId,
+                PatronCategoryId = c.Id,
+                Price            = c.Price,
+            }).ToList());
+    }
+
     private void SetupPricingContext(
         Guid theaterId, Guid roomTypeId, Guid showTimeId, Guid roomId, int basePrice,
         DateTime startTime, ProjectionForm projectionForm,
@@ -135,8 +150,10 @@ public class BookingServiceTests
             .ReturnsAsync(ticketPrices ?? new List<TicketPrice>());
         _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
             .ReturnsAsync(kindMap ?? new Dictionary<SeatKind, Guid>());
+        var categoryList = categories ?? new List<PatronCategory>();
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
-            .ReturnsAsync(categories ?? new List<PatronCategory>());
+            .ReturnsAsync(categoryList);
+        AllowAllCategories(roomTypeId, categoryList);
     }
 
     [Fact]
@@ -234,7 +251,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task GetShowTimePricesAsync_RoomTypeWithAnyOverrideRow_RestrictsToOnlyThoseCategories()
+    public async Task GetShowTimePricesAsync_RoomTypeOffersOnlyCategoriesWithARow()
     {
         var theaterId  = Guid.NewGuid();
         var roomTypeId = Guid.NewGuid();
@@ -253,7 +270,7 @@ public class BookingServiceTests
                 new() { Id = childId,   TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Child",   Price = 50000, IsActive = true },
             },
             kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
-        // This room type has override rows for Adult and Student only — Child has none, so even
+        // This room type's allow-list has rows for Adult and Student only — Child has none, so even
         // though Child exists theater-wide, this room type must not offer it at all.
         _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new List<RoomTypePatronCategoryPrice>
@@ -268,7 +285,29 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task CreateBookingAsync_RejectsCategoryNotOverriddenForARestrictedRoomType()
+    public async Task GetShowTimePricesAsync_RoomTypeWithNoRows_OffersNothing()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+
+        SetupPricingContext(
+            theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            startTime: new DateTime(2026, 3, 2, 19, 0, 0), projectionForm: ProjectionForm.TwoD,
+            categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 90000, IsActive = true } },
+            kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        // Zero rows for this room type: it offers NOTHING — no fallback to the theater-wide default.
+        _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<RoomTypePatronCategoryPrice>());
+
+        var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_RejectsCategoryNotIncludedInRoomType()
     {
         var theaterId  = Guid.NewGuid();
         var roomTypeId = Guid.NewGuid();
@@ -286,7 +325,7 @@ public class BookingServiceTests
                 new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 90000, IsActive = true },
                 new() { Id = childId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Child", Price = 50000, IsActive = true },
             });
-        // Restricted room type: only Adult has an override row, so Child is not offered here at all.
+        // Only Adult is in this room type's allow-list, so Child is not offered here at all.
         _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new List<RoomTypePatronCategoryPrice> { new() { RoomTypeId = roomTypeId, PatronCategoryId = adultId, Price = 90000 } });
         _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
@@ -297,6 +336,38 @@ public class BookingServiceTests
             ShowTimeId    = ShowTimeId1,
             RoomId        = RoomId1,
             Seats         = new List<BookingSeatItem> { new() { SeatId = seat, PatronCategoryId = childId } },
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*patron category*");
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_RejectsAnyCategory_WhenRoomTypeHasNoRows()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+        var seat       = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 90000, IsActive = true } });
+        // No rows at all for this room type — it offers nothing, so even Adult is rejected.
+        _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<RoomTypePatronCategoryPrice>());
+        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RowName = "I", ColIndex = 1 } });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = seat, PatronCategoryId = adultId } },
             PaymentMethod = "Sandbox",
         };
 
@@ -399,12 +470,14 @@ public class BookingServiceTests
         SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
         _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
             .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId,   TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult",   Price = 100, IsActive = true },
+            new() { Id = studentId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Student", Price = 75,  IsActive = true },
+        };
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
-            .ReturnsAsync(new List<PatronCategory>
-            {
-                new() { Id = adultId,   TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult",   Price = 100, IsActive = true },
-                new() { Id = studentId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Student", Price = 75,  IsActive = true },
-            });
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
         _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new Dictionary<Guid, Seat>
             {
@@ -526,8 +599,10 @@ public class BookingServiceTests
             .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType, [SeatKind.Double] = doubleType });
         // Student only has a Standard row — no Double row exists, so this category cannot book a
         // double seat at all (this IS the entire eligibility rule).
+        var categories = new List<PatronCategory> { new() { Id = studentId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Student", Price = 65, IsActive = true } };
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
-            .ReturnsAsync(new List<PatronCategory> { new() { Id = studentId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Student", Price = 65, IsActive = true } });
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
         var groupId = Guid.NewGuid();
         _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RowName = "E", ColIndex = 1, SeatGroupId = groupId } });
@@ -552,35 +627,50 @@ public class BookingServiceTests
         var theaterId    = Guid.NewGuid();
         var roomTypeId   = Guid.NewGuid();
         var doubleType   = Guid.NewGuid();
-        var seat         = Guid.NewGuid();
+        var seatA        = Guid.NewGuid();
+        var seatB        = Guid.NewGuid();
         var adultId      = Guid.NewGuid();
         var groupId      = Guid.NewGuid();
 
         SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
         _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
             .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Double] = doubleType });
+        var categories = new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = doubleType, Name = "Adult", Price = 170, IsActive = true } };
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
-            .ReturnsAsync(new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = doubleType, Name = "Adult", Price = 170, IsActive = true } });
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
         _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RowName = "F", ColIndex = 1, SeatGroupId = groupId } });
-        // Only one seat of the pair is in the DB lookup result (the request also books only one) —
-        // pair-integrity treats "every seat sharing the group is in the request" as satisfied here
-        // since the request itself supplies the full set found.
+            .ReturnsAsync(new Dictionary<Guid, Seat>
+            {
+                [seatA] = new() { Id = seatA, RowName = "F", ColIndex = 1, SeatGroupId = groupId },
+                [seatB] = new() { Id = seatB, RowName = "F", ColIndex = 2, SeatGroupId = groupId },
+            });
         _uowMock.Setup(u => u.SeatStore.FindAsync(It.IsAny<Expression<Func<Seat, bool>>>()))
-            .ReturnsAsync(new List<Seat> { new() { Id = seat, RowName = "F", ColIndex = 1, SeatGroupId = groupId } });
+            .ReturnsAsync(new List<Seat>
+            {
+                new() { Id = seatA, RowName = "F", ColIndex = 1, SeatGroupId = groupId },
+                new() { Id = seatB, RowName = "F", ColIndex = 2, SeatGroupId = groupId },
+            });
 
         var request = new CreateBookingRequest
         {
-            ShowTimeId    = ShowTimeId1,
-            RoomId        = RoomId1,
-            Seats         = new List<BookingSeatItem> { new() { SeatId = seat, PatronCategoryId = adultId } },
+            ShowTimeId = ShowTimeId1,
+            RoomId     = RoomId1,
+            Seats = new List<BookingSeatItem>
+            {
+                new() { SeatId = seatA, PatronCategoryId = adultId },
+                new() { SeatId = seatB, PatronCategoryId = adultId },
+            },
             PaymentMethod = "Sandbox",
         };
 
         var result = await _sut.CreateBookingAsync(Guid.NewGuid(), request);
 
-        result.Tickets.Single().Price.Should().Be(170);
-        result.Tickets.Single().SeatType.Should().Be("Double");
+        // 170 is the price for the whole couple seat, split across its two physical tickets.
+        result.Tickets.Should().HaveCount(2);
+        result.Tickets.Should().AllSatisfy(t => t.SeatType.Should().Be("Double"));
+        result.Tickets.Sum(t => t.Price).Should().Be(170);
+        result.TotalAmount.Should().Be(170);
     }
 
     [Fact]

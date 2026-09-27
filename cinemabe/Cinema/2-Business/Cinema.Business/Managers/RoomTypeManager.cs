@@ -95,7 +95,33 @@ public class RoomTypeManager : IRoomTypeManager
     {
         ValidateTurnoverBuffer(request.TurnoverBufferMinutes);
         var entity = request.ToNewEntity<CreateRoomTypeRequest, RoomType>();
-        await _uow.RoomTypeStore.CreateAsync(entity);
+
+        // A brand-new RoomType starts with every active theater-wide category included at its
+        // default price, so it's bookable immediately — the admin then removes what shouldn't
+        // be offered here, rather than starting from a fully unbookable room type.
+        var categories = await _uow.PatronCategoryStore.FindAsync(c => c.TheaterId == request.TheaterId && c.IsActive);
+
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            await _uow.RoomTypeStore.CreateAsync(entity);
+            foreach (var category in categories)
+            {
+                await _uow.RoomTypePatronCategoryPriceStore.CreateAsync(new RoomTypePatronCategoryPrice
+                {
+                    RoomTypeId       = entity.Id,
+                    PatronCategoryId = category.Id,
+                    Price            = category.Price,
+                });
+            }
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
+
         return entity.ToDTO<RoomType, RoomTypeDTO>();
     }
 

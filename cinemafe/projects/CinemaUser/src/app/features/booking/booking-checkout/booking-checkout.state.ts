@@ -6,7 +6,8 @@
 export interface BookingCheckoutSeat {
   seatId: string;
   label: string;
-  /** "Standard" or "Double". */
+  /** Mirrors the backend `SeatKind` enum member name — "Standard" or "Double" — not the
+   * user-facing label, which comes from `booking.seats.kindStandard`/`kindDouble` via `seatKindLabel()`. */
   seatKind: string;
   /** The seat's "from" price shown on the seat map before a category was resolved. */
   basePrice: number;
@@ -14,6 +15,8 @@ export interface BookingCheckoutSeat {
   price: number;
   patronCategoryId: string;
   patronCategoryName: string;
+  /** Shared by both physical seats of a Double pair; undefined for a Standard seat. */
+  seatGroupId?: string;
 }
 
 export interface BookingCheckoutFood {
