@@ -1,8 +1,11 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
+import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
+import { DiscountCodeDialog } from './discount-code.dialog';
+import { PointsRedeemDialog } from './points-redeem.dialog';
 import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState, takePendingCheckout } from './booking-checkout.state';
 
 /**
@@ -46,6 +49,22 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   bookingCode = '';
   qrDataUrl = '';
 
+  /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
+  readonly methods: { value: string; labelKey: string; svg?: string; icon?: string }[] = [
+    { value: 'Momo', labelKey: 'booking.confirm.momoWallet', icon: 'account_balance_wallet' },
+    { value: 'Card', labelKey: 'booking.confirm.domesticCard', icon: 'credit_card' },
+    { value: 'ApplePay', labelKey: 'booking.confirm.applePay', svg: 'apple' },
+    { value: 'GooglePay', labelKey: 'booking.confirm.googlePay', svg: 'google' },
+  ];
+
+  // Order context for the summary card, loaded after arrival; blank until each lookup answers.
+  movieTitle = '';
+  ageCode = '';
+  theaterName = '';
+  theaterAddress = '';
+  roomName = '';
+  startTime: Date | null = null;
+
   discountCode = '';
   giftCardCode = '';
   giftCardValid: boolean | null = null;
@@ -65,6 +84,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     private _hub: BookingHubService,
     private _cdr: ChangeDetectorRef,
     private _translate: TranslateService,
+    private _cinemaService: CinemaServiceAgent.HttpService,
+    private _dialog: MatDialog,
   ) {}
 
   get totalPrice(): number {
@@ -136,11 +157,93 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this.foods = state.foods ?? [];
 
     this._startHoldCountdown();
+    this._loadOrderContext();
 
     this._identityService.getProfile().subscribe({
       next: u => { this.pointsBalance = u.points ?? 0; this._cdr.markForCheck(); },
       error: () => this._cdr.markForCheck(),
     });
+  }
+
+  openDiscountDialog(): void {
+    this._dialog.open(DiscountCodeDialog, { data: { code: this.discountCode }, width: '420px', maxWidth: '92vw' })
+      .afterClosed().subscribe((code: string | undefined) => {
+        if (code !== undefined) {
+          this.discountCode = code;
+          this._cdr.markForCheck();
+        }
+      });
+  }
+
+  openPointsDialog(): void {
+    this._dialog.open(PointsRedeemDialog, {
+      data: {
+        balance: this.pointsBalance,
+        max: this.maxRedeemablePoints,
+        value: this.pointsToRedeem,
+        pointValue: BookingCheckoutComponent.POINT_VALUE,
+      },
+      width: '420px',
+      maxWidth: '92vw',
+    }).afterClosed().subscribe((points: number | undefined) => {
+      if (points !== undefined) {
+        this.pointsToRedeem = points;
+        this.clampPoints();
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  /** Best-effort display data only: a failed lookup leaves its fields blank and never blocks payment. */
+  private _loadOrderContext(): void {
+    this._cinemaService.getShowTime(this.showTimeId).subscribe({
+      next: st => {
+        this.startTime = st.startTime ?? null;
+        this.roomName = st.roomName ?? '';
+        this._cdr.markForCheck();
+        if (st.movieId) {
+          this._cinemaService.getMovie(st.movieId).subscribe({
+            next: m => {
+              this.movieTitle = m.title ?? '';
+              this.ageCode = m.ageRestrictionCode ?? '';
+              this._cdr.markForCheck();
+            },
+            error: () => { /* summary stays without a title */ },
+          });
+        }
+      },
+      error: () => { /* summary stays without showtime details */ },
+    });
+    this._cinemaService.getRoom(this.roomId).subscribe({
+      next: room => {
+        this.roomName = this.roomName || (room.name ?? '');
+        this._cdr.markForCheck();
+        if (room.theaterId) {
+          this._cinemaService.getTheater(room.theaterId).subscribe({
+            next: t => {
+              this.theaterName = t.name ?? '';
+              this.theaterAddress = t.address ?? '';
+              this._cdr.markForCheck();
+            },
+            error: () => { /* summary stays without the cinema */ },
+          });
+        }
+      },
+      error: () => { /* summary stays without the room */ },
+    });
+  }
+
+  /** Distinct ticket categories in the order, e.g. "Adult, Student". */
+  get ticketTypes(): string {
+    return [...new Set(this.ticketLines.map(t => t.categoryName))].join(', ');
+  }
+
+  get seatCodes(): string {
+    return this.ticketLines.map(t => t.label).join(', ');
+  }
+
+  get foodSummary(): string {
+    return this.foods.map(f => `${f.quantity} × ${f.name}`).join(' · ');
   }
 
   ngOnDestroy(): void {
@@ -174,10 +277,6 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     const m = Math.floor(this.holdSecondsLeft / 60);
     const s = this.holdSecondsLeft % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
-  }
-
-  get holdProgressPercent(): number {
-    return (this.holdSecondsLeft / BookingCheckoutComponent.HOLD_SECONDS) * 100;
   }
 
   clampPoints(): void {

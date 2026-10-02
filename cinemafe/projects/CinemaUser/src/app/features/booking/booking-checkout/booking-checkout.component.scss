@@ -39,50 +39,23 @@
   mat-icon { margin-right: 8px; color: var(--ml-action-strong); vertical-align: -5px; }
 }
 
-// Selected-state fix: default mat-button-toggle "checked" tint reads too flat to scan at a
-// glance, so we push a stronger fill and add an explicit corner checkmark badge — no borders,
-// per design. overflow/border here override Material's own group-level appearance-standard
-// border and clipping (the badge is deliberately positioned outside each tile's box).
-.method-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-  overflow: visible !important;
-  border: none !important;
-
-  ::ng-deep .mat-button-toggle {
-    position: relative; overflow: visible;
-    border-radius: var(--ml-r-lg) !important;
-    border: none !important;
-    background: var(--ml-panel-2);
-    transition: background 0.15s;
-  }
-  // Material centers label-content children via `vertical-align: middle`, but it also force-sets
-  // `.mat-icon svg { vertical-align: top }` — which the custom `svg-icon` component (Apple/Google
-  // Pay) isn't matched by, so its icon and the mat-icon ones (MoMo/Card) sit at different
-  // baselines. Flex layout sidesteps vertical-align entirely instead of fighting it rule-by-rule.
-  ::ng-deep .mat-button-toggle-label-content {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-  ::ng-deep .mat-button-toggle-label-content svg-icon,
-  ::ng-deep .mat-button-toggle-label-content mat-icon {
-    flex-shrink: 0; width: 20px; height: 20px; font-size: 20px;
-    display: inline-flex; align-items: center; justify-content: center;
-  }
-  ::ng-deep .mat-button-toggle:not(.mat-button-toggle-checked):hover {
-    background: var(--ml-action-soft);
-  }
-  ::ng-deep .mat-button-toggle-checked {
-    background: var(--ml-action-soft) !important;
-  }
-  ::ng-deep .mat-button-toggle-checked::after {
-    content: '\2713';
-    position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
-    border-radius: 50%; background: var(--ml-action-strong); color: var(--ml-on-action, #fff);
-    display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); z-index: 1;
-  }
+// ── Payment methods: one full-width row each ─────────────────────────────────
+.method-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.method-row {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
+  padding: 16px 18px; border-radius: var(--ml-r-md);
+  background: var(--ml-panel); border: 1px solid var(--ml-rule-strong); color: var(--ml-ink);
+  font-family: var(--ml-font-body); font-size: 1rem; font-weight: 500;
+  transition: border-color 0.15s, background 0.15s;
+  &:hover { border-color: var(--ml-action-ring); }
+  &.active { border-color: var(--ml-action); background: var(--ml-action-soft); box-shadow: 0 0 0 2px var(--ml-action-soft); }
+  &:focus-visible { outline: var(--cx-focus-width) solid var(--ml-action); outline-offset: var(--cx-focus-offset); }
+}
+.method-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 32px; height: 32px; color: var(--ml-action-strong);
+  mat-icon { font-size: 26px; width: 26px; height: 26px; }
+  svg-icon { width: 24px; height: 24px; display: inline-flex; }
 }
 
 .field-group { margin-bottom: 12px; }
@@ -108,47 +81,83 @@
   border-radius: var(--ml-r-lg); padding: 24px;
   position: sticky; top: 80px;
 }
+.summary-head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
 .summary-title {
-  font-family: var(--ml-font-head); font-size: 1rem;
-  font-weight: 600; color: var(--ml-ink); margin: 0 0 20px;
+  font-family: var(--ml-font-head); font-size: 1.15rem; line-height: 1.25;
+  font-weight: 600; text-transform: uppercase; color: var(--ml-ink); margin: 0; min-width: 0;
 }
-.seat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
-.seat-entry {
-  display: flex; justify-content: space-between; align-items: center;
-  background: var(--ml-panel-2); border-radius: var(--ml-r-sm); padding: 8px 12px;
+.age-tag { color: var(--ml-ink-2); }
+.hold-chip {
+  flex: none; font-size: 0.78rem; color: var(--ml-ink-2); white-space: nowrap;
+  b {
+    margin-left: 4px; padding: 3px 9px; border-radius: var(--ml-r-sm);
+    background: var(--ml-action); color: var(--ml-on-action);
+    font-family: var(--ml-font-data); font-size: 0.9rem; font-weight: 500; font-variant-numeric: tabular-nums;
+  }
+  &.expired { color: var(--ml-danger); font-weight: 600; }
 }
-.seat-entry-info { display: flex; flex-direction: column; gap: 2px; }
-.seat-entry-code {
-  font-family: var(--ml-font-head); font-size: 0.9rem;
-  font-weight: 600; color: var(--ml-action-strong);
+.hold-expired-note { margin: -8px 0 16px; font-size: 0.8rem; color: var(--ml-danger-ink); }
+.info-block { margin-bottom: 16px; }
+.info-label {
+  font-family: var(--ml-font-head); font-size: 0.7rem; font-weight: 500;
+  letter-spacing: var(--cx-track-caps); text-transform: uppercase; color: var(--ml-action-strong); margin-bottom: 2px;
 }
-.seat-entry-type { font-size: 0.72rem; color: var(--ml-muted); }
-.seat-entry-price { font-size: 0.875rem; font-weight: 600; color: var(--ml-ink); text-align: right; }
-.seat-entry-price-strike {
-  font-size: 0.72rem; font-weight: 400; color: var(--ml-muted);
-  text-decoration: line-through; margin-right: 6px;
+.info-value { font-size: 0.95rem; color: var(--ml-ink); overflow-wrap: anywhere; }
+.info-sub { font-size: 0.78rem; color: var(--ml-ink-2); margin-top: 2px; }
+.seat-codes { font-family: var(--ml-font-data); font-variant-numeric: tabular-nums; }
+.info-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 16px 24px; margin-bottom: 16px;
 }
 
-.summary-divider { border: none; border-top: 1px dashed var(--ml-rule); margin: 14px 0; }
+.summary-divider { border: none; border-top: 2px dashed var(--ml-rule-strong); margin: 16px 0; }
 .summary-row {
   display: flex; justify-content: space-between;
   font-size: 0.875rem; color: var(--ml-ink); margin-bottom: 8px;
 }
 
-// The grand total previously rendered as a plain text row above the CTA and read as
-// low-priority — give it its own tinted block so it registers before the pay button.
-.total-block {
-  display: flex; justify-content: space-between; align-items: baseline;
-  background: var(--ml-action-soft); border: 1px solid var(--ml-action-ring);
-  border-radius: var(--ml-r-md); padding: 12px 14px; margin: 14px 0;
-  font-weight: 600; color: var(--ml-ink);
+// Amount to pay: label on the left, large figure on the right, no box.
+.total-block { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.total-label {
+  font-family: var(--ml-font-head); font-size: 0.95rem; font-weight: 600;
+  letter-spacing: var(--cx-track-caps); text-transform: uppercase; color: var(--ml-ink);
 }
 .total-amount {
-  font-family: var(--ml-font-head); font-size: 1.3rem;
-  font-weight: 600; color: var(--ml-action-strong);
+  font-family: var(--ml-font-data); font-size: 1.6rem;
+  font-weight: 500; color: var(--ml-action-strong); font-variant-numeric: tabular-nums;
+}
+// ── Discounts block + actions (left column) ───────────────────────────────────
+.section-rule { border-top: 1px solid var(--ml-rule); margin: 4px 0 20px; }
+.promo-card {
+  background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-md);
+  padding: 18px 20px; margin-bottom: 20px;
+}
+.discount-banner {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
+  padding: 14px 16px; margin-bottom: 16px; border-radius: var(--ml-r-md);
+  background: var(--ml-action-soft); border: 1px solid var(--ml-action-ring); color: var(--ml-ink);
+  font-family: var(--ml-font-body);
+  transition: border-color 0.15s;
+  &:hover { border-color: var(--ml-action); }
+  &:focus-visible { outline: var(--cx-focus-width) solid var(--ml-action); outline-offset: var(--cx-focus-offset); }
+  mat-icon { color: var(--ml-action-strong); flex: none; }
+}
+.discount-banner:disabled { opacity: 0.55; cursor: not-allowed; &:hover { border-color: var(--ml-action-ring); } }
+.discount-banner-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.discount-banner-title { font-weight: 600; font-size: 0.95rem; }
+.discount-banner-sub { font-size: 0.8rem; color: var(--ml-ink-2); overflow-wrap: anywhere; }
+.action-row { display: flex; gap: 12px; }
+.btn-back {
+  flex: 1; padding: 12px 16px; border-radius: var(--ml-r-sm); cursor: pointer;
+  background: var(--ml-panel); border: 1px solid var(--ml-rule-strong); color: var(--ml-ink);
+  font-family: var(--ml-font-body); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em;
+  &:hover { border-color: var(--ml-action); }
+  &:focus-visible { outline: var(--cx-focus-width) solid var(--ml-action); outline-offset: var(--cx-focus-offset); }
 }
 .confirm-btn {
-  width: 100%; justify-content: center; margin-top: 4px;
+  flex: 1; justify-content: center;
   font-size: 0.85rem; letter-spacing: 0.04em;
   ::ng-deep .mat-mdc-progress-spinner circle { stroke: var(--ml-on-action) !important; }
 }
@@ -170,34 +179,6 @@
   cursor: pointer; transition: border-color 0.2s, background 0.2s;
   &:hover:not(:disabled) { border-color: var(--ml-action-ring); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-// Same warn-then-danger pattern as the seat-selection step's countdown.
-// Was a thin single-line strip that was easy to scroll past — now full-width with a
-// draining progress bar along the bottom edge so the countdown stays visually urgent.
-.hold-banner {
-  position: relative; overflow: hidden;
-  display: flex; align-items: center; gap: 8px;
-  margin: 16px 40px 0; padding: 12px 16px; border-radius: var(--ml-r-md);
-  font-size: 0.9rem; font-weight: 600;
-  background: var(--ml-warn-soft); color: var(--ml-warn-ink);
-  border: 1px solid var(--ml-warn);
-}
-.hold-banner mat-icon { font-size: 20px; width: 20px; height: 20px; }
-.hold-banner .hold-bar {
-  position: absolute; left: 0; bottom: 0; height: 3px; background: var(--ml-warn);
-  transition: width 1s linear;
-}
-.hold-banner.expired {
-  background: var(--ml-danger-soft); border-color: var(--ml-danger); color: var(--ml-danger-ink);
-  .hold-bar { background: var(--ml-danger); width: 100%; }
-}
-
-.back-link {
-  display: inline-flex; align-items: center; gap: 6px;
-  margin: 16px 40px 0; font-size: 0.85rem; color: var(--ml-muted); cursor: pointer;
-  background: none; border: none; padding: 0;
-  &:hover { color: var(--ml-action-strong); }
 }
 
 // ── Success Page ──────────────────────────────────────────────────────────────
@@ -295,6 +276,5 @@
 @media (max-width: 900px) {
   .checkout-page { grid-template-columns: 1fr; padding: 0 20px 24px; }
   .summary-card { position: static; }
-  .hold-banner, .back-link { margin-left: 20px; margin-right: 20px; }
   .page-header-inner { padding: 0 20px; }
 }

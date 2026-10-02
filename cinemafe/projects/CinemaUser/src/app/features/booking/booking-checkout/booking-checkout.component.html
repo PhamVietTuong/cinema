@@ -14,43 +14,19 @@
     </div>
   </div>
 
-  <button type="button" class="back-link" (click)="backToSeats()">
-    <i class="fas fa-arrow-left"></i> {{ 'booking.checkout.backToSeats' | translate }}
-  </button>
-
-  <!-- Seat-hold countdown -->
-  <div class="hold-banner" [class.expired]="holdExpired" *ngIf="!holdExpired">
-    <mat-icon>timer</mat-icon>
-    <span>{{ 'booking.holdTimer' | translate:{ time: holdCountdown } }}</span>
-    <div class="hold-bar" [style.width.%]="holdProgressPercent"></div>
-  </div>
-  <div class="hold-banner expired" *ngIf="holdExpired">
-    <mat-icon>timer_off</mat-icon>
-    <span>{{ 'booking.holdExpired' | translate }}</span>
-    <div class="hold-bar"></div>
-  </div>
-
   <div class="checkout-page">
 
-    <!-- Left: Payment Form -->
+    <!-- Left: payment methods, discounts, actions -->
     <div class="payment-form-col">
 
-      <div class="form-card">
-        <h3 class="card-title"><mat-icon>credit_card</mat-icon> {{ 'booking.confirm.paymentMethod' | translate }}</h3>
-        <mat-button-toggle-group class="method-grid" [(ngModel)]="paymentMethod">
-          <mat-button-toggle value="ApplePay">
-            <svg-icon key="apple"></svg-icon> Apple Pay
-          </mat-button-toggle>
-          <mat-button-toggle value="GooglePay">
-            <svg-icon key="google"></svg-icon> Google Pay
-          </mat-button-toggle>
-          <mat-button-toggle value="Momo" class="momo">
-            <mat-icon>account_balance_wallet</mat-icon> {{ 'booking.confirm.momoWallet' | translate }}
-          </mat-button-toggle>
-          <mat-button-toggle value="Card">
-            <mat-icon>credit_card</mat-icon> {{ 'booking.confirm.domesticCard' | translate }}
-          </mat-button-toggle>
-        </mat-button-toggle-group>
+      <div class="method-list" role="radiogroup" [attr.aria-label]="'booking.confirm.paymentMethod' | translate">
+        <button type="button" role="radio" class="method-row" *ngFor="let m of methods"
+                [class.active]="paymentMethod === m.value" [attr.aria-checked]="paymentMethod === m.value"
+                (click)="paymentMethod = m.value">
+          <span class="method-icon" *ngIf="m.svg"><svg-icon [key]="m.svg"></svg-icon></span>
+          <span class="method-icon" *ngIf="!m.svg"><mat-icon>{{ m.icon }}</mat-icon></span>
+          <span class="method-name">{{ m.labelKey | translate }}</span>
+        </button>
       </div>
 
       <div class="form-card" *ngIf="paymentMethod === 'Card'">
@@ -80,46 +56,18 @@
         <p class="qr-note">{{ 'booking.confirm.qrNote' | translate:{ app: paymentMethod === 'Momo' ? 'MoMo' : paymentMethod === 'ApplePay' ? 'Apple Pay' : 'Google Pay' } }}</p>
       </div>
 
-      <div *ngIf="error" class="error-banner">
-        <mat-icon>error</mat-icon> {{ error }}
-      </div>
-    </div>
+      <div class="section-rule"></div>
 
-    <!-- Right: Order Summary -->
-    <div class="summary-col">
-      <div class="summary-card">
-        <h3 class="summary-title">{{ 'booking.summary.orderTitle' | translate }}</h3>
-
-        <div class="seat-list">
-          <div class="seat-entry" *ngFor="let t of ticketLines">
-            <div class="seat-entry-info">
-              <span class="seat-entry-code">{{ t.label }}</span>
-              <span class="seat-entry-type">{{ seatKindLabel(t) | translate }} · {{ t.categoryName }}</span>
-            </div>
-            <span class="seat-entry-price">{{ t.price | number:'1.0-0' }}đ</span>
-          </div>
-        </div>
-
-        <div class="summary-divider"></div>
-
-        <div class="summary-row">
-          <span>{{ 'booking.summary.tickets' | translate:{ count: seats.length } }}</span>
-          <span>{{ totalPrice | number:'1.0-0' }}đ</span>
-        </div>
-        <div class="summary-row" *ngFor="let f of foods">
-          <span>{{ f.name }} × {{ f.quantity }}</span>
-          <span>{{ f.unitPrice * f.quantity | number:'1.0-0' }}đ</span>
-        </div>
-
-        <div class="summary-divider"></div>
-
-        <div class="field-group">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'booking.summary.discountCode' | translate }}</mat-label>
-            <input matInput [(ngModel)]="discountCode" [placeholder]="'booking.summary.discountPlaceholder' | translate">
-          </mat-form-field>
-          <span class="discount-note">{{ 'booking.summary.discountNote' | translate }}</span>
-        </div>
+      <!-- Discounts: promo code, gift card, loyalty points -->
+      <div class="promo-card">
+        <button type="button" class="discount-banner" (click)="openDiscountDialog()">
+          <mat-icon>local_offer</mat-icon>
+          <span class="discount-banner-text">
+            <span class="discount-banner-title">{{ 'booking.summary.discountBannerTitle' | translate }}</span>
+            <span class="discount-banner-sub">{{ discountCode ? ('booking.summary.discountEntered' | translate:{ code: discountCode }) : ('booking.summary.discountBannerSub' | translate) }}</span>
+          </span>
+          <mat-icon class="discount-banner-chevron">chevron_right</mat-icon>
+        </button>
 
         <div class="field-group">
           <div class="gift-card-row">
@@ -136,40 +84,91 @@
           </span>
         </div>
 
-        <!-- Loyalty points redemption -->
-        <div class="summary-divider"></div>
-        <div class="field-group">
-          <span class="discount-note">{{ 'booking.summary.pointsBalance' | translate:{ points: pointsBalance } }}</span>
-          <mat-form-field appearance="outline">
-            <mat-label><mat-icon>star</mat-icon> {{ 'booking.summary.redeemPoints' | translate }}</mat-label>
-            <input matInput type="number" min="0" [max]="maxRedeemablePoints" step="1"
-              [(ngModel)]="pointsToRedeem" (ngModelChange)="clampPoints()"
-              [disabled]="maxRedeemablePoints === 0"
-              [placeholder]="'booking.summary.pointsPlaceholder' | translate">
-          </mat-form-field>
-          <span class="discount-note">{{ 'booking.summary.pointsHint' | translate:{ max: maxRedeemablePoints } }}</span>
-        </div>
+        <button type="button" class="discount-banner points-banner" (click)="openPointsDialog()" [disabled]="maxRedeemablePoints === 0">
+          <mat-icon>star</mat-icon>
+          <span class="discount-banner-text">
+            <span class="discount-banner-title">{{ 'booking.summary.redeemPoints' | translate }}</span>
+            <span class="discount-banner-sub">
+              <ng-container *ngIf="pointsToRedeem > 0">{{ 'booking.summary.pointsRedeeming' | translate:{ points: pointsToRedeem } }}</ng-container>
+              <ng-container *ngIf="!(pointsToRedeem > 0)">{{ 'booking.summary.pointsBalance' | translate:{ points: pointsBalance } }}</ng-container>
+            </span>
+          </span>
+          <mat-icon class="discount-banner-chevron">chevron_right</mat-icon>
+        </button>
+      </div>
 
-        <div class="summary-divider"></div>
+      <div *ngIf="error" class="error-banner">
+        <mat-icon>error</mat-icon> {{ error }}
+      </div>
 
-        <div class="summary-row" *ngIf="pointsToRedeem > 0">
-          <span>{{ 'booking.summary.pointsDiscount' | translate:{ points: pointsToRedeem } }}</span>
-          <span>−{{ pointsDiscount | number:'1.0-0' }}đ</span>
-        </div>
-
-        <div class="total-block">
-          <span>{{ 'booking.summary.grandTotal' | translate }}</span>
-          <span class="total-amount">{{ finalTotal | number:'1.0-0' }}đ</span>
-        </div>
-
+      <div class="action-row">
+        <button type="button" class="btn-back" (click)="backToSeats()">{{ 'booking.checkout.backToSeats' | translate }}</button>
         <button mat-raised-button class="btn-primary-cta confirm-btn" (click)="confirmBooking()" [disabled]="loading">
           <mat-spinner diameter="18" *ngIf="loading"></mat-spinner>
           <ng-container *ngIf="!loading">
             <mat-icon>lock</mat-icon> {{ 'booking.confirm.payCta' | translate }}
           </ng-container>
         </button>
+      </div>
+      <p class="secure-note"><mat-icon>verified_user</mat-icon> {{ 'booking.confirm.secureNote' | translate }}</p>
+    </div>
 
-        <p class="secure-note"><mat-icon>verified_user</mat-icon> {{ 'booking.confirm.secureNote' | translate }}</p>
+    <!-- Right: order summary -->
+    <div class="summary-col">
+      <div class="summary-card">
+        <div class="summary-head">
+          <h3 class="summary-title">{{ movieTitle || ('booking.summary.orderTitle' | translate) }}<span class="age-tag" *ngIf="ageCode"> ({{ ageCode }})</span></h3>
+          <span class="hold-chip" [class.expired]="holdExpired">
+            <ng-container *ngIf="!holdExpired">{{ 'booking.holdLabel' | translate }} <b>{{ holdCountdown }}</b></ng-container>
+            <ng-container *ngIf="holdExpired">{{ 'booking.holdExpiredShort' | translate }}</ng-container>
+          </span>
+        </div>
+        <p class="hold-expired-note" *ngIf="holdExpired">{{ 'booking.holdExpired' | translate }}</p>
+
+        <div class="info-block" *ngIf="theaterName">
+          <div class="info-value">{{ theaterName }}</div>
+          <div class="info-sub" *ngIf="theaterAddress">{{ theaterAddress }}</div>
+        </div>
+
+        <div class="info-block" *ngIf="startTime">
+          <div class="info-label">{{ 'booking.summary.showtime' | translate }}</div>
+          <div class="info-value">{{ startTime | date:'HH:mm · dd/MM/yyyy' }}</div>
+        </div>
+
+        <div class="info-grid">
+          <div *ngIf="roomName">
+            <div class="info-label">{{ 'booking.summary.room' | translate }}</div>
+            <div class="info-value">{{ roomName }}</div>
+          </div>
+          <div>
+            <div class="info-label">{{ 'booking.summary.ticketCount' | translate }}</div>
+            <div class="info-value">{{ ticketLines.length }}</div>
+          </div>
+          <div>
+            <div class="info-label">{{ 'booking.summary.ticketType' | translate }}</div>
+            <div class="info-value">{{ ticketTypes }}</div>
+          </div>
+          <div>
+            <div class="info-label">{{ 'booking.summary.seats' | translate }}</div>
+            <div class="info-value seat-codes">{{ seatCodes }}</div>
+          </div>
+        </div>
+
+        <div class="info-block" *ngIf="foods.length">
+          <div class="info-label">{{ 'booking.summary.snacks' | translate }}</div>
+          <div class="info-value">{{ foodSummary }}</div>
+        </div>
+
+        <div class="summary-row" *ngIf="pointsToRedeem > 0">
+          <span>{{ 'booking.summary.pointsDiscount' | translate:{ points: pointsToRedeem } }}</span>
+          <span>−{{ pointsDiscount | number:'1.0-0' }}đ</span>
+        </div>
+
+        <div class="summary-divider"></div>
+        <div class="total-block">
+          <span class="total-label">{{ 'booking.summary.amountToPay' | translate }}</span>
+          <span class="total-amount">{{ finalTotal | number:'1.0-0' }}đ</span>
+        </div>
       </div>
     </div>
 
