@@ -173,6 +173,7 @@
     "summary": {
       "subtotal": "Tạm tính ({{count}} ghế)",
       "comboTotal": "Tổng cộng",
+      "comboBreakdown": "Ghế {{seats}}đ + bắp nước {{food}}đ",
       "orderTitle": "Tóm Tắt Đơn Hàng",
       "tickets": "Vé ({{count}} ghế)",
       "discountCode": "Mã Giảm Giá",
@@ -196,6 +197,7 @@
       "momoWallet": "Ví MoMo",
       "domesticCard": "Thẻ ATM nội địa",
       "concessions": "Bắp Nước & Combo",
+      "concessionsShort": "Bắp nước",
       "creditDebit": "Thẻ Tín Dụng / Ghi Nợ",
       "cardNumber": "Số Thẻ",
       "expiry": "Ngày Hết Hạn",

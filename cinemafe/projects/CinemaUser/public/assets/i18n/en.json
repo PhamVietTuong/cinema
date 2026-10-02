@@ -173,6 +173,7 @@
     "summary": {
       "subtotal": "Subtotal ({{count}} seats)",
       "comboTotal": "Total",
+      "comboBreakdown": "Seats {{seats}}đ + snacks {{food}}đ",
       "orderTitle": "Order Summary",
       "tickets": "Tickets ({{count}} seats)",
       "discountCode": "Discount Code",
@@ -196,6 +197,7 @@
       "momoWallet": "MoMo Wallet",
       "domesticCard": "Domestic ATM Card",
       "concessions": "Snacks & Combos",
+      "concessionsShort": "Snacks",
       "creditDebit": "Credit / Debit Card",
       "cardNumber": "Card Number",
       "expiry": "Expiry Date",

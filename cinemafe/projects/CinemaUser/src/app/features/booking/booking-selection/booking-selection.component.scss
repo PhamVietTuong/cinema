@@ -215,13 +215,15 @@
   p { font-size: var(--cx-text-sm); margin: 0; }
 }
 .selected-list { display: flex; flex-direction: column; gap: var(--cx-space-2); }
+// Ticket-stub rows: the price sits in a tear-off segment divided by a dashed line.
 .selected-item {
-  display: flex; align-items: center; justify-content: space-between;
-  background: var(--ml-action-soft);
-  border: 1px solid var(--ml-action-ring);
-  border-radius: var(--ml-r-sm); padding: 10px 13px;
+  display: flex; align-items: stretch; justify-content: space-between;
+  background: var(--ml-panel-2);
+  border: 1px solid var(--ml-rule);
+  border-radius: var(--ml-r-md); overflow: hidden;
+  &.is-food .seat-code { font-size: var(--cx-text-sm); color: var(--ml-ink); }
 }
-.selected-seat-name { display: flex; flex-direction: column; gap: 2px; }
+.selected-seat-name { display: flex; flex-direction: column; gap: 2px; padding: 10px 13px; min-width: 0; flex: 1; }
 .seat-code {
   font-family: var(--ml-font-data); font-size: var(--cx-text-md);
   font-weight: var(--cx-weight-medium); color: var(--ml-action-strong);
@@ -229,6 +231,8 @@
 }
 .seat-type { font-size: var(--cx-text-xs); color: var(--ml-muted); }
 .seat-price {
+  display: flex; align-items: center; padding: 10px 13px; white-space: nowrap;
+  border-left: 2px dashed var(--ml-rule-strong);
   font-family: var(--ml-font-data); font-size: var(--cx-text-sm);
   color: var(--ml-ink); font-variant-numeric: tabular-nums;
 }
@@ -239,8 +243,14 @@
   font-variant-numeric: tabular-nums;
 }
 .total-row { color: var(--ml-ink); font-weight: var(--cx-weight-semibold); margin-top: var(--cx-space-1); }
+.grand-total { display: flex; justify-content: space-between; align-items: baseline; }
+.grand-label {
+  font-family: var(--ml-font-head); font-size: var(--cx-text-md); font-weight: var(--cx-weight-semibold);
+  letter-spacing: var(--cx-track-caps); text-transform: uppercase; color: var(--ml-ink);
+}
+.grand-hint { margin: var(--cx-space-1) 0 0; font-size: var(--cx-text-xs); color: var(--ml-ink-2); font-variant-numeric: tabular-nums; }
 .total-amount {
-  font-family: var(--ml-font-data); font-size: var(--cx-text-lg);
+  font-family: var(--ml-font-data); font-size: var(--cx-text-xl);
   font-weight: var(--cx-weight-medium); color: var(--ml-action-strong);
   font-variant-numeric: tabular-nums;
 }

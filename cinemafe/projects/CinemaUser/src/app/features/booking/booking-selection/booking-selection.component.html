@@ -114,23 +114,26 @@
           </div>
           <span class="seat-price">{{ t.price | number:'1.0-0' }}đ</span>
         </div>
+        <ng-container *ngIf="selectedSeats.length > 0">
+          <div class="selected-item is-food" *ngFor="let f of selectedFoods">
+            <div class="selected-seat-name">
+              <span class="seat-code">{{ f.name }} × {{ foodQty[f.id!] }}</span>
+              <span class="seat-type">{{ 'booking.confirm.concessionsShort' | translate }}</span>
+            </div>
+            <span class="seat-price">{{ (f.price ?? 0) * foodQty[f.id!] | number:'1.0-0' }}đ</span>
+          </div>
+        </ng-container>
       </div>
 
       <ng-container *ngIf="selectedSeats.length > 0">
         <div class="price-divider"></div>
-        <div class="price-row">
-          <span>{{ 'booking.summary.subtotal' | translate:{ count: selectedSeats.length } }}</span>
-          <span>{{ totalPrice | number:'1.0-0' }}đ</span>
-        </div>
-        <div class="price-row" *ngFor="let f of selectedFoods">
-          <span>{{ f.name }} × {{ foodQty[f.id!] }}</span>
-          <span>{{ (f.price ?? 0) * foodQty[f.id!] | number:'1.0-0' }}đ</span>
-        </div>
-        <div class="price-divider"></div>
-        <div class="price-row total-row">
-          <span>{{ 'booking.summary.comboTotal' | translate }}</span>
+        <div class="grand-total">
+          <span class="grand-label">{{ 'booking.summary.comboTotal' | translate }}</span>
           <span class="total-amount">{{ grandTotal | number:'1.0-0' }}đ</span>
         </div>
+        <p class="grand-hint" *ngIf="foodTotal > 0">
+          {{ 'booking.summary.comboBreakdown' | translate:{ seats: (totalPrice | number:'1.0-0'), food: (foodTotal | number:'1.0-0') } }}
+        </p>
       </ng-container>
 
       <button class="btn-primary-cta confirm-btn" [disabled]="!canProceed" (click)="proceedToCheckout()">
