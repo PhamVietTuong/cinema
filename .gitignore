@@ -23,3 +23,5 @@ CLAUDE.md
 .playwright-mcp/
 pagelist.txt
 tasks/
+
+logs/
