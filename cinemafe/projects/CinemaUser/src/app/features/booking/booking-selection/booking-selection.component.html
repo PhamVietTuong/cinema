@@ -118,9 +118,18 @@
 
       <ng-container *ngIf="selectedSeats.length > 0">
         <div class="price-divider"></div>
-        <div class="price-row total-row">
+        <div class="price-row">
           <span>{{ 'booking.summary.subtotal' | translate:{ count: selectedSeats.length } }}</span>
-          <span class="total-amount">{{ totalPrice | number:'1.0-0' }}đ</span>
+          <span>{{ totalPrice | number:'1.0-0' }}đ</span>
+        </div>
+        <div class="price-row" *ngFor="let f of selectedFoods">
+          <span>{{ f.name }} × {{ foodQty[f.id!] }}</span>
+          <span>{{ (f.price ?? 0) * foodQty[f.id!] | number:'1.0-0' }}đ</span>
+        </div>
+        <div class="price-divider"></div>
+        <div class="price-row total-row">
+          <span>{{ 'booking.summary.comboTotal' | translate }}</span>
+          <span class="total-amount">{{ grandTotal | number:'1.0-0' }}đ</span>
         </div>
       </ng-container>
 

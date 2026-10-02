@@ -172,6 +172,7 @@
     },
     "summary": {
       "subtotal": "Subtotal ({{count}} seats)",
+      "comboTotal": "Total",
       "orderTitle": "Order Summary",
       "tickets": "Tickets ({{count}} seats)",
       "discountCode": "Discount Code",

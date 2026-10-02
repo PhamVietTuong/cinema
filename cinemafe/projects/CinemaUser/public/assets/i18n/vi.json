@@ -172,6 +172,7 @@
     },
     "summary": {
       "subtotal": "Tạm tính ({{count}} ghế)",
+      "comboTotal": "Tổng cộng",
       "orderTitle": "Tóm Tắt Đơn Hàng",
       "tickets": "Vé ({{count}} ghế)",
       "discountCode": "Mã Giảm Giá",
