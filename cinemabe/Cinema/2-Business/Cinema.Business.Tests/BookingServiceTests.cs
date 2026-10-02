@@ -915,4 +915,66 @@ public class BookingServiceTests
         // Frees the seats at the DB unique-index level for multi-instance safety.
         _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
     }
+
+    // ── Discount code validation ────────────────────────────────────────────────
+
+    private Discount SetupDiscount(Action<Discount>? tweak = null)
+    {
+        var discount = new Discount
+        {
+            Id = Guid.NewGuid(), Code = "SUMMER25", Percent = 10, IsActive = true,
+            StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1),
+            ApplyToAllTheaters = true,
+        };
+        tweak?.Invoke(discount);
+        _uowMock.Setup(u => u.DiscountStore.GetByCodeAsync("SUMMER25")).ReturnsAsync(discount);
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(RoomId1)).ReturnsAsync(new Room { Id = RoomId1, TheaterId = Guid.NewGuid() });
+        _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(ShowTimeId1)).ReturnsAsync(new ShowTime { Id = ShowTimeId1, StartTime = DateTime.UtcNow });
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
+        return discount;
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_UsableCode_ReportsWhatItTakesOff()
+    {
+        SetupDiscount();
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), " SUMMER25 ", RoomId1, ShowTimeId1, 200000);
+
+        result.Valid.Should().BeTrue();
+        result.DiscountAmount.Should().Be(20000);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_CapsTheAmountAtMaxDiscount()
+    {
+        SetupDiscount(d => d.MaxDiscountAmount = 5000);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000);
+
+        result.DiscountAmount.Should().Be(5000);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_UnknownCode_IsInvalidWithoutThrowing()
+    {
+        _uowMock.Setup(u => u.DiscountStore.GetByCodeAsync("NOPE")).ReturnsAsync((Discount?)null);
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(RoomId1)).ReturnsAsync(new Room { Id = RoomId1, TheaterId = Guid.NewGuid() });
+        _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(ShowTimeId1)).ReturnsAsync(new ShowTime { Id = ShowTimeId1, StartTime = DateTime.UtcNow });
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "NOPE", RoomId1, ShowTimeId1, 200000);
+
+        result.Valid.Should().BeFalse();
+        result.Message.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_ExpiredOrExhaustedCode_IsInvalid()
+    {
+        SetupDiscount(d => d.EndDate = DateTime.UtcNow.AddDays(-1));
+        (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000)).Valid.Should().BeFalse();
+
+        SetupDiscount(d => { d.MaxUsage = 3; d.UsedCount = 3; });
+        (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000)).Valid.Should().BeFalse();
+    }
 }

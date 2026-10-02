@@ -369,6 +369,43 @@
         ]
       }
     },
+    "/api/Payment/ValidateDiscountCode": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "Payment_ValidateDiscountCode",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateDiscountCodeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountCodeValidationDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Payment/ValidateGiftCard": {
       "post": {
         "tags": [
@@ -1316,6 +1353,44 @@
           "invoiceId": {
             "type": "string",
             "format": "guid"
+          }
+        }
+      },
+      "DiscountCodeValidationDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "discountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ValidateDiscountCodeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "showTimeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
           }
         }
       },

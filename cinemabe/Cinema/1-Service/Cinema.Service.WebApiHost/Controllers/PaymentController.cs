@@ -209,6 +209,22 @@ public class PaymentController : ApiControllerBase
         }
     }
 
+    [HttpPost]
+    [ProducesResponseType(typeof(DiscountCodeValidationDTO), 200)]
+    public async Task<IActionResult> ValidateDiscountCode([FromBody] ValidateDiscountCodeRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ValidateDiscountCode being awakened to process request...");
+        try
+        {
+            var result = await _bookingManager.ValidateDiscountCodeAsync(User.GetUserId(), request.Code, request.RoomId, request.ShowTimeId, request.Total);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ValidateDiscountCode));
+        }
+    }
+
     // ── Gift cards ────────────────────────────────────────────────────────────
 
     [HttpPost]
@@ -436,4 +452,5 @@ public record ValidateTicketRequest(string QrCode);
 public record CancelBookingRequest(Guid InvoiceId);
 public record RefundBookingRequest(Guid InvoiceId);
 public record ValidateGiftCardRequest(string Code);
+public record ValidateDiscountCodeRequest(string Code, Guid RoomId, Guid ShowTimeId, double Total);
 public record SetGiftCardActiveRequest(Guid Id, bool Active);

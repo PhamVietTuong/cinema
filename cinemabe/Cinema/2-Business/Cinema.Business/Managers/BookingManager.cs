@@ -672,17 +672,7 @@ public class BookingManager : IBookingManager
     private async Task<(double DiscountAmount, double FinalAmount, Guid? DiscountId)> ComputePricingAsync(
         Guid userId, double total, string? discountCode, Guid roomId, Guid showTimeId)
     {
-        var running = total;
-
-        var user = await _uow.UserStore.GetByIdAsync(userId);
-        if (user?.MemberShipId is Guid membershipId)
-        {
-            var membership = await _uow.MemberShipStore.GetByIdAsync(membershipId);
-            if (membership is { DiscountPercent: > 0 })
-            {
-                running -= running * (membership.DiscountPercent / 100.0);
-            }
-        }
+        var running = await ApplyMembershipDiscountAsync(userId, total);
 
         var now = DateTime.UtcNow;
         var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
@@ -691,14 +681,11 @@ public class BookingManager : IBookingManager
         Guid? discountId = null;
         if (!string.IsNullOrWhiteSpace(discountCode))
         {
-            var code = discountCode.Trim();
-            var discount = await _uow.DiscountStore.GetByCodeAsync(code);
-            if (discount is null
-                || !discount.IsActive
-                || discount.StartDate > now || now > discount.EndDate
-                || (discount.MaxUsage != null && discount.UsedCount >= discount.MaxUsage)
-                || !MatchesScope(discount, bookingTheaterId, showTime))
-                throw new InvalidOperationException("Discount code is invalid or no longer available.");
+            var discount = await FindUsableDiscountAsync(discountCode.Trim(), now, bookingTheaterId, showTime);
+            if (discount is null)
+            {
+                throw new InvalidOperationException(_invalidDiscountMessage);
+            }
 
             running -= ApplyPercent(running, discount);
             discountId = discount.Id;
@@ -725,6 +712,59 @@ public class BookingManager : IBookingManager
             running = 0;
         }
         return (Math.Round(total - running, 2), Math.Round(running, 2), discountId);
+    }
+
+    private const string _invalidDiscountMessage = "Discount code is invalid or no longer available.";
+
+    // The member's tier discount comes off first, before any promo code.
+    private async Task<double> ApplyMembershipDiscountAsync(Guid userId, double running)
+    {
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user?.MemberShipId is Guid membershipId)
+        {
+            var membership = await _uow.MemberShipStore.GetByIdAsync(membershipId);
+            if (membership is { DiscountPercent: > 0 })
+            {
+                running -= running * (membership.DiscountPercent / 100.0);
+            }
+        }
+        return running;
+    }
+
+    // The promo code if it exists, is active, in its date window, under its usage cap and in scope for
+    // this booking; otherwise null.
+    private async Task<Discount?> FindUsableDiscountAsync(string code, DateTime now, Guid? bookingTheaterId, ShowTime? showTime)
+    {
+        var discount = await _uow.DiscountStore.GetByCodeAsync(code);
+        if (discount is null
+            || !discount.IsActive
+            || discount.StartDate > now || now > discount.EndDate
+            || (discount.MaxUsage != null && discount.UsedCount >= discount.MaxUsage)
+            || !MatchesScope(discount, bookingTheaterId, showTime))
+        {
+            return null;
+        }
+        return discount;
+    }
+
+    public async Task<DiscountCodeValidationDTO> ValidateDiscountCodeAsync(Guid userId, string code, Guid roomId, Guid showTimeId, double total)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return new DiscountCodeValidationDTO { Valid = false, Message = _invalidDiscountMessage };
+        }
+
+        var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
+        var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeId);
+        var discount = await FindUsableDiscountAsync(code.Trim(), DateTime.UtcNow, bookingTheaterId, showTime);
+        if (discount is null)
+        {
+            return new DiscountCodeValidationDTO { Valid = false, Message = _invalidDiscountMessage };
+        }
+
+        var running = await ApplyMembershipDiscountAsync(userId, total);
+        var amount = Math.Round(Math.Min(ApplyPercent(running, discount), running), 2);
+        return new DiscountCodeValidationDTO { Valid = true, DiscountAmount = amount };
     }
 
     // Percentage reduction on the running total, capped by the promotion's MaxDiscountAmount.
