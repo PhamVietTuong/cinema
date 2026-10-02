@@ -29,6 +29,7 @@ export interface IHttpService {
     paymentCallbackPOST(provider?: string | undefined): Observable<void>;
     paymentCallbackGET(provider?: string | undefined): Observable<void>;
     refundBooking(request: RefundBookingRequest): Observable<void>;
+    validateDiscountCode(request: ValidateDiscountCodeRequest): Observable<DiscountCodeValidationDTO>;
     validateGiftCard(request: ValidateGiftCardRequest): Observable<GiftCardValidationDTO>;
     getGiftCards(search: PagingSearchDTO): Observable<DefaultSearchResultsOfGiftCardDTO>;
     issueGiftCard(request: IssueGiftCardRequest): Observable<GiftCardDTO>;
@@ -546,6 +547,58 @@ export class HttpService implements IHttpService {
             let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result400 = ProblemDetails.fromJS(resultData400);
             return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    validateDiscountCode(request: ValidateDiscountCodeRequest): Observable<DiscountCodeValidationDTO> {
+        let url_ = this.baseUrl + "/api/Payment/ValidateDiscountCode";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processValidateDiscountCode(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processValidateDiscountCode(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DiscountCodeValidationDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DiscountCodeValidationDTO>;
+        }));
+    }
+
+    protected processValidateDiscountCode(response: HttpResponseBase): Observable<DiscountCodeValidationDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DiscountCodeValidationDTO.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -2105,6 +2158,98 @@ export class RefundBookingRequest implements IRefundBookingRequest {
 
 export interface IRefundBookingRequest {
     invoiceId?: string;
+}
+
+export class DiscountCodeValidationDTO implements IDiscountCodeValidationDTO {
+    valid?: boolean;
+    discountAmount?: number;
+    message?: string | undefined;
+
+    constructor(data?: IDiscountCodeValidationDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.valid = _data["valid"];
+            this.discountAmount = _data["discountAmount"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): DiscountCodeValidationDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DiscountCodeValidationDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["valid"] = this.valid;
+        data["discountAmount"] = this.discountAmount;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface IDiscountCodeValidationDTO {
+    valid?: boolean;
+    discountAmount?: number;
+    message?: string | undefined;
+}
+
+export class ValidateDiscountCodeRequest implements IValidateDiscountCodeRequest {
+    code?: string;
+    roomId?: string;
+    showTimeId?: string;
+    total?: number;
+
+    constructor(data?: IValidateDiscountCodeRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.code = _data["code"];
+            this.roomId = _data["roomId"];
+            this.showTimeId = _data["showTimeId"];
+            this.total = _data["total"];
+        }
+    }
+
+    static fromJS(data: any): ValidateDiscountCodeRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ValidateDiscountCodeRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        data["roomId"] = this.roomId;
+        data["showTimeId"] = this.showTimeId;
+        data["total"] = this.total;
+        return data;
+    }
+}
+
+export interface IValidateDiscountCodeRequest {
+    code?: string;
+    roomId?: string;
+    showTimeId?: string;
+    total?: number;
 }
 
 export class GiftCardValidationDTO implements IGiftCardValidationDTO {

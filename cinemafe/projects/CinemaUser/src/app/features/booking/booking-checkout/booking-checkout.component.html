@@ -60,40 +60,37 @@
 
       <!-- Discounts: promo code, gift card, loyalty points -->
       <div class="promo-card">
-        <button type="button" class="discount-banner" (click)="openDiscountDialog()">
-          <mat-icon>local_offer</mat-icon>
-          <span class="discount-banner-text">
-            <span class="discount-banner-title">{{ 'booking.summary.discountBannerTitle' | translate }}</span>
-            <span class="discount-banner-sub">{{ discountCode ? ('booking.summary.discountEntered' | translate:{ code: discountCode }) : ('booking.summary.discountBannerSub' | translate) }}</span>
+        <button type="button" class="disc-row" [class.on]="discountValid" (click)="openDiscountDialog()">
+          <span class="disc-ico"><mat-icon>local_offer</mat-icon></span>
+          <span class="disc-text">
+            <span class="disc-title">{{ 'booking.summary.discountBannerTitle' | translate }}</span>
+            <span class="disc-sub">{{ discountValid ? discountMessage : ('booking.summary.discountBannerSub' | translate) }}</span>
           </span>
-          <mat-icon class="discount-banner-chevron">chevron_right</mat-icon>
+          <span class="disc-pill" *ngIf="discountValid">−{{ discountAmount | number:'1.0-0' }}đ</span>
+          <mat-icon class="disc-chev">chevron_right</mat-icon>
         </button>
 
-        <div class="field-group">
-          <div class="gift-card-row">
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'booking.summary.giftCardCode' | translate }}</mat-label>
-              <input matInput [(ngModel)]="giftCardCode" [placeholder]="'booking.summary.giftCardPlaceholder' | translate">
-            </mat-form-field>
-            <button mat-stroked-button type="button" class="gift-card-apply" (click)="validateGiftCard()" [disabled]="giftCardChecking || !giftCardCode.trim()">
-              {{ 'booking.summary.giftCardApply' | translate }}
-            </button>
-          </div>
-          <span class="discount-note" *ngIf="giftCardMessage" [class.gift-card-valid]="giftCardValid" [class.gift-card-invalid]="giftCardValid === false">
-            {{ giftCardMessage }}
+        <button type="button" class="disc-row" [class.on]="giftCardValid" (click)="openGiftCardDialog()">
+          <span class="disc-ico"><mat-icon>card_giftcard</mat-icon></span>
+          <span class="disc-text">
+            <span class="disc-title">{{ 'booking.summary.giftCardCode' | translate }}</span>
+            <span class="disc-sub">{{ giftCardValid ? giftCardMessage : ('booking.summary.giftCardRowSub' | translate) }}</span>
           </span>
-        </div>
+          <span class="disc-pill" *ngIf="giftCardValid">{{ 'booking.summary.pillAdded' | translate }}</span>
+          <mat-icon class="disc-chev">chevron_right</mat-icon>
+        </button>
 
-        <button type="button" class="discount-banner points-banner" (click)="openPointsDialog()" [disabled]="maxRedeemablePoints === 0">
-          <mat-icon>star</mat-icon>
-          <span class="discount-banner-text">
-            <span class="discount-banner-title">{{ 'booking.summary.redeemPoints' | translate }}</span>
-            <span class="discount-banner-sub">
+        <button type="button" class="disc-row" [class.on]="pointsToRedeem > 0" (click)="openPointsDialog()" [disabled]="maxRedeemablePoints === 0">
+          <span class="disc-ico"><mat-icon>star</mat-icon></span>
+          <span class="disc-text">
+            <span class="disc-title">{{ 'booking.summary.redeemPoints' | translate }}</span>
+            <span class="disc-sub">
               <ng-container *ngIf="pointsToRedeem > 0">{{ 'booking.summary.pointsRedeeming' | translate:{ points: pointsToRedeem } }}</ng-container>
               <ng-container *ngIf="!(pointsToRedeem > 0)">{{ 'booking.summary.pointsBalance' | translate:{ points: pointsBalance } }}</ng-container>
             </span>
           </span>
-          <mat-icon class="discount-banner-chevron">chevron_right</mat-icon>
+          <span class="disc-pill" *ngIf="pointsToRedeem > 0">−{{ pointsDiscount | number:'1.0-0' }}đ</span>
+          <mat-icon class="disc-chev">chevron_right</mat-icon>
         </button>
       </div>
 

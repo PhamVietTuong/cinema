@@ -134,20 +134,34 @@
   background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-md);
   padding: 18px 20px; margin-bottom: 20px;
 }
-.discount-banner {
+.promo-card { display: flex; flex-direction: column; gap: 10px; }
+// Three identical rows (discount code, gift card, points): icon, title + status line, optional pill, chevron.
+.disc-row {
   display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
-  padding: 14px 16px; margin-bottom: 16px; border-radius: var(--ml-r-md);
-  background: var(--ml-action-soft); border: 1px solid var(--ml-action-ring); color: var(--ml-ink);
+  padding: 12px 14px; border-radius: var(--ml-r-md);
+  background: var(--ml-panel-2); border: 1px solid var(--ml-rule); color: var(--ml-ink);
   font-family: var(--ml-font-body);
-  transition: border-color 0.15s;
-  &:hover { border-color: var(--ml-action); }
+  transition: border-color 0.15s, background 0.15s;
+  &:hover:not(:disabled) { border-color: var(--ml-action); }
+  &.on { background: var(--ml-action-soft); border-color: var(--ml-action-ring); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
   &:focus-visible { outline: var(--cx-focus-width) solid var(--ml-action); outline-offset: var(--cx-focus-offset); }
-  mat-icon { color: var(--ml-action-strong); flex: none; }
 }
-.discount-banner:disabled { opacity: 0.55; cursor: not-allowed; &:hover { border-color: var(--ml-action-ring); } }
-.discount-banner-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.discount-banner-title { font-weight: 600; font-size: 0.95rem; }
-.discount-banner-sub { font-size: 0.8rem; color: var(--ml-ink-2); overflow-wrap: anywhere; }
+.disc-ico {
+  flex: none; width: 36px; height: 36px; border-radius: var(--ml-r-md);
+  display: grid; place-items: center; background: var(--ml-panel); border: 1px solid var(--ml-action-ring);
+  mat-icon { color: var(--ml-action-strong); font-size: 20px; width: 20px; height: 20px; }
+}
+.disc-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.disc-title { font-weight: 600; font-size: 0.92rem; }
+.disc-sub { font-size: 0.78rem; color: var(--ml-ink-2); overflow-wrap: anywhere; }
+.disc-pill {
+  flex: none; padding: 3px 9px; border-radius: var(--ml-r-full);
+  background: var(--ml-success-soft); color: var(--ml-success-ink);
+  font-family: var(--ml-font-head); font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+}
+.disc-chev { flex: none; color: var(--ml-action-strong); }
 .action-row { display: flex; gap: 12px; }
 .btn-back {
   flex: 1; padding: 12px 16px; border-radius: var(--ml-r-sm); cursor: pointer;
@@ -164,21 +178,6 @@
 .secure-note {
   text-align: center; font-size: 0.75rem; color: var(--ml-muted);
   margin: 12px 0 0; mat-icon { margin-right: 4px; vertical-align: -5px; font-size: 15px; width: 15px; height: 15px; }
-}
-
-.discount-note { display: block; margin-top: 6px; font-size: 0.8rem; opacity: 0.65; }
-// Gift-card feedback carries meaning (valid/invalid), never mood — success/danger, not the accent.
-.discount-note.gift-card-valid { color: var(--ml-success-ink, #2e7d32); opacity: 1; }
-.discount-note.gift-card-invalid { color: var(--ml-danger); opacity: 1; }
-
-.gift-card-row { display: flex; gap: 8px; align-items: stretch; }
-.gift-card-apply {
-  flex: 0 0 auto; padding: 0 16px; border-radius: var(--ml-r-sm);
-  border: 1px solid var(--ml-rule); background: var(--ml-panel);
-  color: var(--ml-ink); font-family: var(--ml-font-body); font-size: 0.85rem; font-weight: 600;
-  cursor: pointer; transition: border-color 0.2s, background 0.2s;
-  &:hover:not(:disabled) { border-color: var(--ml-action-ring); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 // ── Success Page ──────────────────────────────────────────────────────────────

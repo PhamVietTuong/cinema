@@ -2,10 +2,12 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
 import { MatDialog } from '@angular/material/dialog';
+import { Observable, catchError, map, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
-import { DiscountCodeDialog } from './discount-code.dialog';
+import { DiscountCodeDialog, DiscountCheckResult, DiscountCodeDialogResult } from './discount-code.dialog';
 import { PointsRedeemDialog } from './points-redeem.dialog';
+import { GiftCardDialog, GiftCardCheckResult, GiftCardDialogResult } from './gift-card.dialog';
 import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState, takePendingCheckout } from './booking-checkout.state';
 
 /**
@@ -66,10 +68,12 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   startTime: Date | null = null;
 
   discountCode = '';
+  discountValid: boolean | null = null;
+  discountMessage = '';
+  discountAmount = 0;
   giftCardCode = '';
   giftCardValid: boolean | null = null;
   giftCardMessage = '';
-  giftCardChecking = false;
 
   static readonly POINT_VALUE = 1000;
   pointsBalance = 0;
@@ -165,14 +169,46 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Asks the server whether a promo code can be used for this order; failures come back as an invalid result. */
+  checkDiscountCode(code: string): Observable<DiscountCheckResult> {
+    return this._paymentService.validateDiscountCode(PaymentServiceAgent.ValidateDiscountCodeRequest.fromJS({
+      code,
+      roomId: this.roomId,
+      showTimeId: this.showTimeId,
+      total: this.grandTotal,
+    })).pipe(
+      map(res => {
+        const amount = res?.discountAmount ?? 0;
+        return {
+          valid: !!res?.valid,
+          discountAmount: amount,
+          message: res?.valid
+            ? this._translate.instant('booking.summary.discountSaves', { code, amount: Math.round(amount).toLocaleString('en-US') })
+            : (res?.message ?? this._translate.instant('booking.summary.discountInvalid')),
+        };
+      }),
+      catchError(err => of({
+        valid: false,
+        discountAmount: 0,
+        message: this._err(err, this._translate.instant('booking.summary.discountInvalid')),
+      })),
+    );
+  }
+
   openDiscountDialog(): void {
-    this._dialog.open(DiscountCodeDialog, { data: { code: this.discountCode }, width: '420px', maxWidth: '92vw' })
-      .afterClosed().subscribe((code: string | undefined) => {
-        if (code !== undefined) {
-          this.discountCode = code;
-          this._cdr.markForCheck();
-        }
-      });
+    this._dialog.open(DiscountCodeDialog, {
+      data: { code: this.discountCode, check: (code: string) => this.checkDiscountCode(code) },
+      width: '420px',
+      maxWidth: '92vw',
+    }).afterClosed().subscribe((result: DiscountCodeDialogResult | undefined) => {
+      if (result) {
+        this.discountCode = result.code;
+        this.discountValid = result.valid;
+        this.discountMessage = result.message;
+        this.discountAmount = result.discountAmount;
+        this._cdr.markForCheck();
+      }
+    });
   }
 
   openPointsDialog(): void {
@@ -284,30 +320,34 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this.pointsToRedeem = Math.max(0, Math.min(n, this.maxRedeemablePoints));
   }
 
-  validateGiftCard(): void {
-    const code = this.giftCardCode.trim();
-    if (!code) {
-      this.giftCardValid = null;
-      this.giftCardMessage = '';
-      return;
-    }
-    this.giftCardChecking = true;
-    this._paymentService.validateGiftCard(PaymentServiceAgent.ValidateGiftCardRequest.fromJS({ code }))
-      .subscribe({
-        next: res => {
-          this.giftCardValid = !!res?.valid;
-          this.giftCardMessage = res?.message
-            ?? (res?.valid ? this._translate.instant('booking.summary.giftCardBalance', { balance: res?.balance ?? 0 }) : '');
-          this.giftCardChecking = false;
-          this._cdr.markForCheck();
-        },
-        error: err => {
-          this.giftCardValid = false;
-          this.giftCardMessage = this._err(err, this._translate.instant('booking.summary.giftCardInvalid'));
-          this.giftCardChecking = false;
-          this._cdr.markForCheck();
-        },
-      });
+  /** Asks the server whether a gift card code is usable; failures come back as an invalid result, never an error. */
+  checkGiftCard(code: string): Observable<GiftCardCheckResult> {
+    return this._paymentService.validateGiftCard(PaymentServiceAgent.ValidateGiftCardRequest.fromJS({ code })).pipe(
+      map(res => ({
+        valid: !!res?.valid,
+        message: res?.message
+          ?? (res?.valid ? this._translate.instant('booking.summary.giftCardBalance', { balance: res?.balance ?? 0 }) : ''),
+      })),
+      catchError(err => of({
+        valid: false,
+        message: this._err(err, this._translate.instant('booking.summary.giftCardInvalid')),
+      })),
+    );
+  }
+
+  openGiftCardDialog(): void {
+    this._dialog.open(GiftCardDialog, {
+      data: { code: this.giftCardCode, check: (code: string) => this.checkGiftCard(code) },
+      width: '460px',
+      maxWidth: '92vw',
+    }).afterClosed().subscribe((result: GiftCardDialogResult | undefined) => {
+      if (result) {
+        this.giftCardCode = result.code;
+        this.giftCardValid = result.valid;
+        this.giftCardMessage = result.message;
+        this._cdr.markForCheck();
+      }
+    });
   }
 
   confirmBooking(): void {
