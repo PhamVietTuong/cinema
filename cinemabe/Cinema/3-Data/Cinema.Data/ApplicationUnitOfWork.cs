@@ -37,7 +37,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IReminderLogStore ReminderLogStore { get; }
     public IGiftCardStore GiftCardStore { get; }
     public IPatronCategoryStore PatronCategoryStore { get; }
-    public IPatronCategorySeatTypeStore PatronCategorySeatTypeStore { get; }
+    public IRoomTypePatronCategoryPriceStore RoomTypePatronCategoryPriceStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
     {
@@ -68,7 +68,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         ReminderLogStore = new ReminderLogStore(db);
         GiftCardStore = new GiftCardStore(db);
         PatronCategoryStore = new PatronCategoryStore(db);
-        PatronCategorySeatTypeStore = new PatronCategorySeatTypeStore(db);
+        RoomTypePatronCategoryPriceStore = new RoomTypePatronCategoryPriceStore(db);
     }
 
     public Task<int> SaveChangesAsync()

@@ -58,18 +58,17 @@ public class BookingManager : IBookingManager
             var key      = SeatKey(showTimeId, roomId, s.Id);
             var isBooked = bookedIds.Contains(s.Id);
             var isLocked = _lockedSeats.ContainsKey(key);
+            var kind     = s.SeatGroupId.HasValue ? SeatKind.Double : SeatKind.Standard;
             return new SeatDTO
             {
-                Id            = s.Id,
-                RowName       = s.RowName,
-                ColIndex      = s.ColIndex,
-                SeatTypeId    = s.SeatTypeId,
-                SeatTypeName  = s.SeatType?.Name ?? "",
-                SeatTypeColor = s.SeatType?.Color ?? "#808080",
-                Status        = isBooked ? SeatStatus.Occupied : isLocked ? SeatStatus.Reserved : SeatStatus.Available,
-                Price         = PriceSeat(pricing, s.SeatTypeId, s.SeatType?.PriceMultiplier ?? 1),
-                IsLocked      = isLocked && !isBooked,
-                SeatGroupId   = s.SeatGroupId,
+                Id          = s.Id,
+                RowName     = s.RowName,
+                ColIndex    = s.ColIndex,
+                IsDouble    = kind == SeatKind.Double,
+                Status      = isBooked ? SeatStatus.Occupied : isLocked ? SeatStatus.Reserved : SeatStatus.Available,
+                Price       = pricing.MinPriceByKind.TryGetValue(kind, out var fromPrice) ? fromPrice : 0,
+                IsLocked    = isLocked && !isBooked,
+                SeatGroupId = s.SeatGroupId,
             };
         }).ToList();
 
@@ -80,6 +79,24 @@ public class BookingManager : IBookingManager
             CountPerPage = dtos.Count,
             Page         = 1
         };
+    }
+
+    public async Task<List<ShowTimePriceDTO>> GetShowTimePricesAsync(Guid showTimeId, Guid roomId)
+    {
+        var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId);
+        var pricing = await BuildSeatPricingContextAsync(showTimeRoom);
+        return pricing.ByCategoryId.Values
+            .Select(c => new ShowTimePriceDTO
+            {
+                PatronCategoryId   = c.Id,
+                PatronCategoryName = c.Name,
+                SeatTypeId         = c.SeatTypeId,
+                Kind               = c.Kind,
+                IsDouble           = c.Kind == SeatKind.Double,
+                Price              = c.Price,
+            })
+            .OrderBy(p => p.Price)
+            .ToList();
     }
 
     public async Task<BookingResultDTO> CreateBookingAsync(Guid userId, CreateBookingRequest request)
@@ -97,10 +114,30 @@ public class BookingManager : IBookingManager
                 throw new InvalidOperationException("ShowTime/Room combination not found.");
             }
             var pricing = await BuildSeatPricingContextAsync(showTimeRoom);
-            var patronCategories = await LoadPatronCategoriesAsync(request.RoomId, request.Seats);
-            var allowedSeatTypesByCategory = await LoadAllowedSeatTypesAsync(patronCategories.Keys);
 
             var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
+
+            // One batched load for every requested seat — replaces a per-seat SeatStore.GetByIdAsync +
+            // SeatTypeStore.GetByIdAsync pair that used to run inside this loop.
+            var seatIds  = request.Seats.Select(s => s.SeatId).Distinct().ToList();
+            var seatsById = await _uow.SeatStore.GetByIdsAsync(seatIds);
+
+            // A double seat must be booked whole: if any requested seat is part of a group, every seat
+            // sharing that group must also be in this request, or the partner would be left half-sold.
+            var groupIds = seatsById.Values.Where(s => s.SeatGroupId.HasValue).Select(s => s.SeatGroupId!.Value).Distinct().ToList();
+            if (groupIds.Count > 0)
+            {
+                var requestedIds = seatIds.ToHashSet();
+                var groups = (await _uow.SeatStore.FindAsync(s => s.SeatGroupId != null && groupIds.Contains(s.SeatGroupId!.Value)))
+                    .GroupBy(s => s.SeatGroupId!.Value);
+                foreach (var group in groups)
+                {
+                    if (!group.All(s => requestedIds.Contains(s.Id)))
+                    {
+                        throw new InvalidOperationException("A double seat must be booked together with its partner.");
+                    }
+                }
+            }
 
             double ticketTotal = 0;
             var tickets    = new List<InvoiceTicket>();
@@ -122,43 +159,35 @@ public class BookingManager : IBookingManager
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
                 }
 
-                var seat = await _uow.SeatStore.GetByIdAsync(seatItem.SeatId);
-                if (seat == null)
+                if (!seatsById.TryGetValue(seatItem.SeatId, out var seat))
                 {
                     throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
                 }
+                var seatKind = seat.SeatGroupId.HasValue ? SeatKind.Double : SeatKind.Standard;
 
-                // Price is BasePrice scaled by the ticket-price matrix multiplier (theater/roomType/seatType/
-                // timeSlot/holiday) when a row matches, falling back to BasePrice × the seat type's multiplier
-                // × holiday factor otherwise. See BuildSeatPricingContextAsync.
-                var seatType   = await _uow.SeatTypeStore.GetByIdAsync(seat.SeatTypeId);
-                var multiplier = seatType?.PriceMultiplier ?? 1;
-                var basePrice  = PriceSeat(pricing, seat.SeatTypeId, multiplier);
-
-                // Self-reported patron category (Adult/Student/Senior/Child), checked visually at the
-                // theater rather than verified here. A supplied id must resolve to an active category in
-                // this room's theater, or the booking is rejected outright — silently falling back to
-                // full price would surprise the customer, and silently discounting an unknown id would be
-                // a revenue hole. The category reduces this ticket's own price (stacks with the
-                // membership/promo discount ComputePricingAsync applies to the invoice total afterward).
-                PatronCategory? category = null;
-                if (seatItem.PatronCategoryId is Guid patronCategoryId && patronCategoryId != Guid.Empty)
+                // A PatronCategory is now the only source of a ticket's price, so every seat must name
+                // one. The category's Price already has every pricing factor (RoomType override,
+                // TimeSlot/Holiday, 3D, per-showtime BasePrice surcharge) resolved in — see
+                // BuildSeatPricingContextAsync. Eligibility is enforced by requiring the category's own
+                // seat kind to match the seat actually being booked: there is no separate allow-list.
+                if (seatItem.PatronCategoryId is not Guid patronCategoryId || patronCategoryId == Guid.Empty)
                 {
-                    if (!patronCategories.TryGetValue(patronCategoryId, out category) || !category.IsActive)
-                    {
-                        throw new InvalidOperationException("Selected patron category is invalid or unavailable.");
-                    }
-
-                    // Server-side enforcement of the seat-type gate — the client's greyed-out seat map is
-                    // cosmetic only. Empty allowed-set = category is unrestricted.
-                    if (allowedSeatTypesByCategory.TryGetValue(patronCategoryId, out var allowedSeatTypeIds)
-                        && allowedSeatTypeIds.Count > 0
-                        && !allowedSeatTypeIds.Contains(seat.SeatTypeId))
-                    {
-                        throw new InvalidOperationException($"Seat {seatItem.SeatId} is not available for the selected patron category.");
-                    }
+                    throw new InvalidOperationException("A patron category is required for every seat.");
                 }
-                var price = ApplyPatronDiscount(basePrice, category?.DiscountPercent ?? 0);
+                if (!pricing.ByCategoryId.TryGetValue(patronCategoryId, out var category))
+                {
+                    throw new InvalidOperationException("Selected patron category is invalid or unavailable.");
+                }
+                if (category.Kind != seatKind)
+                {
+                    throw new InvalidOperationException($"Seat {seatItem.SeatId} is not available for the selected patron category.");
+                }
+
+                // A Double seat is one bookable unit priced once as a whole (category.Price is that
+                // whole-seat price) but is still two physical Seat rows, each needing its own
+                // InvoiceTicket for occupancy/refund tracking — split the price across the pair so
+                // the two halves sum to the single price the customer was quoted for one seat.
+                var price = seatKind == SeatKind.Double ? category.Price / 2 : category.Price;
                 ticketTotal += price;
 
                 // Unguessable per-ticket token; encoded as the e-ticket QR and checked at the gate.
@@ -169,20 +198,19 @@ public class BookingManager : IBookingManager
                     RoomId                = request.RoomId,
                     SeatId                = seatItem.SeatId,
                     Price                 = price,
-                    PatronCategoryId      = category?.Id,
-                    PatronCategoryName    = category?.Name,
-                    PatronDiscountPercent = category?.DiscountPercent ?? 0,
+                    PatronCategoryId      = category.Id,
+                    PatronCategoryName    = category.Name,
+                    PatronDiscountPercent = 0,
                     QrCode                = qr,
                 });
 
                 ticketItems.Add(new TicketItemDTO
                 {
-                    SeatLabel             = $"{seat.RowName}{seat.ColIndex}",
-                    SeatType              = seatType?.Name ?? string.Empty,
-                    Price                 = price,
-                    PatronCategory        = category?.Name ?? string.Empty,
-                    PatronDiscountPercent = category?.DiscountPercent ?? 0,
-                    QrCode                = qr,
+                    SeatLabel      = $"{seat.RowName}{seat.ColIndex}",
+                    SeatType       = seatKind == SeatKind.Double ? "Double" : "Single",
+                    Price          = price,
+                    PatronCategory = category.Name,
+                    QrCode         = qr,
                 });
             }
 
@@ -486,98 +514,37 @@ public class BookingManager : IBookingManager
     }
 
     // ── Seat pricing ────────────────────────────────────────────────────────────
-    // A seat's price is always anchored on the showtime's own BasePrice (which reflects the movie/format
-    // being screened) — nothing is allowed to replace it outright, only scale it. When a ticket-price
-    // matrix row (theater × roomType × seatType × timeSlot × isHoliday) matches, its PriceMultiplier scales
-    // BasePrice instead of SeatType.PriceMultiplier — the matrix row is already seat-type-scoped, so
-    // applying both would double-count the seat premium. It's already holiday-scoped too, so the holiday
-    // factor is also skipped in that branch; only the fallback (BasePrice × SeatType multiplier) applies
-    // the holiday factor, since there the holiday-ness hasn't been priced in yet. The context is resolved
-    // once per showtime and reused for every seat; all store lookups are null-guarded so the fallback
-    // holds when nothing is configured. A 3D screening adds a flat per-ticket surcharge on top of
-    // whichever branch produced the price — the room class sets the base, the dimension is charged
-    // separately (an IMAX 3D ticket pays both).
+    // A seat's price is anchored on the resolved PatronCategory row (theater-wide Price, or a
+    // RoomType-specific override if one exists for this room's RoomType) — PatronCategory.Price is an
+    // absolute, independently-configured amount per seat kind (Standard/Double), never derived from
+    // another row. On top of that: the TicketPrice matrix's (theater/roomType/timeSlot/holiday) factor
+    // multiplies it when a row matches (that row is already holiday-scoped, so the plain Holiday
+    // factor is skipped in that case — only applied as a fallback when no matrix row matches); a 3D
+    // screening adds RoomType.ThreeDSurcharge; and the showtime's own BasePrice is added last as a
+    // manual per-showtime surcharge (e.g. a premium for a new release, 0 for a long-running title —
+    // NOT a multiplier, so it never interacts with the factors above). The whole context is resolved
+    // once per showtime+room and reused for every seat/category.
+    private sealed record ResolvedCategory(Guid Id, string Name, Guid SeatTypeId, SeatKind Kind, double Price);
+
     private sealed record SeatPricingContext(
-        double BasePrice,
-        IReadOnlyDictionary<Guid, double> MultiplierBySeatType,
-        double HolidayFactor,
-        double ThreeDSurcharge);
+        IReadOnlyDictionary<Guid, ResolvedCategory> ByCategoryId,
+        IReadOnlyDictionary<SeatKind, double> MinPriceByKind);
 
-    private static double PriceSeat(SeatPricingContext ctx, Guid seatTypeId, double seatMultiplier)
-    {
-        if (ctx.MultiplierBySeatType.TryGetValue(seatTypeId, out var matrixMultiplier))
-        {
-            return (ctx.BasePrice * matrixMultiplier) + ctx.ThreeDSurcharge;
-        }
-        return (ctx.BasePrice * seatMultiplier * ctx.HolidayFactor) + ctx.ThreeDSurcharge;
-    }
-
-    /// <summary>Reduces a single ticket's price by its patron category's percent-off. This is a price
-    /// input like the seat-type/holiday factors above — not an invoice discount line — so it is applied
-    /// once, here, before the ticket total is summed; ComputePricingAsync's membership/promo discounts
-    /// then apply to that already-adjusted total, so the two never double-count each other.</summary>
-    private static double ApplyPatronDiscount(double price, double discountPercent)
-    {
-        var pct = Math.Clamp(discountPercent, 0, 100);
-        return Math.Round(Math.Max(0, price * (1 - pct / 100.0)), 2);
-    }
-
-    /// <summary>Resolves the active patron categories referenced by a booking's seats, scoped to the
-    /// room's theater (categories are per-theater). Returns an empty dictionary — no query — when no
-    /// seat requests one.</summary>
-    private async Task<Dictionary<Guid, PatronCategory>> LoadPatronCategoriesAsync(Guid roomId, IEnumerable<BookingSeatItem> seats)
-    {
-        var ids = seats
-            .Select(s => s.PatronCategoryId)
-            .Where(id => id is Guid g && g != Guid.Empty)
-            .Select(id => id!.Value)
-            .Distinct()
-            .ToList();
-        if (ids.Count == 0)
-        {
-            return new Dictionary<Guid, PatronCategory>();
-        }
-
-        var room = await _uow.RoomStore.GetByIdAsync(roomId);
-        if (room is null)
-        {
-            return new Dictionary<Guid, PatronCategory>();
-        }
-
-        var categories = await _uow.PatronCategoryStore.FindAsync(c => c.TheaterId == room.TheaterId && ids.Contains(c.Id));
-        return (categories ?? Enumerable.Empty<PatronCategory>()).ToDictionary(c => c.Id);
-    }
-
-    /// <summary>Batches the seat-type gate for the given patron category ids into one query. A category
-    /// absent from the result, or mapped to an empty set, is unrestricted.</summary>
-    private async Task<Dictionary<Guid, HashSet<Guid>>> LoadAllowedSeatTypesAsync(IEnumerable<Guid> patronCategoryIds)
-    {
-        var ids = patronCategoryIds.ToList();
-        if (ids.Count == 0)
-        {
-            return new Dictionary<Guid, HashSet<Guid>>();
-        }
-
-        var rows = await _uow.PatronCategorySeatTypeStore.FindByPatronCategoriesAsync(ids);
-        return rows
-            .GroupBy(r => r.PatronCategoryId)
-            .ToDictionary(g => g.Key, g => g.Select(r => r.SeatTypeId).ToHashSet());
-    }
+    private static readonly SeatPricingContext _emptyPricingContext =
+        new(new Dictionary<Guid, ResolvedCategory>(), new Dictionary<SeatKind, double>());
 
     private async Task<SeatPricingContext> BuildSeatPricingContextAsync(ShowTimeRoom? showTimeRoom)
     {
-        var basePrice = showTimeRoom?.BasePrice ?? 0;
-        var empty = new Dictionary<Guid, double>();
         if (showTimeRoom is null)
         {
-            return new SeatPricingContext(basePrice, empty, 1.0, 0);
+            return _emptyPricingContext;
         }
 
         var room     = await _uow.RoomStore.GetByIdAsync(showTimeRoom.RoomId);
         var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeRoom.ShowTimeId);
         if (room is null || showTime is null)
         {
-            return new SeatPricingContext(basePrice, empty, 1.0, 0);
+            return _emptyPricingContext;
         }
 
         // Only a 3D screening pays the surcharge, so only a 3D screening costs the extra lookup.
@@ -591,32 +558,64 @@ public class BookingManager : IBookingManager
         var date      = DateOnly.FromDateTime(showTime.StartTime);
         var timeOfDay = TimeOnly.FromDateTime(showTime.StartTime);
 
-        // Holiday: any Holiday whose date matches the showtime's date scales the fallback price.
+        // Holiday: any Holiday whose date matches the showtime's date scales the price when no
+        // TicketPrice matrix row matches (a matrix row is already holiday-scoped).
         var holidays  = await _uow.HolidayStore.FindAsync(h => h.Date == date) ?? Enumerable.Empty<Holiday>();
         var holiday   = holidays.FirstOrDefault();
         var isHoliday = holiday is not null;
-        var holidayFactor = isHoliday ? holiday!.PriceMultiplier : 1.0;
+        var fallbackHolidayFactor = isHoliday ? holiday!.PriceMultiplier : 1.0;
 
         // The theater time slot whose [start, end) window contains the showtime's time-of-day.
         var slots = await _uow.TimeSlotStore.FindAsync(t => t.TheaterId == room.TheaterId) ?? Enumerable.Empty<TimeSlot>();
         var slot  = slots.FirstOrDefault(s => TimeInSlot(timeOfDay, s));
 
-        var multipliers = new Dictionary<Guid, double>();
+        double? timeFactor = null;
         if (slot is not null)
         {
-            var rows = await _uow.TicketPriceStore.FindAsync(tp =>
-                           tp.TheaterId == room.TheaterId
-                           && tp.RoomTypeId == room.RoomTypeId
-                           && tp.TimeSlotId == slot.Id
-                           && tp.IsHoliday == isHoliday)
-                       ?? Enumerable.Empty<TicketPrice>();
-            foreach (var r in rows)
+            var matrixRows = await _uow.TicketPriceStore.FindAsync(tp =>
+                                  tp.TheaterId == room.TheaterId
+                                  && tp.RoomTypeId == room.RoomTypeId
+                                  && tp.TimeSlotId == slot.Id
+                                  && tp.IsHoliday == isHoliday)
+                              ?? Enumerable.Empty<TicketPrice>();
+            timeFactor = matrixRows.Select(r => (double?)r.PriceMultiplier).FirstOrDefault();
+        }
+        var holidayFactor = timeFactor.HasValue ? 1.0 : fallbackHolidayFactor;
+
+        var kindBySeatTypeId = (await _uow.SeatTypeStore.GetKindMapAsync(room.TheaterId))
+            .ToDictionary(kv => kv.Value, kv => kv.Key);
+
+        var categories = (await _uow.PatronCategoryStore.FindAsync(c => c.TheaterId == room.TheaterId && c.IsActive))
+                          ?? Enumerable.Empty<PatronCategory>();
+        var categoryList = categories.ToList();
+        var categoryIds  = categoryList.Select(c => c.Id).ToList();
+
+        var overridesForRoomType = categoryIds.Count == 0
+            ? new List<RoomTypePatronCategoryPrice>()
+            : (await _uow.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(categoryIds))
+                .Where(o => o.RoomTypeId == room.RoomTypeId)
+                .ToList();
+        var overrideByCategory = overridesForRoomType.ToDictionary(o => o.PatronCategoryId, o => o.Price);
+        // RoomTypePatronCategoryPrice is a per-RoomType allow-list: a RoomType offers exactly the
+        // categories that have a row here, at that row's price. Zero rows means the RoomType offers
+        // nothing — there is no "unrestricted" fallback to the theater-wide PatronCategory.Price.
+        var byCategoryId = new Dictionary<Guid, ResolvedCategory>();
+        foreach (var c in categoryList)
+        {
+            if (!overrideByCategory.TryGetValue(c.Id, out var roomTypePrice))
             {
-                multipliers[r.SeatTypeId] = r.PriceMultiplier;
+                continue;
             }
+            var price = Math.Round(roomTypePrice * (timeFactor ?? 1.0) * holidayFactor + threeDSurcharge + showTimeRoom.BasePrice, 2);
+            var kind  = kindBySeatTypeId.TryGetValue(c.SeatTypeId, out var k) ? k : SeatKind.Standard;
+            byCategoryId[c.Id] = new ResolvedCategory(c.Id, c.Name, c.SeatTypeId, kind, price);
         }
 
-        return new SeatPricingContext(basePrice, multipliers, holidayFactor, threeDSurcharge);
+        var minPriceByKind = byCategoryId.Values
+            .GroupBy(c => c.Kind)
+            .ToDictionary(g => g.Key, g => g.Min(c => c.Price));
+
+        return new SeatPricingContext(byCategoryId, minPriceByKind);
     }
 
     private static bool TimeInSlot(TimeOnly t, TimeSlot slot)
@@ -673,17 +672,7 @@ public class BookingManager : IBookingManager
     private async Task<(double DiscountAmount, double FinalAmount, Guid? DiscountId)> ComputePricingAsync(
         Guid userId, double total, string? discountCode, Guid roomId, Guid showTimeId)
     {
-        var running = total;
-
-        var user = await _uow.UserStore.GetByIdAsync(userId);
-        if (user?.MemberShipId is Guid membershipId)
-        {
-            var membership = await _uow.MemberShipStore.GetByIdAsync(membershipId);
-            if (membership is { DiscountPercent: > 0 })
-            {
-                running -= running * (membership.DiscountPercent / 100.0);
-            }
-        }
+        var running = await ApplyMembershipDiscountAsync(userId, total);
 
         var now = DateTime.UtcNow;
         var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
@@ -692,14 +681,11 @@ public class BookingManager : IBookingManager
         Guid? discountId = null;
         if (!string.IsNullOrWhiteSpace(discountCode))
         {
-            var code = discountCode.Trim();
-            var discount = await _uow.DiscountStore.GetByCodeAsync(code);
-            if (discount is null
-                || !discount.IsActive
-                || discount.StartDate > now || now > discount.EndDate
-                || (discount.MaxUsage != null && discount.UsedCount >= discount.MaxUsage)
-                || !MatchesScope(discount, bookingTheaterId, showTime))
-                throw new InvalidOperationException("Discount code is invalid or no longer available.");
+            var discount = await FindUsableDiscountAsync(discountCode.Trim(), now, bookingTheaterId, showTime);
+            if (discount is null)
+            {
+                throw new InvalidOperationException(_invalidDiscountMessage);
+            }
 
             running -= ApplyPercent(running, discount);
             discountId = discount.Id;
@@ -726,6 +712,59 @@ public class BookingManager : IBookingManager
             running = 0;
         }
         return (Math.Round(total - running, 2), Math.Round(running, 2), discountId);
+    }
+
+    private const string _invalidDiscountMessage = "Discount code is invalid or no longer available.";
+
+    // The member's tier discount comes off first, before any promo code.
+    private async Task<double> ApplyMembershipDiscountAsync(Guid userId, double running)
+    {
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user?.MemberShipId is Guid membershipId)
+        {
+            var membership = await _uow.MemberShipStore.GetByIdAsync(membershipId);
+            if (membership is { DiscountPercent: > 0 })
+            {
+                running -= running * (membership.DiscountPercent / 100.0);
+            }
+        }
+        return running;
+    }
+
+    // The promo code if it exists, is active, in its date window, under its usage cap and in scope for
+    // this booking; otherwise null.
+    private async Task<Discount?> FindUsableDiscountAsync(string code, DateTime now, Guid? bookingTheaterId, ShowTime? showTime)
+    {
+        var discount = await _uow.DiscountStore.GetByCodeAsync(code);
+        if (discount is null
+            || !discount.IsActive
+            || discount.StartDate > now || now > discount.EndDate
+            || (discount.MaxUsage != null && discount.UsedCount >= discount.MaxUsage)
+            || !MatchesScope(discount, bookingTheaterId, showTime))
+        {
+            return null;
+        }
+        return discount;
+    }
+
+    public async Task<DiscountCodeValidationDTO> ValidateDiscountCodeAsync(Guid userId, string code, Guid roomId, Guid showTimeId, double total)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return new DiscountCodeValidationDTO { Valid = false, Message = _invalidDiscountMessage };
+        }
+
+        var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
+        var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeId);
+        var discount = await FindUsableDiscountAsync(code.Trim(), DateTime.UtcNow, bookingTheaterId, showTime);
+        if (discount is null)
+        {
+            return new DiscountCodeValidationDTO { Valid = false, Message = _invalidDiscountMessage };
+        }
+
+        var running = await ApplyMembershipDiscountAsync(userId, total);
+        var amount = Math.Round(Math.Min(ApplyPercent(running, discount), running), 2);
+        return new DiscountCodeValidationDTO { Valid = true, DiscountAmount = amount };
     }
 
     // Percentage reduction on the running total, capped by the promotion's MaxDiscountAmount.

@@ -3,7 +3,7 @@
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
     <div class="dlg-grid">
-      <div class="dlg-row dlg-row--3">
+      <div class="dlg-row dlg-row--2">
         <div class="dlg-field">
           <label class="dlg-label" id="tp-roomTypeId-lbl">{{ 'theaters.ticketPrices.roomTypeLabel' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -11,15 +11,6 @@
               <mat-option *ngFor="let rt of roomTypes" [value]="rt.id">{{ rt.name }}</mat-option>
             </mat-select>
             <mat-error *ngIf="form.controls['roomTypeId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
-        </div>
-        <div class="dlg-field">
-          <label class="dlg-label" id="tp-seatTypeId-lbl">{{ 'theaters.ticketPrices.seatTypeLabel' | translate }}</label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="seatTypeId" panelClass="dlg-select-panel" aria-labelledby="tp-seatTypeId-lbl">
-              <mat-option *ngFor="let s of seatTypes" [value]="s.id">{{ s.name }}</mat-option>
-            </mat-select>
-            <mat-error *ngIf="form.controls['seatTypeId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
           </mat-form-field>
         </div>
         <div class="dlg-field">

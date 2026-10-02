@@ -15,6 +15,7 @@ import { RoomDialog } from './theaters/room.dialog';
 import { SeatMapDialog } from './theaters/seat-map.dialog';
 import { TheaterRoomTypesComponent } from './theaters/theater-room-types.component';
 import { RoomTypeDialog } from './theaters/room-type.dialog';
+import { RoomTypePricesDialog } from './theaters/room-type-prices.dialog';
 import { TheaterSeatTypesComponent } from './theaters/theater-seat-types.component';
 import { SeatTypeDialog } from './theaters/seat-type.dialog';
 import { TheaterPatronCategoriesComponent } from './theaters/theater-patron-categories.component';
@@ -65,6 +66,7 @@ const routes: Routes = [
     SeatMapDialog,
     TheaterRoomTypesComponent,
     RoomTypeDialog,
+    RoomTypePricesDialog,
     TheaterSeatTypesComponent,
     SeatTypeDialog,
     TheaterPatronCategoriesComponent,

@@ -1432,45 +1432,6 @@
         ]
       }
     },
-    "/api/Cinema/CreateSeatType": {
-      "post": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_CreateSeatType",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSeatTypeRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeatTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
     "/api/Cinema/UpdateSeatType": {
       "put": {
         "tags": [
@@ -1510,37 +1471,6 @@
         ]
       }
     },
-    "/api/Cinema/DeleteSeatType": {
-      "delete": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_DeleteSeatType",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
     "/api/Cinema/GetPatronCategories": {
       "post": {
         "tags": [
@@ -1566,6 +1496,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DefaultSearchResultsOfPatronCategoryDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetPatronCategoriesByTheater": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPatronCategoriesByTheater",
+        "parameters": [
+          {
+            "name": "theaterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PatronCategoryDTO"
+                  }
                 }
               }
             }
@@ -3543,6 +3512,79 @@
         ]
       }
     },
+    "/api/Cinema/GetRoomTypePatronCategoryPrices": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetRoomTypePatronCategoryPrices",
+        "parameters": [
+          {
+            "name": "roomTypeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoomTypePatronCategoryPriceDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/SaveRoomTypePatronCategoryPrices": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_SaveRoomTypePatronCategoryPrices",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoomTypePatronCategoryPricesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetShowTimeList": {
       "post": {
         "tags": [
@@ -5197,6 +5239,9 @@
             "type": "string",
             "format": "guid"
           },
+          "kind": {
+            "$ref": "#/components/schemas/SeatKind"
+          },
           "name": {
             "type": "string"
           },
@@ -5206,36 +5251,20 @@
           },
           "color": {
             "type": "string"
-          },
-          "priceMultiplier": {
-            "type": "number",
-            "format": "double"
           }
         }
       },
-      "CreateSeatTypeRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "theaterId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "color": {
-            "type": "string"
-          },
-          "priceMultiplier": {
-            "type": "number",
-            "format": "double"
-          }
-        }
+      "SeatKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Standard",
+          "Double"
+        ],
+        "enum": [
+          0,
+          1
+        ]
       },
       "UpdateSeatTypeRequest": {
         "type": "object",
@@ -5258,10 +5287,6 @@
           },
           "color": {
             "type": "string"
-          },
-          "priceMultiplier": {
-            "type": "number",
-            "format": "double"
           }
         }
       },
@@ -5313,6 +5338,16 @@
             "type": "string",
             "format": "guid"
           },
+          "seatTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "seatTypeName": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SeatKind"
+          },
           "name": {
             "type": "string"
           },
@@ -5320,19 +5355,12 @@
             "type": "string",
             "nullable": true
           },
-          "discountPercent": {
+          "price": {
             "type": "number",
             "format": "double"
           },
           "isActive": {
             "type": "boolean"
-          },
-          "allowedSeatTypeIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "guid"
-            }
           }
         }
       },
@@ -5356,21 +5384,17 @@
             "type": "string",
             "nullable": true
           },
-          "discountPercent": {
-            "type": "number",
-            "format": "double",
-            "maximum": 100.0,
-            "minimum": 0.0
-          },
           "isActive": {
             "type": "boolean"
           },
-          "allowedSeatTypeIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "guid"
-            }
+          "seatTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0.0
           }
         }
       },
@@ -5385,10 +5409,6 @@
             "type": "string",
             "format": "guid"
           },
-          "theaterId": {
-            "type": "string",
-            "format": "guid"
-          },
           "name": {
             "type": "string",
             "maxLength": 100,
@@ -5398,21 +5418,17 @@
             "type": "string",
             "nullable": true
           },
-          "discountPercent": {
-            "type": "number",
-            "format": "double",
-            "maximum": 100.0,
-            "minimum": 0.0
-          },
           "isActive": {
             "type": "boolean"
           },
-          "allowedSeatTypeIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "guid"
-            }
+          "seatTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0.0
           }
         }
       },
@@ -5569,10 +5585,6 @@
             "type": "string",
             "format": "guid"
           },
-          "seatTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
           "timeSlotId": {
             "type": "string",
             "format": "guid"
@@ -5595,10 +5607,6 @@
             "format": "guid"
           },
           "roomTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "seatTypeId": {
             "type": "string",
             "format": "guid"
           },
@@ -5628,10 +5636,6 @@
             "format": "guid"
           },
           "roomTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "seatTypeId": {
             "type": "string",
             "format": "guid"
           },
@@ -6713,6 +6717,82 @@
           }
         }
       },
+      "RoomTypePatronCategoryPriceDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "patronCategoryId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "patronCategoryName": {
+            "type": "string"
+          },
+          "seatTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "seatTypeName": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SeatKind"
+          },
+          "defaultPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "isIncluded": {
+            "type": "boolean"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "SaveRoomTypePatronCategoryPricesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "roomTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveRoomTypePatronCategoryPriceItem"
+            }
+          }
+        }
+      },
+      "SaveRoomTypePatronCategoryPriceItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "patronCategoryId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "included": {
+            "type": "boolean"
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
       "DefaultSearchResultsOfShowTimeDTO": {
         "allOf": [
           {
@@ -6964,19 +7044,8 @@
             "type": "integer",
             "format": "int32"
           },
-          "seatTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "seatTypeName": {
-            "type": "string"
-          },
-          "seatTypeColor": {
-            "type": "string"
-          },
-          "priceMultiplier": {
-            "type": "number",
-            "format": "double"
+          "isDouble": {
+            "type": "boolean"
           },
           "seatGroupId": {
             "type": "string",
@@ -7009,10 +7078,6 @@
         "additionalProperties": false,
         "properties": {
           "seatId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "seatTypeId": {
             "type": "string",
             "format": "guid"
           },

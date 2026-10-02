@@ -15,8 +15,8 @@ import { TicketPriceDialog } from './ticket-price.dialog';
 type Dto = CinemaServiceAgent.TicketPriceDTO;
 
 /**
- * Ticket-price management scoped to a single theater: a pricing multiplier per seat type ×
- * time slot × holiday, applied to the showtime's own base price (not an absolute amount).
+ * Ticket-price management scoped to a single theater: a pricing multiplier per room type ×
+ * time slot × holiday, applied to the resolved PatronCategory price (not an absolute amount).
  */
 @Component({
   selector: 'app-theater-ticket-prices',
@@ -28,7 +28,6 @@ export class TheaterTicketPricesComponent extends BaseTableComponent<Dto> {
   @Input({ required: true }) theaterId!: string;
 
   roomTypes: CinemaServiceAgent.RoomTypeDTO[] = [];
-  seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
   timeSlots: CinemaServiceAgent.TimeSlotDTO[] = [];
 
   constructor(
@@ -47,7 +46,6 @@ export class TheaterTicketPricesComponent extends BaseTableComponent<Dto> {
     super.ngOnInit();
     const search = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: { theaterId: this.theaterId } });
     this._svc.getRoomTypes(search).subscribe(r => { this.roomTypes = r.results ?? []; this._cd.markForCheck(); });
-    this._svc.getSeatTypes(search).subscribe(r => { this.seatTypes = r.results ?? []; this._cd.markForCheck(); });
     this._svc.getTimeSlots(search).subscribe(r => { this.timeSlots = r.results ?? []; this._cd.markForCheck(); });
   }
 
@@ -72,14 +70,14 @@ export class TheaterTicketPricesComponent extends BaseTableComponent<Dto> {
   openCreate(): void {
     this._dialog.open(TicketPriceDialog, {
       width: '600px',
-      data: { theaterId: this.theaterId, ticketPrice: null, roomTypes: this.roomTypes, seatTypes: this.seatTypes, timeSlots: this.timeSlots },
+      data: { theaterId: this.theaterId, ticketPrice: null, roomTypes: this.roomTypes, timeSlots: this.timeSlots },
     }).afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
     this._dialog.open(TicketPriceDialog, {
       width: '600px',
-      data: { theaterId: this.theaterId, ticketPrice: item, roomTypes: this.roomTypes, seatTypes: this.seatTypes, timeSlots: this.timeSlots },
+      data: { theaterId: this.theaterId, ticketPrice: item, roomTypes: this.roomTypes, timeSlots: this.timeSlots },
     }).afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
@@ -108,9 +106,6 @@ export class TheaterTicketPricesComponent extends BaseTableComponent<Dto> {
 
   roomTypeName(id?: string): string {
     return this.roomTypes.find(t => t.id === id)?.name ?? '—';
-  }
-  seatTypeName(id?: string): string {
-    return this.seatTypes.find(s => s.id === id)?.name ?? '—';
   }
   timeSlotName(id?: string): string {
     const t = this.timeSlots.find(s => s.id === id);

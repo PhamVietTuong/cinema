@@ -11,6 +11,7 @@ import {
   showLoading, hideLoading, showSuccess, showException,
 } from 'CinemaLib';
 import { RoomTypeDialog } from './room-type.dialog';
+import { RoomTypePricesDialog } from './room-type-prices.dialog';
 
 type Dto = CinemaServiceAgent.RoomTypeDTO;
 
@@ -65,6 +66,10 @@ export class TheaterRoomTypesComponent extends BaseTableComponent {
   edit(item: Dto): void {
     this._dialog.open(RoomTypeDialog, { width: '560px', data: { theaterId: this.theaterId, roomType: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+  }
+
+  openPrices(item: Dto): void {
+    this._dialog.open(RoomTypePricesDialog, { width: '620px', data: { theaterId: this.theaterId, roomType: item } });
   }
 
   delete(id?: string): void {

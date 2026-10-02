@@ -1,28 +1,31 @@
 namespace Cinema.Data.Entities;
 
 /// <summary>
-/// A per-theater patron pricing category (e.g. Adult, Student, Senior, Child). DiscountPercent
-/// reduces a ticket's own price; it is self-reported by the customer and checked visually
-/// (ID/student card) at the theater, not verified by this system.
+/// A per-theater, per-seat-kind pricing row (e.g. Adult/Single, Adult/Double, Student/Single).
+/// A logical category such as "Adult" is represented as one row PER SeatKind it may book — omitting a
+/// row for a kind means that category cannot book that kind of seat at all (e.g. no Student/Double row
+/// means Students cannot book double seats). This is the entire eligibility rule: there is no separate
+/// allow-list table. Price is absolute VND, configured directly and independently per row — a Double
+/// row's price is NOT computed from the Single row (a couple seat may cost more than 2x single for
+/// the seating privacy, so an admin sets it explicitly).
 /// The API models this per seat (CreateBookingRequest.BookingSeatItem.PatronCategoryId) so a single
 /// order can mix categories (e.g. 2 Adult + 2 Child), mirroring how Vietnamese chains sell tickets.
-/// The CinemaUser web app has the customer pick a QUANTITY per category up front, building one
-/// "ticket slot" per ticket; each seat click claims the most category-appropriate free slot. See
-/// AllowedSeatTypes/PatronCategorySeatType, which gates seat *type* selectability by category and is
-/// what motivated putting the quantity picker before the seat map in that UI.
 /// </summary>
 public class PatronCategory : BaseEntity
 {
     public Guid TheaterId { get; set; }
     public Theater Theater { get; set; } = null!;
 
+    public Guid SeatTypeId { get; set; }
+    public SeatType SeatType { get; set; } = null!;
+
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
 
-    /// <summary>Percent off this category's ticket price (0 = full price).</summary>
-    public double DiscountPercent { get; set; }
+    /// <summary>Absolute price in VND for one seat row of this kind, before RoomType overrides.</summary>
+    public double Price { get; set; }
 
     public bool IsActive { get; set; } = true;
 
-    public ICollection<PatronCategorySeatType> AllowedSeatTypes { get; set; } = new List<PatronCategorySeatType>();
+    public ICollection<RoomTypePatronCategoryPrice> RoomTypePrices { get; set; } = new List<RoomTypePatronCategoryPrice>();
 }

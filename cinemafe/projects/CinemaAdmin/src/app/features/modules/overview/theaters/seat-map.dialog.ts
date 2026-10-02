@@ -8,7 +8,11 @@ export interface SeatMapDialogData {
   room: CinemaServiceAgent.RoomDTO;
 }
 
-/** Seat-map editor for a room: grid resize, paint seat types, pair/unpair double seats. Resolves `true` if the map was saved. */
+/** Seat-map editor for a room: grid resize, set each seat's type by picking a seat type at the top
+ * (paint mode) then clicking seats to apply it. A seat has no stored kind of its own — Standard vs
+ * Double is derived from whether it's paired: applying Double auto-pairs the seat with an adjacent
+ * unpaired seat in the same row; applying Standard on a paired seat unpairs the whole group.
+ * Resolves `true` if the map was saved. */
 @Component({
   selector: 'app-seat-map-dialog',
   standalone: false,
@@ -18,17 +22,16 @@ export interface SeatMapDialogData {
 export class SeatMapDialog {
   room: CinemaServiceAgent.RoomDTO;
   seats: CinemaServiceAgent.RoomSeatDTO[] = [];
-  allSeatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
+  seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
   seatsLoading = false;
   saving = false;
   resizing = false;
-  /** Editor mode: paint a seat type onto seats, or pair/unpair double seats. */
-  mode: 'paint' | 'pair' = 'paint';
-  activeSeatTypeId = '';
+  /** The seat type currently selected at the top of the dialog; clicking a seat applies this kind. */
+  activeIsDouble = false;
+  /** Shown briefly when a seat can't be paired (no free adjacent seat in its row). */
+  pairError = false;
   /** True once a save has actually persisted, so the dialog resolves `true` on close. */
   private _saved = false;
-  /** First seat picked while pairing; the next click completes the pair. */
-  private _pairFirst: CinemaServiceAgent.RoomSeatDTO | null = null;
 
   constructor(
     private _svc: CinemaServiceAgent.HttpService,
@@ -40,8 +43,7 @@ export class SeatMapDialog {
     this.seatsLoading = true;
     this._svc.getSeatTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: { theaterId: data.theaterId } }))
       .subscribe(r => {
-        this.allSeatTypes = r.results ?? [];
-        this.activeSeatTypeId = this.allSeatTypes[0]?.id ?? '';
+        this.seatTypes = (r.results ?? []).sort((a, b) => (a.kind ?? 0) - (b.kind ?? 0));
         this._cdr.markForCheck();
       });
     this._svc.getRoomSeatMap(this.room.id!).subscribe({
@@ -54,7 +56,25 @@ export class SeatMapDialog {
     this._dialogRef.close(this._saved);
   }
 
-  setMode(m: 'paint' | 'pair'): void { this.mode = m; this._pairFirst = null; }
+  colorFor(seat: CinemaServiceAgent.RoomSeatDTO): string {
+    return this.colorForKind(!!seat.isDouble);
+  }
+
+  colorForKind(isDouble: boolean): string {
+    const kind = isDouble ? CinemaServiceAgent.SeatKind.Double : CinemaServiceAgent.SeatKind.Standard;
+    return this.seatTypes.find(t => t.kind === kind)?.color ?? '#8fa3bf';
+  }
+
+  nameFor(seat: CinemaServiceAgent.RoomSeatDTO): string {
+    return this.seatTypeName(!!seat.isDouble);
+  }
+
+  /** The theater's actual SeatType name for a kind (e.g. renamed to "Ghế VIP"), not a hardcoded
+   * "Standard"/"Double" label — the seat-type menu must reflect what the admin configured. */
+  seatTypeName(isDouble: boolean): string {
+    const kind = isDouble ? CinemaServiceAgent.SeatKind.Double : CinemaServiceAgent.SeatKind.Standard;
+    return this.seatTypes.find(t => t.kind === kind)?.name ?? '';
+  }
 
   // ── Grid resize: add/remove rows or columns, preserving existing seats ──────────
   addRow(): void { this.resizeGrid(1, 0); }
@@ -69,7 +89,6 @@ export class SeatMapDialog {
     if (totalRows < 1 || totalColumns < 1) { return; }
 
     this.resizing = true;
-    this._pairFirst = null;
     this._svc.resizeRoomSeatGrid(CinemaServiceAgent.ResizeSeatGridRequest.fromJS(
       { roomId: this.room.id, totalRows, totalColumns }))
       .subscribe({
@@ -85,35 +104,42 @@ export class SeatMapDialog {
       });
   }
 
-  /** Click handler: paint the active seat type, or pair/unpair two seats. */
+  /** Click handler for a seat cell: applies whichever type is currently active at the top. */
   onSeatClick(seat: CinemaServiceAgent.RoomSeatDTO): void {
-    if (this.mode === 'paint') {
-      const t = this.allSeatTypes.find(x => x.id === this.activeSeatTypeId);
-      if (!t) { return; }
-      seat.seatTypeId = t.id;
-      seat.seatTypeName = t.name;
-      seat.seatTypeColor = t.color;
-      seat.priceMultiplier = t.priceMultiplier;
-      return;
-    }
-
-    // Pair mode: clicking a grouped seat unpairs the whole group.
-    if (seat.seatGroupId) {
-      const gid = seat.seatGroupId;
-      this.seats.filter(s => s.seatGroupId === gid).forEach(s => s.seatGroupId = undefined);
-      this._pairFirst = null;
-      return;
-    }
-    if (!this._pairFirst) { this._pairFirst = seat; return; }
-    if (this._pairFirst === seat) { this._pairFirst = null; return; }
-    // Complete a new pair (a "double seat") by giving both the same fresh group id.
-    const gid = crypto.randomUUID();
-    this._pairFirst.seatGroupId = gid;
-    seat.seatGroupId = gid;
-    this._pairFirst = null;
+    this.setSeatKind(seat, this.activeIsDouble);
   }
 
-  isPairPending(seat: CinemaServiceAgent.RoomSeatDTO): boolean { return this._pairFirst === seat; }
+  /** Sets a seat's type. Setting Double auto-pairs the seat with an adjacent unpaired seat in the
+   * same row (prefers the seat to the right, else the left); setting Standard on a paired seat
+   * unpairs the whole group. */
+  private setSeatKind(seat: CinemaServiceAgent.RoomSeatDTO, isDouble: boolean): void {
+    this.pairError = false;
+    if (!isDouble) {
+      if (seat.seatGroupId) {
+        const gid = seat.seatGroupId;
+        this.seats.filter(s => s.seatGroupId === gid).forEach(s => { s.seatGroupId = undefined; s.isDouble = false; });
+      }
+      return;
+    }
+
+    if (seat.seatGroupId) {
+      return;
+    }
+    const rowSeats = this.seatsInRow(seat.rowName ?? '');
+    const index = rowSeats.indexOf(seat);
+    const right = rowSeats[index + 1];
+    const left = rowSeats[index - 1];
+    const partner = (right && !right.seatGroupId) ? right : (left && !left.seatGroupId) ? left : undefined;
+    if (!partner) {
+      this.pairError = true;
+      return;
+    }
+    const gid = crypto.randomUUID();
+    seat.seatGroupId = gid;
+    seat.isDouble = true;
+    partner.seatGroupId = gid;
+    partner.isDouble = true;
+  }
 
   saveSeatMap(): void {
     this.saving = true;
@@ -121,13 +147,20 @@ export class SeatMapDialog {
       roomId: this.room.id,
       seats: this.seats.map(s => ({
         seatId: s.id,
-        seatTypeId: s.seatTypeId,
         seatGroupId: s.seatGroupId,
         isActive: s.isActive,
       })),
     });
     this._svc.saveRoomSeatMap(request).subscribe({
-      next: () => { this.saving = false; this._saved = true; this.close(); },
+      next: () => {
+        this.saving = false;
+        this._saved = true;
+        // Flush the "saving" binding synchronously before closing — MatDialog's close() triggers
+        // its own change-detection pass on this still-attached view, and without this the pending
+        // saving=false mutation trips NG0100 (ExpressionChangedAfterItHasBeenCheckedError).
+        this._cdr.detectChanges();
+        this.close();
+      },
       error: () => { this.saving = false; this._cdr.markForCheck(); },
     });
   }

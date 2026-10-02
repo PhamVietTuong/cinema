@@ -6,33 +6,24 @@
   </button>
 </div>
 
-<!-- Real-time seat-lock countdown — shown while at least one selected seat's lock is still held -->
-<div class="hold-banner" [class.expired]="holdExpired" *ngIf="holdActive && !holdExpired">
-  <mat-icon>timer</mat-icon>
-  <span>{{ 'booking.holdTimer' | translate:{ time: holdCountdown } }}</span>
-</div>
-<div class="hold-banner expired" *ngIf="holdActive && holdExpired">
-  <mat-icon>timer_off</mat-icon>
-  <span>{{ 'booking.holdExpired' | translate }}</span>
-</div>
-
 <!-- ── STEP 1: TICKET QUANTITIES ─────────────────────────────────────────── -->
 <div class="section-wrap">
   <div class="form-card">
     <h3 class="card-title"><i class="fas fa-ticket-alt"></i> {{ 'booking.tickets.title' | translate }}</h3>
     <p class="card-hint">{{ 'booking.tickets.hint' | translate }}</p>
     <div class="option-grid ticket-grid">
-      <div class="option-card mag-card" *ngFor="let c of patronCategories" [class.active]="ticketQty[c.id!] > 0">
+      <div class="option-card mag-card" *ngFor="let row of priceRows" [class.active]="ticketQty[row.patronCategoryId!] > 0">
         <div class="mag-card-stripe"></div>
         <div class="mag-card-chip"></div>
         <div class="option-info">
-          <span class="option-name">{{ c.name }}</span>
-          <span class="category-discount" *ngIf="c.discountPercent">-{{ c.discountPercent }}%</span>
+          <span class="option-name">{{ row.patronCategoryName }}</span>
+          <span class="option-kind-badge">{{ seatKindLabel(row.isDouble) | translate }}</span>
+          <span class="option-price">{{ row.price | number:'1.0-0' }}đ</span>
         </div>
         <div class="option-qty">
-          <button type="button" (click)="decTicket(c)" [disabled]="!ticketQty[c.id!]">−</button>
-          <span>{{ ticketQty[c.id!] || 0 }}</span>
-          <button type="button" (click)="incTicket(c)" [disabled]="totalTickets >= maxTickets">+</button>
+          <button type="button" (click)="decTicket(row)" [disabled]="!ticketQty[row.patronCategoryId!]">−</button>
+          <span>{{ ticketQty[row.patronCategoryId!] || 0 }}</span>
+          <button type="button" (click)="incTicket(row)" [disabled]="!canIncrement(row)">+</button>
         </div>
       </div>
     </div>
@@ -69,7 +60,7 @@
                  'selected':  seat.isSelected,
                  'occupied':  seat.status === SeatStatus.Occupied,
                  'locked':    seat.isLocked || seat.status === SeatStatus.Reserved,
-                 'vip':       seat.seatTypeName === 'VIP'
+                 'double':    seat.isDouble
                }"
                (click)="toggleSeat(seat)">{{ seat.rowName }}{{ seat.colIndex }}</div>
         </div>
@@ -86,53 +77,13 @@
           <span class="legend-dot occupied"></span> {{ 'booking.seats.legendOccupied' | translate }}
         </span>
         <span class="legend-item">
-          <span class="legend-dot vip available"></span> {{ 'booking.seats.legendVip' | translate }}
+          <span class="legend-dot double available"></span> {{ 'booking.seats.legendDouble' | translate }}
         </span>
         <span class="legend-item" *ngIf="totalTickets > 0">
           <span class="legend-dot unavailable-category"></span> {{ 'booking.seats.notAvailableForCategory' | translate }}
         </span>
       </div>
     </ng-container>
-  </div>
-
-  <!-- ── SIDEBAR: selected seats running total ─────────────────────────── -->
-  <div class="sidebar">
-    <div class="sidebar-card">
-      <h3 class="sidebar-title">{{ 'booking.seats.selectedTitle' | translate }}</h3>
-
-      <div *ngIf="selectedSeats.length === 0" class="empty-seats">
-        <i class="fas fa-chair"></i>
-        <p>{{ 'booking.seats.empty' | translate }}</p>
-      </div>
-
-      <div class="selected-list">
-        <div class="selected-item" *ngFor="let s of selectedSeats">
-          <div class="selected-seat-name">
-            <span class="seat-code">{{ s.rowName }}{{ s.colIndex }}</span>
-            <span class="seat-type">{{ s.seatTypeName }} · {{ categoryForSeat(s.id!)?.name }}</span>
-          </div>
-          <span class="seat-price">
-            <span class="seat-entry-price-strike" *ngIf="seatPrice(s) !== s.price">{{ s.price | number:'1.0-0' }}đ</span>
-            {{ seatPrice(s) | number:'1.0-0' }}đ
-          </span>
-        </div>
-      </div>
-
-      <ng-container *ngIf="selectedSeats.length > 0">
-        <div class="price-divider"></div>
-        <div class="price-row total-row">
-          <span>{{ 'booking.summary.subtotal' | translate:{ count: selectedSeats.length } }}</span>
-          <span class="total-amount">{{ totalPrice | number:'1.0-0' }}đ</span>
-        </div>
-      </ng-container>
-
-      <button class="btn-primary-cta confirm-btn" [disabled]="!canProceed" (click)="proceedToCheckout()">
-        {{ 'booking.tickets.continueCta' | translate }}
-      </button>
-      <p class="select-more-hint" *ngIf="totalTickets > 0 && remainingTickets > 0">
-        {{ 'booking.tickets.selectMore' | translate:{ count: remainingTickets } }}
-      </p>
-    </div>
   </div>
 </div>
 
@@ -158,6 +109,36 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ORDER BAR: fixed summary with hold timer, total and the continue button ── -->
+<div class="order-bar-spacer" *ngIf="totalTickets > 0"></div>
+<div class="order-bar" *ngIf="totalTickets > 0">
+  <div class="order-bar-inner">
+    <div class="order-info">
+      <span class="order-context">{{ headerLabel || roomName }}</span>
+      <span class="order-line" *ngIf="selectedTickets.length > 0">
+        <ng-container *ngFor="let t of selectedTickets; let last = last">{{ t.label }} ({{ t.categoryName }}){{ last ? '' : ' · ' }}</ng-container>
+      </span>
+      <span class="order-line" *ngIf="selectedSeats.length > 0 && selectedFoods.length > 0">
+        <ng-container *ngFor="let f of selectedFoods; let last = last">{{ foodQty[f.id!] }} × {{ f.name }}{{ last ? '' : ' · ' }}</ng-container>
+      </span>
+      <span class="order-line muted" *ngIf="remainingTickets > 0">
+        {{ 'booking.tickets.selectMore' | translate:{ count: remainingTickets } }}
+      </span>
+    </div>
+    <div class="order-hold" *ngIf="holdActive" [class.expired]="holdExpired">
+      <span class="order-hold-label">{{ (holdExpired ? 'booking.holdExpiredShort' : 'booking.holdLabel') | translate }}</span>
+      <span class="order-hold-time" *ngIf="!holdExpired">{{ holdCountdown }}</span>
+    </div>
+    <div class="order-total">
+      <span class="order-total-label">{{ 'booking.summary.comboTotal' | translate }}</span>
+      <span class="total-amount">{{ grandTotal | number:'1.0-0' }}đ</span>
+      <button class="btn-primary-cta order-cta" [disabled]="!canProceed" (click)="proceedToCheckout()">
+        {{ 'booking.tickets.continueCta' | translate }}
+      </button>
     </div>
   </div>
 </div>

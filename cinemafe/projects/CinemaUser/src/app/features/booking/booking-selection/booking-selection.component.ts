@@ -1,16 +1,22 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService } from 'CinemaLib';
+import { Store } from '@ngrx/store';
+import { Subscription, take } from 'rxjs';
+import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, selectIsAuthenticated } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
-import { BookingCheckoutState } from '../booking-checkout/booking-checkout.state';
+import { BookingCheckoutState, stashPendingCheckout } from '../booking-checkout/booking-checkout.state';
 
-type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean; isSelectable?: boolean };
+type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean; isSelectable?: boolean; isAllowedForPatronCategory?: boolean };
+type ShowTimePriceDTO = PaymentServiceAgent.ShowTimePriceDTO;
 
-/** One ticket the customer is buying: a category and, once a seat is picked for it, that seat's id. */
+/** One ticket the customer is buying: a specific (patron category, seat kind) row — each row already
+ * has its own PatronCategory id, so a slot's kind is fixed at creation time, never resolved later.
+ * A Double seat is one bookable unit priced once (quantity 1 = one couple seat), but is still two
+ * physical Seat rows sharing a group id — `seatIds` holds both once filled, one for a Standard slot. */
 interface TicketSlot {
-  categoryId: string;
-  seatId: string | null;
+  patronCategoryId: string;
+  isDouble: boolean;
+  seatIds: string[];
 }
 
 /**
@@ -46,6 +52,9 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   selectedSeats: SelectableSeat[] = [];
   loadingSeats = true;
   SeatStatus = PaymentServiceAgent.SeatStatus;
+  readonly seatKindLabel = seatKindLabel;
+  /** Name of the room being booked, shown in the order bar when no embedded header label is supplied. */
+  roomName = '';
   private _theaterId = '';
   /** Which showTimeId/roomId the currently-loaded seats/locks belong to — distinct from the
    * @Input values, which Angular has already updated to the NEW target by the time a switch away
@@ -70,13 +79,31 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   private _seatLockedAt: Record<string, number> = {};
   private _holdTimer: any;
 
-  /** Patron categories (Adult/Student/Senior/Child) available at this theater, and the quantity
-   * chosen per category. Quantities build `slots` — one entry per ticket, in category-declared
-   * order — each of which is filled by exactly one seat click. */
-  patronCategories: CinemaServiceAgent.PatronCategoryDTO[] = [];
+  /** The resolved price list for this showtime+room: one row per (patron category, seat kind)
+   * combination actually bookable here (all pricing factors already applied server-side). Each row
+   * already carries its own PatronCategory id (Standard and Double are separate PatronCategory rows),
+   * so each is shown as its own independent ticket-type card — never merged. Quantities build
+   * `slots` — one entry per ticket, in category-declared order — each filled by exactly one seat
+   * click. */
+  showTimePrices: ShowTimePriceDTO[] = [];
   ticketQty: Record<string, number> = {};
   slots: TicketSlot[] = [];
   categoryWarning = '';
+
+  /** Ticket-type cards, grouped by category name then Standard-before-Double, purely for a stable,
+   * readable display order — each row is still its own independent card/quantity. */
+  get priceRows(): ShowTimePriceDTO[] {
+    return [...this.showTimePrices].sort((a, b) =>
+      (a.patronCategoryName ?? '').localeCompare(b.patronCategoryName ?? '') || (a.isDouble ? 1 : 0) - (b.isDouble ? 1 : 0));
+  }
+
+  canIncrement(row: ShowTimePriceDTO): boolean {
+    return this.totalTickets < this.maxTickets;
+  }
+
+  private _rowFor(patronCategoryId: string): ShowTimePriceDTO | undefined {
+    return this.showTimePrices.find(r => r.patronCategoryId === patronCategoryId);
+  }
 
   foods: CinemaServiceAgent.FoodAndDrinkDTO[] = [];
   foodQty: Record<string, number> = {};
@@ -88,6 +115,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     private _router: Router,
+    private _store: Store,
     private _paymentService: PaymentServiceAgent.HttpService,
     private _cinemaService: CinemaServiceAgent.HttpService,
     private _hub: BookingHubService,
@@ -112,31 +140,49 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   get remainingTickets(): number {
-    return this.slots.filter(s => s.seatId === null).length;
+    return this.slots.filter(s => s.seatIds.length === 0).length;
   }
 
   get canProceed(): boolean {
     return this.totalTickets > 0 && this.remainingTickets === 0;
   }
 
-  categoryForSeat(seatId: string): CinemaServiceAgent.PatronCategoryDTO | undefined {
-    const slot = this.slots.find(sl => sl.seatId === seatId);
+/** The (patron category × seat kind) row pricing the given seat, once a slot has claimed it. */
+  categoryForSeat(seatId: string): ShowTimePriceDTO | undefined {
+    const slot = this.slots.find(sl => sl.seatIds.includes(seatId));
     if (!slot) {
       return undefined;
     }
-    return this.patronCategories.find(c => c.id === slot.categoryId);
+    return this._rowFor(slot.patronCategoryId);
   }
 
-  /** This seat's price after its assigned category's discount — mirrors the server's
-   * ApplyPatronDiscount (percent off, floored at 0, rounded to 2dp). */
+  /** The server-resolved final price for this seat once a category has claimed it. A Double seat's
+   * row price is for the whole couple seat, split across its two physical halves so they sum to the
+   * single price the customer was quoted for one seat. Falls back to the seat's own "from" price
+   * when nothing has claimed it yet (shouldn't normally be displayed). */
   seatPrice(seat: SelectableSeat): number {
-    const base = seat.price ?? 0;
-    const pct = this.categoryForSeat(seat.id!)?.discountPercent ?? 0;
-    return Math.round(Math.max(0, base * (1 - pct / 100)) * 100) / 100;
+    const price = this.categoryForSeat(seat.id!)?.price ?? seat.price ?? 0;
+    return seat.isDouble ? price / 2 : price;
   }
 
   get totalPrice(): number {
     return this.selectedSeats.reduce((sum, s) => sum + this.seatPrice(s), 0);
+  }
+
+  /** One row per purchased ticket (not per physical seat) for the sidebar: a Double ticket combines
+   * its two seats into a single line at the whole-seat price, avoiding a misleading "half price"
+   * display split across two lines. */
+  get selectedTickets(): { label: string; isDouble: boolean; categoryName: string; price: number }[] {
+    return this.slots
+      .filter(sl => sl.seatIds.length > 0)
+      .map(sl => {
+        const seats = sl.seatIds
+          .map(id => this.seats.find(s => s.id === id))
+          .filter((s): s is SelectableSeat => !!s);
+        const label = seats.map(s => `${s.rowName}${s.colIndex}`).join('-');
+        const row = this._rowFor(sl.patronCategoryId);
+        return { label, isDouble: sl.isDouble, categoryName: row?.patronCategoryName ?? '', price: row?.price ?? 0 };
+      });
   }
 
   get foodTotal(): number {
@@ -243,13 +289,14 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this.selectedSeats = [];
     this.slots = [];
     this.ticketQty = {};
-    this.patronCategories = [];
+    this.showTimePrices = [];
     this.foods = [];
     this.foodQty = {};
     this._foodImgFailed.clear();
     this.categoryWarning = '';
     this._seatLockedAt = {};
     this._theaterId = '';
+    this.roomName = '';
     this.loadingSeats = true;
     if (this._holdTimer) {
       clearInterval(this._holdTimer);
@@ -288,6 +335,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       this._cinemaService.getRoom(this.roomId).subscribe({
         next: room => {
           if (seq !== this._loadSeq) { return; }
+          this.roomName = room?.name ?? '';
+          this._cdr.markForCheck();
           if (!room?.theaterId) { return; }
           this._theaterId = room.theaterId;
           this._cinemaService.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS(
@@ -295,16 +344,6 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
             .subscribe(r => {
               if (seq !== this._loadSeq) { return; }
               this.foods = (r.results ?? []).filter(f => f.isAvailable);
-              this._cdr.markForCheck();
-            });
-          this._cinemaService.getPatronCategories(CinemaServiceAgent.PagingSearchDTO.fromJS(
-            { pageIndex: 1, pageSize: 100, filters: { theaterId: room.theaterId, isActive: 'true' } }))
-            .subscribe(r => {
-              if (seq !== this._loadSeq) { return; }
-              this.patronCategories = (r.results ?? []).slice().sort((a, b) => (a.discountPercent ?? 0) - (b.discountPercent ?? 0));
-              for (const c of this.patronCategories) {
-                this.ticketQty[c.id!] = 0;
-              }
               this._cdr.markForCheck();
             });
         },
@@ -315,71 +354,72 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       });
     }
 
+    this._paymentService.getShowTimePrices(this.showTimeId, this.roomId).subscribe({
+      next: rows => {
+        if (seq !== this._loadSeq) { return; }
+        this.showTimePrices = rows ?? [];
+        for (const row of this.showTimePrices) {
+          this.ticketQty[row.patronCategoryId!] = 0;
+        }
+        this._cdr.markForCheck();
+      },
+      error: () => {
+        if (seq !== this._loadSeq) { return; }
+        this._cdr.markForCheck();
+      },
+    });
+
     this._hub.startConnection(this.showTimeId, this.roomId).catch(() => { /* degrade to non-realtime */ });
   }
 
-  incTicket(c: CinemaServiceAgent.PatronCategoryDTO): void {
-    this.setTicketQty(c.id!, (this.ticketQty[c.id!] ?? 0) + 1);
+  incTicket(row: ShowTimePriceDTO): void {
+    this.setTicketQty(row.patronCategoryId!, (this.ticketQty[row.patronCategoryId!] ?? 0) + 1, !!row.isDouble);
   }
 
-  decTicket(c: CinemaServiceAgent.PatronCategoryDTO): void {
-    this.setTicketQty(c.id!, Math.max(0, (this.ticketQty[c.id!] ?? 0) - 1));
+  decTicket(row: ShowTimePriceDTO): void {
+    this.setTicketQty(row.patronCategoryId!, Math.max(0, (this.ticketQty[row.patronCategoryId!] ?? 0) - 1), !!row.isDouble);
   }
 
-  setTicketQty(categoryId: string, qty: number): void {
-    const prev = this.ticketQty[categoryId] ?? 0;
+  setTicketQty(patronCategoryId: string, qty: number, isDouble: boolean): void {
+    const prev = this.ticketQty[patronCategoryId] ?? 0;
     const otherTotal = this.slots.length - prev;
     const clamped = Math.max(0, Math.min(qty, BookingSelectionComponent.MAX_TICKETS - otherTotal));
     if (clamped === prev) {
       return;
     }
-    this.ticketQty[categoryId] = clamped;
+    this.ticketQty[patronCategoryId] = clamped;
 
     if (clamped > prev) {
       for (let i = prev; i < clamped; i++) {
-        this.slots.push({ categoryId, seatId: null });
+        this.slots.push({ patronCategoryId, isDouble, seatIds: [] });
       }
       this.categoryWarning = '';
     } else {
       const diff = prev - clamped;
       const forThisCategory = this.slots
         .map((slot, index) => ({ slot, index }))
-        .filter(x => x.slot.categoryId === categoryId);
+        .filter(x => x.slot.patronCategoryId === patronCategoryId);
       // Free (unassigned) slots go first; assigned slots are freed last-declared-first.
       const removable = [
-        ...forThisCategory.filter(x => x.slot.seatId === null).map(x => x.index),
-        ...forThisCategory.filter(x => x.slot.seatId !== null).map(x => x.index).reverse(),
+        ...forThisCategory.filter(x => x.slot.seatIds.length === 0).map(x => x.index),
+        ...forThisCategory.filter(x => x.slot.seatIds.length > 0).map(x => x.index).reverse(),
       ].slice(0, diff);
 
-      // Release each removed slot's seat AND its double-seat partner (if any) together — a group is
-      // always fully selected or fully unselected, same as toggleSeat enforces on selection. The
-      // partner's own slot is freed (seatId set back to null) wherever it lives, even if that's a
-      // different category's slot; only THIS category's slots are actually spliced out below.
+      // A slot already holds every physical seat of its group (both halves of a double, filled
+      // together by toggleSeat), so releasing it needs no separate partner lookup.
       const removedLabels: string[] = [];
-      const releasedSeatIds = new Set<string>();
       for (const index of removable) {
         const slot = this.slots[index];
-        if (!slot.seatId) {
-          continue;
-        }
-        const seat = this.seats.find(s => s.id === slot.seatId);
-        if (!seat) {
-          continue;
-        }
-        for (const s of this._groupOf(seat)) {
-          if (releasedSeatIds.has(s.id!)) {
+        for (const seatId of slot.seatIds) {
+          const seat = this.seats.find(s => s.id === seatId);
+          if (!seat) {
             continue;
           }
-          releasedSeatIds.add(s.id!);
-          s.isSelected = false;
-          this.selectedSeats = this.selectedSeats.filter(x => x.id !== s.id);
-          delete this._seatLockedAt[s.id!];
-          this._hub.unlockSeat(this.showTimeId, this.roomId, s.id!).catch(() => {});
-          removedLabels.push(`${s.rowName}${s.colIndex}`);
-          const holdingSlot = this.slots.find(sl => sl.seatId === s.id);
-          if (holdingSlot) {
-            holdingSlot.seatId = null;
-          }
+          seat.isSelected = false;
+          this.selectedSeats = this.selectedSeats.filter(x => x.id !== seatId);
+          delete this._seatLockedAt[seatId];
+          this._hub.unlockSeat(this.showTimeId, this.roomId, seatId).catch(() => {});
+          removedLabels.push(`${seat.rowName}${seat.colIndex}`);
         }
       }
       for (const index of [...removable].sort((a, b) => b - a)) {
@@ -395,47 +435,22 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this._refreshHoldTimer();
   }
 
-  /** True iff this category's allow-list (empty = unrestricted) permits the given seat type. */
-  private _categoryAllows(categoryId: string, seatTypeId: string): boolean {
-    const category = this.patronCategories.find(c => c.id === categoryId);
-    const allowed = category?.allowedSeatTypeIds ?? [];
-    return allowed.length === 0 || allowed.includes(seatTypeId);
+  /** Picks the first free slot of this seat kind. Returns -1 when no free slot has this kind (either
+   * no ticket of this kind was chosen at all, or they're all already filled). */
+  private _bestSlotFor(isDouble: boolean): number {
+    return this.slots.findIndex(slot => slot.seatIds.length === 0 && slot.isDouble === isDouble);
   }
 
-  /** Picks the best free slot for a seat of this type: the most-constrained matching category
-   * (narrowest allow-list) first, so a restricted slot is never left unfilled in favor of an
-   * unrestricted one. Returns -1 when no free slot's category allows this seat type. */
-  private _bestSlotFor(seatTypeId: string, exclude: Set<number>): number {
-    let bestIndex = -1;
-    let bestRank = Infinity;
-    this.slots.forEach((slot, index) => {
-      if (slot.seatId !== null || exclude.has(index)) {
-        return;
-      }
-      if (!this._categoryAllows(slot.categoryId, seatTypeId)) {
-        return;
-      }
-      const category = this.patronCategories.find(c => c.id === slot.categoryId);
-      const allowedLen = category?.allowedSeatTypeIds?.length ?? 0;
-      const rank = allowedLen === 0 ? Infinity : allowedLen;
-      if (bestIndex === -1 || rank < bestRank) {
-        bestRank = rank;
-        bestIndex = index;
-      }
-    });
-    return bestIndex;
-  }
-
-  /** Recomputes each seat's isAllowedForPatronCategory (does ANY chosen ticket's category allow
-   * this seat type at all) and isSelectable (is there currently a FREE slot for it). */
+  /** Recomputes each seat's isAllowedForPatronCategory (is there a chosen ticket of this seat's kind
+   * at all) and isSelectable (is there currently a FREE slot for it). */
   private _applyGate(): void {
     if (this.seats.length === 0) {
       return;
     }
     for (const seat of this.seats) {
-      const seatTypeId = seat.seatTypeId!;
-      const allowedByAny = this.slots.length === 0 || this.slots.some(sl => this._categoryAllows(sl.categoryId, seatTypeId));
-      const hasFreeMatch = this.slots.some(sl => sl.seatId === null && this._categoryAllows(sl.categoryId, seatTypeId));
+      const isDouble = !!seat.isDouble;
+      const allowedByAny = this.slots.length === 0 || this.slots.some(sl => sl.isDouble === isDouble);
+      const hasFreeMatch = this.slots.some(sl => sl.seatIds.length === 0 && sl.isDouble === isDouble);
       seat.isAllowedForPatronCategory = allowedByAny;
       seat.isSelectable = seat.status === PaymentServiceAgent.SeatStatus.Available && !seat.isLocked && allowedByAny && (!!seat.isSelected || hasFreeMatch);
     }
@@ -446,7 +461,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     if (!seat.isSelected && seat.isSelectable === false) {
       return;
     }
-    // Double seats are two linked seats sharing a group id — select/lock them together.
+    // Double seats are two linked seats sharing a group id — select/lock them together, as one
+    // ticket (one slot), since a couple seat is priced and counted as a single bookable unit.
     const group = this._groupOf(seat);
     if (group.some(s => s.status === PaymentServiceAgent.SeatStatus.Occupied || s.isLocked)) {
       return;
@@ -454,22 +470,14 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
 
     const select = !seat.isSelected;
     if (select) {
-      const claimed = new Set<number>();
-      const assignments: { seat: SelectableSeat; slotIndex: number }[] = [];
-      for (const s of group) {
-        const slotIndex = this._bestSlotFor(s.seatTypeId!, claimed);
-        if (slotIndex === -1) {
-          this.categoryWarning = this._translate.instant(
-            group.length > 1 ? 'booking.tickets.notEnoughForDouble' : 'booking.tickets.capReached'
-          );
-          this._cdr.markForCheck();
-          return;
-        }
-        claimed.add(slotIndex);
-        assignments.push({ seat: s, slotIndex });
+      const slotIndex = this._bestSlotFor(!!seat.isDouble);
+      if (slotIndex === -1) {
+        this.categoryWarning = this._translate.instant('booking.tickets.capReached');
+        this._cdr.markForCheck();
+        return;
       }
-      for (const { seat: s, slotIndex } of assignments) {
-        this.slots[slotIndex].seatId = s.id!;
+      this.slots[slotIndex].seatIds = group.map(s => s.id!);
+      for (const s of group) {
         s.isSelected = true;
         if (!this.selectedSeats.includes(s)) {
           this.selectedSeats.push(s);
@@ -479,11 +487,11 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       }
       this.categoryWarning = '';
     } else {
+      const slot = this.slots.find(sl => sl.seatIds.includes(seat.id!));
+      if (slot) {
+        slot.seatIds = [];
+      }
       for (const s of group) {
-        const slot = this.slots.find(sl => sl.seatId === s.id);
-        if (slot) {
-          slot.seatId = null;
-        }
         s.isSelected = false;
         this.selectedSeats = this.selectedSeats.filter(x => x.id !== s.id);
         delete this._seatLockedAt[s.id!];
@@ -546,18 +554,30 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     return group;
   }
 
+  /** Releases the ticket slot holding this seat, if any — frees the WHOLE slot (both halves of a
+   * double), since a couple seat is always fully selected or fully unselected together. */
+  private _releaseSlotFor(seatId: string): void {
+    const slot = this.slots.find(sl => sl.seatIds.includes(seatId));
+    if (!slot) {
+      return;
+    }
+    for (const id of slot.seatIds) {
+      const seat = this.seats.find(s => s.id === id);
+      if (seat) {
+        seat.isSelected = false;
+      }
+      this.selectedSeats = this.selectedSeats.filter(s => s.id !== id);
+      delete this._seatLockedAt[id];
+    }
+    slot.seatIds = [];
+  }
+
   private _setLocked(seatId: string, locked: boolean): void {
     const seat = this.seats.find(s => s.id === seatId);
     if (!seat) { return; }
     seat.isLocked = locked;
     if (locked && seat.isSelected) {
-      seat.isSelected = false;
-      this.selectedSeats = this.selectedSeats.filter(s => s.id !== seatId);
-      delete this._seatLockedAt[seatId];
-      const slot = this.slots.find(sl => sl.seatId === seatId);
-      if (slot) {
-        slot.seatId = null;
-      }
+      this._releaseSlotFor(seatId);
     }
     this._applyGate();
     this._refreshHoldTimer();
@@ -570,13 +590,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       seat.status = PaymentServiceAgent.SeatStatus.Occupied;
       seat.isLocked = false;
       seat.isSelected = false;
-      delete this._seatLockedAt[seatId];
-      const slot = this.slots.find(sl => sl.seatId === seatId);
-      if (slot) {
-        slot.seatId = null;
-      }
+      this._releaseSlotFor(seatId);
     }
-    this.selectedSeats = this.selectedSeats.filter(s => !seatIds.includes(s.id!));
     this._applyGate();
     this._refreshHoldTimer();
   }
@@ -609,7 +624,6 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     if (!this.canProceed) {
       return;
     }
-    this._navigatingToCheckout = true;
     const state: BookingCheckoutState = {
       showTimeId: this.showTimeId,
       roomId: this.roomId,
@@ -618,12 +632,12 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         return {
           seatId: s.id!,
           label: `${s.rowName}${s.colIndex}`,
-          seatTypeName: s.seatTypeName ?? '',
+          seatKind: s.isDouble ? 'Double' : 'Standard',
           basePrice: s.price ?? 0,
           price: this.seatPrice(s),
-          patronCategoryId: category?.id ?? '',
-          patronCategoryName: category?.name ?? '',
-          discountPercent: category?.discountPercent ?? 0,
+          patronCategoryId: category?.patronCategoryId ?? '',
+          patronCategoryName: category?.patronCategoryName ?? '',
+          seatGroupId: s.seatGroupId ?? undefined,
         };
       }),
       foods: this.selectedFoods.map(f => ({
@@ -633,10 +647,21 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         quantity: this.foodQty[f.id!] ?? 0,
       })),
     };
-    this._router.navigate(['/booking/checkout'], { state, queryParams: { showTimeId: this.showTimeId, roomId: this.roomId } })
-      .then(
-        ok => { if (!ok) { this._navigatingToCheckout = false; } },
-        () => { this._navigatingToCheckout = false; },
-      );
+    this._store.select(selectIsAuthenticated).pipe(take(1)).subscribe(isAuthenticated => {
+      const queryParams = { showTimeId: this.showTimeId, roomId: this.roomId };
+      if (!isAuthenticated) {
+        // Park the order, log in, then resume at checkout (it reads the parked order back).
+        stashPendingCheckout(state);
+        const returnUrl = this._router.serializeUrl(this._router.createUrlTree(['/booking/checkout'], { queryParams }));
+        this._router.navigate(['/auth/login'], { queryParams: { returnUrl } });
+        return;
+      }
+      this._navigatingToCheckout = true;
+      this._router.navigate(['/booking/checkout'], { state, queryParams })
+        .then(
+          ok => { if (!ok) { this._navigatingToCheckout = false; } },
+          () => { this._navigatingToCheckout = false; },
+        );
+    });
   }
 }

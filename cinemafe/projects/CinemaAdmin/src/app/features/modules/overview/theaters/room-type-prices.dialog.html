@@ -1,0 +1,54 @@
+<div mat-dialog-title class="dialog-title">
+  {{ 'theaters.roomTypePrices.title' | translate }} · {{ roomType.name }}
+  <p class="ad-sub">{{ 'theaters.roomTypePrices.subtitle' | translate }}</p>
+</div>
+
+<mat-dialog-content>
+  <p class="ad-sub">{{ 'theaters.roomTypePrices.restrictionWarning' | translate }}</p>
+  <div class="ad-warning-banner" *ngIf="hasNoIncluded">
+    <mat-icon>warning</mat-icon>
+    <span>{{ 'theaters.roomTypePrices.noneIncludedWarning' | translate }}</span>
+  </div>
+
+  <div *ngIf="loading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'common.loading' | translate }}</p></div>
+
+  <ng-container *ngIf="!loading">
+    <div class="rtp-add-bar">
+      <button mat-stroked-button type="button" [matMenuTriggerFor]="addMenu" [disabled]="!availableToAdd.length">
+        <mat-icon>add</mat-icon> {{ 'theaters.roomTypePrices.addCategory' | translate }}
+      </button>
+      <mat-menu #addMenu="matMenu">
+        <button mat-menu-item type="button" *ngFor="let c of availableToAdd" (click)="addCategory(c.patronCategoryId)">
+          {{ c.patronCategoryName }}
+        </button>
+      </mat-menu>
+    </div>
+
+    <div *ngIf="!includedRows.length" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.roomTypePrices.empty' | translate }}</p></div>
+
+    <div class="rtp-item" *ngFor="let row of includedRows">
+      <div class="rtp-item-name">
+        <div>{{ row.patronCategoryName }}</div>
+        <p class="ad-sub">{{ 'theaters.roomTypePrices.theaterPrice' | translate }}: {{ row.defaultPrice | number:'1.0-0' }}đ</p>
+      </div>
+      <mat-form-field class="rtp-item-price" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" step="1000" min="0" [(ngModel)]="row.price" [placeholder]="'theaters.roomTypePrices.overrideLabel' | translate">
+        <span matTextSuffix>đ</span>
+      </mat-form-field>
+      <button mat-icon-button type="button" (click)="removeCategory(row)" [matTooltip]="'theaters.roomTypePrices.removeCategory' | translate">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </ng-container>
+</mat-dialog-content>
+
+<div mat-dialog-actions class="dialog-actions">
+  <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+  <button mat-raised-button color="primary" type="button" [disabled]="saving || loading" (click)="save()">
+    {{ saving ? ('theaters.rooms.saving' | translate) : ('common.save' | translate) }}
+  </button>
+</div>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

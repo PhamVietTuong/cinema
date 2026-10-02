@@ -43,7 +43,6 @@
   &.occupied { opacity: 0.35; }
   &.editable { cursor: pointer; }
   &.paired { border-style: dashed; border-color: var(--ad-primary); }
-  &.pending { outline: 2px solid var(--ad-primary); outline-offset: 1px; }
 
   .pair-badge {
     position: absolute;
@@ -60,6 +59,7 @@
 }
 .grid-resize-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .seatmap-toolbar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
+.seatmap-error { color: var(--ml-warn-ink); }
 .palette { display: flex; flex-wrap: wrap; gap: 8px; }
 .palette-chip {
   display: inline-flex; align-items: center; gap: 7px;

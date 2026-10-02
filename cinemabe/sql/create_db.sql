@@ -1,7 +1,77 @@
-﻿-- ============================================================
+-- ============================================================
 -- create_db.sql  --  Fresh database creation
 -- Run this on a new SQL Server instance to set up Cinema DB
+-- Tables are ordered so every FK references a table already created above it
+-- (no deferred ALTER TABLE block needed).
 -- ============================================================
+
+-- ── Drop existing tables (idempotent re-run) ──────────────────────────────────
+-- Reverse of the creation order below, so every table is dropped before any
+-- table it references (FK target) — otherwise SQL Server refuses the drop.
+IF OBJECT_ID('dbo.__EFMigrationsHistory', 'U') IS NOT NULL
+DROP TABLE dbo.__EFMigrationsHistory;
+IF OBJECT_ID('dbo.GiftCard', 'U') IS NOT NULL
+DROP TABLE dbo.GiftCard;
+IF OBJECT_ID('dbo.ReminderLog', 'U') IS NOT NULL
+DROP TABLE dbo.ReminderLog;
+IF OBJECT_ID('dbo.RoomTypePatronCategoryPrice', 'U') IS NOT NULL
+DROP TABLE dbo.RoomTypePatronCategoryPrice;
+IF OBJECT_ID('dbo.TicketPrice', 'U') IS NOT NULL
+DROP TABLE dbo.TicketPrice;
+IF OBJECT_ID('dbo.TimeSlot', 'U') IS NOT NULL
+DROP TABLE dbo.TimeSlot;
+IF OBJECT_ID('dbo.InvoiceTicket', 'U') IS NOT NULL
+DROP TABLE dbo.InvoiceTicket;
+IF OBJECT_ID('dbo.InvoiceFoodAndDrink', 'U') IS NOT NULL
+DROP TABLE dbo.InvoiceFoodAndDrink;
+IF OBJECT_ID('dbo.ShowTimeRoom', 'U') IS NOT NULL
+DROP TABLE dbo.ShowTimeRoom;
+IF OBJECT_ID('dbo.Invoice', 'U') IS NOT NULL
+DROP TABLE dbo.Invoice;
+IF OBJECT_ID('dbo.Evaluation', 'U') IS NOT NULL
+DROP TABLE dbo.Evaluation;
+IF OBJECT_ID('dbo.Comment', 'U') IS NOT NULL
+DROP TABLE dbo.Comment;
+IF OBJECT_ID('dbo.Seat', 'U') IS NOT NULL
+DROP TABLE dbo.Seat;
+IF OBJECT_ID('dbo.ShowTime', 'U') IS NOT NULL
+DROP TABLE dbo.ShowTime;
+IF OBJECT_ID('dbo.MovieTypeDetail', 'U') IS NOT NULL
+DROP TABLE dbo.MovieTypeDetail;
+IF OBJECT_ID('dbo.User', 'U') IS NOT NULL
+DROP TABLE dbo.[User];
+IF OBJECT_ID('dbo.Room', 'U') IS NOT NULL
+DROP TABLE dbo.Room;
+IF OBJECT_ID('dbo.DiscountTheater', 'U') IS NOT NULL
+DROP TABLE dbo.DiscountTheater;
+IF OBJECT_ID('dbo.Discount', 'U') IS NOT NULL
+DROP TABLE dbo.Discount;
+IF OBJECT_ID('dbo.Movie', 'U') IS NOT NULL
+DROP TABLE dbo.Movie;
+IF OBJECT_ID('dbo.FoodAndDrink', 'U') IS NOT NULL
+DROP TABLE dbo.FoodAndDrink;
+IF OBJECT_ID('dbo.PatronCategory', 'U') IS NOT NULL
+DROP TABLE dbo.PatronCategory;
+IF OBJECT_ID('dbo.SeatType', 'U') IS NOT NULL
+DROP TABLE dbo.SeatType;
+IF OBJECT_ID('dbo.RoomType', 'U') IS NOT NULL
+DROP TABLE dbo.RoomType;
+IF OBJECT_ID('dbo.Theater', 'U') IS NOT NULL
+DROP TABLE dbo.Theater;
+IF OBJECT_ID('dbo.UserType', 'U') IS NOT NULL
+DROP TABLE dbo.UserType;
+IF OBJECT_ID('dbo.News', 'U') IS NOT NULL
+DROP TABLE dbo.News;
+IF OBJECT_ID('dbo.MovieType', 'U') IS NOT NULL
+DROP TABLE dbo.MovieType;
+IF OBJECT_ID('dbo.MemberShip', 'U') IS NOT NULL
+DROP TABLE dbo.MemberShip;
+IF OBJECT_ID('dbo.Holiday', 'U') IS NOT NULL
+DROP TABLE dbo.Holiday;
+IF OBJECT_ID('dbo.DiscountType', 'U') IS NOT NULL
+DROP TABLE dbo.DiscountType;
+IF OBJECT_ID('dbo.AgeRestriction', 'U') IS NOT NULL
+DROP TABLE dbo.AgeRestriction;
 
 CREATE TABLE [AgeRestriction] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
@@ -19,19 +89,6 @@ CREATE TABLE [DiscountType] (
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_DiscountType] PRIMARY KEY ([Id])
-);
-
-CREATE TABLE [FoodAndDrink] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [Name] nvarchar(200) NOT NULL,
-    [Price] float NOT NULL,
-    [ImageUrl] nvarchar(max) NULL,
-    [Description] nvarchar(max) NULL,
-    [IsAvailable] bit NOT NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_FoodAndDrink] PRIMARY KEY ([Id])
 );
 
 CREATE TABLE [Holiday] (
@@ -76,29 +133,12 @@ CREATE TABLE [News] (
     CONSTRAINT [PK_News] PRIMARY KEY ([Id])
 );
 
-CREATE TABLE [SeatType] (
+CREATE TABLE [UserType] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [Name] nvarchar(100) NOT NULL,
-    [Description] nvarchar(max) NULL,
-    [Color] nvarchar(max) NOT NULL,
-    [PriceMultiplier] float NOT NULL DEFAULT 1,
+    [Name] nvarchar(max) NOT NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_SeatType] PRIMARY KEY ([Id])
-);
-
--- Per-theater patron pricing category (Adult/Student/Senior/Child), chosen per seat at checkout.
-CREATE TABLE [PatronCategory] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [Name] nvarchar(100) NOT NULL,
-    [Description] nvarchar(max) NULL,
-    [DiscountPercent] float NOT NULL DEFAULT 0,
-    [IsActive] bit NOT NULL DEFAULT 1,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_PatronCategory] PRIMARY KEY ([Id])
+    CONSTRAINT [PK_UserType] PRIMARY KEY ([Id])
 );
 
 CREATE TABLE [Theater] (
@@ -136,12 +176,54 @@ CREATE TABLE [RoomType] (
     CONSTRAINT [FK_RoomType_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
 );
 
-CREATE TABLE [UserType] (
+-- Exactly 2 rows per theater (Standard, Double), seeded on theater creation. Kind is the machine-
+-- readable identity (never match on Name, which is display text an admin can rename); no pricing
+-- lives here anymore — PatronCategory owns the per-seat-kind price.
+CREATE TABLE [SeatType] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [Name] nvarchar(max) NOT NULL,
+    [TheaterId] uniqueidentifier NOT NULL,
+    [Kind] int NOT NULL DEFAULT 0,
+    [Name] nvarchar(100) NOT NULL,
+    [Description] nvarchar(max) NULL,
+    [Color] nvarchar(max) NOT NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_UserType] PRIMARY KEY ([Id])
+    CONSTRAINT [PK_SeatType] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_SeatType_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
+);
+
+-- One row per (theater, logical category name, seat kind) — e.g. Adult/Standard and Adult/Double are
+-- two separate rows sharing the name "Adult". Price is absolute VND, independently configured per row
+-- (a Double row is NEVER computed as 2x Standard). Omitting a seat kind for a category means that
+-- category cannot book that kind at all — this is the entire eligibility rule, there is no separate
+-- allow-list table.
+CREATE TABLE [PatronCategory] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [SeatTypeId] uniqueidentifier NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [Description] nvarchar(max) NULL,
+    [Price] float NOT NULL DEFAULT 0,
+    [IsActive] bit NOT NULL DEFAULT 1,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_PatronCategory] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_PatronCategory_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_PatronCategory_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION
+);
+
+CREATE TABLE [FoodAndDrink] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Price] float NOT NULL,
+    [ImageUrl] nvarchar(max) NULL,
+    [Description] nvarchar(max) NULL,
+    [IsAvailable] bit NOT NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_FoodAndDrink] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
 );
 
 CREATE TABLE [Movie] (
@@ -273,19 +355,20 @@ CREATE TABLE [ShowTime] (
     CONSTRAINT [FK_ShowTime_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE CASCADE
 );
 
+-- A seat has no stored kind of its own: Standard vs Double is derived from SeatGroupId being set
+-- (a non-null group id always links exactly 2 seats). This avoids two places that could disagree
+-- about a seat's kind.
 CREATE TABLE [Seat] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [RoomId] uniqueidentifier NOT NULL,
     [RowName] nvarchar(5) NOT NULL,
     [ColIndex] int NOT NULL,
-    [SeatTypeId] uniqueidentifier NOT NULL,
     [IsActive] bit NOT NULL,
     [SeatGroupId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Seat] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Seat_Room_RoomId] FOREIGN KEY ([RoomId]) REFERENCES [Room] ([Id]) ON DELETE CASCADE,
-    CONSTRAINT [FK_Seat_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION
+    CONSTRAINT [FK_Seat_Room_RoomId] FOREIGN KEY ([RoomId]) REFERENCES [Room] ([Id]) ON DELETE CASCADE
 );
 
 CREATE TABLE [Comment] (
@@ -342,6 +425,9 @@ CREATE TABLE [Invoice] (
 CREATE TABLE [ShowTimeRoom] (
     [ShowTimeId] uniqueidentifier NOT NULL,
     [RoomId] uniqueidentifier NOT NULL,
+    -- Flat per-showtime surcharge added to every ticket (0 = none) — a manual admin lever per
+    -- title/showtime (e.g. a premium for a new release), NOT the seat's base price; PatronCategory
+    -- owns that.
     [BasePrice] float NOT NULL,
     CONSTRAINT [PK_ShowTimeRoom] PRIMARY KEY ([ShowTimeId], [RoomId]),
     CONSTRAINT [FK_ShowTimeRoom_Room_RoomId] FOREIGN KEY ([RoomId]) REFERENCES [Room] ([Id]) ON DELETE CASCADE,
@@ -391,42 +477,46 @@ CREATE TABLE [TimeSlot] (
     CONSTRAINT [FK_TimeSlot_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
 );
 
+-- A time-of-day/holiday pricing factor for (theater, room type, time slot, holiday?). Multiplies the
+-- resolved PatronCategory price — no seat-kind dimension here anymore, since PatronCategory now owns
+-- the per-seat-kind price absolutely.
 CREATE TABLE [TicketPrice] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [TheaterId] uniqueidentifier NOT NULL,
     [RoomTypeId] uniqueidentifier NOT NULL,
-    [SeatTypeId] uniqueidentifier NOT NULL,
     [TimeSlotId] uniqueidentifier NOT NULL,
     [IsHoliday] bit NOT NULL,
-    -- Factor applied to the showtime's BasePrice (mirrors SeatType.PriceMultiplier /
-    -- Holiday.PriceMultiplier) — not an absolute amount, so a movie-specific base price is
-    -- never undercut by a generic time-slot row.
     [PriceMultiplier] float NOT NULL DEFAULT 1,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_TicketPrice] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_TicketPrice_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE,
     CONSTRAINT [FK_TicketPrice_RoomType_RoomTypeId] FOREIGN KEY ([RoomTypeId]) REFERENCES [RoomType] ([Id]) ON DELETE NO ACTION,
-    CONSTRAINT [FK_TicketPrice_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION,
     CONSTRAINT [FK_TicketPrice_TimeSlot_TimeSlotId] FOREIGN KEY ([TimeSlotId]) REFERENCES [TimeSlot] ([Id]) ON DELETE NO ACTION
 );
 
--- Deferred FKs: SeatType and FoodAndDrink are created before Theater, so their
--- theater FK is added here once both tables exist.
-ALTER TABLE [SeatType]       ADD CONSTRAINT [FK_SeatType_Theater_TheaterId]       FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
-ALTER TABLE [FoodAndDrink]   ADD CONSTRAINT [FK_FoodAndDrink_Theater_TheaterId]   FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
-ALTER TABLE [PatronCategory] ADD CONSTRAINT [FK_PatronCategory_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE;
-
--- Gates which SeatTypes a PatronCategory may book. No rows for a category = unrestricted.
-CREATE TABLE [PatronCategorySeatType] (
+-- A RoomType's patron-category allow-list: a RoomType offers EXACTLY the categories that have a row
+-- here, at that row's Price. Zero rows means the RoomType offers nothing — there is no "unrestricted,
+-- falls back to the theater-wide default" state. (e.g. Room Type 1 = Adult Standard + Child Standard;
+-- Room Type 2 = Child Double + Child Standard + Senior Standard.) RoomTypeManager.CreateAsync seeds a
+-- new RoomType with one row per active theater-wide PatronCategory so it's bookable immediately; the
+-- admin then removes the ones that shouldn't be offered there.
+CREATE TABLE [RoomTypePatronCategoryPrice] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [RoomTypeId] uniqueidentifier NOT NULL,
     [PatronCategoryId] uniqueidentifier NOT NULL,
-    [SeatTypeId] uniqueidentifier NOT NULL,
-    CONSTRAINT [PK_PatronCategorySeatType] PRIMARY KEY ([PatronCategoryId], [SeatTypeId]),
-    CONSTRAINT [FK_PatronCategorySeatType_PatronCategory_PatronCategoryId] FOREIGN KEY ([PatronCategoryId]) REFERENCES [PatronCategory] ([Id]) ON DELETE CASCADE,
-    CONSTRAINT [FK_PatronCategorySeatType_SeatType_SeatTypeId] FOREIGN KEY ([SeatTypeId]) REFERENCES [SeatType] ([Id]) ON DELETE NO ACTION
+    [Price] float NOT NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_RoomTypePatronCategoryPrice] PRIMARY KEY ([Id]),
+    -- Both RoomType and PatronCategory already cascade from Theater, so only one leg here may cascade
+    -- (SQL Server rejects multiple cascade paths). PatronCategory cascades; RoomType deletes clean up
+    -- override rows explicitly (RoomTypeManager.DeleteAsync).
+    CONSTRAINT [FK_RoomTypePatronCategoryPrice_RoomType_RoomTypeId] FOREIGN KEY ([RoomTypeId]) REFERENCES [RoomType] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_RoomTypePatronCategoryPrice_PatronCategory_PatronCategoryId] FOREIGN KEY ([PatronCategoryId]) REFERENCES [PatronCategory] ([Id]) ON DELETE CASCADE
 );
 
--- Showtime reminders already sent (persists dedup across restarts).
+-- Showtime reminders already sent (persists dedup across restarts). No FKs — a purely transient log.
 CREATE TABLE [ReminderLog] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [UserId] uniqueidentifier NOT NULL,
@@ -475,16 +565,17 @@ CREATE INDEX [IX_Movie_AgeRestrictionId] ON [Movie] ([AgeRestrictionId]);
 CREATE INDEX [IX_MovieTypeDetail_MovieTypeId] ON [MovieTypeDetail] ([MovieTypeId]);
 CREATE INDEX [IX_Room_TheaterId] ON [Room] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_Seat_RoomId_RowName_ColIndex] ON [Seat] ([RoomId], [RowName], [ColIndex]);
-CREATE INDEX [IX_Seat_SeatTypeId] ON [Seat] ([SeatTypeId]);
 CREATE INDEX [IX_Seat_SeatGroupId] ON [Seat] ([SeatGroupId]);
-CREATE INDEX [IX_SeatType_TheaterId] ON [SeatType] ([TheaterId]);
+CREATE UNIQUE INDEX [IX_SeatType_TheaterId_Kind] ON [SeatType] ([TheaterId], [Kind]);
 CREATE INDEX [IX_PatronCategory_TheaterId] ON [PatronCategory] ([TheaterId]);
-CREATE INDEX [IX_PatronCategorySeatType_SeatTypeId] ON [PatronCategorySeatType] ([SeatTypeId]);
+CREATE INDEX [IX_PatronCategory_SeatTypeId] ON [PatronCategory] ([SeatTypeId]);
+CREATE UNIQUE INDEX [IX_PatronCategory_TheaterId_Name_SeatTypeId] ON [PatronCategory] ([TheaterId], [Name], [SeatTypeId]);
+CREATE INDEX [IX_RoomTypePatronCategoryPrice_PatronCategoryId] ON [RoomTypePatronCategoryPrice] ([PatronCategoryId]);
+CREATE UNIQUE INDEX [IX_RoomTypePatronCategoryPrice_RoomTypeId_PatronCategoryId] ON [RoomTypePatronCategoryPrice] ([RoomTypeId], [PatronCategoryId]);
 CREATE INDEX [IX_TimeSlot_TheaterId] ON [TimeSlot] ([TheaterId]);
 CREATE INDEX [IX_TicketPrice_RoomTypeId] ON [TicketPrice] ([RoomTypeId]);
-CREATE INDEX [IX_TicketPrice_SeatTypeId] ON [TicketPrice] ([SeatTypeId]);
 CREATE INDEX [IX_TicketPrice_TimeSlotId] ON [TicketPrice] ([TimeSlotId]);
-CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_SeatTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [RoomTypeId], [SeatTypeId], [TimeSlotId], [IsHoliday]);
+CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [RoomTypeId], [TimeSlotId], [IsHoliday]);
 CREATE INDEX [IX_RoomType_TheaterId] ON [RoomType] ([TheaterId]);
 CREATE INDEX [IX_Room_RoomTypeId] ON [Room] ([RoomTypeId]);
 CREATE INDEX [IX_ShowTimeRoom_RoomId] ON [ShowTimeRoom] ([RoomId]);
@@ -500,10 +591,10 @@ CREATE UNIQUE INDEX [IX_GiftCard_Code] ON [GiftCard] ([Code]);
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
--- The schema above is the exact shape produced by the InitialBaseline migration
--- (Cinema.Data/Migrations). Stamping the history table here marks this fresh database
--- as already migrated, so `dotnet ef database update` applies only later migrations
--- instead of trying to re-create everything.
+-- The schema above is intentionally maintained by hand (see CLAUDE.md: schema changes go into
+-- create_db.sql/upgrade_db.sql, never `dotnet ef migrations add`). Stamping the history table here
+-- marks this fresh database as already migrated, so `dotnet ef database update` applies only later
+-- migrations instead of trying to re-create everything.
 --
 -- Keep this row in sync with the InitialBaseline migration id if it is ever regenerated.
 

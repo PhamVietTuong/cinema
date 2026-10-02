@@ -30,4 +30,5 @@ public class RoomType : BaseEntity
     public int TurnoverBufferMinutes { get; set; }
 
     public ICollection<Room> Rooms { get; set; } = new List<Room>();
+    public ICollection<RoomTypePatronCategoryPrice> PatronCategoryPrices { get; set; } = new List<RoomTypePatronCategoryPrice>();
 }

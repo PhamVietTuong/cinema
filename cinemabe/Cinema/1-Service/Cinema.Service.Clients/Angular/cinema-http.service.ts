@@ -58,10 +58,9 @@ export interface IHttpService {
     deleteMovieType(id?: string | undefined): Observable<void>;
     getSeatTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSeatTypeDTO>;
     getSeatType(id?: string | undefined): Observable<SeatTypeDTO>;
-    createSeatType(request: CreateSeatTypeRequest): Observable<SeatTypeDTO>;
     updateSeatType(request: UpdateSeatTypeRequest): Observable<SeatTypeDTO>;
-    deleteSeatType(id?: string | undefined): Observable<void>;
     getPatronCategories(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPatronCategoryDTO>;
+    getPatronCategoriesByTheater(theaterId?: string | undefined): Observable<PatronCategoryDTO[]>;
     getPatronCategory(id?: string | undefined): Observable<PatronCategoryDTO>;
     createPatronCategory(request: CreatePatronCategoryRequest): Observable<PatronCategoryDTO>;
     updatePatronCategory(request: UpdatePatronCategoryRequest): Observable<PatronCategoryDTO>;
@@ -116,6 +115,8 @@ export interface IHttpService {
     createRoomType(request: CreateRoomTypeRequest): Observable<RoomTypeDTO>;
     updateRoomType(request: UpdateRoomTypeRequest): Observable<RoomTypeDTO>;
     deleteRoomType(id?: string | undefined): Observable<void>;
+    getRoomTypePatronCategoryPrices(roomTypeId?: string | undefined): Observable<RoomTypePatronCategoryPriceDTO[]>;
+    saveRoomTypePatronCategoryPrices(request: SaveRoomTypePatronCategoryPricesRequest): Observable<void>;
     getShowTimeList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeDTO>;
     getShowTime(id?: string | undefined): Observable<ShowTimeDTO>;
     createShowTime(request: CreateShowTimeRequest): Observable<ShowTimeDTO>;
@@ -2117,58 +2118,6 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
-    createSeatType(request: CreateSeatTypeRequest): Observable<SeatTypeDTO> {
-        let url_ = this.baseUrl + "/api/Cinema/CreateSeatType";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processCreateSeatType(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processCreateSeatType(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<SeatTypeDTO>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<SeatTypeDTO>;
-        }));
-    }
-
-    protected processCreateSeatType(response: HttpResponseBase): Observable<SeatTypeDTO> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = SeatTypeDTO.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
     updateSeatType(request: UpdateSeatTypeRequest): Observable<SeatTypeDTO> {
         let url_ = this.baseUrl + "/api/Cinema/UpdateSeatType";
         url_ = url_.replace(/[?&]$/, "");
@@ -2221,54 +2170,6 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
-    deleteSeatType(id?: string | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/Cinema/DeleteSeatType?";
-        if (id === null)
-            throw new Error("The parameter 'id' cannot be null.");
-        else if (id !== undefined)
-            url_ += "id=" + encodeURIComponent("" + id) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-            })
-        };
-
-        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processDeleteSeatType(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processDeleteSeatType(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processDeleteSeatType(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
     getPatronCategories(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPatronCategoryDTO> {
         let url_ = this.baseUrl + "/api/Cinema/GetPatronCategories";
         url_ = url_.replace(/[?&]$/, "");
@@ -2311,6 +2212,65 @@ export class HttpService implements IHttpService {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = DefaultSearchResultsOfPatronCategoryDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPatronCategoriesByTheater(theaterId?: string | undefined): Observable<PatronCategoryDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPatronCategoriesByTheater?";
+        if (theaterId === null)
+            throw new Error("The parameter 'theaterId' cannot be null.");
+        else if (theaterId !== undefined)
+            url_ += "theaterId=" + encodeURIComponent("" + theaterId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPatronCategoriesByTheater(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPatronCategoriesByTheater(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PatronCategoryDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PatronCategoryDTO[]>;
+        }));
+    }
+
+    protected processGetPatronCategoriesByTheater(response: HttpResponseBase): Observable<PatronCategoryDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(PatronCategoryDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -5067,6 +5027,113 @@ export class HttpService implements IHttpService {
     }
 
     protected processDeleteRoomType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getRoomTypePatronCategoryPrices(roomTypeId?: string | undefined): Observable<RoomTypePatronCategoryPriceDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/GetRoomTypePatronCategoryPrices?";
+        if (roomTypeId === null)
+            throw new Error("The parameter 'roomTypeId' cannot be null.");
+        else if (roomTypeId !== undefined)
+            url_ += "roomTypeId=" + encodeURIComponent("" + roomTypeId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRoomTypePatronCategoryPrices(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRoomTypePatronCategoryPrices(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomTypePatronCategoryPriceDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomTypePatronCategoryPriceDTO[]>;
+        }));
+    }
+
+    protected processGetRoomTypePatronCategoryPrices(response: HttpResponseBase): Observable<RoomTypePatronCategoryPriceDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(RoomTypePatronCategoryPriceDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    saveRoomTypePatronCategoryPrices(request: SaveRoomTypePatronCategoryPricesRequest): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/SaveRoomTypePatronCategoryPrices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSaveRoomTypePatronCategoryPrices(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSaveRoomTypePatronCategoryPrices(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSaveRoomTypePatronCategoryPrices(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -8115,10 +8182,10 @@ export interface IDefaultSearchResultsOfSeatTypeDTO extends IBaseSearchResultsOf
 export class SeatTypeDTO implements ISeatTypeDTO {
     id?: string;
     theaterId?: string;
+    kind?: SeatKind;
     name?: string;
     description?: string | undefined;
     color?: string;
-    priceMultiplier?: number;
 
     constructor(data?: ISeatTypeDTO) {
         if (data) {
@@ -8133,10 +8200,10 @@ export class SeatTypeDTO implements ISeatTypeDTO {
         if (_data) {
             this.id = _data["id"];
             this.theaterId = _data["theaterId"];
+            this.kind = _data["kind"];
             this.name = _data["name"];
             this.description = _data["description"];
             this.color = _data["color"];
-            this.priceMultiplier = _data["priceMultiplier"];
         }
     }
 
@@ -8151,10 +8218,10 @@ export class SeatTypeDTO implements ISeatTypeDTO {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["theaterId"] = this.theaterId;
+        data["kind"] = this.kind;
         data["name"] = this.name;
         data["description"] = this.description;
         data["color"] = this.color;
-        data["priceMultiplier"] = this.priceMultiplier;
         return data;
     }
 }
@@ -8162,62 +8229,15 @@ export class SeatTypeDTO implements ISeatTypeDTO {
 export interface ISeatTypeDTO {
     id?: string;
     theaterId?: string;
+    kind?: SeatKind;
     name?: string;
     description?: string | undefined;
     color?: string;
-    priceMultiplier?: number;
 }
 
-export class CreateSeatTypeRequest implements ICreateSeatTypeRequest {
-    theaterId?: string;
-    name?: string;
-    description?: string | undefined;
-    color?: string;
-    priceMultiplier?: number;
-
-    constructor(data?: ICreateSeatTypeRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.theaterId = _data["theaterId"];
-            this.name = _data["name"];
-            this.description = _data["description"];
-            this.color = _data["color"];
-            this.priceMultiplier = _data["priceMultiplier"];
-        }
-    }
-
-    static fromJS(data: any): CreateSeatTypeRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new CreateSeatTypeRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["theaterId"] = this.theaterId;
-        data["name"] = this.name;
-        data["description"] = this.description;
-        data["color"] = this.color;
-        data["priceMultiplier"] = this.priceMultiplier;
-        return data;
-    }
-}
-
-export interface ICreateSeatTypeRequest {
-    theaterId?: string;
-    name?: string;
-    description?: string | undefined;
-    color?: string;
-    priceMultiplier?: number;
+export enum SeatKind {
+    Standard = 0,
+    Double = 1,
 }
 
 export class UpdateSeatTypeRequest implements IUpdateSeatTypeRequest {
@@ -8226,7 +8246,6 @@ export class UpdateSeatTypeRequest implements IUpdateSeatTypeRequest {
     name?: string;
     description?: string | undefined;
     color?: string;
-    priceMultiplier?: number;
 
     constructor(data?: IUpdateSeatTypeRequest) {
         if (data) {
@@ -8244,7 +8263,6 @@ export class UpdateSeatTypeRequest implements IUpdateSeatTypeRequest {
             this.name = _data["name"];
             this.description = _data["description"];
             this.color = _data["color"];
-            this.priceMultiplier = _data["priceMultiplier"];
         }
     }
 
@@ -8262,7 +8280,6 @@ export class UpdateSeatTypeRequest implements IUpdateSeatTypeRequest {
         data["name"] = this.name;
         data["description"] = this.description;
         data["color"] = this.color;
-        data["priceMultiplier"] = this.priceMultiplier;
         return data;
     }
 }
@@ -8273,7 +8290,6 @@ export interface IUpdateSeatTypeRequest {
     name?: string;
     description?: string | undefined;
     color?: string;
-    priceMultiplier?: number;
 }
 
 export abstract class BaseSearchResultsOfPatronCategoryDTO implements IBaseSearchResultsOfPatronCategoryDTO {
@@ -8360,11 +8376,13 @@ export interface IDefaultSearchResultsOfPatronCategoryDTO extends IBaseSearchRes
 export class PatronCategoryDTO implements IPatronCategoryDTO {
     id?: string;
     theaterId?: string;
+    seatTypeId?: string;
+    seatTypeName?: string;
+    kind?: SeatKind;
     name?: string;
     description?: string | undefined;
-    discountPercent?: number;
+    price?: number;
     isActive?: boolean;
-    allowedSeatTypeIds?: string[];
 
     constructor(data?: IPatronCategoryDTO) {
         if (data) {
@@ -8379,15 +8397,13 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
         if (_data) {
             this.id = _data["id"];
             this.theaterId = _data["theaterId"];
+            this.seatTypeId = _data["seatTypeId"];
+            this.seatTypeName = _data["seatTypeName"];
+            this.kind = _data["kind"];
             this.name = _data["name"];
             this.description = _data["description"];
-            this.discountPercent = _data["discountPercent"];
+            this.price = _data["price"];
             this.isActive = _data["isActive"];
-            if (Array.isArray(_data["allowedSeatTypeIds"])) {
-                this.allowedSeatTypeIds = [] as any;
-                for (let item of _data["allowedSeatTypeIds"])
-                    this.allowedSeatTypeIds!.push(item);
-            }
         }
     }
 
@@ -8402,15 +8418,13 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["theaterId"] = this.theaterId;
+        data["seatTypeId"] = this.seatTypeId;
+        data["seatTypeName"] = this.seatTypeName;
+        data["kind"] = this.kind;
         data["name"] = this.name;
         data["description"] = this.description;
-        data["discountPercent"] = this.discountPercent;
+        data["price"] = this.price;
         data["isActive"] = this.isActive;
-        if (Array.isArray(this.allowedSeatTypeIds)) {
-            data["allowedSeatTypeIds"] = [];
-            for (let item of this.allowedSeatTypeIds)
-                data["allowedSeatTypeIds"].push(item);
-        }
         return data;
     }
 }
@@ -8418,20 +8432,22 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
 export interface IPatronCategoryDTO {
     id?: string;
     theaterId?: string;
+    seatTypeId?: string;
+    seatTypeName?: string;
+    kind?: SeatKind;
     name?: string;
     description?: string | undefined;
-    discountPercent?: number;
+    price?: number;
     isActive?: boolean;
-    allowedSeatTypeIds?: string[];
 }
 
 export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest {
     theaterId?: string;
     name!: string;
     description?: string | undefined;
-    discountPercent?: number;
     isActive?: boolean;
-    allowedSeatTypeIds?: string[];
+    seatTypeId?: string;
+    price?: number;
 
     constructor(data?: ICreatePatronCategoryRequest) {
         if (data) {
@@ -8447,13 +8463,9 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
             this.theaterId = _data["theaterId"];
             this.name = _data["name"];
             this.description = _data["description"];
-            this.discountPercent = _data["discountPercent"];
             this.isActive = _data["isActive"];
-            if (Array.isArray(_data["allowedSeatTypeIds"])) {
-                this.allowedSeatTypeIds = [] as any;
-                for (let item of _data["allowedSeatTypeIds"])
-                    this.allowedSeatTypeIds!.push(item);
-            }
+            this.seatTypeId = _data["seatTypeId"];
+            this.price = _data["price"];
         }
     }
 
@@ -8469,13 +8481,9 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
         data["theaterId"] = this.theaterId;
         data["name"] = this.name;
         data["description"] = this.description;
-        data["discountPercent"] = this.discountPercent;
         data["isActive"] = this.isActive;
-        if (Array.isArray(this.allowedSeatTypeIds)) {
-            data["allowedSeatTypeIds"] = [];
-            for (let item of this.allowedSeatTypeIds)
-                data["allowedSeatTypeIds"].push(item);
-        }
+        data["seatTypeId"] = this.seatTypeId;
+        data["price"] = this.price;
         return data;
     }
 }
@@ -8484,19 +8492,18 @@ export interface ICreatePatronCategoryRequest {
     theaterId?: string;
     name: string;
     description?: string | undefined;
-    discountPercent?: number;
     isActive?: boolean;
-    allowedSeatTypeIds?: string[];
+    seatTypeId?: string;
+    price?: number;
 }
 
 export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest {
     id?: string;
-    theaterId?: string;
     name!: string;
     description?: string | undefined;
-    discountPercent?: number;
     isActive?: boolean;
-    allowedSeatTypeIds?: string[];
+    seatTypeId?: string;
+    price?: number;
 
     constructor(data?: IUpdatePatronCategoryRequest) {
         if (data) {
@@ -8510,16 +8517,11 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.theaterId = _data["theaterId"];
             this.name = _data["name"];
             this.description = _data["description"];
-            this.discountPercent = _data["discountPercent"];
             this.isActive = _data["isActive"];
-            if (Array.isArray(_data["allowedSeatTypeIds"])) {
-                this.allowedSeatTypeIds = [] as any;
-                for (let item of _data["allowedSeatTypeIds"])
-                    this.allowedSeatTypeIds!.push(item);
-            }
+            this.seatTypeId = _data["seatTypeId"];
+            this.price = _data["price"];
         }
     }
 
@@ -8533,28 +8535,22 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["theaterId"] = this.theaterId;
         data["name"] = this.name;
         data["description"] = this.description;
-        data["discountPercent"] = this.discountPercent;
         data["isActive"] = this.isActive;
-        if (Array.isArray(this.allowedSeatTypeIds)) {
-            data["allowedSeatTypeIds"] = [];
-            for (let item of this.allowedSeatTypeIds)
-                data["allowedSeatTypeIds"].push(item);
-        }
+        data["seatTypeId"] = this.seatTypeId;
+        data["price"] = this.price;
         return data;
     }
 }
 
 export interface IUpdatePatronCategoryRequest {
     id?: string;
-    theaterId?: string;
     name: string;
     description?: string | undefined;
-    discountPercent?: number;
     isActive?: boolean;
-    allowedSeatTypeIds?: string[];
+    seatTypeId?: string;
+    price?: number;
 }
 
 export abstract class BaseSearchResultsOfTimeSlotDTO implements IBaseSearchResultsOfTimeSlotDTO {
@@ -8875,7 +8871,6 @@ export class TicketPriceDTO implements ITicketPriceDTO {
     id?: string;
     theaterId?: string;
     roomTypeId?: string;
-    seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
     priceMultiplier?: number;
@@ -8894,7 +8889,6 @@ export class TicketPriceDTO implements ITicketPriceDTO {
             this.id = _data["id"];
             this.theaterId = _data["theaterId"];
             this.roomTypeId = _data["roomTypeId"];
-            this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
             this.priceMultiplier = _data["priceMultiplier"];
@@ -8913,7 +8907,6 @@ export class TicketPriceDTO implements ITicketPriceDTO {
         data["id"] = this.id;
         data["theaterId"] = this.theaterId;
         data["roomTypeId"] = this.roomTypeId;
-        data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
         data["priceMultiplier"] = this.priceMultiplier;
@@ -8925,7 +8918,6 @@ export interface ITicketPriceDTO {
     id?: string;
     theaterId?: string;
     roomTypeId?: string;
-    seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
     priceMultiplier?: number;
@@ -8934,7 +8926,6 @@ export interface ITicketPriceDTO {
 export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
     theaterId?: string;
     roomTypeId?: string;
-    seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
     priceMultiplier?: number;
@@ -8952,7 +8943,6 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
         if (_data) {
             this.theaterId = _data["theaterId"];
             this.roomTypeId = _data["roomTypeId"];
-            this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
             this.priceMultiplier = _data["priceMultiplier"];
@@ -8970,7 +8960,6 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
         data = typeof data === 'object' ? data : {};
         data["theaterId"] = this.theaterId;
         data["roomTypeId"] = this.roomTypeId;
-        data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
         data["priceMultiplier"] = this.priceMultiplier;
@@ -8981,7 +8970,6 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
 export interface ICreateTicketPriceRequest {
     theaterId?: string;
     roomTypeId?: string;
-    seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
     priceMultiplier?: number;
@@ -8991,7 +8979,6 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
     id?: string;
     theaterId?: string;
     roomTypeId?: string;
-    seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
     priceMultiplier?: number;
@@ -9010,7 +8997,6 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
             this.id = _data["id"];
             this.theaterId = _data["theaterId"];
             this.roomTypeId = _data["roomTypeId"];
-            this.seatTypeId = _data["seatTypeId"];
             this.timeSlotId = _data["timeSlotId"];
             this.isHoliday = _data["isHoliday"];
             this.priceMultiplier = _data["priceMultiplier"];
@@ -9029,7 +9015,6 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
         data["id"] = this.id;
         data["theaterId"] = this.theaterId;
         data["roomTypeId"] = this.roomTypeId;
-        data["seatTypeId"] = this.seatTypeId;
         data["timeSlotId"] = this.timeSlotId;
         data["isHoliday"] = this.isHoliday;
         data["priceMultiplier"] = this.priceMultiplier;
@@ -9041,7 +9026,6 @@ export interface IUpdateTicketPriceRequest {
     id?: string;
     theaterId?: string;
     roomTypeId?: string;
-    seatTypeId?: string;
     timeSlotId?: string;
     isHoliday?: boolean;
     priceMultiplier?: number;
@@ -11133,6 +11117,170 @@ export interface IUpdateRoomTypeRequest {
     turnoverBufferMinutes?: number;
 }
 
+export class RoomTypePatronCategoryPriceDTO implements IRoomTypePatronCategoryPriceDTO {
+    id?: string;
+    roomTypeId?: string;
+    patronCategoryId?: string;
+    patronCategoryName?: string;
+    seatTypeId?: string;
+    seatTypeName?: string;
+    kind?: SeatKind;
+    defaultPrice?: number;
+    isIncluded?: boolean;
+    price?: number;
+
+    constructor(data?: IRoomTypePatronCategoryPriceDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.roomTypeId = _data["roomTypeId"];
+            this.patronCategoryId = _data["patronCategoryId"];
+            this.patronCategoryName = _data["patronCategoryName"];
+            this.seatTypeId = _data["seatTypeId"];
+            this.seatTypeName = _data["seatTypeName"];
+            this.kind = _data["kind"];
+            this.defaultPrice = _data["defaultPrice"];
+            this.isIncluded = _data["isIncluded"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): RoomTypePatronCategoryPriceDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new RoomTypePatronCategoryPriceDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["roomTypeId"] = this.roomTypeId;
+        data["patronCategoryId"] = this.patronCategoryId;
+        data["patronCategoryName"] = this.patronCategoryName;
+        data["seatTypeId"] = this.seatTypeId;
+        data["seatTypeName"] = this.seatTypeName;
+        data["kind"] = this.kind;
+        data["defaultPrice"] = this.defaultPrice;
+        data["isIncluded"] = this.isIncluded;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface IRoomTypePatronCategoryPriceDTO {
+    id?: string;
+    roomTypeId?: string;
+    patronCategoryId?: string;
+    patronCategoryName?: string;
+    seatTypeId?: string;
+    seatTypeName?: string;
+    kind?: SeatKind;
+    defaultPrice?: number;
+    isIncluded?: boolean;
+    price?: number;
+}
+
+export class SaveRoomTypePatronCategoryPricesRequest implements ISaveRoomTypePatronCategoryPricesRequest {
+    roomTypeId?: string;
+    items?: SaveRoomTypePatronCategoryPriceItem[];
+
+    constructor(data?: ISaveRoomTypePatronCategoryPricesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.roomTypeId = _data["roomTypeId"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(SaveRoomTypePatronCategoryPriceItem.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SaveRoomTypePatronCategoryPricesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveRoomTypePatronCategoryPricesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["roomTypeId"] = this.roomTypeId;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ISaveRoomTypePatronCategoryPricesRequest {
+    roomTypeId?: string;
+    items?: SaveRoomTypePatronCategoryPriceItem[];
+}
+
+export class SaveRoomTypePatronCategoryPriceItem implements ISaveRoomTypePatronCategoryPriceItem {
+    patronCategoryId?: string;
+    included?: boolean;
+    price?: number | undefined;
+
+    constructor(data?: ISaveRoomTypePatronCategoryPriceItem) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.patronCategoryId = _data["patronCategoryId"];
+            this.included = _data["included"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): SaveRoomTypePatronCategoryPriceItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveRoomTypePatronCategoryPriceItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["patronCategoryId"] = this.patronCategoryId;
+        data["included"] = this.included;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface ISaveRoomTypePatronCategoryPriceItem {
+    patronCategoryId?: string;
+    included?: boolean;
+    price?: number | undefined;
+}
+
 export abstract class BaseSearchResultsOfShowTimeDTO implements IBaseSearchResultsOfShowTimeDTO {
     results?: ShowTimeDTO[];
     totalCount?: number;
@@ -11599,10 +11747,7 @@ export class RoomSeatDTO implements IRoomSeatDTO {
     id?: string;
     rowName?: string;
     colIndex?: number;
-    seatTypeId?: string;
-    seatTypeName?: string;
-    seatTypeColor?: string;
-    priceMultiplier?: number;
+    isDouble?: boolean;
     seatGroupId?: string | undefined;
     isActive?: boolean;
 
@@ -11620,10 +11765,7 @@ export class RoomSeatDTO implements IRoomSeatDTO {
             this.id = _data["id"];
             this.rowName = _data["rowName"];
             this.colIndex = _data["colIndex"];
-            this.seatTypeId = _data["seatTypeId"];
-            this.seatTypeName = _data["seatTypeName"];
-            this.seatTypeColor = _data["seatTypeColor"];
-            this.priceMultiplier = _data["priceMultiplier"];
+            this.isDouble = _data["isDouble"];
             this.seatGroupId = _data["seatGroupId"];
             this.isActive = _data["isActive"];
         }
@@ -11641,10 +11783,7 @@ export class RoomSeatDTO implements IRoomSeatDTO {
         data["id"] = this.id;
         data["rowName"] = this.rowName;
         data["colIndex"] = this.colIndex;
-        data["seatTypeId"] = this.seatTypeId;
-        data["seatTypeName"] = this.seatTypeName;
-        data["seatTypeColor"] = this.seatTypeColor;
-        data["priceMultiplier"] = this.priceMultiplier;
+        data["isDouble"] = this.isDouble;
         data["seatGroupId"] = this.seatGroupId;
         data["isActive"] = this.isActive;
         return data;
@@ -11655,10 +11794,7 @@ export interface IRoomSeatDTO {
     id?: string;
     rowName?: string;
     colIndex?: number;
-    seatTypeId?: string;
-    seatTypeName?: string;
-    seatTypeColor?: string;
-    priceMultiplier?: number;
+    isDouble?: boolean;
     seatGroupId?: string | undefined;
     isActive?: boolean;
 }
@@ -11713,7 +11849,6 @@ export interface ISaveSeatMapRequest {
 
 export class SeatAssignmentItem implements ISeatAssignmentItem {
     seatId?: string;
-    seatTypeId?: string;
     seatGroupId?: string | undefined;
     isActive?: boolean;
 
@@ -11729,7 +11864,6 @@ export class SeatAssignmentItem implements ISeatAssignmentItem {
     init(_data?: any) {
         if (_data) {
             this.seatId = _data["seatId"];
-            this.seatTypeId = _data["seatTypeId"];
             this.seatGroupId = _data["seatGroupId"];
             this.isActive = _data["isActive"];
         }
@@ -11745,7 +11879,6 @@ export class SeatAssignmentItem implements ISeatAssignmentItem {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["seatId"] = this.seatId;
-        data["seatTypeId"] = this.seatTypeId;
         data["seatGroupId"] = this.seatGroupId;
         data["isActive"] = this.isActive;
         return data;
@@ -11754,7 +11887,6 @@ export class SeatAssignmentItem implements ISeatAssignmentItem {
 
 export interface ISeatAssignmentItem {
     seatId?: string;
-    seatTypeId?: string;
     seatGroupId?: string | undefined;
     isActive?: boolean;
 }

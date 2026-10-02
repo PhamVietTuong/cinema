@@ -65,6 +65,7 @@ public class SeatTypeManager : ISeatTypeManager
         return sort.Field switch
         {
             "name" => _uow.SeatTypeStore.OrderQuery(query, e => e.Name, sort.Ascending),
+            "kind" => _uow.SeatTypeStore.OrderQuery(query, e => e.Kind, sort.Ascending),
             _ => query,
         };
     }
@@ -91,13 +92,6 @@ public class SeatTypeManager : ISeatTypeManager
         return entity.ToDTO<SeatType, SeatTypeDTO>();
     }
 
-    public async Task<SeatTypeDTO> CreateAsync(CreateSeatTypeRequest request)
-    {
-        var entity = request.ToNewEntity<CreateSeatTypeRequest, SeatType>();
-        await _uow.SeatTypeStore.CreateAsync(entity);
-        return entity.ToDTO<SeatType, SeatTypeDTO>();
-    }
-
     public async Task<SeatTypeDTO> UpdateAsync(UpdateSeatTypeRequest request)
     {
         var entity = await _uow.SeatTypeStore.GetByIdAsync(request.Id);
@@ -110,21 +104,28 @@ public class SeatTypeManager : ISeatTypeManager
         return entity.ToDTO<SeatType, SeatTypeDTO>();
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task EnsureDefaultsAsync(Guid theaterId)
     {
-        // Two separate SaveChanges calls — wrap in one transaction so a failed seat-type delete (e.g.
-        // still referenced by a Seat) can't leave every category's gating configuration silently wiped.
-        await _uow.BeginTransactionAsync();
-        try
+        var existing = (await _uow.SeatTypeStore.FindAsync(s => s.TheaterId == theaterId)).ToList();
+        if (!existing.Any(s => s.Kind == SeatKind.Standard))
         {
-            await _uow.PatronCategorySeatTypeStore.DeleteBySeatTypeAsync(id);
-            await _uow.SeatTypeStore.DeleteAsync(id);
-            await _uow.CommitTransactionAsync();
+            await _uow.SeatTypeStore.CreateAsync(new SeatType
+            {
+                TheaterId = theaterId,
+                Kind      = SeatKind.Standard,
+                Name      = "Single",
+                Color     = "#3B82F6",
+            });
         }
-        catch
+        if (!existing.Any(s => s.Kind == SeatKind.Double))
         {
-            await _uow.RollbackTransactionAsync();
-            throw;
+            await _uow.SeatTypeStore.CreateAsync(new SeatType
+            {
+                TheaterId = theaterId,
+                Kind      = SeatKind.Double,
+                Name      = "Double",
+                Color     = "#EC4899",
+            });
         }
     }
 }

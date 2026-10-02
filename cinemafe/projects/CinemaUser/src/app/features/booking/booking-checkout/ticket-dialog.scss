@@ -1,0 +1,54 @@
+// Shared "ticket sheet" look for the checkout dialogs (discount code, gift card, reward points):
+// amber header with a tear line, big mono input, full-width primary action.
+
+:host { display: block; color: var(--ml-ink); }
+
+.tk-top {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 20px 14px;
+  background: var(--ml-action-soft);
+  border-bottom: 2px dashed var(--ml-rule-strong);
+}
+.tk-badge {
+  flex: none; width: 40px; height: 40px; border-radius: var(--ml-r-lg);
+  display: grid; place-items: center;
+  background: var(--ml-panel); border: 1px solid var(--ml-action-ring);
+  mat-icon { color: var(--ml-action-strong); }
+}
+h2.tk-title {
+  margin: 0; padding: 0;
+  font-family: var(--ml-font-head); font-size: 1.1rem; font-weight: 600;
+  letter-spacing: 0.03em; text-transform: uppercase; color: var(--ml-ink);
+  &::before { display: none; }
+}
+
+.tk-body { display: flex; flex-direction: column; gap: 12px; padding: 22px 20px 8px; min-width: min(300px, 80vw); }
+.tk-foot { display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 20px; }
+
+.tk-input {
+  width: 100%; height: 46px; padding: 0 12px; box-sizing: border-box;
+  border-radius: var(--ml-r-lg); border: 1px solid var(--ml-rule-strong);
+  background: var(--ml-panel); color: var(--ml-ink);
+  font-family: var(--ml-font-data); font-size: 1rem; font-weight: 500; letter-spacing: 0.06em;
+  &:focus { outline: var(--cx-focus-width) solid var(--ml-action); outline-offset: 1px; }
+}
+
+.tk-note { margin: 0; font-size: 0.8rem; line-height: 1.4; color: var(--ml-ink-2); }
+.tk-result {
+  margin: 0; padding: 10px 12px; border-radius: var(--ml-r-lg); font-size: 0.85rem;
+  &.ok { background: var(--ml-success-soft); color: var(--ml-success-ink); }
+  &.bad { background: var(--ml-danger-soft); color: var(--ml-danger-ink); }
+}
+
+.tk-btn {
+  height: 44px; padding: 0 18px; border-radius: var(--ml-r-lg); border: 0; cursor: pointer;
+  background: var(--ml-action); color: var(--ml-on-action);
+  font-family: var(--ml-font-body); font-size: 0.9rem; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center;
+  &:hover:not(:disabled) { background: var(--ml-action-strong); }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+  &:focus-visible { outline: var(--cx-focus-width) solid var(--ml-action); outline-offset: var(--cx-focus-offset); }
+  &.full { width: 100%; }
+  &.ghost { background: transparent; border: 1px solid var(--ml-rule-strong); color: var(--ml-ink); }
+  &.text { background: transparent; color: var(--ml-ink-2); &:hover:not(:disabled) { background: var(--ml-panel-2); } }
+}

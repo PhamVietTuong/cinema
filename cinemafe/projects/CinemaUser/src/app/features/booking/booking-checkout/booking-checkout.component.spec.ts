@@ -13,8 +13,8 @@ describe('BookingCheckoutComponent', () => {
     showTimeId: 'st-1',
     roomId: 'room-1',
     seats: [
-      { seatId: 's1', label: 'A1', seatTypeName: 'Standard', basePrice: 100000, price: 100000, patronCategoryId: 'cat-adult', patronCategoryName: 'Adult', discountPercent: 0 },
-      { seatId: 's2', label: 'A2', seatTypeName: 'Standard', basePrice: 100000, price: 75000, patronCategoryId: 'cat-student', patronCategoryName: 'Student', discountPercent: 25 },
+      { seatId: 's1', label: 'A1', seatKind: 'Standard', basePrice: 100000, price: 100000, patronCategoryId: 'cat-adult', patronCategoryName: 'Adult' },
+      { seatId: 's2', label: 'A2', seatKind: 'Standard', basePrice: 100000, price: 75000, patronCategoryId: 'cat-student', patronCategoryName: 'Student' },
     ],
     foods: [{ foodAndDrinkId: 'f1', name: 'Popcorn', unitPrice: 50000, quantity: 2 }],
   };
@@ -32,11 +32,17 @@ describe('BookingCheckoutComponent', () => {
     identity = { getProfile: vi.fn().mockReturnValue(of({ points: 10 })) };
     hub = { connectionId: 'my-connection', stopConnection: vi.fn() };
     cdr = { markForCheck: vi.fn() };
+    const cinema = {
+      getShowTime: vi.fn().mockReturnValue(of({ startTime: new Date(), roomName: '03', movieId: 'm1' })),
+      getMovie: vi.fn().mockReturnValue(of({ title: 'Test Movie', ageRestrictionCode: 'T13' })),
+      getRoom: vi.fn().mockReturnValue(of({ name: '03', theaterId: 't1' })),
+      getTheater: vi.fn().mockReturnValue(of({ name: 'Cinema 1', address: 'Addr' })),
+    };
     const route = { snapshot: { queryParams } };
     const translate = { instant: (key: string, params?: any) => `${key}${params ? ':' + JSON.stringify(params) : ''}` };
 
     const c = new BookingCheckoutComponent(
-      route as never, router as never, payment as never, identity as never, hub as never, cdr as never, translate as never,
+      route as never, router as never, payment as never, identity as never, hub as never, cdr as never, translate as never, cinema as never, { open: vi.fn() } as never,
     );
     c.ngOnInit();
     return c;

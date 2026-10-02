@@ -48,6 +48,23 @@ public class PaymentController : ApiControllerBase
         }
     }
 
+    [AllowAnonymous]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<ShowTimePriceDTO>), 200)]
+    public async Task<IActionResult> GetShowTimePrices([FromQuery] Guid showTimeId, [FromQuery] Guid roomId)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetShowTimePrices being awakened to process request...");
+        try
+        {
+            var result = await _bookingManager.GetShowTimePricesAsync(showTimeId, roomId);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetShowTimePrices));
+        }
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(BookingResultDTO), 200)]
     public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
@@ -189,6 +206,22 @@ public class PaymentController : ApiControllerBase
         catch (Exception e)
         {
             return HandleException(e, nameof(RefundBooking));
+        }
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(DiscountCodeValidationDTO), 200)]
+    public async Task<IActionResult> ValidateDiscountCode([FromBody] ValidateDiscountCodeRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.ValidateDiscountCode being awakened to process request...");
+        try
+        {
+            var result = await _bookingManager.ValidateDiscountCodeAsync(User.GetUserId(), request.Code, request.RoomId, request.ShowTimeId, request.Total);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ValidateDiscountCode));
         }
     }
 
@@ -419,4 +452,5 @@ public record ValidateTicketRequest(string QrCode);
 public record CancelBookingRequest(Guid InvoiceId);
 public record RefundBookingRequest(Guid InvoiceId);
 public record ValidateGiftCardRequest(string Code);
+public record ValidateDiscountCodeRequest(string Code, Guid RoomId, Guid ShowTimeId, double Total);
 public record SetGiftCardActiveRequest(Guid Id, bool Active);

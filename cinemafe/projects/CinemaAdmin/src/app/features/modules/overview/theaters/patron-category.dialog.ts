@@ -8,11 +8,14 @@ type Dto = CinemaServiceAgent.PatronCategoryDTO;
 
 export interface PatronCategoryDialogData {
   theaterId: string;
-  patronCategory: Dto | null;
   seatTypes: CinemaServiceAgent.SeatTypeDTO[];
+  /** The row being edited, or null when creating. */
+  category: Dto | null;
 }
 
-/** Create/edit form for a theater's patron category (Adult/Student/Senior/Child), opened via MatDialog. Resolves `true` on save, `false` on cancel. */
+/** Create/edit form for a single, independent PatronCategory pricing row (e.g. "Adult" / Standard).
+ * Rows are never grouped or merged by Name — editing or deleting one row never affects any other
+ * row, even one sharing the same Name. Resolves `true` on save, `false` on cancel. */
 @Component({
   selector: 'app-patron-category-dialog',
   standalone: false,
@@ -20,10 +23,9 @@ export interface PatronCategoryDialogData {
   styleUrls: ['./theater-catalog-tab.scss'],
 })
 export class PatronCategoryDialog {
-  readonly editingId: string | null;
+  readonly isEditing: boolean;
   readonly seatTypes: CinemaServiceAgent.SeatTypeDTO[];
   form: FormGroup;
-  selectedSeatTypeIds: string[];
 
   constructor(
     private _svc: CinemaServiceAgent.HttpService,
@@ -32,39 +34,35 @@ export class PatronCategoryDialog {
     private _dialogRef: MatDialogRef<PatronCategoryDialog, boolean>,
     @Inject(MAT_DIALOG_DATA) private _data: PatronCategoryDialogData,
   ) {
-    this.editingId = _data.patronCategory?.id ?? null;
-    this.seatTypes = _data.seatTypes;
-    this.selectedSeatTypeIds = [...(_data.patronCategory?.allowedSeatTypeIds ?? [])];
+    this.isEditing = !!this._data.category;
+    this.seatTypes = this._data.seatTypes;
+    const category = this._data.category;
+
     this.form = this._fb.group({
-      name: [_data.patronCategory?.name ?? '', Validators.required],
-      discountPercent: [_data.patronCategory?.discountPercent ?? 0, [Validators.required, Validators.min(0), Validators.max(100)]],
-      isActive: [_data.patronCategory?.isActive ?? true],
-      description: [_data.patronCategory?.description ?? ''],
+      name: [category?.name ?? '', Validators.required],
+      description: [category?.description ?? ''],
+      isActive: [category?.isActive ?? true],
+      seatTypeId: [category?.seatTypeId ?? this.seatTypes[0]?.id, Validators.required],
+      price: [category?.price ?? null, [Validators.required, Validators.min(0)]],
     });
   }
 
-  isSeatTypeSelected(seatTypeId?: string): boolean {
-    return !!seatTypeId && this.selectedSeatTypeIds.includes(seatTypeId);
-  }
-
-  toggleSeatType(seatTypeId?: string): void {
-    if (!seatTypeId) {
-      return;
-    }
-    this.selectedSeatTypeIds = this.isSeatTypeSelected(seatTypeId)
-      ? this.selectedSeatTypeIds.filter(id => id !== seatTypeId)
-      : [...this.selectedSeatTypeIds, seatTypeId];
-  }
-
   save(): void {
-    if (!this.form.valid) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+
     const v = this.form.value;
-    const obs = this.editingId
-      ? this._svc.updatePatronCategory(CinemaServiceAgent.UpdatePatronCategoryRequest.fromJS({ ...v, id: this.editingId, theaterId: this._data.theaterId, allowedSeatTypeIds: this.selectedSeatTypeIds }))
-      : this._svc.createPatronCategory(CinemaServiceAgent.CreatePatronCategoryRequest.fromJS({ ...v, theaterId: this._data.theaterId, allowedSeatTypeIds: this.selectedSeatTypeIds }));
+    const category = this._data.category;
+
+    const obs = category
+      ? this._svc.updatePatronCategory(CinemaServiceAgent.UpdatePatronCategoryRequest.fromJS({
+          id: category.id, name: v.name, description: v.description, isActive: v.isActive, seatTypeId: v.seatTypeId, price: v.price,
+        }))
+      : this._svc.createPatronCategory(CinemaServiceAgent.CreatePatronCategoryRequest.fromJS({
+          theaterId: this._data.theaterId, name: v.name, description: v.description, isActive: v.isActive, seatTypeId: v.seatTypeId, price: v.price,
+        }));
 
     this._store.dispatch(showLoading());
     obs.subscribe({

@@ -111,7 +111,7 @@ public class RoomManager : IRoomManager
     {
         var entity = request.ToNewEntity<CreateRoomRequest, Room>();
         await _uow.RoomStore.CreateAsync(entity);
-        await GenerateSeatsAsync(entity.Id, entity.TheaterId, entity.TotalRows, entity.TotalColumns);
+        await GenerateSeatsAsync(entity.Id, entity.TotalRows, entity.TotalColumns);
         return entity.ToDTO<Room, RoomDTO>();
     }
 
@@ -131,7 +131,7 @@ public class RoomManager : IRoomManager
         {
             // Single bulk delete instead of one round trip per seat (avoids an N+1 query pattern).
             await _uow.SeatStore.DeleteAsync(s => s.RoomId == entity.Id);
-            await GenerateSeatsAsync(entity.Id, entity.TheaterId, request.TotalRows, request.TotalColumns);
+            await GenerateSeatsAsync(entity.Id, request.TotalRows, request.TotalColumns);
         }
         return entity.ToDTO<Room, RoomDTO>();
     }
@@ -141,18 +141,13 @@ public class RoomManager : IRoomManager
         await _uow.RoomStore.DeleteAsync(id);
     }
 
-    /// <summary>Creates a seat for every cell of the room's row × column grid.</summary>
-    private async Task GenerateSeatsAsync(Guid roomId, Guid theaterId, int rows, int columns)
+    /// <summary>Creates a seat for every cell of the room's row × column grid. A seat has no stored
+    /// kind of its own (Standard/Double is derived from SeatGroupId at read time), so nothing in a
+    /// theater's configuration can block this — every seat starts Standard/ungrouped.</summary>
+    private async Task GenerateSeatsAsync(Guid roomId, int rows, int columns)
     {
         if (rows <= 0 || columns <= 0)
         {
-            return;
-        }
-
-        var seatTypeId = (await _uow.SeatTypeStore.FindAsync(st => st.TheaterId == theaterId)).FirstOrDefault()?.Id ?? Guid.Empty;
-        if (seatTypeId == Guid.Empty)
-        {
-            // No seat types for this theater yet — nothing valid to attach seats to.
             return;
         }
 
@@ -164,11 +159,10 @@ public class RoomManager : IRoomManager
             {
                 seats.Add(new Seat
                 {
-                    RoomId     = roomId,
-                    RowName    = rowName,
-                    ColIndex   = c,
-                    SeatTypeId = seatTypeId,
-                    IsActive   = true,
+                    RoomId   = roomId,
+                    RowName  = rowName,
+                    ColIndex = c,
+                    IsActive = true,
                 });
             }
         }
@@ -192,24 +186,16 @@ public class RoomManager : IRoomManager
     public async Task<List<RoomSeatDTO>> GetSeatMapAsync(Guid roomId)
     {
         var seats = await _uow.SeatStore.FindAsync(s => s.RoomId == roomId);
-        var types = (await _uow.SeatTypeStore.GetAllAsync()).ToDictionary(t => t.Id);
         return seats
             .OrderBy(s => s.RowName).ThenBy(s => s.ColIndex)
-            .Select(s =>
+            .Select(s => new RoomSeatDTO
             {
-                types.TryGetValue(s.SeatTypeId, out var t);
-                return new RoomSeatDTO
-                {
-                    Id            = s.Id,
-                    RowName       = s.RowName,
-                    ColIndex      = s.ColIndex,
-                    SeatTypeId    = s.SeatTypeId,
-                    SeatTypeName  = t?.Name ?? string.Empty,
-                    SeatTypeColor = t?.Color ?? "#808080",
-                    PriceMultiplier = t?.PriceMultiplier ?? 1,
-                    SeatGroupId   = s.SeatGroupId,
-                    IsActive      = s.IsActive,
-                };
+                Id          = s.Id,
+                RowName     = s.RowName,
+                ColIndex    = s.ColIndex,
+                IsDouble    = s.SeatGroupId.HasValue,
+                SeatGroupId = s.SeatGroupId,
+                IsActive    = s.IsActive,
             })
             .ToList();
     }
@@ -234,7 +220,6 @@ public class RoomManager : IRoomManager
             {
                 continue;
             }
-            seat.SeatTypeId  = item.SeatTypeId;
             seat.SeatGroupId = item.SeatGroupId.HasValue && groupSizes[item.SeatGroupId.Value] == 2
                 ? item.SeatGroupId
                 : null;
@@ -278,26 +263,21 @@ public class RoomManager : IRoomManager
             await _uow.SeatStore.DeleteAsync(s => idsToDelete.Contains(s.Id));
         }
 
-        // Create seats for the appended cells; seats that stay keep their type + grouping.
+        // Create seats for the appended cells; seats that stay keep their grouping.
         var present = existing.Select(s => (s.RowName, s.ColIndex)).ToHashSet();
-        var seatTypeId = (await _uow.SeatTypeStore.FindAsync(st => st.TheaterId == room.TheaterId)).FirstOrDefault()?.Id ?? Guid.Empty;
-        if (seatTypeId != Guid.Empty)
-        {
-            var toAdd = desired
-                .Where(cell => !present.Contains(cell))
-                .Select(cell => new Seat
-                {
-                    RoomId     = room.Id,
-                    RowName    = cell.Row,
-                    ColIndex   = cell.Col,
-                    SeatTypeId = seatTypeId,
-                    IsActive   = true,
-                })
-                .ToList();
-            if (toAdd.Count > 0)
+        var toAdd = desired
+            .Where(cell => !present.Contains(cell))
+            .Select(cell => new Seat
             {
-                await _uow.SeatStore.CreateRangeAsync(toAdd);
-            }
+                RoomId   = room.Id,
+                RowName  = cell.Row,
+                ColIndex = cell.Col,
+                IsActive = true,
+            })
+            .ToList();
+        if (toAdd.Count > 0)
+        {
+            await _uow.SeatStore.CreateRangeAsync(toAdd);
         }
 
         // Keep the room's stored dimensions in step with its seat grid.
