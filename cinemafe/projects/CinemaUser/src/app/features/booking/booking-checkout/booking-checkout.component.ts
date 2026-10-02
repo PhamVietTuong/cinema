@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
-import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState } from './booking-checkout.state';
+import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState, takePendingCheckout } from './booking-checkout.state';
 
 /**
  * Second page of the booking flow: payment. Reached only via BookingPageComponent's
@@ -113,7 +113,11 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const state = history.state as Partial<BookingCheckoutState> | undefined;
+    let state = history.state as Partial<BookingCheckoutState> | undefined;
+    if (!state?.seats?.length) {
+      // Resuming after a login redirect: the order was parked in sessionStorage.
+      state = takePendingCheckout();
+    }
     if (!state?.seats?.length) {
       // Reload/deep-link with no order in flight — never render an empty checkout.
       const showTimeId = this._route.snapshot.queryParams['showTimeId'];

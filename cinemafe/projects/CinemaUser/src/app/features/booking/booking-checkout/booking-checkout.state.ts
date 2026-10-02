@@ -34,3 +34,25 @@ export interface BookingCheckoutState {
   /** Only entries with quantity > 0. */
   foods: BookingCheckoutFood[];
 }
+
+const PENDING_KEY = 'pendingCheckout';
+
+/** Parks the order across the login round-trip (router state does not survive it). */
+export function stashPendingCheckout(state: BookingCheckoutState): void {
+  try {
+    sessionStorage.setItem(PENDING_KEY, JSON.stringify(state));
+  } catch {
+    // Storage unavailable — checkout falls back to sending the user back to seat selection.
+  }
+}
+
+/** Returns and clears the order parked by `stashPendingCheckout`, if any. */
+export function takePendingCheckout(): Partial<BookingCheckoutState> | undefined {
+  try {
+    const raw = sessionStorage.getItem(PENDING_KEY);
+    sessionStorage.removeItem(PENDING_KEY);
+    return raw ? JSON.parse(raw) as BookingCheckoutState : undefined;
+  } catch {
+    return undefined;
+  }
+}

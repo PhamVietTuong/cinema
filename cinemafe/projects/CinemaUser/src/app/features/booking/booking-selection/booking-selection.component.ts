@@ -1,9 +1,10 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
+import { Store } from '@ngrx/store';
+import { Subscription, take } from 'rxjs';
+import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, selectIsAuthenticated } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
-import { BookingCheckoutState } from '../booking-checkout/booking-checkout.state';
+import { BookingCheckoutState, stashPendingCheckout } from '../booking-checkout/booking-checkout.state';
 
 type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean; isSelectable?: boolean; isAllowedForPatronCategory?: boolean };
 type ShowTimePriceDTO = PaymentServiceAgent.ShowTimePriceDTO;
@@ -112,6 +113,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     private _router: Router,
+    private _store: Store,
     private _paymentService: PaymentServiceAgent.HttpService,
     private _cinemaService: CinemaServiceAgent.HttpService,
     private _hub: BookingHubService,
@@ -617,7 +619,6 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     if (!this.canProceed) {
       return;
     }
-    this._navigatingToCheckout = true;
     const state: BookingCheckoutState = {
       showTimeId: this.showTimeId,
       roomId: this.roomId,
@@ -641,10 +642,21 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         quantity: this.foodQty[f.id!] ?? 0,
       })),
     };
-    this._router.navigate(['/booking/checkout'], { state, queryParams: { showTimeId: this.showTimeId, roomId: this.roomId } })
-      .then(
-        ok => { if (!ok) { this._navigatingToCheckout = false; } },
-        () => { this._navigatingToCheckout = false; },
-      );
+    this._store.select(selectIsAuthenticated).pipe(take(1)).subscribe(isAuthenticated => {
+      const queryParams = { showTimeId: this.showTimeId, roomId: this.roomId };
+      if (!isAuthenticated) {
+        // Park the order, log in, then resume at checkout (it reads the parked order back).
+        stashPendingCheckout(state);
+        const returnUrl = this._router.serializeUrl(this._router.createUrlTree(['/booking/checkout'], { queryParams }));
+        this._router.navigate(['/auth/login'], { queryParams: { returnUrl } });
+        return;
+      }
+      this._navigatingToCheckout = true;
+      this._router.navigate(['/booking/checkout'], { state, queryParams })
+        .then(
+          ok => { if (!ok) { this._navigatingToCheckout = false; } },
+          () => { this._navigatingToCheckout = false; },
+        );
+    });
   }
 }
