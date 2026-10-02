@@ -53,6 +53,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   loadingSeats = true;
   SeatStatus = PaymentServiceAgent.SeatStatus;
   readonly seatKindLabel = seatKindLabel;
+  /** Name of the room being booked, shown in the order bar when no embedded header label is supplied. */
+  roomName = '';
   private _theaterId = '';
   /** Which showTimeId/roomId the currently-loaded seats/locks belong to — distinct from the
    * @Input values, which Angular has already updated to the NEW target by the time a switch away
@@ -294,6 +296,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this.categoryWarning = '';
     this._seatLockedAt = {};
     this._theaterId = '';
+    this.roomName = '';
     this.loadingSeats = true;
     if (this._holdTimer) {
       clearInterval(this._holdTimer);
@@ -332,6 +335,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       this._cinemaService.getRoom(this.roomId).subscribe({
         next: room => {
           if (seq !== this._loadSeq) { return; }
+          this.roomName = room?.name ?? '';
+          this._cdr.markForCheck();
           if (!room?.theaterId) { return; }
           this._theaterId = room.theaterId;
           this._cinemaService.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS(

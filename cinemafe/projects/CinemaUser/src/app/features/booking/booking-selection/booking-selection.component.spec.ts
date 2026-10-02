@@ -1,4 +1,5 @@
 import { Subject, of } from 'rxjs';
+import { takePendingCheckout } from '../booking-checkout/booking-checkout.state';
 import { BookingSelectionComponent } from './booking-selection.component';
 import { PaymentServiceAgent } from 'CinemaLib';
 
@@ -30,7 +31,8 @@ const priceRow = (over: Partial<PriceRow>): PriceRow => ({
 
 describe('BookingSelectionComponent', () => {
   let component: BookingSelectionComponent;
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn>; serializeUrl: ReturnType<typeof vi.fn>; createUrlTree: ReturnType<typeof vi.fn> };
+  let authenticated = true;
   let hub: {
     seatLocked$: Subject<{ seatId: string; connectionId: string }>;
     seatUnlocked$: Subject<string>;
@@ -67,13 +69,15 @@ describe('BookingSelectionComponent', () => {
       getRoom: vi.fn().mockReturnValue(of({ theaterId: 'theater-1' })),
       getFoodAndDrinks: vi.fn().mockReturnValue(of({ results: [] })),
     };
-    router = { navigate: vi.fn().mockResolvedValue(true) };
+    authenticated = true;
+    router = { navigate: vi.fn().mockResolvedValue(true), serializeUrl: vi.fn().mockReturnValue('/booking/checkout?showTimeId=st-1&roomId=room-1'), createUrlTree: vi.fn() };
+    const store = { select: () => of(authenticated) };
 
     const cdr = { markForCheck: vi.fn() };
     const translate = { instant: (key: string, params?: any) => `${key}${params ? ':' + JSON.stringify(params) : ''}` };
 
     const c = new BookingSelectionComponent(
-      router as never, payment as never, cinema as never, hub as never, cdr as never, translate as never,
+      router as never, store as never, payment as never, cinema as never, hub as never, cdr as never, translate as never,
     );
     c.showTimeId = 'st-1';
     c.roomId = 'room-1';
@@ -438,6 +442,21 @@ describe('BookingSelectionComponent', () => {
       });
     });
 
+    it('sends a logged-out user to login with a return URL, parking the order for checkout', () => {
+      component = build([seat({ id: 's1' })]);
+      authenticated = false;
+      component.incTicket(component.priceRows[0]);
+      component.toggleSeat(component.seats[0]);
+
+      component.proceedToCheckout();
+
+      expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], {
+        queryParams: { returnUrl: '/booking/checkout?showTimeId=st-1&roomId=room-1' },
+      });
+      expect(router.navigate).not.toHaveBeenCalledWith(['/booking/checkout'], expect.anything());
+      expect(takePendingCheckout()?.seats?.length).toBe(1);
+    });
+
     it('does not stop the hub connection afterwards, but a plain destroy does', () => {
       component = build([seat({ id: 's1' })]);
       component.incTicket(component.priceRows[0]);
@@ -608,10 +627,11 @@ describe('BookingSelectionComponent', () => {
         getRoom: vi.fn().mockReturnValue(of({ theaterId: 'theater-1' })),
         getFoodAndDrinks: vi.fn().mockReturnValue(of({ results: [] })),
       };
-      router = { navigate: vi.fn().mockResolvedValue(true) };
+      router = { navigate: vi.fn().mockResolvedValue(true), serializeUrl: vi.fn(), createUrlTree: vi.fn() };
+      const store = { select: () => of(true) };
       const cdr = { markForCheck: vi.fn() };
       const translate = { instant: (key: string) => key };
-      const c = new BookingSelectionComponent(router as never, payment as never, cinema as never, hub as never, cdr as never, translate as never);
+      const c = new BookingSelectionComponent(router as never, store as never, payment as never, cinema as never, hub as never, cdr as never, translate as never);
       c.showTimeId = 'st-1';
       c.roomId = 'room-1';
       c.ngOnChanges(); // kicks off the slow initial load for st-1/room-1; seats still []

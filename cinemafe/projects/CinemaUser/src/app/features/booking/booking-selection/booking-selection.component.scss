@@ -24,15 +24,6 @@
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
 }
 
-// ── Seat-lock countdown ─────────────────────────────────────────────────────────
-.hold-banner {
-  display: flex; align-items: center; gap: var(--cx-space-2);
-  max-width: 1280px; margin: var(--cx-space-4) auto 0; padding: 10px 40px;
-  font-size: var(--cx-text-sm); font-weight: var(--cx-weight-medium); color: var(--ml-ink);
-  mat-icon { font-size: 20px; width: 20px; height: 20px; color: var(--ml-warn); }
-  &.expired { color: var(--ml-danger); mat-icon { color: var(--ml-danger); } }
-}
-
 // ── Ticket-type section ───────────────────────────────────────────────────────
 .section-wrap { max-width: 1280px; margin: 0 auto; padding: 24px 40px 0; }
 .card-hint { font-size: var(--cx-text-xs); color: var(--ml-muted); margin: 0 0 16px; }
@@ -45,8 +36,7 @@
 // ── Layout ────────────────────────────────────────────────────────────────────
 .seat-page {
   max-width: 1280px; margin: 0 auto; padding: 24px 40px 40px;
-  display: grid; grid-template-columns: 1fr 300px; gap: var(--cx-space-6); align-items: start;
-}
+  }
 
 .seat-area { min-width: 0; }
 
@@ -196,68 +186,50 @@
   &.unavailable-category { background: var(--ml-seat-empty); opacity: 0.35; }
 }
 
-// ── Sidebar (running seat total) ───────────────────────────────────────────────
-.sidebar-card {
-  background: var(--ml-panel);
-  border: 1px solid var(--ml-rule);
-  border-radius: var(--ml-r-lg);
-  padding: var(--cx-space-5);
-  position: sticky;
-  top: 80px;
+// ── Order bar (sticky bottom summary) ──────────────────────────────────────────
+:host { display: block; }
+.order-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: var(--ml-panel); border-top: 1px solid var(--ml-rule-strong);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.12);
 }
-.sidebar-title {
-  font-family: var(--ml-font-head); font-size: var(--cx-text-lg);
-  font-weight: var(--cx-weight-semibold); color: var(--ml-ink); margin: 0 0 var(--cx-space-5);
+.order-bar-spacer { height: 120px; } // reserves room so the fixed bar never covers the last content
+.order-bar-inner {
+  max-width: 1280px; margin: 0 auto; padding: var(--cx-space-3) 40px;
+  display: flex; align-items: center; gap: var(--cx-space-5);
 }
-.empty-seats {
-  text-align: center; padding: var(--cx-space-5) 0; color: var(--ml-muted);
-  i { font-size: 1.9rem; margin-bottom: var(--cx-space-2); display: block; color: var(--ml-faint); }
-  p { font-size: var(--cx-text-sm); margin: 0; }
+.order-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.order-context {
+  font-family: var(--ml-font-head); font-size: var(--cx-text-md); font-weight: var(--cx-weight-semibold);
+  letter-spacing: 0.02em; color: var(--ml-ink);
 }
-.selected-list { display: flex; flex-direction: column; gap: var(--cx-space-2); }
-// Ticket-stub rows: the price sits in a tear-off segment divided by a dashed line.
-.selected-item {
-  display: flex; align-items: stretch; justify-content: space-between;
-  background: var(--ml-panel-2);
-  border: 1px solid var(--ml-rule);
-  border-radius: var(--ml-r-md); overflow: hidden;
-  &.is-food .seat-code { font-size: var(--cx-text-sm); color: var(--ml-ink); }
+.order-line { font-size: var(--cx-text-sm); color: var(--ml-ink-2); overflow-wrap: anywhere; &.muted { color: var(--ml-muted); } }
+.order-hold {
+  flex: none; text-align: center; padding: 6px 12px; border-radius: var(--ml-r-md);
+  background: var(--ml-action-soft); border: 1px solid var(--ml-action-ring);
+  &.expired { background: transparent; border-color: var(--ml-danger); color: var(--ml-danger); }
 }
-.selected-seat-name { display: flex; flex-direction: column; gap: 2px; padding: 10px 13px; min-width: 0; flex: 1; }
-.seat-code {
-  font-family: var(--ml-font-data); font-size: var(--cx-text-md);
-  font-weight: var(--cx-weight-medium); color: var(--ml-action-strong);
-  font-variant-numeric: tabular-nums;
-}
-.seat-type { font-size: var(--cx-text-xs); color: var(--ml-muted); }
-.seat-price {
-  display: flex; align-items: center; padding: 10px 13px; white-space: nowrap;
-  border-left: 2px dashed var(--ml-rule-strong);
-  font-family: var(--ml-font-data); font-size: var(--cx-text-sm);
+.order-hold-label { display: block; font-size: var(--cx-text-xs); color: var(--ml-ink-2); }
+.order-hold-time {
+  font-family: var(--ml-font-data); font-size: var(--cx-text-lg); font-weight: var(--cx-weight-medium);
   color: var(--ml-ink); font-variant-numeric: tabular-nums;
 }
-.price-divider { border: none; border-top: 1px dashed var(--ml-rule); margin: var(--cx-space-4) 0; }
-.price-row {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: var(--cx-text-sm); color: var(--ml-ink-2); margin-bottom: var(--cx-space-2);
-  font-variant-numeric: tabular-nums;
+.order-total { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: var(--cx-space-1); min-width: 190px; }
+.order-total-label {
+  font-size: var(--cx-text-xs); letter-spacing: var(--cx-track-caps); text-transform: uppercase; color: var(--ml-ink-2);
 }
-.total-row { color: var(--ml-ink); font-weight: var(--cx-weight-semibold); margin-top: var(--cx-space-1); }
-.grand-total { display: flex; justify-content: space-between; align-items: baseline; }
-.grand-label {
-  font-family: var(--ml-font-head); font-size: var(--cx-text-md); font-weight: var(--cx-weight-semibold);
-  letter-spacing: var(--cx-track-caps); text-transform: uppercase; color: var(--ml-ink);
-}
-.grand-hint { margin: var(--cx-space-1) 0 0; font-size: var(--cx-text-xs); color: var(--ml-ink-2); font-variant-numeric: tabular-nums; }
 .total-amount {
   font-family: var(--ml-font-data); font-size: var(--cx-text-xl);
   font-weight: var(--cx-weight-medium); color: var(--ml-action-strong);
   font-variant-numeric: tabular-nums;
 }
+.order-cta { width: 100%; justify-content: center; font-size: var(--cx-text-sm); letter-spacing: 0.03em; }
 
 @media (max-width: 900px) {
-  .seat-page { grid-template-columns: 1fr; padding: 24px 20px; }
-  .sidebar-card { position: static; }
+  .seat-page { padding: 24px 20px; }
+  .order-bar-inner { flex-wrap: wrap; padding: var(--cx-space-3) 20px; gap: var(--cx-space-3); }
+  .order-info { flex-basis: 100%; }
+  .order-total { flex: 1; }
   .section-wrap, .panel-header { padding-left: 20px; padding-right: 20px; }
 }
 
@@ -361,13 +333,4 @@
 .food-body {
   flex: 1; min-width: 0;
   display: flex; flex-direction: column; justify-content: space-between; gap: var(--cx-space-2);
-}
-
-.confirm-btn {
-  width: 100%; justify-content: center; margin-top: var(--cx-space-5);
-  font-size: var(--cx-text-sm); letter-spacing: 0.03em;
-}
-.select-more-hint {
-  text-align: center; font-size: var(--cx-text-xs); color: var(--ml-muted);
-  margin: var(--cx-space-2) 0 0;
 }
