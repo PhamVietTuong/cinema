@@ -1,4 +1,5 @@
 using Cinema.Business.Contracts;
+using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Movies;
 using Cinema.Business.DTO.Requests;
@@ -39,6 +40,7 @@ public class CinemaController : ApiControllerBase
     private readonly ITicketPriceManager         _ticketPrices;
     private readonly IPatronCategoryManager      _patronCategories;
     private readonly IRoomTypePatronCategoryPriceManager _roomTypePatronCategoryPrices;
+    private readonly IComboManager               _combos;
     private readonly IWebHostEnvironment         _env;
 
     public CinemaController(
@@ -63,8 +65,10 @@ public class CinemaController : ApiControllerBase
         ITicketPriceManager ticketPrices,
         IPatronCategoryManager patronCategories,
         IRoomTypePatronCategoryPriceManager roomTypePatronCategoryPrices,
+        IComboManager combos,
         IWebHostEnvironment env)
     {
+        _combos              = combos;
         _movieManager    = movieManager;
         _theaterManager  = theaterManager;
         _ageRestrictions = ageRestrictions;
@@ -1472,6 +1476,24 @@ public class CinemaController : ApiControllerBase
         {
             return HandleException(e, action);
         }
+    }
+    #endregion
+
+    #region Combo
+    [AllowAnonymous]
+    [HttpGet]
+    [ProducesResponseType(typeof(List<ComboComponentDTO>), 200)]
+    public Task<IActionResult> GetComboComponents([FromQuery] Guid comboId)
+    {
+        return Run(nameof(GetComboComponents), () => _combos.GetComponentsAsync(comboId));
+    }
+
+    [Authorize(Roles = RoleNames.Admin)]
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public Task<IActionResult> SaveComboComposition([FromBody] SaveComboRequest request)
+    {
+        return RunNoContent(nameof(SaveComboComposition), () => _combos.SaveAsync(request));
     }
     #endregion
 }
