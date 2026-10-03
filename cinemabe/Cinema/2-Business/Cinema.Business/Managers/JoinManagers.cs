@@ -107,9 +107,29 @@ public class InvoiceAdminManager : IInvoiceAdminManager
         return Map(invoice);
     }
 
-    public Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id)
     {
-        return _uow.InvoiceStore.DeleteAsync(id);
+        // A Pending invoice still holds food stock it took at booking time; put it back before the invoice
+        // goes away. (Other statuses are completed sales, so their stock stays sold.)
+        var invoice = await _uow.InvoiceStore.GetByIdAsync(id);
+        if (invoice is null || invoice.Status != InvoiceStatus.Pending)
+        {
+            await _uow.InvoiceStore.DeleteAsync(id);
+            return;
+        }
+
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            await FoodStockRestorer.RestoreAsync(_uow, new[] { id }, "Deleted", null);
+            await _uow.InvoiceStore.DeleteAsync(id);
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
     }
 
     private static InvoiceAdminDTO Map(Invoice i)
