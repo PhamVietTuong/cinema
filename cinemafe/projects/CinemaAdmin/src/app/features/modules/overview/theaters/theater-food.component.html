@@ -29,7 +29,7 @@
       </ngx-datatable-column>
 
       <ngx-datatable-column [name]="'theaters.food.nameLabel' | translate" prop="name" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
+        <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong> <span *ngIf="row.isCombo" class="ad-pill ad-pill--violet">{{ 'combo.badge' | translate }}</span></ng-template>
       </ngx-datatable-column>
 
       <ngx-datatable-column [name]="'common.price' | translate" prop="price" [sortable]="false">
@@ -41,6 +41,18 @@
           <span class="ad-pill" [class.ad-pill--success]="row.isAvailable" [class.ad-pill--neutral]="!row.isAvailable">
             {{ row.isAvailable ? ('theaters.food.onSale' | translate) : ('theaters.food.offSale' | translate) }}
           </span>
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'combo.stock' | translate" prop="isOutOfStock" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <ng-container *ngIf="row.trackInventory || row.isCombo; else untracked">
+            <span class="ad-pill" [class.ad-pill--success]="!row.isOutOfStock" [class.ad-pill--danger]="row.isOutOfStock">
+              {{ row.isOutOfStock ? ('combo.outOfStock' | translate) : ('combo.inStock' | translate) }}
+            </span>
+            <span *ngIf="row.availableQuantity != null && !row.isOutOfStock"> {{ row.availableQuantity >= 10 ? '10+' : row.availableQuantity }}</span>
+          </ng-container>
+          <ng-template #untracked><span class="ad-pill ad-pill--neutral">{{ 'combo.untracked' | translate }}</span></ng-template>
         </ng-template>
       </ngx-datatable-column>
 
@@ -66,12 +78,24 @@
   <div class="ad-mobile-only">
     <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
       <mat-card-content>
-        <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong></div>
+        <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong> <span *ngIf="row.isCombo" class="ad-pill ad-pill--violet">{{ 'combo.badge' | translate }}</span></div>
         <div class="ad-mobile-card-row"><span>{{ 'common.price' | translate }}</span><span>{{ row.price | number:'1.0-0' }}đ</span></div>
         <div class="ad-mobile-card-row">
           <span>{{ 'common.status' | translate }}</span>
           <span class="ad-pill" [class.ad-pill--success]="row.isAvailable" [class.ad-pill--neutral]="!row.isAvailable">
             {{ row.isAvailable ? ('theaters.food.onSale' | translate) : ('theaters.food.offSale' | translate) }}
+          </span>
+        </div>
+        <div class="ad-mobile-card-row">
+          <span>{{ 'combo.stock' | translate }}</span>
+          <span>
+            <ng-container *ngIf="row.trackInventory || row.isCombo; else untrackedM">
+              <span class="ad-pill" [class.ad-pill--success]="!row.isOutOfStock" [class.ad-pill--danger]="row.isOutOfStock">
+                {{ row.isOutOfStock ? ('combo.outOfStock' | translate) : ('combo.inStock' | translate) }}
+              </span>
+              <span *ngIf="row.availableQuantity != null && !row.isOutOfStock"> {{ row.availableQuantity >= 10 ? '10+' : row.availableQuantity }}</span>
+            </ng-container>
+            <ng-template #untrackedM><span class="ad-pill ad-pill--neutral">{{ 'combo.untracked' | translate }}</span></ng-template>
           </span>
         </div>
         <div class="ad-mobile-card-actions">

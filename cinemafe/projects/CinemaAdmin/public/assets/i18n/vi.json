@@ -724,6 +724,22 @@
     "message": "Tài khoản này không phải quản trị viên. Vui lòng đăng nhập bằng tài khoản quản trị.",
     "switchAccount": "Đăng nhập tài khoản khác"
   },
+  "combo": {
+    "isCombo": "Món combo",
+    "hint": "Combo gồm các món khác của rạp; khi bán sẽ trừ tồn kho các thành phần.",
+    "trackedHint": "Món đang theo dõi tồn kho không thể là combo.",
+    "components": "Thành phần",
+    "selectItem": "Chọn món",
+    "quantity": "SL",
+    "addRow": "Thêm thành phần",
+    "removeRow": "Xóa",
+    "atLeastOne": "Combo cần ít nhất một thành phần.",
+    "badge": "Combo",
+    "stock": "Tồn kho",
+    "inStock": "Còn hàng",
+    "outOfStock": "Hết hàng",
+    "untracked": "Không theo dõi"
+  },
   "errors": {
     "network": "Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.",
     "forbidden": "Bạn không có quyền thực hiện thao tác này.",
