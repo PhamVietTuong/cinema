@@ -12,6 +12,15 @@ public class TheaterStore : GenericStore<Theater>, ITheaterStore
     public async Task<IEnumerable<Theater>> GetTheatersWithRoomsAsync()
         => await DbSet.Include(t => t.Rooms).Where(t => t.IsActive).OrderBy(t => t.Name).ToListAsync();
 
+    public async Task<Dictionary<Guid, string>> GetNamesByIdsAsync(IReadOnlyCollection<Guid> ids)
+    {
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+        return await DbSet.AsNoTracking().Where(t => ids.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name);
+    }
+
     public async Task<Theater?> GetDetailAsync(Guid id)
         => await DbSet
             .Include(t => t.Rooms)

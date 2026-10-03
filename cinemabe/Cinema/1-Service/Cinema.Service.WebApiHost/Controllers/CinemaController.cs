@@ -1559,6 +1559,128 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetStockMovements), () => inventory.GetMovementsAsync(search, scope));
     }
     #endregion
+
+    #region StoragePlan
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<StoragePlanListItemDTO>), 200)]
+    public Task<IActionResult> GetStoragePlans([FromBody] PagingSearchDTO search, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(GetStoragePlans), () => plans.GetAsync(search, scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpGet]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> GetStoragePlan([FromQuery] Guid id, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(GetStoragePlan), () => plans.GetByIdAsync(id, scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> CreateStoragePlan([FromBody] SaveStoragePlanRequest request, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(CreateStoragePlan), () => plans.CreateAsync(request, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPut]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> UpdateStoragePlan([FromBody] SaveStoragePlanRequest request, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(UpdateStoragePlan), () => plans.UpdateAsync(request, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> SubmitStoragePlan([FromBody] StoragePlanDecisionRequest request, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(SubmitStoragePlan), () => plans.SubmitAsync(request.Id, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.StockApprovers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> ApproveStoragePlan([FromBody] StoragePlanDecisionRequest request, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(ApproveStoragePlan), () => plans.ApproveAsync(request.Id, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.StockApprovers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> RejectStoragePlan([FromBody] StoragePlanDecisionRequest request, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(RejectStoragePlan), () => plans.RejectAsync(request.Id, request.Reason, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> ReceiveStoragePlan([FromBody] ReceiveStoragePlanRequest request, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(ReceiveStoragePlan), () => plans.ReceiveAsync(request, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> CancelStoragePlan([FromBody] StoragePlanDecisionRequest request, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(CancelStoragePlan), () => plans.CancelAsync(request.Id, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StoragePlanDTO), 200)]
+    public Task<IActionResult> CreateStoragePlanFromLowStock([FromBody] CreatePlanFromLowStockRequest request, [FromServices] IStoragePlanManager plans)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(CreateStoragePlanFromLowStock), () => plans.CreateFromLowStockAsync(request, User.GetUserId(), scope));
+    }
+    #endregion
 }
 
 // ── Request classes ───────────────────────────────────────────────────────────

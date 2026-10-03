@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<ITicketPriceManager, TicketPriceManager>();
         services.AddScoped<IRoomTypePatronCategoryPriceManager, RoomTypePatronCategoryPriceManager>();
         services.AddScoped<IInventoryManager, InventoryManager>();
+        services.AddScoped<IStoragePlanManager, StoragePlanManager>();
         return services;
     }
 }

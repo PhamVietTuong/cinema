@@ -26,6 +26,38 @@ public class StoragePlanStore : GenericStore<StoragePlan>, IStoragePlanStore
         }
     }
 
+    public async Task<(List<StoragePlanListRow> Items, int Total)> SearchAsync(StoragePlanSearchCriteria criteria)
+    {
+        var query = DbSet.AsNoTracking().AsQueryable();
+        if (criteria.TheaterId.HasValue)
+        {
+            var theaterId = criteria.TheaterId.Value;
+            query = query.Where(p => p.TheaterId == theaterId);
+        }
+        if (criteria.Status.HasValue)
+        {
+            var status = criteria.Status.Value;
+            query = query.Where(p => p.Status == status);
+        }
+        if (!string.IsNullOrWhiteSpace(criteria.Keyword))
+        {
+            var keyword = criteria.Keyword.Trim();
+            query = query.Where(p => p.Code.Contains(keyword));
+        }
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(p => p.CreationTime)
+            .ThenBy(p => p.Id)
+            .Skip(criteria.PageIndex * criteria.PageSize)
+            .Take(criteria.PageSize)
+            .Select(p => new StoragePlanListRow(
+                p.Id, p.Code, p.TheaterId, p.Status, p.TargetDate, p.Supplier,
+                p.Items.Count, p.Items.Sum(i => i.PlannedQuantity), p.CreatedByUserId, p.CreationTime))
+            .ToListAsync();
+        return (items, total);
+    }
+
     public async Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids)
     {
         if (ids.Count == 0)
