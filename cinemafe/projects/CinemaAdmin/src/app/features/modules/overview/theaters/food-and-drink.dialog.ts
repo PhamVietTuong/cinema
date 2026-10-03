@@ -26,6 +26,8 @@ export class FoodAndDrinkDialog {
   editingId: string | null;
   /** Fixed when the dialog opens, so the title does not flip to 'edit' after a first save creates the item. */
   readonly isEditMode: boolean;
+  /** Combo options live in the Combo tab: the food tab's dialog hides them (unless it edits an existing combo). */
+  readonly showComboControls: boolean;
   form: FormGroup;
 
   /** This theater's non-combo foods, selectable as combo components. */
@@ -48,6 +50,7 @@ export class FoodAndDrinkDialog {
   ) {
     this.editingId = _data.foodAndDrink?.id ?? null;
     this.isEditMode = !!_data.foodAndDrink?.id;
+    this.showComboControls = !!_data.presetCombo || !!_data.foodAndDrink?.isCombo;
     this.form = this._fb.group({
       name: [_data.foodAndDrink?.name ?? '', Validators.required],
       price: [_data.foodAndDrink?.price ?? 0, [Validators.required, Validators.min(0)]],

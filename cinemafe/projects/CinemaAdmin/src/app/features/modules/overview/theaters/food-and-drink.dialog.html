@@ -51,12 +51,14 @@
         <mat-slide-toggle formControlName="isAvailable" aria-labelledby="fd-isAvailable-lbl"></mat-slide-toggle>
       </div>
 
-      <div class="dlg-switch">
-        <span class="dlg-switch-label" id="fd-isCombo-lbl">{{ 'combo.isCombo' | translate }}</span>
-        <mat-slide-toggle formControlName="isCombo" aria-labelledby="fd-isCombo-lbl" (change)="onComboToggle()"></mat-slide-toggle>
-      </div>
-      <p class="dlg-hint" *ngIf="isTracked">{{ 'combo.trackedHint' | translate }}</p>
-      <p class="dlg-hint" *ngIf="!isTracked">{{ 'combo.hint' | translate }}</p>
+      <ng-container *ngIf="showComboControls">
+        <div class="dlg-switch">
+          <span class="dlg-switch-label" id="fd-isCombo-lbl">{{ 'combo.isCombo' | translate }}</span>
+          <mat-slide-toggle formControlName="isCombo" aria-labelledby="fd-isCombo-lbl" (change)="onComboToggle()"></mat-slide-toggle>
+        </div>
+        <p class="dlg-hint" *ngIf="isTracked">{{ 'combo.trackedHint' | translate }}</p>
+        <p class="dlg-hint" *ngIf="!isTracked">{{ 'combo.hint' | translate }}</p>
+      </ng-container>
 
       <div *ngIf="isCombo" formArrayName="components">
         <label class="dlg-label">{{ 'combo.components' | translate }}</label>
