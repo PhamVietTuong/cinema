@@ -86,7 +86,9 @@ public class FoodAndDrinkManager : IFoodAndDrinkManager
         query = ApplySort(query, search.Sort);
         var total = await _uow.FoodAndDrinkStore.CountAsync(query);
         var items = await _uow.FoodAndDrinkStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<FoodAndDrink, FoodAndDrinkDTO>(items, total, page, pageSize);
+        var result = PagingHelper.ToPagedResult<FoodAndDrink, FoodAndDrinkDTO>(items, total, page, pageSize);
+        await ComboAvailability.PopulateAsync(_uow, items, result.Results.ToList());
+        return result;
     }
 
     public async Task<FoodAndDrinkDTO> GetByIdAsync(Guid id)
@@ -96,7 +98,9 @@ public class FoodAndDrinkManager : IFoodAndDrinkManager
         {
             throw new KeyNotFoundException($"FoodAndDrink {id} not found.");
         }
-        return entity.ToDTO<FoodAndDrink, FoodAndDrinkDTO>();
+        var dto = entity.ToDTO<FoodAndDrink, FoodAndDrinkDTO>();
+        await ComboAvailability.PopulateAsync(_uow, new[] { entity }, new[] { dto });
+        return dto;
     }
 
     public async Task<FoodAndDrinkDTO> CreateAsync(CreateFoodAndDrinkRequest request)
@@ -113,13 +117,47 @@ public class FoodAndDrinkManager : IFoodAndDrinkManager
         {
             throw new KeyNotFoundException($"FoodAndDrink {request.Id} not found.");
         }
+        if (request.TheaterId != entity.TheaterId)
+        {
+            await EnsureTheaterCanChangeAsync(entity);
+        }
         entity.PatchEntity<FoodAndDrink, UpdateFoodAndDrinkRequest>(request);
         await _uow.FoodAndDrinkStore.UpdateAsync(entity);
-        return entity.ToDTO<FoodAndDrink, FoodAndDrinkDTO>();
+        var dto = entity.ToDTO<FoodAndDrink, FoodAndDrinkDTO>();
+        await ComboAvailability.PopulateAsync(_uow, new[] { entity }, new[] { dto });
+        return dto;
     }
 
     public async Task DeleteAsync(Guid id)
     {
+        var usedIn = await _uow.ComboItemStore.GetCombosUsingAsync(id);
+        if (usedIn.Count > 0)
+        {
+            throw new InvalidOperationException($"Used in combo(s): {string.Join(", ", usedIn.Select(u => u.ComboName))}");
+        }
         await _uow.FoodAndDrinkStore.DeleteAsync(id);
+    }
+
+    /// <summary>
+    /// Combos, components and stock-bearing items are tied to their theater (recipes must stay within one
+    /// theater, and the ledger is theater-scoped), so moving them is refused.
+    /// </summary>
+    private async Task EnsureTheaterCanChangeAsync(FoodAndDrink entity)
+    {
+        if (entity.IsCombo)
+        {
+            throw new InvalidOperationException("A combo cannot be moved to another theater.");
+        }
+
+        var usedIn = await _uow.ComboItemStore.GetCombosUsingAsync(entity.Id);
+        if (usedIn.Count > 0)
+        {
+            throw new InvalidOperationException($"Cannot change theater: used in combo(s): {string.Join(", ", usedIn.Select(u => u.ComboName))}");
+        }
+
+        if (entity.TrackInventory || entity.QuantityOnHand > 0 || await _uow.StockMovementStore.ExistsAsync(m => m.FoodAndDrinkId == entity.Id))
+        {
+            throw new InvalidOperationException("Cannot change theater: the item has inventory or stock history.");
+        }
     }
 }
