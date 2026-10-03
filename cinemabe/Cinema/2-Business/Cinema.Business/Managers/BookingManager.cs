@@ -214,24 +214,7 @@ public class BookingManager : IBookingManager
                 });
             }
 
-            double foodTotal = 0;
-            var foods = new List<InvoiceFoodAndDrink>();
-            foreach (var f in request.Foods)
-            {
-                var food = await _uow.FoodAndDrinkStore.GetByIdAsync(f.FoodAndDrinkId);
-                if (food == null)
-                {
-                    throw new KeyNotFoundException($"Food item {f.FoodAndDrinkId} not found.");
-                }
-                foods.Add(new InvoiceFoodAndDrink
-                {
-                    FoodAndDrinkId = f.FoodAndDrinkId,
-                    Quantity       = f.Quantity,
-                    UnitPrice      = food.Price,
-                    TotalPrice     = food.Price * f.Quantity
-                });
-                foodTotal += food.Price * f.Quantity;
-            }
+            var (foods, foodTotal, stockDemand) = await BuildFoodLinesAndReserveStockAsync(request);
 
             var total = ticketTotal + foodTotal;
             var (discountAmount, finalAmount, discountId) =
@@ -303,6 +286,7 @@ public class BookingManager : IBookingManager
             };
 
             await _uow.InvoiceStore.CreateAsync(invoice);
+            await RecordSaleMovementsAsync(stockDemand, invoice, userId);
             await _uow.CommitTransactionAsync();
 
             // Clear the booker's own advisory locks on the seats just booked (SeatBooked below supersedes
@@ -345,6 +329,174 @@ public class BookingManager : IBookingManager
         {
             gate.Release();
         }
+    }
+
+    // Units of one tracked item to take off the shelf for a booking, and the combos (if any) that asked for it.
+    private sealed class StockDemand
+    {
+        public StockDemand(FoodAndDrink food)
+        {
+            Food = food;
+        }
+
+        public FoodAndDrink Food { get; }
+        public int Quantity { get; set; }
+        public List<string> ComboNames { get; } = new();
+    }
+
+    // Merges the requested food lines, validates them (theater + availability), expands combos into their
+    // tracked components and takes the stock — all inside the caller's transaction, so a shortage throws and
+    // the caller's catch rolls every stock change back. Fixed query count regardless of line count:
+    // foods (1) + room (1) + combo recipes (1) + component foods (1).
+    private async Task<(List<InvoiceFoodAndDrink> Lines, double Total, List<StockDemand> Demand)> BuildFoodLinesAndReserveStockAsync(CreateBookingRequest request)
+    {
+        var lines = new List<InvoiceFoodAndDrink>();
+        var demand = new List<StockDemand>();
+        if (request.Foods.Count == 0)
+        {
+            return (lines, 0, demand);
+        }
+
+        // The same food on two lines would collide on the (InvoiceId, FoodAndDrinkId) key; sum them.
+        var merged = request.Foods
+            .GroupBy(f => f.FoodAndDrinkId)
+            .Select(g => (FoodAndDrinkId: g.Key, Quantity: g.Sum(x => x.Quantity)))
+            .ToList();
+
+        var room = await _uow.RoomStore.GetByIdAsync(request.RoomId);
+        if (room is null)
+        {
+            throw new InvalidOperationException("ShowTime/Room combination not found.");
+        }
+
+        var foodsById = await _uow.FoodAndDrinkStore.GetByIdsAsync(merged.Select(m => m.FoodAndDrinkId).ToList());
+
+        double total = 0;
+        foreach (var (foodId, quantity) in merged)
+        {
+            if (!foodsById.TryGetValue(foodId, out var food))
+            {
+                throw new KeyNotFoundException($"Food item {foodId} not found.");
+            }
+            EnsureOrderable(food, room.TheaterId);
+
+            lines.Add(new InvoiceFoodAndDrink
+            {
+                FoodAndDrinkId = foodId,
+                Quantity       = quantity,
+                UnitPrice      = food.Price,
+                TotalPrice     = food.Price * quantity
+            });
+            total += food.Price * quantity;
+        }
+
+        var demandById = new Dictionary<Guid, StockDemand>();
+        void Add(FoodAndDrink item, int units, string? comboName)
+        {
+            // Untracked items never touch stock.
+            if (!item.TrackInventory)
+            {
+                return;
+            }
+            if (!demandById.TryGetValue(item.Id, out var entry))
+            {
+                entry = new StockDemand(item);
+                demandById[item.Id] = entry;
+            }
+            entry.Quantity += units;
+            if (comboName is not null && !entry.ComboNames.Contains(comboName))
+            {
+                entry.ComboNames.Add(comboName);
+            }
+        }
+
+        var comboLines = merged.Where(m => foodsById[m.FoodAndDrinkId].IsCombo).ToList();
+        foreach (var (foodId, quantity) in merged)
+        {
+            var food = foodsById[foodId];
+            if (!food.IsCombo)
+            {
+                Add(food, quantity, null);
+            }
+        }
+
+        if (comboLines.Count > 0)
+        {
+            var recipes = await _uow.ComboItemStore.GetByCombosAsync(comboLines.Select(c => c.FoodAndDrinkId).ToList());
+            var componentIds = recipes.Select(r => r.ComponentId).Distinct().Where(id => !foodsById.ContainsKey(id)).ToList();
+            var components = componentIds.Count == 0
+                ? new Dictionary<Guid, FoodAndDrink>()
+                : await _uow.FoodAndDrinkStore.GetByIdsAsync(componentIds);
+
+            foreach (var (comboId, comboQuantity) in comboLines)
+            {
+                var combo = foodsById[comboId];
+                foreach (var recipe in recipes.Where(r => r.ComboId == comboId))
+                {
+                    if (!foodsById.TryGetValue(recipe.ComponentId, out var component)
+                        && !components.TryGetValue(recipe.ComponentId, out component))
+                    {
+                        throw new InvalidOperationException($"'{combo.Name}' is no longer available.");
+                    }
+                    EnsureOrderable(component, room.TheaterId);
+                    Add(component, comboQuantity * recipe.Quantity, combo.Name);
+                }
+            }
+        }
+
+        // Fixed (ascending id) order so two bookings contending for the same items can't deadlock.
+        var ordered = demandById.Values.OrderBy(d => d.Food.Id).ToList();
+        foreach (var entry in ordered)
+        {
+            if (!await _uow.FoodAndDrinkStore.TryApplyStockDeltaAsync(entry.Food.Id, -entry.Quantity))
+            {
+                var name = entry.ComboNames.Count > 0 ? entry.ComboNames[0] : entry.Food.Name;
+                throw new InvalidOperationException($"'{name}' is out of stock or has insufficient quantity.");
+            }
+        }
+
+        return (lines, total, ordered);
+    }
+
+    private static void EnsureOrderable(FoodAndDrink food, Guid theaterId)
+    {
+        if (food.TheaterId != theaterId)
+        {
+            throw new InvalidOperationException($"'{food.Name}' is not available at this theater.");
+        }
+        if (!food.IsAvailable)
+        {
+            throw new InvalidOperationException($"'{food.Name}' is no longer available.");
+        }
+    }
+
+    // One Sale ledger row per demanded item (negative quantity), written with the invoice in the same transaction.
+    private async Task RecordSaleMovementsAsync(IReadOnlyList<StockDemand> demand, Invoice invoice, Guid userId)
+    {
+        if (demand.Count == 0)
+        {
+            return;
+        }
+
+        var movements = demand.Select(d => new StockMovement
+        {
+            FoodAndDrinkId = d.Food.Id,
+            TheaterId      = d.Food.TheaterId,
+            Type           = StockMovementType.Sale,
+            Quantity       = -d.Quantity,
+            Reason         = d.ComboNames.Count > 0
+                ? $"Sold on {invoice.Code} via combo {string.Join(", ", d.ComboNames)}"
+                : $"Sold on {invoice.Code}",
+            InvoiceId      = invoice.Id,
+            UserId         = userId,
+        }).ToList();
+        await _uow.StockMovementStore.CreateRangeAsync(movements);
+    }
+
+    // Puts sold stock back for invoices that did not complete. Ledger-driven and idempotent (see FoodStockRestorer).
+    private Task RestoreFoodStockAsync(IReadOnlyCollection<Invoice> invoices, string reason, Guid? userId)
+    {
+        return FoodStockRestorer.RestoreAsync(_uow, invoices.Select(i => i.Id).ToList(), reason, userId);
     }
 
     public async Task<PaymentInitiationDTO?> InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl)
@@ -831,12 +983,23 @@ public class BookingManager : IBookingManager
         {
             return false;
         }
-        invoice.Status = InvoiceStatus.Cancelled;
-        await _uow.InvoiceStore.UpdateAsync(invoice);
-        await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-        await RestoreRedeemedPointsAsync(invoice);
-        await RestoreGiftCardAsync(invoice);
-        await _uow.SaveChangesAsync();
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            invoice.Status = InvoiceStatus.Cancelled;
+            await _uow.InvoiceStore.UpdateAsync(invoice);
+            await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
+            await RestoreRedeemedPointsAsync(invoice);
+            await RestoreGiftCardAsync(invoice);
+            await RestoreFoodStockAsync(new[] { invoice }, "Cancelled", userId);
+            await _uow.SaveChangesAsync();
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
         return true;
     }
 
@@ -911,44 +1074,59 @@ public class BookingManager : IBookingManager
             return false;
         }
 
-        // Mark refunded. Because seat occupancy counts only Pending/Paid invoices, this frees the seats.
-        invoice.Status     = InvoiceStatus.Refunded;
-        invoice.RefundedAt = DateTime.UtcNow;
-        await _uow.InvoiceStore.UpdateAsync(invoice);
-        await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-
-        // Reverse the loyalty points accrued at payment, give back any points spent on this booking,
-        // and re-evaluate the membership tier.
-        var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(invoice.UserId);
-        if (user is not null)
+        // The gateway call above can't be rolled back, so the DB writes start their transaction after it.
+        User? user;
+        await _uow.BeginTransactionAsync();
+        try
         {
-            user.Points -= (int)(invoice.FinalAmount / _pointsPerUnit);
-            user.Points += invoice.PointsRedeemed;
-            if (user.Points < 0)
-            {
-                user.Points = 0;
-            }
-            var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
-            var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
-            user.MemberShipId = tier?.Id;
-            await _uow.UserStore.UpdateAsync(user);
-        }
+            // Mark refunded. Because seat occupancy counts only Pending/Paid invoices, this frees the seats.
+            invoice.Status     = InvoiceStatus.Refunded;
+            invoice.RefundedAt = DateTime.UtcNow;
+            await _uow.InvoiceStore.UpdateAsync(invoice);
+            await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
 
-        // Give the promo code's usage back.
-        if (invoice.DiscountId is Guid usedDiscountId)
+            // Reverse the loyalty points accrued at payment, give back any points spent on this booking,
+            // and re-evaluate the membership tier.
+            user = invoice.User ?? await _uow.UserStore.GetByIdAsync(invoice.UserId);
+            if (user is not null)
+            {
+                user.Points -= (int)(invoice.FinalAmount / _pointsPerUnit);
+                user.Points += invoice.PointsRedeemed;
+                if (user.Points < 0)
+                {
+                    user.Points = 0;
+                }
+                var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
+                var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
+                user.MemberShipId = tier?.Id;
+                await _uow.UserStore.UpdateAsync(user);
+            }
+
+            // Give the promo code's usage back.
+            if (invoice.DiscountId is Guid usedDiscountId)
+            {
+                var discount = invoice.Discount ?? await _uow.DiscountStore.GetByIdAsync(usedDiscountId);
+                if (discount is not null && discount.UsedCount > 0)
+                {
+                    discount.UsedCount -= 1;
+                    await _uow.DiscountStore.UpdateAsync(discount);
+                }
+            }
+
+            // Give the gift-card balance back.
+            await RestoreGiftCardAsync(invoice);
+
+            // Put the sold food/drink stock back.
+            await RestoreFoodStockAsync(new[] { invoice }, "Refunded", userId);
+
+            await _uow.SaveChangesAsync();
+            await _uow.CommitTransactionAsync();
+        }
+        catch
         {
-            var discount = invoice.Discount ?? await _uow.DiscountStore.GetByIdAsync(usedDiscountId);
-            if (discount is not null && discount.UsedCount > 0)
-            {
-                discount.UsedCount -= 1;
-                await _uow.DiscountStore.UpdateAsync(discount);
-            }
+            await _uow.RollbackTransactionAsync();
+            throw;
         }
-
-        // Give the gift-card balance back.
-        await RestoreGiftCardAsync(invoice);
-
-        await _uow.SaveChangesAsync();
 
         if (user is not null)
         {
@@ -969,16 +1147,28 @@ public class BookingManager : IBookingManager
         {
             return 0;
         }
-        foreach (var invoice in stale)
+        await _uow.BeginTransactionAsync();
+        try
         {
-            // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
-            invoice.Status = InvoiceStatus.Cancelled;
-            await _uow.InvoiceStore.UpdateAsync(invoice);
-            await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-            await RestoreRedeemedPointsAsync(invoice);
-            await RestoreGiftCardAsync(invoice);
+            foreach (var invoice in stale)
+            {
+                // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
+                invoice.Status = InvoiceStatus.Cancelled;
+                await _uow.InvoiceStore.UpdateAsync(invoice);
+                await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
+                await RestoreRedeemedPointsAsync(invoice);
+                await RestoreGiftCardAsync(invoice);
+            }
+            // One batched ledger read/restock for the whole run, not one per invoice.
+            await RestoreFoodStockAsync(stale.ToList(), "Expired", null);
+            await _uow.SaveChangesAsync();
+            await _uow.CommitTransactionAsync();
         }
-        await _uow.SaveChangesAsync();
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
         return stale.Count;
     }
 

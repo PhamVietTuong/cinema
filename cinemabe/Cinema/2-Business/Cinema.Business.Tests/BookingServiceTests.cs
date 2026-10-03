@@ -49,6 +49,9 @@ public class BookingServiceTests
         // Default: no active patron categories in the theater unless a test sets them up.
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
             .ReturnsAsync(new List<PatronCategory>());
+        // Default: no stock ledger rows (nothing sold) unless a test sets them up.
+        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<StockNetQuantity>());
     }
 
     private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId)
@@ -976,5 +979,343 @@ public class BookingServiceTests
 
         SetupDiscount(d => { d.MaxUsage = 3; d.UsedCount = 3; });
         (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000)).Valid.Should().BeFalse();
+    }
+
+    // ── Food stock: deduct at booking, restore on cancel / expire / refund ──────
+
+    private static readonly Guid FoodTheaterId = Guid.NewGuid();
+
+    private static FoodAndDrink Food(string name, double price, bool tracked, bool isCombo = false, Guid? theaterId = null, bool available = true)
+    {
+        return new FoodAndDrink
+        {
+            Id             = Guid.NewGuid(),
+            TheaterId      = theaterId ?? FoodTheaterId,
+            Name           = name,
+            Price          = price,
+            TrackInventory = tracked,
+            IsCombo        = isCombo,
+            IsAvailable    = available,
+        };
+    }
+
+    /// <summary>Wires a one-seat booking in <see cref="FoodTheaterId"/> and the food store with the given
+    /// items (stock calls succeed unless a test overrides them). Returns a request skeleton to add Foods to.</summary>
+    private CreateBookingRequest SetupFoodBooking(params FoodAndDrink[] foods)
+    {
+        var roomTypeId   = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var seat         = Guid.NewGuid();
+        var adultId      = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(FoodTheaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(FoodTheaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId, TheaterId = FoodTheaterId, SeatTypeId = standardType, Name = "Adult", Price = 100, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>())).ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RowName = "A", ColIndex = 1 } });
+
+        _uowMock.Setup(u => u.FoodAndDrinkStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync((IReadOnlyCollection<Guid> ids) => foods.Where(f => ids.Contains(f.Id)).ToDictionary(f => f.Id));
+        _uowMock.Setup(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
+        _uowMock.Setup(u => u.ComboItemStore.GetByCombosAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<ComboItem>());
+
+        return new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = seat, PatronCategoryId = adultId } },
+            PaymentMethod = "Sandbox",
+        };
+    }
+
+    private List<StockMovement> CaptureMovements()
+    {
+        var captured = new List<StockMovement>();
+        _uowMock.Setup(u => u.StockMovementStore.CreateRangeAsync(It.IsAny<List<StockMovement>>()))
+            .Callback((List<StockMovement> m) => captured.AddRange(m))
+            .ReturnsAsync((List<StockMovement> m) => m);
+        return captured;
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_UntrackedFood_MakesNoStockOrMovementCalls()
+    {
+        var popcorn = Food("Popcorn", 50, tracked: false);
+        var request = SetupFoodBooking(popcorn);
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = popcorn.Id, Quantity = 2 });
+
+        var result = await _sut.CreateBookingAsync(Guid.NewGuid(), request);
+
+        result.TotalAmount.Should().Be(200);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
+        _uowMock.Verify(u => u.StockMovementStore.CreateRangeAsync(It.IsAny<List<StockMovement>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_TrackedFoodInsufficientStock_ThrowsRollsBackAndCreatesNoInvoice()
+    {
+        var cola = Food("Cola", 30, tracked: true);
+        var request = SetupFoodBooking(cola);
+        _uowMock.Setup(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, -2)).ReturnsAsync(false);
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = cola.Id, Quantity = 2 });
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*Cola*out of stock*");
+
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Never);
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_SameFoodOnTwoLines_MergesIntoOneRowAndOneStockCall()
+    {
+        var cola = Food("Cola", 30, tracked: true);
+        var request = SetupFoodBooking(cola);
+        Invoice? created = null;
+        _uowMock.Setup(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()))
+            .Callback((Invoice i) => created = i).ReturnsAsync((Invoice i) => i);
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = cola.Id, Quantity = 1 });
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = cola.Id, Quantity = 2 });
+
+        var result = await _sut.CreateBookingAsync(Guid.NewGuid(), request);
+
+        created!.InvoiceFoodAndDrinks.Should().ContainSingle()
+            .Which.Quantity.Should().Be(3);
+        result.TotalAmount.Should().Be(100 + 90);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, -3), Times.Once);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_Combo_DeductsOnlyTrackedComponentsAndRecordsSaleMovement()
+    {
+        var a     = Food("Cola", 10, tracked: true);
+        var b     = Food("Straw", 1, tracked: false);
+        var combo = Food("Combo 1", 80, tracked: false, isCombo: true);
+        var request = SetupFoodBooking(a, b, combo);
+        _uowMock.Setup(u => u.ComboItemStore.GetByCombosAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<ComboItem>
+            {
+                new() { ComboId = combo.Id, ComponentId = a.Id, Quantity = 1 },
+                new() { ComboId = combo.Id, ComponentId = b.Id, Quantity = 2 },
+            });
+        var movements = CaptureMovements();
+        Invoice? created = null;
+        _uowMock.Setup(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()))
+            .Callback((Invoice i) => created = i).ReturnsAsync((Invoice i) => i);
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = combo.Id, Quantity = 2 });
+
+        await _sut.CreateBookingAsync(Guid.NewGuid(), request);
+
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(a.Id, -2), Times.Once);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(b.Id, It.IsAny<int>()), Times.Never);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(combo.Id, It.IsAny<int>()), Times.Never);
+        var sale = movements.Should().ContainSingle().Subject;
+        sale.Type.Should().Be(StockMovementType.Sale);
+        sale.FoodAndDrinkId.Should().Be(a.Id);
+        sale.Quantity.Should().Be(-2);
+        sale.InvoiceId.Should().Be(created!.Id);
+        sale.TheaterId.Should().Be(FoodTheaterId);
+        var line = created.InvoiceFoodAndDrinks.Should().ContainSingle().Subject;
+        line.FoodAndDrinkId.Should().Be(combo.Id);
+        line.Quantity.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_PlainFoodPlusComboContainingIt_CombinesIntoOneStockCall()
+    {
+        var a     = Food("Cola", 10, tracked: true);
+        var combo = Food("Combo 1", 80, tracked: false, isCombo: true);
+        var request = SetupFoodBooking(a, combo);
+        _uowMock.Setup(u => u.ComboItemStore.GetByCombosAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<ComboItem> { new() { ComboId = combo.Id, ComponentId = a.Id, Quantity = 1 } });
+        var movements = CaptureMovements();
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = a.Id, Quantity = 1 });
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = combo.Id, Quantity = 2 });
+
+        await _sut.CreateBookingAsync(Guid.NewGuid(), request);
+
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(a.Id, -3), Times.Once);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Once);
+        movements.Should().ContainSingle().Which.Quantity.Should().Be(-3);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ComboWithShortSecondComponent_ThrowsNamingComboAndCommitsNothing()
+    {
+        var a     = Food("Cola", 10, tracked: true);
+        var b     = Food("Chips", 10, tracked: true);
+        var combo = Food("Combo 1", 80, tracked: false, isCombo: true);
+        var request = SetupFoodBooking(a, b, combo);
+        _uowMock.Setup(u => u.ComboItemStore.GetByCombosAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<ComboItem>
+            {
+                new() { ComboId = combo.Id, ComponentId = a.Id, Quantity = 1 },
+                new() { ComboId = combo.Id, ComponentId = b.Id, Quantity = 1 },
+            });
+        // Whichever component sorts second is the short one; stock applies in ascending id order.
+        var second = new[] { a.Id, b.Id }.OrderBy(id => id).Last();
+        _uowMock.Setup(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(second, -1)).ReturnsAsync(false);
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = combo.Id, Quantity = 1 });
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*Combo 1*out of stock*");
+
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Never);
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+        _uowMock.Verify(u => u.StockMovementStore.CreateRangeAsync(It.IsAny<List<StockMovement>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_FoodFromAnotherTheater_Throws()
+    {
+        var foreign = Food("Foreign", 10, tracked: true, theaterId: Guid.NewGuid());
+        var request = SetupFoodBooking(foreign);
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = foreign.Id, Quantity = 1 });
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*not available at this theater*");
+
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_UnavailableFood_Throws()
+    {
+        var off = Food("Off the menu", 10, tracked: true, available: false);
+        var request = SetupFoodBooking(off);
+        request.Foods.Add(new BookingFoodItem { FoodAndDrinkId = off.Id, Quantity = 1 });
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*no longer available*");
+    }
+
+    private (Invoice Invoice, FoodAndDrink Food) SetupCancellableInvoiceWithSale(Guid userId, int netSold, bool tracked = true)
+    {
+        var invoice = new Invoice { Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Pending };
+        var cola = Food("Cola", 10, tracked);
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<StockNetQuantity> { new(invoice.Id, cola.Id, -netSold) });
+        _uowMock.Setup(u => u.FoodAndDrinkStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, FoodAndDrink> { [cola.Id] = cola });
+        _uowMock.Setup(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
+        return (invoice, cola);
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_RestocksNetSoldQuantityFromLedger_NotFromRecipe()
+    {
+        var userId = Guid.NewGuid();
+        var (invoice, cola) = SetupCancellableInvoiceWithSale(userId, netSold: 3);
+        var movements = CaptureMovements();
+
+        (await _sut.CancelBookingAsync(userId, invoice.Id)).Should().BeTrue();
+
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, 3), Times.Once);
+        _uowMock.Verify(u => u.ComboItemStore.GetByCombosAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
+        _uowMock.Verify(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Once);
+        var reversal = movements.Should().ContainSingle().Subject;
+        reversal.Type.Should().Be(StockMovementType.SaleReversal);
+        reversal.Quantity.Should().Be(3);
+        reversal.InvoiceId.Should().Be(invoice.Id);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_SecondRestockFindsNetZeroAndIsNoOp()
+    {
+        var userId = Guid.NewGuid();
+        var (invoice, cola) = SetupCancellableInvoiceWithSale(userId, netSold: 0);
+
+        // Net 0 (a SaleReversal already recorded) is what the ledger reports after a first restock.
+        await _sut.CancelBookingAsync(userId, invoice.Id);
+
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, It.IsAny<int>()), Times.Never);
+        _uowMock.Verify(u => u.StockMovementStore.CreateRangeAsync(It.IsAny<List<StockMovement>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_ItemNoLongerTracked_IsSkipped()
+    {
+        var userId = Guid.NewGuid();
+        var (invoice, cola) = SetupCancellableInvoiceWithSale(userId, netSold: 2, tracked: false);
+
+        await _sut.CancelBookingAsync(userId, invoice.Id);
+
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExpireStalePendingBookingsAsync_RestocksWithOneBatchedLedgerCall()
+    {
+        var invoices = new List<Invoice>
+        {
+            new() { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), Status = InvoiceStatus.Pending },
+            new() { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), Status = InvoiceStatus.Pending },
+        };
+        var cola = Food("Cola", 10, tracked: true);
+        _uowMock.Setup(u => u.InvoiceStore.GetStalePendingAsync(It.IsAny<DateTime>())).ReturnsAsync(invoices);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>())).ReturnsAsync((Invoice i) => i);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<StockNetQuantity>
+            {
+                new(invoices[0].Id, cola.Id, -2),
+                new(invoices[1].Id, cola.Id, -1),
+            });
+        _uowMock.Setup(u => u.FoodAndDrinkStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, FoodAndDrink> { [cola.Id] = cola });
+        _uowMock.Setup(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
+        var movements = CaptureMovements();
+
+        var count = await _sut.ExpireStalePendingBookingsAsync(TimeSpan.FromMinutes(15));
+
+        count.Should().Be(2);
+        _uowMock.Verify(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Once);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, 2), Times.Once);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, 1), Times.Once);
+        movements.Should().HaveCount(2).And.OnlyContain(m => m.Type == StockMovementType.SaleReversal && m.UserId == null);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task RefundBookingAsync_RestocksNetSoldQuantity()
+    {
+        var userId  = Guid.NewGuid();
+        var invoice = new Invoice
+        {
+            Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Paid, FinalAmount = 100000,
+            PaymentMethod = "Sandbox", PaymentReference = "SANDBOX-abc", User = new User { Id = userId, Email = "u@cinema.vn", Points = 50 },
+        };
+        var cola = Food("Cola", 10, tracked: true);
+        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(It.IsAny<User>())).ReturnsAsync((User x) => x);
+        _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<Expression<Func<MemberShip, bool>>>())).ReturnsAsync(new List<MemberShip>());
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<StockNetQuantity> { new(invoice.Id, cola.Id, -4) });
+        _uowMock.Setup(u => u.FoodAndDrinkStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, FoodAndDrink> { [cola.Id] = cola });
+        _uowMock.Setup(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
+        var movements = CaptureMovements();
+
+        (await _sut.RefundBookingAsync(userId, invoice.Id, isAdmin: false)).Should().BeTrue();
+
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, 4), Times.Once);
+        movements.Should().ContainSingle().Which.Reason.Should().Be("Refunded");
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }
 }
