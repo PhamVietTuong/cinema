@@ -1,4 +1,4 @@
-<div mat-dialog-title class="dialog-title">{{ (editingId ? 'theaters.food.editTitle' : 'theaters.food.newTitle') | translate }}</div>
+<div mat-dialog-title class="dialog-title">{{ (isEditMode ? 'theaters.food.editTitle' : 'theaters.food.newTitle') | translate }}</div>
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
