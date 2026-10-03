@@ -61,6 +61,12 @@
 .ticket-code { font-family: monospace; opacity: 0.85; }
 .ticket-body { padding: 16px 20px; text-align: left; }
 .ticket-detail-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; margin-bottom: 8px; }
+.ticket-movie-title { font-size: 1.15rem; font-weight: 600; margin-bottom: 14px; }
+.ticket-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+.ticket-info-wide { grid-column: 1 / -1; }
+.ticket-info-grid .ticket-detail-label { margin-bottom: 4px; }
+.ticket-info-value { font-size: 0.9rem; font-weight: 500; }
+.ticket-total .ticket-info-value { font-size: 1.05rem; font-weight: 700; }
 .ticket-seats-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .ticket-seat-chip {
   padding: 4px 10px; border-radius: 8px;
