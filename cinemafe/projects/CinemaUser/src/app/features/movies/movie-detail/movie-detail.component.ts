@@ -87,26 +87,20 @@ export class MovieDetailComponent implements OnInit {
   }
 
   /**
-   * Opens (or re-targets) the inline booking panel for the clicked showtime. Anonymous visitors are
-   * sent to log in instead — the booking hub and its seat locks require an authenticated connection,
-   * and silently showing a panel that can't actually lock seats would fail invisibly at checkout.
+   * Opens (or re-targets) the inline booking panel for the clicked showtime. Anonymous visitors may
+   * browse seats and food too (the seat map and prices are public reads); login is only required at
+   * checkout, where BookingSelectionComponent parks the order and resumes it after sign-in.
    */
   selectShowTime(st: any): void {
-    this.isAuthenticated$.pipe(take(1)).subscribe(isAuthenticated => {
-      if (!isAuthenticated) {
-        this._router.navigate(['/auth/login'], { queryParams: { returnUrl: '/movies/' + this.movieId } });
-        return;
-      }
-      this.selectedShowTimeId = st.id;
-      this.selectedRoomId = st.roomId;
-      const time = new Date(st.startTime);
-      const hh = time.getHours().toString().padStart(2, '0');
-      const mm = time.getMinutes().toString().padStart(2, '0');
-      const format = screeningFormatLabel(st.roomTypeName, st.projectionForm);
-      this.selectedShowTimeLabel = `${st.theaterName} · ${hh}:${mm} · ${format}`;
-      this._cdr.markForCheck();
-      setTimeout(() => this._scrollToBookingPanel(), 0);
-    });
+    this.selectedShowTimeId = st.id;
+    this.selectedRoomId = st.roomId;
+    const time = new Date(st.startTime);
+    const hh = time.getHours().toString().padStart(2, '0');
+    const mm = time.getMinutes().toString().padStart(2, '0');
+    const format = screeningFormatLabel(st.roomTypeName, st.projectionForm);
+    this.selectedShowTimeLabel = `${st.theaterName} · ${hh}:${mm} · ${format}`;
+    this._cdr.markForCheck();
+    setTimeout(() => this._scrollToBookingPanel(), 0);
   }
 
   closeBookingPanel(): void {
