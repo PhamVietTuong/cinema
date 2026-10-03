@@ -38,6 +38,10 @@ public class CinemaContext : DbContext
     public DbSet<Evaluation> Evaluation => Set<Evaluation>();
     public DbSet<ReminderLog> ReminderLog => Set<ReminderLog>();
     public DbSet<GiftCard> GiftCard => Set<GiftCard>();
+    public DbSet<ComboItem> ComboItem => Set<ComboItem>();
+    public DbSet<StockMovement> StockMovement => Set<StockMovement>();
+    public DbSet<StoragePlan> StoragePlan => Set<StoragePlan>();
+    public DbSet<StoragePlanItem> StoragePlanItem => Set<StoragePlanItem>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

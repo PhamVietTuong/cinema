@@ -29,6 +29,9 @@ public interface IApplicationUnitOfWork : IDisposable
     IGiftCardStore GiftCardStore { get; }
     IPatronCategoryStore PatronCategoryStore { get; }
     IRoomTypePatronCategoryPriceStore RoomTypePatronCategoryPriceStore { get; }
+    IComboItemStore ComboItemStore { get; }
+    IStockMovementStore StockMovementStore { get; }
+    IStoragePlanStore StoragePlanStore { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

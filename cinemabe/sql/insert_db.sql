@@ -196,6 +196,20 @@ CROSS JOIN (VALUES
     (N'Combo Gia Đình',       150000, N'2 bắp rang lớn kèm 4 nước ngọt 500ml',                  1)
 ) AS f(Name, Price, Description, IsAvailable);
 
+-- ── Seeded combos: flag the two combo items and give them a recipe (tracking stays off) ──
+UPDATE [FoodAndDrink] SET [IsCombo] = 1 WHERE [Name] IN (N'Combo Bắp Nước', N'Combo Gia Đình');
+
+INSERT INTO [ComboItem] ([Id], [ComboId], [ComponentId], [Quantity], [CreationTime])
+SELECT NEWID(), combo.Id, comp.Id, r.Quantity, GETUTCDATE()
+FROM (VALUES
+    (N'Combo Bắp Nước', N'Bắp Rang Thường', 1),
+    (N'Combo Bắp Nước', N'Coca-Cola',       1),
+    (N'Combo Gia Đình', N'Bắp Rang Lớn',    2),
+    (N'Combo Gia Đình', N'Coca-Cola',       4)
+) AS r(ComboName, ComponentName, Quantity)
+JOIN [FoodAndDrink] combo ON combo.[Name] = r.ComboName
+JOIN [FoodAndDrink] comp  ON comp.[Name] = r.ComponentName AND comp.[TheaterId] = combo.[TheaterId];
+
 -- ── Time slots (per theater) ──────────────────────────────────────────────────
 INSERT INTO [TimeSlot] ([Id], [TheaterId], [Name], [StartTime], [EndTime], [CreationTime])
 SELECT NEWID(), t.Id, ts.Name, ts.StartTime, ts.EndTime, GETUTCDATE()

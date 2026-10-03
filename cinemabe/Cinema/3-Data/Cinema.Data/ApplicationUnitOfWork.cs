@@ -38,6 +38,9 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IGiftCardStore GiftCardStore { get; }
     public IPatronCategoryStore PatronCategoryStore { get; }
     public IRoomTypePatronCategoryPriceStore RoomTypePatronCategoryPriceStore { get; }
+    public IComboItemStore ComboItemStore { get; }
+    public IStockMovementStore StockMovementStore { get; }
+    public IStoragePlanStore StoragePlanStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
     {
@@ -69,6 +72,9 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         GiftCardStore = new GiftCardStore(db);
         PatronCategoryStore = new PatronCategoryStore(db);
         RoomTypePatronCategoryPriceStore = new RoomTypePatronCategoryPriceStore(db);
+        ComboItemStore = new ComboItemStore(db);
+        StockMovementStore = new StockMovementStore(db);
+        StoragePlanStore = new StoragePlanStore(db);
     }
 
     public Task<int> SaveChangesAsync()
