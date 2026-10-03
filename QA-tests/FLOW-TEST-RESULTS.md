@@ -783,3 +783,84 @@ Re-run triggered by fix: `IdentityController` now extends `ApiControllerBase` (n
 - Live-DB playbook (§3) not executed (no reseed / no running app) — run manually after reseed.
 
 ---
+
+# Flow Test Result — booking-seat-lock — 2026-09-27 (this run)
+**Flow**: Seat locking + booking → Invoice lifecycle (Business + Data + Service + FE)   **Layers**: business, data, service, frontend
+**Changed scope detected**: none vs `master` (`git diff --name-only master...HEAD` empty; working tree clean). Ran on branch `worktree-agent-af8ec2f6b1e98adfd` (HEAD = merge of `feature/frontend-library-css-refactor`). All checks run against current file content for full coverage.
+
+> ✅ **No P0 alert raised this run.** All 9 static checks PASS and both applicable build/test checks PASS; BC-BOOK-FE SKIPped (unchanged). 0 of 7 regression indicators triggered. One spec-hygiene item found (see §5) — a file rename, not a code defect.
+
+## §1 Static checks (9/9 PASS)
+| Check | Severity | Status | Detail |
+|---|---|---|---|
+| SC-BOOK-01 | P0 | ✅ PASS | `static readonly ConcurrentDictionary<...> _lockedSeats` (BookingManager.cs:19) — all 3 patterns present |
+| SC-BOOK-02 | P0 | ✅ PASS | `IsSeatLocked` contains `TimeSpan.FromMinutes(5)` (line 969) |
+| SC-BOOK-03 | P0 | ✅ PASS | `UnlockSeat` compares `info.ConnectionId == connectionId` before removal (line 952) — owner-scoped |
+| SC-BOOK-04 | P0 | ✅ PASS | `CreateBookingAsync` sets `Status = InvoiceStatus.Pending` (line 271) inside `BeginTransactionAsync`(91)/`CommitTransactionAsync`(278)/`RollbackTransactionAsync`(308,313) |
+| SC-BOOK-05 | P0 | ✅ PASS | `CancelBookingAsync` (lines 784-802): gates `Status != InvoiceStatus.Pending → return false` (791) and `invoice.UserId != userId` (787) |
+| SC-BOOK-06 | P0 | ✅ PASS | Forbidden regex (hardcoded status int) — 0 matches in BookingManager.cs and InvoiceManager.cs |
+| SC-BOOK-07 | P1 | ✅ PASS | `InvoiceStatus` enum = `Pending=0, Paid=1, Cancelled=2, Failed=3, Refunded=4` — all 4 required members present (extra `Refunded` member is not a violation) |
+| SC-BOOK-08 | P1 | ✅ PASS | `SeatStatus` enum = `Available=0, Reserved=1, Occupied=2` — exact match |
+| SC-BOOK-09 | P1 | ✅ PASS (path stale, see §5) | The literal spec path `.../seat-selection/seat-selection.component.html` no longer exists. The component was renamed to `booking-selection/booking-selection.component.html` in commit `6fa2419` ("rework booking UX - inline panel, date tabs, quantity tickets"). Verified the renamed file still renders `available`/`occupied`/`locked` seat-state classes (lines 68-73) via `ngClass`, so the underlying invariant holds. |
+
+## §2 Build + test checks (2/2 PASS, 1 SKIP)
+| Check | Status | Output (excerpt if fail) |
+|---|---|---|
+| BC-BOOK-BUILD | ✅ PASS (exit 0) | `dotnet build Cinema.Business.csproj --nologo -v minimal` → Build succeeded. 0 Warning(s), 0 Error(s) (13.8s). |
+| BC-BOOK-TEST | ✅ PASS (exit 0) | `dotnet test --filter FullyQualifiedName~BookingServiceTests` → `Passed! - Failed: 0, Passed: 28, Skipped: 0, Total: 28` (1s). |
+| BC-BOOK-FE | ⏭️ SKIP | `skip_if_unchanged` matched — no diff under `projects/CinemaUser/src/app/features/booking/**` or `projects/CinemaLib/**` vs master (clean tree). `node_modules` also not installed in this worktree, so the skip avoided an unnecessary `npm install`. |
+
+## §3 Playbook to run manually
+
+**Prerequisites:**
+- Backend running: `dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost` (http://localhost:5102)
+- Seed accounts: `dotnet run --project Cinema/2-Business/Cinema.Business.Tests` (admin@cinema.vn / user@cinema.vn)
+- DB seeded with ≥1 Movie, ≥1 Theater/Room with a seat map, ≥1 ShowTime
+- FE: `ng serve CinemaUser` (http://localhost:4202)
+
+### PB-BOOK-01 — Happy path: pick seats → create booking → confirm payment (P0)
+1. Login as user@cinema.vn, open a movie's showtime → `/booking/seats?showTimeId=...&roomId=...`
+   - Expected: Seat grid renders; available seats clickable, occupied seats not
+2. Select 2 available seats → click 'XÁC NHẬN ĐẶT VÉ'
+   - Expected: Navigates to `/booking/confirmation`
+   - Expected: DB Invoice created with Status = Pending (0), Code matching `CIN{yyyyMMddHHmmss}{NNNN}`
+   - Expected: DB 2 InvoiceTicket rows linked to the invoice
+3. Choose a payment method → 'XÁC NHẬN & THANH TOÁN'
+   - Expected: Success page shows a ticket-code
+   - Expected: DB Invoice.Status = Paid (1)
+
+### PB-BOOK-02 — Concurrent lock: two clients cannot book the same seat (P0)
+1. Client A opens the seat grid and selects seat R5 (SignalR LockSeat fires)
+   - Expected: Client B's grid shows R5 as 'locked' within ~1s
+2. Client B tries to select R5
+   - Expected: Selection rejected (seat is locked by A)
+3. Client A abandons the page without booking; wait 5 minutes
+   - Expected: R5 auto-expires (IsSeatLocked 5-min window) and becomes available to B again
+
+### PB-BOOK-03 — Cancel guards (P0)
+1. User cancels their own Pending booking
+   - Expected: DB Invoice.Status = Cancelled (2); seats freed
+2. User attempts to cancel a booking they do not own (different userId)
+   - Expected: Rejected (returns false / 4xx), invoice unchanged
+3. User attempts to cancel an already-Paid invoice
+   - Expected: Rejected, status stays Paid
+
+## §4 Regression indicators
+| ID | Severity | Status | Source |
+|---|---|---|---|
+| RI-BOOK-01 | P0 | ✅ Not triggered | SC-BOOK-01 PASS |
+| RI-BOOK-02 | P0 | ✅ Not triggered (static) / verify manually | SC-BOOK-02 PASS; PB-BOOK-02 step 3 manual |
+| RI-BOOK-03 | P0 | ✅ Not triggered (static) / verify manually | SC-BOOK-03 PASS; PB-BOOK-02 step 2 manual |
+| RI-BOOK-04 | P0 | ✅ Not triggered (static) / verify manually | SC-BOOK-04 PASS; PB-BOOK-01 step 2 manual |
+| RI-BOOK-05 | P0 | ✅ Not triggered (static) / verify manually | SC-BOOK-05 PASS; PB-BOOK-03 steps 2-3 manual |
+| RI-BOOK-06 | P0 | ✅ Not triggered | SC-BOOK-06 PASS |
+| RI-BOOK-07 | P1 | ✅ Not triggered (static) / verify manually | SC-BOOK-09 PASS (renamed file, see §5); PB-BOOK-01 step 1 manual |
+
+## §5 Summary
+- **0 of 7 regression indicators triggered.** No P0 alert this run.
+- **Static: 9/9 PASS. Build/tests: 2/2 PASS, 1 SKIP** (BC-BOOK-FE skipped — no diff in scope, and correctly avoided a cold `npm install` in this worktree).
+- **No real code defects found — no BUG files written.**
+- **Spec hygiene note (stale paths, not a code defect):** `trigger_paths` and `SC-BOOK-09.file` still reference `projects/CinemaUser/src/app/features/booking/seat-selection/` and `booking-confirmation/`. Commit `6fa2419` ("rework booking UX - inline panel, date tabs, quantity tickets") renamed/merged these into `booking-selection/` and `booking-checkout/` respectively. Recommend updating `booking-seat-lock.yaml` `trigger_paths` and `SC-BOOK-09.file` to the new paths so future runs resolve them directly instead of relying on a manual search.
+- **Action expected:** None blocking. Safe to push. The three P0 playbook scenarios (PB-BOOK-01/02/03) still require a manual E2E run before full sign-off — no backend/DB was running this session.
+
+---
