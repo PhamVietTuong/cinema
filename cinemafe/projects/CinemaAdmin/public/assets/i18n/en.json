@@ -862,5 +862,77 @@
       "countSaved": "Stock count recorded.",
       "planCreated": "Storage plan created."
     }
+  },
+  "storagePlans": {
+    "list": {
+      "title": "Storage plans",
+      "subtitle": "Plan, approve and receive stock for your theater.",
+      "newPlan": "New plan",
+      "code": "Plan code",
+      "theater": "Theater",
+      "targetDate": "Target date",
+      "supplier": "Supplier",
+      "itemCount": "Items",
+      "totalQuantity": "Total qty",
+      "createdBy": "Created by",
+      "empty": "No storage plans found."
+    },
+    "detail": {
+      "back": "Back to plans",
+      "newTitle": "New storage plan",
+      "subtitle": "Items can be edited while the plan is a draft or was rejected.",
+      "infoTitle": "Plan details",
+      "selectTheater": "Select a theater",
+      "note": "Note",
+      "submittedAt": "Submitted at",
+      "approvedBy": "Approved by",
+      "rejectedBy": "Rejected by",
+      "receivedBy": "Received by",
+      "rejectedBanner": "This plan was rejected",
+      "rejectedHint": "Edit the plan and save it to return it to draft, then submit it again.",
+      "itemsTitle": "Items",
+      "addProduct": "Add a product...",
+      "addLowStock": "Add all low-stock items",
+      "product": "Product",
+      "onHand": "On hand",
+      "planned": "Planned qty",
+      "received": "Received qty",
+      "unitCost": "Unit cost",
+      "itemNote": "Note",
+      "targetLevel": "Target level",
+      "suggested": "Suggested reorder",
+      "useSuggested": "Use",
+      "noItems": "No items yet. Add at least one product."
+    },
+    "actions": {
+      "saveDraft": "Save draft",
+      "submit": "Submit for approval",
+      "approve": "Approve",
+      "reject": "Reject",
+      "receive": "Receive stock",
+      "cancel": "Cancel plan"
+    },
+    "confirm": {
+      "cancel": "Cancel this storage plan?"
+    },
+    "reject": {
+      "title": "Reject plan",
+      "reason": "Reason",
+      "reasonPlaceholder": "Why is this plan rejected?"
+    },
+    "receive": {
+      "title": "Receive stock",
+      "hint": "Enter the quantity actually received for each item. Stock is increased by these amounts.",
+      "planned": "Planned",
+      "actual": "Received"
+    },
+    "errors": {
+      "datePast": "The target date cannot be in the past.",
+      "plannedRange": "Quantity must be a whole number from 1 to 100000.",
+      "costNegative": "Unit cost cannot be negative.",
+      "receivedRange": "Must be a whole number from 0 to 100000.",
+      "invalidForm": "Please fix the highlighted fields.",
+      "noItems": "Add at least one item to the plan."
+    }
   }
 }
