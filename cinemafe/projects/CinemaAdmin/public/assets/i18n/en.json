@@ -781,5 +781,86 @@
       "received": "Received",
       "cancelled": "Cancelled"
     }
+  },
+  "inventory": {
+    "title": "Inventory",
+    "subtitle": "Stock levels of tracked food and drinks per theater.",
+    "createPlan": "Create plan from low stock",
+    "empty": "No items found.",
+    "filters": {
+      "theater": "Theater",
+      "allTheaters": "All theaters",
+      "keyword": "Search by name",
+      "trackedOnly": "Tracked only",
+      "lowStockOnly": "Low stock only"
+    },
+    "columns": {
+      "stock": "In stock",
+      "threshold": "Low-stock threshold",
+      "target": "Target level"
+    },
+    "status": {
+      "untracked": "Not tracked",
+      "ok": "In stock",
+      "low": "Low stock",
+      "outOfStock": "Out of stock"
+    },
+    "actions": {
+      "movement": "Adjust / waste",
+      "count": "Stock count",
+      "history": "History",
+      "settings": "Stock settings"
+    },
+    "settings": {
+      "title": "Stock settings",
+      "track": "Track inventory",
+      "trackHint": "When tracking is on, sales deduct stock and the item cannot be sold when it runs out.",
+      "threshold": "Low-stock threshold",
+      "thresholdHint": "The item is flagged as low stock at or below this quantity.",
+      "target": "Target stock level",
+      "targetHint": "Restock plans suggest topping the item up to this quantity.",
+      "opening": "Opening quantity",
+      "openingHint": "Quantity currently on hand. Required when switching tracking on."
+    },
+    "movement": {
+      "title": "Adjust / waste",
+      "onHand": "Currently in stock",
+      "type": "Type",
+      "quantity": "Quantity",
+      "adjustHint": "Adjustment: enter a signed change, for example 5 to add or -3 to remove.",
+      "wasteHint": "Waste: enter a positive quantity, it cannot exceed the stock on hand.",
+      "reason": "Reason",
+      "note": "Note"
+    },
+    "count": {
+      "title": "Stock count",
+      "current": "Quantity in the system",
+      "counted": "Counted quantity",
+      "difference": "Difference"
+    },
+    "history": {
+      "title": "Stock history",
+      "date": "Date",
+      "type": "Type",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "reference": "Invoice / plan",
+      "user": "User",
+      "empty": "No stock movements yet."
+    },
+    "errors": {
+      "range": "Enter a whole number between 0 and 100000.",
+      "openingRequired": "Opening quantity is required.",
+      "nonZero": "Enter a non-zero whole number.",
+      "positive": "Waste quantity must be positive.",
+      "exceedsOnHand": "Cannot exceed the stock on hand.",
+      "noteRequired": "A note is required when the reason is Other."
+    },
+    "toast": {
+      "settingsSaved": "Stock settings saved.",
+      "movementSaved": "Stock movement recorded.",
+      "countSaved": "Stock count recorded.",
+      "planCreated": "Storage plan created."
+    }
   }
 }

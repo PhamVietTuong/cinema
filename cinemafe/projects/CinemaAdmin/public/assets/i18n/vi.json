@@ -781,5 +781,86 @@
       "received": "Đã nhập kho",
       "cancelled": "Đã hủy"
     }
+  },
+  "inventory": {
+    "title": "Tồn kho",
+    "subtitle": "Mức tồn kho của đồ ăn thức uống được theo dõi theo từng rạp.",
+    "createPlan": "Tạo kế hoạch từ hàng sắp hết",
+    "empty": "Không có mặt hàng nào.",
+    "filters": {
+      "theater": "Rạp",
+      "allTheaters": "Tất cả rạp",
+      "keyword": "Tìm theo tên",
+      "trackedOnly": "Chỉ hàng đang theo dõi",
+      "lowStockOnly": "Chỉ hàng sắp hết"
+    },
+    "columns": {
+      "stock": "Tồn kho",
+      "threshold": "Ngưỡng sắp hết",
+      "target": "Mức tồn mục tiêu"
+    },
+    "status": {
+      "untracked": "Không theo dõi",
+      "ok": "Còn hàng",
+      "low": "Sắp hết",
+      "outOfStock": "Hết hàng"
+    },
+    "actions": {
+      "movement": "Điều chỉnh / hao hụt",
+      "count": "Kiểm kê",
+      "history": "Lịch sử",
+      "settings": "Cài đặt tồn kho"
+    },
+    "settings": {
+      "title": "Cài đặt tồn kho",
+      "track": "Theo dõi tồn kho",
+      "trackHint": "Khi bật theo dõi, mỗi lần bán sẽ trừ tồn kho và mặt hàng không thể bán khi đã hết.",
+      "threshold": "Ngưỡng sắp hết",
+      "thresholdHint": "Mặt hàng được đánh dấu sắp hết khi số lượng bằng hoặc thấp hơn ngưỡng này.",
+      "target": "Mức tồn mục tiêu",
+      "targetHint": "Kế hoạch nhập hàng sẽ đề xuất bổ sung mặt hàng đến số lượng này.",
+      "opening": "Số lượng ban đầu",
+      "openingHint": "Số lượng hiện có trong kho. Bắt buộc khi bật theo dõi."
+    },
+    "movement": {
+      "title": "Điều chỉnh / hao hụt",
+      "onHand": "Tồn kho hiện tại",
+      "type": "Loại",
+      "quantity": "Số lượng",
+      "adjustHint": "Điều chỉnh: nhập số thay đổi có dấu, ví dụ 5 để tăng hoặc -3 để giảm.",
+      "wasteHint": "Hao hụt: nhập số lượng dương, không được vượt quá tồn kho hiện có.",
+      "reason": "Lý do",
+      "note": "Ghi chú"
+    },
+    "count": {
+      "title": "Kiểm kê",
+      "current": "Số lượng trên hệ thống",
+      "counted": "Số lượng kiểm đếm",
+      "difference": "Chênh lệch"
+    },
+    "history": {
+      "title": "Lịch sử tồn kho",
+      "date": "Ngày",
+      "type": "Loại",
+      "quantity": "Số lượng",
+      "reason": "Lý do",
+      "reference": "Hóa đơn / kế hoạch",
+      "user": "Người thực hiện",
+      "empty": "Chưa có biến động tồn kho."
+    },
+    "errors": {
+      "range": "Nhập số nguyên từ 0 đến 100000.",
+      "openingRequired": "Vui lòng nhập số lượng ban đầu.",
+      "nonZero": "Nhập số nguyên khác 0.",
+      "positive": "Số lượng hao hụt phải là số dương.",
+      "exceedsOnHand": "Không được vượt quá tồn kho hiện có.",
+      "noteRequired": "Cần ghi chú khi lý do là Khác."
+    },
+    "toast": {
+      "settingsSaved": "Đã lưu cài đặt tồn kho.",
+      "movementSaved": "Đã ghi nhận biến động tồn kho.",
+      "countSaved": "Đã ghi nhận kiểm kê.",
+      "planCreated": "Đã tạo kế hoạch nhập hàng."
+    }
   }
 }
