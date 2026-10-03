@@ -48,6 +48,8 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         var q = DbSet
             .Include(i => i.InvoiceTickets).ThenInclude(it => it.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
             .Include(i => i.InvoiceTickets).ThenInclude(it => it.Seat)
+            .Include(i => i.InvoiceFoodAndDrinks).ThenInclude(f => f.FoodAndDrink)
+            .AsSplitQuery()
             .Where(i => i.UserId == userId)
             .OrderByDescending(i => i.CreationTime);
         var total = await q.CountAsync();

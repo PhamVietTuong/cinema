@@ -398,6 +398,8 @@
     "colMovie": "Movie",
     "colDate": "Show Date",
     "colSeats": "Seats",
+    "colFood": "Food & drinks",
+    "foodTitle": "Food & drinks",
     "colStatus": "Status",
     "noTickets": "You don't have any tickets yet.",
     "bookingHistory": "Booking History",
