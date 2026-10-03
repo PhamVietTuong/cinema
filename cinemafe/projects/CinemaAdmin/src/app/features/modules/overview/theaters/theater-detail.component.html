@@ -64,37 +64,65 @@
 
   <!-- Per-theater management tabs -->
   <mat-tab-group class="detail-tabs" animationDuration="150ms">
-    <mat-tab [label]="'theaters.detail.tabRooms' | translate">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">meeting_room</mat-icon>
+        <span>{{ 'theaters.detail.tabRooms' | translate }}</span>
+      </ng-template>
       <div class="tab-body">
         <app-theater-rooms [theaterId]="theaterId"></app-theater-rooms>
       </div>
     </mat-tab>
-    <mat-tab [label]="'theaters.detail.tabRoomTypes' | translate">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">theaters</mat-icon>
+        <span>{{ 'theaters.detail.tabRoomTypes' | translate }}</span>
+      </ng-template>
       <div class="tab-body">
         <app-theater-room-types [theaterId]="theaterId"></app-theater-room-types>
       </div>
     </mat-tab>
-    <mat-tab [label]="'theaters.detail.tabSeatTypes' | translate">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">event_seat</mat-icon>
+        <span>{{ 'theaters.detail.tabSeatTypes' | translate }}</span>
+      </ng-template>
       <div class="tab-body">
         <app-theater-seat-types [theaterId]="theaterId"></app-theater-seat-types>
       </div>
     </mat-tab>
-    <mat-tab [label]="'theaters.detail.tabFood' | translate">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">local_cafe</mat-icon>
+        <span>{{ 'theaters.detail.tabFood' | translate }}</span>
+      </ng-template>
       <div class="tab-body">
         <app-theater-food [theaterId]="theaterId"></app-theater-food>
       </div>
     </mat-tab>
-    <mat-tab [label]="'theaters.detail.tabTimeSlots' | translate">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">schedule</mat-icon>
+        <span>{{ 'theaters.detail.tabTimeSlots' | translate }}</span>
+      </ng-template>
       <div class="tab-body">
         <app-theater-time-slots [theaterId]="theaterId"></app-theater-time-slots>
       </div>
     </mat-tab>
-    <mat-tab [label]="'theaters.detail.tabTicketPrices' | translate">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">confirmation_number</mat-icon>
+        <span>{{ 'theaters.detail.tabTicketPrices' | translate }}</span>
+      </ng-template>
       <div class="tab-body">
         <app-theater-ticket-prices [theaterId]="theaterId"></app-theater-ticket-prices>
       </div>
     </mat-tab>
-    <mat-tab [label]="'theaters.detail.tabPatronCategories' | translate">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">groups</mat-icon>
+        <span>{{ 'theaters.detail.tabPatronCategories' | translate }}</span>
+      </ng-template>
       <div class="tab-body">
         <app-theater-patron-categories [theaterId]="theaterId"></app-theater-patron-categories>
       </div>
