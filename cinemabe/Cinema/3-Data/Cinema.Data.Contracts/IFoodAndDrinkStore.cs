@@ -13,4 +13,10 @@ public interface IFoodAndDrinkStore : IGenericStore<FoodAndDrink>
     /// nothing — when the result would be negative. Joins whatever transaction is open on the context.
     /// </summary>
     Task<bool> TryApplyStockDeltaAsync(Guid foodAndDrinkId, int delta);
+
+    /// <summary>
+    /// One filtered, sorted, DB-paged read of the warehouse list (combos excluded). Items are projected, untracked
+    /// FoodAndDrink instances carrying only the columns the stock list shows.
+    /// </summary>
+    Task<(List<FoodAndDrink> Items, int Total)> SearchInventoryAsync(InventorySearchCriteria criteria);
 }

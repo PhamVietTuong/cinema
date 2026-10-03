@@ -12,4 +12,7 @@ public interface IStockMovementStore : IGenericStore<StockMovement>
     /// Restocking is driven by this, never by the current combo recipe, and is idempotent.
     /// </summary>
     Task<List<StockNetQuantity>> GetNetSaleQuantitiesAsync(IReadOnlyCollection<Guid> invoiceIds);
+
+    /// <summary>Filtered ledger page, newest first, untracked. Returns the page plus the unpaged total.</summary>
+    Task<(List<StockMovement> Items, int Total)> SearchAsync(StockMovementSearchCriteria criteria);
 }

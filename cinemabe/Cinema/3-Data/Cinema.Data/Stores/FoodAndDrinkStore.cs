@@ -30,4 +30,69 @@ public class FoodAndDrinkStore : GenericStore<FoodAndDrink>, IFoodAndDrinkStore
                 .SetProperty(f => f.LastUpdatedTime, now));
         return rows == 1;
     }
+
+    public async Task<(List<FoodAndDrink> Items, int Total)> SearchInventoryAsync(InventorySearchCriteria criteria)
+    {
+        var query = DbSet.AsNoTracking().Where(f => !f.IsCombo);
+        if (criteria.TheaterId.HasValue)
+        {
+            var theaterId = criteria.TheaterId.Value;
+            query = query.Where(f => f.TheaterId == theaterId);
+        }
+        if (!string.IsNullOrWhiteSpace(criteria.Keyword))
+        {
+            var keyword = criteria.Keyword.Trim();
+            query = query.Where(f => f.Name.Contains(keyword));
+        }
+        if (criteria.TrackedOnly)
+        {
+            query = query.Where(f => f.TrackInventory);
+        }
+        if (criteria.LowStock.HasValue)
+        {
+            var low = criteria.LowStock.Value;
+            query = low
+                ? query.Where(f => f.TrackInventory && f.QuantityOnHand <= f.LowStockThreshold)
+                : query.Where(f => !(f.TrackInventory && f.QuantityOnHand <= f.LowStockThreshold));
+        }
+        if (criteria.OutOfStock.HasValue)
+        {
+            var outOfStock = criteria.OutOfStock.Value;
+            query = outOfStock
+                ? query.Where(f => f.TrackInventory && f.QuantityOnHand == 0)
+                : query.Where(f => !(f.TrackInventory && f.QuantityOnHand == 0));
+        }
+
+        var total = await query.CountAsync();
+
+        IOrderedQueryable<FoodAndDrink> ordered;
+        if (criteria.SortByQuantity)
+        {
+            ordered = criteria.Ascending ? query.OrderBy(f => f.QuantityOnHand) : query.OrderByDescending(f => f.QuantityOnHand);
+        }
+        else
+        {
+            ordered = criteria.Ascending ? query.OrderBy(f => f.Name) : query.OrderByDescending(f => f.Name);
+        }
+
+        var items = await ordered
+            .ThenBy(f => f.Id)
+            .Skip(criteria.PageIndex * criteria.PageSize)
+            .Take(criteria.PageSize)
+            .Select(f => new FoodAndDrink
+            {
+                Id = f.Id,
+                TheaterId = f.TheaterId,
+                Name = f.Name,
+                ImageUrl = f.ImageUrl,
+                Price = f.Price,
+                IsAvailable = f.IsAvailable,
+                TrackInventory = f.TrackInventory,
+                QuantityOnHand = f.QuantityOnHand,
+                LowStockThreshold = f.LowStockThreshold,
+                TargetStockLevel = f.TargetStockLevel
+            })
+            .ToListAsync();
+        return (items, total);
+    }
 }

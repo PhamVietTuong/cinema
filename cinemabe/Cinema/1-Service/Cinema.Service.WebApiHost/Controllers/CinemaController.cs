@@ -1,5 +1,7 @@
 using Cinema.Business.Contracts;
+using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Catalog;
+using Cinema.Business.DTO.Inventory;
 using Cinema.Business.DTO.Movies;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.DTO.Theaters;
@@ -1472,6 +1474,68 @@ public class CinemaController : ApiControllerBase
         {
             return HandleException(e, action);
         }
+    }
+    #endregion
+
+    #region Inventory
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<InventoryItemDTO>), 200)]
+    public Task<IActionResult> GetInventory([FromBody] PagingSearchDTO search, [FromServices] IInventoryManager inventory)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(GetInventory), () => inventory.GetInventoryAsync(search, scope));
+    }
+
+    [Authorize(Roles = RoleNames.StockApprovers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(InventoryItemDTO), 200)]
+    public Task<IActionResult> UpdateInventorySettings([FromBody] UpdateInventorySettingsRequest request, [FromServices] IInventoryManager inventory)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(UpdateInventorySettings), () => inventory.UpdateSettingsAsync(request, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(InventoryItemDTO), 200)]
+    public Task<IActionResult> RecordStockMovement([FromBody] RecordStockMovementRequest request, [FromServices] IInventoryManager inventory)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(RecordStockMovement), () => inventory.RecordMovementAsync(request, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(InventoryItemDTO), 200)]
+    public Task<IActionResult> RecordStockCount([FromBody] RecordStockCountRequest request, [FromServices] IInventoryManager inventory)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(RecordStockCount), () => inventory.RecordStockCountAsync(request, User.GetUserId(), scope));
+    }
+
+    [Authorize(Roles = RoleNames.BackOffice)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<StockMovementDTO>), 200)]
+    public Task<IActionResult> GetStockMovements([FromBody] PagingSearchDTO search, [FromServices] IInventoryManager inventory)
+    {
+        if (!User.TryGetBackOfficeScope(out var scope))
+        {
+            return Task.FromResult<IActionResult>(Forbid());
+        }
+        return Run(nameof(GetStockMovements), () => inventory.GetMovementsAsync(search, scope));
     }
     #endregion
 }

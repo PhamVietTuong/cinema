@@ -26,4 +26,43 @@ public class StockMovementStore : GenericStore<StockMovement>, IStockMovementSto
             .ToListAsync();
         return rows.Select(r => new StockNetQuantity(r.InvoiceId, r.FoodAndDrinkId, r.Net)).ToList();
     }
+
+    public async Task<(List<StockMovement> Items, int Total)> SearchAsync(StockMovementSearchCriteria criteria)
+    {
+        var query = DbSet.AsNoTracking().AsQueryable();
+        if (criteria.TheaterId.HasValue)
+        {
+            var theaterId = criteria.TheaterId.Value;
+            query = query.Where(m => m.TheaterId == theaterId);
+        }
+        if (criteria.FoodAndDrinkId.HasValue)
+        {
+            var itemId = criteria.FoodAndDrinkId.Value;
+            query = query.Where(m => m.FoodAndDrinkId == itemId);
+        }
+        if (criteria.Type.HasValue)
+        {
+            var type = criteria.Type.Value;
+            query = query.Where(m => m.Type == type);
+        }
+        if (criteria.From.HasValue)
+        {
+            var from = criteria.From.Value;
+            query = query.Where(m => m.CreationTime >= from);
+        }
+        if (criteria.To.HasValue)
+        {
+            var to = criteria.To.Value;
+            query = query.Where(m => m.CreationTime <= to);
+        }
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(m => m.CreationTime)
+            .ThenByDescending(m => m.Id)
+            .Skip(criteria.PageIndex * criteria.PageSize)
+            .Take(criteria.PageSize)
+            .ToListAsync();
+        return (items, total);
+    }
 }
