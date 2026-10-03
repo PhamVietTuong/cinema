@@ -24,4 +24,7 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     /// <summary>Marks an invoice's tickets inactive (frees their seats at the DB unique-index level).
     /// Called when a booking is cancelled, expires, or is refunded.</summary>
     Task DeactivateTicketsAsync(Guid invoiceId);
+
+    /// <summary>Invoice code by invoice id for a batch of ids (one query). Unknown ids are absent.</summary>
+    Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids);
 }

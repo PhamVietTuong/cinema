@@ -25,4 +25,13 @@ public class StoragePlanStore : GenericStore<StoragePlan>, IStoragePlanStore
             throw new ConcurrencyConflictException("The storage plan was modified by someone else.", ex);
         }
     }
+
+    public async Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids)
+    {
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+        return await DbSet.AsNoTracking().Where(p => ids.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Code);
+    }
 }

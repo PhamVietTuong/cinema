@@ -141,4 +141,13 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         => await Context.InvoiceTicket
             .Where(t => t.InvoiceId == invoiceId && t.IsActive)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
+
+    public async Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids)
+    {
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+        return await DbSet.AsNoTracking().Where(i => ids.Contains(i.Id)).ToDictionaryAsync(i => i.Id, i => i.Code);
+    }
 }
