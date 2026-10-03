@@ -1,0 +1,123 @@
+<div class="tab-toolbar">
+  <p class="ad-sub">{{ 'comboTab.subtitle' | translate }}</p>
+  <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'comboTab.add' | translate }}</button>
+</div>
+
+<mat-card class="ad-card--pad-0">
+  <!-- Desktop / tablet: ngx-datatable grid. -->
+  <div class="ad-table-wrap ad-desktop-only">
+    <ngx-datatable
+      class="material ad-datatable"
+      [rows]="pageRows"
+      [columnMode]="'force'"
+      [headerHeight]="44"
+      [footerHeight]="50"
+      [rowHeight]="'auto'"
+      [externalPaging]="true"
+      [externalSorting]="true"
+      [count]="total"
+      [offset]="pageOffset"
+      [limit]="pageSize"
+      [loadingIndicator]="loadingIndicator"
+      [messages]="{ emptyMessage: 'comboTab.empty' | translate, selectedMessage: '' }"
+      (page)="onChangePage($event)">
+
+      <ngx-datatable-column [name]="'theaters.food.imageLabel' | translate" prop="imageUrl" [sortable]="false" [width]="80" [canAutoResize]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <img *ngIf="row.imageUrl" [src]="row.imageUrl" alt="" style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px;">
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'theaters.food.nameLabel' | translate" prop="name" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'comboTab.components' | translate" prop="id" [sortable]="false" [width]="260">
+        <ng-template let-row="row" ngx-datatable-cell-template>{{ summaryOf(row) }}</ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'common.price' | translate" prop="price" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.price | number:'1.0-0' }}đ</ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'common.status' | translate" prop="isAvailable" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <span class="ad-pill" [class.ad-pill--success]="row.isAvailable" [class.ad-pill--neutral]="!row.isAvailable">
+            {{ row.isAvailable ? ('theaters.food.onSale' | translate) : ('theaters.food.offSale' | translate) }}
+          </span>
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'combo.stock' | translate" prop="isOutOfStock" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <ng-container *ngIf="row.trackInventory || row.isCombo; else untracked">
+            <span class="ad-pill" [class.ad-pill--success]="!row.isOutOfStock" [class.ad-pill--danger]="row.isOutOfStock">
+              {{ row.isOutOfStock ? ('combo.outOfStock' | translate) : ('combo.inStock' | translate) }}
+            </span>
+            <span *ngIf="row.availableQuantity != null && !row.isOutOfStock"> {{ row.availableQuantity >= 10 ? '10+' : row.availableQuantity }}</span>
+          </ng-container>
+          <ng-template #untracked><span class="ad-pill ad-pill--neutral">{{ 'combo.untracked' | translate }}</span></ng-template>
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="ad-td-actions ad-td-actions--mat">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-footer>
+        <ng-template ngx-datatable-footer-template>
+          <div class="page-count">{{ 'common.totalEntries' | translate }} {{ total }}</div>
+          <ngx-datatable-pager *ngIf="total > pageSize"></ngx-datatable-pager>
+        </ng-template>
+      </ngx-datatable-footer>
+    </ngx-datatable>
+  </div>
+
+  <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+  <div class="ad-mobile-only">
+    <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+      <mat-card-content>
+        <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong></div>
+        <div class="ad-mobile-card-row"><span>{{ 'comboTab.components' | translate }}</span><span>{{ summaryOf(row) }}</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'common.price' | translate }}</span><span>{{ row.price | number:'1.0-0' }}đ</span></div>
+        <div class="ad-mobile-card-row">
+          <span>{{ 'common.status' | translate }}</span>
+          <span class="ad-pill" [class.ad-pill--success]="row.isAvailable" [class.ad-pill--neutral]="!row.isAvailable">
+            {{ row.isAvailable ? ('theaters.food.onSale' | translate) : ('theaters.food.offSale' | translate) }}
+          </span>
+        </div>
+        <div class="ad-mobile-card-row">
+          <span>{{ 'combo.stock' | translate }}</span>
+          <span>
+            <ng-container *ngIf="row.trackInventory || row.isCombo; else untrackedM">
+              <span class="ad-pill" [class.ad-pill--success]="!row.isOutOfStock" [class.ad-pill--danger]="row.isOutOfStock">
+                {{ row.isOutOfStock ? ('combo.outOfStock' | translate) : ('combo.inStock' | translate) }}
+              </span>
+              <span *ngIf="row.availableQuantity != null && !row.isOutOfStock"> {{ row.availableQuantity >= 10 ? '10+' : row.availableQuantity }}</span>
+            </ng-container>
+            <ng-template #untrackedM><span class="ad-pill ad-pill--neutral">{{ 'combo.untracked' | translate }}</span></ng-template>
+          </span>
+        </div>
+        <div class="ad-mobile-card-actions">
+          <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>lunch_dining</mat-icon><p>{{ 'comboTab.empty' | translate }}</p></div>
+
+    <mat-paginator
+      *ngIf="total > 0"
+      [length]="total"
+      [pageSize]="pageSize"
+      [pageIndex]="pageOffset"
+      [hidePageSize]="true"
+      (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+    </mat-paginator>
+  </div>
+</mat-card>

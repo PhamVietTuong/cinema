@@ -360,7 +360,7 @@
       "pricePlaceholder": "90000"
     },
     "food": {
-      "subtitle": "Bắp, nước và combo bán tại rạp này.",
+      "subtitle": "Bắp và nước bán tại rạp này (combo nằm ở tab Combo).",
       "add": "Thêm Món",
       "editTitle": "Chỉnh Sửa Món",
       "newTitle": "Món Mới",
@@ -741,6 +741,13 @@
     "inStock": "Còn hàng",
     "outOfStock": "Hết hàng",
     "untracked": "Không theo dõi"
+  },
+  "comboTab": {
+    "tab": "Combo",
+    "subtitle": "Combo bán tại rạp này, gồm nhiều món kết hợp.",
+    "add": "Thêm Combo",
+    "components": "Thành phần",
+    "empty": "Rạp này chưa có combo nào."
   },
   "errors": {
     "network": "Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.",

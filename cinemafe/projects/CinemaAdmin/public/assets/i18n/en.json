@@ -360,7 +360,7 @@
       "pricePlaceholder": "90000"
     },
     "food": {
-      "subtitle": "Popcorn, drinks and combos sold at this theater.",
+      "subtitle": "Popcorn and drinks sold at this theater (combos are in the Combos tab).",
       "add": "Add Item",
       "editTitle": "Edit Item",
       "newTitle": "New Item",
@@ -741,6 +741,13 @@
     "inStock": "In stock",
     "outOfStock": "Out of stock",
     "untracked": "Untracked"
+  },
+  "comboTab": {
+    "tab": "Combos",
+    "subtitle": "Combos sold at this theater, made of several items.",
+    "add": "Add Combo",
+    "components": "Components",
+    "empty": "This theater has no combos yet."
   },
   "errors": {
     "network": "Cannot reach the server. Please check your network connection.",

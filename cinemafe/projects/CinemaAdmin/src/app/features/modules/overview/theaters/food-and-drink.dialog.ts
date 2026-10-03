@@ -12,6 +12,8 @@ type Dto = CinemaServiceAgent.FoodAndDrinkDTO;
 export interface FoodAndDrinkDialogData {
   theaterId: string;
   foodAndDrink: Dto | null;
+  /** Create-mode only: start with the combo toggle ON and locked (opened from the Combo tab). */
+  presetCombo?: boolean;
 }
 
 /** Create/edit form for a theater's food & drink item, opened via MatDialog. Resolves `true` on save, `false` on cancel. */
@@ -49,10 +51,16 @@ export class FoodAndDrinkDialog {
       imageUrl: [_data.foodAndDrink?.imageUrl ?? ''],
       description: [_data.foodAndDrink?.description ?? ''],
       isAvailable: [_data.foodAndDrink?.isAvailable ?? true],
-      isCombo: [{ value: _data.foodAndDrink?.isCombo ?? false, disabled: !!_data.foodAndDrink?.trackInventory }],
+      isCombo: [{
+        value: _data.presetCombo ? true : (_data.foodAndDrink?.isCombo ?? false),
+        disabled: !!_data.presetCombo || !!_data.foodAndDrink?.trackInventory,
+      }],
       components: this._fb.array([]),
     });
     this.isTracked = !!_data.foodAndDrink?.trackInventory;
+    if (_data.presetCombo) {
+      this.addRow();
+    }
     this._loadComponentOptions();
     if (_data.foodAndDrink?.isCombo && this.editingId) {
       this._loadRecipe(this.editingId);

@@ -102,6 +102,15 @@
     </mat-tab>
     <mat-tab>
       <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">lunch_dining</mat-icon>
+        <span>{{ 'comboTab.tab' | translate }}</span>
+      </ng-template>
+      <div class="tab-body">
+        <app-theater-combos [theaterId]="theaterId"></app-theater-combos>
+      </div>
+    </mat-tab>
+    <mat-tab>
+      <ng-template mat-tab-label>
         <mat-icon class="tab-icon">schedule</mat-icon>
         <span>{{ 'theaters.detail.tabTimeSlots' | translate }}</span>
       </ng-template>

@@ -2,8 +2,8 @@ import { ChangeDetectorRef, Component, Input } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import {
   CinemaServiceAgent,
@@ -15,15 +15,18 @@ import { FoodAndDrinkDialog } from './food-and-drink.dialog';
 
 type Dto = CinemaServiceAgent.FoodAndDrinkDTO;
 
-/** Food & drink management scoped to a single theater. */
+/** Combo management scoped to a single theater (combos are food items flagged isCombo). */
 @Component({
-  selector: 'app-theater-food',
+  selector: 'app-theater-combos',
   standalone: false,
-  templateUrl: './theater-food.component.html',
+  templateUrl: './theater-combos.component.html',
   styleUrls: ['./theater-catalog-tab.scss'],
 })
-export class TheaterFoodComponent extends BaseTableComponent<Dto> {
+export class TheaterCombosComponent extends BaseTableComponent<Dto> {
   @Input({ required: true }) theaterId!: string;
+
+  /** Components summary ("1 × Popcorn + 1 × Coke") keyed by combo id, for the combos on the current page. */
+  summaries: Record<string, string> = {};
 
   constructor(
     cd: ChangeDetectorRef,
@@ -42,14 +45,32 @@ export class TheaterFoodComponent extends BaseTableComponent<Dto> {
   }
 
   protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {
-    // Combos live in their own tab: load the theater's items (API max page size 200), drop combos and page client-side.
+    // Load the theater's items (API max page size 200), keep only combos and page client-side.
     return this._svc.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: 1, pageSize: 200, filters: criteria.filters,
-    })).pipe(map(res => {
-      const foods = (res.results ?? []).filter(f => !f.isCombo);
-      const start = (criteria.pageIndex - 1) * criteria.pageSize;
-      return { results: foods.slice(start, start + criteria.pageSize), totalCount: foods.length };
-    }));
+    })).pipe(
+      switchMap(res => {
+        const combos = (res.results ?? []).filter(f => f.isCombo === true);
+        const start = (criteria.pageIndex - 1) * criteria.pageSize;
+        const pageCombos = combos.slice(start, start + criteria.pageSize);
+        const page: TablePage<Dto> = { results: pageCombos, totalCount: combos.length };
+        if (!pageCombos.length) {
+          this.summaries = {};
+          return of(page);
+        }
+        // One call per combo shown on the page (at most pageSize).
+        return forkJoin(pageCombos.map(c => this._svc.getComboComponents(c.id as string))).pipe(
+          map(lists => {
+            const summaries: Record<string, string> = {};
+            pageCombos.forEach((c, i) => {
+              summaries[c.id as string] = (lists[i] ?? []).map(x => `${x.quantity} × ${x.name}`).join(' + ');
+            });
+            this.summaries = summaries;
+            return page;
+          }),
+        );
+      }),
+    );
   }
 
   protected override _extraFilters(): Record<string, unknown> {
@@ -57,17 +78,29 @@ export class TheaterFoodComponent extends BaseTableComponent<Dto> {
   }
 
   protected override _searchStateKey(): string {
-    return this._router.url + '#food';
+    return this._router.url + '#combos';
+  }
+
+  summaryOf(row: Dto): string {
+    return (row.id ? this.summaries[row.id] : '') || '—';
   }
 
   openCreate(): void {
-    this._dialog.open(FoodAndDrinkDialog, { width: '600px', data: { theaterId: this.theaterId, foodAndDrink: null } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+    this._dialog.open(FoodAndDrinkDialog, { width: '600px', data: { theaterId: this.theaterId, foodAndDrink: null, presetCombo: true } })
+      .afterClosed().subscribe(saved => {
+        if (saved) {
+          this.triggerSearch();
+        }
+      });
   }
 
   edit(item: Dto): void {
     this._dialog.open(FoodAndDrinkDialog, { width: '600px', data: { theaterId: this.theaterId, foodAndDrink: item } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => {
+        if (saved) {
+          this.triggerSearch();
+        }
+      });
   }
 
   delete(id?: string): void {
