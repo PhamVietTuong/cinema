@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { BookingCheckoutComponent } from './booking-checkout.component';
 import { BookingCheckoutState } from './booking-checkout.state';
 
@@ -87,6 +87,34 @@ describe('BookingCheckoutComponent', () => {
       { seatId: 's2', patronCategoryId: 'cat-student' },
     ]);
     expect(request.connectionId).toBe('my-connection');
+  });
+
+  it('classifies stock errors case-insensitively', () => {
+    expect(BookingCheckoutComponent.isStockError("'Popcorn' is out of stock or has insufficient quantity.")).toBe(true);
+    expect(BookingCheckoutComponent.isStockError('OUT OF STOCK')).toBe(true);
+    expect(BookingCheckoutComponent.isStockError('Insufficient quantity')).toBe(true);
+    expect(BookingCheckoutComponent.isStockError('Seat already taken')).toBe(false);
+    expect(BookingCheckoutComponent.isStockError(undefined)).toBe(false);
+  });
+
+  it('flags a stock problem when createBooking fails with an out-of-stock message', () => {
+    const c = build(state);
+    payment.createBooking.mockReturnValue(throwError(() => ({ error: "'Popcorn' is out of stock or has insufficient quantity." })));
+
+    c.confirmBooking();
+
+    expect(c.error).toContain('out of stock');
+    expect(c.stockProblem).toBe(true);
+    expect(c.loading).toBe(false);
+  });
+
+  it('does not flag a stock problem for other booking failures', () => {
+    const c = build(state);
+    payment.createBooking.mockReturnValue(throwError(() => ({ error: 'Seat is locked' })));
+
+    c.confirmBooking();
+
+    expect(c.stockProblem).toBe(false);
   });
 
   it('stops the hub connection on destroy', () => {

@@ -254,7 +254,9 @@
     },
     "errors": {
       "bookingFailed": "Đặt vé thất bại. Vui lòng thử lại.",
-      "paymentFailed": "Không thể bắt đầu thanh toán. Vui lòng thử lại."
+      "paymentFailed": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
+      "outOfStock": "Một số món ăn/combo trong đơn đã hết hàng hoặc không còn đủ số lượng. Hãy quay lại để điều chỉnh đơn - ghế của bạn vẫn đang được giữ.",
+      "soldOut": "Hết hàng"
     }
   },
   "home": {
