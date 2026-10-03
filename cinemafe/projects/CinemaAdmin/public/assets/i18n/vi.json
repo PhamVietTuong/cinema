@@ -728,5 +728,42 @@
     "network": "Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.",
     "forbidden": "Bạn không có quyền thực hiện thao tác này.",
     "server": "Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau."
+  },
+  "warehouse": {
+    "nav": {
+      "inventory": "Tồn kho",
+      "storagePlans": "Kế hoạch nhập kho"
+    },
+    "section": "Kho",
+    "pageTitle": {
+      "inventory": "Tồn kho",
+      "storagePlans": "Kế hoạch nhập kho"
+    },
+    "userTheater": "Rạp",
+    "userTheaterSelect": "Chọn rạp",
+    "movementType": {
+      "receive": "Nhập kho",
+      "sale": "Bán hàng",
+      "saleReversal": "Hoàn bán hàng",
+      "adjust": "Điều chỉnh",
+      "waste": "Hao hụt"
+    },
+    "reason": {
+      "other": "Khác",
+      "expired": "Hết hạn",
+      "damaged": "Hư hỏng",
+      "spilled": "Đổ vỡ",
+      "theftOrLoss": "Mất mát",
+      "stockCountCorrection": "Điều chỉnh kiểm kê",
+      "openingBalance": "Tồn đầu kỳ"
+    },
+    "planStatus": {
+      "draft": "Nháp",
+      "submitted": "Đã gửi",
+      "approved": "Đã duyệt",
+      "rejected": "Từ chối",
+      "received": "Đã nhập kho",
+      "cancelled": "Đã hủy"
+    }
   }
 }

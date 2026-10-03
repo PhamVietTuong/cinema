@@ -62,6 +62,18 @@
           </mat-form-field>
         </div>
       </div>
+
+      <div class="dlg-row" *ngIf="needsTheater">
+        <div class="dlg-field">
+          <label class="dlg-label" id="us-theaterId-lbl">{{ 'warehouse.userTheater' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="theaterId" panelClass="dlg-select-panel" aria-labelledby="us-theaterId-lbl" [placeholder]="'warehouse.userTheaterSelect' | translate">
+              <mat-option *ngFor="let t of theaters" [value]="t.id">{{ t.name }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.controls['theaterId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
     </div>
   </mat-dialog-content>
 

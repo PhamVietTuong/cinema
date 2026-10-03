@@ -4,6 +4,8 @@ import { CinemaServiceAgent } from '../services/cinema-http.service';
 export enum UserRole {
   Admin = 'Admin',
   Customer = 'Khách Hàng',
+  TheaterStaff = 'Nhân viên rạp',
+  TheaterManager = 'Quản lý rạp',
 }
 
 // NOTE: display-label lookups for NSwag-generated enums (like ProjectionForm below)
@@ -61,6 +63,52 @@ export const InvoiceStatusValues = [
   { value: CinemaServiceAgent.InvoiceStatus.Failed, name: 'invoices.statusFailed' },
   { value: CinemaServiceAgent.InvoiceStatus.Refunded, name: 'invoices.statusRefunded' },
 ];
+
+/** i18n-key label for each StockMovement.StockMovementType value. */
+export const StockMovementTypeValues: { value: CinemaServiceAgent.StockMovementType; name: string }[] = [
+  { value: CinemaServiceAgent.StockMovementType.Receive, name: 'warehouse.movementType.receive' },
+  { value: CinemaServiceAgent.StockMovementType.Sale, name: 'warehouse.movementType.sale' },
+  { value: CinemaServiceAgent.StockMovementType.SaleReversal, name: 'warehouse.movementType.saleReversal' },
+  { value: CinemaServiceAgent.StockMovementType.Adjust, name: 'warehouse.movementType.adjust' },
+  { value: CinemaServiceAgent.StockMovementType.Waste, name: 'warehouse.movementType.waste' },
+];
+
+/** i18n-key label for each StockMovement.StockReasonCode value. */
+export const StockReasonCodeValues: { value: CinemaServiceAgent.StockReasonCode; name: string }[] = [
+  { value: CinemaServiceAgent.StockReasonCode.Other, name: 'warehouse.reason.other' },
+  { value: CinemaServiceAgent.StockReasonCode.Expired, name: 'warehouse.reason.expired' },
+  { value: CinemaServiceAgent.StockReasonCode.Damaged, name: 'warehouse.reason.damaged' },
+  { value: CinemaServiceAgent.StockReasonCode.Spilled, name: 'warehouse.reason.spilled' },
+  { value: CinemaServiceAgent.StockReasonCode.TheftOrLoss, name: 'warehouse.reason.theftOrLoss' },
+  { value: CinemaServiceAgent.StockReasonCode.StockCountCorrection, name: 'warehouse.reason.stockCountCorrection' },
+  { value: CinemaServiceAgent.StockReasonCode.OpeningBalance, name: 'warehouse.reason.openingBalance' },
+];
+
+/** i18n-key label for each StoragePlan.StoragePlanStatus value. */
+export const StoragePlanStatusValues: { value: CinemaServiceAgent.StoragePlanStatus; name: string }[] = [
+  { value: CinemaServiceAgent.StoragePlanStatus.Draft, name: 'warehouse.planStatus.draft' },
+  { value: CinemaServiceAgent.StoragePlanStatus.Submitted, name: 'warehouse.planStatus.submitted' },
+  { value: CinemaServiceAgent.StoragePlanStatus.Approved, name: 'warehouse.planStatus.approved' },
+  { value: CinemaServiceAgent.StoragePlanStatus.Rejected, name: 'warehouse.planStatus.rejected' },
+  { value: CinemaServiceAgent.StoragePlanStatus.Received, name: 'warehouse.planStatus.received' },
+  { value: CinemaServiceAgent.StoragePlanStatus.Cancelled, name: 'warehouse.planStatus.cancelled' },
+];
+
+/** i18n key for a storage plan status (falls back to Draft's key). */
+export function storagePlanStatusLabel(s?: CinemaServiceAgent.StoragePlanStatus): string {
+  return StoragePlanStatusValues.find(v => v.value === s)?.name ?? StoragePlanStatusValues[0].name;
+}
+
+/** CSS pill class for each StoragePlanStatus value (same pill palette as invoices). */
+export function storagePlanStatusPillClass(s?: CinemaServiceAgent.StoragePlanStatus): string {
+  switch (s) {
+    case CinemaServiceAgent.StoragePlanStatus.Approved:
+    case CinemaServiceAgent.StoragePlanStatus.Received: return 'ad-pill--success';
+    case CinemaServiceAgent.StoragePlanStatus.Submitted: return 'ad-pill--warn';
+    case CinemaServiceAgent.StoragePlanStatus.Rejected: return 'ad-pill--danger';
+    default: return 'ad-pill--neutral';
+  }
+}
 
 /** CSS pill class for each Invoice.InvoiceStatus value (used by the admin invoices grid). */
 export function invoiceStatusPillClass(s?: CinemaServiceAgent.InvoiceStatus): string {

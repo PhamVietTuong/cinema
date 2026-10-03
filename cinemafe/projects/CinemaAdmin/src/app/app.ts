@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { filter, map, startWith } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { Router, NavigationEnd } from '@angular/router';
-import { selectCurrentUser, loadUserFromStorage, logout, ThemeService } from 'CinemaLib';
+import { selectCurrentUser, selectIsAdmin, selectIsBackOffice, loadUserFromStorage, logout, ThemeService } from 'CinemaLib';
 
 /** Sidebar becomes an off-canvas mat-sidenav drawer below this width; matches app.scss's own breakpoint. */
 const MOBILE_QUERY = '(max-width: 768px)';
@@ -27,6 +27,8 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   news: 'pageTitle.news',
   discounts: 'pageTitle.discounts',
   invoices: 'pageTitle.invoices',
+  inventory: 'warehouse.pageTitle.inventory',
+  'storage-plans': 'warehouse.pageTitle.storagePlans',
 };
 
 @Component({
@@ -38,6 +40,8 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
 export class App implements OnInit {
   /** Drives the admin chrome. Gated on being an Admin, not merely signed in, so a customer
    *  who lands on /forbidden isn't shown a sidebar full of pages they can't open. */
+  isBackOffice$: Observable<boolean>;
+  /** Admin-only nav links. */
   isAdmin$: Observable<boolean>;
   user$: Observable<any>;
   pageTitleKey$: Observable<string>;
@@ -55,7 +59,8 @@ export class App implements OnInit {
   readonly theme = inject(ThemeService);
 
   constructor(private _store: Store, private _router: Router) {
-    this.isAdmin$ = this._store.select(selectCurrentUser).pipe(map(u => u?.userTypeName === 'Admin'));
+    this.isAdmin$ = this._store.select(selectIsAdmin);
+    this.isBackOffice$ = this._store.select(selectIsBackOffice);
     this.user$ = this._store.select(selectCurrentUser);
     const nav$ = this._router.events.pipe(filter(e => e instanceof NavigationEnd));
     // Close the mobile drawer whenever navigation completes.

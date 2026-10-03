@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard } from 'CinemaLib';
+import { authGuard, adminGuard, roleGuard, homeRedirectGuard, BACK_OFFICE_ROLES } from 'CinemaLib';
 
 export const routes: Routes = [
   // Convenience aliases so /login and /auth/login both work
@@ -23,7 +23,8 @@ export const routes: Routes = [
     path: '',
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      // Role-aware landing: Admin -> /dashboard, other back-office roles -> /inventory.
+      { path: '', pathMatch: 'full', canActivate: [homeRedirectGuard], children: [] },
       {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
@@ -55,6 +56,12 @@ export const routes: Routes = [
         path: '',
         canActivate: [adminGuard],
         loadChildren: () => import('./features/modules/operations/operations.module').then(m => m.OperationsModule)
+      },
+      // ── Warehouse (inventory + storage plans): all back-office roles ───────────
+      {
+        path: '',
+        canActivate: [roleGuard(BACK_OFFICE_ROLES)],
+        loadChildren: () => import('./features/modules/inventory/inventory.module').then(m => m.InventoryModule)
       }
     ]
   },

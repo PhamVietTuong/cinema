@@ -1,9 +1,9 @@
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { IdentityServiceAgent, CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException } from 'CinemaLib';
+import { IdentityServiceAgent, CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, UserRoles } from 'CinemaLib';
 
 const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
 
@@ -23,6 +23,7 @@ export class UserDialog {
   readonly editingId: string | null;
   readonly statuses: { v: IdentityServiceAgent.UserStatus; label: string }[];
   userTypes: CinemaServiceAgent.UserTypeDTO[] = [];
+  theaters: CinemaServiceAgent.TheaterDTO[] = [];
   form: FormGroup;
 
   constructor(
@@ -32,6 +33,7 @@ export class UserDialog {
     private _store: Store<any>,
     private _dialogRef: MatDialogRef<UserDialog, boolean>,
     private _translate: TranslateService,
+    private _cd: ChangeDetectorRef,
     @Inject(MAT_DIALOG_DATA) data: UserDialogData,
   ) {
     this.editingId = data.user?.id ?? null;
@@ -47,10 +49,37 @@ export class UserDialog {
       password: [{ value: '', disabled: !!data.user }, data.user ? [] : [Validators.required, Validators.minLength(6)]],
       userTypeId: [data.user?.userTypeId ?? '', Validators.required],
       status: [data.user?.status ?? IdentityServiceAgent.UserStatus.Active, Validators.required],
+      theaterId: [data.user?.theaterId ?? ''],
     });
 
-    this._cinema.getUserTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
-      .subscribe(r => { this.userTypes = r.results ?? []; });
+    this.form.controls['userTypeId'].valueChanges.subscribe(() => this._syncTheaterValidator());
+
+    const paging = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 });
+    this._cinema.getUserTypes(paging)
+      .subscribe(r => {
+        this.userTypes = r.results ?? [];
+        this._syncTheaterValidator();
+        this._cd.markForCheck();
+      });
+    this._cinema.getTheaters(paging)
+      .subscribe(r => { this.theaters = r.results ?? []; this._cd.markForCheck(); });
+  }
+
+  /** The theater applies only to theater-pinned roles (TheaterStaff / TheaterManager). */
+  get needsTheater(): boolean {
+    const name = this.userTypes.find(t => t.id === this.form.controls['userTypeId'].value)?.name;
+    return name === UserRoles.TheaterStaff || name === UserRoles.TheaterManager;
+  }
+
+  private _syncTheaterValidator(): void {
+    const ctrl = this.form.controls['theaterId'];
+    if (this.needsTheater) {
+      ctrl.setValidators(Validators.required);
+    } else {
+      ctrl.clearValidators();
+      ctrl.setValue('', { emitEvent: false });
+    }
+    ctrl.updateValueAndValidity({ emitEvent: false });
   }
 
   save(): void {
@@ -59,12 +88,13 @@ export class UserDialog {
       return;
     }
     const v = this.form.getRawValue();
+    const theaterId = this.needsTheater ? v.theaterId : undefined;
     const obs = this.editingId
       ? this._identity.updateUser(IdentityServiceAgent.UpdateUserRequest.fromJS({
-          id: this.editingId, name: v.name, phone: v.phone, userTypeId: v.userTypeId, status: v.status,
+          id: this.editingId, name: v.name, phone: v.phone, userTypeId: v.userTypeId, status: v.status, theaterId,
         }))
-      : this._identity.createUser(IdentityServiceAgent.CreateUserRequest.fromJS({
-          name: v.name, email: v.email, phone: v.phone, password: v.password, userTypeId: v.userTypeId, status: v.status,
+      :this._identity.createUser(IdentityServiceAgent.CreateUserRequest.fromJS({
+          name: v.name, email: v.email, phone: v.phone, password: v.password, userTypeId: v.userTypeId, status: v.status, theaterId,
         }));
 
     this._store.dispatch(showLoading());

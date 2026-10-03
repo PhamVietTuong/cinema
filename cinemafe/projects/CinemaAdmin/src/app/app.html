@@ -1,4 +1,4 @@
-<ng-container *ngIf="isAdmin$ | async; else loginView">
+<ng-container *ngIf="isBackOffice$ | async; else loginView">
   <mat-sidenav-container class="admin-shell">
     <mat-sidenav class="sidebar" [mode]="isMobile ? 'over' : 'side'" [opened]="isMobile ? menuOpen : true" (openedChange)="onSidenavOpenedChange($event)">
       <div class="brand">
@@ -7,6 +7,7 @@
       </div>
 
       <nav class="nav">
+        <ng-container *ngIf="isAdmin$ | async">
         <a routerLink="/dashboard" routerLinkActive="is-active" class="nav-item">
           <mat-icon>dashboard</mat-icon><span>{{ 'nav.dashboard' | translate }}</span>
         </a>
@@ -61,6 +62,15 @@
         </a>
         <a routerLink="/gift-cards" routerLinkActive="is-active" class="nav-item">
           <mat-icon>card_giftcard</mat-icon><span>{{ 'nav.giftCards' | translate }}</span>
+        </a>
+        </ng-container>
+
+        <span class="nav-section">{{ 'warehouse.section' | translate }}</span>
+        <a routerLink="/inventory" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>inventory_2</mat-icon><span>{{ 'warehouse.nav.inventory' | translate }}</span>
+        </a>
+        <a routerLink="/storage-plans" routerLinkActive="is-active" class="nav-item">
+          <mat-icon>assignment</mat-icon><span>{{ 'warehouse.nav.storagePlans' | translate }}</span>
         </a>
       </nav>
 

@@ -728,5 +728,42 @@
     "network": "Cannot reach the server. Please check your network connection.",
     "forbidden": "You do not have permission to perform this action.",
     "server": "A server error occurred. Please try again later."
+  },
+  "warehouse": {
+    "nav": {
+      "inventory": "Inventory",
+      "storagePlans": "Storage plans"
+    },
+    "section": "Warehouse",
+    "pageTitle": {
+      "inventory": "Inventory",
+      "storagePlans": "Storage plans"
+    },
+    "userTheater": "Theater",
+    "userTheaterSelect": "Select a theater",
+    "movementType": {
+      "receive": "Receive",
+      "sale": "Sale",
+      "saleReversal": "Sale reversal",
+      "adjust": "Adjustment",
+      "waste": "Waste"
+    },
+    "reason": {
+      "other": "Other",
+      "expired": "Expired",
+      "damaged": "Damaged",
+      "spilled": "Spilled",
+      "theftOrLoss": "Theft or loss",
+      "stockCountCorrection": "Stock count correction",
+      "openingBalance": "Opening balance"
+    },
+    "planStatus": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "received": "Received",
+      "cancelled": "Cancelled"
+    }
   }
 }

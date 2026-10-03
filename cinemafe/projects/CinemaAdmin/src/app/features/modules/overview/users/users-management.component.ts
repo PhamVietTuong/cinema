@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import {
   IdentityServiceAgent,
-  UserRole,
+  UserRole, UserRoles,
   BaseTableComponent, TablePage, TableSearchCriteria,
   DialogService,
   showLoading, hideLoading, showSuccess, showException,
@@ -32,7 +32,7 @@ interface UserRow {
 })
 export class UsersManagementComponent extends BaseTableComponent {
   readonly UserRole = UserRole;
-  readonly roles: UserRole[] = [UserRole.Admin, UserRole.Customer];
+  readonly roles: UserRole[] = [UserRole.Admin, UserRole.TheaterManager, UserRole.TheaterStaff, UserRole.Customer];
 
   constructor(
     cd: ChangeDetectorRef,
@@ -66,10 +66,19 @@ export class UsersManagementComponent extends BaseTableComponent {
       name: u.name ?? '',
       email: u.email ?? '',
       phone: u.phone ?? '',
-      role: u.userTypeName === 'Admin' ? UserRole.Admin : UserRole.Customer,
+      role: this._toRole(u.userTypeName),
       active: (u.status ?? IdentityServiceAgent.UserStatus.Active) === IdentityServiceAgent.UserStatus.Active,
       joined: u.creationTime ? new Date(u.creationTime).toLocaleDateString('vi-VN') : '',
     };
+  }
+
+  private _toRole(userTypeName?: string): UserRole {
+    switch (userTypeName) {
+      case UserRoles.Admin: return UserRole.Admin;
+      case UserRoles.TheaterManager: return UserRole.TheaterManager;
+      case UserRoles.TheaterStaff: return UserRole.TheaterStaff;
+      default: return UserRole.Customer;
+    }
   }
 
   openCreate(): void {
