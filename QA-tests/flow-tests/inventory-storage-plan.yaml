@@ -1,0 +1,589 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Cinema — Flow regression test
+# Flow : Food & drink inventory, combos, storage plans, back-office roles
+# Invoked by : /test-flow inventory-storage-plan
+# ─────────────────────────────────────────────────────────────────────────────
+
+flow_id: inventory-storage-plan
+name: "Inventory, combos & storage plans — stock ledger, deduct/restore, plan lifecycle, theater scoping"
+description: >
+  Verifies that a change touching opt-in food/drink stock tracking does not break:
+  (1) QuantityOnHand only changing through the guarded FoodAndDrinkStore.TryApplyStockDeltaAsync,
+      always paired with an insert-only StockMovement ledger row,
+  (2) CreateBookingAsync deducting stock inside its transaction, in ascending id order,
+      with combos expanded into their tracked components (a combo holds no stock),
+  (3) Cancel / Refund / Expire restocking from the ledger (GetNetSaleQuantitiesAsync),
+      idempotently, never from the current combo recipe,
+  (4) storage plan lifecycle Draft -> Submitted -> Approved|Rejected -> Received|Cancelled,
+      Receive only from Approved and guarded by the plan RowVersion,
+  (5) Approve/Reject limited to RoleNames.StockApprovers (Admin, TheaterManager),
+  (6) back-office endpoints scoped by TryGetBackOfficeScope and answering 403 (never 401) on scope failure,
+  (7) food Create/Update requests carrying no inventory or combo fields,
+  (8) combos never tracked and never nested.
+
+layers: [business, data, service, frontend]
+version: 1.0
+last_updated: 2026-10-04
+maintained_by: "Cinema QA"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §1 — Files that trigger this test when modified
+# ─────────────────────────────────────────────────────────────────────────────
+trigger_paths:
+  - "Cinema/2-Business/Cinema.Business/Managers/InventoryManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/ComboManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/FoodStockRestorer.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/FoodAndDrinkManager.cs"
+  - "Cinema/2-Business/Cinema.Business/Managers/JoinManagers.cs"
+  - "Cinema/2-Business/Cinema.Business/Helpers/ComboAvailability.cs"
+  - "Cinema/2-Business/Cinema.Business.DTO/Catalog/FoodAndDrinkDTOs.cs"
+  - "Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs"
+  - "Cinema/3-Data/Cinema.Data/Stores/FoodAndDrinkStore.cs"
+  - "Cinema/3-Data/Cinema.Data/Stores/StockMovementStore.cs"
+  - "Cinema/3-Data/Cinema.Data/Stores/StoragePlanStore.cs"
+  - "Cinema/3-Data/Cinema.Data/Stores/ComboItemStore.cs"
+  - "Cinema/3-Data/Cinema.Data/Configurations/InventoryConfiguration.cs"
+  - "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs"
+  - "Cinema/1-Service/Cinema.Service.WebApiHost/Helpers/ClaimsPrincipalExtensions.cs"
+  - "projects/CinemaAdmin/src/app/features/modules/inventory/"
+  - "projects/CinemaAdmin/src/app/features/modules/overview/theaters/food-and-drink.dialog.ts"
+  - "projects/CinemaAdmin/src/app/features/modules/overview/theaters/food-and-drink.dialog.html"
+
+trigger_keywords:
+  - "TryApplyStockDeltaAsync"
+  - "QuantityOnHand"
+  - "TrackInventory"
+  - "StockMovement"
+  - "GetNetSaleQuantitiesAsync"
+  - "FoodStockRestorer"
+  - "ComboItem"
+  - "IsCombo"
+  - "StoragePlan"
+  - "StockApprovers"
+  - "TryGetBackOfficeScope"
+  - "RoleNames"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §2 — Static checks
+# ─────────────────────────────────────────────────────────────────────────────
+static_checks:
+
+  - id: SC-INV-01
+    severity: P0
+    description: >
+      The only primitive that changes QuantityOnHand is the guarded conditional UPDATE
+      FoodAndDrinkStore.TryApplyStockDeltaAsync (refuses to go below zero, atomic under concurrency).
+    file: "Cinema/3-Data/Cinema.Data/Stores/FoodAndDrinkStore.cs"
+    method: "TryApplyStockDeltaAsync"
+    must_contain:
+      - pattern: "QuantityOnHand + delta >= 0"
+        rationale: "Stock can never be driven negative; oversell fails the UPDATE instead of racing"
+      - pattern: "ExecuteUpdateAsync"
+        rationale: "Single atomic SQL UPDATE, not read-modify-write on a tracked entity"
+
+  - id: SC-INV-02
+    severity: P0
+    description: >
+      Managers never assign QuantityOnHand directly (no read-modify-write); every stock change goes
+      through TryApplyStockDeltaAsync.
+    files:
+      - "Cinema/2-Business/Cinema.Business/Managers/InventoryManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/FoodStockRestorer.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/FoodAndDrinkManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/ComboManager.cs"
+    forbidden_patterns:
+      - regex: '\.QuantityOnHand\s*[-+]?=[^=]'
+        rationale: "Direct assignment to QuantityOnHand bypasses the non-negative guard and the ledger"
+
+  - id: SC-INV-03
+    severity: P0
+    description: >
+      Every stock change is paired with a StockMovement ledger row. InventoryManager.ApplyAndRecordAsync
+      is the single manual-adjustment path (delta + ledger row); Receive writes a Receive row per line.
+    files:
+      - "Cinema/2-Business/Cinema.Business/Managers/InventoryManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+    must_contain:
+      - pattern: "TryApplyStockDeltaAsync"
+        rationale: "Guarded stock write"
+      - pattern: "StockMovementStore.CreateAsync"
+        rationale: "Ledger row written next to the stock change"
+
+  - id: SC-INV-04
+    severity: P0
+    description: >
+      The ledger is insert-only: no code path updates or deletes StockMovement rows.
+    files:
+      - "Cinema/2-Business/Cinema.Business/Managers/InventoryManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/FoodStockRestorer.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/FoodAndDrinkManager.cs"
+    forbidden_patterns:
+      - regex: 'StockMovementStore\.(Update|Delete|Remove)'
+        rationale: "Corrections are new compensating rows, never edits of history (restock is derived from the ledger)"
+
+  - id: SC-INV-05
+    severity: P0
+    description: >
+      Selling deducts stock inside the CreateBookingAsync transaction: BeginTransactionAsync is opened
+      first, then BuildFoodLinesAndReserveStockAsync, and the Sale ledger rows are written with the invoice.
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    method: "CreateBookingAsync"
+    must_contain:
+      - pattern: "BeginTransactionAsync"
+        rationale: "Deduction + invoice commit or roll back together"
+      - pattern: "BuildFoodLinesAndReserveStockAsync"
+        rationale: "Stock is reserved inside the booking transaction"
+      - pattern: "RecordSaleMovementsAsync"
+        rationale: "Sale ledger rows persisted with the invoice"
+      - pattern: "RollbackTransactionAsync"
+        rationale: "Failed booking returns the stock"
+
+  - id: SC-INV-06
+    severity: P0
+    description: >
+      Stock deduction runs in a fixed ascending item-id order (prevents deadlocks between concurrent
+      bookings) and combos are expanded into their components (a combo line never deducts its own stock).
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    method: "BuildFoodLinesAndReserveStockAsync"
+    must_contain:
+      - pattern: "OrderBy(d => d.Food.Id)"
+        rationale: "Ascending id order across all demanded items"
+      - pattern: "TryApplyStockDeltaAsync(entry.Food.Id, -entry.Quantity)"
+        rationale: "Guarded negative delta per demanded item"
+      - pattern: "GetByCombosAsync"
+        rationale: "Combo lines expand through the ComboItem recipe into tracked components"
+      - pattern: "comboQuantity * recipe.Quantity"
+        rationale: "Component demand = combo units x recipe quantity"
+      - pattern: "if (!item.TrackInventory)"
+        rationale: "Untracked items never touch stock"
+
+  - id: SC-INV-07
+    severity: P0
+    description: >
+      Restock after Cancel / Refund / Expire is ledger-driven: it reads GetNetSaleQuantitiesAsync (net
+      Sale quantity per invoice+item), NOT the current combo recipe (the recipe may have changed since
+      the sale), and is idempotent (net already zero -> nothing to restore).
+    file: "Cinema/2-Business/Cinema.Business/Managers/FoodStockRestorer.cs"
+    must_contain:
+      - pattern: "GetNetSaleQuantitiesAsync"
+        rationale: "Owed quantity comes from the ledger"
+      - pattern: "NetQuantity < 0"
+        rationale: "Only units still owed back to the shelf are restored (idempotent)"
+      - pattern: "TryApplyStockDeltaAsync"
+        rationale: "Guarded stock write"
+      - pattern: "StockMovementStore.CreateRangeAsync"
+        rationale: "Restore ledger rows recorded"
+    must_not_contain:
+      - pattern: "ComboItemStore"
+        rationale: "Restock must not re-derive quantities from the (mutable) combo recipe"
+
+  - id: SC-INV-08
+    severity: P0
+    description: >
+      Cancel, refund and expiry all call RestoreFoodStockAsync so food stock is never leaked.
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    must_contain:
+      - pattern: 'RestoreFoodStockAsync(new[] { invoice }, "Cancelled"'
+        rationale: "Cancel restores stock"
+      - pattern: 'RestoreFoodStockAsync(new[] { invoice }, "Refunded"'
+        rationale: "Refund restores stock"
+      - pattern: 'RestoreFoodStockAsync(stale.ToList(), "Expired"'
+        rationale: "Expired pending invoices restore stock"
+
+  - id: SC-INV-09
+    severity: P0
+    description: >
+      Storage plan Receive is only allowed from Approved, is guarded by the plan RowVersion (saved
+      BEFORE any stock moves, so a concurrent second receive fails first), adds stock in ascending item
+      order and writes Receive ledger rows inside a transaction.
+    file: "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+    method: "ReceiveAsync"
+    must_contain:
+      - pattern: "plan.Status != StoragePlanStatus.Approved"
+        rationale: "Receive only from Approved"
+      - pattern: "BeginTransactionAsync"
+        rationale: "Plan status + stock + ledger are atomic"
+      - pattern: "await SaveAsync(plan);"
+        rationale: "Plan saved first; ConcurrencyConflictException (RowVersion) aborts before stock moves"
+      - pattern: "OrderBy(i => i.FoodAndDrinkId)"
+        rationale: "Ascending item order, deadlock-safe"
+      - pattern: "StockMovementType.Receive"
+        rationale: "Receive ledger rows"
+      - pattern: "StoragePlanId = plan.Id"
+        rationale: "Ledger row links back to its plan"
+
+  - id: SC-INV-10
+    severity: P0
+    description: >
+      The StoragePlan entity keeps its optimistic-concurrency RowVersion (mapped IsRowVersion) and
+      SaveAsync maps ConcurrencyConflictException to a friendly error.
+    files:
+      - "Cinema/3-Data/Cinema.Data.Entities/Entities/StoragePlan.cs"
+      - "Cinema/3-Data/Cinema.Data/Configurations/InventoryConfiguration.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+    must_contain:
+      - pattern: "RowVersion"
+        rationale: "Concurrency token on the plan"
+      - pattern: "IsRowVersion()"
+        rationale: "EF treats it as SQL rowversion"
+      - pattern: "ConcurrencyConflictException"
+        rationale: "Concurrent decision surfaces as a handled conflict"
+
+  - id: SC-INV-11
+    severity: P0
+    description: >
+      Plan state machine transitions stay one-directional: Submit only from Draft, Approve/Reject only
+      from Submitted, Cancel only from Draft/Submitted/Approved.
+    file: "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+    must_contain:
+      - pattern: "plan.Status != StoragePlanStatus.Draft"
+        rationale: "Submit (and edit) only from Draft"
+      - pattern: "plan.Status != StoragePlanStatus.Submitted"
+        rationale: "Approve/Reject only from Submitted"
+      - pattern: "plan.Status = StoragePlanStatus.Approved"
+        rationale: "Approve transition"
+      - pattern: "plan.Status = StoragePlanStatus.Rejected"
+        rationale: "Reject transition"
+      - pattern: "plan.Status = StoragePlanStatus.Cancelled"
+        rationale: "Cancel transition"
+      - pattern: "plan.Status = StoragePlanStatus.Received"
+        rationale: "Receive transition"
+
+  - id: SC-INV-12
+    severity: P0
+    description: >
+      Approve/Reject (and inventory settings) are limited to RoleNames.StockApprovers
+      (Admin + TheaterManager); theater staff cannot approve their own plans.
+    file: "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs"
+    must_contain:
+      - pattern: "Authorize(Roles = RoleNames.StockApprovers)"
+        rationale: "Approval endpoints exclude TheaterStaff"
+
+  - id: SC-INV-13
+    severity: P0
+    description: >
+      RoleNames.StockApprovers excludes TheaterStaff.
+    file: "Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs"
+    must_contain:
+      - pattern: 'StockApprovers = Admin + "," + TheaterManager;'
+        rationale: "Approvers are exactly Admin and TheaterManager"
+      - pattern: 'BackOffice = Admin + "," + TheaterManager + "," + TheaterStaff;'
+        rationale: "Back-office = all three roles"
+
+  - id: SC-INV-14
+    severity: P0
+    description: >
+      Inventory / combo-adjacent / storage-plan controller actions resolve the caller's theater scope with
+      TryGetBackOfficeScope and answer Forbid() (403) when it fails. Never 401: the frontend logs the user
+      out on a 401.
+    file: "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs"
+    must_contain:
+      - pattern: "User.TryGetBackOfficeScope(out var scope)"
+        rationale: "Staff/manager pinned to their own theater, admin unscoped"
+      - pattern: "Task.FromResult<IActionResult>(Forbid())"
+        rationale: "Scope failure is 403"
+    must_not_contain:
+      - pattern: "Unauthorized("
+        rationale: "A 401 on scope failure would log the user out in the SPA"
+      - pattern: "StatusCode(401"
+        rationale: "Same: scope failure must be 403"
+
+  - id: SC-INV-15
+    severity: P0
+    description: >
+      TryGetBackOfficeScope: admin -> unscoped; staff/manager -> their theater claim (false when the
+      claim is missing); anyone else -> false.
+    file: "Cinema/1-Service/Cinema.Service.WebApiHost/Helpers/ClaimsPrincipalExtensions.cs"
+    method: "TryGetBackOfficeScope"
+    must_contain:
+      - pattern: "principal.IsAdmin()"
+        rationale: "Admin sees all theaters"
+      - pattern: "principal.IsTheaterStaff() || principal.IsTheaterManager()"
+        rationale: "Both roles are theater-pinned"
+      - pattern: "return theaterScope != null;"
+        rationale: "Staff/manager token without a theater claim is refused"
+
+  - id: SC-INV-16
+    severity: P0
+    description: >
+      Out-of-scope plans/items look like "not found" to staff (they cannot probe other theaters).
+    file: "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+    must_contain:
+      - pattern: "theaterScope.HasValue && plan.TheaterId != theaterScope.Value"
+        rationale: "Plan loads are theater-scoped"
+      - pattern: "KeyNotFoundException"
+        rationale: "Out-of-scope reads as missing"
+
+  - id: SC-INV-17
+    severity: P0
+    description: >
+      The generic food Create/Update requests carry NO inventory or combo fields: stock/tracking and
+      recipes are changed only through the dedicated Inventory / Combo endpoints (so a plain edit can
+      never overwrite QuantityOnHand or flip IsCombo).
+    file: "Cinema/2-Business/Cinema.Business.DTO/Catalog/FoodAndDrinkDTOs.cs"
+    must_contain:
+      - pattern: "class CreateFoodAndDrinkRequest"
+        rationale: "Request type exists"
+      - pattern: "class UpdateFoodAndDrinkRequest"
+        rationale: "Request type exists"
+    forbidden_patterns:
+      - regex: '(?s)class (Create|Update)FoodAndDrinkRequest[^}]*(TrackInventory|QuantityOnHand|LowStockThreshold|TargetStockLevel|IsCombo)'
+        rationale: "Inventory/combo fields must not be accepted on generic food create/update"
+
+  - id: SC-INV-18
+    severity: P0
+    description: >
+      Combos are never tracked and never nested: SaveAsync rejects nested components and cross-theater
+      components; InventoryManager refuses settings/movements on a combo; storage plans refuse combos.
+    files:
+      - "Cinema/2-Business/Cinema.Business/Managers/ComboManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/InventoryManager.cs"
+      - "Cinema/2-Business/Cinema.Business/Managers/StoragePlanManager.cs"
+    must_contain:
+      - pattern: "combos cannot be nested"
+        rationale: "A component may not itself be a combo"
+      - pattern: "belongs to a different theater than the combo"
+        rationale: "Recipes stay within one theater"
+      - pattern: "A combo holds no stock of its own"
+        rationale: "Inventory writes on a combo are refused"
+      - pattern: "food.IsCombo"
+        rationale: "Receive refuses combo lines"
+
+  - id: SC-INV-19
+    severity: P1
+    description: >
+      Theater of a combo, a component or a stock-bearing item cannot be changed (recipes and the ledger
+      are theater-scoped).
+    file: "Cinema/2-Business/Cinema.Business/Managers/FoodAndDrinkManager.cs"
+    method: "EnsureTheaterCanChangeAsync"
+    must_contain:
+      - pattern: "A combo cannot be moved to another theater."
+        rationale: "Combo pinned to theater"
+      - pattern: "GetCombosUsingAsync"
+        rationale: "Components used in a combo are pinned"
+      - pattern: "StockMovementStore.ExistsAsync"
+        rationale: "Items with stock history are pinned"
+
+  - id: SC-INV-20
+    severity: P1
+    description: >
+      Inventory settings change tracked config only (never QuantityOnHand directly); turning tracking
+      on requires an opening quantity which is applied as a ledger-recorded delta.
+    file: "Cinema/2-Business/Cinema.Business/Managers/InventoryManager.cs"
+    must_contain:
+      - pattern: "An opening quantity is required when inventory tracking is turned on."
+        rationale: "No tracking without a baseline"
+      - pattern: "ApplyAndRecordAsync"
+        rationale: "Opening/adjust/count all go through the single stock-write helper"
+
+  - id: SC-INV-21
+    severity: P1
+    description: >
+      Frontend: admin inventory feature module exists with its storage-plan pages, and the food dialog
+      (theaters) still exists to edit name/price only.
+    files:
+      - "projects/CinemaAdmin/src/app/features/modules/inventory/inventory.module.ts"
+      - "projects/CinemaAdmin/src/app/features/modules/overview/theaters/food-and-drink.dialog.ts"
+    must_contain:
+      - pattern: "InventoryModule"
+        rationale: "Inventory lazy module"
+      - pattern: "FoodAndDrinkDialog"
+        rationale: "Food dialog component"
+
+build_checks:
+  - id: BC-INV-BUILD
+    description: "Whole backend solution builds clean"
+    cwd: "E:/cinema/cinemabe"
+    command: 'dotnet build Cinema.sln --nologo -v minimal'
+    expected_exit_code: 0
+    timeout_seconds: 300
+
+  - id: BC-INV-TEST
+    description: "Business xUnit suite passes (booking, inventory, combo, storage plan tests)"
+    cwd: "E:/cinema/cinemabe"
+    command: 'dotnet test "Cinema/2-Business/Cinema.Business.Tests/Cinema.Business.Tests.csproj" --nologo -v minimal'
+    expected_exit_code: 0
+    timeout_seconds: 600
+
+  - id: BC-INV-FE-ADMIN
+    description: "CinemaAdmin builds (inventory, storage plans, food dialog)"
+    cwd: "E:/cinema/cinemafe"
+    command: "npx ng build CinemaAdmin --configuration development"
+    expected_exit_code: 0
+    timeout_seconds: 600
+    skip_if_unchanged:
+      - "projects/CinemaAdmin/**"
+      - "projects/CinemaLib/**"
+
+  - id: BC-INV-FE-USER
+    description: "CinemaUser builds (food ordering with out-of-stock / combo display)"
+    cwd: "E:/cinema/cinemafe"
+    command: "npx ng build CinemaUser --configuration development"
+    expected_exit_code: 0
+    timeout_seconds: 600
+    skip_if_unchanged:
+      - "projects/CinemaUser/**"
+      - "projects/CinemaLib/**"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §4 — Manual E2E playbook
+# ─────────────────────────────────────────────────────────────────────────────
+playbook:
+  prerequisites:
+    - "Backend on http://localhost:5102 with the inventory schema applied (upgrade_db.sql / create_db.sql); seed accounts created"
+    - "FE: ng serve CinemaAdmin (http://localhost:4201) and ng serve CinemaUser (http://localhost:4200)"
+    - "Accounts: admin@cinema.vn, a TheaterManager and a TheaterStaff pinned to theater A, plus user@cinema.vn; theater B exists with its own food"
+    - "Theater A has two foods (e.g. Popcorn, Cola) and an upcoming showtime"
+  scenarios:
+    - id: PB-INV-01
+      title: "Enable tracking with an opening quantity"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Admin -> Inventory -> open Popcorn -> turn tracking on WITHOUT an opening quantity"
+          expected: ["Rejected: an opening quantity is required"]
+        - step: 2
+          action: "Turn tracking on with opening quantity 10, low-stock threshold 3"
+          expected:
+            - "QuantityOnHand = 10"
+            - "Ledger shows one movement of +10 (opening)"
+        - step: 3
+          action: "Manual adjust -20 (more than on hand)"
+          expected: ["Rejected; quantity still 10, no new ledger row"]
+
+    - id: PB-INV-02
+      title: "Define a combo; combos cannot be tracked or nested"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Create food 'Combo 1' and save its composition: 2 x Popcorn + 1 x Cola"
+          expected: ["Combo saved; combo shows an availability derived from its components"]
+        - step: 2
+          action: "Try to enable tracking on the combo; try to add another combo as a component; try a component from theater B"
+          expected: ["All three refused (combo holds no stock / cannot be nested / different theater)"]
+        - step: 3
+          action: "Edit the combo's name/price in the generic food dialog"
+          expected: ["Saved; QuantityOnHand/TrackInventory/recipe unchanged (dialog has no inventory fields)"]
+
+    - id: PB-INV-03
+      title: "Booking deducts stock (plain item and combo) in one transaction"
+      severity: P0
+      steps:
+        - step: 1
+          action: "As user@cinema.vn book seats + 1 Combo 1 + 1 Popcorn (Popcorn tracked, qty 10, Cola tracked)"
+          expected:
+            - "Popcorn on hand = 10 - 2 (combo) - 1 = 7; Cola reduced by 1"
+            - "Sale ledger rows (negative) reference the invoice; combo row shows 'via combo' in the reason"
+        - step: 2
+          action: "Order more than is on hand (e.g. 8 more Popcorn)"
+          expected: ["Booking refused with 'out of stock'; no seats held, no stock change, no ledger rows"]
+        - step: 3
+          action: "Two users order the last units at the same time"
+          expected: ["Exactly one succeeds; quantity never negative"]
+
+    - id: PB-INV-04
+      title: "Cancel / refund / expiry restore the stock exactly once"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Cancel the pending invoice from PB-INV-03"
+          expected: ["Popcorn back to 10, Cola back; compensating positive ledger rows linked to the invoice"]
+        - step: 2
+          action: "Change the combo recipe, then cancel an invoice that was sold under the OLD recipe"
+          expected: ["Restored quantities match what was sold (ledger), not the new recipe"]
+        - step: 3
+          action: "Trigger cancel/refund/expiry a second time for the same invoice"
+          expected: ["No double restore; quantity unchanged"]
+
+    - id: PB-INV-05
+      title: "Storage plan lifecycle"
+      severity: P0
+      steps:
+        - step: 1
+          action: "As TheaterStaff create a plan (Draft) with Popcorn x 20, then Submit"
+          expected: ["Status Submitted; staff has no Approve/Reject buttons"]
+        - step: 2
+          action: "As TheaterStaff call ApproveStoragePlan directly"
+          expected: ["403 Forbidden"]
+        - step: 3
+          action: "As TheaterManager Reject with a reason; staff edits and resubmits; manager Approves"
+          expected: ["Rejected shows the reason; resubmit goes Draft->Submitted; Approved"]
+        - step: 4
+          action: "Receive with an actual quantity of 18"
+          expected:
+            - "Status Received; Popcorn +18; one Receive ledger row linked to the plan"
+        - step: 5
+          action: "Receive the same plan again (or from two tabs at once)"
+          expected: ["Second attempt refused (not Approved / concurrency conflict); stock not added twice"]
+        - step: 6
+          action: "Cancel a Draft, Submitted and Approved plan; try to cancel a Received one"
+          expected: ["First three Cancelled; Received refused"]
+
+    - id: PB-INV-06
+      title: "Back-office role scoping"
+      severity: P0
+      steps:
+        - step: 1
+          action: "Login as TheaterStaff of theater A -> Inventory and Storage plans"
+          expected: ["Only theater A items/plans/movements are listed"]
+        - step: 2
+          action: "Call GetInventory / receive / adjust for a theater B item id with the staff token"
+          expected: ["Not found / 403; no data from theater B leaks"]
+        - step: 3
+          action: "Use a staff token with no theater claim"
+          expected: ["403 Forbidden (NOT 401) and the SPA does not log the user out"]
+        - step: 4
+          action: "Login as user@cinema.vn and call any Inventory endpoint"
+          expected: ["403 Forbidden"]
+        - step: 5
+          action: "Login as admin"
+          expected: ["All theaters visible"]
+
+regression_indicators:
+  - id: RI-INV-01
+    description: "Stock changed outside TryApplyStockDeltaAsync -> negative stock / oversell / lost ledger"
+    severity: P0
+    detection: "static SC-INV-01, SC-INV-02, SC-INV-03 OR playbook PB-INV-01 step 3, PB-INV-03 step 3"
+  - id: RI-INV-02
+    description: "Ledger rows edited/deleted or missing -> restock and audit become wrong"
+    severity: P0
+    detection: "static SC-INV-03, SC-INV-04"
+  - id: RI-INV-03
+    description: "Deduction leaves the booking transaction or loses ascending order -> phantom stock loss / deadlocks"
+    severity: P0
+    detection: "static SC-INV-05, SC-INV-06 OR playbook PB-INV-03"
+  - id: RI-INV-04
+    description: "Restock reads the combo recipe, or is not idempotent -> wrong or doubled stock after cancel/refund/expiry"
+    severity: P0
+    detection: "static SC-INV-07, SC-INV-08 OR playbook PB-INV-04"
+  - id: RI-INV-05
+    description: "Receive allowed outside Approved or without the RowVersion guard -> stock added twice"
+    severity: P0
+    detection: "static SC-INV-09, SC-INV-10, SC-INV-11 OR playbook PB-INV-05 step 5"
+  - id: RI-INV-06
+    description: "Staff can approve/reject plans, or see/modify another theater -> privilege escalation / data leak"
+    severity: P0
+    detection: "static SC-INV-12, SC-INV-13, SC-INV-16 OR playbook PB-INV-05 step 2, PB-INV-06"
+  - id: RI-INV-07
+    description: "Scope failure answers 401 -> frontend logs the user out"
+    severity: P0
+    detection: "static SC-INV-14, SC-INV-15 OR playbook PB-INV-06 step 3"
+  - id: RI-INV-08
+    description: "Generic food edit accepts inventory/combo fields -> plain edit overwrites stock or flips combo"
+    severity: P0
+    detection: "static SC-INV-17 OR playbook PB-INV-02 step 3"
+  - id: RI-INV-09
+    description: "Combo tracked or nested -> double-counted / cyclic stock"
+    severity: P0
+    detection: "static SC-INV-18 OR playbook PB-INV-02 step 2"
+
+reporting:
+  output_path: "QA-tests/FLOW-TEST-RESULTS.md"
+  alert_on_p0: true
+  format: "markdown"

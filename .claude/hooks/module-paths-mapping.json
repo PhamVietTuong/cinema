@@ -92,6 +92,48 @@
         "Admin FE routes are behind adminGuard."
       ],
       "coupled_to": ["auth"]
+    },
+    "inventory": {
+      "label": "Inventory, combos & storage plans",
+      "lead": "cinema dev",
+      "paths": [
+        "/managers/inventorymanager",
+        "/managers/combomanager",
+        "/managers/storageplanmanager",
+        "/managers/foodstockrestorer",
+        "/helpers/comboavailability",
+        "/stores/foodanddrinkstore",
+        "/stores/stockmovementstore",
+        "/stores/storageplanstore",
+        "/stores/comboitemstore",
+        "inventoryconfiguration",
+        "claimsprincipalextensions",
+        "rolenames",
+        "/features/modules/inventory/",
+        "food-and-drink.dialog"
+      ],
+      "entities": [
+        "StockMovement.cs",
+        "StoragePlan.cs",
+        "StoragePlanItem.cs",
+        "ComboItem.cs",
+        "FoodAndDrink.cs",
+        "InventoryItemDTO",
+        "StoragePlanDTO"
+      ],
+      "flow_id": "inventory-storage-plan",
+      "top_p0": [
+        "QuantityOnHand changes ONLY via FoodAndDrinkStore.TryApplyStockDeltaAsync (guarded, never below zero), always with a StockMovement ledger row. Never assign QuantityOnHand directly.",
+        "StockMovement is insert-only: no Update/Delete. Corrections are new compensating rows.",
+        "CreateBookingAsync deducts stock inside its transaction, in ascending item-id order; combos expand to tracked components (a combo holds no stock).",
+        "Restock on Cancel/Refund/Expire reads GetNetSaleQuantitiesAsync (ledger), never the combo recipe, and is idempotent.",
+        "StoragePlan Receive only from Approved and guarded by RowVersion (SaveAsync(plan) before stock moves).",
+        "Approve/Reject use RoleNames.StockApprovers (Admin, TheaterManager) - TheaterStaff cannot approve.",
+        "Back-office actions call User.TryGetBackOfficeScope and answer Forbid() (403), NEVER 401 (the SPA logs out on 401); staff stay pinned to their theater.",
+        "CreateFoodAndDrinkRequest/UpdateFoodAndDrinkRequest carry no inventory or combo fields.",
+        "Combos can never be tracked or nested, and stay within one theater."
+      ],
+      "coupled_to": ["booking", "auth", "catalog"]
     }
   },
   "diff_rules": [

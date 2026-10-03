@@ -112,6 +112,51 @@
         "Admin CRUD + soft-delete playbook (PB-MADM-01)",
         "Non-admin blocked playbook (PB-MADM-02)"
       ]
+    },
+    {
+      "id": "FLOW-INV-01",
+      "name": "Inventory, combos & storage plans — stock ledger, deduct/restore, plan lifecycle, theater scoping",
+      "flow_id": "inventory-storage-plan",
+      "layers": ["business", "data", "service", "frontend"],
+      "trigger_keywords": [
+        "TryApplyStockDeltaAsync",
+        "QuantityOnHand",
+        "TrackInventory",
+        "StockMovement",
+        "GetNetSaleQuantitiesAsync",
+        "FoodStockRestorer",
+        "ComboItem",
+        "IsCombo",
+        "StoragePlan",
+        "StockApprovers",
+        "TryGetBackOfficeScope"
+      ],
+      "invariants_at_risk": [
+        "QuantityOnHand changes only via TryApplyStockDeltaAsync, paired with an insert-only StockMovement row",
+        "CreateBookingAsync deducts stock in its transaction, ascending item-id order; combos expand to tracked components",
+        "Restock reads GetNetSaleQuantitiesAsync (ledger), not the combo recipe, and is idempotent",
+        "StoragePlan Receive only from Approved, guarded by RowVersion",
+        "Approve/Reject limited to RoleNames.StockApprovers (Admin, TheaterManager)",
+        "Back-office actions use TryGetBackOfficeScope and return 403 (never 401); staff pinned to their theater",
+        "Food Create/Update requests carry no inventory/combo fields; combos never tracked or nested"
+      ],
+      "regression_symptoms": [
+        "Stock written outside the guarded delta -> negative stock / oversold items / missing audit trail",
+        "Ledger rows edited or deleted -> restock and audit wrong",
+        "Deduction outside the booking transaction or unordered -> phantom stock loss / deadlocks",
+        "Restock from the current recipe or non-idempotent -> wrong or doubled stock after cancel/refund/expiry",
+        "Receive allowed twice -> stock added twice",
+        "Staff can approve plans or read another theater -> privilege escalation / data leak",
+        "Scope failure returns 401 -> frontend logs the user out",
+        "Plain food edit overwrites stock or flips IsCombo"
+      ],
+      "tests_to_run": [
+        "dotnet test Cinema/2-Business/Cinema.Business.Tests",
+        "Booking deduct + combo playbook (PB-INV-03)",
+        "Cancel/refund restock playbook (PB-INV-04)",
+        "Storage plan lifecycle playbook (PB-INV-05)",
+        "Role scoping playbook (PB-INV-06)"
+      ]
     }
   ]
 }

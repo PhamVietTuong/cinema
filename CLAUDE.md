@@ -289,7 +289,7 @@ State these answers in your self-review. "It works" is not sufficient for a read
 
 Two complementary systems live under `QA-tests/` (see `QA-tests/flow-tests/README.md` and `QA-tests/playwright/README.md`):
 
-1. **Flow tests** — `/test-flow <flow-id>` runs static invariant checks + `dotnet build`/`dotnet test` + `ng build` + a manual E2E playbook for a business flow, writing `QA-tests/FLOW-TEST-RESULTS.md` (rolling log) and `QA-tests/reports/<flow>-<date>/REPORT.html`. Real defects → `QA-tests/auto-bugs/BUG-<NNNN>-*.md` (+ optional `patch-suggestions/`). Flows: `booking-seat-lock`, `auth-login`, `movie-admin`.
+1. **Flow tests** — `/test-flow <flow-id>` runs static invariant checks + `dotnet build`/`dotnet test` + `ng build` + a manual E2E playbook for a business flow, writing `QA-tests/FLOW-TEST-RESULTS.md` (rolling log) and `QA-tests/reports/<flow>-<date>/REPORT.html`. Real defects → `QA-tests/auto-bugs/BUG-<NNNN>-*.md` (+ optional `patch-suggestions/`). Flows: `booking-seat-lock`, `auth-login`, `movie-admin`, `inventory-storage-plan`.
 2. **Playwright E2E** — `QA-tests/playwright/` (CinemaUser :4202, CinemaAdmin :4201), `npm test` → HTML report via `npm run report`.
 
 A **PreToolUse hook** (`.claude/hooks/check-business-invariants.js`, wired in `.claude/settings.json`) guards edits in real time against the invariants in `module-paths-mapping.json` + `business-flows.json` (P0 → ask, P1/P2 → soft warning).

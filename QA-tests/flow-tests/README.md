@@ -35,6 +35,7 @@ The test does **not block** your work — it runs in parallel.
 | `booking-seat-lock` | Seat locking (`_lockedSeats` ConcurrentDictionary, 5-min expiry) + booking → Invoice(Pending) → ConfirmPayment(Paid) → Cancel guards | Business + Data + Service + FE booking | ✅ v1.0 |
 | `auth-login` | Login/Register, JWT issuance, role-based `[Authorize]` gating | Business + Service + FE auth | ✅ v1.0 |
 | `movie-admin` | Admin movie/catalog CRUD, Admin-role gating, soft-delete (IsActive=false) | Business + Service + FE admin | ✅ v1.0 |
+| `inventory-storage-plan` | Opt-in food/drink stock + insert-only StockMovement ledger, combos, booking deduct/restore, storage-plan lifecycle (Receive guarded by RowVersion), back-office role/theater scoping | Business + Data + Service + FE admin | ✅ v1.0 |
 
 ## How to invoke
 
