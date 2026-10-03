@@ -175,6 +175,7 @@
     "summary": {
       "subtotal": "Tạm tính ({{count}} ghế)",
       "comboTotal": "Tổng cộng",
+      "minutes": "{{count}} phút",
       "discountSaves": "{{code}} giảm {{amount}}đ",
       "discountInvalid": "Mã này không dùng được cho đơn hàng này.",
       "giftCardNote": "Số dư thẻ sẽ được trừ vào số tiền cần thanh toán.",
@@ -238,6 +239,7 @@
     "success": {
       "title": "Đặt Vé Thành Công!",
       "subtitle": "Cảm ơn bạn đã đặt vé. Vé của bạn đã được xác nhận.",
+      "theaterLabel": "Rạp chiếu",
       "seatsLabel": "Ghế",
       "totalLabel": "Tổng tiền",
       "qrInstruction": "Xuất trình mã QR tại quầy hoặc cổng soát vé",

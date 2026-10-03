@@ -175,6 +175,7 @@
     "summary": {
       "subtotal": "Subtotal ({{count}} seats)",
       "comboTotal": "Total",
+      "minutes": "{{count}} min",
       "discountSaves": "{{code}} saves {{amount}}đ",
       "discountInvalid": "This code is not valid for this order.",
       "giftCardNote": "The card balance is deducted from the amount to pay.",
@@ -238,6 +239,7 @@
     "success": {
       "title": "Booking Successful!",
       "subtitle": "Thank you for your booking. Your ticket has been confirmed.",
+      "theaterLabel": "Theater",
       "seatsLabel": "Seats",
       "totalLabel": "Total",
       "qrInstruction": "Present the QR code at the counter or ticket gate",

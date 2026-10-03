@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel } from 'CinemaLib';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, map, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -64,6 +64,12 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   // Order context for the summary card, loaded after arrival; blank until each lookup answers.
   movieTitle = '';
   ageCode = '';
+  moviePosterUrl = '';
+  movieDuration = 0;
+  movieGenres = '';
+  movieLanguage = '';
+  /** e.g. "IMAX 3D": the room type plus the projection dimension of this showtime. */
+  screeningFormat = '';
   theaterName = '';
   theaterAddress = '';
   roomName = '';
@@ -238,12 +244,17 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       next: st => {
         this.startTime = st.startTime ?? null;
         this.roomName = st.roomName ?? '';
+        this.screeningFormat = screeningFormatLabel(st.roomTypeName, st.projectionForm);
         this._cdr.markForCheck();
         if (st.movieId) {
           this._cinemaService.getMovie(st.movieId).subscribe({
             next: m => {
               this.movieTitle = m.title ?? '';
               this.ageCode = m.ageRestrictionCode ?? '';
+              this.moviePosterUrl = m.posterUrl ?? '';
+              this.movieDuration = m.duration ?? 0;
+              this.movieGenres = (m.genres ?? []).join(', ');
+              this.movieLanguage = [m.language, m.subtitle].filter(x => !!x).join(' · ');
               this._cdr.markForCheck();
             },
             error: () => { /* summary stays without a title */ },
