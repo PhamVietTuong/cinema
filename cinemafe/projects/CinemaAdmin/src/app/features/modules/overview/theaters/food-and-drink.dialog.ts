@@ -1,6 +1,8 @@
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
+import { Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
@@ -19,8 +21,14 @@ export interface FoodAndDrinkDialogData {
   templateUrl: './food-and-drink.dialog.html',
 })
 export class FoodAndDrinkDialog {
-  readonly editingId: string | null;
+  editingId: string | null;
   form: FormGroup;
+
+  /** This theater's non-combo foods, selectable as combo components. */
+  componentOptions: Dto[] = [];
+  /** Tracked items cannot become combos. */
+  readonly isTracked: boolean;
+  comboRowsError = false;
 
   uploading = false;
   uploadError = '';
@@ -41,6 +49,73 @@ export class FoodAndDrinkDialog {
       imageUrl: [_data.foodAndDrink?.imageUrl ?? ''],
       description: [_data.foodAndDrink?.description ?? ''],
       isAvailable: [_data.foodAndDrink?.isAvailable ?? true],
+      isCombo: [{ value: _data.foodAndDrink?.isCombo ?? false, disabled: !!_data.foodAndDrink?.trackInventory }],
+      components: this._fb.array([]),
+    });
+    this.isTracked = !!_data.foodAndDrink?.trackInventory;
+    this._loadComponentOptions();
+    if (_data.foodAndDrink?.isCombo && this.editingId) {
+      this._loadRecipe(this.editingId);
+    }
+  }
+
+  get rows(): FormArray {
+    return this.form.get('components') as FormArray;
+  }
+
+  get isCombo(): boolean {
+    return !!this.form.get('isCombo')?.value;
+  }
+
+  addRow(componentId = '', quantity = 1): void {
+    this.rows.push(this._fb.group({
+      componentId: [componentId, Validators.required],
+      quantity: [quantity, [Validators.required, Validators.min(1), Validators.max(100)]],
+    }));
+    this.comboRowsError = false;
+  }
+
+  removeRow(index: number): void {
+    this.rows.removeAt(index);
+  }
+
+  onComboToggle(): void {
+    if (this.isCombo && this.rows.length === 0) {
+      this.addRow();
+    }
+    this.comboRowsError = false;
+  }
+
+  /** Options for one row: excludes components already chosen in other rows. */
+  optionsFor(index: number): Dto[] {
+    const chosen = new Set<string>();
+    this.rows.controls.forEach((c, i) => {
+      if (i !== index && c.value.componentId) {
+        chosen.add(c.value.componentId);
+      }
+    });
+    return this.componentOptions.filter(o => !chosen.has(o.id!));
+  }
+
+  private _loadComponentOptions(): void {
+    this._svc.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: 0, pageSize: 500, filters: { theaterId: this._data.theaterId },
+    })).subscribe({
+      next: res => {
+        this.componentOptions = (res.results ?? []).filter(f => !f.isCombo && f.id !== this.editingId);
+        this._cdr.markForCheck();
+      },
+      error: error => this._store.dispatch(showException({ error })),
+    });
+  }
+
+  private _loadRecipe(comboId: string): void {
+    this._svc.getComboComponents(comboId).subscribe({
+      next: items => {
+        (items ?? []).forEach(i => this.addRow(i.componentId, i.quantity));
+        this._cdr.markForCheck();
+      },
+      error: error => this._store.dispatch(showException({ error })),
     });
   }
 
@@ -70,13 +145,37 @@ export class FoodAndDrinkDialog {
       this.form.markAllAsTouched();
       return;
     }
-    const v = this.form.value;
-    const obs = this.editingId
-      ? this._svc.updateFoodAndDrink(CinemaServiceAgent.UpdateFoodAndDrinkRequest.fromJS({ ...v, id: this.editingId, theaterId: this._data.theaterId }))
-      : this._svc.createFoodAndDrink(CinemaServiceAgent.CreateFoodAndDrinkRequest.fromJS({ ...v, theaterId: this._data.theaterId }));
+    if (this.isCombo && this.rows.length === 0) {
+      this.comboRowsError = true;
+      return;
+    }
+    const { name, price, imageUrl, description, isAvailable } = this.form.value;
+    const v = { name, price, imageUrl, description, isAvailable };
+    const wasCombo = !!this._data.foodAndDrink?.isCombo;
+    const isCombo = this.isCombo;
 
     this._store.dispatch(showLoading());
-    obs.subscribe({
+    const saved$: Observable<string> = this.editingId
+      ? this._svc.updateFoodAndDrink(CinemaServiceAgent.UpdateFoodAndDrinkRequest.fromJS({ ...v, id: this.editingId, theaterId: this._data.theaterId }))
+        .pipe(map(() => this.editingId as string))
+      : this._svc.createFoodAndDrink(CinemaServiceAgent.CreateFoodAndDrinkRequest.fromJS({ ...v, theaterId: this._data.theaterId }))
+        .pipe(map(created => {
+          // Remember the new id so a retry after a failed composition save updates instead of duplicating.
+          this.editingId = created.id ?? null;
+          return created.id as string;
+        }));
+
+    saved$.pipe(
+      switchMap(id => {
+        if (!isCombo && !wasCombo) {
+          return of(null);
+        }
+        const components = isCombo
+          ? this.rows.controls.map(c => CinemaServiceAgent.ComboComponentItem.fromJS({ componentId: c.value.componentId, quantity: Number(c.value.quantity) }))
+          : [];
+        return this._svc.saveComboComposition(CinemaServiceAgent.SaveComboRequest.fromJS({ comboId: id, isCombo, components }));
+      }),
+    ).subscribe({
       next: () => {
         this._store.dispatch(showSuccess({}));
         this._dialogRef.close(true);

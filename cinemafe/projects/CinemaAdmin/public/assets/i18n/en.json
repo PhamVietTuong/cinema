@@ -724,6 +724,22 @@
     "message": "This account is not an administrator. Please sign in with an admin account.",
     "switchAccount": "Sign in with another account"
   },
+  "combo": {
+    "isCombo": "Combo item",
+    "hint": "A combo is made of other items of this theater; selling it consumes its components.",
+    "trackedHint": "Items with inventory tracking cannot be combos.",
+    "components": "Components",
+    "selectItem": "Select item",
+    "quantity": "Qty",
+    "addRow": "Add component",
+    "removeRow": "Remove",
+    "atLeastOne": "A combo needs at least one component.",
+    "badge": "Combo",
+    "stock": "Stock",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "untracked": "Untracked"
+  },
   "errors": {
     "network": "Cannot reach the server. Please check your network connection.",
     "forbidden": "You do not have permission to perform this action.",
