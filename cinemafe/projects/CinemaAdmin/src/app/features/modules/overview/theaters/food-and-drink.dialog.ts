@@ -99,7 +99,7 @@ export class FoodAndDrinkDialog {
 
   private _loadComponentOptions(): void {
     this._svc.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: 0, pageSize: 500, filters: { theaterId: this._data.theaterId },
+      pageIndex: 1, pageSize: 200, filters: { theaterId: this._data.theaterId },
     })).subscribe({
       next: res => {
         this.componentOptions = (res.results ?? []).filter(f => !f.isCombo && f.id !== this.editingId);

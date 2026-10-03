@@ -450,7 +450,7 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
       return;
     }
     this._cinema.getInventory(CinemaServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: 1, pageSize: 500, filters: { theaterId, trackedOnly: 'true' },
+      pageIndex: 1, pageSize: 200, filters: { theaterId, trackedOnly: 'true' },
     })).subscribe(r => {
       this.inventory = r.results ?? [];
       for (const i of this.inventory) {

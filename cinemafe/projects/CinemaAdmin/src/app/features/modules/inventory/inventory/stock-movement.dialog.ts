@@ -83,8 +83,9 @@ export class StockMovementDialog {
     { value: CinemaServiceAgent.StockMovementType.Adjust, name: 'warehouse.movementType.adjust' },
     { value: CinemaServiceAgent.StockMovementType.Waste, name: 'warehouse.movementType.waste' },
   ];
-  /** OpeningBalance is system-only. */
-  readonly reasons = StockReasonCodeValues.filter(r => r.value !== CinemaServiceAgent.StockReasonCode.OpeningBalance);
+  /** OpeningBalance and StockCountCorrection are system reasons (the count dialog writes the latter). */
+  readonly reasons = StockReasonCodeValues.filter(r => r.value !== CinemaServiceAgent.StockReasonCode.OpeningBalance
+    && r.value !== CinemaServiceAgent.StockReasonCode.StockCountCorrection);
   form: FormGroup;
 
   constructor(

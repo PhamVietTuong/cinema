@@ -82,7 +82,7 @@ type Item = CinemaServiceAgent.InventoryItemDTO;
             (sort)="onSort($any($event))">
 
             <ngx-datatable-column [name]="'common.name' | translate" prop="name" [sortable]="true">
-              <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
+              <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong><div style="color: var(--ad-muted); font-size: 12px" *ngIf="isAdmin">{{ theaterName(row.theaterId) }}</div></ng-template>
             </ngx-datatable-column>
 
             <ngx-datatable-column [name]="'inventory.columns.stock' | translate" prop="quantityOnHand" [sortable]="true" [width]="130" [canAutoResize]="false">
@@ -129,7 +129,7 @@ type Item = CinemaServiceAgent.InventoryItemDTO;
           <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
             <mat-card-content>
               <div class="ad-mobile-card-title">
-                <strong>{{ row.name }}</strong>
+                <strong>{{ row.name }}<small style="color: var(--ad-muted); font-weight: 400" *ngIf="isAdmin"> · {{ theaterName(row.theaterId) }}</small></strong>
                 <span class="ad-pill" [ngClass]="statusClass(row)">{{ statusKey(row) | translate }}</span>
               </div>
               <div class="ad-mobile-card-row"><span>{{ 'inventory.columns.stock' | translate }}</span><span>{{ row.trackInventory ? row.quantityOnHand : '-' }}</span></div>
@@ -184,6 +184,10 @@ export class InventoryListComponent extends BaseTableComponent<Item> implements 
 
   protected override _createSearchForm(): void {
     this.searchForm = this._formBuilder.group({ theaterId: [''], keyword: [''], trackedOnly: [false], lowStock: [false] });
+  }
+
+  theaterName(id?: string): string {
+    return this.theaters.find(t => t.id === id)?.name ?? '';
   }
 
   /** The theater a low-stock plan would be created for: the chosen one (Admin) or the user's own. */

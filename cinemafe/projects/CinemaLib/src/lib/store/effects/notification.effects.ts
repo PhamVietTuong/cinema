@@ -49,13 +49,28 @@ export class NotificationEffects {
         this._matSnackBar.openFromComponent(SnackBarComponent, {
           ...this._commonConfig,
           data: {
-            message: error
-              ? (error.isApiException ? (JSON.parse(error.response).Message || error.response) : error)
-              : 'Đã xảy ra lỗi.',
+            message: this._errorMessage(error),
             className: 'error',
           },
         })
       )
     ), { dispatch: false }
   );
+
+  /** Pulls a readable message out of an NSwag ApiException body ({ error | Message | message }), never raw JSON. */
+  private _errorMessage(error: any): string {
+    const fallback = 'Đã xảy ra lỗi.';
+    if (!error) {
+      return fallback;
+    }
+    if (error.isApiException) {
+      try {
+        const body = JSON.parse(error.response);
+        return body.Message || body.message || body.error || error.response || fallback;
+      } catch {
+        return error.response || error.message || fallback;
+      }
+    }
+    return typeof error === 'string' ? error : (error.message || fallback);
+  }
 }
