@@ -344,6 +344,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
             .subscribe(r => {
               if (seq !== this._loadSeq) { return; }
               this.foods = (r.results ?? []).filter(f => f.isAvailable);
+              this._clampFoodQty();
               this._cdr.markForCheck();
             });
         },
@@ -596,7 +597,38 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this._refreshHoldTimer();
   }
 
+  /** Max orderable quantity for a food/combo: 0 when sold out, the public availability cap when
+   * tracked, or null when unlimited (untracked). */
+  foodCap(f: CinemaServiceAgent.FoodAndDrinkDTO): number | null {
+    if (f.isOutOfStock) {
+      return 0;
+    }
+    if (f.availableQuantity === null || f.availableQuantity === undefined) {
+      return null;
+    }
+    return Math.max(0, f.availableQuantity);
+  }
+
+  canIncFood(f: CinemaServiceAgent.FoodAndDrinkDTO): boolean {
+    const cap = this.foodCap(f);
+    return cap === null || (this.foodQty[f.id!] ?? 0) < cap;
+  }
+
+  /** Clamps every chosen quantity to its (possibly refreshed) cap. */
+  private _clampFoodQty(): void {
+    for (const f of this.foods) {
+      const cap = this.foodCap(f);
+      const qty = this.foodQty[f.id!] ?? 0;
+      if (cap !== null && qty > cap) {
+        this.foodQty[f.id!] = cap;
+      }
+    }
+  }
+
   incFood(f: CinemaServiceAgent.FoodAndDrinkDTO): void {
+    if (!this.canIncFood(f)) {
+      return;
+    }
     this.foodQty[f.id!] = (this.foodQty[f.id!] ?? 0) + 1;
   }
   decFood(f: CinemaServiceAgent.FoodAndDrinkDTO): void {

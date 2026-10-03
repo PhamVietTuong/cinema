@@ -47,6 +47,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   paymentMethod = 'Card';
   loading = false;
   error = '';
+  /** The last createBooking failure was a stock problem — show the localized hint to go back and adjust. */
+  stockProblem = false;
   bookingSuccess = false;
   bookingCode = '';
   qrDataUrl = '';
@@ -354,6 +356,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this.clampPoints();
     this.loading = true;
     this.error = '';
+    this.stockProblem = false;
     const foods = this.foods.map(f => PaymentServiceAgent.BookingFoodItem.fromJS({
       foodAndDrinkId: f.foodAndDrinkId,
       quantity: f.quantity,
@@ -386,8 +389,19 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         }
         this._initiatePayment(invoiceId, code);
       },
-      error: err => { this.error = this._err(err, this._translate.instant('booking.errors.bookingFailed')); this.loading = false; this._cdr.markForCheck(); },
+      error: err => {
+        this.error = this._err(err, this._translate.instant('booking.errors.bookingFailed'));
+        this.stockProblem = BookingCheckoutComponent.isStockError(this.error);
+        this.loading = false;
+        this._cdr.markForCheck();
+      },
     });
+  }
+
+  /** True when a server error message reports an out-of-stock / insufficient-quantity food or combo. */
+  static isStockError(message: string | null | undefined): boolean {
+    const m = (message ?? '').toLowerCase();
+    return m.includes('out of stock') || m.includes('insufficient');
   }
 
   private _providerFor(method: string): string {

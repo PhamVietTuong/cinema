@@ -319,6 +319,12 @@
   flex-direction: row; align-items: flex-start; gap: var(--cx-space-3);
   min-height: 0; padding: 12px;
 }
+.food-card.sold-out { opacity: 0.55; }
+.sold-out-badge {
+  align-self: flex-start; padding: 1px 7px; border-radius: var(--ml-r-sm);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em;
+  background: var(--ml-panel-2); color: var(--ml-muted); border: 1px solid var(--ml-rule);
+}
 .food-media {
   width: 96px; height: 96px; flex: none; overflow: hidden;
   border-radius: var(--ml-r-sm); background: var(--ml-panel-2);

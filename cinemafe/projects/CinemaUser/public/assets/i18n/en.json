@@ -254,7 +254,9 @@
     },
     "errors": {
       "bookingFailed": "Booking failed. Please try again.",
-      "paymentFailed": "Payment could not be started. Please try again."
+      "paymentFailed": "Payment could not be started. Please try again.",
+      "outOfStock": "Some snacks or combos in your order are sold out or no longer available in that quantity. Go back to adjust your order - your seats are still held.",
+      "soldOut": "Sold out"
     }
   },
   "home": {
