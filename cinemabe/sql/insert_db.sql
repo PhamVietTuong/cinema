@@ -29,7 +29,8 @@ DECLARE @UserTypeStaff    uniqueidentifier = NEWID();
 INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES
 (@UserTypeAdmin,    N'Admin',        GETUTCDATE()),
 (@UserTypeCustomer, N'Customer',     GETUTCDATE()),
-(@UserTypeStaff,    N'TheaterStaff', GETUTCDATE());
+(@UserTypeStaff,    N'TheaterStaff', GETUTCDATE()),
+(NEWID(),           N'TheaterManager', GETUTCDATE());
 
 -- ── Membership tiers ─────────────────────────────────────────────────────────
 DECLARE @MemberBronze  uniqueidentifier = NEWID();

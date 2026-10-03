@@ -501,6 +501,8 @@ public class AuthManager : IAuthManager
             userTypeId = customerType.Id;
         }
 
+        var theaterId = await ResolveTheaterIdAsync(userTypeId, request.TheaterId);
+
         CreatePasswordHash(request.Password, out var hash, out var salt);
         var user = new User
         {
@@ -510,7 +512,7 @@ public class AuthManager : IAuthManager
             PasswordHash = hash,
             PasswordSalt = salt,
             UserTypeId   = userTypeId,
-            TheaterId    = request.TheaterId,
+            TheaterId    = theaterId,
             Status       = request.Status,
         };
         await _uow.UserStore.CreateAsync(user);
@@ -524,6 +526,9 @@ public class AuthManager : IAuthManager
         {
             throw new KeyNotFoundException("User not found.");
         }
+        var targetUserTypeId = request.UserTypeId != Guid.Empty ? request.UserTypeId : user.UserTypeId;
+        var theaterId = await ResolveTheaterIdAsync(targetUserTypeId, request.TheaterId);
+
         user.Name   = request.Name;
         user.Phone  = request.Phone;
         user.Status = request.Status;
@@ -531,14 +536,41 @@ public class AuthManager : IAuthManager
         {
             user.Avatar = request.Avatar;
         }
-        if (request.UserTypeId != Guid.Empty)
-        {
-            user.UserTypeId = request.UserTypeId;
-        }
-        user.TheaterId = request.TheaterId;
+        user.UserTypeId = targetUserTypeId;
+        user.TheaterId = theaterId;
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
         return ToUserDTO(await _uow.UserStore.GetByIdAsync(request.Id) ?? user);
+    }
+
+    /// <summary>
+    /// Theater staff and managers must belong to an existing theater; every other role is theater-less.
+    /// </summary>
+    private async Task<Guid?> ResolveTheaterIdAsync(Guid userTypeId, Guid? requestedTheaterId)
+    {
+        var userType = await _uow.UserTypeStore.GetByIdAsync(userTypeId);
+        if (userType == null)
+        {
+            throw new InvalidOperationException("User type not found.");
+        }
+
+        if (userType.Name != RoleNames.TheaterStaff && userType.Name != RoleNames.TheaterManager)
+        {
+            return null;
+        }
+
+        if (requestedTheaterId == null || requestedTheaterId == Guid.Empty)
+        {
+            throw new InvalidOperationException($"A theater is required for the {userType.Name} role.");
+        }
+
+        var theaterId = requestedTheaterId.Value;
+        if (!await _uow.TheaterStore.ExistsAsync(t => t.Id == theaterId))
+        {
+            throw new InvalidOperationException("Theater not found.");
+        }
+
+        return theaterId;
     }
 
     public async Task DeleteUserAsync(Guid id)

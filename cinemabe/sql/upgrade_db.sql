@@ -137,6 +137,15 @@ BEGIN
 END
 
 -- ============================================================
+-- Staff roles: TheaterManager user type
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'TheaterManager')
+BEGIN
+    INSERT INTO [UserType] ([Id], [Name], [CreationTime])
+    VALUES (NEWID(), N'TheaterManager', GETUTCDATE());
+END
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

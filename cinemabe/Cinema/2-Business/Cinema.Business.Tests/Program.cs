@@ -43,6 +43,33 @@ await CreateAccount(services,
     userTypeName: "Customer",
     label:        "User");
 
+// ─── Theater staff accounts (need a theater) ─────────────────────────────────
+var seedTheaterId = await GetFirstTheaterId(services);
+if (seedTheaterId == null)
+{
+    Console.WriteLine("[Staff] No theaters found — skipped staff@cinema.vn and manager@cinema.vn. Seed theaters, then re-run.");
+}
+else
+{
+    await CreateAccount(services,
+        name:         "Theater Staff",
+        email:        "staff@cinema.vn",
+        phone:        "0900000002",
+        password:     "Staff@123",
+        userTypeName: "TheaterStaff",
+        label:        "Staff",
+        theaterId:    seedTheaterId);
+
+    await CreateAccount(services,
+        name:         "Theater Manager",
+        email:        "manager@cinema.vn",
+        phone:        "0900000003",
+        password:     "Manager@123",
+        userTypeName: "TheaterManager",
+        label:        "Manager",
+        theaterId:    seedTheaterId);
+}
+
 Console.WriteLine();
 Console.WriteLine("Done.");
 
@@ -56,7 +83,7 @@ if (!Console.IsInputRedirected)
 static async Task CreateAccount(
     IServiceProvider services,
     string name, string email, string phone, string password,
-    string userTypeName, string label)
+    string userTypeName, string label, Guid? theaterId = null)
 {
     try
     {
@@ -89,6 +116,7 @@ static async Task CreateAccount(
             PasswordHash   = hash,
             PasswordSalt   = salt,
             UserTypeId     = userType.Id,
+            TheaterId      = theaterId,
             EmailConfirmed = true, // seeded accounts are pre-verified
         };
 
@@ -105,6 +133,18 @@ static async Task CreateAccount(
         var inner = ex.InnerException;
         while (inner != null) { Console.WriteLine($"  → {inner.Message}"); inner = inner.InnerException; }
     }
+}
+
+static async Task<Guid?> GetFirstTheaterId(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<CinemaContext>();
+    return await db.Theater
+        .AsNoTracking()
+        .OrderBy(t => t.Name)
+        .ThenBy(t => t.Id)
+        .Select(t => (Guid?)t.Id)
+        .FirstOrDefaultAsync();
 }
 
 static void CreatePasswordHash(string password, out byte[] hash, out byte[] salt)
