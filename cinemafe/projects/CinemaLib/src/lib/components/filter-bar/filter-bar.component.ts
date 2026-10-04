@@ -17,13 +17,15 @@ export interface FilterBarOption {
 /** One control of the filter bar, bound to the form control named `key`. */
 export interface FilterBarField {
   key: string;
-  type: 'text' | 'select' | 'toggle' | 'date';
+  type: 'text' | 'select' | 'multiselect' | 'toggle' | 'date';
   /** i18n key of the control label. */
   labelKey: string;
   /** `select` only: the choices. */
   options?: readonly FilterBarOption[];
   /** `select` only: i18n key of the empty "no filter" option (default `common.all`). */
   allLabelKey?: string;
+  /** `select` only: false removes the empty "no filter" option, so a choice is always made. Default true. */
+  allowEmpty?: boolean;
 }
 
 /**
@@ -60,7 +62,19 @@ export interface FilterBarField {
                 <mat-form-field appearance="outline">
                   <mat-label>{{ field.labelKey | translate }}</mat-label>
                   <mat-select [formControlName]="field.key" (selectionChange)="filtersChange.emit()">
-                    <mat-option value="">{{ (field.allLabelKey ?? 'common.all') | translate }}</mat-option>
+                    @if (field.allowEmpty !== false) {
+                      <mat-option value="">{{ (field.allLabelKey ?? 'common.all') | translate }}</mat-option>
+                    }
+                    @for (option of field.options ?? []; track option.value) {
+                      <mat-option [value]="option.value">{{ option.labelKey ? (option.labelKey | translate) : option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+              @case ('multiselect') {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ field.labelKey | translate }}</mat-label>
+                  <mat-select multiple [formControlName]="field.key" (selectionChange)="filtersChange.emit()">
                     @for (option of field.options ?? []; track option.value) {
                       <mat-option [value]="option.value">{{ option.labelKey ? (option.labelKey | translate) : option.label }}</mat-option>
                     }

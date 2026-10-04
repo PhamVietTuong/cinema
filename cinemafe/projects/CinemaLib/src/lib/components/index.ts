@@ -6,3 +6,4 @@ export * from './auth';
 export * from './status-pill';
 export * from './empty-state';
 export * from './filter-bar';
+export * from './bar-chart';

@@ -5,3 +5,4 @@ export { StaffServiceAgent } from './staff-http.service';
 export * from './booking-hub.service';
 export * from './toast.service';
 export * from './api-error';
+export * from './staff-hub.service';

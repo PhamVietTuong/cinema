@@ -1,4 +1,5 @@
-import { BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES } from 'CinemaLib';
+import { BACK_OFFICE_ROLES, CONCESSION_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES } from 'CinemaLib';
+import { LOW_STOCK_BADGE } from './core/staff-live.service';
 
 /**
  * CinemaStaff sidebar. Each item may carry `roles` (omitted = every staff role); the shared
@@ -14,6 +15,18 @@ export const STAFF_MENU: NavSection[] = [
     titleKey: 'gate.section',
     items: [
       { icon: 'qr_code_scanner', labelKey: 'gate.nav.gate', route: '/gate', titleKey: 'gate.pageTitle', roles: GATE_KEEPER_ROLES },
+    ],
+  },
+  {
+    titleKey: 'kitchen.section',
+    items: [
+      { icon: 'restaurant', labelKey: 'kitchen.nav.kitchen', route: '/kitchen', titleKey: 'kitchen.pageTitle', roles: CONCESSION_ROLES, badge: LOW_STOCK_BADGE },
+    ],
+  },
+  {
+    titleKey: 'salesReports.section',
+    items: [
+      { icon: 'insights', labelKey: 'salesReports.nav.reports', route: '/reports', titleKey: 'salesReports.pageTitle', roles: REPORTING_ROLES },
     ],
   },
   {
