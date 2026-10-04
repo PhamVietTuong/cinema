@@ -42,6 +42,9 @@ export class LoginFormComponent {
   readonly icon = input<string>('admin_panel_settings');
   /** i18n key of an extra notice shown above the submit button (e.g. "this account may not use this app"). */
   readonly noticeKey = input<string | null>(null);
+  /** Optional link shown after the notice (i18n key of its text and its URL), e.g. "Open Staff app". */
+  readonly noticeLinkKey = input<string | null>(null);
+  readonly noticeLinkUrl = input<string | null>(null);
   /** When set, a successful sign-in with any other role emits `rejected` with that role. */
   readonly allowedRoles = input<readonly string[] | null>(null);
   readonly rejected = output<string>();

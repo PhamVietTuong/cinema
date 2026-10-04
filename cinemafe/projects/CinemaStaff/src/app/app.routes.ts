@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard, homeRedirectByRole, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
+import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
 
 /**
  * Where each role lands from '/'. Everyone goes to /home until the role-specific pages
@@ -37,6 +37,13 @@ export const routes: Routes = [
       {
         path: 'home',
         loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent)
+      },
+      // Warehouse (inventory + storage plans): back-office roles. One pass-through entry loads WarehouseModule,
+      // whose own routes match /inventory, /storage-plans and /storage-plans/:id.
+      {
+        path: '',
+        canActivate: [roleGuard(BACK_OFFICE_ROLES)],
+        loadChildren: () => import('./features/warehouse/warehouse.module').then(m => m.WarehouseModule)
       }
     ]
   },

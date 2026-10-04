@@ -72,6 +72,9 @@
         @if (noticeKey()) {
           <div class="login-error login-notice" role="alert">
             <mat-icon>error_outline</mat-icon> {{ noticeKey()! | translate }}
+            @if (noticeLinkKey() && noticeLinkUrl()) {
+              <a class="login-notice-link" [href]="noticeLinkUrl()">{{ noticeLinkKey()! | translate }}</a>
+            }
           </div>
         }
 

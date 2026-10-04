@@ -119,3 +119,51 @@ export function invoiceStatusPillClass(s?: CinemaServiceAgent.InvoiceStatus): st
     default: return 'ad-pill--danger';
   }
 }
+
+/** Derived stock health of an inventory row, driving its pill. */
+export type StockLevel = 'untracked' | 'outOfStock' | 'low' | 'ok';
+
+/** Resolves an inventory row (InventoryItemDTO) to its stock level. */
+export function stockLevelOf(row: { trackInventory?: boolean; isOutOfStock?: boolean; isLowStock?: boolean }): StockLevel {
+  if (!row.trackInventory) {
+    return 'untracked';
+  }
+  if (row.isOutOfStock) {
+    return 'outOfStock';
+  }
+  if (row.isLowStock) {
+    return 'low';
+  }
+  return 'ok';
+}
+
+/** i18n label and pill class for each StockLevel. */
+export const StockLevelPills: Record<StockLevel, { labelKey: string; cssClass: string }> = {
+  untracked: { labelKey: 'inventory.status.untracked', cssClass: 'ad-pill--neutral' },
+  outOfStock: { labelKey: 'inventory.status.outOfStock', cssClass: 'ad-pill--danger' },
+  low: { labelKey: 'inventory.status.low', cssClass: 'ad-pill--warn' },
+  ok: { labelKey: 'inventory.status.ok', cssClass: 'ad-pill--success' },
+};
+
+/** What `cl-status-pill` can render; each kind maps its `value` to a label key and pill class in this file. */
+export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel';
+
+/** Label (i18n key) and CSS class a `cl-status-pill` shows for a kind/value pair. */
+export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey: string; cssClass: string } {
+  switch (kind) {
+    case 'invoice': {
+      const status = value as CinemaServiceAgent.InvoiceStatus;
+      return {
+        labelKey: InvoiceStatusValues.find(v => v.value === status)?.name ?? InvoiceStatusValues[0].name,
+        cssClass: invoiceStatusPillClass(status),
+      };
+    }
+    case 'storagePlan': {
+      const status = value as CinemaServiceAgent.StoragePlanStatus;
+      return { labelKey: storagePlanStatusLabel(status), cssClass: storagePlanStatusPillClass(status) };
+    }
+    case 'stockLevel': {
+      return StockLevelPills[(value as StockLevel) ?? 'untracked'] ?? StockLevelPills.untracked;
+    }
+  }
+}

@@ -114,7 +114,8 @@
     "statTickets": "3.4K Vé bán",
     "title": "Đăng Nhập Quản Trị",
     "subtitle": "Vui lòng đăng nhập bằng tài khoản quản trị viên.",
-    "footer": "© 2026 Cinema. Hệ thống quản trị nội bộ."
+    "footer": "© 2026 Cinema. Hệ thống quản trị nội bộ.",
+    "notAdminAccount": "Tài khoản này không dùng được ứng dụng Quản trị. Tài khoản nhân viên đăng nhập ở ứng dụng Nhân viên."
   },
   "dashboard": {
     "title": "Tổng Quan Hệ Thống",
@@ -710,7 +711,8 @@
   "forbidden": {
     "title": "Không có quyền truy cập",
     "message": "Tài khoản này không phải quản trị viên. Vui lòng đăng nhập bằng tài khoản quản trị.",
-    "switchAccount": "Đăng nhập tài khoản khác"
+    "switchAccount": "Đăng nhập tài khoản khác",
+    "openStaffApp": "Mở ứng dụng Nhân viên"
   },
   "combo": {
     "isCombo": "Món combo",
@@ -741,193 +743,7 @@
     "server": "Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau."
   },
   "warehouse": {
-    "nav": {
-      "inventory": "Tồn kho",
-      "storagePlans": "Kế hoạch nhập kho"
-    },
-    "section": "Kho",
-    "pageTitle": {
-      "inventory": "Tồn kho",
-      "storagePlans": "Kế hoạch nhập kho"
-    },
     "userTheater": "Rạp",
-    "userTheaterSelect": "Chọn rạp",
-    "movementType": {
-      "receive": "Nhập kho",
-      "sale": "Bán hàng",
-      "saleReversal": "Hoàn bán hàng",
-      "adjust": "Điều chỉnh",
-      "waste": "Hao hụt"
-    },
-    "reason": {
-      "other": "Khác",
-      "expired": "Hết hạn",
-      "damaged": "Hư hỏng",
-      "spilled": "Đổ vỡ",
-      "theftOrLoss": "Mất mát",
-      "stockCountCorrection": "Điều chỉnh kiểm kê",
-      "openingBalance": "Tồn đầu kỳ"
-    },
-    "planStatus": {
-      "draft": "Nháp",
-      "submitted": "Đã gửi",
-      "approved": "Đã duyệt",
-      "rejected": "Từ chối",
-      "received": "Đã nhập kho",
-      "cancelled": "Đã hủy"
-    }
-  },
-  "inventory": {
-    "title": "Tồn kho",
-    "subtitle": "Mức tồn kho của đồ ăn thức uống được theo dõi theo từng rạp.",
-    "createPlan": "Tạo kế hoạch từ hàng sắp hết",
-    "empty": "Không có mặt hàng nào.",
-    "filters": {
-      "theater": "Rạp",
-      "allTheaters": "Tất cả rạp",
-      "keyword": "Tìm theo tên",
-      "trackedOnly": "Chỉ hàng đang theo dõi",
-      "lowStockOnly": "Chỉ hàng sắp hết"
-    },
-    "columns": {
-      "stock": "Tồn kho",
-      "threshold": "Ngưỡng sắp hết",
-      "target": "Mức tồn mục tiêu"
-    },
-    "status": {
-      "untracked": "Không theo dõi",
-      "ok": "Còn hàng",
-      "low": "Sắp hết",
-      "outOfStock": "Hết hàng"
-    },
-    "actions": {
-      "movement": "Điều chỉnh / hao hụt",
-      "count": "Kiểm kê",
-      "history": "Lịch sử",
-      "settings": "Cài đặt tồn kho"
-    },
-    "settings": {
-      "title": "Cài đặt tồn kho",
-      "track": "Theo dõi tồn kho",
-      "trackHint": "Khi bật theo dõi, mỗi lần bán sẽ trừ tồn kho và mặt hàng không thể bán khi đã hết.",
-      "threshold": "Ngưỡng sắp hết",
-      "thresholdHint": "Mặt hàng được đánh dấu sắp hết khi số lượng bằng hoặc thấp hơn ngưỡng này.",
-      "target": "Mức tồn mục tiêu",
-      "targetHint": "Kế hoạch nhập hàng sẽ đề xuất bổ sung mặt hàng đến số lượng này.",
-      "opening": "Số lượng ban đầu",
-      "openingHint": "Số lượng hiện có trong kho. Bắt buộc khi bật theo dõi."
-    },
-    "movement": {
-      "title": "Điều chỉnh / hao hụt",
-      "onHand": "Tồn kho hiện tại",
-      "type": "Loại",
-      "quantity": "Số lượng",
-      "adjustHint": "Điều chỉnh: nhập số thay đổi có dấu, ví dụ 5 để tăng hoặc -3 để giảm.",
-      "wasteHint": "Hao hụt: nhập số lượng dương, không được vượt quá tồn kho hiện có.",
-      "reason": "Lý do",
-      "note": "Ghi chú"
-    },
-    "count": {
-      "title": "Kiểm kê",
-      "current": "Số lượng trên hệ thống",
-      "counted": "Số lượng kiểm đếm",
-      "difference": "Chênh lệch"
-    },
-    "history": {
-      "title": "Lịch sử tồn kho",
-      "date": "Ngày",
-      "type": "Loại",
-      "quantity": "Số lượng",
-      "reason": "Lý do",
-      "reference": "Hóa đơn / kế hoạch",
-      "user": "Người thực hiện",
-      "empty": "Chưa có biến động tồn kho."
-    },
-    "errors": {
-      "range": "Nhập số nguyên từ 0 đến 100000.",
-      "openingRequired": "Vui lòng nhập số lượng ban đầu.",
-      "nonZero": "Nhập số nguyên khác 0.",
-      "positive": "Số lượng hao hụt phải là số dương.",
-      "exceedsOnHand": "Không được vượt quá tồn kho hiện có.",
-      "noteRequired": "Cần ghi chú khi lý do là Khác."
-    },
-    "toast": {
-      "settingsSaved": "Đã lưu cài đặt tồn kho.",
-      "movementSaved": "Đã ghi nhận biến động tồn kho.",
-      "countSaved": "Đã ghi nhận kiểm kê.",
-      "planCreated": "Đã tạo kế hoạch nhập hàng."
-    }
-  },
-  "storagePlans": {
-    "list": {
-      "title": "Kế hoạch nhập kho",
-      "subtitle": "Lập kế hoạch, duyệt và nhập hàng cho rạp.",
-      "newPlan": "Tạo kế hoạch",
-      "code": "Mã kế hoạch",
-      "theater": "Rạp",
-      "targetDate": "Ngày dự kiến",
-      "supplier": "Nhà cung cấp",
-      "itemCount": "Số mặt hàng",
-      "totalQuantity": "Tổng SL",
-      "createdBy": "Người tạo",
-      "empty": "Không có kế hoạch nhập kho nào."
-    },
-    "detail": {
-      "back": "Quay lại danh sách",
-      "newTitle": "Kế hoạch nhập kho mới",
-      "subtitle": "Chỉ chỉnh sửa được khi kế hoạch ở trạng thái nháp hoặc bị từ chối.",
-      "infoTitle": "Thông tin kế hoạch",
-      "selectTheater": "Chọn rạp",
-      "note": "Ghi chú",
-      "submittedAt": "Gửi duyệt lúc",
-      "approvedBy": "Người duyệt",
-      "rejectedBy": "Người từ chối",
-      "receivedBy": "Người nhập kho",
-      "rejectedBanner": "Kế hoạch này đã bị từ chối",
-      "rejectedHint": "Hãy chỉnh sửa và lưu để chuyển về nháp, sau đó gửi duyệt lại.",
-      "itemsTitle": "Mặt hàng",
-      "addProduct": "Thêm sản phẩm...",
-      "addLowStock": "Thêm tất cả hàng sắp hết",
-      "product": "Sản phẩm",
-      "onHand": "Tồn kho",
-      "planned": "SL dự kiến",
-      "received": "SL đã nhận",
-      "unitCost": "Đơn giá nhập",
-      "itemNote": "Ghi chú",
-      "targetLevel": "Mức tồn mục tiêu",
-      "suggested": "Gợi ý nhập",
-      "useSuggested": "Dùng",
-      "noItems": "Chưa có mặt hàng. Hãy thêm ít nhất một sản phẩm."
-    },
-    "actions": {
-      "saveDraft": "Lưu nháp",
-      "submit": "Gửi duyệt",
-      "approve": "Duyệt",
-      "reject": "Từ chối",
-      "receive": "Nhập kho",
-      "cancel": "Hủy kế hoạch"
-    },
-    "confirm": {
-      "cancel": "Bạn có chắc muốn hủy kế hoạch nhập kho này?"
-    },
-    "reject": {
-      "title": "Từ chối kế hoạch",
-      "reason": "Lý do",
-      "reasonPlaceholder": "Vì sao kế hoạch bị từ chối?"
-    },
-    "receive": {
-      "title": "Nhập kho",
-      "hint": "Nhập số lượng thực nhận của từng mặt hàng. Tồn kho sẽ được cộng theo các số này.",
-      "planned": "Dự kiến",
-      "actual": "Thực nhận"
-    },
-    "errors": {
-      "datePast": "Ngày dự kiến không được ở quá khứ.",
-      "plannedRange": "Số lượng phải là số nguyên từ 1 đến 100000.",
-      "costNegative": "Đơn giá không được âm.",
-      "receivedRange": "Phải là số nguyên từ 0 đến 100000.",
-      "invalidForm": "Vui lòng sửa các trường chưa hợp lệ.",
-      "noItems": "Hãy thêm ít nhất một mặt hàng vào kế hoạch."
-    }
+    "userTheaterSelect": "Chọn rạp"
   }
 }

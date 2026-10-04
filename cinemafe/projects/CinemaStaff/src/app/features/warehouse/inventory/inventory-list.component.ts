@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, effect, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -10,9 +10,11 @@ import { TranslateService } from '@ngx-translate/core';
 import {
   CinemaServiceAgent, SharedModule,
   BaseTableComponent, TablePage, TableSearchCriteria,
-  selectIsAdmin, selectIsStockApprover, selectUserTheaterId,
+  EmptyStateComponent, FilterBarComponent, FilterBarField, StatusPillComponent, stockLevelOf,
+  selectIsStockApprover,
   showLoading, hideLoading, showSuccess, showException,
 } from 'CinemaLib';
+import { TheaterContextService } from '../../../core/theater-context.service';
 import { StockSettingsDialog } from './stock-settings.dialog';
 import { StockMovementDialog } from './stock-movement.dialog';
 import { StockCountDialog } from './stock-count.dialog';
@@ -20,11 +22,11 @@ import { StockHistoryDialog } from './stock-history.dialog';
 
 type Item = CinemaServiceAgent.InventoryItemDTO;
 
-/** Warehouse inventory: tracked stock per theater with settings, manual movements, stock count and history. */
+/** Warehouse inventory: tracked stock of the current theater with settings, manual movements, stock count and history. */
 @Component({
-  selector: 'app-inventory-list',
+  selector: 'staff-inventory-list',
   standalone: true,
-  imports: [SharedModule, NgxDatatableModule],
+  imports: [SharedModule, NgxDatatableModule, StatusPillComponent, EmptyStateComponent, FilterBarComponent],
   template: `
     <div class="ad-page">
       <div class="ad-page-header">
@@ -33,36 +35,19 @@ type Item = CinemaServiceAgent.InventoryItemDTO;
           <p class="ad-sub">{{ 'inventory.subtitle' | translate }}</p>
         </div>
         <div class="ad-toolbar">
-          <button mat-raised-button color="primary" *ngIf="planTheaterId" (click)="createPlan()">
+          <button mat-raised-button color="primary" *ngIf="theaterId" (click)="createPlan()">
             <mat-icon>playlist_add</mat-icon> {{ 'inventory.createPlan' | translate }}
           </button>
         </div>
       </div>
 
-      <mat-card class="ad-filter-card">
-        <mat-card-content>
-          <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
-          <form [formGroup]="searchForm" class="ad-filter-grid">
-            <mat-form-field appearance="outline" *ngIf="isAdmin">
-              <mat-label>{{ 'inventory.filters.theater' | translate }}</mat-label>
-              <mat-select formControlName="theaterId" (selectionChange)="onFilterChange()">
-                <mat-option value="">{{ 'inventory.filters.allTheaters' | translate }}</mat-option>
-                <mat-option *ngFor="let t of theaters" [value]="t.id">{{ t.name }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'inventory.filters.keyword' | translate }}</mat-label>
-              <input matInput formControlName="keyword" (input)="onFilterChange()">
-            </mat-form-field>
-            <div class="inv-toggles">
-              <mat-slide-toggle formControlName="trackedOnly" (change)="onFilterChange()">{{ 'inventory.filters.trackedOnly' | translate }}</mat-slide-toggle>
-              <mat-slide-toggle formControlName="lowStock" (change)="onFilterChange()">{{ 'inventory.filters.lowStockOnly' | translate }}</mat-slide-toggle>
-            </div>
-          </form>
-        </mat-card-content>
+      <cl-filter-bar [form]="searchForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
+
+      <mat-card class="ad-card--pad-0" *ngIf="!theaterId">
+        <cl-empty-state icon="theaters" messageKey="warehouse.pickTheater" hintKey="warehouse.pickTheaterHint" />
       </mat-card>
 
-      <mat-card class="ad-card--pad-0">
+      <mat-card class="ad-card--pad-0" *ngIf="theaterId">
         <div class="ad-table-wrap ad-desktop-only">
           <ngx-datatable
             class="material ad-datatable"
@@ -82,7 +67,7 @@ type Item = CinemaServiceAgent.InventoryItemDTO;
             (sort)="onSort($any($event))">
 
             <ngx-datatable-column [name]="'common.name' | translate" prop="name" [sortable]="true">
-              <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong><div style="color: var(--ad-muted); font-size: 12px" *ngIf="isAdmin">{{ theaterName(row.theaterId) }}</div></ng-template>
+              <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
             </ngx-datatable-column>
 
             <ngx-datatable-column [name]="'inventory.columns.stock' | translate" prop="quantityOnHand" [sortable]="true" [width]="130" [canAutoResize]="false">
@@ -99,7 +84,7 @@ type Item = CinemaServiceAgent.InventoryItemDTO;
 
             <ngx-datatable-column [name]="'common.status' | translate" prop="status" [sortable]="false" [width]="150" [canAutoResize]="false">
               <ng-template let-row="row" ngx-datatable-cell-template>
-                <span class="ad-pill" [ngClass]="statusClass(row)">{{ statusKey(row) | translate }}</span>
+                <cl-status-pill kind="stockLevel" [value]="stockLevel(row)" />
               </ng-template>
             </ngx-datatable-column>
 
@@ -129,8 +114,8 @@ type Item = CinemaServiceAgent.InventoryItemDTO;
           <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
             <mat-card-content>
               <div class="ad-mobile-card-title">
-                <strong>{{ row.name }}<small style="color: var(--ad-muted); font-weight: 400" *ngIf="isAdmin"> · {{ theaterName(row.theaterId) }}</small></strong>
-                <span class="ad-pill" [ngClass]="statusClass(row)">{{ statusKey(row) | translate }}</span>
+                <strong>{{ row.name }}</strong>
+                <cl-status-pill kind="stockLevel" [value]="stockLevel(row)" />
               </div>
               <div class="ad-mobile-card-row"><span>{{ 'inventory.columns.stock' | translate }}</span><span>{{ row.trackInventory ? row.quantityOnHand : '-' }}</span></div>
               <div class="ad-mobile-card-row"><span>{{ 'inventory.columns.threshold' | translate }}</span><span>{{ row.trackInventory ? row.lowStockThreshold : '-' }}</span></div>
@@ -145,7 +130,7 @@ type Item = CinemaServiceAgent.InventoryItemDTO;
               </div>
             </mat-card-content>
           </mat-card>
-          <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>inventory_2</mat-icon><p>{{ 'inventory.empty' | translate }}</p></div>
+          <cl-empty-state *ngIf="!pageRows.length" messageKey="inventory.empty" />
 
           <mat-paginator
             *ngIf="total > 0"
@@ -159,15 +144,20 @@ type Item = CinemaServiceAgent.InventoryItemDTO;
       </mat-card>
     </div>
   `,
-  styles: [`
-    .inv-toggles { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; padding-bottom: 8px; }
-  `],
 })
 export class InventoryListComponent extends BaseTableComponent<Item> implements OnInit {
-  isAdmin = false;
   isApprover = false;
-  userTheaterId: string | null = null;
-  theaters: CinemaServiceAgent.TheaterDTO[] = [];
+
+  /** Filter controls rendered by the shared filter bar. */
+  readonly filterFields: FilterBarField[] = [
+    { key: 'keyword', type: 'text', labelKey: 'inventory.filters.keyword' },
+    { key: 'trackedOnly', type: 'toggle', labelKey: 'inventory.filters.trackedOnly' },
+    { key: 'lowStock', type: 'toggle', labelKey: 'inventory.filters.lowStockOnly' },
+  ];
+
+  private readonly _theaterContext = inject(TheaterContextService);
+  /** Theater seen by the previous effect run; undefined until the first run, so the initial load isn't doubled. */
+  private _seenTheaterId: string | null | undefined = undefined;
 
   constructor(
     cd: ChangeDetectorRef,
@@ -179,43 +169,35 @@ export class InventoryListComponent extends BaseTableComponent<Item> implements 
     private _translate: TranslateService,
   ) {
     super(cd, fb, router, store);
-    this.defaultSearchFormValue = { theaterId: '', keyword: '', trackedOnly: false, lowStock: false };
+    this.defaultSearchFormValue = { keyword: '', trackedOnly: false, lowStock: false };
+
+    // Reload when an Admin switches the topbar theater.
+    effect(() => {
+      const theaterId = this._theaterContext.currentTheaterId();
+      if (this._seenTheaterId !== undefined && this._seenTheaterId !== theaterId) {
+        this.pageOffset = 0;
+        this.triggerSearch();
+      }
+      this._seenTheaterId = theaterId;
+    });
   }
 
   protected override _createSearchForm(): void {
-    this.searchForm = this._formBuilder.group({ theaterId: [''], keyword: [''], trackedOnly: [false], lowStock: [false] });
+    this.searchForm = this._formBuilder.group({ keyword: [''], trackedOnly: [false], lowStock: [false] });
   }
 
-  theaterName(id?: string): string {
-    return this.theaters.find(t => t.id === id)?.name ?? '';
-  }
-
-  /** The theater a low-stock plan would be created for: the chosen one (Admin) or the user's own. */
-  get planTheaterId(): string {
-    if (this.isAdmin) {
-      return String(this.searchForm.get('theaterId')?.value ?? '');
-    }
-    return this.userTheaterId ?? '';
+  /** Theater the page is scoped to; empty while an Admin has not picked one. */
+  get theaterId(): string {
+    return this._theaterContext.currentTheaterId() ?? '';
   }
 
   override ngOnInit(): void {
-    this._store.select(selectIsAdmin).subscribe(v => { this.isAdmin = !!v; this._cd.markForCheck(); });
     this._store.select(selectIsStockApprover).subscribe(v => { this.isApprover = !!v; this._cd.markForCheck(); });
-    this._store.select(selectUserTheaterId).subscribe(v => { this.userTheaterId = v ?? null; this._cd.markForCheck(); });
-    if (this.isAdmin) {
-      this._loadTheaters();
-    }
     super.ngOnInit();
   }
 
-  private _loadTheaters(): void {
-    this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: {} })).subscribe({
-      next: r => {
-        this.theaters = r.results ?? [];
-        this._cd.markForCheck();
-      },
-      error: error => this._store.dispatch(showException({ error })),
-    });
+  protected override _extraFilters(): Record<string, unknown> {
+    return { theaterId: this.theaterId };
   }
 
   /** Switch-off toggles are not sent: the API reads "false" as a real filter value. */
@@ -230,6 +212,9 @@ export class InventoryListComponent extends BaseTableComponent<Item> implements 
   }
 
   protected _search(criteria: TableSearchCriteria): Observable<TablePage<Item>> {
+    if (!this.theaterId) {
+      return of({ results: [], totalCount: 0 });
+    }
     return this._svc.getInventory(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: criteria.pageIndex,
       pageSize: criteria.pageSize,
@@ -238,30 +223,8 @@ export class InventoryListComponent extends BaseTableComponent<Item> implements 
     })).pipe(map(r => ({ results: r.results ?? [], totalCount: r.totalCount })));
   }
 
-  statusKey(row: Item): string {
-    if (!row.trackInventory) {
-      return 'inventory.status.untracked';
-    }
-    if (row.isOutOfStock) {
-      return 'inventory.status.outOfStock';
-    }
-    if (row.isLowStock) {
-      return 'inventory.status.low';
-    }
-    return 'inventory.status.ok';
-  }
-
-  statusClass(row: Item): string {
-    if (!row.trackInventory) {
-      return 'ad-pill--neutral';
-    }
-    if (row.isOutOfStock) {
-      return 'ad-pill--danger';
-    }
-    if (row.isLowStock) {
-      return 'ad-pill--warn';
-    }
-    return 'ad-pill--success';
+  stockLevel(row: Item): string {
+    return stockLevelOf(row);
   }
 
   openSettings(row: Item): void {
@@ -290,7 +253,7 @@ export class InventoryListComponent extends BaseTableComponent<Item> implements 
   }
 
   createPlan(): void {
-    const theaterId = this.planTheaterId;
+    const theaterId = this.theaterId;
     if (!theaterId) {
       return;
     }

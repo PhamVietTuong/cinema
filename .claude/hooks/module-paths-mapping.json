@@ -112,6 +112,7 @@
         "claimsprincipalextensions",
         "rolenames",
         "/features/modules/inventory/",
+        "/cinemastaff/src/app/features/warehouse/",
         "food-and-drink.dialog"
       ],
       "entities": [

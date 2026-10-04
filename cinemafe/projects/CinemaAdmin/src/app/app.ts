@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { ShellBrand, ShellUserFallback, selectCurrentUser, selectIsAdmin, selectIsBackOffice, loadUserFromStorage, logout } from 'CinemaLib';
+import { ShellBrand, ShellUserFallback, selectCurrentUser, selectIsAdmin,loadUserFromStorage, logout } from 'CinemaLib';
 import { ADMIN_MENU } from './admin-menu';
 
 @Component({
@@ -11,10 +11,8 @@ import { ADMIN_MENU } from './admin-menu';
   styleUrl: './app.scss',
 })
 export class App implements OnInit {
-  /** Drives the admin chrome. Gated on being back office, not merely signed in, so a customer
-   *  who lands on /forbidden isn't shown a sidebar full of pages they can't open. */
-  isBackOffice$: Observable<boolean>;
-  /** Admin-only nav links. */
+  /** Drives the admin chrome. Gated on being an Admin, not merely signed in, so a staff member
+   *  or customer who lands on /forbidden isn't shown a sidebar full of pages they can't open. */
   isAdmin$: Observable<boolean>;
   user$: Observable<any>;
 
@@ -24,7 +22,6 @@ export class App implements OnInit {
 
   constructor(private _store: Store) {
     this.isAdmin$ = this._store.select(selectIsAdmin);
-    this.isBackOffice$ = this._store.select(selectIsBackOffice);
     this.user$ = this._store.select(selectCurrentUser);
   }
 
