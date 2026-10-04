@@ -24,6 +24,9 @@ builder.Services.AddData(builder.Configuration);
 // Real-time seat-map broadcasts (SignalR) replace AddBusiness's no-op sender.
 builder.Services.AddSingleton<Cinema.Business.Contracts.ISeatNotificationService, Cinema.Service.WebApiHost.Hubs.SignalRSeatNotificationService>();
 
+// Real-time staff-app events (kitchen queue, low stock, incidents) replace AddBusiness's no-op sender.
+builder.Services.AddSingleton<Cinema.Business.Contracts.IStaffNotificationService, Cinema.Service.WebApiHost.Hubs.SignalRStaffNotificationService>();
+
 // Real email delivery when SMTP is configured; otherwise AddBusiness's dev-log sender stays.
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Smtp:Host"]))
 {
@@ -214,6 +217,7 @@ app.UseAuthorization();
 app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllers();
 app.MapHub<BookingHub>("/hubs/booking");
+app.MapHub<StaffHub>("/hubs/staff");
 app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {

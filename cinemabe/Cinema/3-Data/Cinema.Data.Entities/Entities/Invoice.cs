@@ -28,6 +28,10 @@ public class Invoice : BaseEntity
     /// <summary>Staff member who rang up a counter sale.</summary>
     public Guid? SoldByUserId { get; set; }
     public Guid? CashDrawerSessionId { get; set; }
+    /// <summary>Pickup state of the food lines. None when the invoice has no food.</summary>
+    public FoodOrderStatus FoodStatus { get; set; } = FoodOrderStatus.None;
+    public DateTime? FoodHandedOverAt { get; set; }
+    public Guid? FoodHandedOverByUserId { get; set; }
     public User? User { get; set; }
     public Discount? Discount { get; set; }
     public ICollection<InvoiceTicket> InvoiceTickets { get; set; } = new List<InvoiceTicket>();

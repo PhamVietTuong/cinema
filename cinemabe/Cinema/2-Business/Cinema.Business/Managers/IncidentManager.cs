@@ -6,9 +6,11 @@ using Cinema.Business.DTO.Requests;
 using Cinema.Business.DTO.Staff;
 using Cinema.Business.Extensions;
 using Cinema.Business.Helpers;
+using Cinema.Business.Notifications;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
+using Cinema.Foundation.Logging;
 
 namespace Cinema.Business.Managers;
 
@@ -18,11 +20,14 @@ public class IncidentManager : IIncidentManager
     private readonly IAuditLogger _audit;
     private readonly IManagerOverrideService _overrides;
 
-    public IncidentManager(IApplicationUnitOfWork uow, IAuditLogger audit, IManagerOverrideService overrides)
+    private readonly IStaffNotificationService _staffNotifications;
+
+    public IncidentManager(IApplicationUnitOfWork uow, IAuditLogger audit, IManagerOverrideService overrides, IStaffNotificationService? staffNotifications = null)
     {
         _uow = uow;
         _audit = audit;
         _overrides = overrides;
+        _staffNotifications = staffNotifications ?? new NoOpStaffNotificationService();
     }
 
     public async Task<IncidentDTO> ReportAsync(Guid theaterId, Guid actorUserId, ReportIncidentRequest request)
@@ -57,7 +62,17 @@ public class IncidentManager : IIncidentManager
         };
         await _uow.IncidentStore.CreateAsync(incident);
 
-        return await ToDtoAsync(new IncidentRow(incident, room?.Name, seat?.RowName, seat?.ColIndex));
+        var dto = await ToDtoAsync(new IncidentRow(incident, room?.Name, seat?.RowName, seat?.ColIndex));
+        try
+        {
+            await _staffNotifications.NotifyIncidentRaisedAsync(theaterId, dto);
+        }
+        catch (Exception e)
+        {
+            // The incident is saved; a failed push must not fail the reporter's request.
+            LogProvider.Current.Warning(e, $"{nameof(IncidentManager)}.{nameof(ReportAsync)} push failed for incident {incident.Id}: {e.Message}");
+        }
+        return dto;
     }
 
     public async Task<IncidentDTO> ResolveAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, Guid actorUserId, ResolveIncidentRequest request)

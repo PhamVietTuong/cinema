@@ -218,6 +218,100 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             .Where(t => t.InvoiceId == invoiceId && t.IsActive)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
 
+    // Shared projection of an invoice with food: header, earliest showtime/movie/room and the food lines, one query.
+    private static IQueryable<PickupOrderRow> ProjectPickupOrders(IQueryable<Invoice> invoices)
+    {
+        return invoices.Select(i => new PickupOrderRow
+        {
+            InvoiceId = i.Id,
+            TheaterId = i.TheaterId!.Value,
+            InvoiceCode = i.Code,
+            InvoiceStatus = i.Status,
+            Channel = i.Channel,
+            FoodStatus = i.FoodStatus,
+            PaidAt = i.PaidAt,
+            FoodHandedOverAt = i.FoodHandedOverAt,
+            CustomerName = i.User != null ? i.User.Name : null,
+            ShowTimeStart = i.InvoiceTickets.Min(t => (DateTime?)t.ShowTimeRoom.ShowTime.StartTime),
+            MovieTitle = i.InvoiceTickets
+                .OrderBy(t => t.ShowTimeRoom.ShowTime.StartTime)
+                .Select(t => t.ShowTimeRoom.ShowTime.Movie.Title)
+                .FirstOrDefault(),
+            RoomName = i.InvoiceTickets
+                .OrderBy(t => t.ShowTimeRoom.ShowTime.StartTime)
+                .Select(t => t.ShowTimeRoom.Room.Name)
+                .FirstOrDefault(),
+            Items = i.InvoiceFoodAndDrinks
+                .Select(f => new PickupItemRow { Name = f.FoodAndDrink.Name, Quantity = f.Quantity })
+                .ToList()
+        });
+    }
+
+    public async Task<List<PickupOrderRow>> GetPickupQueueAsync(Guid theaterId, DateTime dayStart, DateTime dayEnd)
+    {
+        var open = new[] { FoodOrderStatus.Pending, FoodOrderStatus.Preparing, FoodOrderStatus.Ready };
+        var invoices = DbSet
+            .AsNoTracking()
+            .Where(i => i.TheaterId == theaterId
+                        && i.Status == InvoiceStatus.Paid
+                        && open.Contains(i.FoodStatus)
+                        && (!i.InvoiceTickets.Any()
+                            || i.InvoiceTickets.Min(t => t.ShowTimeRoom.ShowTime.StartTime) >= dayStart
+                               && i.InvoiceTickets.Min(t => t.ShowTimeRoom.ShowTime.StartTime) < dayEnd));
+        return await ProjectPickupOrders(invoices).ToListAsync();
+    }
+
+    public async Task<PickupOrderRow?> GetPickupOrderByCodeAsync(Guid theaterId, string invoiceCode)
+    {
+        return await ProjectPickupOrders(DbSet.AsNoTracking()
+                .Where(i => i.Code == invoiceCode && i.TheaterId == theaterId && i.FoodStatus != FoodOrderStatus.None))
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<PickupOrderRow?> GetPickupOrderByIdAsync(Guid invoiceId)
+    {
+        return await ProjectPickupOrders(DbSet.AsNoTracking()
+                .Where(i => i.Id == invoiceId && i.TheaterId != null && i.FoodStatus != FoodOrderStatus.None))
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<FoodOrderHeaderRow?> GetFoodOrderHeaderAsync(Guid invoiceId)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Where(i => i.Id == invoiceId && i.TheaterId != null)
+            .Select(i => new FoodOrderHeaderRow
+            {
+                InvoiceId = i.Id,
+                TheaterId = i.TheaterId!.Value,
+                InvoiceCode = i.Code,
+                InvoiceStatus = i.Status,
+                FoodStatus = i.FoodStatus
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<bool> TrySetFoodStatusAsync(Guid invoiceId, FoodOrderStatus from, FoodOrderStatus to, Guid userId, DateTime nowUtc)
+    {
+        var target = DbSet.Where(i => i.Id == invoiceId && i.FoodStatus == from);
+        int rows;
+        if (to == FoodOrderStatus.HandedOver)
+        {
+            rows = await target.ExecuteUpdateAsync(s => s
+                .SetProperty(i => i.FoodStatus, to)
+                .SetProperty(i => i.FoodHandedOverAt, (DateTime?)nowUtc)
+                .SetProperty(i => i.FoodHandedOverByUserId, (Guid?)userId)
+                .SetProperty(i => i.LastUpdatedTime, nowUtc));
+        }
+        else
+        {
+            rows = await target.ExecuteUpdateAsync(s => s
+                .SetProperty(i => i.FoodStatus, to)
+                .SetProperty(i => i.LastUpdatedTime, nowUtc));
+        }
+        return rows == 1;
+    }
+
     public async Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids)
     {
         if (ids.Count == 0)

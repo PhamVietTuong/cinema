@@ -14,6 +14,10 @@ public interface IFoodAndDrinkStore : IGenericStore<FoodAndDrink>
     /// </summary>
     Task<bool> TryApplyStockDeltaAsync(Guid foodAndDrinkId, int delta);
 
+    /// <summary>Tracked items of a theater with <c>QuantityOnHand &lt;= LowStockThreshold</c>, projected and untracked
+    /// (combos hold no stock and are never tracked), emptiest first.</summary>
+    Task<List<LowStockRow>> GetLowStockAsync(Guid theaterId);
+
     /// <summary>
     /// One filtered, sorted, DB-paged read of the warehouse list (combos excluded). Items are projected, untracked
     /// FoodAndDrink instances carrying only the columns the stock list shows.

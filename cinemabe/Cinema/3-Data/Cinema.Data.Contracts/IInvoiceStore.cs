@@ -37,6 +37,24 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     /// Called when a booking is cancelled, expires, or is refunded.</summary>
     Task DeactivateTicketsAsync(Guid invoiceId);
 
+    /// <summary>The pickup queue of a theater: Paid invoices whose food is Pending, Preparing or Ready, projected in one
+    /// query with their food lines. An invoice with tickets is listed when its earliest showtime starts in
+    /// [dayStart, dayEnd); a food-only sale is always listed. Unordered: the caller sorts.</summary>
+    Task<List<PickupOrderRow>> GetPickupQueueAsync(Guid theaterId, DateTime dayStart, DateTime dayEnd);
+
+    /// <summary>One invoice with food by its code, in the given theater (null when unknown, foodless or elsewhere).</summary>
+    Task<PickupOrderRow?> GetPickupOrderByCodeAsync(Guid theaterId, string invoiceCode);
+
+    /// <summary>One invoice with food by id (null when unknown or foodless).</summary>
+    Task<PickupOrderRow?> GetPickupOrderByIdAsync(Guid invoiceId);
+
+    /// <summary>The pickup header of an invoice, no tracking (null when unknown).</summary>
+    Task<FoodOrderHeaderRow?> GetFoodOrderHeaderAsync(Guid invoiceId);
+
+    /// <summary>Atomic compare-and-set of <c>FoodStatus</c> (UPDATE ... WHERE FoodStatus = from). Stamps the handover
+    /// time and user when moving to HandedOver. False when the invoice was not in <paramref name="from"/> any more.</summary>
+    Task<bool> TrySetFoodStatusAsync(Guid invoiceId, FoodOrderStatus from, FoodOrderStatus to, Guid userId, DateTime nowUtc);
+
     /// <summary>Invoice code by invoice id for a batch of ids (one query). Unknown ids are absent.</summary>
     Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids);
 }
