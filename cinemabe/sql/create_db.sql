@@ -988,6 +988,35 @@ END
 -- ===== end P4 box office =====
 
 -- ============================================================
+-- P6 food pickup: kitchen queue state on the invoice
+-- ============================================================
+-- Identical in create_db.sql and upgrade_db.sql (idempotent). FoodStatus: 0 None, 1 Pending, 2 Preparing, 3 Ready,
+-- 4 HandedOver, 5 Cancelled. Statements that touch a column added in this block run through EXEC so the batch
+-- compiles before the column exists.
+IF COL_LENGTH('dbo.Invoice', 'FoodHandedOverAt') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [FoodHandedOverAt] datetime NULL;
+END
+
+IF COL_LENGTH('dbo.Invoice', 'FoodHandedOverByUserId') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [FoodHandedOverByUserId] uniqueidentifier NULL;
+END
+
+IF COL_LENGTH('dbo.Invoice', 'FoodStatus') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [FoodStatus] int NOT NULL CONSTRAINT [DF_Invoice_FoodStatus] DEFAULT 0;
+
+    -- Backfill (runs once, with the column): food already sold is history, so a paid invoice with food is HandedOver
+    -- (stamped with its payment time), an unpaid one stays Pending, a cancelled/failed/refunded one is Cancelled.
+    EXEC('UPDATE i SET i.[FoodStatus] = CASE i.[Status] WHEN 1 THEN 4 WHEN 0 THEN 1 ELSE 5 END,
+                       i.[FoodHandedOverAt] = CASE WHEN i.[Status] = 1 THEN i.[PaidAt] ELSE NULL END
+          FROM [Invoice] i
+          WHERE EXISTS (SELECT 1 FROM [InvoiceFoodAndDrink] f WHERE f.[InvoiceId] = i.[Id])');
+END
+-- ===== end P6 food pickup =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- The schema above is intentionally maintained by hand (see CLAUDE.md: schema changes go into

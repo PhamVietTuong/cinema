@@ -20,6 +20,23 @@ public class FoodAndDrinkStore : GenericStore<FoodAndDrink>, IFoodAndDrinkStore
         return await DbSet.AsNoTracking().Where(f => ids.Contains(f.Id)).ToDictionaryAsync(f => f.Id);
     }
 
+    public async Task<List<LowStockRow>> GetLowStockAsync(Guid theaterId)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Where(f => f.TheaterId == theaterId && f.TrackInventory && !f.IsCombo && f.QuantityOnHand <= f.LowStockThreshold)
+            .OrderBy(f => f.QuantityOnHand).ThenBy(f => f.Name)
+            .Select(f => new LowStockRow
+            {
+                FoodAndDrinkId = f.Id,
+                Name = f.Name,
+                QuantityOnHand = f.QuantityOnHand,
+                LowStockThreshold = f.LowStockThreshold,
+                TargetStockLevel = f.TargetStockLevel
+            })
+            .ToListAsync();
+    }
+
     public async Task<bool> TryApplyStockDeltaAsync(Guid foodAndDrinkId, int delta)
     {
         var now = DateTime.UtcNow;

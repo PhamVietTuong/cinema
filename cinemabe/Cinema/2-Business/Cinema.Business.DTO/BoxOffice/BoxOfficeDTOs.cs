@@ -85,6 +85,10 @@ public class CounterSaleRequest
 
     /// <summary>Manager approval, required when any line carries an OverrideUnitPrice.</summary>
     public ManagerOverrideDTO? Override { get; set; }
+
+    /// <summary>The food is not handed over at the counter: it joins the kitchen's pickup queue (Pending) instead of
+    /// being recorded as handed over. Ignored when the sale has no food.</summary>
+    public bool HoldForPickup { get; set; }
 }
 
 public class CounterQuoteLineDTO
