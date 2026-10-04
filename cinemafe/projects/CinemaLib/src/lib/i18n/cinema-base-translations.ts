@@ -11,6 +11,15 @@ import { catchError, map } from 'rxjs/operators';
 export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   vi: {
     nav: { logout: 'Đăng Xuất' },
+    override: {
+      title: 'Cần quản lý xác nhận',
+      hint: 'Thao tác này cần quản lý xác nhận. Chọn người duyệt và nhập mã PIN của họ.',
+      approver: 'Người duyệt',
+      pin: 'Mã PIN',
+      pinInvalid: 'Mã PIN gồm 4-8 chữ số.',
+      noApprovers: 'Không có quản lý nào đang phụ trách rạp này.',
+      confirm: 'Xác nhận',
+    },
     common: {
       actions: 'Thao Tác',
       all: 'Tất Cả',
@@ -47,6 +56,15 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   },
   en: {
     nav: { logout: 'Log Out' },
+    override: {
+      title: 'Manager approval needed',
+      hint: 'This action needs a manager. Pick the approver and enter their PIN.',
+      approver: 'Approver',
+      pin: 'PIN',
+      pinInvalid: 'The PIN has 4-8 digits.',
+      noApprovers: 'No manager is assigned to this theater.',
+      confirm: 'Approve',
+    },
     common: {
       actions: 'Actions',
       all: 'All',
