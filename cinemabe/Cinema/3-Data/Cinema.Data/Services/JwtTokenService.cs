@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using Cinema.Business.Contracts;
+using Cinema.Business.DTO.Auth;
 using Cinema.Data.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +35,14 @@ public class JwtTokenService : ITokenService
         if (user.TheaterId is Guid theaterId)
         {
             claims.Add(new Claim("theaterId", theaterId.ToString()));
+        }
+        // A RegionalManager carries one theaterId claim per assigned theater (the UserTheater rows).
+        if (user.UserType?.Name == RoleNames.RegionalManager)
+        {
+            foreach (var assignedTheaterId in user.UserTheaters.Select(ut => ut.TheaterId).Distinct())
+            {
+                claims.Add(new Claim("theaterId", assignedTheaterId.ToString()));
+            }
         }
 
         var token = new JwtSecurityToken(

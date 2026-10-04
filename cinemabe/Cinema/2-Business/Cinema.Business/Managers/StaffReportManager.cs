@@ -6,16 +6,21 @@ using Cinema.Business.Helpers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
+using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Managers;
 
-public class StaffReportManager : IStaffReportManager
+public partial class StaffReportManager : IStaffReportManager
 {
     private readonly IApplicationUnitOfWork _uow;
+    private readonly IConfiguration _config;
+    private readonly TimeProvider _clock;
 
-    public StaffReportManager(IApplicationUnitOfWork uow)
+    public StaffReportManager(IApplicationUnitOfWork uow, IConfiguration config, TimeProvider clock)
     {
         _uow = uow;
+        _config = config;
+        _clock = clock;
     }
 
     public async Task<DefaultSearchResults<AuditLogDTO>> GetAuditLogAsync(PagingSearchDTO search, IReadOnlyCollection<Guid>? theaterIds)

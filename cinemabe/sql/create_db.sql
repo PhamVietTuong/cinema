@@ -26,6 +26,9 @@ IF OBJECT_ID('dbo.ChecklistTemplate', 'U') IS NOT NULL
 DROP TABLE dbo.ChecklistTemplate;
 IF OBJECT_ID('dbo.Incident', 'U') IS NOT NULL
 DROP TABLE dbo.Incident;
+-- P9 reporting
+IF OBJECT_ID('dbo.UserTheater', 'U') IS NOT NULL
+DROP TABLE dbo.UserTheater;
 -- P4 box office
 IF OBJECT_ID('dbo.CashMovement', 'U') IS NOT NULL
 DROP TABLE dbo.CashMovement;
@@ -986,6 +989,22 @@ BEGIN
     CREATE INDEX [IX_CashMovement_CashDrawerSessionId] ON [CashMovement] ([CashDrawerSessionId]);
 END
 -- ===== end P4 box office =====
+
+-- ===== P9 reporting =====
+-- Theater assignments of a RegionalManager (decision D12). Composite PK; NO ACTION FKs (users are soft-deleted,
+-- a theater with assignments cannot be removed by surprise).
+IF OBJECT_ID('dbo.UserTheater', 'U') IS NULL
+BEGIN
+    CREATE TABLE [UserTheater] (
+        [UserId] uniqueidentifier NOT NULL,
+        [TheaterId] uniqueidentifier NOT NULL,
+        CONSTRAINT [PK_UserTheater] PRIMARY KEY ([UserId], [TheaterId]),
+        CONSTRAINT [FK_UserTheater_User_UserId] FOREIGN KEY ([UserId]) REFERENCES [User] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_UserTheater_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_UserTheater_TheaterId] ON [UserTheater] ([TheaterId]);
+END
+-- ===== end P9 reporting =====
 
 -- ============================================================
 -- EF Core migrations baseline

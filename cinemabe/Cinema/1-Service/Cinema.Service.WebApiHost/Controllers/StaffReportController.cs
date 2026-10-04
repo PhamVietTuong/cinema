@@ -57,4 +57,72 @@ public class StaffReportController : ApiControllerBase
             return HandleException(e, nameof(GetAuditLog));
         }
     }
+
+    // ── P9 reporting (append new actions below) ──────────────────────────────
+
+    /// <summary>
+    /// Sales grouped by Day, Movie, Theater, PaymentMethod, Staff or Channel: ticket and F&amp;B revenue separate, net of
+    /// refunds. Range of business dates, at most 92 days. A theater outside the caller's scope is refused with 403.
+    /// </summary>
+    [Authorize(Roles = RoleNames.Reporting)]
+    [HttpPost]
+    [ProducesResponseType(typeof(SalesReportDTO), 200)]
+    public async Task<IActionResult> GetSales([FromBody] StaffReportRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetSales)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _reports.GetSalesAsync(request, scope.ToTheaterFilter()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetSales));
+        }
+    }
+
+    /// <summary>Sold / active seats per screening starting in the range. Scope and range rules as for sales.</summary>
+    [Authorize(Roles = RoleNames.Reporting)]
+    [HttpPost]
+    [ProducesResponseType(typeof(OccupancyReportDTO), 200)]
+    public async Task<IActionResult> GetOccupancy([FromBody] StaffReportRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetOccupancy)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _reports.GetOccupancyAsync(request, scope.ToTheaterFilter()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetOccupancy));
+        }
+    }
+
+    /// <summary>Attach rate, refund rate (count and amount) and average spend per head. Scope and range rules as for sales.</summary>
+    [Authorize(Roles = RoleNames.Reporting)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StaffKpisDTO), 200)]
+    public async Task<IActionResult> GetKpis([FromBody] StaffReportRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetKpis)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _reports.GetKpisAsync(request, scope.ToTheaterFilter()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetKpis));
+        }
+    }
 }

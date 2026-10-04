@@ -54,6 +54,7 @@ public class CinemaContext : DbContext
     public DbSet<InvoicePayment> InvoicePayment => Set<InvoicePayment>();
     public DbSet<CashDrawerSession> CashDrawerSession => Set<CashDrawerSession>();
     public DbSet<CashMovement> CashMovement => Set<CashMovement>();
+    public DbSet<UserTheater> UserTheater => Set<UserTheater>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
