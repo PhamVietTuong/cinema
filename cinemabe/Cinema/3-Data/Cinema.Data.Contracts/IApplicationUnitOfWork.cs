@@ -40,6 +40,8 @@ public interface IApplicationUnitOfWork : IDisposable
     ICashDrawerStore CashDrawerStore { get; }
     IStaffReportStore StaffReportStore { get; }
     IAfterSalesStore AfterSalesStore { get; }
+    IComplaintStore ComplaintStore { get; }
+    ICustomerServiceStore CustomerServiceStore { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();
