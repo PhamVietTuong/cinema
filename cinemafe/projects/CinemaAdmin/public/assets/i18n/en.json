@@ -16,8 +16,7 @@
     "discounts": "Discount Codes",
     "invoices": "Invoices",
     "comments": "Moderation",
-    "giftCards": "Gift Cards",
-    "logout": "Log Out"
+    "giftCards": "Gift Cards"
   },
   "section": {
     "catalog": "Catalog",
@@ -40,11 +39,6 @@
     "discounts": "Discount Code Management",
     "invoices": "Invoice Management",
     "default": "Control Panel"
-  },
-  "topbar": {
-    "lightMode": "Light mode",
-    "darkMode": "Dark mode",
-    "notifications": "Notifications"
   },
   "profile": {
     "myProfile": "My profile",
@@ -120,14 +114,6 @@
     "statTickets": "3.4K Tickets sold",
     "title": "Admin Login",
     "subtitle": "Please sign in with an administrator account.",
-    "emailOrPhoneLabel": "Email or Phone Number",
-    "emailOrPhonePlaceholder": "Enter email or phone number",
-    "passwordLabel": "Password",
-    "showPassword": "Show password",
-    "hidePassword": "Hide password",
-    "rememberMe": "Remember me",
-    "forgotPassword": "Forgot password?",
-    "submit": "Sign In",
     "footer": "© 2026 Cinema. Internal administration system."
   },
   "dashboard": {

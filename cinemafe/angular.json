@@ -194,6 +194,95 @@
         }
       }
     },
+    "CinemaStaff": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/CinemaStaff",
+      "sourceRoot": "projects/CinemaStaff/src",
+      "prefix": "staff",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/CinemaStaff/src/main.ts",
+            "tsConfig": "projects/CinemaStaff/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/CinemaLib/src"
+              ]
+            },
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/CinemaStaff/public"
+              }
+            ],
+            "styles": [
+              "node_modules/@swimlane/ngx-datatable/index.css",
+              "node_modules/@swimlane/ngx-datatable/themes/material.css",
+              "node_modules/@swimlane/ngx-datatable/assets/icons.css",
+              "projects/CinemaStaff/src/styles.scss"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/CinemaStaff/src/environments/environment.ts",
+                  "with": "projects/CinemaStaff/src/environments/environment.prod.ts"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "1.5MB",
+                  "maximumError": "2.5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4203
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "CinemaStaff:build:production"
+            },
+            "development": {
+              "buildTarget": "CinemaStaff:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/CinemaStaff/tsconfig.spec.json",
+            "runnerConfig": "vitest.config.ts"
+          }
+        }
+      }
+    },
     "CinemaUser": {
       "projectType": "application",
       "schematics": {

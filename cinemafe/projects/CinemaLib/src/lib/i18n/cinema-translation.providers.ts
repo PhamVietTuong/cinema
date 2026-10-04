@@ -4,9 +4,9 @@ import {
   inject,
   provideAppInitializer,
 } from '@angular/core';
-import { provideTranslateService } from '@ngx-translate/core';
-import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { TranslateLoader, provideTranslateService } from '@ngx-translate/core';
 import { LanguageService } from './language.service';
+import { CinemaTranslateLoader } from './cinema-base-translations';
 
 /**
  * One-line translation wiring for an app's root providers. Loads JSON
@@ -19,7 +19,7 @@ import { LanguageService } from './language.service';
 export function provideCinemaTranslation(): (Provider | EnvironmentProviders)[] {
   return [
     provideTranslateService({
-      loader: provideTranslateHttpLoader({ prefix: '/assets/i18n/', suffix: '.json' }),
+      loader: { provide: TranslateLoader, useClass: CinemaTranslateLoader },
       fallbackLang: 'vi',
     }),
     provideAppInitializer(() => inject(LanguageService).init()),
