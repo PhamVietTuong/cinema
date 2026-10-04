@@ -42,6 +42,10 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IStockMovementStore StockMovementStore { get; }
     public IStoragePlanStore StoragePlanStore { get; }
     public IAuditLogStore AuditLogStore { get; }
+    public IIncidentStore IncidentStore { get; }
+    public IScheduleBoardStore ScheduleBoardStore { get; }
+    public IChecklistStore ChecklistStore { get; }
+    public IWorkforceStore WorkforceStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
     {
@@ -77,6 +81,10 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         StockMovementStore = new StockMovementStore(db);
         StoragePlanStore = new StoragePlanStore(db);
         AuditLogStore = new AuditLogStore(db);
+        IncidentStore = new IncidentStore(db);
+        ScheduleBoardStore = new ScheduleBoardStore(db);
+        ChecklistStore = new ChecklistStore(db);
+        WorkforceStore = new WorkforceStore(db);
     }
 
     public Task<int> SaveChangesAsync()

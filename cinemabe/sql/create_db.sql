@@ -10,6 +10,22 @@
 -- table it references (FK target) — otherwise SQL Server refuses the drop.
 IF OBJECT_ID('dbo.__EFMigrationsHistory', 'U') IS NOT NULL
 DROP TABLE dbo.__EFMigrationsHistory;
+IF OBJECT_ID('dbo.StaffTask', 'U') IS NOT NULL
+DROP TABLE dbo.StaffTask;
+IF OBJECT_ID('dbo.TimeClockEntry', 'U') IS NOT NULL
+DROP TABLE dbo.TimeClockEntry;
+IF OBJECT_ID('dbo.StaffShift', 'U') IS NOT NULL
+DROP TABLE dbo.StaffShift;
+IF OBJECT_ID('dbo.ChecklistRunItem', 'U') IS NOT NULL
+DROP TABLE dbo.ChecklistRunItem;
+IF OBJECT_ID('dbo.ChecklistRun', 'U') IS NOT NULL
+DROP TABLE dbo.ChecklistRun;
+IF OBJECT_ID('dbo.ChecklistTemplateItem', 'U') IS NOT NULL
+DROP TABLE dbo.ChecklistTemplateItem;
+IF OBJECT_ID('dbo.ChecklistTemplate', 'U') IS NOT NULL
+DROP TABLE dbo.ChecklistTemplate;
+IF OBJECT_ID('dbo.Incident', 'U') IS NOT NULL
+DROP TABLE dbo.Incident;
 IF OBJECT_ID('dbo.AuditLog', 'U') IS NOT NULL
 DROP TABLE dbo.AuditLog;
 IF OBJECT_ID('dbo.StoragePlanItem', 'U') IS NOT NULL
@@ -709,6 +725,146 @@ CREATE TABLE [AuditLog] (
 );
 CREATE INDEX [IX_AuditLog_TheaterId_CreationTime] ON [AuditLog] ([TheaterId], [CreationTime]);
 CREATE INDEX [IX_AuditLog_ActorUserId_CreationTime] ON [AuditLog] ([ActorUserId], [CreationTime]);
+
+-- ── P8a incidents ────────────────────────────────────────────────────────────
+-- Staff incident reports (seat/room blocks reference them). No FKs, like AuditLog: the history survives deletions.
+CREATE TABLE [Incident] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [RoomId] uniqueidentifier NULL,
+    [SeatId] uniqueidentifier NULL,
+    [ShowTimeId] uniqueidentifier NULL,
+    [Category] int NOT NULL,
+    [Severity] int NOT NULL,
+    [Status] int NOT NULL,
+    [Title] nvarchar(200) NOT NULL,
+    [Description] nvarchar(2000) NULL,
+    [ReportedByUserId] uniqueidentifier NOT NULL,
+    [ResolvedByUserId] uniqueidentifier NULL,
+    [ResolvedAt] datetime NULL,
+    [ResolutionNote] nvarchar(1000) NULL,
+    [BlocksSeat] bit NOT NULL DEFAULT 0,
+    [BlocksRoom] bit NOT NULL DEFAULT 0,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_Incident] PRIMARY KEY ([Id])
+);
+CREATE INDEX [IX_Incident_TheaterId_Status_CreationTime] ON [Incident] ([TheaterId], [Status], [CreationTime]);
+-- ── end P8a incidents ────────────────────────────────────────────────────────
+
+-- ── P8b checklists ───────────────────────────────────────────────────────────
+-- Reusable per-theater templates; a run (a showtime's copy of the template) is created lazily on first open.
+-- Runs keep no FK to the template or showtime, so template edits/deletions never rewrite history.
+CREATE TABLE [ChecklistTemplate] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Kind] int NOT NULL,
+    [IsActive] bit NOT NULL DEFAULT 1,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_ChecklistTemplate] PRIMARY KEY ([Id])
+);
+CREATE UNIQUE INDEX [IX_ChecklistTemplate_TheaterId_Kind] ON [ChecklistTemplate] ([TheaterId], [Kind]) WHERE [IsActive] = 1;
+
+CREATE TABLE [ChecklistTemplateItem] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [ChecklistTemplateId] uniqueidentifier NOT NULL,
+    [SortOrder] int NOT NULL,
+    [Text] nvarchar(300) NOT NULL,
+    [IsRequired] bit NOT NULL DEFAULT 1,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_ChecklistTemplateItem] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_ChecklistTemplateItem_ChecklistTemplate] FOREIGN KEY ([ChecklistTemplateId]) REFERENCES [ChecklistTemplate] ([Id]) ON DELETE CASCADE
+);
+CREATE INDEX [IX_ChecklistTemplateItem_ChecklistTemplateId] ON [ChecklistTemplateItem] ([ChecklistTemplateId]);
+
+CREATE TABLE [ChecklistRun] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [ShowTimeId] uniqueidentifier NOT NULL,
+    [RoomId] uniqueidentifier NOT NULL,
+    [Kind] int NOT NULL,
+    [ChecklistTemplateId] uniqueidentifier NOT NULL,
+    [TemplateName] nvarchar(200) NOT NULL,
+    [CompletedAt] datetime NULL,
+    [CompletedByUserId] uniqueidentifier NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_ChecklistRun] PRIMARY KEY ([Id])
+);
+CREATE UNIQUE INDEX [IX_ChecklistRun_ShowTimeId_RoomId_Kind] ON [ChecklistRun] ([ShowTimeId], [RoomId], [Kind]);
+CREATE INDEX [IX_ChecklistRun_TheaterId_CreationTime] ON [ChecklistRun] ([TheaterId], [CreationTime]);
+
+CREATE TABLE [ChecklistRunItem] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [ChecklistRunId] uniqueidentifier NOT NULL,
+    [SortOrder] int NOT NULL,
+    [Text] nvarchar(300) NOT NULL,
+    [IsRequired] bit NOT NULL DEFAULT 1,
+    [IsDone] bit NOT NULL DEFAULT 0,
+    [DoneByUserId] uniqueidentifier NULL,
+    [DoneAt] datetime NULL,
+    [Note] nvarchar(500) NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_ChecklistRunItem] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_ChecklistRunItem_ChecklistRun] FOREIGN KEY ([ChecklistRunId]) REFERENCES [ChecklistRun] ([Id]) ON DELETE CASCADE
+);
+CREATE INDEX [IX_ChecklistRunItem_ChecklistRunId] ON [ChecklistRunItem] ([ChecklistRunId]);
+-- ── end P8b checklists ───────────────────────────────────────────────────────
+
+-- ── P8c workforce ────────────────────────────────────────────────────────────
+-- Rosters, time clock and staff tasks. No FKs (like AuditLog/Incident): history survives user/theater deletions.
+CREATE TABLE [StaffShift] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [UserId] uniqueidentifier NOT NULL,
+    [StartTime] datetime NOT NULL,
+    [EndTime] datetime NOT NULL,
+    [Note] nvarchar(500) NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_StaffShift] PRIMARY KEY ([Id])
+);
+CREATE INDEX [IX_StaffShift_TheaterId_StartTime] ON [StaffShift] ([TheaterId], [StartTime]);
+CREATE INDEX [IX_StaffShift_UserId_StartTime] ON [StaffShift] ([UserId], [StartTime]);
+
+CREATE TABLE [TimeClockEntry] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [UserId] uniqueidentifier NOT NULL,
+    [ClockInAt] datetime NOT NULL,
+    [ClockOutAt] datetime NULL,
+    [Note] nvarchar(500) NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_TimeClockEntry] PRIMARY KEY ([Id])
+);
+-- At most one open (not clocked out) entry per user.
+CREATE UNIQUE INDEX [IX_TimeClockEntry_UserId_Open] ON [TimeClockEntry] ([UserId]) WHERE [ClockOutAt] IS NULL;
+CREATE INDEX [IX_TimeClockEntry_TheaterId_ClockInAt] ON [TimeClockEntry] ([TheaterId], [ClockInAt]);
+
+CREATE TABLE [StaffTask] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [AssignedToUserId] uniqueidentifier NOT NULL,
+    [CreatedByUserId] uniqueidentifier NOT NULL,
+    [Title] nvarchar(200) NOT NULL,
+    [Description] nvarchar(2000) NULL,
+    [DueAt] datetime NULL,
+    [Status] int NOT NULL,
+    [CompletedAt] datetime NULL,
+    [IncidentId] uniqueidentifier NULL,
+    [ChecklistRunId] uniqueidentifier NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_StaffTask] PRIMARY KEY ([Id])
+);
+CREATE INDEX [IX_StaffTask_AssignedToUserId_Status] ON [StaffTask] ([AssignedToUserId], [Status]);
+CREATE INDEX [IX_StaffTask_TheaterId_Status_CreationTime] ON [StaffTask] ([TheaterId], [Status], [CreationTime]);
+-- ── end P8c workforce ────────────────────────────────────────────────────────
 
 -- ============================================================
 -- EF Core migrations baseline

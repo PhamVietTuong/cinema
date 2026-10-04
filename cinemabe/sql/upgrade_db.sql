@@ -210,6 +210,166 @@ BEGIN
     CREATE INDEX [IX_AuditLog_ActorUserId_CreationTime] ON [AuditLog] ([ActorUserId], [CreationTime]);
 END
 
+-- ── P8a incidents ────────────────────────────────────────────────────────────
+IF OBJECT_ID('dbo.Incident', 'U') IS NULL
+BEGIN
+    CREATE TABLE [Incident] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [RoomId] uniqueidentifier NULL,
+        [SeatId] uniqueidentifier NULL,
+        [ShowTimeId] uniqueidentifier NULL,
+        [Category] int NOT NULL,
+        [Severity] int NOT NULL,
+        [Status] int NOT NULL,
+        [Title] nvarchar(200) NOT NULL,
+        [Description] nvarchar(2000) NULL,
+        [ReportedByUserId] uniqueidentifier NOT NULL,
+        [ResolvedByUserId] uniqueidentifier NULL,
+        [ResolvedAt] datetime NULL,
+        [ResolutionNote] nvarchar(1000) NULL,
+        [BlocksSeat] bit NOT NULL DEFAULT 0,
+        [BlocksRoom] bit NOT NULL DEFAULT 0,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_Incident] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_Incident_TheaterId_Status_CreationTime] ON [Incident] ([TheaterId], [Status], [CreationTime]);
+END
+-- ── end P8a incidents ────────────────────────────────────────────────────────
+
+-- ── P8b checklists ───────────────────────────────────────────────────────────
+IF OBJECT_ID('dbo.ChecklistTemplate', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ChecklistTemplate] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [Name] nvarchar(200) NOT NULL,
+        [Kind] int NOT NULL,
+        [IsActive] bit NOT NULL DEFAULT 1,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ChecklistTemplate] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_ChecklistTemplate_TheaterId_Kind] ON [ChecklistTemplate] ([TheaterId], [Kind]) WHERE [IsActive] = 1;
+END
+
+IF OBJECT_ID('dbo.ChecklistTemplateItem', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ChecklistTemplateItem] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [ChecklistTemplateId] uniqueidentifier NOT NULL,
+        [SortOrder] int NOT NULL,
+        [Text] nvarchar(300) NOT NULL,
+        [IsRequired] bit NOT NULL DEFAULT 1,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ChecklistTemplateItem] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_ChecklistTemplateItem_ChecklistTemplate] FOREIGN KEY ([ChecklistTemplateId]) REFERENCES [ChecklistTemplate] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_ChecklistTemplateItem_ChecklistTemplateId] ON [ChecklistTemplateItem] ([ChecklistTemplateId]);
+END
+
+IF OBJECT_ID('dbo.ChecklistRun', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ChecklistRun] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [ShowTimeId] uniqueidentifier NOT NULL,
+        [RoomId] uniqueidentifier NOT NULL,
+        [Kind] int NOT NULL,
+        [ChecklistTemplateId] uniqueidentifier NOT NULL,
+        [TemplateName] nvarchar(200) NOT NULL,
+        [CompletedAt] datetime NULL,
+        [CompletedByUserId] uniqueidentifier NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ChecklistRun] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_ChecklistRun_ShowTimeId_RoomId_Kind] ON [ChecklistRun] ([ShowTimeId], [RoomId], [Kind]);
+    CREATE INDEX [IX_ChecklistRun_TheaterId_CreationTime] ON [ChecklistRun] ([TheaterId], [CreationTime]);
+END
+
+IF OBJECT_ID('dbo.ChecklistRunItem', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ChecklistRunItem] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [ChecklistRunId] uniqueidentifier NOT NULL,
+        [SortOrder] int NOT NULL,
+        [Text] nvarchar(300) NOT NULL,
+        [IsRequired] bit NOT NULL DEFAULT 1,
+        [IsDone] bit NOT NULL DEFAULT 0,
+        [DoneByUserId] uniqueidentifier NULL,
+        [DoneAt] datetime NULL,
+        [Note] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ChecklistRunItem] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_ChecklistRunItem_ChecklistRun] FOREIGN KEY ([ChecklistRunId]) REFERENCES [ChecklistRun] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_ChecklistRunItem_ChecklistRunId] ON [ChecklistRunItem] ([ChecklistRunId]);
+END
+-- ── end P8b checklists ───────────────────────────────────────────────────────
+
+-- ── P8c workforce ────────────────────────────────────────────────────────────
+IF OBJECT_ID('dbo.StaffShift', 'U') IS NULL
+BEGIN
+    CREATE TABLE [StaffShift] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [UserId] uniqueidentifier NOT NULL,
+        [StartTime] datetime NOT NULL,
+        [EndTime] datetime NOT NULL,
+        [Note] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_StaffShift] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_StaffShift_TheaterId_StartTime] ON [StaffShift] ([TheaterId], [StartTime]);
+    CREATE INDEX [IX_StaffShift_UserId_StartTime] ON [StaffShift] ([UserId], [StartTime]);
+END
+
+IF OBJECT_ID('dbo.TimeClockEntry', 'U') IS NULL
+BEGIN
+    CREATE TABLE [TimeClockEntry] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [UserId] uniqueidentifier NOT NULL,
+        [ClockInAt] datetime NOT NULL,
+        [ClockOutAt] datetime NULL,
+        [Note] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_TimeClockEntry] PRIMARY KEY ([Id])
+    );
+    -- At most one open (not clocked out) entry per user.
+    CREATE UNIQUE INDEX [IX_TimeClockEntry_UserId_Open] ON [TimeClockEntry] ([UserId]) WHERE [ClockOutAt] IS NULL;
+    CREATE INDEX [IX_TimeClockEntry_TheaterId_ClockInAt] ON [TimeClockEntry] ([TheaterId], [ClockInAt]);
+END
+
+IF OBJECT_ID('dbo.StaffTask', 'U') IS NULL
+BEGIN
+    CREATE TABLE [StaffTask] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [AssignedToUserId] uniqueidentifier NOT NULL,
+        [CreatedByUserId] uniqueidentifier NOT NULL,
+        [Title] nvarchar(200) NOT NULL,
+        [Description] nvarchar(2000) NULL,
+        [DueAt] datetime NULL,
+        [Status] int NOT NULL,
+        [CompletedAt] datetime NULL,
+        [IncidentId] uniqueidentifier NULL,
+        [ChecklistRunId] uniqueidentifier NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_StaffTask] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_StaffTask_AssignedToUserId_Status] ON [StaffTask] ([AssignedToUserId], [Status]);
+    CREATE INDEX [IX_StaffTask_TheaterId_Status_CreationTime] ON [StaffTask] ([TheaterId], [Status], [CreationTime]);
+END
+-- ── end P8c workforce ────────────────────────────────────────────────────────
+
 -- ============================================================
 -- P3 gate: InvoiceTicket.UsedAt / UsedByUserId
 -- ============================================================
