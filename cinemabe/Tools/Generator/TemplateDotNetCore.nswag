@@ -17,7 +17,7 @@
   },
   "codeGenerators": {
     "openApiToTypeScriptClient": {
-      "className": "HttpService",
+      "className": "[TSClassName]",
       "moduleName": "",
       "namespace": "[PascalCaseController]ServiceAgent",
       "typeScriptVersion": 4.3,
@@ -51,7 +51,7 @@
       "newLineBehavior": "Auto"
     },
     "openApiToCSharpClient": {
-      "className": "[PascalCaseController]Client",
+      "className": "[CSClassName]",
       "namespace": "[SystemName].Service.Clients.[PascalCaseController]",
       "generateClientClasses": true,
       "generateClientInterfaces": true,

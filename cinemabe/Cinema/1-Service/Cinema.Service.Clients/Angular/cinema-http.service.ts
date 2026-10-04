@@ -12939,7 +12939,7 @@ export interface IDefaultSearchResultsOfInvoiceAdminDTO extends IBaseSearchResul
 export class InvoiceAdminDTO implements IInvoiceAdminDTO {
     id?: string;
     code?: string;
-    userId?: string;
+    userId?: string | undefined;
     userName?: string;
     userEmail?: string;
     totalAmount?: number;
@@ -13004,7 +13004,7 @@ export class InvoiceAdminDTO implements IInvoiceAdminDTO {
 export interface IInvoiceAdminDTO {
     id?: string;
     code?: string;
-    userId?: string;
+    userId?: string | undefined;
     userName?: string;
     userEmail?: string;
     totalAmount?: number;

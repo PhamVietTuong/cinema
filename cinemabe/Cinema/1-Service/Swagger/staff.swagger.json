@@ -1,0 +1,3864 @@
+{
+  "x-generator": "NSwag v14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))",
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Staff API",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/BoxOffice/Quote": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_Quote",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CounterSaleRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CounterQuoteDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/Sell": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_Sell",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CounterSaleRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CounterSaleResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/OpenDrawer": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_OpenDrawer",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenDrawerRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashDrawerDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/GetMyDrawer": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_GetMyDrawer",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoxOfficeScopeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashDrawerDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/PayInOut": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_PayInOut",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayInOutRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashDrawerDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/GetShowtimesToday": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_GetShowtimesToday",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShowtimesTodayRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CounterShowtimeDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/FindCustomer": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_FindCustomer",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindCustomerRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CounterCustomerDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Gate/Scan": {
+      "post": {
+        "tags": [
+          "Gate"
+        ],
+        "operationId": "Gate_Scan",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanTicketRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanTicketResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "GateStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Gate/Lookup": {
+      "post": {
+        "tags": [
+          "Gate"
+        ],
+        "operationId": "Gate_Lookup",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GateLookupRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GateLookupResultDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "GateStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/GetScheduleBoard": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_GetScheduleBoard",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleBoardRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleBoardDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/ReportIncident": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_ReportIncident",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIncidentRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/GetIncidents": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_GetIncidents",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfIncidentDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/GetIncident": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_GetIncident",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetIncidentRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/ResolveIncident": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_ResolveIncident",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIncidentRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/BlockSeat": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_BlockSeat",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockSeatRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/BlockRoom": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_BlockRoom",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockRoomRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/GetChecklistTemplates": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_GetChecklistTemplates",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetChecklistTemplatesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChecklistTemplateDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/SaveChecklistTemplate": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_SaveChecklistTemplate",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveChecklistTemplateRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistTemplateDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/OpenChecklist": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_OpenChecklist",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenChecklistRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistRunDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/SetChecklistItem": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_SetChecklistItem",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetChecklistItemRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistRunDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Operations/CompleteChecklist": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "Operations_CompleteChecklist",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteChecklistRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistRunDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/StaffReport/GetAuditLog": {
+      "post": {
+        "tags": [
+          "StaffReport"
+        ],
+        "operationId": "StaffReport_GetAuditLog",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfAuditLogDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/SetMyOverridePin": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_SetMyOverridePin",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOverridePinRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/GetOverrideApprovers": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_GetOverrideApprovers",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideApproversRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OverrideApproverDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/GetTheaterStaff": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_GetTheaterStaff",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetTheaterStaffRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TheaterStaffDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/GetRoster": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_GetRoster",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RosterRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffShiftDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/SaveShift": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_SaveShift",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStaffShiftRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffShiftDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/DeleteShift": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_DeleteShift",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteStaffShiftRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/GetMyShifts": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_GetMyShifts",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MyShiftsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffShiftDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/ClockIn": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_ClockIn",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClockInRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeClockEntryDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/ClockOut": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_ClockOut",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClockOutRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeClockEntryDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/GetMyClockStatus": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_GetMyClockStatus",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClockStatusDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/GetTimeSheet": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_GetTimeSheet",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeSheetRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TimeClockEntryDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/SaveTask": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_SaveTask",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStaffTaskRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffTaskDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/GetTasks": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_GetTasks",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfStaffTaskDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/GetMyTasks": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_GetMyTasks",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MyTasksRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffTaskDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Workforce/SetMyTaskStatus": {
+      "post": {
+        "tags": [
+          "Workforce"
+        ],
+        "operationId": "Workforce_SetMyTaskStatus",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMyTaskStatusRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffTaskDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "GateStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CounterQuoteDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CounterQuoteLineDTO"
+            }
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "discountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "pointsValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "giftCardAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalAmount": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CounterQuoteLineDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "listUnitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "lineTotal": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CounterSaleRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "showTimeId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CounterSeatItem"
+            }
+          },
+          "foods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CounterFoodItem"
+            }
+          },
+          "customerUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "discountCode": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0,
+            "nullable": true
+          },
+          "giftCardCode": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0,
+            "nullable": true
+          },
+          "pointsToRedeem": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
+          },
+          "tenders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenderLine"
+            }
+          },
+          "connectionId": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 0,
+            "nullable": true
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "CounterSeatItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "seatId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "patronCategoryId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "overrideUnitPrice": {
+            "type": "number",
+            "format": "double",
+            "maximum": 100000000.0,
+            "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "CounterFoodItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "foodAndDrinkId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100.0,
+            "minimum": 1.0
+          },
+          "overrideUnitPrice": {
+            "type": "number",
+            "format": "double",
+            "maximum": 100000000.0,
+            "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "TenderLine": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "method": {
+            "$ref": "#/components/schemas/PaymentTender"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "maximum": 100000000.0,
+            "minimum": 0.0
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "PaymentTender": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Cash",
+          "Card",
+          "QrWallet",
+          "GiftCard",
+          "Points",
+          "Online"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "ManagerOverrideDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pin"
+        ],
+        "properties": {
+          "approverUserId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "pin": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          }
+        }
+      },
+      "CounterSaleResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "invoiceCode": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "discountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "pointsValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "giftCardAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "changeDue": {
+            "type": "number",
+            "format": "double"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CounterQuoteLineDTO"
+            }
+          },
+          "tickets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketItemDTO"
+            }
+          }
+        }
+      },
+      "TicketItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "seatLabel": {
+            "type": "string"
+          },
+          "seatType": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "patronCategory": {
+            "type": "string"
+          },
+          "qrCode": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CashDrawerDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isOpen": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "terminalName": {
+            "type": "string"
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "openingFloat": {
+            "type": "number",
+            "format": "double"
+          },
+          "cashSales": {
+            "type": "number",
+            "format": "double"
+          },
+          "payIns": {
+            "type": "number",
+            "format": "double"
+          },
+          "payOuts": {
+            "type": "number",
+            "format": "double"
+          },
+          "refunds": {
+            "type": "number",
+            "format": "double"
+          },
+          "expectedCash": {
+            "type": "number",
+            "format": "double"
+          },
+          "recentMovements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashMovementDTO"
+            }
+          }
+        }
+      },
+      "CashMovementDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CashMovementType"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CashMovementType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "OpeningFloat",
+          "Sale",
+          "Refund",
+          "PayIn",
+          "PayOut"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "OpenDrawerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "terminalName"
+        ],
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "terminalName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "openingFloat": {
+            "type": "number",
+            "format": "double",
+            "maximum": 100000000.0,
+            "minimum": 0.0
+          }
+        }
+      },
+      "BoxOfficeScopeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "PayInOutRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "note"
+        ],
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/CashMovementType"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "maximum": 100000000.0,
+            "minimum": 1.0
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "CounterShowtimeDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "showTimeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomName": {
+            "type": "string"
+          },
+          "movieId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "movieTitle": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "projectionForm": {
+            "$ref": "#/components/schemas/ProjectionForm"
+          },
+          "hasEnded": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProjectionForm": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "TwoD",
+          "ThreeD"
+        ],
+        "enum": [
+          1,
+          2
+        ]
+      },
+      "ShowtimesTodayRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "CounterCustomerDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "points": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "memberShipName": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountPercent": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "FindCustomerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phone"
+        ],
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          }
+        }
+      },
+      "ScanTicketResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "$ref": "#/components/schemas/ScanOutcome"
+          },
+          "invoiceCode": {
+            "type": "string"
+          },
+          "seatLabel": {
+            "type": "string"
+          },
+          "movieTitle": {
+            "type": "string"
+          },
+          "roomName": {
+            "type": "string"
+          },
+          "showTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "patronCategory": {
+            "type": "string"
+          },
+          "ageRatingCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "minAge": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "usedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "usedBy": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ScanOutcome": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Admitted",
+          "NotFound",
+          "NotPaid",
+          "AlreadyUsed",
+          "WrongTheater",
+          "WrongShowTime",
+          "TooEarly",
+          "Expired",
+          "AgeCheckRequired"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "ScanTicketRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "showTimeId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "ageConfirmed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GateLookupResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceCode": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "maskedPhone": {
+            "type": "string"
+          },
+          "tickets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GateLookupTicketDTO"
+            }
+          }
+        }
+      },
+      "GateLookupTicketDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "qrCode": {
+            "type": "string"
+          },
+          "seatLabel": {
+            "type": "string"
+          },
+          "movieTitle": {
+            "type": "string"
+          },
+          "roomName": {
+            "type": "string"
+          },
+          "showTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isUsed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GateLookupRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceCode": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0,
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0,
+            "nullable": true
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "ScheduleBoardDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleBoardRoomDTO"
+            }
+          }
+        }
+      },
+      "ScheduleBoardRoomDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomName": {
+            "type": "string"
+          },
+          "roomTypeName": {
+            "type": "string"
+          },
+          "roomStatus": {
+            "$ref": "#/components/schemas/RoomStatus"
+          },
+          "turnoverBufferMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "showTimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleBoardShowTimeDTO"
+            }
+          }
+        }
+      },
+      "RoomStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Active",
+          "Maintenance",
+          "Inactive"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
+      },
+      "ScheduleBoardShowTimeDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "showTimeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "movieId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "movieTitle": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bufferEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "roomStatus": {
+            "$ref": "#/components/schemas/RoomStatus"
+          }
+        }
+      },
+      "ScheduleBoardRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "IncidentDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "roomName": {
+            "type": "string",
+            "nullable": true
+          },
+          "seatId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "seatLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "showTimeId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/IncidentCategory"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/IncidentSeverity"
+          },
+          "status": {
+            "$ref": "#/components/schemas/IncidentStatus"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportedByUserId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "reportedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "resolvedByUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "resolvedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolutionNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "blocksSeat": {
+            "type": "boolean"
+          },
+          "blocksRoom": {
+            "type": "boolean"
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "IncidentCategory": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Other",
+          "Seat",
+          "Room",
+          "Projection",
+          "Sound",
+          "Safety",
+          "Customer",
+          "Cleanliness"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "IncidentSeverity": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Low",
+          "Medium",
+          "High",
+          "Critical"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "IncidentStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Open",
+          "Resolved"
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "ReportIncidentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/IncidentCategory"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/IncidentSeverity"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "seatId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "showTimeId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "DefaultSearchResultsOfIncidentDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfIncidentDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfIncidentDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncidentDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagingSearchDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "pageIndex": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 200.0,
+            "minimum": 0.0
+          },
+          "filters": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "sort": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortDTO"
+              }
+            ]
+          }
+        }
+      },
+      "SortDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "ascending": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GetIncidentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "incidentId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
+      },
+      "ResolveIncidentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "incidentId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "resolutionNote": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "unblock": {
+            "type": "boolean"
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "BlockResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "incidentId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "blockedSeatIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          "blockedRoomId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "affectedTickets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedTicketDTO"
+            }
+          }
+        }
+      },
+      "AffectedTicketDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "invoiceCode": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "customerPhone": {
+            "type": "string"
+          },
+          "showTimeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomName": {
+            "type": "string"
+          },
+          "movieTitle": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seatId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "seatLabel": {
+            "type": "string"
+          }
+        }
+      },
+      "BlockSeatRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "seatId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "incidentId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0,
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "BlockRoomRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "incidentId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0,
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "ChecklistTemplateDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ChecklistKind"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChecklistTemplateItemDTO"
+            }
+          }
+        }
+      },
+      "ChecklistKind": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "PreShow",
+          "PostShow"
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "ChecklistTemplateItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "isRequired": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GetChecklistTemplatesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "SaveChecklistTemplateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ChecklistKind"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/ChecklistTemplateItemDTO"
+            }
+          }
+        }
+      },
+      "ChecklistRunDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "showTimeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ChecklistKind"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completedByUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChecklistRunItemDTO"
+            }
+          }
+        }
+      },
+      "ChecklistRunItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "text": {
+            "type": "string"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "isDone": {
+            "type": "boolean"
+          },
+          "doneByUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "doneByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "doneAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OpenChecklistRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "showTimeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ChecklistKind"
+          }
+        }
+      },
+      "SetChecklistItemRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "runItemId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "isDone": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "CompleteChecklistRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "runId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
+      },
+      "DefaultSearchResultsOfAuditLogDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfAuditLogDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfAuditLogDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AuditLogDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "actorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "approverUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "approverName": {
+            "type": "string",
+            "nullable": true
+          },
+          "action": {
+            "$ref": "#/components/schemas/AuditAction"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "reasonCode": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StaffReasonCode"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuditAction": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Other",
+          "OverrideFailed",
+          "OverridePinChanged",
+          "PriceOverride",
+          "Refund",
+          "Exchange",
+          "Reprint",
+          "VoidSale",
+          "CashPayOut",
+          "DrawerReconcile",
+          "Compensation",
+          "PointsAdjust",
+          "ResendTicket",
+          "BlockSeat",
+          "BlockRoom",
+          "TicketAdmitOverride"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      },
+      "StaffReasonCode": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Other",
+          "CustomerRequest",
+          "WrongShowtime",
+          "DuplicateSale",
+          "ServiceFailure",
+          "TechnicalIssue",
+          "PriceMatch",
+          "Compensation"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "SetOverridePinRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pin"
+        ],
+        "properties": {
+          "pin": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          }
+        }
+      },
+      "OverrideApproverDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "OverrideApproversRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "TheaterStaffDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          }
+        }
+      },
+      "GetTheaterStaffRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "StaffShiftDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RosterRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "SaveStaffShiftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "DeleteStaffShiftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "shiftId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
+      },
+      "MyShiftsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TimeClockEntryDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "clockInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "clockOutAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ClockInRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "ClockOutRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "ClockStatusDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isClockedIn": {
+            "type": "boolean"
+          },
+          "openEntry": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TimeClockEntryDTO"
+              }
+            ]
+          }
+        }
+      },
+      "TimeSheetRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "StaffTaskDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "assignedToUserId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "assignedToName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "createdByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/StaffTaskStatus"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "incidentId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "checklistRunId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StaffTaskStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Open",
+          "InProgress",
+          "Done",
+          "Cancelled"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "SaveStaffTaskRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "assignedToUserId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "incidentId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "checklistRunId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "status": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StaffTaskStatus"
+              }
+            ]
+          }
+        }
+      },
+      "DefaultSearchResultsOfStaffTaskDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfStaffTaskDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfStaffTaskDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffTaskDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MyTasksRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "includeClosed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SetMyTaskStatusRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StaffTaskStatus"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Enter your JWT token",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

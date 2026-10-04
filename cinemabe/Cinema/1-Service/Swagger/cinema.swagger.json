@@ -4213,7 +4213,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4294,7 +4295,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4335,7 +4337,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4376,7 +4379,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4417,7 +4421,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4457,7 +4462,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4498,7 +4504,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4539,7 +4546,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4580,7 +4588,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4701,7 +4710,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4742,7 +4752,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -4783,7 +4794,8 @@
             "Bearer": [
               "Admin",
               "TheaterManager",
-              "TheaterStaff"
+              "TheaterStaff",
+              "KitchenStaff"
             ]
           }
         ]
@@ -7854,7 +7866,8 @@
           },
           "userId": {
             "type": "string",
-            "format": "guid"
+            "format": "guid",
+            "nullable": true
           },
           "userName": {
             "type": "string"

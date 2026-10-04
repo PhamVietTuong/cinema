@@ -17,7 +17,7 @@
   },
   "codeGenerators": {
     "openApiToTypeScriptClient": {
-      "className": "HttpService",
+      "className": "{controller}HttpService",
       "moduleName": "",
       "namespace": "StaffServiceAgent",
       "typeScriptVersion": 4.3,
@@ -51,7 +51,7 @@
       "newLineBehavior": "Auto"
     },
     "openApiToCSharpClient": {
-      "className": "StaffClient",
+      "className": "Staff{controller}Client",
       "namespace": "Cinema.Service.Clients.Staff",
       "generateClientClasses": true,
       "generateClientInterfaces": true,
