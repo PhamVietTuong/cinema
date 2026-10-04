@@ -558,6 +558,9 @@ CREATE TABLE [InvoiceTicket] (
     [QrCode] nvarchar(max) NULL,
     [IsUsed] bit NOT NULL,
     [IsActive] bit NOT NULL DEFAULT 1,
+    -- P3 gate: stamped atomically with IsUsed when a ticket is admitted at the gate.
+    [UsedAt] datetime NULL,
+    [UsedByUserId] uniqueidentifier NULL,
     CONSTRAINT [PK_InvoiceTicket] PRIMARY KEY ([InvoiceId], [ShowTimeId], [RoomId], [SeatId]),
     CONSTRAINT [FK_InvoiceTicket_Invoice_InvoiceId] FOREIGN KEY ([InvoiceId]) REFERENCES [Invoice] ([Id]) ON DELETE CASCADE,
     CONSTRAINT [FK_InvoiceTicket_Seat_SeatId] FOREIGN KEY ([SeatId]) REFERENCES [Seat] ([Id]) ON DELETE NO ACTION,

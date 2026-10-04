@@ -19,6 +19,18 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     Task<IReadOnlyList<Invoice>> GetStalePendingAsync(DateTime olderThan);
     /// <summary>Loads a ticket by its QR token, with invoice + seat + showtime/room details, for gate check-in.</summary>
     Task<InvoiceTicket?> GetTicketByQrAsync(string qrCode);
+    /// <summary>No-tracking projection of a ticket by QR token with its invoice, seat, showtime, room theater and
+    /// movie age rating, for gate scanning (one query).</summary>
+    Task<GateTicketRow?> GetGateTicketByQrAsync(string qrCode);
+
+    /// <summary>Atomically admits a ticket: a single UPDATE ... WHERE IsUsed = 0 AND IsActive = 1. Returns true only
+    /// for the caller whose update changed the row, so two simultaneous scans cannot both admit.</summary>
+    Task<bool> TryAdmitTicketAsync(Guid invoiceId, Guid seatId, Guid showTimeId, Guid userId, DateTime nowUtc);
+
+    /// <summary>Paid, active tickets of a theater whose showtime starts in [dayStart, dayEnd), matched by exact
+    /// invoice code and/or phone (no-tracking projection).</summary>
+    Task<List<GateLookupRow>> FindTicketsForLookupAsync(Guid theaterId, string? invoiceCode, string? phone, DateTime dayStart, DateTime dayEnd);
+
     /// <summary>Paid tickets whose showtime starts in [from, to) — with user + movie + seat — for reminders.</summary>
     Task<IReadOnlyList<InvoiceTicket>> GetPaidTicketsForShowtimesAsync(DateTime from, DateTime to);
     /// <summary>Marks an invoice's tickets inactive (frees their seats at the DB unique-index level).

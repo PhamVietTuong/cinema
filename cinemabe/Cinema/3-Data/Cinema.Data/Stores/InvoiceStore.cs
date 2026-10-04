@@ -139,6 +139,80 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             .Include(t => t.ShowTimeRoom).ThenInclude(sr => sr.Room)
             .FirstOrDefaultAsync(t => t.QrCode == qrCode);
 
+    public async Task<GateTicketRow?> GetGateTicketByQrAsync(string qrCode)
+        => await Context.InvoiceTicket
+            .AsNoTracking()
+            .Where(t => t.QrCode == qrCode)
+            .Select(t => new GateTicketRow
+            {
+                InvoiceId = t.InvoiceId,
+                ShowTimeId = t.ShowTimeId,
+                SeatId = t.SeatId,
+                IsUsed = t.IsUsed,
+                IsActive = t.IsActive,
+                UsedAt = t.UsedAt,
+                UsedByName = Context.User.Where(u => u.Id == t.UsedByUserId).Select(u => u.Name).FirstOrDefault(),
+                PatronCategoryName = t.PatronCategoryName,
+                InvoiceStatus = t.Invoice.Status,
+                InvoiceCode = t.Invoice.Code,
+                SeatLabel = t.Seat.RowName + t.Seat.ColIndex,
+                MovieTitle = t.ShowTimeRoom.ShowTime.Movie.Title,
+                RoomName = t.ShowTimeRoom.Room.Name,
+                TheaterId = t.ShowTimeRoom.Room.TheaterId,
+                StartTime = t.ShowTimeRoom.ShowTime.StartTime,
+                EndTime = t.ShowTimeRoom.ShowTime.EndTime,
+                AgeRatingCode = t.ShowTimeRoom.ShowTime.Movie.AgeRestriction.Code,
+                MinAge = t.ShowTimeRoom.ShowTime.Movie.AgeRestriction.MinAge
+            })
+            .FirstOrDefaultAsync();
+
+    public async Task<bool> TryAdmitTicketAsync(Guid invoiceId, Guid seatId, Guid showTimeId, Guid userId, DateTime nowUtc)
+    {
+        var rows = await Context.InvoiceTicket
+            .Where(t => t.InvoiceId == invoiceId && t.SeatId == seatId && t.ShowTimeId == showTimeId
+                        && !t.IsUsed && t.IsActive)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(t => t.IsUsed, true)
+                .SetProperty(t => t.UsedAt, (DateTime?)nowUtc)
+                .SetProperty(t => t.UsedByUserId, (Guid?)userId));
+        return rows == 1;
+    }
+
+    public async Task<List<GateLookupRow>> FindTicketsForLookupAsync(
+        Guid theaterId, string? invoiceCode, string? phone, DateTime dayStart, DateTime dayEnd)
+    {
+        var q = Context.InvoiceTicket
+            .AsNoTracking()
+            .Where(t => t.IsActive
+                        && t.Invoice.Status == InvoiceStatus.Paid
+                        && t.ShowTimeRoom.Room.TheaterId == theaterId
+                        && t.ShowTimeRoom.ShowTime.StartTime >= dayStart
+                        && t.ShowTimeRoom.ShowTime.StartTime < dayEnd);
+        if (!string.IsNullOrEmpty(invoiceCode))
+        {
+            q = q.Where(t => t.Invoice.Code == invoiceCode);
+        }
+        if (!string.IsNullOrEmpty(phone))
+        {
+            q = q.Where(t => t.Invoice.User.Phone == phone);
+        }
+        return await q
+            .OrderBy(t => t.ShowTimeRoom.ShowTime.StartTime).ThenBy(t => t.Invoice.Code)
+            .Select(t => new GateLookupRow
+            {
+                InvoiceCode = t.Invoice.Code,
+                CustomerName = t.Invoice.User.Name,
+                CustomerPhone = t.Invoice.User.Phone,
+                QrCode = t.QrCode,
+                SeatLabel = t.Seat.RowName + t.Seat.ColIndex,
+                MovieTitle = t.ShowTimeRoom.ShowTime.Movie.Title,
+                RoomName = t.ShowTimeRoom.Room.Name,
+                StartTime = t.ShowTimeRoom.ShowTime.StartTime,
+                IsUsed = t.IsUsed
+            })
+            .ToListAsync();
+    }
+
     public async Task DeactivateTicketsAsync(Guid invoiceId)
         => await Context.InvoiceTicket
             .Where(t => t.InvoiceId == invoiceId && t.IsActive)

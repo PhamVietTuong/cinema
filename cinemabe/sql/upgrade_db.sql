@@ -211,6 +211,18 @@ BEGIN
 END
 
 -- ============================================================
+-- P3 gate: InvoiceTicket.UsedAt / UsedByUserId
+-- ============================================================
+IF COL_LENGTH('dbo.InvoiceTicket', 'UsedAt') IS NULL
+BEGIN
+    ALTER TABLE [InvoiceTicket] ADD [UsedAt] datetime NULL;
+END
+IF COL_LENGTH('dbo.InvoiceTicket', 'UsedByUserId') IS NULL
+BEGIN
+    ALTER TABLE [InvoiceTicket] ADD [UsedByUserId] uniqueidentifier NULL;
+END
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already
