@@ -100,7 +100,6 @@ interface BoardRoom {
 </div>
 `,
   styles: [`
-    .day-nav { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
     .legend { display: flex; gap: 16px; margin-bottom: 8px; color: var(--ml-muted); font-size: 13px; }
     .swatch { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: middle; }
     .swatch--show { background: var(--ml-action-strong); }

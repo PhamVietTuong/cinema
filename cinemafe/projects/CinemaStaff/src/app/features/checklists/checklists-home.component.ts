@@ -77,7 +77,6 @@ import { TheaterContextService } from '../../core/theater-context.service';
 </div>
 `,
   styles: [`
-    .day-nav { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
     .room-card { margin-bottom: 16px; }
     .room-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px 0; }
     .actions { text-align: right; white-space: nowrap; }
