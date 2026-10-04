@@ -113,6 +113,10 @@ public class BookingManager : IBookingManager
             {
                 throw new InvalidOperationException("ShowTime/Room combination not found.");
             }
+            if (showTimeRoom.Room.Status != RoomStatus.Active)
+            {
+                throw new InvalidOperationException("This room is not open for booking.");
+            }
             var pricing = await BuildSeatPricingContextAsync(showTimeRoom);
 
             var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
@@ -162,6 +166,14 @@ public class BookingManager : IBookingManager
                 if (!seatsById.TryGetValue(seatItem.SeatId, out var seat))
                 {
                     throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
+                }
+                if (seat.RoomId != request.RoomId)
+                {
+                    throw new InvalidOperationException($"Seat {seat.RowName}{seat.ColIndex} does not belong to this room.");
+                }
+                if (!seat.IsActive)
+                {
+                    throw new InvalidOperationException($"Seat {seat.RowName}{seat.ColIndex} is blocked and cannot be booked.");
                 }
                 var seatKind = seat.SeatGroupId.HasValue ? SeatKind.Double : SeatKind.Standard;
 
