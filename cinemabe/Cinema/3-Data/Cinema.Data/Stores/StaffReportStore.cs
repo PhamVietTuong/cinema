@@ -2,6 +2,7 @@ using Cinema.Data.Contexts;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Data.Stores;
@@ -17,25 +18,6 @@ public class StaffReportStore : IStaffReportStore
     public StaffReportStore(CinemaContext db)
     {
         _db = db;
-    }
-
-    /// <summary>Invoice-level key columns, filled for the single dimension in use.</summary>
-    private sealed class KeyedInvoice
-    {
-        public Guid InvoiceId { get; set; }
-        public DateTime? DayKey { get; set; }
-        public Guid? GuidKey { get; set; }
-        public int? IntKey { get; set; }
-        public double Final { get; set; }
-        public double Discount { get; set; }
-    }
-
-    private sealed class KeyedAmount
-    {
-        public DateTime? DayKey { get; set; }
-        public Guid? GuidKey { get; set; }
-        public int? IntKey { get; set; }
-        public double Amount { get; set; }
     }
 
     private IQueryable<Invoice> InvoicesFor(SalesQuery query, bool refunds)
@@ -57,38 +39,6 @@ public class StaffReportStore : IStaffReportStore
             && i.PaidAt >= from && i.PaidAt < to);
     }
 
-    private static IQueryable<KeyedInvoice> Keyed(IQueryable<Invoice> invoices, SalesQuery query, bool refunds)
-    {
-        var shift = query.DayShiftMinutes;
-        switch (query.GroupBy)
-        {
-            case SalesGroupBy.Day when refunds:
-                return invoices.Select(i => new KeyedInvoice
-                {
-                    InvoiceId = i.Id,
-                    DayKey = i.RefundedAt!.Value.AddMinutes(shift).Date,
-                    Final = i.FinalAmount,
-                    Discount = i.DiscountAmount
-                });
-            case SalesGroupBy.Day:
-                return invoices.Select(i => new KeyedInvoice
-                {
-                    InvoiceId = i.Id,
-                    DayKey = i.PaidAt!.Value.AddMinutes(shift).Date,
-                    Final = i.FinalAmount,
-                    Discount = i.DiscountAmount
-                });
-            case SalesGroupBy.Theater:
-                return invoices.Select(i => new KeyedInvoice { InvoiceId = i.Id, GuidKey = i.TheaterId, Final = i.FinalAmount, Discount = i.DiscountAmount });
-            case SalesGroupBy.Staff:
-                return invoices.Select(i => new KeyedInvoice { InvoiceId = i.Id, GuidKey = i.SoldByUserId, Final = i.FinalAmount, Discount = i.DiscountAmount });
-            case SalesGroupBy.Channel:
-                return invoices.Select(i => new KeyedInvoice { InvoiceId = i.Id, IntKey = (int)i.Channel, Final = i.FinalAmount, Discount = i.DiscountAmount });
-            default:
-                throw new InvalidOperationException($"{query.GroupBy} is not an invoice-level dimension.");
-        }
-    }
-
     public async Task<SalesAggregates> GetSalesAsync(SalesQuery query)
     {
         return new SalesAggregates
@@ -101,69 +51,110 @@ public class StaffReportStore : IStaffReportStore
     private async Task<List<SalesAggregateRow>> AggregateAsync(SalesQuery query, bool refunds)
     {
         var invoices = InvoicesFor(query, refunds);
+        var shift = query.DayShiftMinutes;
         switch (query.GroupBy)
         {
             case SalesGroupBy.Movie:
                 return await AggregateByMovieAsync(invoices);
             case SalesGroupBy.PaymentMethod:
                 return await AggregateByTenderAsync(invoices);
+            case SalesGroupBy.Day when refunds:
+                return await AggregateByInvoiceAsync<DateTime?>(invoices, i => i.RefundedAt!.Value.AddMinutes(shift).Date,
+                    (row, key) => row.DayKey = key);
+            case SalesGroupBy.Day:
+                return await AggregateByInvoiceAsync<DateTime?>(invoices, i => i.PaidAt!.Value.AddMinutes(shift).Date,
+                    (row, key) => row.DayKey = key);
+            case SalesGroupBy.Theater:
+                return await AggregateByInvoiceAsync<Guid?>(invoices, i => i.TheaterId, (row, key) => row.GuidKey = key);
+            case SalesGroupBy.Staff:
+                return await AggregateByInvoiceAsync<Guid?>(invoices, i => i.SoldByUserId, (row, key) => row.GuidKey = key);
+            case SalesGroupBy.Channel:
+                return await AggregateByInvoiceAsync<int?>(invoices, i => (int)i.Channel, (row, key) => row.IntKey = key);
             default:
-                return await AggregateByInvoiceAsync(Keyed(invoices, query, refunds));
+                throw new InvalidOperationException($"{query.GroupBy} is not a sales dimension.");
         }
     }
 
-    /// <summary>Day / Theater / Staff / Channel: invoice totals plus ticket and F&amp;B line totals (3 queries).</summary>
-    private async Task<List<SalesAggregateRow>> AggregateByInvoiceAsync(IQueryable<KeyedInvoice> keyed)
+    /// <summary>
+    /// Day / Theater / Staff / Channel: invoice totals plus ticket and F&amp;B line totals (3 queries). The key is a plain
+    /// scalar selected from the invoice; the line queries reuse it through the line's Invoice navigation and filter with
+    /// an EXISTS over the same invoice query, so all grouping happens in SQL.
+    /// </summary>
+    private async Task<List<SalesAggregateRow>> AggregateByInvoiceAsync<TKey>(IQueryable<Invoice> invoices,
+        Expression<Func<Invoice, TKey>> keySelector, Action<SalesAggregateRow, TKey> assignKey)
     {
-        var invoiceRows = await keyed
-            .GroupBy(k => new { k.DayKey, k.GuidKey, k.IntKey })
-            .Select(g => new SalesAggregateRow
+        var invoiceRows = await invoices
+            .GroupBy(keySelector)
+            .Select(g => new
             {
-                DayKey = g.Key.DayKey,
-                GuidKey = g.Key.GuidKey,
-                IntKey = g.Key.IntKey,
+                Key = g.Key,
                 InvoiceCount = g.Count(),
-                FinalAmount = g.Sum(k => k.Final),
-                DiscountAmount = g.Sum(k => k.Discount)
+                FinalAmount = g.Sum(i => i.FinalAmount),
+                DiscountAmount = g.Sum(i => i.DiscountAmount)
             })
             .ToListAsync();
 
-        var ticketRows = await keyed
-            .Join(_db.InvoiceTicket, k => k.InvoiceId, t => t.InvoiceId,
-                (k, t) => new KeyedAmount { DayKey = k.DayKey, GuidKey = k.GuidKey, IntKey = k.IntKey, Amount = t.Price })
-            .GroupBy(x => new { x.DayKey, x.GuidKey, x.IntKey })
-            .Select(g => new SalesAggregateRow
-            {
-                DayKey = g.Key.DayKey,
-                GuidKey = g.Key.GuidKey,
-                IntKey = g.Key.IntKey,
-                TicketAmount = g.Sum(x => x.Amount)
-            })
+        var ticketKey = Rebind<InvoiceTicket, TKey>(keySelector, t => t.Invoice);
+        var ticketRows = await _db.InvoiceTicket.AsNoTracking()
+            .Where(t => invoices.Any(i => i.Id == t.InvoiceId))
+            .GroupBy(ticketKey)
+            .Select(g => new { Key = g.Key, Amount = g.Sum(t => t.Price) })
             .ToListAsync();
 
-        var foodRows = await keyed
-            .Join(_db.InvoiceFoodAndDrink, k => k.InvoiceId, f => f.InvoiceId,
-                (k, f) => new KeyedAmount { DayKey = k.DayKey, GuidKey = k.GuidKey, IntKey = k.IntKey, Amount = f.TotalPrice })
-            .GroupBy(x => new { x.DayKey, x.GuidKey, x.IntKey })
-            .Select(g => new SalesAggregateRow
-            {
-                DayKey = g.Key.DayKey,
-                GuidKey = g.Key.GuidKey,
-                IntKey = g.Key.IntKey,
-                FoodAmount = g.Sum(x => x.Amount)
-            })
+        var foodKey = Rebind<InvoiceFoodAndDrink, TKey>(keySelector, f => f.Invoice);
+        var foodRows = await _db.InvoiceFoodAndDrink.AsNoTracking()
+            .Where(f => invoices.Any(i => i.Id == f.InvoiceId))
+            .GroupBy(foodKey)
+            .Select(g => new { Key = g.Key, Amount = g.Sum(f => f.TotalPrice) })
             .ToListAsync();
 
-        var merged = invoiceRows.ToDictionary(r => (r.DayKey, r.GuidKey, r.IntKey));
-        foreach (var row in ticketRows)
+        // ValueTuple wrapper so a null key (e.g. an invoice without a theater) is a valid dictionary key.
+        var merged = new Dictionary<ValueTuple<TKey>, SalesAggregateRow>();
+        foreach (var r in invoiceRows)
         {
-            merged[(row.DayKey, row.GuidKey, row.IntKey)].TicketAmount = row.TicketAmount;
+            var row = new SalesAggregateRow
+            {
+                InvoiceCount = r.InvoiceCount,
+                FinalAmount = r.FinalAmount,
+                DiscountAmount = r.DiscountAmount
+            };
+            assignKey(row, r.Key);
+            merged[ValueTuple.Create(r.Key)] = row;
         }
-        foreach (var row in foodRows)
+        foreach (var r in ticketRows)
         {
-            merged[(row.DayKey, row.GuidKey, row.IntKey)].FoodAmount = row.FoodAmount;
+            merged[ValueTuple.Create(r.Key)].TicketAmount = r.Amount;
+        }
+        foreach (var r in foodRows)
+        {
+            merged[ValueTuple.Create(r.Key)].FoodAmount = r.Amount;
         }
         return merged.Values.ToList();
+    }
+
+    /// <summary>Re-expresses an invoice key selector over a line entity by substituting the line's Invoice navigation for the parameter.</summary>
+    private static Expression<Func<TLine, TKey>> Rebind<TLine, TKey>(Expression<Func<Invoice, TKey>> keySelector,
+        Expression<Func<TLine, Invoice>> navigation)
+    {
+        var body = new ParameterRebinder(keySelector.Parameters[0], navigation.Body).Visit(keySelector.Body);
+        return Expression.Lambda<Func<TLine, TKey>>(body, navigation.Parameters);
+    }
+
+    private sealed class ParameterRebinder : ExpressionVisitor
+    {
+        private readonly ParameterExpression _parameter;
+        private readonly Expression _replacement;
+
+        public ParameterRebinder(ParameterExpression parameter, Expression replacement)
+        {
+            _parameter = parameter;
+            _replacement = replacement;
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return node == _parameter ? _replacement : base.VisitParameter(node);
+        }
     }
 
     /// <summary>Movie: ticket lines only (food has no movie). 1 query.</summary>
