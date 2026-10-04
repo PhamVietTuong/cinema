@@ -226,5 +226,106 @@
       "received": "Received",
       "cancelled": "Cancelled"
     }
+  },
+  "gate": {
+    "section": "Gate",
+    "nav": {
+      "gate": "Ticket gate"
+    },
+    "pageTitle": "Ticket Gate",
+    "title": "Ticket gate",
+    "subtitle": "Scan tickets at the entrance, or look a booking up by code or phone.",
+    "tabScan": "Scan",
+    "tabLookup": "Lookup",
+    "pickTheater": "Choose a theater first",
+    "pickTheaterHint": "Pick the theater you are working at in the top bar to scan tickets.",
+    "scanLabel": "Scan the ticket QR code",
+    "scanPlaceholder": "Scan or type the ticket code, then press Enter",
+    "cameraStart": "Use camera",
+    "cameraStop": "Stop camera",
+    "showTimeFilter": "Only admit this showtime",
+    "anyShowTime": "Any showtime today",
+    "recent": "Recent scans",
+    "recentEmpty": "No tickets scanned yet.",
+    "ageRating": "Age rating: {{code}}",
+    "usedAt": "Used by {{by}} at {{at}}",
+    "ageQuestion": "This film is rated {{age}}+. Did you check the patron's age?",
+    "confirmAge": "Age confirmed - admit",
+    "denyAge": "Deny entry",
+    "next": "Next",
+    "outcome": {
+      "admitted": "Admitted",
+      "notFound": "Ticket not found",
+      "notPaid": "Ticket not paid or cancelled",
+      "alreadyUsed": "Ticket already used",
+      "wrongTheater": "Ticket is for another theater",
+      "wrongShowTime": "Wrong showtime",
+      "tooEarly": "Too early to enter",
+      "expired": "Showtime has ended",
+      "ageCheckRequired": "Age check required"
+    },
+    "lookup": {
+      "invoiceCode": "Booking code",
+      "phone": "Phone number",
+      "search": "Search",
+      "hint": "Shows today's paid tickets for this theater.",
+      "used": "Used",
+      "admit": "Admit",
+      "empty": "No matching tickets for today."
+    }
+  },
+  "auditLog": {
+    "section": "Reports",
+    "nav": {
+      "auditLog": "Audit log"
+    },
+    "pageTitle": "Audit Log",
+    "title": "Audit log",
+    "subtitle": "Sensitive staff actions, who did them and who approved them.",
+    "from": "From date",
+    "to": "To date",
+    "empty": "No audit entries match these filters.",
+    "col": {
+      "action": "Action",
+      "actor": "Performed by",
+      "approver": "Approved by",
+      "entity": "Entity",
+      "amount": "Amount",
+      "reason": "Reason"
+    },
+    "action": {
+      "other": "Other",
+      "overrideFailed": "Override failed",
+      "overridePinChanged": "Override PIN changed",
+      "priceOverride": "Price override",
+      "refund": "Refund",
+      "exchange": "Exchange",
+      "reprint": "Reprint",
+      "voidSale": "Void sale",
+      "cashPayOut": "Cash pay-out",
+      "drawerReconcile": "Drawer reconciliation",
+      "compensation": "Compensation",
+      "pointsAdjust": "Points adjustment",
+      "resendTicket": "Resend ticket",
+      "blockSeat": "Block seat",
+      "blockRoom": "Block room",
+      "ticketAdmitOverride": "Ticket admit override"
+    }
+  },
+  "profile": {
+    "myProfile": "My profile",
+    "title": "My profile",
+    "subtitle": "Your account and security settings.",
+    "account": "Account"
+  },
+  "pinSettings": {
+    "title": "Manager override PIN",
+    "hint": "Staff at the counter can ask you to approve sensitive actions by typing this PIN. Choose 4 to 8 digits and keep it private.",
+    "pin": "New PIN",
+    "confirmPin": "Confirm PIN",
+    "pinInvalid": "The PIN must be 4 to 8 digits.",
+    "mismatch": "The two PINs do not match.",
+    "save": "Save PIN",
+    "saved": "Override PIN saved."
   }
 }

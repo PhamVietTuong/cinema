@@ -4,7 +4,7 @@
     [menu]="menu"
     [user]="user$ | async"
     [userFallback]="userFallback"
-    [profileRoute]="null"
+    [profileRoute]="'/profile'"
     [showNotifications]="false"
     defaultTitleKey="pageTitle.default"
     (logout)="doLogout()">

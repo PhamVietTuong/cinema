@@ -17,7 +17,7 @@ export interface FilterBarOption {
 /** One control of the filter bar, bound to the form control named `key`. */
 export interface FilterBarField {
   key: string;
-  type: 'text' | 'select' | 'toggle';
+  type: 'text' | 'select' | 'toggle' | 'date';
   /** i18n key of the control label. */
   labelKey: string;
   /** `select` only: the choices. */
@@ -48,6 +48,12 @@ export interface FilterBarField {
                 <mat-form-field appearance="outline">
                   <mat-label>{{ field.labelKey | translate }}</mat-label>
                   <input matInput [formControlName]="field.key" (input)="filtersChange.emit()">
+                </mat-form-field>
+              }
+              @case ('date') {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ field.labelKey | translate }}</mat-label>
+                  <input matInput type="date" [formControlName]="field.key" (change)="filtersChange.emit()">
                 </mat-form-field>
               }
               @case ('select') {

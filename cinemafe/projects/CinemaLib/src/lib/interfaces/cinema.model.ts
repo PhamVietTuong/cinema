@@ -1,4 +1,5 @@
 import { CinemaServiceAgent } from '../services/cinema-http.service';
+import { StaffServiceAgent } from '../services/staff-http.service';
 
 /** Display role shown in the admin user list (derived from UserDTO.userTypeName). */
 export enum UserRole {
@@ -146,7 +147,73 @@ export const StockLevelPills: Record<StockLevel, { labelKey: string; cssClass: s
 };
 
 /** What `cl-status-pill` can render; each kind maps its `value` to a label key and pill class in this file. */
-export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel';
+export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction';
+
+/** Traffic-light tone of a gate scan result: green admits, amber needs the gate keeper's judgement, red refuses. */
+export type ScanTone = 'success' | 'warn' | 'danger';
+
+/** i18n label key (under `gate.outcome`) and tone for each gate ScanOutcome. */
+export const ScanOutcomeSpecs: Record<StaffServiceAgent.ScanOutcome, { labelKey: string; tone: ScanTone }> = {
+  [StaffServiceAgent.ScanOutcome.Admitted]: { labelKey: 'gate.outcome.admitted', tone: 'success' },
+  [StaffServiceAgent.ScanOutcome.NotFound]: { labelKey: 'gate.outcome.notFound', tone: 'danger' },
+  [StaffServiceAgent.ScanOutcome.NotPaid]: { labelKey: 'gate.outcome.notPaid', tone: 'danger' },
+  [StaffServiceAgent.ScanOutcome.AlreadyUsed]: { labelKey: 'gate.outcome.alreadyUsed', tone: 'danger' },
+  [StaffServiceAgent.ScanOutcome.WrongTheater]: { labelKey: 'gate.outcome.wrongTheater', tone: 'danger' },
+  [StaffServiceAgent.ScanOutcome.WrongShowTime]: { labelKey: 'gate.outcome.wrongShowTime', tone: 'warn' },
+  [StaffServiceAgent.ScanOutcome.TooEarly]: { labelKey: 'gate.outcome.tooEarly', tone: 'warn' },
+  [StaffServiceAgent.ScanOutcome.Expired]: { labelKey: 'gate.outcome.expired', tone: 'danger' },
+  [StaffServiceAgent.ScanOutcome.AgeCheckRequired]: { labelKey: 'gate.outcome.ageCheckRequired', tone: 'warn' },
+};
+
+/** Label key and tone of a scan outcome; an unknown value is treated as a refusal. */
+export function scanOutcomeSpec(outcome?: StaffServiceAgent.ScanOutcome): { labelKey: string; tone: ScanTone } {
+  return ScanOutcomeSpecs[outcome as StaffServiceAgent.ScanOutcome] ?? ScanOutcomeSpecs[StaffServiceAgent.ScanOutcome.NotFound];
+}
+
+/** CSS pill class for a scan tone. */
+export function scanToneCssClass(tone: ScanTone): string {
+  return 'ad-pill--' + tone;
+}
+
+/** i18n label key (under `auditLog.action`) for each AuditAction value. */
+export const AuditActionValues: { value: StaffServiceAgent.AuditAction; name: string }[] = [
+  { value: StaffServiceAgent.AuditAction.Other, name: 'auditLog.action.other' },
+  { value: StaffServiceAgent.AuditAction.OverrideFailed, name: 'auditLog.action.overrideFailed' },
+  { value: StaffServiceAgent.AuditAction.OverridePinChanged, name: 'auditLog.action.overridePinChanged' },
+  { value: StaffServiceAgent.AuditAction.PriceOverride, name: 'auditLog.action.priceOverride' },
+  { value: StaffServiceAgent.AuditAction.Refund, name: 'auditLog.action.refund' },
+  { value: StaffServiceAgent.AuditAction.Exchange, name: 'auditLog.action.exchange' },
+  { value: StaffServiceAgent.AuditAction.Reprint, name: 'auditLog.action.reprint' },
+  { value: StaffServiceAgent.AuditAction.VoidSale, name: 'auditLog.action.voidSale' },
+  { value: StaffServiceAgent.AuditAction.CashPayOut, name: 'auditLog.action.cashPayOut' },
+  { value: StaffServiceAgent.AuditAction.DrawerReconcile, name: 'auditLog.action.drawerReconcile' },
+  { value: StaffServiceAgent.AuditAction.Compensation, name: 'auditLog.action.compensation' },
+  { value: StaffServiceAgent.AuditAction.PointsAdjust, name: 'auditLog.action.pointsAdjust' },
+  { value: StaffServiceAgent.AuditAction.ResendTicket, name: 'auditLog.action.resendTicket' },
+  { value: StaffServiceAgent.AuditAction.BlockSeat, name: 'auditLog.action.blockSeat' },
+  { value: StaffServiceAgent.AuditAction.BlockRoom, name: 'auditLog.action.blockRoom' },
+  { value: StaffServiceAgent.AuditAction.TicketAdmitOverride, name: 'auditLog.action.ticketAdmitOverride' },
+];
+
+/** i18n label key for an AuditAction value. */
+export function auditActionLabel(action?: StaffServiceAgent.AuditAction): string {
+  return AuditActionValues.find(v => v.value === action)?.name ?? AuditActionValues[0].name;
+}
+
+/** CSS pill class for an AuditAction: failures red, money-affecting actions amber, the rest neutral. */
+export function auditActionPillClass(action?: StaffServiceAgent.AuditAction): string {
+  switch (action) {
+    case StaffServiceAgent.AuditAction.OverrideFailed: return 'ad-pill--danger';
+    case StaffServiceAgent.AuditAction.PriceOverride:
+    case StaffServiceAgent.AuditAction.Refund:
+    case StaffServiceAgent.AuditAction.VoidSale:
+    case StaffServiceAgent.AuditAction.CashPayOut:
+    case StaffServiceAgent.AuditAction.Compensation:
+    case StaffServiceAgent.AuditAction.PointsAdjust:
+    case StaffServiceAgent.AuditAction.TicketAdmitOverride: return 'ad-pill--warn';
+    default: return 'ad-pill--neutral';
+  }
+}
 
 /** Label (i18n key) and CSS class a `cl-status-pill` shows for a kind/value pair. */
 export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey: string; cssClass: string } {
@@ -161,6 +228,14 @@ export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey
     case 'storagePlan': {
       const status = value as CinemaServiceAgent.StoragePlanStatus;
       return { labelKey: storagePlanStatusLabel(status), cssClass: storagePlanStatusPillClass(status) };
+    }
+    case 'scanOutcome': {
+      const spec = scanOutcomeSpec(value as StaffServiceAgent.ScanOutcome);
+      return { labelKey: spec.labelKey, cssClass: scanToneCssClass(spec.tone) };
+    }
+    case 'auditAction': {
+      const action = value as StaffServiceAgent.AuditAction;
+      return { labelKey: auditActionLabel(action), cssClass: auditActionPillClass(action) };
     }
     case 'stockLevel': {
       return StockLevelPills[(value as StockLevel) ?? 'untracked'] ?? StockLevelPills.untracked;

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
+import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
 
 /**
  * Where each role lands from '/'. Everyone goes to /home until the role-specific pages
@@ -9,6 +9,10 @@ const STAFF_LANDING: Record<string, string> = {
   [UserRoles.Admin]: '/home',
   [UserRoles.TheaterManager]: '/home',
   [UserRoles.TheaterStaff]: '/home',
+  [UserRoles.RegionalManager]: '/home',
+  [UserRoles.BoxOfficeStaff]: '/home',
+  [UserRoles.KitchenStaff]: '/home',
+  [UserRoles.GateStaff]: '/gate',
 };
 
 export const routes: Routes = [
@@ -37,6 +41,22 @@ export const routes: Routes = [
       {
         path: 'home',
         loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+      },
+      // Gate: ticket scanning and lookup.
+      {
+        path: 'gate',
+        canActivate: [roleGuard(GATE_KEEPER_ROLES)],
+        loadChildren: () => import('./features/gate/gate.module').then(m => m.GateModule)
+      },
+      // Reports (audit log): management roles. The module's own routes match /audit-log.
+      {
+        path: '',
+        canActivate: [roleGuard(REPORTING_ROLES)],
+        loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule)
       },
       // Warehouse (inventory + storage plans): back-office roles. One pass-through entry loads WarehouseModule,
       // whose own routes match /inventory, /storage-plans and /storage-plans/:id.
