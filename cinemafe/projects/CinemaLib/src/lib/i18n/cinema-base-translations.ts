@@ -11,6 +11,17 @@ import { catchError, map } from 'rxjs/operators';
 export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   vi: {
     nav: { logout: 'Đăng Xuất' },
+    staffEnums: {
+      incidentCategory: {
+        other: 'Khác', seat: 'Ghế', room: 'Phòng chiếu', projection: 'Máy chiếu',
+        sound: 'Âm thanh', safety: 'An toàn', customer: 'Khách hàng', cleanliness: 'Vệ sinh',
+      },
+      incidentSeverity: { low: 'Thấp', medium: 'Trung bình', high: 'Cao', critical: 'Nghiêm trọng' },
+      incidentStatus: { open: 'Đang mở', resolved: 'Đã xử lý' },
+      checklistKind: { preShow: 'Trước suất chiếu', postShow: 'Sau suất chiếu' },
+      taskStatus: { open: 'Mới', inProgress: 'Đang làm', done: 'Hoàn thành', cancelled: 'Đã hủy' },
+      roomStatus: { active: 'Hoạt động', maintenance: 'Bảo trì', inactive: 'Ngừng hoạt động' },
+    },
     override: {
       title: 'Cần quản lý xác nhận',
       hint: 'Thao tác này cần quản lý xác nhận. Chọn người duyệt và nhập mã PIN của họ.',
@@ -56,6 +67,17 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   },
   en: {
     nav: { logout: 'Log Out' },
+    staffEnums: {
+      incidentCategory: {
+        other: 'Other', seat: 'Seat', room: 'Room', projection: 'Projection',
+        sound: 'Sound', safety: 'Safety', customer: 'Customer', cleanliness: 'Cleanliness',
+      },
+      incidentSeverity: { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' },
+      incidentStatus: { open: 'Open', resolved: 'Resolved' },
+      checklistKind: { preShow: 'Pre-show', postShow: 'Post-show' },
+      taskStatus: { open: 'Open', inProgress: 'In progress', done: 'Done', cancelled: 'Cancelled' },
+      roomStatus: { active: 'Active', maintenance: 'Maintenance', inactive: 'Inactive' },
+    },
     override: {
       title: 'Manager approval needed',
       hint: 'This action needs a manager. Pick the approver and enter their PIN.',

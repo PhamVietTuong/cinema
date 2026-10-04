@@ -226,5 +226,221 @@
       "received": "Đã nhập kho",
       "cancelled": "Đã hủy"
     }
+  },
+  "opsCommon": {
+    "pickTheater": "Chọn rạp để tiếp tục",
+    "pickTheaterHint": "Chọn rạp ở thanh trên cùng; dữ liệu này được quản lý theo từng rạp.",
+    "date": "Ngày",
+    "refresh": "Làm mới",
+    "back": "Quay lại",
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "note": "Ghi chú"
+  },
+  "schedule": {
+    "section": "Vận hành",
+    "nav": "Lịch chiếu",
+    "title": "Bảng lịch chiếu",
+    "subtitle": "Suất chiếu theo từng phòng trong ngày. Bấm vào suất chiếu để mở checklist.",
+    "prevDay": "Ngày trước",
+    "nextDay": "Ngày sau",
+    "today": "Hôm nay",
+    "seats": "ghế",
+    "legend": {
+      "showtime": "Suất chiếu",
+      "buffer": "Thời gian dọn phòng"
+    },
+    "bufferTitle": "Thời gian dọn phòng: {{minutes}} phút",
+    "openChecklist": "Mở checklist",
+    "empty": "Rạp chưa có phòng chiếu."
+  },
+  "incidents": {
+    "nav": "Sự cố",
+    "list": {
+      "title": "Sự cố",
+      "subtitle": "Các sự cố và vấn đề được báo cáo tại rạp.",
+      "report": "Báo cáo sự cố",
+      "empty": "Không có sự cố phù hợp với bộ lọc."
+    },
+    "fields": {
+      "title": "Tiêu đề",
+      "category": "Loại",
+      "severity": "Mức độ",
+      "description": "Mô tả",
+      "room": "Phòng chiếu",
+      "noRoom": "Không chọn phòng",
+      "seat": "Ghế",
+      "noSeat": "Không chọn ghế",
+      "location": "Vị trí",
+      "reportedBy": "Người báo cáo"
+    },
+    "report": {
+      "title": "Báo cáo sự cố",
+      "submit": "Báo cáo"
+    },
+    "detail": {
+      "blocking": "Đang chặn",
+      "blocksSeat": "Đã chặn ghế",
+      "blocksRoom": "Đã chặn phòng",
+      "resolution": "Xử lý",
+      "notFound": "Không tìm thấy sự cố."
+    },
+    "block": {
+      "title": "Chặn bán",
+      "hintApprover": "Ghế và phòng bị chặn sẽ không bán được. Các vé sắp tới được liệt kê để bạn chuyển khách; hệ thống không tự hủy vé.",
+      "hintOverride": "Chặn bán cần quản lý xác nhận: bạn sẽ được yêu cầu chọn người duyệt và nhập mã PIN. Các vé sắp tới sẽ được liệt kê sau đó; hệ thống không tự hủy vé.",
+      "seat": "Chặn ghế",
+      "room": "Chặn phòng"
+    },
+    "resolve": {
+      "title": "Xử lý sự cố",
+      "unblock": "Mở lại ghế hoặc phòng",
+      "unblockHint": "Mở bán lại những gì sự cố này đã chặn. Cần quản lý xác nhận.",
+      "action": "Đã xử lý",
+      "note": "Ghi chú xử lý"
+    },
+    "affected": {
+      "title": "Vé sắp tới bị ảnh hưởng",
+      "hint": "Hãy chuyển các khách này sang ghế hoặc suất chiếu khác. Chưa có vé nào bị hủy.",
+      "invoice": "Hóa đơn",
+      "customer": "Khách hàng",
+      "movie": "Phim",
+      "start": "Giờ chiếu",
+      "none": "Không có vé sắp tới bị ảnh hưởng."
+    },
+    "toast": {
+      "reported": "Đã báo cáo sự cố.",
+      "resolved": "Đã xử lý sự cố.",
+      "blocked": "Đã chặn bán."
+    }
+  },
+  "checklists": {
+    "nav": "Checklist",
+    "title": "Checklist",
+    "subtitle": "Kiểm tra trước và sau mỗi suất chiếu.",
+    "templates": {
+      "open": "Sửa mẫu",
+      "title": "Mẫu checklist",
+      "subtitle": "Các mục nhân viên cần tick trước và sau mỗi suất chiếu.",
+      "new": "Mẫu mới",
+      "items": "mục",
+      "inactive": "Không dùng",
+      "name": "Tên",
+      "kind": "Loại",
+      "active": "Đang dùng",
+      "itemsTitle": "Các mục",
+      "itemText": "Nội dung",
+      "moveUp": "Lên",
+      "moveDown": "Xuống",
+      "addItem": "Thêm mục",
+      "empty": "Chưa có mẫu nào."
+    },
+    "home": {
+      "time": "Giờ",
+      "movie": "Phim",
+      "empty": "Ngày này không có suất chiếu."
+    },
+    "run": {
+      "title": "Checklist",
+      "noTemplate": "Chưa có checklist",
+      "noTemplateHint": "Rạp chưa có mẫu đang dùng cho loại này.",
+      "progress": "Đã xong {{done}}/{{total}}",
+      "completedAt": "Hoàn thành lúc {{time}}",
+      "required": "Bắt buộc",
+      "note": "Ghi chú",
+      "missing": "Còn {{count}} mục bắt buộc chưa xong",
+      "complete": "Hoàn thành checklist"
+    },
+    "toast": {
+      "completed": "Đã hoàn thành checklist.",
+      "templateSaved": "Đã lưu mẫu."
+    }
+  },
+  "roster": {
+    "nav": "Lịch làm việc",
+    "title": "Lịch làm việc",
+    "subtitle": "Ca làm theo tuần. Bấm vào ngày để thêm ca, bấm vào ca để sửa.",
+    "prevWeek": "Tuần trước",
+    "nextWeek": "Tuần sau",
+    "thisWeek": "Tuần này",
+    "staff": "Nhân viên",
+    "hours": "Giờ",
+    "empty": "Rạp chưa có nhân viên.",
+    "dialog": {
+      "new": "Ca làm mới",
+      "edit": "Sửa ca làm",
+      "start": "Bắt đầu",
+      "end": "Kết thúc",
+      "overnightHint": "Giờ kết thúc bằng hoặc trước giờ bắt đầu nghĩa là ca kết thúc vào ngày hôm sau."
+    },
+    "errors": {
+      "invalidTime": "Nhập ngày và giờ hợp lệ."
+    },
+    "toast": {
+      "saved": "Đã lưu ca làm.",
+      "deleted": "Đã xóa ca làm."
+    }
+  },
+  "timeClock": {
+    "section": "Nhân sự",
+    "nav": "Chấm công",
+    "title": "Chấm công",
+    "subtitle": "Vào ca, ra ca và xem các ca sắp tới của bạn.",
+    "clockedIn": "Đang trong ca",
+    "clockedOut": "Chưa vào ca",
+    "since": "Từ {{time}}",
+    "clockIn": "Vào ca",
+    "clockOut": "Ra ca",
+    "myShifts": "Ca của tôi (14 ngày tới)",
+    "time": "Giờ",
+    "noShifts": "Chưa có ca nào.",
+    "timeSheet": "Bảng chấm công",
+    "load": "Xem",
+    "in": "Vào",
+    "out": "Ra",
+    "duration": "Thời lượng",
+    "open": "Đang mở",
+    "total": "Tổng",
+    "sheetEmpty": "Không có lượt chấm công trong khoảng này.",
+    "toast": {
+      "in": "Đã vào ca.",
+      "out": "Đã ra ca."
+    },
+    "errors": {
+      "range": "Chọn khoảng ngày hợp lệ, tối đa {{days}} ngày."
+    }
+  },
+  "tasks": {
+    "nav": "Việc của tôi",
+    "boardNav": "Bảng công việc",
+    "my": {
+      "title": "Việc của tôi",
+      "subtitle": "Các công việc được giao cho bạn.",
+      "showClosed": "Hiện việc đã xong và đã hủy",
+      "empty": "Không có công việc.",
+      "start": "Bắt đầu",
+      "done": "Hoàn thành",
+      "reopen": "Mở lại"
+    },
+    "fields": {
+      "title": "Tiêu đề",
+      "description": "Mô tả",
+      "assignee": "Người nhận",
+      "dueAt": "Hạn",
+      "createdBy": "Người giao"
+    },
+    "board": {
+      "title": "Bảng công việc",
+      "subtitle": "Giao và theo dõi công việc tại rạp.",
+      "new": "Việc mới",
+      "empty": "Không có công việc phù hợp với bộ lọc."
+    },
+    "dialog": {
+      "new": "Việc mới",
+      "edit": "Sửa công việc"
+    },
+    "toast": {
+      "saved": "Đã lưu công việc."
+    }
   }
 }
