@@ -1,17 +1,10 @@
-import { APPROVER_ROLES, StaffServiceAgent, apiErrorMessage } from 'CinemaLib';
+import { APPROVER_ROLES, StaffServiceAgent } from 'CinemaLib';
 
-/** Server answer for a sensitive action sent without (or with a wrong) manager override. */
-const OVERRIDE_REJECTION = /approval/i;
+export { isOverrideRejection } from '../../core/sensitive-call.service';
 
 /** A manager PIN is needed unless the signed-in user already holds an approver role. */
 export function needsManagerOverride(role: string | null | undefined): boolean {
   return !role || !APPROVER_ROLES.includes(role);
-}
-
-/** True when the API refused the call (403) because the manager approval was missing or wrong, so the PIN prompt should reopen. */
-export function isOverrideRejection(error: unknown): boolean {
-  const status = (error as { status?: number } | null | undefined)?.status;
-  return status === 403 && OVERRIDE_REJECTION.test(apiErrorMessage(error, ''));
 }
 
 /** Search needs at least one non-blank criterion. */

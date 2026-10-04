@@ -851,8 +851,34 @@
     },
     "exchange": {
       "button": "Đổi vé",
-      "disabledTip": "Đổi vé sắp có: cần màn chọn suất mới của quầy bán vé.",
-      "notEligibleTip": "Chỉ đổi được hóa đơn đã thanh toán tại quầy và chưa dùng vé (và tính năng đổi vé chưa sẵn sàng)."
+      "tip": "Thay hóa đơn quầy này bằng một giao dịch mới; chỉ phần chênh lệch giá được thu hoặc hoàn.",
+      "notEligibleTip": "Chỉ đổi được hóa đơn đã thanh toán tại quầy và chưa dùng vé.",
+      "title": "Đổi vé {{code}}",
+      "oldInvoice": "Hóa đơn được thay thế",
+      "hint": "Chọn suất chiếu, ghế và đồ ăn thay thế. Ghế của hóa đơn cũ được trả lại khi xác nhận đổi.",
+      "difference": "Chênh lệch giá",
+      "oldAmount": "Hóa đơn cũ",
+      "newAmount": "Tổng mới",
+      "collect": "Cần thu thêm",
+      "payBack": "Cần hoàn lại",
+      "even": "Cùng giá, không phải thanh toán",
+      "refundTender": "Hoàn chênh lệch bằng",
+      "collectTitle": "Thu phần chênh lệch",
+      "confirm": "Xác nhận đổi vé",
+      "reasonTitle": "Lý do đổi vé",
+      "reasonHint": "Đổi vé được ghi nhật ký và cần quản lý duyệt. Hãy chọn lý do.",
+      "done": "Đã đổi vé",
+      "collected": "Đã thu",
+      "paidBack": "Đã hoàn",
+      "success": "Đã đổi vé. Hóa đơn mới {{code}}.",
+      "failed": "Đổi vé không thành công.",
+      "error": {
+        "noItems": "Hãy chọn ghế hoặc đồ ăn thay thế trước.",
+        "noQuote": "Đang chờ tổng tiền mới...",
+        "tendersIncomplete": "Các khoản thanh toán chưa đủ phần chênh lệch.",
+        "drawer": "Hãy mở két tiền của bạn trước.",
+        "busy": "Đang đổi vé..."
+      }
     },
     "reprint": {
       "button": "In lại vé",
@@ -940,6 +966,102 @@
       "confirm": "Đối soát",
       "note": "Ghi chú",
       "done": "Đã đối soát két."
+    }
+  },
+  "customerService": {
+    "section": "Chăm sóc khách hàng",
+    "nav": {
+      "lookup": "Tra cứu khách hàng",
+      "complaints": "Khiếu nại"
+    },
+    "lookup": {
+      "title": "Tra cứu khách hàng",
+      "subtitle": "Tìm khách hàng và các đơn đặt gần nhất, gửi lại vé điện tử hoặc ghi nhận khiếu nại.",
+      "query": "Email, số điện thoại hoặc mã đơn",
+      "queryHint": "Email (có @), số điện thoại chính xác hoặc mã hóa đơn",
+      "search": "Tìm kiếm",
+      "hint": "Tìm khách hàng để xem thẻ khách và các đơn đặt.",
+      "notFound": "Không có khách hàng hay đơn đặt nào khớp.",
+      "noTier": "Chưa có hạng thành viên",
+      "points": "{{points}} điểm"
+    },
+    "invoices": {
+      "code": "Đơn đặt",
+      "theater": "Rạp",
+      "movie": "Phim",
+      "showtime": "Suất chiếu",
+      "amount": "Số tiền"
+    },
+    "resend": {
+      "button": "Gửi lại vé",
+      "tip": "Gửi lại vé điện tử qua email hoặc SMS",
+      "exhausted": "Đã hết lượt gửi lại trong giờ này cho đơn này",
+      "title": "Gửi lại vé điện tử {{code}}",
+      "hint": "Gửi tới liên hệ đã lưu, trừ khi bạn nhập địa chỉ khác. Giao dịch khách vãng lai không có liên hệ cần nhập địa chỉ.",
+      "remaining": "Lượt gửi lại còn lại trong giờ này: {{remaining}}/{{max}}",
+      "channel": "Kênh gửi",
+      "address": "Địa chỉ (không bắt buộc)",
+      "addressHint": "Địa chỉ email hoặc số điện thoại",
+      "send": "Gửi",
+      "success": "Đã gửi vé {{code}} tới {{address}}. Lượt gửi lại còn lại trong giờ này: {{remaining}}.",
+      "failed": "Không gửi được vé điện tử.",
+      "error": {
+        "email": "Nhập địa chỉ email hợp lệ.",
+        "phone": "Nhập số điện thoại hợp lệ."
+      }
+    },
+    "complaint": {
+      "new": "Khiếu nại mới",
+      "createTitle": "Khiếu nại mới",
+      "editTitle": "Sửa khiếu nại",
+      "category": "Loại khiếu nại",
+      "description": "Nội dung",
+      "customer": "Khách hàng",
+      "invoice": "Đơn đặt",
+      "assignedTo": "Người xử lý",
+      "fileFor": "Ghi nhận khiếu nại cho đơn này",
+      "created": "Đã ghi nhận khiếu nại.",
+      "saveFailed": "Không lưu được khiếu nại."
+    },
+    "list": {
+      "title": "Khiếu nại",
+      "subtitle": "Khiếu nại của khách tại các rạp của bạn.",
+      "empty": "Không có khiếu nại phù hợp."
+    },
+    "detail": {
+      "workflow": "Quy trình xử lý",
+      "edit": "Sửa",
+      "startReview": "Bắt đầu xử lý",
+      "reject": "Từ chối",
+      "rejectTitle": "Từ chối khiếu nại",
+      "rejectHint": "Khiếu nại được đóng mà không đền bù. Hãy nhập lý do.",
+      "rejectReason": "Lý do",
+      "resolve": "Giải quyết",
+      "reviewStarted": "Đã bắt đầu xử lý.",
+      "rejected": "Đã từ chối khiếu nại.",
+      "resolved": "Đã giải quyết khiếu nại: {{resolution}}.",
+      "outcome": "Kết quả",
+      "notFound": "Không tìm thấy khiếu nại."
+    },
+    "resolve": {
+      "title": "Giải quyết khiếu nại",
+      "approverHint": "Khoản đền bù này được ghi nhận với bạn là người duyệt.",
+      "pinHint": "Khoản đền bù này cần quản lý duyệt: bạn sẽ được yêu cầu nhập mã PIN của quản lý.",
+      "resolution": "Hình thức giải quyết",
+      "amount": "Số tiền (VND)",
+      "points": "Số điểm",
+      "refundHint": "Hoàn tiền toàn bộ đơn {{code}}.",
+      "refundTender": "Hoàn bằng",
+      "refundReference": "Mã tham chiếu",
+      "note": "Ghi chú",
+      "confirm": "Giải quyết",
+      "error": {
+        "resolution": "Chọn hình thức giải quyết mà khiếu nại cho phép.",
+        "amount": "Nhập số tiền lớn hơn 0.",
+        "pointsWhole": "Số điểm phải là số nguyên.",
+        "tender": "Chọn cách hoàn tiền.",
+        "reference": "Hoàn qua thẻ hoặc QR cần mã tham chiếu."
+      }
     }
   }
 }

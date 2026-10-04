@@ -1,0 +1,15 @@
+// Small helpers shared by the counter components (POS page, exchange dialog, cart, summary, tender panel).
+.pos-muted { color: var(--ml-muted); font-size: 0.85rem; margin: 4px 0; }
+.pos-warn {
+  margin: 8px 0; padding: 8px 12px; border-radius: var(--ml-r-sm);
+  background: var(--ml-warn-soft); color: var(--ml-warn-ink); font-size: 0.85rem;
+}
+.pos-full { width: 100%; margin-top: 12px; }
+.pos-grow { flex: 1; }
+.pos-inline { display: flex; gap: 8px; align-items: center; }
+.pos-flag { font-size: 16px; width: 16px; height: 16px; vertical-align: middle; color: var(--ml-warn-ink); }
+.pos-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.7rem;
+  background: var(--ml-action-soft); color: var(--ml-action-strong);
+  &--danger { background: var(--ml-warn-soft); color: var(--ml-warn-ink); }
+}
