@@ -243,7 +243,6 @@ export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey
   }
 }
 
-import { StaffServiceAgent } from '../services/staff-http.service';
 
 /** i18n-key label for each counter payment tender a cashier can take. */
 export const CounterTenderValues: { value: StaffServiceAgent.PaymentTender; name: string }[] = [
