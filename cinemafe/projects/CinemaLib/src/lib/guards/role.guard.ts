@@ -3,7 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { map, take } from 'rxjs/operators';
 import { selectCurrentUser } from '../store/auth/auth.selectors';
-import { BACK_OFFICE_ROLES, UserRoles } from '../models/roles.models';
+import { UserRoles } from '../models/roles.models';
 
 /**
  * Allows users whose role is in `roles`, otherwise sends them to /forbidden
@@ -21,8 +21,8 @@ export function roleGuard(roles: readonly string[]): CanActivateFn {
 }
 
 /**
- * Landing redirect for the admin app root: Admin -> /dashboard, other back-office
- * roles -> /inventory, everyone else -> /forbidden.
+ * Landing redirect for the admin app root: Admin -> /dashboard, everyone else -> /forbidden
+ * (staff roles use the CinemaStaff app).
  */
 export const homeRedirectGuard: CanActivateFn = () => {
   const store = inject(Store);
@@ -33,9 +33,6 @@ export const homeRedirectGuard: CanActivateFn = () => {
       const role = user?.userTypeName ?? '';
       if (role === UserRoles.Admin) {
         return router.createUrlTree(['/dashboard']);
-      }
-      if (BACK_OFFICE_ROLES.includes(role)) {
-        return router.createUrlTree(['/inventory']);
       }
       return router.createUrlTree(['/forbidden']);
     })

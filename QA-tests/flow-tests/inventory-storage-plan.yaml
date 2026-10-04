@@ -47,7 +47,7 @@ trigger_paths:
   - "Cinema/3-Data/Cinema.Data/Configurations/InventoryConfiguration.cs"
   - "Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs"
   - "Cinema/1-Service/Cinema.Service.WebApiHost/Helpers/ClaimsPrincipalExtensions.cs"
-  - "projects/CinemaAdmin/src/app/features/modules/inventory/"
+  - "projects/CinemaStaff/src/app/features/warehouse/"
   - "projects/CinemaAdmin/src/app/features/modules/overview/theaters/food-and-drink.dialog.ts"
   - "projects/CinemaAdmin/src/app/features/modules/overview/theaters/food-and-drink.dialog.html"
 
@@ -385,14 +385,14 @@ static_checks:
   - id: SC-INV-21
     severity: P1
     description: >
-      Frontend: admin inventory feature module exists with its storage-plan pages, and the food dialog
+      Frontend: the CinemaStaff warehouse feature module exists with its storage-plan pages, and the food dialog
       (theaters) still exists to edit name/price only.
     files:
-      - "projects/CinemaAdmin/src/app/features/modules/inventory/inventory.module.ts"
+      - "projects/CinemaStaff/src/app/features/warehouse/warehouse.module.ts"
       - "projects/CinemaAdmin/src/app/features/modules/overview/theaters/food-and-drink.dialog.ts"
     must_contain:
-      - pattern: "InventoryModule"
-        rationale: "Inventory lazy module"
+      - pattern: "WarehouseModule"
+        rationale: "Warehouse lazy module (CinemaStaff)"
       - pattern: "FoodAndDrinkDialog"
         rationale: "Food dialog component"
 
@@ -412,13 +412,23 @@ build_checks:
     timeout_seconds: 600
 
   - id: BC-INV-FE-ADMIN
-    description: "CinemaAdmin builds (inventory, storage plans, food dialog)"
+    description: "CinemaAdmin builds (food dialog, admin-only shell)"
     cwd: "E:/cinema/cinemafe"
     command: "npx ng build CinemaAdmin --configuration development"
     expected_exit_code: 0
     timeout_seconds: 600
     skip_if_unchanged:
       - "projects/CinemaAdmin/**"
+      - "projects/CinemaLib/**"
+
+  - id: BC-INV-FE-STAFF
+    description: "CinemaStaff builds (warehouse: inventory, storage plans)"
+    cwd: "E:/cinema/cinemafe"
+    command: "npx ng build CinemaStaff --configuration development"
+    expected_exit_code: 0
+    timeout_seconds: 600
+    skip_if_unchanged:
+      - "projects/CinemaStaff/**"
       - "projects/CinemaLib/**"
 
   - id: BC-INV-FE-USER
@@ -437,7 +447,7 @@ build_checks:
 playbook:
   prerequisites:
     - "Backend on http://localhost:5102 with the inventory schema applied (upgrade_db.sql / create_db.sql); seed accounts created"
-    - "FE: ng serve CinemaAdmin (http://localhost:4201) and ng serve CinemaUser (http://localhost:4200)"
+    - "FE: ng serve CinemaStaff (http://localhost:4203, the Warehouse lives here), ng serve CinemaAdmin (http://localhost:4201, Admin-only) and ng serve CinemaUser (http://localhost:4202)"
     - "Accounts: admin@cinema.vn, a TheaterManager and a TheaterStaff pinned to theater A, plus user@cinema.vn; theater B exists with its own food"
     - "Theater A has two foods (e.g. Popcorn, Cola) and an upcoming showtime"
   scenarios:

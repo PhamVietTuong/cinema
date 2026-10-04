@@ -9,7 +9,8 @@ import { StoragePlanDetailComponent } from './storage-plans/storage-plan-detail.
 /**
  * Warehouse pages for all back-office roles (Admin, TheaterManager, TheaterStaff):
  * inventory and storage (restock) plans. Mounted behind roleGuard(BACK_OFFICE_ROLES)
- * via one pass-through entry in app.routes.ts.
+ * via one pass-through entry in app.routes.ts. Every page is scoped to the theater from
+ * TheaterContextService.
  */
 const routes: Routes = [
   { path: 'inventory', component: InventoryListComponent },
@@ -26,4 +27,4 @@ const routes: Routes = [
     RouterModule.forChild(routes),
   ],
 })
-export class InventoryModule {}
+export class WarehouseModule {}

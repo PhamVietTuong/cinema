@@ -1,10 +1,10 @@
-import { BACK_OFFICE_ROLES, NavSection, UserRoles } from 'CinemaLib';
+import { NavSection, UserRoles } from 'CinemaLib';
 
 const ADMIN_ONLY: readonly string[] = [UserRoles.Admin];
 
 /**
  * CinemaAdmin sidebar. Items without `titleKey` fall back to the shell's default topbar title.
- * The Warehouse section stays open to every back-office role until it moves to CinemaStaff.
+ * Admin-only: the Warehouse lives in the CinemaStaff app.
  */
 export const ADMIN_MENU: NavSection[] = [
   {
@@ -36,13 +36,6 @@ export const ADMIN_MENU: NavSection[] = [
       { icon: 'receipt_long', labelKey: 'nav.invoices', route: '/invoices', titleKey: 'pageTitle.invoices', roles: ADMIN_ONLY },
       { icon: 'forum', labelKey: 'nav.comments', route: '/comments', roles: ADMIN_ONLY },
       { icon: 'card_giftcard', labelKey: 'nav.giftCards', route: '/gift-cards', roles: ADMIN_ONLY },
-    ],
-  },
-  {
-    titleKey: 'warehouse.section',
-    items: [
-      { icon: 'inventory_2', labelKey: 'warehouse.nav.inventory', route: '/inventory', titleKey: 'warehouse.pageTitle.inventory', roles: BACK_OFFICE_ROLES },
-      { icon: 'assignment', labelKey: 'warehouse.nav.storagePlans', route: '/storage-plans', titleKey: 'warehouse.pageTitle.storagePlans', roles: BACK_OFFICE_ROLES },
     ],
   },
 ];

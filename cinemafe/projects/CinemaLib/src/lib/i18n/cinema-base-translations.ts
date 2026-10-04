@@ -11,6 +11,20 @@ import { catchError, map } from 'rxjs/operators';
 export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   vi: {
     nav: { logout: 'Đăng Xuất' },
+    common: {
+      actions: 'Thao Tác',
+      all: 'Tất Cả',
+      cancel: 'Hủy',
+      close: 'Đóng',
+      createdAt: 'Ngày Tạo',
+      filters: 'Bộ Lọc',
+      name: 'Tên',
+      remove: 'Xóa',
+      required: 'Trường này là bắt buộc.',
+      save: 'Lưu',
+      status: 'Trạng Thái',
+      totalEntries: 'Tổng cộng',
+    },
     topbar: {
       lightMode: 'Chế độ sáng',
       darkMode: 'Chế độ tối',
@@ -33,6 +47,20 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   },
   en: {
     nav: { logout: 'Log Out' },
+    common: {
+      actions: 'Actions',
+      all: 'All',
+      cancel: 'Cancel',
+      close: 'Close',
+      createdAt: 'Created At',
+      filters: 'Filters',
+      name: 'Name',
+      remove: 'Remove',
+      required: 'This field is required.',
+      save: 'Save',
+      status: 'Status',
+      totalEntries: 'in total',
+    },
     topbar: {
       lightMode: 'Light mode',
       darkMode: 'Dark mode',

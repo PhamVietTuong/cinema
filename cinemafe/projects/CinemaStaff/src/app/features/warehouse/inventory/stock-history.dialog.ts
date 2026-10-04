@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {
-  CinemaServiceAgent, SharedModule, StockMovementTypeValues, StockReasonCodeValues,
+  CinemaServiceAgent, EmptyStateComponent, SharedModule, StockMovementTypeValues, StockReasonCodeValues,
   showException,
 } from 'CinemaLib';
 
@@ -14,7 +14,7 @@ export interface StockHistoryDialogData {
 @Component({
   selector: 'app-stock-history-dialog',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, EmptyStateComponent],
   template: `
     <div mat-dialog-title class="dialog-title">{{ 'inventory.history.title' | translate }}: {{ _data.item.name }}</div>
     <mat-dialog-content>
@@ -44,7 +44,7 @@ export interface StockHistoryDialogData {
             </tr>
           </tbody>
         </table>
-        <div *ngIf="!rows.length && !loading" class="ad-empty"><mat-icon>history</mat-icon><p>{{ 'inventory.history.empty' | translate }}</p></div>
+        <cl-empty-state *ngIf="!rows.length && !loading" icon="history" messageKey="inventory.history.empty" />
         <div *ngIf="loading" class="ad-empty"><mat-spinner diameter="28"></mat-spinner></div>
       </div>
       <mat-paginator

@@ -59,7 +59,7 @@
 
         <ngx-datatable-column [name]="'common.status' | translate" prop="status" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <span class="ad-pill" [ngClass]="statusClass(row.status)">{{ statusLabel(row.status) | translate }}</span>
+            <cl-status-pill kind="invoice" [value]="row.status" />
           </ng-template>
         </ngx-datatable-column>
 
@@ -96,7 +96,7 @@
           <div class="ad-mobile-card-row"><span>{{ 'invoices.finalAmount' | translate }}</span><span>{{ row.finalAmount | number:'1.0-0' }}đ</span></div>
           <div class="ad-mobile-card-row">
             <span>{{ 'common.status' | translate }}</span>
-            <span class="ad-pill" [ngClass]="statusClass(row.status)">{{ statusLabel(row.status) | translate }}</span>
+            <cl-status-pill kind="invoice" [value]="row.status" />
           </div>
           <div class="ad-mobile-card-row"><span>{{ 'common.createdAt' | translate }}</span><span>{{ row.creationTime | date:'dd/MM/yy HH:mm' }}</span></div>
           <div class="ad-mobile-card-actions">

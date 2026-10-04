@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard, roleGuard, homeRedirectGuard, BACK_OFFICE_ROLES } from 'CinemaLib';
+import { authGuard, adminGuard, homeRedirectGuard } from 'CinemaLib';
 
 export const routes: Routes = [
   // Convenience aliases so /login and /auth/login both work
@@ -21,9 +21,10 @@ export const routes: Routes = [
   },
   {
     path: '',
-    canActivate: [authGuard],
+    // CinemaAdmin is Admin-only: staff roles are sent to /forbidden, which links to the Staff app.
+    canActivate: [authGuard, adminGuard],
     children: [
-      // Role-aware landing: Admin -> /dashboard, other back-office roles -> /inventory.
+      // Landing: Admin -> /dashboard, everyone else -> /forbidden.
       { path: '', pathMatch: 'full', canActivate: [homeRedirectGuard], children: [] },
       {
         path: 'profile',
@@ -56,12 +57,6 @@ export const routes: Routes = [
         path: '',
         canActivate: [adminGuard],
         loadChildren: () => import('./features/modules/operations/operations.module').then(m => m.OperationsModule)
-      },
-      // ── Warehouse (inventory + storage plans): all back-office roles ───────────
-      {
-        path: '',
-        canActivate: [roleGuard(BACK_OFFICE_ROLES)],
-        loadChildren: () => import('./features/modules/inventory/inventory.module').then(m => m.InventoryModule)
       }
     ]
   },

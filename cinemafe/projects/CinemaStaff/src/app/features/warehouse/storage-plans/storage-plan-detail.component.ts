@@ -1,7 +1,6 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of, Subscription } from 'rxjs';
@@ -9,20 +8,17 @@ import { map, switchMap, take } from 'rxjs/operators';
 import {
   CinemaServiceAgent,
   DialogService,
+  EmptyStateComponent,
   SharedModule,
-  selectIsAdmin,
+  StatusPillComponent,
   selectIsStockApprover,
-  selectUserTheaterId,
-  storagePlanStatusLabel,
-  storagePlanStatusPillClass,
   showError,
   showException,
   showLoading,
   hideLoading,
   showSuccess,
 } from 'CinemaLib';
-import { RejectPlanDialog } from './reject-plan.dialog';
-import { ReceivePlanDialog } from './receive-plan.dialog';
+import { TheaterContextService } from '../../../core/theater-context.service';
 
 const Status = CinemaServiceAgent.StoragePlanStatus;
 const MAX_QUANTITY = 100000;
@@ -37,10 +33,15 @@ interface ItemMeta {
 
 /** Storage plan editor / viewer plus the whole approval workflow (submit, approve, reject, receive, cancel). */
 @Component({
-  selector: 'app-storage-plan-detail',
+  selector: 'staff-storage-plan-detail',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, StatusPillComponent, EmptyStateComponent],
   template: `
+@if (noTheater) {
+  <div class="ad-page">
+    <cl-empty-state icon="theaters" messageKey="warehouse.pickTheater" hintKey="warehouse.pickTheaterHint" />
+  </div>
+} @else {
 <div class="ad-page">
   <div class="ad-page-header">
     <div>
@@ -48,7 +49,7 @@ interface ItemMeta {
       <h1 class="ad-h1">
         {{ (plan ? plan.code : ('storagePlans.detail.newTitle' | translate)) }}
         @if (plan) {
-          <span class="ad-pill status-pill" [ngClass]="pillClass(plan.status)">{{ statusLabel(plan.status) | translate }}</span>
+          <cl-status-pill class="status-pill" kind="storagePlan" [value]="plan.status" />
         }
       </h1>
       <p class="ad-sub">{{ 'storagePlans.detail.subtitle' | translate }}</p>
@@ -71,15 +72,7 @@ interface ItemMeta {
     <form [formGroup]="form" class="plan-form">
       <div class="ad-field">
         <label class="ad-label">{{ 'storagePlans.list.theater' | translate }}</label>
-        <select class="ad-select" formControlName="theaterId" (change)="onTheaterChange()">
-          <option value="">{{ 'storagePlans.detail.selectTheater' | translate }}</option>
-          @for (t of theaters; track t.id) {
-            <option [value]="t.id">{{ t.name }}</option>
-          }
-        </select>
-        @if (showError('theaterId')) {
-          <span class="ad-field-err">{{ 'common.required' | translate }}</span>
-        }
+        <input class="ad-input" [value]="theaterLabel" readonly>
       </div>
       <div class="ad-field">
         <label class="ad-label">{{ 'storagePlans.list.targetDate' | translate }}</label>
@@ -194,7 +187,7 @@ interface ItemMeta {
       </table>
     </div>
     @if (!itemGroups.length) {
-      <div class="ad-empty"><mat-icon>inventory_2</mat-icon><p>{{ 'storagePlans.detail.noItems' | translate }}</p></div>
+      <cl-empty-state messageKey="storagePlans.detail.noItems" />
     }
   </div>
 
@@ -229,6 +222,7 @@ interface ItemMeta {
     }
   </div>
 </div>
+}
 `,
   styles: [`
     .status-pill { margin-left: 8px; vertical-align: middle; }
@@ -255,22 +249,23 @@ interface ItemMeta {
 export class StoragePlanDetailComponent implements OnInit, OnDestroy {
   readonly Status = Status;
   readonly maxQuantity = MAX_QUANTITY;
-  readonly statusLabel = storagePlanStatusLabel;
+
+  /** The theater the staff app is scoped to (own theater, or the one an Admin picked in the topbar). */
+  private readonly _theaterContext = inject(TheaterContextService);
 
   planId = 'new';
   plan: CinemaServiceAgent.StoragePlanDTO | null = null;
-  theaters: CinemaServiceAgent.TheaterDTO[] = [];
   inventory: CinemaServiceAgent.InventoryItemDTO[] = [];
   form: FormGroup;
   today = this._toInputDate(new Date());
   busy = false;
-  isAdmin = false;
   isApprover = false;
-  userTheaterId = '';
 
   private readonly _meta = new Map<string, ItemMeta>();
   private readonly _receivedByItem = new Map<string, number | undefined>();
   private _routeSub?: Subscription;
+  /** False until the route param is read, so the theater effect doesn't load stock for a plan that is about to be opened. */
+  private _routeResolved = false;
 
   constructor(
     private _route: ActivatedRoute,
@@ -278,7 +273,6 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
     private _fb: FormBuilder,
     private _cinema: CinemaServiceAgent.HttpService,
     private _store: Store<any>,
-    private _dialog: MatDialog,
     private _dialogService: DialogService,
     private _cd: ChangeDetectorRef,
     private _translate: TranslateService,
@@ -290,21 +284,35 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
       note: [''],
       items: this._fb.array([]),
     });
+
+    // A new plan follows the topbar theater: an Admin switching theaters starts the plan over for that one.
+    effect(() => {
+      const theaterId = this._theaterContext.currentTheaterId() ?? '';
+      if (this._routeResolved && this.isNew && this.form.getRawValue().theaterId !== theaterId) {
+        this.itemsArray.clear();
+        this.form.controls['theaterId'].setValue(theaterId);
+        this._loadInventory(theaterId);
+        this._cd.markForCheck();
+      }
+    });
+  }
+
+  /** Theater name shown read-only in the info card. */
+  get theaterLabel(): string {
+    return this.plan?.theaterName ?? this._theaterContext.currentTheaterName() ?? '';
+  }
+
+  /** A new plan needs a theater, and an Admin has none until they pick one in the topbar. */
+  get noTheater(): boolean {
+    return this.isNew && !this.form.getRawValue().theaterId;
   }
 
   ngOnInit(): void {
-    this._store.select(selectIsAdmin).pipe(take(1)).subscribe(v => { this.isAdmin = v; });
     this._store.select(selectIsStockApprover).pipe(take(1)).subscribe(v => { this.isApprover = v; });
-    this._store.select(selectUserTheaterId).pipe(take(1)).subscribe(v => { this.userTheaterId = v ?? ''; });
-
-    this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
-      .subscribe(r => {
-        this.theaters = r.results ?? [];
-        this._cd.markForCheck();
-      });
 
     this._routeSub = this._route.paramMap.subscribe(params => {
       this.planId = params.get('id') ?? 'new';
+      this._routeResolved = true;
       if (this.planId === 'new') {
         this._startNew();
       } else {
@@ -357,10 +365,6 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
     return this.availableItems.filter(i => i.isLowStock);
   }
 
-  pillClass(status?: CinemaServiceAgent.StoragePlanStatus): string {
-    return storagePlanStatusPillClass(status);
-  }
-
   meta(g: FormGroup): ItemMeta {
     return this._meta.get(g.value.foodAndDrinkId) ?? { name: '', onHand: 0, target: 0, suggested: 0 };
   }
@@ -381,7 +385,7 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
     this.itemsArray.clear();
     this._meta.clear();
     this._receivedByItem.clear();
-    this.form.reset({ theaterId: this.isAdmin ? '' : this.userTheaterId, targetDate: this.today, supplier: '', note: '' });
+    this.form.reset({ theaterId: this._theaterContext.currentTheaterId() ?? '', targetDate: this.today, supplier: '', note: '' });
     this._applyEnabledState();
     this._loadInventory(this.form.getRawValue().theaterId);
     this._cd.markForCheck();
@@ -435,9 +439,7 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
   private _applyEnabledState(): void {
     if (this.editable) {
       this.form.enable({ emitEvent: false });
-      if (!this.isNew || !this.isAdmin) {
-        this.form.controls['theaterId'].disable({ emitEvent: false });
-      }
+      this.form.controls['theaterId'].disable({ emitEvent: false });
     } else {
       this.form.disable({ emitEvent: false });
     }
@@ -478,11 +480,6 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
       unitCost: [unitCost ?? null, [Validators.min(0)]],
       note: [note ?? ''],
     });
-  }
-
-  onTheaterChange(): void {
-    this.itemsArray.clear();
-    this._loadInventory(this.form.value.theaterId);
   }
 
   addItem(id: string): void {
@@ -539,9 +536,14 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
   }
 
   reject(): void {
-    this._dialog.open(RejectPlanDialog, { width: '480px' }).afterClosed().subscribe(reason => {
-      if (reason) {
-        this._run(this._cinema.rejectStoragePlan(this._decision(this.planId, reason)).pipe(map(plan => ({ plan, navigate: false }))), true);
+    this._dialogService.openReasonDialog({
+      titleKey: 'storagePlans.reject.title',
+      confirmKey: 'storagePlans.actions.reject',
+      confirmColor: 'warn',
+      note: { labelKey: 'storagePlans.reject.reason', placeholderKey: 'storagePlans.reject.reasonPlaceholder', required: true },
+    }).afterClosed().subscribe(result => {
+      if (result?.note) {
+        this._run(this._cinema.rejectStoragePlan(this._decision(this.planId, result.note)).pipe(map(plan => ({ plan, navigate: false }))), true);
       }
     });
   }
@@ -550,14 +552,32 @@ export class StoragePlanDetailComponent implements OnInit, OnDestroy {
     if (!this.plan) {
       return;
     }
-    this._dialog.open(ReceivePlanDialog, { width: '520px', data: { items: this.plan.items ?? [] } })
-      .afterClosed().subscribe((items: CinemaServiceAgent.ReceiveStoragePlanItem[] | undefined) => {
-        if (items) {
-          this._run(this._cinema.receiveStoragePlan(CinemaServiceAgent.ReceiveStoragePlanRequest.fromJS({
-            id: this.planId, items,
-          })).pipe(map(plan => ({ plan, navigate: false }))), true);
-        }
-      });
+    const planned = this._translate.instant('storagePlans.receive.planned');
+    this._dialogService.openReasonDialog({
+      titleKey: 'storagePlans.receive.title',
+      hintKey: 'storagePlans.receive.hint',
+      confirmKey: 'storagePlans.actions.receive',
+      lines: {
+        labelKey: 'storagePlans.receive.actual',
+        errorKey: 'storagePlans.errors.receivedRange',
+        items: (this.plan.items ?? []).map(item => ({
+          id: item.id as string,
+          label: item.foodAndDrinkName ?? '',
+          hint: `${planned}: ${item.plannedQuantity}`,
+          value: item.plannedQuantity ?? 0,
+        })),
+      },
+    }).afterClosed().subscribe(result => {
+      if (result?.lines) {
+        const items = result.lines.map(line => CinemaServiceAgent.ReceiveStoragePlanItem.fromJS({
+          storagePlanItemId: line.id,
+          receivedQuantity: line.quantity,
+        }));
+        this._run(this._cinema.receiveStoragePlan(CinemaServiceAgent.ReceiveStoragePlanRequest.fromJS({
+          id: this.planId, items,
+        })).pipe(map(plan => ({ plan, navigate: false }))), true);
+      }
+    });
   }
 
   cancelPlan(): void {

@@ -86,6 +86,7 @@
   input { accent-color: var(--ad-primary); width: 15px; height: 15px; } }
 .forgot { color: var(--ad-primary-strong); text-decoration: none; &:hover { text-decoration: underline; } }
 
+.login-notice-link { color: inherit; font-weight: 600; text-decoration: underline; white-space: nowrap; }
 .login-error {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 12px; border-radius: var(--ad-r-sm);
