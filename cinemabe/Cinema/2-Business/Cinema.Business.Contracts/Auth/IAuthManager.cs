@@ -23,4 +23,10 @@ public interface IAuthManager
     Task<UserDTO> CreateUserAsync(CreateUserRequest request);
     Task<UserDTO> UpdateUserAsync(UpdateUserRequest request);
     Task DeleteUserAsync(Guid id);
+
+    /// <summary>The theaters assigned to a RegionalManager (empty if none). 404 if the user does not exist; 400 if the user is not a RegionalManager.</summary>
+    Task<UserTheatersDTO> GetUserTheatersAsync(Guid userId);
+
+    /// <summary>Replaces a RegionalManager's theater assignments with exactly the given set (may be empty). 400 for another role or an unknown theater.</summary>
+    Task<UserTheatersDTO> SetUserTheatersAsync(UserTheatersDTO request);
 }

@@ -19,5 +19,7 @@ public enum AuditAction
     ResendTicket = 12,
     BlockSeat = 13,
     BlockRoom = 14,
-    TicketAdmitOverride = 15
+    TicketAdmitOverride = 15,
+    /// <summary>An admin changed the theater assignments of a RegionalManager.</summary>
+    UserTheatersChanged = 16
 }

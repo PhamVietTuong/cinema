@@ -118,13 +118,14 @@ public class ManagerOverrideService : IManagerOverrideService
         var approvers = await _uow.UserStore.GetApproversAsync(
             theaterId,
             new[] { RoleNames.TheaterManager },
-            new[] { RoleNames.Admin });
+            new[] { RoleNames.Admin },
+            new[] { RoleNames.RegionalManager });
         return approvers.Select(a => new OverrideApproverDTO { Id = a.Id, Name = a.Name }).ToList();
     }
 
     /// <summary>
-    /// Admin approves anywhere; a TheaterManager only in their own theater. RegionalManager is intentionally not
-    /// eligible yet: their theater assignments (UserTheater) arrive with the regional-reporting phase.
+    /// Admin approves anywhere; a TheaterManager only in their own theater; a RegionalManager only in the theaters
+    /// assigned to them (<see cref="User.UserTheaters"/>, loaded by the user store).
     /// </summary>
     private static bool IsApproverFor(User user, Guid theaterId)
     {
@@ -132,6 +133,10 @@ public class ManagerOverrideService : IManagerOverrideService
         if (role == RoleNames.Admin)
         {
             return true;
+        }
+        if (role == RoleNames.RegionalManager)
+        {
+            return user.UserTheaters.Any(ut => ut.TheaterId == theaterId);
         }
         return role == RoleNames.TheaterManager && user.TheaterId == theaterId;
     }
