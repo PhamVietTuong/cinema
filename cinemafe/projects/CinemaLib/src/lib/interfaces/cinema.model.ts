@@ -7,6 +7,10 @@ export enum UserRole {
   Customer = 'Khách Hàng',
   TheaterStaff = 'Nhân viên rạp',
   TheaterManager = 'Quản lý rạp',
+  BoxOfficeStaff = 'Nhân viên bán vé',
+  GateStaff = 'Nhân viên soát vé',
+  KitchenStaff = 'Nhân viên bếp',
+  RegionalManager = 'Quản lý vùng',
 }
 
 // NOTE: display-label lookups for NSwag-generated enums (like ProjectionForm below)
@@ -147,7 +151,37 @@ export const StockLevelPills: Record<StockLevel, { labelKey: string; cssClass: s
 };
 
 /** What `cl-status-pill` can render; each kind maps its `value` to a label key and pill class in this file. */
-export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction' | 'incident' | 'incidentSeverity' | 'staffTask' | 'roomStatus';
+export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction' | 'incident' | 'incidentSeverity' | 'staffTask' | 'roomStatus' | 'foodOrder';
+
+/** i18n label key (under `kitchen.status`) and pill class for each FoodOrderStatus. */
+export const FoodOrderStatusSpecs: Record<StaffServiceAgent.FoodOrderStatus, { labelKey: string; cssClass: string }> = {
+  [StaffServiceAgent.FoodOrderStatus.None]: { labelKey: 'kitchen.status.none', cssClass: 'ad-pill--neutral' },
+  [StaffServiceAgent.FoodOrderStatus.Pending]: { labelKey: 'kitchen.status.pending', cssClass: 'ad-pill--warn' },
+  [StaffServiceAgent.FoodOrderStatus.Preparing]: { labelKey: 'kitchen.status.preparing', cssClass: 'ad-pill--violet' },
+  [StaffServiceAgent.FoodOrderStatus.Ready]: { labelKey: 'kitchen.status.ready', cssClass: 'ad-pill--success' },
+  [StaffServiceAgent.FoodOrderStatus.HandedOver]: { labelKey: 'kitchen.status.handedOver', cssClass: 'ad-pill--neutral' },
+  [StaffServiceAgent.FoodOrderStatus.Cancelled]: { labelKey: 'kitchen.status.cancelled', cssClass: 'ad-pill--danger' },
+};
+
+/** Label key and pill class of a food order status; an unknown value reads as "none". */
+export function foodOrderStatusSpec(status?: StaffServiceAgent.FoodOrderStatus): { labelKey: string; cssClass: string } {
+  return FoodOrderStatusSpecs[status as StaffServiceAgent.FoodOrderStatus] ?? FoodOrderStatusSpecs[StaffServiceAgent.FoodOrderStatus.None];
+}
+
+/** i18n label key (under `salesReports.groupBy`) for each SalesGroupBy value, in display order. */
+export const SalesGroupByValues: { value: StaffServiceAgent.SalesGroupBy; name: string }[] = [
+  { value: StaffServiceAgent.SalesGroupBy.Day, name: 'salesReports.groupBy.day' },
+  { value: StaffServiceAgent.SalesGroupBy.Movie, name: 'salesReports.groupBy.movie' },
+  { value: StaffServiceAgent.SalesGroupBy.Theater, name: 'salesReports.groupBy.theater' },
+  { value: StaffServiceAgent.SalesGroupBy.PaymentMethod, name: 'salesReports.groupBy.paymentMethod' },
+  { value: StaffServiceAgent.SalesGroupBy.Staff, name: 'salesReports.groupBy.staff' },
+  { value: StaffServiceAgent.SalesGroupBy.Channel, name: 'salesReports.groupBy.channel' },
+];
+
+/** i18n label key for a SalesGroupBy value. */
+export function salesGroupByLabel(groupBy?: StaffServiceAgent.SalesGroupBy): string {
+  return SalesGroupByValues.find(v => v.value === groupBy)?.name ?? SalesGroupByValues[0].name;
+}
 
 /** Traffic-light tone of a gate scan result: green admits, amber needs the gate keeper's judgement, red refuses. */
 export type ScanTone = 'success' | 'warn' | 'danger';
@@ -346,6 +380,9 @@ export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey
     case 'auditAction': {
       const action = value as StaffServiceAgent.AuditAction;
       return { labelKey: auditActionLabel(action), cssClass: auditActionPillClass(action) };
+    }
+    case 'foodOrder': {
+      return foodOrderStatusSpec(value as StaffServiceAgent.FoodOrderStatus);
     }
     case 'stockLevel': {
       return StockLevelPills[(value as StockLevel) ?? 'untracked'] ?? StockLevelPills.untracked;

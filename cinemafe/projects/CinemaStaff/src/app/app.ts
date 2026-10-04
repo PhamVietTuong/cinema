@@ -5,6 +5,7 @@ import { Store } from '@ngrx/store';
 import { STAFF_APP_ROLES, ShellBrand, ShellUserFallback, selectCurrentUser, loadUserFromStorage, logout } from 'CinemaLib';
 import { STAFF_MENU } from './staff-menu';
 import { TheaterContextService } from './core/theater-context.service';
+import { StaffLiveService } from './core/staff-live.service';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,8 @@ import { TheaterContextService } from './core/theater-context.service';
 export class App implements OnInit {
   private readonly _store = inject(Store);
   readonly theaterContext = inject(TheaterContextService);
+  /** Injected so the staff hub connects and the Kitchen badge updates on every page. */
+  private readonly _live = inject(StaffLiveService);
 
   user$: Observable<any> = this._store.select(selectCurrentUser);
   /** Drives the staff chrome. Gated on holding a staff role, not merely being signed in, so a customer

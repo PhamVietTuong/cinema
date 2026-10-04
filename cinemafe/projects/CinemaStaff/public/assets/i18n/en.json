@@ -694,5 +694,103 @@
     "toast": {
       "saved": "Task saved."
     }
+  },
+  "kitchen": {
+    "section": "Kitchen",
+    "pageTitle": "Pickup queue",
+    "title": "Food pickup queue",
+    "subtitle": "Prepare and hand over food and drink orders as they come in.",
+    "nav": {
+      "kitchen": "Pickup queue"
+    },
+    "live": "Live",
+    "offline": "Offline",
+    "refresh": "Refresh",
+    "pickTheater": "Pick a theater",
+    "pickTheaterHint": "Choose a theater in the top bar to see its pickup queue.",
+    "emptyColumn": "No orders",
+    "paidAgo": "paid {{minutes}} min ago",
+    "action": {
+      "start": "Start preparing",
+      "ready": "Mark ready",
+      "handOver": "Hand over"
+    },
+    "status": {
+      "none": "None",
+      "pending": "Pending",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "handedOver": "Handed over",
+      "cancelled": "Cancelled"
+    },
+    "lookup": {
+      "code": "Pickup / invoice code",
+      "search": "Find",
+      "result": "Lookup result",
+      "notFound": "No order found for this code."
+    }
+  },
+  "stockAlerts": {
+    "title": "Low stock",
+    "none": "All tracked items are above their threshold.",
+    "onHand": "{{qty}} left (alert at {{threshold}})"
+  },
+  "salesReports": {
+    "section": "Reports",
+    "pageTitle": "Sales reports",
+    "title": "Sales reports",
+    "subtitle": "Revenue, occupancy and key figures for a range of business dates.",
+    "nav": {
+      "reports": "Sales reports"
+    },
+    "filters": "Report filters",
+    "from": "From",
+    "to": "To",
+    "groupByLabel": "Group by",
+    "theaters": "Theaters (empty = all)",
+    "run": "Run report",
+    "notRun": "Choose a range and run the report.",
+    "noData": "No data in this range.",
+    "error": {
+      "required": "Pick both dates.",
+      "order": "The end date must not be before the start date.",
+      "tooLong": "The range is limited to 92 days."
+    },
+    "groupBy": {
+      "day": "Day",
+      "movie": "Movie",
+      "theater": "Theater",
+      "paymentMethod": "Payment method",
+      "staff": "Staff",
+      "channel": "Channel"
+    },
+    "kpi": {
+      "paidInvoices": "Paid invoices",
+      "ticketsSold": "Tickets sold",
+      "attachRate": "Food attach rate",
+      "averageSpend": "Average spend per head",
+      "refunds": "Refunds (count, amount)",
+      "refundRate": "Refund rate (count / amount)"
+    },
+    "salesTitle": "Sales",
+    "occupancyTitle": "Occupancy",
+    "occupancySummary": "{{sold}} of {{active}} seats sold",
+    "occupancyTruncated": "Showing {{shown}} of {{total}} showtimes.",
+    "col": {
+      "group": "Group",
+      "invoices": "Invoices",
+      "tickets": "Tickets",
+      "food": "Food",
+      "discount": "Discount",
+      "net": "Net revenue",
+      "refunds": "Refunds",
+      "total": "Total",
+      "theater": "Theater",
+      "room": "Room",
+      "movie": "Movie",
+      "showtime": "Showtime",
+      "seats": "Seats sold",
+      "rate": "Occupancy"
+    }
   }
 }

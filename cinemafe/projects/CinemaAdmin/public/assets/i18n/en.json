@@ -745,5 +745,9 @@
   "warehouse": {
     "userTheater": "Theater",
     "userTheaterSelect": "Select a theater"
+  },
+  "adminUserTheaters": {
+    "label": "Theaters managed",
+    "select": "Select theaters"
   }
 }

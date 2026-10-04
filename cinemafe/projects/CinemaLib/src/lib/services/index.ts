@@ -6,3 +6,4 @@ export * from './booking-hub.service';
 export * from './toast.service';
 export * from './api-error';
 export * from './seat-lock-session.service';
+export * from './staff-hub.service';

@@ -10,3 +10,4 @@ export * from './seat-map';
 export * from './qr';
 export * from './ticket';
 export * from './price';
+export * from './bar-chart';

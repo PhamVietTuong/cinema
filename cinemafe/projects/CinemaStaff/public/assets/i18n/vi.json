@@ -694,5 +694,103 @@
     "toast": {
       "saved": "Đã lưu công việc."
     }
+  },
+  "kitchen": {
+    "section": "Bếp",
+    "pageTitle": "Hàng chờ nhận đồ",
+    "title": "Hàng chờ nhận đồ ăn",
+    "subtitle": "Chuẩn bị và giao đồ ăn, thức uống ngay khi có đơn.",
+    "nav": {
+      "kitchen": "Hàng chờ nhận đồ"
+    },
+    "live": "Trực tiếp",
+    "offline": "Mất kết nối",
+    "refresh": "Làm mới",
+    "pickTheater": "Chọn rạp",
+    "pickTheaterHint": "Chọn một rạp ở thanh trên để xem hàng chờ của rạp đó.",
+    "emptyColumn": "Không có đơn",
+    "paidAgo": "đã thanh toán {{minutes}} phút trước",
+    "action": {
+      "start": "Bắt đầu chuẩn bị",
+      "ready": "Đánh dấu sẵn sàng",
+      "handOver": "Giao khách"
+    },
+    "status": {
+      "none": "Không có",
+      "pending": "Chờ xử lý",
+      "preparing": "Đang chuẩn bị",
+      "ready": "Sẵn sàng",
+      "handedOver": "Đã giao",
+      "cancelled": "Đã hủy"
+    },
+    "lookup": {
+      "code": "Mã nhận đồ / mã hóa đơn",
+      "search": "Tìm",
+      "result": "Kết quả tra cứu",
+      "notFound": "Không tìm thấy đơn với mã này."
+    }
+  },
+  "stockAlerts": {
+    "title": "Sắp hết hàng",
+    "none": "Mọi mặt hàng theo dõi đều trên ngưỡng cảnh báo.",
+    "onHand": "Còn {{qty}} (cảnh báo ở {{threshold}})"
+  },
+  "salesReports": {
+    "section": "Báo cáo",
+    "pageTitle": "Báo cáo doanh thu",
+    "title": "Báo cáo doanh thu",
+    "subtitle": "Doanh thu, tỷ lệ lấp đầy và các chỉ số chính theo khoảng ngày kinh doanh.",
+    "nav": {
+      "reports": "Báo cáo doanh thu"
+    },
+    "filters": "Bộ lọc báo cáo",
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "groupByLabel": "Nhóm theo",
+    "theaters": "Rạp (để trống = tất cả)",
+    "run": "Chạy báo cáo",
+    "notRun": "Chọn khoảng ngày rồi chạy báo cáo.",
+    "noData": "Không có dữ liệu trong khoảng này.",
+    "error": {
+      "required": "Hãy chọn cả hai ngày.",
+      "order": "Ngày kết thúc không được trước ngày bắt đầu.",
+      "tooLong": "Khoảng ngày tối đa là 92 ngày."
+    },
+    "groupBy": {
+      "day": "Ngày",
+      "movie": "Phim",
+      "theater": "Rạp",
+      "paymentMethod": "Phương thức thanh toán",
+      "staff": "Nhân viên",
+      "channel": "Kênh bán"
+    },
+    "kpi": {
+      "paidInvoices": "Hóa đơn đã thanh toán",
+      "ticketsSold": "Vé đã bán",
+      "attachRate": "Tỷ lệ bán kèm đồ ăn",
+      "averageSpend": "Chi tiêu trung bình mỗi khách",
+      "refunds": "Hoàn tiền (số lượng, số tiền)",
+      "refundRate": "Tỷ lệ hoàn tiền (số lượng / số tiền)"
+    },
+    "salesTitle": "Doanh thu",
+    "occupancyTitle": "Tỷ lệ lấp đầy",
+    "occupancySummary": "Đã bán {{sold}} / {{active}} ghế",
+    "occupancyTruncated": "Hiển thị {{shown}} / {{total}} suất chiếu.",
+    "col": {
+      "group": "Nhóm",
+      "invoices": "Hóa đơn",
+      "tickets": "Vé",
+      "food": "Đồ ăn",
+      "discount": "Giảm giá",
+      "net": "Doanh thu thuần",
+      "refunds": "Hoàn tiền",
+      "total": "Tổng",
+      "theater": "Rạp",
+      "room": "Phòng",
+      "movie": "Phim",
+      "showtime": "Suất chiếu",
+      "seats": "Ghế đã bán",
+      "rate": "Lấp đầy"
+    }
   }
 }

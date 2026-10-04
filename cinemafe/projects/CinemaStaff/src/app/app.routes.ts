@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
+import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles, CONCESSION_ROLES } from 'CinemaLib';
 
 /**
  * Where each role lands from '/'. Everyone goes to /home until the role-specific pages
@@ -10,7 +10,7 @@ const STAFF_LANDING: Record<string, string> = {
   [UserRoles.TheaterManager]: '/home',
   [UserRoles.TheaterStaff]: '/home',
   [UserRoles.RegionalManager]: '/home',
-  [UserRoles.KitchenStaff]: '/home',
+  [UserRoles.KitchenStaff]: '/kitchen',
   [UserRoles.GateStaff]: '/gate',
   [UserRoles.BoxOfficeStaff]: '/pos',
 };
@@ -51,6 +51,18 @@ export const routes: Routes = [
         path: 'gate',
         canActivate: [roleGuard(GATE_KEEPER_ROLES)],
         loadChildren: () => import('./features/gate/gate.module').then(m => m.GateModule)
+      },
+      // Kitchen: food pickup queue and low-stock alerts.
+      {
+        path: 'kitchen',
+        canActivate: [roleGuard(CONCESSION_ROLES)],
+        loadChildren: () => import('./features/kitchen/kitchen.module').then(m => m.KitchenModule)
+      },
+      // Sales, occupancy and KPI reports: management roles.
+      {
+        path: 'reports',
+        canActivate: [roleGuard(REPORTING_ROLES)],
+        loadChildren: () => import('./features/sales-reports/sales-reports.module').then(m => m.SalesReportsModule)
       },
       // Reports (audit log): management roles. The module's own routes match /audit-log.
       {
