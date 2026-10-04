@@ -11,6 +11,29 @@ import { catchError, map } from 'rxjs/operators';
 export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   vi: {
     nav: { logout: 'Đăng Xuất' },
+    seatMap: {
+      screen: 'MÀN HÌNH',
+      legendAvailable: 'Ghế Trống',
+      legendSelected: 'Đang Chọn',
+      legendOccupied: 'Đã Bán',
+      legendLocked: 'Đang Giữ',
+      legendDouble: 'Ghế Đôi',
+      notAvailableForCategory: 'Không khả dụng cho loại vé này',
+      capReached: 'Bạn đã chọn đủ số vé — tăng số lượng để chọn thêm',
+    },
+    ticket: {
+      showTime: 'Suất chiếu',
+      room: 'Phòng',
+      seat: 'Ghế',
+      category: 'Loại vé',
+      price: 'Giá',
+      order: 'Mã đơn',
+    },
+    priceBreakdown: {
+      subtotal: 'Tạm tính',
+      total: 'Tổng cộng',
+      empty: 'Chưa có mục nào',
+    },
     override: {
       title: 'Cần quản lý xác nhận',
       hint: 'Thao tác này cần quản lý xác nhận. Chọn người duyệt và nhập mã PIN của họ.',
@@ -56,6 +79,29 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   },
   en: {
     nav: { logout: 'Log Out' },
+    seatMap: {
+      screen: 'SCREEN',
+      legendAvailable: 'Available',
+      legendSelected: 'Selected',
+      legendOccupied: 'Sold',
+      legendLocked: 'Held',
+      legendDouble: 'Double Seat',
+      notAvailableForCategory: 'Not available for this ticket type',
+      capReached: "You've selected all your tickets — increase a quantity to add more",
+    },
+    ticket: {
+      showTime: 'Showtime',
+      room: 'Room',
+      seat: 'Seat',
+      category: 'Ticket type',
+      price: 'Price',
+      order: 'Order',
+    },
+    priceBreakdown: {
+      subtotal: 'Subtotal',
+      total: 'Total',
+      empty: 'Nothing added yet',
+    },
     override: {
       title: 'Manager approval needed',
       hint: 'This action needs a manager. Pick the approver and enter their PIN.',

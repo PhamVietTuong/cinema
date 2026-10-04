@@ -226,5 +226,144 @@
       "received": "Received",
       "cancelled": "Cancelled"
     }
+  },
+  "pos": {
+    "section": "Counter",
+    "nav": { "counter": "Counter sale" },
+    "pageTitle": { "counter": "Counter sale" },
+    "title": "Counter sale",
+    "subtitle": "Sell tickets and food at the box office.",
+    "drawer": {
+      "open": "Drawer open: {{terminal}}",
+      "closed": "No cash drawer open.",
+      "openLink": "Open drawer"
+    },
+    "tender": { "cash": "Cash", "card": "Card", "qrWallet": "QR wallet" },
+    "showtimes": {
+      "title": "Today's showtimes",
+      "fnbOnly": "Food & drink only",
+      "empty": "No showtimes today."
+    },
+    "seats": {
+      "title": "Seats",
+      "noCategory": "No ticket category is priced for this seat type in this showtime."
+    },
+    "food": {
+      "title": "Food & combos",
+      "empty": "No food is available at this theater.",
+      "combo": "Combo",
+      "soldOut": "Sold out",
+      "left": "{{count}} left"
+    },
+    "member": {
+      "title": "Member",
+      "phone": "Phone number",
+      "find": "Find",
+      "walkIn": "No member attached: walk-in sale, no points.",
+      "notFound": "No member with this phone number.",
+      "failed": "Could not look up the member.",
+      "points": "{{points}} points",
+      "detach": "Remove member",
+      "redeem": "Points to redeem",
+      "redeemHint": "Up to {{max}} points"
+    },
+    "codes": {
+      "title": "Codes",
+      "discount": "Discount code",
+      "giftCard": "Gift card code"
+    },
+    "quote": {
+      "title": "Order total",
+      "empty": "Pick seats or food to start.",
+      "failed": "Could not price this order.",
+      "discount": "Discount",
+      "points": "Points redeemed",
+      "giftCard": "Gift card"
+    },
+    "pay": {
+      "title": "Payment",
+      "tendered": "Cash received",
+      "amount": "Amount",
+      "reference": "Terminal / QR reference",
+      "fill": "Fill the remaining amount",
+      "due": "Amount due",
+      "tenderedTotal": "Received",
+      "remaining": "Still to collect",
+      "change": "Change to give back",
+      "nonCashExcess": "Card and QR payments cannot exceed the amount due.",
+      "missingReference": "Enter the terminal or QR reference for every card and QR payment.",
+      "needDrawer": "Cash needs an open drawer."
+    },
+    "sell": {
+      "action": "Complete sale",
+      "success": "Sale {{code}} completed.",
+      "failed": "The sale could not be completed."
+    },
+    "override": {
+      "title": "Change price",
+      "newPrice": "New price (VND)",
+      "invalid": "Enter a price of 0 or more.",
+      "hint": "A price change needs a manager's approval.",
+      "apply": "Apply",
+      "reset": "Restore list price",
+      "action": "Change price",
+      "active": "Price changed by a manager"
+    },
+    "receipt": {
+      "done": "Sale completed",
+      "changeDue": "Change",
+      "format": "Paper format",
+      "print": "Print",
+      "newSale": "New sale"
+    }
+  },
+  "drawer": {
+    "nav": { "drawer": "Cash drawer" },
+    "pageTitle": { "drawer": "Cash drawer" },
+    "title": "Cash drawer",
+    "subtitle": "Open your till, record cash in and out, and follow the expected cash.",
+    "amountInvalid": "Enter a valid amount.",
+    "failed": "The drawer action failed.",
+    "open": {
+      "title": "Open the drawer",
+      "hint": "Count the opening float and enter it with the terminal name.",
+      "terminal": "Terminal name",
+      "float": "Opening float (VND)",
+      "action": "Open drawer",
+      "done": "Drawer opened."
+    },
+    "status": {
+      "title": "Drawer {{terminal}}",
+      "openedAt": "Opened at",
+      "openingFloat": "Opening float",
+      "cashSales": "Cash sales",
+      "payIns": "Pay-ins",
+      "payOuts": "Pay-outs",
+      "refunds": "Cash refunds",
+      "expected": "Expected cash"
+    },
+    "move": {
+      "title": "Pay-in / pay-out",
+      "amount": "Amount (VND)",
+      "note": "Reason",
+      "payOutApproval": "A pay-out needs a manager's approval.",
+      "record": "Record",
+      "done": "Movement recorded."
+    },
+    "movements": {
+      "title": "Recent movements",
+      "empty": "No movements yet.",
+      "time": "Time",
+      "type": "Type",
+      "amount": "Amount",
+      "note": "Note"
+    },
+    "movement": {
+      "openingFloat": "Opening float",
+      "sale": "Cash sale",
+      "refund": "Refund",
+      "payIn": "Pay-in",
+      "payOut": "Pay-out"
+    }
   }
 }

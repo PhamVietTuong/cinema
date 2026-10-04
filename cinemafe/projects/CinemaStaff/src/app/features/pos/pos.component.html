@@ -1,0 +1,284 @@
+<div class="ad-page pos">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'pos.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'pos.subtitle' | translate }}</p>
+    </div>
+    <div class="pos-drawer-chip" [class.is-open]="drawer.isOpen()">
+      <mat-icon>point_of_sale</mat-icon>
+      @if (drawer.isOpen()) {
+        {{ 'pos.drawer.open' | translate: { terminal: drawer.drawer()?.terminalName ?? '' } }}
+      } @else {
+        {{ 'pos.drawer.closed' | translate }}
+        <a routerLink="/drawer">{{ 'pos.drawer.openLink' | translate }}</a>
+      }
+    </div>
+  </div>
+
+  @if (!theaterId()) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="theaters" messageKey="warehouse.pickTheater" hintKey="warehouse.pickTheaterHint" />
+    </mat-card>
+  } @else if (receipt(); as r) {
+    <staff-pos-receipt [receipt]="r" (newSale)="newSale()" />
+  } @else {
+    <div class="pos-layout">
+      <div class="pos-main">
+        <!-- Showtime picker -->
+        <section class="ad-card">
+          <h2 class="ad-card-title">{{ 'pos.showtimes.title' | translate }}</h2>
+          @if (loadingShowtimes()) {
+            <mat-spinner diameter="28" />
+          }
+          <div class="pos-showtimes">
+            <button type="button" class="pos-showtime" [class.is-active]="fnbOnly()" (click)="selectFnbOnly()">
+              <mat-icon>local_cafe</mat-icon>
+              <span>{{ 'pos.showtimes.fnbOnly' | translate }}</span>
+            </button>
+            @for (st of showtimes(); track st.showTimeId) {
+              <button type="button" class="pos-showtime"
+                      [class.is-active]="showtime()?.showTimeId === st.showTimeId"
+                      [disabled]="st.hasEnded"
+                      (click)="selectShowtime(st)">
+                <strong>{{ st.startTime | date:'HH:mm' }}</strong>
+                <span>{{ st.movieTitle }}</span>
+                <small>{{ st.roomName }}</small>
+              </button>
+            }
+          </div>
+          @if (!loadingShowtimes() && showtimes().length === 0) {
+            <p class="pos-muted">{{ 'pos.showtimes.empty' | translate }}</p>
+          }
+        </section>
+
+        <!-- Seats -->
+        @if (showtime(); as st) {
+          <section class="ad-card">
+            <h2 class="ad-card-title">{{ 'pos.seats.title' | translate }} · {{ st.movieTitle }} · {{ st.roomName }}</h2>
+            @if (loadingSeats()) {
+              <mat-spinner diameter="32" />
+            } @else {
+              <cl-seat-map [seats]="seats()" [ready]="true" [showLockedLegend]="true" (seatToggle)="toggleSeat($event)" />
+            }
+            @if (seatWarning()) {
+              <p class="pos-warn">{{ seatWarning() }}</p>
+            }
+
+            @if (tickets().length > 0) {
+              <table class="pos-tickets">
+                <thead>
+                  <tr>
+                    <th>{{ 'ticket.seat' | translate }}</th>
+                    <th>{{ 'ticket.category' | translate }}</th>
+                    <th class="num">{{ 'ticket.price' | translate }}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (t of tickets(); track t.seatIds[0]) {
+                    <tr>
+                      <td><strong>{{ t.label }}</strong> @if (t.isDouble) { <small>({{ 'seatMap.legendDouble' | translate }})</small> }</td>
+                      <td>
+                        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-cat">
+                          <mat-select [value]="t.patronCategoryId" (selectionChange)="setCategory(t, $event.value)">
+                            @for (row of rowsFor(t.isDouble); track row.patronCategoryId) {
+                              <mat-option [value]="row.patronCategoryId">{{ row.patronCategoryName }} · {{ row.price | number:'1.0-0' }}đ</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      </td>
+                      <td class="num">
+                        {{ priceOf(t) | number:'1.0-0' }}đ
+                        @if (t.overridePrice !== undefined) {
+                          <mat-icon class="pos-flag" [matTooltip]="'pos.override.active' | translate">edit</mat-icon>
+                        }
+                      </td>
+                      <td class="pos-row-actions">
+                        <button mat-icon-button type="button" (click)="overrideTicket(t)" [matTooltip]="'pos.override.action' | translate"><mat-icon>price_change</mat-icon></button>
+                        <button mat-icon-button type="button" (click)="toggleSeatByTicket(t)" [matTooltip]="'common.remove' | translate"><mat-icon>close</mat-icon></button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </section>
+        }
+
+        <!-- Food and combos -->
+        <section class="ad-card">
+          <h2 class="ad-card-title">{{ 'pos.food.title' | translate }}</h2>
+          @if (foods().length === 0) {
+            <p class="pos-muted">{{ 'pos.food.empty' | translate }}</p>
+          }
+          <div class="pos-foods">
+            @for (f of foods(); track f.id) {
+              <div class="pos-food" [class.is-sold-out]="cap(f) === 0" [class.is-active]="qtyOf(f) > 0">
+                <div class="pos-food-head">
+                  <strong>{{ f.name }}</strong>
+                  @if (f.isCombo) {
+                    <span class="pos-badge">{{ 'pos.food.combo' | translate }}</span>
+                  }
+                </div>
+                <div class="pos-food-price">{{ f.price | number:'1.0-0' }}đ</div>
+                @if (cap(f) === 0) {
+                  <span class="pos-badge pos-badge--danger">{{ 'pos.food.soldOut' | translate }}</span>
+                } @else if (cap(f) !== null) {
+                  <small class="pos-muted">{{ 'pos.food.left' | translate: { count: cap(f) } }}</small>
+                }
+                <div class="pos-qty">
+                  <button mat-icon-button type="button" (click)="decFood(f)" [disabled]="qtyOf(f) === 0"><mat-icon>remove</mat-icon></button>
+                  <span>{{ qtyOf(f) }}</span>
+                  <button mat-icon-button type="button" (click)="incFood(f)" [disabled]="!canIncFood(f)"><mat-icon>add</mat-icon></button>
+                </div>
+              </div>
+            }
+          </div>
+          @if (foodLines().length > 0) {
+            <div class="pos-food-lines">
+              @for (l of foodLines(); track l.foodAndDrinkId) {
+                <div class="pos-food-line">
+                  <span>{{ l.quantity }} × {{ l.name }}</span>
+                  <span>
+                    {{ foodPrice(l) * l.quantity | number:'1.0-0' }}đ
+                    @if (l.overridePrice !== undefined) {
+                      <mat-icon class="pos-flag" [matTooltip]="'pos.override.active' | translate">edit</mat-icon>
+                    }
+                    <button mat-icon-button type="button" (click)="overrideFood(l)" [matTooltip]="'pos.override.action' | translate"><mat-icon>price_change</mat-icon></button>
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </section>
+      </div>
+
+      <aside class="pos-side">
+        <!-- Member -->
+        <section class="ad-card">
+          <h2 class="ad-card-title">{{ 'pos.member.title' | translate }}</h2>
+          @if (customer(); as c) {
+            <div class="pos-member">
+              <div>
+                <strong>{{ c.name }}</strong>
+                <div class="pos-muted">{{ c.phone }}</div>
+                <div>
+                  @if (c.memberShipName) {
+                    <span class="pos-badge">{{ c.memberShipName }}</span>
+                  }
+                  <span class="pos-muted">{{ 'pos.member.points' | translate: { points: c.points } }}</span>
+                </div>
+              </div>
+              <button mat-icon-button type="button" (click)="detachMember()" [matTooltip]="'pos.member.detach' | translate"><mat-icon>close</mat-icon></button>
+            </div>
+            @if ((c.points ?? 0) > 0) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-full">
+                <mat-label>{{ 'pos.member.redeem' | translate }}</mat-label>
+                <input matInput type="number" min="0" [max]="c.points ?? 0" [ngModel]="points()" (ngModelChange)="setPoints($event)">
+                <mat-hint>{{ 'pos.member.redeemHint' | translate: { max: c.points } }}</mat-hint>
+              </mat-form-field>
+            }
+          } @else {
+            <div class="pos-inline">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-grow">
+                <mat-label>{{ 'pos.member.phone' | translate }}</mat-label>
+                <input matInput inputmode="tel" [ngModel]="phone()" (ngModelChange)="phone.set($event)" (keydown.enter)="findMember()">
+              </mat-form-field>
+              <button mat-raised-button type="button" (click)="findMember()" [disabled]="!phone().trim()">{{ 'pos.member.find' | translate }}</button>
+            </div>
+            @if (customerError()) {
+              <p class="pos-warn">{{ customerError() }}</p>
+            }
+            <p class="pos-muted">{{ 'pos.member.walkIn' | translate }}</p>
+          }
+        </section>
+
+        <!-- Codes -->
+        <section class="ad-card">
+          <h2 class="ad-card-title">{{ 'pos.codes.title' | translate }}</h2>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-full">
+            <mat-label>{{ 'pos.codes.discount' | translate }}</mat-label>
+            <input matInput [ngModel]="discountCode()" (ngModelChange)="discountCode.set($event)">
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-full">
+            <mat-label>{{ 'pos.codes.giftCard' | translate }}</mat-label>
+            <input matInput [ngModel]="giftCardCode()" (ngModelChange)="giftCardCode.set($event)">
+          </mat-form-field>
+        </section>
+
+        <!-- Totals -->
+        <section class="ad-card">
+          <h2 class="ad-card-title">{{ 'pos.quote.title' | translate }}</h2>
+          @if (quoteError()) {
+            <p class="pos-warn">{{ quoteError() }}</p>
+          }
+          <cl-price-breakdown [lines]="breakdownLines()" [adjustments]="breakdownAdjustments()" [total]="due()" emptyKey="pos.quote.empty" />
+          @if (quoting()) {
+            <mat-progress-bar mode="indeterminate" />
+          }
+        </section>
+
+        <!-- Payment -->
+        <section class="ad-card">
+          <h2 class="ad-card-title">{{ 'pos.pay.title' | translate }}</h2>
+          @for (t of tenders(); track $index; let i = $index) {
+            <div class="pos-tender">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-tender-method">
+                <mat-select [value]="t.method" (selectionChange)="updateTender(i, { method: $event.value })">
+                  @for (o of tenderOptions; track o.value) {
+                    <mat-option [value]="o.value">{{ o.name | translate }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-tender-amount">
+                <mat-label>{{ (isCash(t.method) ? 'pos.pay.tendered' : 'pos.pay.amount') | translate }}</mat-label>
+                <input matInput type="number" min="0" step="1000" [ngModel]="t.amount" (ngModelChange)="updateTender(i, { amount: $event ?? 0 })">
+              </mat-form-field>
+              @if (!isCash(t.method)) {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-tender-ref">
+                  <mat-label>{{ 'pos.pay.reference' | translate }}</mat-label>
+                  <input matInput [ngModel]="t.reference" (ngModelChange)="updateTender(i, { reference: $event ?? '' })">
+                </mat-form-field>
+              }
+              <button mat-icon-button type="button" (click)="fillRemaining(i)" [matTooltip]="'pos.pay.fill' | translate"><mat-icon>vertical_align_bottom</mat-icon></button>
+              <button mat-icon-button type="button" (click)="removeTender(i)" [matTooltip]="'common.remove' | translate"><mat-icon>close</mat-icon></button>
+            </div>
+          }
+          <div class="pos-tender-add">
+            @for (o of tenderOptions; track o.value) {
+              <button mat-stroked-button type="button" (click)="addTender(o.value)" [disabled]="!quote()">+ {{ o.name | translate }}</button>
+            }
+          </div>
+
+          <dl class="pos-settle">
+            <div><dt>{{ 'pos.pay.due' | translate }}</dt><dd>{{ settlement().due | number:'1.0-0' }}đ</dd></div>
+            <div><dt>{{ 'pos.pay.tenderedTotal' | translate }}</dt><dd>{{ settlement().tendered | number:'1.0-0' }}đ</dd></div>
+            @if (settlement().remaining > 0) {
+              <div class="is-warn"><dt>{{ 'pos.pay.remaining' | translate }}</dt><dd>{{ settlement().remaining | number:'1.0-0' }}đ</dd></div>
+            }
+            @if (settlement().changeDue > 0) {
+              <div class="is-change"><dt>{{ 'pos.pay.change' | translate }}</dt><dd>{{ settlement().changeDue | number:'1.0-0' }}đ</dd></div>
+            }
+          </dl>
+
+          @if (settlement().nonCashExcess) {
+            <p class="pos-warn">{{ 'pos.pay.nonCashExcess' | translate }}</p>
+          }
+          @if (settlement().missingReference) {
+            <p class="pos-warn">{{ 'pos.pay.missingReference' | translate }}</p>
+          }
+          @if (needsDrawer()) {
+            <p class="pos-warn">
+              {{ 'pos.pay.needDrawer' | translate }}
+              <a routerLink="/drawer">{{ 'pos.drawer.openLink' | translate }}</a>
+            </p>
+          }
+
+          <button mat-raised-button color="primary" type="button" class="pos-sell" [disabled]="!canSell()" (click)="sell()">
+            <mat-icon>receipt_long</mat-icon> {{ 'pos.sell.action' | translate }}
+          </button>
+        </section>
+      </aside>
+    </div>
+  }
+</div>
