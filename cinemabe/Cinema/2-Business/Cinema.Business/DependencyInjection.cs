@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IScheduleBoardManager, ScheduleBoardManager>();
         services.AddScoped<IIncidentManager, IncidentManager>();
         services.AddScoped<IChecklistManager, ChecklistManager>();
+        services.AddScoped<IWorkforceManager, WorkforceManager>();
         return services;
     }
 }

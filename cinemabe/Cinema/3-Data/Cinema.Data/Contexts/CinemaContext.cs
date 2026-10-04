@@ -48,6 +48,9 @@ public class CinemaContext : DbContext
     public DbSet<ChecklistTemplateItem> ChecklistTemplateItem => Set<ChecklistTemplateItem>();
     public DbSet<ChecklistRun> ChecklistRun => Set<ChecklistRun>();
     public DbSet<ChecklistRunItem> ChecklistRunItem => Set<ChecklistRunItem>();
+    public DbSet<StaffShift> StaffShift => Set<StaffShift>();
+    public DbSet<TimeClockEntry> TimeClockEntry => Set<TimeClockEntry>();
+    public DbSet<StaffTask> StaffTask => Set<StaffTask>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

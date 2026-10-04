@@ -10,6 +10,12 @@
 -- table it references (FK target) — otherwise SQL Server refuses the drop.
 IF OBJECT_ID('dbo.__EFMigrationsHistory', 'U') IS NOT NULL
 DROP TABLE dbo.__EFMigrationsHistory;
+IF OBJECT_ID('dbo.StaffTask', 'U') IS NOT NULL
+DROP TABLE dbo.StaffTask;
+IF OBJECT_ID('dbo.TimeClockEntry', 'U') IS NOT NULL
+DROP TABLE dbo.TimeClockEntry;
+IF OBJECT_ID('dbo.StaffShift', 'U') IS NOT NULL
+DROP TABLE dbo.StaffShift;
 IF OBJECT_ID('dbo.ChecklistRunItem', 'U') IS NOT NULL
 DROP TABLE dbo.ChecklistRunItem;
 IF OBJECT_ID('dbo.ChecklistRun', 'U') IS NOT NULL
@@ -805,6 +811,57 @@ CREATE TABLE [ChecklistRunItem] (
 );
 CREATE INDEX [IX_ChecklistRunItem_ChecklistRunId] ON [ChecklistRunItem] ([ChecklistRunId]);
 -- ── end P8b checklists ───────────────────────────────────────────────────────
+
+-- ── P8c workforce ────────────────────────────────────────────────────────────
+-- Rosters, time clock and staff tasks. No FKs (like AuditLog/Incident): history survives user/theater deletions.
+CREATE TABLE [StaffShift] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [UserId] uniqueidentifier NOT NULL,
+    [StartTime] datetime NOT NULL,
+    [EndTime] datetime NOT NULL,
+    [Note] nvarchar(500) NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_StaffShift] PRIMARY KEY ([Id])
+);
+CREATE INDEX [IX_StaffShift_TheaterId_StartTime] ON [StaffShift] ([TheaterId], [StartTime]);
+CREATE INDEX [IX_StaffShift_UserId_StartTime] ON [StaffShift] ([UserId], [StartTime]);
+
+CREATE TABLE [TimeClockEntry] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [UserId] uniqueidentifier NOT NULL,
+    [ClockInAt] datetime NOT NULL,
+    [ClockOutAt] datetime NULL,
+    [Note] nvarchar(500) NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_TimeClockEntry] PRIMARY KEY ([Id])
+);
+-- At most one open (not clocked out) entry per user.
+CREATE UNIQUE INDEX [IX_TimeClockEntry_UserId_Open] ON [TimeClockEntry] ([UserId]) WHERE [ClockOutAt] IS NULL;
+CREATE INDEX [IX_TimeClockEntry_TheaterId_ClockInAt] ON [TimeClockEntry] ([TheaterId], [ClockInAt]);
+
+CREATE TABLE [StaffTask] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [AssignedToUserId] uniqueidentifier NOT NULL,
+    [CreatedByUserId] uniqueidentifier NOT NULL,
+    [Title] nvarchar(200) NOT NULL,
+    [Description] nvarchar(2000) NULL,
+    [DueAt] datetime NULL,
+    [Status] int NOT NULL,
+    [CompletedAt] datetime NULL,
+    [IncidentId] uniqueidentifier NULL,
+    [ChecklistRunId] uniqueidentifier NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_StaffTask] PRIMARY KEY ([Id])
+);
+CREATE INDEX [IX_StaffTask_AssignedToUserId_Status] ON [StaffTask] ([AssignedToUserId], [Status]);
+CREATE INDEX [IX_StaffTask_TheaterId_Status_CreationTime] ON [StaffTask] ([TheaterId], [Status], [CreationTime]);
+-- ── end P8c workforce ────────────────────────────────────────────────────────
 
 -- ============================================================
 -- EF Core migrations baseline

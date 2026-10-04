@@ -311,6 +311,65 @@ BEGIN
 END
 -- ── end P8b checklists ───────────────────────────────────────────────────────
 
+-- ── P8c workforce ────────────────────────────────────────────────────────────
+IF OBJECT_ID('dbo.StaffShift', 'U') IS NULL
+BEGIN
+    CREATE TABLE [StaffShift] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [UserId] uniqueidentifier NOT NULL,
+        [StartTime] datetime NOT NULL,
+        [EndTime] datetime NOT NULL,
+        [Note] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_StaffShift] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_StaffShift_TheaterId_StartTime] ON [StaffShift] ([TheaterId], [StartTime]);
+    CREATE INDEX [IX_StaffShift_UserId_StartTime] ON [StaffShift] ([UserId], [StartTime]);
+END
+
+IF OBJECT_ID('dbo.TimeClockEntry', 'U') IS NULL
+BEGIN
+    CREATE TABLE [TimeClockEntry] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [UserId] uniqueidentifier NOT NULL,
+        [ClockInAt] datetime NOT NULL,
+        [ClockOutAt] datetime NULL,
+        [Note] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_TimeClockEntry] PRIMARY KEY ([Id])
+    );
+    -- At most one open (not clocked out) entry per user.
+    CREATE UNIQUE INDEX [IX_TimeClockEntry_UserId_Open] ON [TimeClockEntry] ([UserId]) WHERE [ClockOutAt] IS NULL;
+    CREATE INDEX [IX_TimeClockEntry_TheaterId_ClockInAt] ON [TimeClockEntry] ([TheaterId], [ClockInAt]);
+END
+
+IF OBJECT_ID('dbo.StaffTask', 'U') IS NULL
+BEGIN
+    CREATE TABLE [StaffTask] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [AssignedToUserId] uniqueidentifier NOT NULL,
+        [CreatedByUserId] uniqueidentifier NOT NULL,
+        [Title] nvarchar(200) NOT NULL,
+        [Description] nvarchar(2000) NULL,
+        [DueAt] datetime NULL,
+        [Status] int NOT NULL,
+        [CompletedAt] datetime NULL,
+        [IncidentId] uniqueidentifier NULL,
+        [ChecklistRunId] uniqueidentifier NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_StaffTask] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_StaffTask_AssignedToUserId_Status] ON [StaffTask] ([AssignedToUserId], [Status]);
+    CREATE INDEX [IX_StaffTask_TheaterId_Status_CreationTime] ON [StaffTask] ([TheaterId], [Status], [CreationTime]);
+END
+-- ── end P8c workforce ────────────────────────────────────────────────────────
+
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
