@@ -4,7 +4,8 @@ public class Invoice : BaseEntity
 {
     public new Guid Id { get; set; } = Guid.NewGuid();
     public string Code { get; set; } = string.Empty;
-    public Guid UserId { get; set; }
+    /// <summary>The customer account. Null for a walk-in counter sale (see SoldByUserId).</summary>
+    public Guid? UserId { get; set; }
     public double TotalAmount { get; set; }
     public double DiscountAmount { get; set; } = 0;
     public double FinalAmount { get; set; }
@@ -21,8 +22,15 @@ public class Invoice : BaseEntity
     public Guid? GiftCardId { get; set; }
     public double GiftCardAmount { get; set; }
     public Guid? DiscountId { get; set; }
-    public User User { get; set; } = null!;
+    /// <summary>Theater the sale belongs to (null only on rows predating the column).</summary>
+    public Guid? TheaterId { get; set; }
+    public SalesChannel Channel { get; set; } = SalesChannel.Online;
+    /// <summary>Staff member who rang up a counter sale.</summary>
+    public Guid? SoldByUserId { get; set; }
+    public Guid? CashDrawerSessionId { get; set; }
+    public User? User { get; set; }
     public Discount? Discount { get; set; }
     public ICollection<InvoiceTicket> InvoiceTickets { get; set; } = new List<InvoiceTicket>();
     public ICollection<InvoiceFoodAndDrink> InvoiceFoodAndDrinks { get; set; } = new List<InvoiceFoodAndDrink>();
+    public ICollection<InvoicePayment> Payments { get; set; } = new List<InvoicePayment>();
 }

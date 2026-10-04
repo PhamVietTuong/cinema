@@ -43,6 +43,9 @@ public class CinemaContext : DbContext
     public DbSet<StoragePlan> StoragePlan => Set<StoragePlan>();
     public DbSet<StoragePlanItem> StoragePlanItem => Set<StoragePlanItem>();
     public DbSet<AuditLog> AuditLog => Set<AuditLog>();
+    public DbSet<InvoicePayment> InvoicePayment => Set<InvoicePayment>();
+    public DbSet<CashDrawerSession> CashDrawerSession => Set<CashDrawerSession>();
+    public DbSet<CashMovement> CashMovement => Set<CashMovement>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

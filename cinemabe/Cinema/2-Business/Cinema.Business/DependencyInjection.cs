@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogger, AuditLogger>();
         services.AddScoped<IManagerOverrideService, ManagerOverrideService>();
         services.AddScoped<IStaffReportManager, StaffReportManager>();
+        services.AddScoped<IBoxOfficeManager, BoxOfficeManager>();
         return services;
     }
 }
