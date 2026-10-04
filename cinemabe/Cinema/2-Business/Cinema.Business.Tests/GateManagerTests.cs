@@ -153,6 +153,23 @@ public class GateManagerTests
     }
 
     [Fact]
+    public async Task Scan_UsedTicketOfAnotherTheater_IsWrongTheater_AndDoesNotLeakWhoUsedIt()
+    {
+        _ticket.TheaterId = Guid.NewGuid();
+        _ticket.IsUsed = true;
+        _ticket.UsedAt = _now.AddMinutes(-5);
+        _ticket.UsedByName = "Gate Guy";
+
+        var result = await Scan();
+
+        result.Outcome.Should().Be(ScanOutcome.WrongTheater);
+        result.UsedBy.Should().BeNull();
+        result.UsedAt.Should().BeNull();
+        result.MovieTitle.Should().BeEmpty();
+        VerifyNotAdmitted();
+    }
+
+    [Fact]
     public async Task Scan_ShowTimeFilterMismatch_IsWrongShowTime()
     {
         var result = await Scan(new ScanTicketRequest { Code = _qr, ShowTimeId = Guid.NewGuid() });

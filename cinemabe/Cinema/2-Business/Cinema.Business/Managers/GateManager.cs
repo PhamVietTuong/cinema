@@ -51,15 +51,16 @@ public class GateManager : IGateManager
             return new ScanTicketResultDTO { Outcome = ScanOutcome.NotPaid };
         }
 
-        if (ticket.IsUsed)
-        {
-            return Result(ScanOutcome.AlreadyUsed, ticket);
-        }
-
-        // Another theater's ticket reveals nothing about the movie or the patron.
+        // Another theater's ticket reveals nothing about the movie, the patron or who admitted it — not even
+        // when it was already used — so the theater is checked before the used flag.
         if (ticket.TheaterId != theaterId)
         {
             return new ScanTicketResultDTO { Outcome = ScanOutcome.WrongTheater };
+        }
+
+        if (ticket.IsUsed)
+        {
+            return Result(ScanOutcome.AlreadyUsed, ticket);
         }
 
         if (request.ShowTimeId.HasValue && request.ShowTimeId.Value != ticket.ShowTimeId)
