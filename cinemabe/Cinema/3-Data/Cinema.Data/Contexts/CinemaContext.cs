@@ -44,6 +44,10 @@ public class CinemaContext : DbContext
     public DbSet<StoragePlanItem> StoragePlanItem => Set<StoragePlanItem>();
     public DbSet<AuditLog> AuditLog => Set<AuditLog>();
     public DbSet<Incident> Incident => Set<Incident>();
+    public DbSet<ChecklistTemplate> ChecklistTemplate => Set<ChecklistTemplate>();
+    public DbSet<ChecklistTemplateItem> ChecklistTemplateItem => Set<ChecklistTemplateItem>();
+    public DbSet<ChecklistRun> ChecklistRun => Set<ChecklistRun>();
+    public DbSet<ChecklistRunItem> ChecklistRunItem => Set<ChecklistRunItem>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

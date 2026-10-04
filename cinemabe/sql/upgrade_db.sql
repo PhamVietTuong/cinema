@@ -238,6 +238,79 @@ BEGIN
 END
 -- ── end P8a incidents ────────────────────────────────────────────────────────
 
+-- ── P8b checklists ───────────────────────────────────────────────────────────
+IF OBJECT_ID('dbo.ChecklistTemplate', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ChecklistTemplate] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [Name] nvarchar(200) NOT NULL,
+        [Kind] int NOT NULL,
+        [IsActive] bit NOT NULL DEFAULT 1,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ChecklistTemplate] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_ChecklistTemplate_TheaterId_Kind] ON [ChecklistTemplate] ([TheaterId], [Kind]) WHERE [IsActive] = 1;
+END
+
+IF OBJECT_ID('dbo.ChecklistTemplateItem', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ChecklistTemplateItem] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [ChecklistTemplateId] uniqueidentifier NOT NULL,
+        [SortOrder] int NOT NULL,
+        [Text] nvarchar(300) NOT NULL,
+        [IsRequired] bit NOT NULL DEFAULT 1,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ChecklistTemplateItem] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_ChecklistTemplateItem_ChecklistTemplate] FOREIGN KEY ([ChecklistTemplateId]) REFERENCES [ChecklistTemplate] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_ChecklistTemplateItem_ChecklistTemplateId] ON [ChecklistTemplateItem] ([ChecklistTemplateId]);
+END
+
+IF OBJECT_ID('dbo.ChecklistRun', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ChecklistRun] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [ShowTimeId] uniqueidentifier NOT NULL,
+        [RoomId] uniqueidentifier NOT NULL,
+        [Kind] int NOT NULL,
+        [ChecklistTemplateId] uniqueidentifier NOT NULL,
+        [TemplateName] nvarchar(200) NOT NULL,
+        [CompletedAt] datetime NULL,
+        [CompletedByUserId] uniqueidentifier NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ChecklistRun] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_ChecklistRun_ShowTimeId_RoomId_Kind] ON [ChecklistRun] ([ShowTimeId], [RoomId], [Kind]);
+    CREATE INDEX [IX_ChecklistRun_TheaterId_CreationTime] ON [ChecklistRun] ([TheaterId], [CreationTime]);
+END
+
+IF OBJECT_ID('dbo.ChecklistRunItem', 'U') IS NULL
+BEGIN
+    CREATE TABLE [ChecklistRunItem] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [ChecklistRunId] uniqueidentifier NOT NULL,
+        [SortOrder] int NOT NULL,
+        [Text] nvarchar(300) NOT NULL,
+        [IsRequired] bit NOT NULL DEFAULT 1,
+        [IsDone] bit NOT NULL DEFAULT 0,
+        [DoneByUserId] uniqueidentifier NULL,
+        [DoneAt] datetime NULL,
+        [Note] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_ChecklistRunItem] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_ChecklistRunItem_ChecklistRun] FOREIGN KEY ([ChecklistRunId]) REFERENCES [ChecklistRun] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_ChecklistRunItem_ChecklistRunId] ON [ChecklistRunItem] ([ChecklistRunId]);
+END
+-- ── end P8b checklists ───────────────────────────────────────────────────────
+
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================

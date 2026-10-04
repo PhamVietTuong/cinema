@@ -53,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<IStaffReportManager, StaffReportManager>();
         services.AddScoped<IScheduleBoardManager, ScheduleBoardManager>();
         services.AddScoped<IIncidentManager, IncidentManager>();
+        services.AddScoped<IChecklistManager, ChecklistManager>();
         return services;
     }
 }
