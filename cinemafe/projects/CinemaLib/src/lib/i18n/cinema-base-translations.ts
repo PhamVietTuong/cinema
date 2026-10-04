@@ -11,6 +11,36 @@ import { catchError, map } from 'rxjs/operators';
 export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   vi: {
     nav: { logout: 'Đăng Xuất' },
+    invoices: {
+      statusPending: 'Chờ thanh toán',
+      statusPaid: 'Đã thanh toán',
+      statusCancelled: 'Đã hủy',
+      statusFailed: 'Thất bại',
+      statusRefunded: 'Đã hoàn tiền',
+    },
+    staffReason: {
+      other: 'Lý do khác',
+      customerRequest: 'Khách yêu cầu',
+      wrongShowtime: 'Nhầm suất chiếu',
+      duplicateSale: 'Bán trùng',
+      serviceFailure: 'Sự cố dịch vụ',
+      technicalIssue: 'Sự cố kỹ thuật',
+      priceMatch: 'Khớp giá',
+      compensation: 'Bồi thường',
+    },
+    tender: {
+      cash: 'Tiền mặt',
+      card: 'Thẻ',
+      qrWallet: 'Ví QR',
+      giftCard: 'Thẻ quà tặng',
+      points: 'Điểm thưởng',
+      online: 'Trực tuyến',
+    },
+    drawerStatus: {
+      open: 'Đang mở',
+      closed: 'Đã đóng',
+      reconciled: 'Đã đối soát',
+    },
     override: {
       title: 'Cần quản lý xác nhận',
       hint: 'Thao tác này cần quản lý xác nhận. Chọn người duyệt và nhập mã PIN của họ.',
@@ -56,6 +86,36 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   },
   en: {
     nav: { logout: 'Log Out' },
+    invoices: {
+      statusPending: 'Pending',
+      statusPaid: 'Paid',
+      statusCancelled: 'Cancelled',
+      statusFailed: 'Failed',
+      statusRefunded: 'Refunded',
+    },
+    staffReason: {
+      other: 'Other',
+      customerRequest: 'Customer request',
+      wrongShowtime: 'Wrong showtime',
+      duplicateSale: 'Duplicate sale',
+      serviceFailure: 'Service failure',
+      technicalIssue: 'Technical issue',
+      priceMatch: 'Price match',
+      compensation: 'Compensation',
+    },
+    tender: {
+      cash: 'Cash',
+      card: 'Card',
+      qrWallet: 'QR wallet',
+      giftCard: 'Gift card',
+      points: 'Points',
+      online: 'Online',
+    },
+    drawerStatus: {
+      open: 'Open',
+      closed: 'Closed',
+      reconciled: 'Reconciled',
+    },
     override: {
       title: 'Manager approval needed',
       hint: 'This action needs a manager. Pick the approver and enter their PIN.',

@@ -85,6 +85,55 @@ export const StockReasonCodeValues: { value: CinemaServiceAgent.StockReasonCode;
   { value: CinemaServiceAgent.StockReasonCode.OpeningBalance, name: 'warehouse.reason.openingBalance' },
 ];
 
+/** i18n-key label for each StaffReasonCode (refund / exchange / compensation reasons). */
+export const StaffReasonCodeValues: { value: StaffServiceAgent.StaffReasonCode; name: string }[] = [
+  { value: StaffServiceAgent.StaffReasonCode.CustomerRequest, name: 'staffReason.customerRequest' },
+  { value: StaffServiceAgent.StaffReasonCode.WrongShowtime, name: 'staffReason.wrongShowtime' },
+  { value: StaffServiceAgent.StaffReasonCode.DuplicateSale, name: 'staffReason.duplicateSale' },
+  { value: StaffServiceAgent.StaffReasonCode.ServiceFailure, name: 'staffReason.serviceFailure' },
+  { value: StaffServiceAgent.StaffReasonCode.TechnicalIssue, name: 'staffReason.technicalIssue' },
+  { value: StaffServiceAgent.StaffReasonCode.PriceMatch, name: 'staffReason.priceMatch' },
+  { value: StaffServiceAgent.StaffReasonCode.Compensation, name: 'staffReason.compensation' },
+  { value: StaffServiceAgent.StaffReasonCode.Other, name: 'staffReason.other' },
+];
+
+/** i18n-key label for each PaymentTender. */
+export const PaymentTenderValues: { value: StaffServiceAgent.PaymentTender; name: string }[] = [
+  { value: StaffServiceAgent.PaymentTender.Cash, name: 'tender.cash' },
+  { value: StaffServiceAgent.PaymentTender.Card, name: 'tender.card' },
+  { value: StaffServiceAgent.PaymentTender.QrWallet, name: 'tender.qrWallet' },
+  { value: StaffServiceAgent.PaymentTender.GiftCard, name: 'tender.giftCard' },
+  { value: StaffServiceAgent.PaymentTender.Points, name: 'tender.points' },
+  { value: StaffServiceAgent.PaymentTender.Online, name: 'tender.online' },
+];
+
+/** i18n key of a PaymentTender (falls back to the first entry for an unknown value). */
+export function paymentTenderLabel(tender?: StaffServiceAgent.PaymentTender): string {
+  return PaymentTenderValues.find(v => v.value === tender)?.name ?? PaymentTenderValues[0].name;
+}
+
+/** Tenders a refund can be paid back through at the counter. */
+export const RefundTenderValues: { value: StaffServiceAgent.PaymentTender; name: string }[] = PaymentTenderValues
+  .filter(v => v.value === StaffServiceAgent.PaymentTender.Cash
+    || v.value === StaffServiceAgent.PaymentTender.Card
+    || v.value === StaffServiceAgent.PaymentTender.QrWallet);
+
+/** i18n-key label for each CashDrawerStatus. */
+export const CashDrawerStatusValues: { value: StaffServiceAgent.CashDrawerStatus; name: string }[] = [
+  { value: StaffServiceAgent.CashDrawerStatus.Open, name: 'drawerStatus.open' },
+  { value: StaffServiceAgent.CashDrawerStatus.Closed, name: 'drawerStatus.closed' },
+  { value: StaffServiceAgent.CashDrawerStatus.Reconciled, name: 'drawerStatus.reconciled' },
+];
+
+/** CSS pill class for a CashDrawerStatus: open amber, closed (awaiting reconciliation) red, reconciled green. */
+export function cashDrawerStatusPillClass(s?: StaffServiceAgent.CashDrawerStatus): string {
+  switch (s) {
+    case StaffServiceAgent.CashDrawerStatus.Reconciled: return 'ad-pill--success';
+    case StaffServiceAgent.CashDrawerStatus.Open: return 'ad-pill--warn';
+    default: return 'ad-pill--danger';
+  }
+}
+
 /** i18n-key label for each StoragePlan.StoragePlanStatus value. */
 export const StoragePlanStatusValues: { value: CinemaServiceAgent.StoragePlanStatus; name: string }[] = [
   { value: CinemaServiceAgent.StoragePlanStatus.Draft, name: 'warehouse.planStatus.draft' },
@@ -147,7 +196,7 @@ export const StockLevelPills: Record<StockLevel, { labelKey: string; cssClass: s
 };
 
 /** What `cl-status-pill` can render; each kind maps its `value` to a label key and pill class in this file. */
-export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction';
+export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction' | 'drawerStatus';
 
 /** Traffic-light tone of a gate scan result: green admits, amber needs the gate keeper's judgement, red refuses. */
 export type ScanTone = 'success' | 'warn' | 'danger';
@@ -236,6 +285,13 @@ export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey
     case 'auditAction': {
       const action = value as StaffServiceAgent.AuditAction;
       return { labelKey: auditActionLabel(action), cssClass: auditActionPillClass(action) };
+    }
+    case 'drawerStatus': {
+      const status = value as StaffServiceAgent.CashDrawerStatus;
+      return {
+        labelKey: CashDrawerStatusValues.find(v => v.value === status)?.name ?? CashDrawerStatusValues[0].name,
+        cssClass: cashDrawerStatusPillClass(status),
+      };
     }
     case 'stockLevel': {
       return StockLevelPills[(value as StockLevel) ?? 'untracked'] ?? StockLevelPills.untracked;

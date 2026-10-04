@@ -327,5 +327,150 @@
     "mismatch": "Hai mã PIN không khớp.",
     "save": "Lưu mã PIN",
     "saved": "Đã lưu mã PIN."
+  },
+  "afterSales": {
+    "section": "Hậu mãi",
+    "pageTitle": "Hậu mãi",
+    "nav": { "afterSales": "Hậu mãi" },
+    "title": "Quầy hậu mãi",
+    "subtitle": "Tìm hóa đơn để hoàn tiền, đổi vé hoặc in lại vé.",
+    "pickTheater": "Hãy chọn rạp trước.",
+    "pickTheaterHint": "Dùng ô chọn rạp trên thanh trên cùng.",
+    "search": {
+      "title": "Tìm hóa đơn",
+      "code": "Mã hóa đơn",
+      "phone": "Số điện thoại khách",
+      "hint": "Nhập mã hóa đơn hoặc số điện thoại để tìm.",
+      "empty": "Không có hóa đơn phù hợp."
+    },
+    "col": {
+      "code": "Hóa đơn",
+      "customer": "Khách hàng",
+      "movie": "Phim",
+      "showtime": "Suất chiếu",
+      "amount": "Số tiền",
+      "flags": "Lưu ý"
+    },
+    "flag": {
+      "showStarted": "Đã chiếu",
+      "used": "Đã dùng {{used}}/{{total}} vé",
+      "food": "Có đồ ăn",
+      "exchanged": "Đổi vé"
+    },
+    "panel": {
+      "title": "Hóa đơn {{code}}",
+      "pinRequired": "Các thao tác này cần mã PIN của quản lý.",
+      "showStarted": "Suất chiếu đã bắt đầu. Hoàn tiền lúc này cần mã PIN của quản lý.",
+      "cannotRefund": "Hóa đơn này không thể hoàn tiền."
+    },
+    "refund": {
+      "tender": "Hoàn tiền qua",
+      "reference": "Mã tham chiếu máy POS hoặc ví",
+      "button": "Hoàn tiền",
+      "title": "Hoàn tiền hóa đơn",
+      "hint": "Hoàn toàn bộ hóa đơn và nhả lại ghế.",
+      "hintAfterStart": "Suất chiếu đã bắt đầu. Hoàn tiền này cần mã PIN của quản lý và được ghi nhận là hoàn sau giờ chiếu.",
+      "confirm": "Hoàn tiền",
+      "reason": "Lý do",
+      "note": "Ghi chú",
+      "success": "Đã hoàn tiền hóa đơn {{code}}: {{amount}}.",
+      "successOutOfBand": "Đã đánh dấu hoàn tiền hóa đơn {{code}} ({{amount}}). Hãy trả tiền cho khách ngoài hệ thống.",
+      "error": {
+        "reasonRequired": "Hãy chọn lý do.",
+        "noteRequired": "Cần ghi chú khi lý do là Khác.",
+        "tenderRequired": "Hãy chọn hình thức trả tiền.",
+        "referenceRequired": "Nhập mã tham chiếu máy POS hoặc ví khi hoàn tiền qua thẻ hoặc QR."
+      }
+    },
+    "exchange": {
+      "button": "Đổi vé",
+      "disabledTip": "Đổi vé sắp có: cần màn chọn suất mới của quầy bán vé.",
+      "notEligibleTip": "Chỉ đổi được hóa đơn đã thanh toán tại quầy và chưa dùng vé (và tính năng đổi vé chưa sẵn sàng)."
+    },
+    "reprint": {
+      "button": "In lại vé",
+      "title": "In lại vé",
+      "hint": "In lại vé được ghi nhật ký. Hãy nhập lý do.",
+      "hintUsed": "Hóa đơn này có vé đã dùng: cần mã PIN của quản lý để in lại.",
+      "confirm": "In lại",
+      "reason": "Lý do",
+      "reasonShort": "Lý do cần ít nhất 3 ký tự.",
+      "ticketsTitle": "Vé của hóa đơn {{code}}",
+      "qrAlt": "Mã QR của vé",
+      "print": "In",
+      "printTitle": "Vé {{code}}"
+    }
+  },
+  "cashClose": {
+    "section": "Chốt tiền",
+    "pageTitle": "Chốt tiền",
+    "nav": { "cashClose": "Chốt tiền" },
+    "title": "Chốt tiền",
+    "subtitle": "Đóng két của bạn và xem lại ngày bán hàng.",
+    "tabDrawer": "Két của tôi",
+    "tabDaily": "Chốt ngày",
+    "pickTheater": "Hãy chọn rạp trước.",
+    "pickTheaterHint": "Dùng ô chọn rạp trên thanh trên cùng.",
+    "drawer": {
+      "title": "Két {{terminal}}",
+      "closedTitle": "Đã đóng két",
+      "status": "Trạng thái",
+      "openedAt": "Mở lúc",
+      "openingFloat": "Tiền đầu ca",
+      "cashSales": "Bán tiền mặt",
+      "payIns": "Thu vào",
+      "payOuts": "Chi ra",
+      "refunds": "Hoàn tiền mặt",
+      "expected": "Tiền mặt dự kiến",
+      "counted": "Tiền mặt đếm được",
+      "variance": "Chênh lệch",
+      "variancePreview": "Chênh lệch (đếm được - dự kiến)",
+      "countInvalid": "Nhập số tiền đã đếm, từ 0 trở lên.",
+      "note": "Ghi chú (tùy chọn)",
+      "reconcileHint": "Nếu có chênh lệch, quản lý phải đối soát két sau khi đóng.",
+      "needsReconciliation": "Két đã đóng nhưng có chênh lệch. Quản lý cần đối soát.",
+      "close": "Đóng két",
+      "confirmTitle": "Đóng két?",
+      "confirmMessage": "Số tiền đếm được sẽ không thể sửa sau khi đóng két.",
+      "closedToast": "Đã đóng két.",
+      "noOpenDrawer": "Bạn chưa mở két nào.",
+      "noOpenDrawerHint": "Hãy mở két từ quầy bán vé trước."
+    },
+    "daily": {
+      "date": "Ngày kinh doanh",
+      "dateHint": "Để trống là ngày kinh doanh hôm nay",
+      "refresh": "Làm mới",
+      "print": "Chốt ngày",
+      "pendingTitle": "{{count}} két chờ đối soát",
+      "pendingHint": "Các két này đóng với chênh lệch. Hãy đối soát sau khi kiểm tra.",
+      "reconcile": "Đối soát",
+      "tenders": "Thanh toán theo hình thức",
+      "tender": "Hình thức",
+      "count": "Số lượt",
+      "amount": "Số tiền",
+      "paymentsTotal": "Tổng thanh toán",
+      "summary": "Tổng hợp",
+      "moneyCollected": "Tiền thu được",
+      "refunds": "Hoàn tiền",
+      "exchanges": "Đổi vé",
+      "comps": "Vé tặng",
+      "netCollected": "Thực thu",
+      "tickets": "Vé đã bán",
+      "foodItems": "Món ăn đã bán",
+      "foodRevenue": "Doanh thu đồ ăn",
+      "drawers": "Các két",
+      "terminal": "Quầy",
+      "cashier": "Thu ngân",
+      "totalVariance": "Tổng chênh lệch",
+      "noDrawers": "Không có phiên két nào trong ngày này.",
+      "empty": "Chưa có báo cáo."
+    },
+    "reconcile": {
+      "title": "Đối soát két",
+      "hint": "Xác nhận đã kiểm tra chênh lệch. Ghi chú được lưu vào nhật ký.",
+      "confirm": "Đối soát",
+      "note": "Ghi chú",
+      "done": "Đã đối soát két."
+    }
   }
 }

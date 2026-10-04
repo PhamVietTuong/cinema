@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
+import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
 
 /**
  * Where each role lands from '/'. Everyone goes to /home until the role-specific pages
@@ -51,6 +51,17 @@ export const routes: Routes = [
         path: 'gate',
         canActivate: [roleGuard(GATE_KEEPER_ROLES)],
         loadChildren: () => import('./features/gate/gate.module').then(m => m.GateModule)
+      },
+      // After-sales desk (refund, exchange, reprint) and cash close (drawer close, daily close): sellers.
+      {
+        path: 'after-sales',
+        canActivate: [roleGuard(SELLER_ROLES)],
+        loadChildren: () => import('./features/after-sales/after-sales.module').then(m => m.AfterSalesModule)
+      },
+      {
+        path: 'cash-close',
+        canActivate: [roleGuard(SELLER_ROLES)],
+        loadChildren: () => import('./features/cash-close/cash-close.module').then(m => m.CashCloseModule)
       },
       // Reports (audit log): management roles. The module's own routes match /audit-log.
       {

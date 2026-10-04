@@ -1,4 +1,4 @@
-import { BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES } from 'CinemaLib';
+import { BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES, SELLER_ROLES } from 'CinemaLib';
 
 /**
  * CinemaStaff sidebar. Each item may carry `roles` (omitted = every staff role); the shared
@@ -14,6 +14,18 @@ export const STAFF_MENU: NavSection[] = [
     titleKey: 'gate.section',
     items: [
       { icon: 'qr_code_scanner', labelKey: 'gate.nav.gate', route: '/gate', titleKey: 'gate.pageTitle', roles: GATE_KEEPER_ROLES },
+    ],
+  },
+  {
+    titleKey: 'afterSales.section',
+    items: [
+      { icon: 'assignment_return', labelKey: 'afterSales.nav.afterSales', route: '/after-sales', titleKey: 'afterSales.pageTitle', roles: SELLER_ROLES },
+    ],
+  },
+  {
+    titleKey: 'cashClose.section',
+    items: [
+      { icon: 'point_of_sale', labelKey: 'cashClose.nav.cashClose', route: '/cash-close', titleKey: 'cashClose.pageTitle', roles: SELLER_ROLES },
     ],
   },
   {
