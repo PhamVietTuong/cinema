@@ -51,6 +51,9 @@ public class CinemaContext : DbContext
     public DbSet<StaffShift> StaffShift => Set<StaffShift>();
     public DbSet<TimeClockEntry> TimeClockEntry => Set<TimeClockEntry>();
     public DbSet<StaffTask> StaffTask => Set<StaffTask>();
+    public DbSet<InvoicePayment> InvoicePayment => Set<InvoicePayment>();
+    public DbSet<CashDrawerSession> CashDrawerSession => Set<CashDrawerSession>();
+    public DbSet<CashMovement> CashMovement => Set<CashMovement>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

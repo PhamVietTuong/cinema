@@ -137,12 +137,23 @@ static_checks:
     must_contain:
       - pattern: "BeginTransactionAsync"
         rationale: "Deduction + invoice commit or roll back together"
-      - pattern: "BuildFoodLinesAndReserveStockAsync"
-        rationale: "Stock is reserved inside the booking transaction"
+      - pattern: "ComposeInvoiceAsync"
+        rationale: "Since P4 the shared compose step (which calls BuildFoodLinesAndReserveStockAsync) runs inside the booking transaction"
       - pattern: "RecordSaleMovementsAsync"
         rationale: "Sale ledger rows persisted with the invoice"
       - pattern: "RollbackTransactionAsync"
         rationale: "Failed booking returns the stock"
+
+  - id: SC-INV-05B
+    severity: P0
+    description: >
+      The shared compose step reserves stock through BuildFoodLinesAndReserveStockAsync. Both CreateBookingAsync
+      (online, Pending) and SellAtCounterAsync (counter, Paid) call it inside their own transaction.
+    file: "Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs"
+    method: "ComposeInvoiceAsync"
+    must_contain:
+      - pattern: "BuildFoodLinesAndReserveStockAsync"
+        rationale: "Stock is reserved inside the caller's transaction"
 
   - id: SC-INV-06
     severity: P0

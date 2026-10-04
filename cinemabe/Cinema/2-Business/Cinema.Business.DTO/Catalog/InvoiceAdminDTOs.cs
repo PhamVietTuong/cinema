@@ -6,7 +6,8 @@ public class InvoiceAdminDTO
 {
     public Guid Id { get; set; }
     public string Code { get; set; } = string.Empty;
-    public Guid UserId { get; set; }
+    /// <summary>Null for a walk-in counter sale.</summary>
+    public Guid? UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
     public double TotalAmount { get; set; }

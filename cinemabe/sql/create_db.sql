@@ -26,6 +26,13 @@ IF OBJECT_ID('dbo.ChecklistTemplate', 'U') IS NOT NULL
 DROP TABLE dbo.ChecklistTemplate;
 IF OBJECT_ID('dbo.Incident', 'U') IS NOT NULL
 DROP TABLE dbo.Incident;
+-- P4 box office
+IF OBJECT_ID('dbo.CashMovement', 'U') IS NOT NULL
+DROP TABLE dbo.CashMovement;
+IF OBJECT_ID('dbo.CashDrawerSession', 'U') IS NOT NULL
+DROP TABLE dbo.CashDrawerSession;
+IF OBJECT_ID('dbo.InvoicePayment', 'U') IS NOT NULL
+DROP TABLE dbo.InvoicePayment;
 IF OBJECT_ID('dbo.AuditLog', 'U') IS NOT NULL
 DROP TABLE dbo.AuditLog;
 IF OBJECT_ID('dbo.StoragePlanItem', 'U') IS NOT NULL
@@ -865,6 +872,120 @@ CREATE TABLE [StaffTask] (
 CREATE INDEX [IX_StaffTask_AssignedToUserId_Status] ON [StaffTask] ([AssignedToUserId], [Status]);
 CREATE INDEX [IX_StaffTask_TheaterId_Status_CreationTime] ON [StaffTask] ([TheaterId], [Status], [CreationTime]);
 -- ── end P8c workforce ────────────────────────────────────────────────────────
+
+-- ============================================================
+-- P4 box office: counter sales, split tenders, cash drawer
+-- ============================================================
+-- Identical in create_db.sql and upgrade_db.sql (idempotent). Statements that touch a column added in this
+-- block run through EXEC so the batch compiles before the column exists.
+
+-- Invoice: sale metadata; UserId becomes NULL so a walk-in counter sale needs no customer account.
+IF COL_LENGTH('dbo.Invoice', 'TheaterId') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [TheaterId] uniqueidentifier NULL;
+END
+
+IF COL_LENGTH('dbo.Invoice', 'Channel') IS NULL
+BEGIN
+    -- 0 = Online, 1 = Counter
+    ALTER TABLE [Invoice] ADD [Channel] int NOT NULL CONSTRAINT [DF_Invoice_Channel] DEFAULT 0;
+END
+
+IF COL_LENGTH('dbo.Invoice', 'SoldByUserId') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [SoldByUserId] uniqueidentifier NULL;
+END
+
+IF COL_LENGTH('dbo.Invoice', 'CashDrawerSessionId') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [CashDrawerSessionId] uniqueidentifier NULL;
+END
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.Invoice') AND name = 'UserId' AND is_nullable = 0)
+BEGIN
+    ALTER TABLE [Invoice] ALTER COLUMN [UserId] uniqueidentifier NULL;
+END
+
+-- Backfill the theater of existing (online) invoices from their tickets' room.
+EXEC('UPDATE i SET i.[TheaterId] = x.[TheaterId]
+      FROM [Invoice] i
+      CROSS APPLY (SELECT TOP 1 r.[TheaterId] FROM [InvoiceTicket] t JOIN [Room] r ON r.[Id] = t.[RoomId] WHERE t.[InvoiceId] = i.[Id]) x
+      WHERE i.[TheaterId] IS NULL');
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Invoice_Theater_TheaterId')
+BEGIN
+    EXEC('ALTER TABLE [Invoice] ADD CONSTRAINT [FK_Invoice_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION');
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_TheaterId_PaidAt' AND object_id = OBJECT_ID('dbo.Invoice'))
+BEGIN
+    EXEC('CREATE INDEX [IX_Invoice_TheaterId_PaidAt] ON [Invoice] ([TheaterId], [PaidAt])');
+END
+
+-- One row per tender applied to an invoice (Method: 0 Cash, 1 Card, 2 QrWallet, 3 GiftCard, 4 Points, 5 Online).
+IF OBJECT_ID('dbo.InvoicePayment', 'U') IS NULL
+BEGIN
+    CREATE TABLE [InvoicePayment] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [InvoiceId] uniqueidentifier NOT NULL,
+        [Method] int NOT NULL,
+        [Amount] float NOT NULL,
+        [TenderedAmount] float NULL,
+        [ChangeAmount] float NULL,
+        [Reference] nvarchar(100) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_InvoicePayment] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_InvoicePayment_Invoice_InvoiceId] FOREIGN KEY ([InvoiceId]) REFERENCES [Invoice] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_InvoicePayment_InvoiceId] ON [InvoicePayment] ([InvoiceId]);
+END
+
+-- A cashier's drawer shift (Status: 0 Open, 1 Closed, 2 Reconciled). One Open session per user and per terminal.
+IF OBJECT_ID('dbo.CashDrawerSession', 'U') IS NULL
+BEGIN
+    CREATE TABLE [CashDrawerSession] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [UserId] uniqueidentifier NOT NULL,
+        [TerminalName] nvarchar(100) NOT NULL,
+        [Status] int NOT NULL,
+        [OpenedAt] datetime NOT NULL,
+        [ClosedAt] datetime NULL,
+        [OpeningFloat] float NOT NULL,
+        [CountedCash] float NULL,
+        [ExpectedCash] float NULL,
+        [Variance] float NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_CashDrawerSession] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_CashDrawerSession_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_CashDrawerSession_User_UserId] FOREIGN KEY ([UserId]) REFERENCES [User] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE UNIQUE INDEX [IX_CashDrawerSession_UserId] ON [CashDrawerSession] ([UserId]) WHERE [Status] = 0;
+    CREATE UNIQUE INDEX [IX_CashDrawerSession_TheaterId_TerminalName] ON [CashDrawerSession] ([TheaterId], [TerminalName]) WHERE [Status] = 0;
+END
+
+-- Signed cash change in a session (Type: 0 OpeningFloat, 1 Sale, 2 Refund, 3 PayIn, 4 PayOut); expected cash = SUM(Amount).
+IF OBJECT_ID('dbo.CashMovement', 'U') IS NULL
+BEGIN
+    CREATE TABLE [CashMovement] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [CashDrawerSessionId] uniqueidentifier NOT NULL,
+        [TheaterId] uniqueidentifier NOT NULL,
+        [Type] int NOT NULL,
+        [Amount] float NOT NULL,
+        [InvoiceId] uniqueidentifier NULL,
+        [UserId] uniqueidentifier NOT NULL,
+        [Note] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_CashMovement] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_CashMovement_CashDrawerSession_CashDrawerSessionId] FOREIGN KEY ([CashDrawerSessionId]) REFERENCES [CashDrawerSession] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_CashMovement_CashDrawerSessionId] ON [CashMovement] ([CashDrawerSessionId]);
+END
+-- ===== end P4 box office =====
 
 -- ============================================================
 -- EF Core migrations baseline

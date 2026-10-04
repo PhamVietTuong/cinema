@@ -57,6 +57,7 @@ public static class DependencyInjection
         services.AddScoped<IIncidentManager, IncidentManager>();
         services.AddScoped<IChecklistManager, ChecklistManager>();
         services.AddScoped<IWorkforceManager, WorkforceManager>();
+        services.AddScoped<IBoxOfficeManager, BoxOfficeManager>();
         return services;
     }
 }
