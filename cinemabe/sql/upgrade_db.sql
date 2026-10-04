@@ -564,6 +564,34 @@ BEGIN
 END
 -- ===== end P5 after-sales =====
 
+-- ── P7 customer service ──────────────────────────────────────────────────────
+-- Customer complaints and their compensation outcome. No FKs, like AuditLog/Incident: history survives deletions.
+IF OBJECT_ID('dbo.Complaint', 'U') IS NULL
+BEGIN
+    CREATE TABLE [Complaint] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NOT NULL,
+        [CustomerUserId] uniqueidentifier NULL,
+        [InvoiceId] uniqueidentifier NULL,
+        [Category] int NOT NULL,
+        [Description] nvarchar(2000) NOT NULL,
+        [Status] int NOT NULL,
+        [Resolution] int NOT NULL DEFAULT 0,
+        [CompensationAmount] float NULL,
+        [CompensationRef] nvarchar(100) NULL,
+        [AssignedToUserId] uniqueidentifier NULL,
+        [CreatedByUserId] uniqueidentifier NOT NULL,
+        [ResolvedByUserId] uniqueidentifier NULL,
+        [ResolvedAt] datetime NULL,
+        [ResolutionNote] nvarchar(1000) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_Complaint] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_Complaint_TheaterId_Status_CreationTime] ON [Complaint] ([TheaterId], [Status], [CreationTime]);
+END
+-- ── end P7 customer service ──────────────────────────────────────────────────
+
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
