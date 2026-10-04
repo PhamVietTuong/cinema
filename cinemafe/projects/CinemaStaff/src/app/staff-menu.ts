@@ -30,6 +30,18 @@ export const STAFF_MENU: NavSection[] = [
     ],
   },
   {
+    titleKey: 'afterSales.section',
+    items: [
+      { icon: 'assignment_return', labelKey: 'afterSales.nav.afterSales', route: '/after-sales', titleKey: 'afterSales.pageTitle', roles: SELLER_ROLES },
+    ],
+  },
+  {
+    titleKey: 'cashClose.section',
+    items: [
+      { icon: 'point_of_sale', labelKey: 'cashClose.nav.cashClose', route: '/cash-close', titleKey: 'cashClose.pageTitle', roles: SELLER_ROLES },
+    ],
+  },
+  {
     titleKey: 'auditLog.section',
     items: [
       { icon: 'fact_check', labelKey: 'auditLog.nav.auditLog', route: '/audit-log', titleKey: 'auditLog.pageTitle', roles: REPORTING_ROLES },

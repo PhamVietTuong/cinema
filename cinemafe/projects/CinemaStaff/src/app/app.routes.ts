@@ -64,6 +64,17 @@ export const routes: Routes = [
         canActivate: [roleGuard(REPORTING_ROLES)],
         loadChildren: () => import('./features/sales-reports/sales-reports.module').then(m => m.SalesReportsModule)
       },
+      // After-sales desk (refund, exchange, reprint) and cash close (drawer close, daily close): sellers.
+      {
+        path: 'after-sales',
+        canActivate: [roleGuard(SELLER_ROLES)],
+        loadChildren: () => import('./features/after-sales/after-sales.module').then(m => m.AfterSalesModule)
+      },
+      {
+        path: 'cash-close',
+        canActivate: [roleGuard(SELLER_ROLES)],
+        loadChildren: () => import('./features/cash-close/cash-close.module').then(m => m.CashCloseModule)
+      },
       // Reports (audit log): management roles. The module's own routes match /audit-log.
       {
         path: '',

@@ -39,7 +39,13 @@ export interface ReasonDialogData {
   /** Offer a required reason-code select. */
   codes?: { labelKey: string; options: readonly ReasonDialogCode[] };
   /** Offer a free-text note. */
-  note?: { labelKey: string; placeholderKey?: string; required?: boolean };
+  note?: {
+    labelKey: string;
+    placeholderKey?: string;
+    required?: boolean;
+    /** The note becomes required only while this reason code is selected (e.g. "Other"). */
+    requiredWhenCode?: string | number;
+  };
   /** Offer one integer quantity input per line. */
   lines?: { labelKey: string; items: readonly ReasonDialogLine[]; max?: number; errorKey: string };
 }
@@ -165,6 +171,15 @@ export class ReasonDialogComponent {
       })));
     }
     this.form = fb.group(controls);
+
+    const requiredWhenCode = data.note?.requiredWhenCode;
+    if (data.codes && requiredWhenCode !== undefined) {
+      const noteControl = this.form.controls['note'];
+      this.form.controls['code'].valueChanges.subscribe(code => {
+        noteControl.setValidators(code === requiredWhenCode ? [Validators.required, Validators.pattern(/\S/)] : []);
+        noteControl.updateValueAndValidity();
+      });
+    }
   }
 
   lineGroup(index: number): FormGroup {

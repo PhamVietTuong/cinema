@@ -792,5 +792,154 @@
       "seats": "Seats sold",
       "rate": "Occupancy"
     }
+  },
+  "afterSales": {
+    "section": "After-sales",
+    "pageTitle": "After-sales",
+    "nav": {
+      "afterSales": "After-sales"
+    },
+    "title": "After-sales desk",
+    "subtitle": "Find an invoice to refund, exchange or reprint its tickets.",
+    "pickTheater": "Pick a theater first.",
+    "pickTheaterHint": "Use the theater picker in the top bar.",
+    "search": {
+      "title": "Find an invoice",
+      "code": "Invoice code",
+      "phone": "Customer phone",
+      "hint": "Type an invoice code or a phone number to search.",
+      "empty": "No invoice matches."
+    },
+    "col": {
+      "code": "Invoice",
+      "customer": "Customer",
+      "movie": "Movie",
+      "showtime": "Showtime",
+      "amount": "Amount",
+      "flags": "Flags"
+    },
+    "flag": {
+      "showStarted": "Show started",
+      "used": "{{used}}/{{total}} tickets used",
+      "food": "Has food",
+      "exchanged": "Exchange"
+    },
+    "panel": {
+      "title": "Invoice {{code}}",
+      "pinRequired": "A manager PIN is required for these actions.",
+      "showStarted": "The showtime has already started. A refund now needs a manager PIN.",
+      "cannotRefund": "This invoice cannot be refunded."
+    },
+    "refund": {
+      "tender": "Refund through",
+      "reference": "Terminal or wallet reference",
+      "button": "Refund",
+      "title": "Refund invoice",
+      "hint": "The whole invoice is refunded and the seats are released.",
+      "hintAfterStart": "The showtime has already started. This refund needs a manager PIN and is recorded as an after-start refund.",
+      "confirm": "Refund",
+      "reason": "Reason",
+      "note": "Note",
+      "success": "Invoice {{code}} refunded: {{amount}}.",
+      "successOutOfBand": "Invoice {{code}} marked refunded ({{amount}}). Return the money outside the system.",
+      "error": {
+        "reasonRequired": "Choose a reason.",
+        "noteRequired": "A note is required when the reason is Other.",
+        "tenderRequired": "Choose how the money is returned.",
+        "referenceRequired": "Enter the terminal or wallet reference for a card or QR refund."
+      }
+    },
+    "exchange": {
+      "button": "Exchange",
+      "disabledTip": "Exchange is coming soon: it needs the replacement-sale picker from the point of sale.",
+      "notEligibleTip": "Only paid counter sales without used tickets can be exchanged (and exchange is not available yet)."
+    },
+    "reprint": {
+      "button": "Reprint",
+      "title": "Reprint tickets",
+      "hint": "Reprints are audited. Give the reason.",
+      "hintUsed": "A ticket on this invoice was already used: a manager PIN is required to reprint it.",
+      "confirm": "Reprint",
+      "reason": "Reason",
+      "reasonShort": "Give a reason of at least 3 characters.",
+      "ticketsTitle": "Tickets for {{code}}",
+      "qrAlt": "Ticket QR code",
+      "print": "Print",
+      "printTitle": "Tickets {{code}}"
+    }
+  },
+  "cashClose": {
+    "section": "Cash close",
+    "pageTitle": "Cash close",
+    "nav": {
+      "cashClose": "Cash close"
+    },
+    "title": "Cash close",
+    "subtitle": "Close your drawer and review the day.",
+    "tabDrawer": "My drawer",
+    "tabDaily": "Daily close",
+    "pickTheater": "Pick a theater first.",
+    "pickTheaterHint": "Use the theater picker in the top bar.",
+    "drawer": {
+      "title": "Drawer {{terminal}}",
+      "closedTitle": "Drawer closed",
+      "status": "Status",
+      "openedAt": "Opened at",
+      "openingFloat": "Opening float",
+      "cashSales": "Cash sales",
+      "payIns": "Pay-ins",
+      "payOuts": "Pay-outs",
+      "refunds": "Cash refunds",
+      "expected": "Expected cash",
+      "counted": "Counted cash",
+      "variance": "Variance",
+      "variancePreview": "Variance (counted - expected)",
+      "countInvalid": "Enter the amount counted, zero or more.",
+      "note": "Note (optional)",
+      "reconcileHint": "A variance needs a manager to reconcile the drawer after closing.",
+      "needsReconciliation": "The drawer is closed with a variance. A manager must reconcile it.",
+      "close": "Close drawer",
+      "confirmTitle": "Close the drawer?",
+      "confirmMessage": "The count is final once the drawer is closed.",
+      "closedToast": "Drawer closed.",
+      "noOpenDrawer": "You have no open drawer.",
+      "noOpenDrawerHint": "Open a drawer from the point of sale first."
+    },
+    "daily": {
+      "date": "Business day",
+      "dateHint": "Empty means today's business day",
+      "refresh": "Refresh",
+      "print": "Daily close",
+      "pendingTitle": "{{count}} drawer(s) waiting for reconciliation",
+      "pendingHint": "These drawers closed with a variance. Reconcile them once checked.",
+      "reconcile": "Reconcile",
+      "tenders": "Payments by tender",
+      "tender": "Tender",
+      "count": "Count",
+      "amount": "Amount",
+      "paymentsTotal": "Payments total",
+      "summary": "Summary",
+      "moneyCollected": "Money collected",
+      "refunds": "Refunds",
+      "exchanges": "Exchanges",
+      "comps": "Comps",
+      "netCollected": "Net collected",
+      "tickets": "Tickets sold",
+      "foodItems": "Food items sold",
+      "foodRevenue": "Food revenue",
+      "drawers": "Drawers",
+      "terminal": "Terminal",
+      "cashier": "Cashier",
+      "totalVariance": "Total variance",
+      "noDrawers": "No drawer sessions on this day.",
+      "empty": "No report loaded."
+    },
+    "reconcile": {
+      "title": "Reconcile drawer",
+      "hint": "Confirm the variance has been checked. The note is kept in the audit trail.",
+      "confirm": "Reconcile",
+      "note": "Note",
+      "done": "Drawer reconciled."
+    }
   }
 }
