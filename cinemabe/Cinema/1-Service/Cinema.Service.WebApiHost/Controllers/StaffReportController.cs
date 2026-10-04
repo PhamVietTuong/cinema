@@ -1,5 +1,6 @@
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
+using Cinema.Business.DTO.BoxOffice;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.DTO.Staff;
 using Cinema.Data.Entities;
@@ -19,10 +20,12 @@ public class StaffReportController : ApiControllerBase
     private const string _theaterIdFilter = "theaterId";
 
     private readonly IStaffReportManager _reports;
+    private readonly IDailyCloseManager _dailyClose;
 
-    public StaffReportController(IStaffReportManager reports)
+    public StaffReportController(IStaffReportManager reports, IDailyCloseManager dailyClose)
     {
         _reports = reports;
+        _dailyClose = dailyClose;
     }
 
     /// <summary>
@@ -55,6 +58,31 @@ public class StaffReportController : ApiControllerBase
         catch (Exception e)
         {
             return HandleException(e, nameof(GetAuditLog));
+        }
+    }
+
+    /// <summary>
+    /// End-of-day cash close of one theater for a business day (Asia/Ho_Chi_Minh, 06:00 cut-off by default): totals by
+    /// tender, refunds, exchanges, comps, tickets and food sold and the drawer sessions with their variance.
+    /// </summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DailyCloseDTO), 200)]
+    public async Task<IActionResult> GetDailyClose([FromBody] DailyCloseRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetDailyClose)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _dailyClose.GetDailyCloseAsync(theaterId, request.BusinessDate));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetDailyClose));
         }
     }
 }

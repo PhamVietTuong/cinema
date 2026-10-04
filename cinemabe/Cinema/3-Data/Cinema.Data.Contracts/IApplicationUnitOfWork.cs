@@ -38,6 +38,7 @@ public interface IApplicationUnitOfWork : IDisposable
     IChecklistStore ChecklistStore { get; }
     IWorkforceStore WorkforceStore { get; }
     ICashDrawerStore CashDrawerStore { get; }
+    IAfterSalesStore AfterSalesStore { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

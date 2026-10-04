@@ -28,6 +28,10 @@ public class Invoice : BaseEntity
     /// <summary>Staff member who rang up a counter sale.</summary>
     public Guid? SoldByUserId { get; set; }
     public Guid? CashDrawerSessionId { get; set; }
+    /// <summary>The invoice this one replaced in a counter exchange (the old one is then Refunded).</summary>
+    public Guid? ExchangedFromInvoiceId { get; set; }
+    /// <summary>Why staff refunded this invoice (null for an online/owner refund).</summary>
+    public StaffReasonCode? RefundReasonCode { get; set; }
     public User? User { get; set; }
     public Discount? Discount { get; set; }
     public ICollection<InvoiceTicket> InvoiceTickets { get; set; } = new List<InvoiceTicket>();

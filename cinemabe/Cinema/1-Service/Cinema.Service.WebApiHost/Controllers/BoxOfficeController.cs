@@ -162,4 +162,131 @@ public class BoxOfficeController : ApiControllerBase
             return HandleException(e, nameof(FindCustomer));
         }
     }
+
+    /// <summary>After-sales search by exact invoice code and/or customer phone, scoped to the theater.</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(List<AfterSalesInvoiceDTO>), 200)]
+    public async Task<IActionResult> FindInvoice([FromBody] FindInvoiceRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(FindInvoice)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.FindInvoiceAsync(theaterId, request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(FindInvoice));
+        }
+    }
+
+    /// <summary>Refunds a whole paid invoice. 403 without a manager approval (unless the caller is a manager).</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(StaffRefundResultDTO), 200)]
+    public async Task<IActionResult> StaffRefund([FromBody] StaffRefundRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(StaffRefund)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.StaffRefundAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(StaffRefund));
+        }
+    }
+
+    /// <summary>Replaces a counter invoice by a new sale in one transaction. 403 without a manager approval (unless the caller is a manager).</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(ExchangeResultDTO), 200)]
+    public async Task<IActionResult> Exchange([FromBody] ExchangeRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(Exchange)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.ExchangeAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(Exchange));
+        }
+    }
+
+    /// <summary>Returns the tickets of a paid invoice again (audited; a manager approves when a ticket was used).</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(ReprintResultDTO), 200)]
+    public async Task<IActionResult> Reprint([FromBody] ReprintRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(Reprint)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.ReprintAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(Reprint));
+        }
+    }
+
+    /// <summary>Closes the caller's own drawer with the counted cash; a variance beyond the tolerance needs reconciliation.</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(CloseDrawerResultDTO), 200)]
+    public async Task<IActionResult> CloseDrawer([FromBody] CloseDrawerRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(CloseDrawer)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.CloseDrawerAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(CloseDrawer));
+        }
+    }
+
+    /// <summary>A manager accepts the variance of a closed drawer.</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CloseDrawerResultDTO), 200)]
+    public async Task<IActionResult> ReconcileDrawer([FromBody] ReconcileDrawerRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ReconcileDrawer)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.ReconcileDrawerAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ReconcileDrawer));
+        }
+    }
 }

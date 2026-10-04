@@ -497,6 +497,29 @@ END
 -- ===== end P4 box office =====
 
 -- ============================================================
+-- P5 after-sales: exchange link and refund reason on Invoice
+-- ============================================================
+-- Identical in create_db.sql and upgrade_db.sql (idempotent). The index runs through EXEC so the batch
+-- compiles before the column exists.
+IF COL_LENGTH('dbo.Invoice', 'ExchangedFromInvoiceId') IS NULL
+BEGIN
+    -- The invoice this one replaced in an exchange (no FK, like the other audit snapshots).
+    ALTER TABLE [Invoice] ADD [ExchangedFromInvoiceId] uniqueidentifier NULL;
+END
+
+IF COL_LENGTH('dbo.Invoice', 'RefundReasonCode') IS NULL
+BEGIN
+    -- StaffReasonCode of a staff refund.
+    ALTER TABLE [Invoice] ADD [RefundReasonCode] int NULL;
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_ExchangedFromInvoiceId' AND object_id = OBJECT_ID('dbo.Invoice'))
+BEGIN
+    EXEC('CREATE INDEX [IX_Invoice_ExchangedFromInvoiceId] ON [Invoice] ([ExchangedFromInvoiceId]) WHERE [ExchangedFromInvoiceId] IS NOT NULL');
+END
+-- ===== end P5 after-sales =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

@@ -138,6 +138,14 @@ public class CounterSaleContext
     /// <summary>Approver of the price overrides (the staff member themself when they are an approver).</summary>
     public Guid? ApproverUserId { get; set; }
     public CounterSaleRequest Request { get; set; } = new();
+
+    /// <summary>Exchange only: the tracked, fully loaded invoice this sale replaces. It is reversed in the same
+    /// transaction as the new sale. The caller has already validated that it can be exchanged.</summary>
+    public Cinema.Data.Entities.Invoice? ExchangedFrom { get; set; }
+    public StaffReasonCode? ExchangeReasonCode { get; set; }
+    public string? ExchangeNote { get; set; }
+    /// <summary>Exchange only: how the customer is paid back when the new sale is cheaper (Cash, Card or QrWallet).</summary>
+    public PaymentTender ExchangeRefundTender { get; set; } = PaymentTender.Cash;
 }
 
 public class OpenDrawerRequest

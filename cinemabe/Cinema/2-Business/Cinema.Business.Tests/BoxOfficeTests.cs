@@ -53,7 +53,7 @@ public class BoxOfficeTests
         _booking = new BookingManager(_uowMock.Object, gateways, _notifications.Object, _sms.Object, _seatNotifications.Object);
         var audit = new AuditLogger(_uowMock.Object);
         var overrides = new ManagerOverrideService(_uowMock.Object, audit);
-        _sut = new BoxOfficeManager(_uowMock.Object, _booking, overrides, audit);
+        _sut = new BoxOfficeManager(_uowMock.Object, _booking, overrides, audit, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(), gateways, TimeProvider.System);
 
         _staff = NewUser(RoleNames.BoxOfficeStaff, _theaterId);
         _manager = NewUser(RoleNames.TheaterManager, _theaterId);
@@ -713,5 +713,300 @@ public class BoxOfficeTests
         var result = await _sut.GetShowtimesTodayAsync(_theaterId, null);
 
         result.Select(r => r.HasEnded).Should().Equal(true, false);
+    }
+
+    // ── After-sales (P5) ─────────────────────────────────────────────────────────
+
+    private Invoice PaidCounterInvoice(Guid seatId, DateTime showStartLocal, Guid? userId = null, double final = 100000, bool withFood = false)
+    {
+        var invoice = new Invoice
+        {
+            Id = Guid.NewGuid(),
+            Code = "INV-" + Guid.NewGuid().ToString("N")[..6],
+            UserId = userId,
+            TheaterId = _theaterId,
+            Status = InvoiceStatus.Paid,
+            Channel = SalesChannel.Counter,
+            FinalAmount = final,
+            TotalAmount = final,
+            PaidAt = DateTime.UtcNow,
+        };
+        var showTime = new ShowTime { Id = _showTimeId, StartTime = showStartLocal, EndTime = showStartLocal.AddHours(2) };
+        invoice.InvoiceTickets.Add(new InvoiceTicket
+        {
+            InvoiceId = invoice.Id, ShowTimeId = _showTimeId, RoomId = _roomId, SeatId = seatId, Price = final, IsActive = true,
+            ShowTimeRoom = new ShowTimeRoom { ShowTimeId = _showTimeId, RoomId = _roomId, ShowTime = showTime },
+            Seat = new Seat { Id = seatId, RowName = "A", ColIndex = 1 },
+        });
+        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.AfterSalesStore.TryClaimRefundAsync(invoice.Id, It.IsAny<StaffReasonCode?>(), It.IsAny<DateTime>())).ReturnsAsync(true);
+        if (withFood)
+        {
+            _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+                .ReturnsAsync(new List<StockNetQuantity> { new(invoice.Id, _cola.Id, -2) });
+        }
+        return invoice;
+    }
+
+    private static DateTime LocalNow() => Cinema.Business.Helpers.BusinessCalendar.ToLocal(DateTime.UtcNow);
+
+    private StaffRefundRequest RefundRequest(Invoice invoice, ManagerOverrideDTO? approval = null)
+    {
+        return new StaffRefundRequest { InvoiceId = invoice.Id, ReasonCode = StaffReasonCode.CustomerRequest, RefundTender = PaymentTender.Cash, Override = approval };
+    }
+
+    [Fact]
+    public async Task StaffRefund_ByBoxOfficeStaffWithoutPin_IsForbidden()
+    {
+        var invoice = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
+
+        await FluentActions.Awaiting(() => _sut.StaffRefundAsync(_theaterId, _staff.Id, RefundRequest(invoice)))
+            .Should().ThrowAsync<AccessDeniedException>();
+
+        invoice.Status.Should().Be(InvoiceStatus.Paid);
+        _uowMock.Verify(u => u.BeginTransactionAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task StaffRefund_WithManagerPin_RefundsFreesSeatsRestoresStockAndPaysCashFromTheDrawer()
+    {
+        var invoice = PaidCounterInvoice(_seatA, LocalNow().AddHours(2), withFood: true);
+        _uowMock.Setup(u => u.CashDrawerStore.GetTotalsByTypeAsync(_drawer.Id))
+            .ReturnsAsync(new Dictionary<CashMovementType, double> { [CashMovementType.Sale] = 300000 });
+        var approval = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin };
+
+        var result = await _sut.StaffRefundAsync(_theaterId, _staff.Id, RefundRequest(invoice, approval));
+
+        result.RefundedAmount.Should().Be(100000);
+        result.CashReturned.Should().Be(100000);
+        invoice.Status.Should().Be(InvoiceStatus.Refunded);
+        invoice.RefundReasonCode.Should().Be(StaffReasonCode.CustomerRequest);
+        _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
+        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(_cola.Id, 2), Times.Once);
+        _stockMovements.Should().ContainSingle(m => m.Type == StockMovementType.SaleReversal && m.Quantity == 2 && m.InvoiceId == invoice.Id);
+        _cashMovements.Should().ContainSingle(m => m.Type == CashMovementType.Refund && m.Amount == -100000 && m.InvoiceId == invoice.Id);
+        _audits.Should().ContainSingle(a => a.Action == AuditAction.Refund && a.ActorUserId == _staff.Id && a.ApproverUserId == _manager.Id && a.EntityId == invoice.Id);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task StaffRefund_ByManagerNeedsNoPin()
+    {
+        var invoice = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
+        _uowMock.Setup(u => u.CashDrawerStore.GetOpenForUserAsync(_manager.Id))
+            .ReturnsAsync(new CashDrawerSession { Id = Guid.NewGuid(), TheaterId = _theaterId, UserId = _manager.Id, Status = CashDrawerStatus.Open });
+        _uowMock.Setup(u => u.CashDrawerStore.GetTotalsByTypeAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new Dictionary<CashMovementType, double> { [CashMovementType.Sale] = 300000 });
+
+        await _sut.StaffRefundAsync(_theaterId, _manager.Id, RefundRequest(invoice));
+
+        _audits.Should().ContainSingle(a => a.ActorUserId == _manager.Id && a.ApproverUserId == _manager.Id);
+    }
+
+    [Fact]
+    public async Task StaffRefund_WalkIn_SkipsUserSteps()
+    {
+        var invoice = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
+        invoice.UserId.Should().BeNull();
+        _uowMock.Setup(u => u.CashDrawerStore.GetTotalsByTypeAsync(_drawer.Id))
+            .ReturnsAsync(new Dictionary<CashMovementType, double> { [CashMovementType.Sale] = 300000 });
+
+        await _sut.StaffRefundAsync(_theaterId, _staff.Id, RefundRequest(invoice, new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin }));
+
+        _uowMock.Verify(u => u.UserStore.UpdateAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task StaffRefund_AfterShowStart_NeedsAnOverride_AndIsFlaggedInTheResult()
+    {
+        var invoice = PaidCounterInvoice(_seatA, LocalNow().AddMinutes(-10));
+        _uowMock.Setup(u => u.CashDrawerStore.GetTotalsByTypeAsync(_drawer.Id))
+            .ReturnsAsync(new Dictionary<CashMovementType, double> { [CashMovementType.Sale] = 300000 });
+
+        await FluentActions.Awaiting(() => _sut.StaffRefundAsync(_theaterId, _staff.Id, RefundRequest(invoice)))
+            .Should().ThrowAsync<AccessDeniedException>();
+
+        var result = await _sut.StaffRefundAsync(_theaterId, _staff.Id, RefundRequest(invoice, new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin }));
+        result.AfterShowStart.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task StaffRefund_AlreadyClaimedByAnotherRequest_RollsBackWithoutPayingOut()
+    {
+        var invoice = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
+        _uowMock.Setup(u => u.AfterSalesStore.TryClaimRefundAsync(invoice.Id, It.IsAny<StaffReasonCode?>(), It.IsAny<DateTime>())).ReturnsAsync(false);
+        _uowMock.Setup(u => u.CashDrawerStore.GetTotalsByTypeAsync(_drawer.Id))
+            .ReturnsAsync(new Dictionary<CashMovementType, double> { [CashMovementType.Sale] = 300000 });
+
+        await FluentActions.Awaiting(() => _sut.StaffRefundAsync(_theaterId, _staff.Id, RefundRequest(invoice, new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin })))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        _cashMovements.Should().BeEmpty();
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task Exchange_ReversesTheOldInvoiceAndSellsTheNewOneInOneTransaction()
+    {
+        var old = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
+        var request = new ExchangeRequest
+        {
+            InvoiceId = old.Id,
+            ReasonCode = StaffReasonCode.WrongShowtime,
+            NewSale = SeatSale(_seatB),
+            Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin },
+        };
+
+        var result = await _sut.ExchangeAsync(_theaterId, _staff.Id, request);
+
+        old.Status.Should().Be(InvoiceStatus.Refunded);
+        var created = _created.Should().ContainSingle().Subject;
+        created.ExchangedFromInvoiceId.Should().Be(old.Id);
+        created.Status.Should().Be(InvoiceStatus.Paid);
+        result.AmountCollected.Should().Be(0);
+        result.RefundedBack.Should().Be(0);
+        _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(old.Id), Times.Once);
+        _uowMock.Verify(u => u.BeginTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+        _audits.Should().ContainSingle(a => a.Action == AuditAction.Exchange && a.ApproverUserId == _manager.Id && a.ActorUserId == _staff.Id);
+    }
+
+    [Fact]
+    public async Task Exchange_ToACheaperSale_PaysTheDifferenceBackFromTheDrawer()
+    {
+        var old = PaidCounterInvoice(_seatA, LocalNow().AddHours(2), final: 160000);
+        _uowMock.Setup(u => u.CashDrawerStore.GetTotalsByTypeAsync(_drawer.Id))
+            .ReturnsAsync(new Dictionary<CashMovementType, double> { [CashMovementType.Sale] = 300000 });
+        var request = new ExchangeRequest
+        {
+            InvoiceId = old.Id,
+            ReasonCode = StaffReasonCode.WrongShowtime,
+            NewSale = SeatSale(_seatB),
+            Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin },
+        };
+
+        var result = await _sut.ExchangeAsync(_theaterId, _staff.Id, request);
+
+        result.RefundedBack.Should().Be(60000);
+        _cashMovements.Should().ContainSingle(m => m.Type == CashMovementType.Refund && m.Amount == -60000);
+    }
+
+    [Fact]
+    public async Task Exchange_WhenTheNewSeatIsTaken_RollsBackAndKeepsTheOldInvoice()
+    {
+        var old = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(_showTimeId, _roomId)).ReturnsAsync(new List<Guid> { _seatB });
+        var request = new ExchangeRequest
+        {
+            InvoiceId = old.Id,
+            ReasonCode = StaffReasonCode.WrongShowtime,
+            NewSale = SeatSale(_seatB),
+            Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin },
+        };
+
+        await FluentActions.Awaiting(() => _sut.ExchangeAsync(_theaterId, _staff.Id, request))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        _created.Should().BeEmpty();
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task Reprint_UsedTicketNeedsAnOverride_UnusedDoesNot_AndBothAreAudited()
+    {
+        var invoice = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
+        invoice.InvoiceTickets.Single().QrCode = "QR1";
+
+        var ok = await _sut.ReprintAsync(_theaterId, _staff.Id, new ReprintRequest { InvoiceId = invoice.Id, Reason = "Printer jam" });
+        ok.Tickets.Should().ContainSingle(t => t.QrCode == "QR1" && t.SeatLabel == "A1");
+        _audits.Should().ContainSingle(a => a.Action == AuditAction.Reprint && a.ApproverUserId == null);
+
+        invoice.InvoiceTickets.Single().IsUsed = true;
+        await FluentActions.Awaiting(() => _sut.ReprintAsync(_theaterId, _staff.Id, new ReprintRequest { InvoiceId = invoice.Id, Reason = "Again" }))
+            .Should().ThrowAsync<AccessDeniedException>();
+    }
+
+    [Fact]
+    public async Task CloseDrawer_TenThousandShort_ShowsVarianceAndNeedsReconciliation()
+    {
+        _uowMock.Setup(u => u.CashDrawerStore.GetByIdAsync(_drawer.Id)).ReturnsAsync(_drawer);
+        _uowMock.Setup(u => u.CashDrawerStore.GetTotalsByTypeAsync(_drawer.Id))
+            .ReturnsAsync(new Dictionary<CashMovementType, double> { [CashMovementType.OpeningFloat] = 500000, [CashMovementType.Sale] = 200000 });
+
+        var result = await _sut.CloseDrawerAsync(_theaterId, _staff.Id, new CloseDrawerRequest { SessionId = _drawer.Id, CountedCash = 690000 });
+
+        result.ExpectedCash.Should().Be(700000);
+        result.Variance.Should().Be(-10000);
+        result.NeedsReconciliation.Should().BeTrue();
+        _drawer.Status.Should().Be(CashDrawerStatus.Closed);
+
+        var reconcile = new ReconcileDrawerRequest { SessionId = _drawer.Id, Note = "Short count accepted" };
+        await FluentActions.Awaiting(() => _sut.ReconcileDrawerAsync(_theaterId, _staff.Id, reconcile))
+            .Should().ThrowAsync<AccessDeniedException>();
+
+        reconcile.Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin };
+        var reconciled = await _sut.ReconcileDrawerAsync(_theaterId, _staff.Id, reconcile);
+        reconciled.Status.Should().Be(CashDrawerStatus.Reconciled);
+        _audits.Should().ContainSingle(a => a.Action == AuditAction.DrawerReconcile && a.ApproverUserId == _manager.Id);
+    }
+
+    [Fact]
+    public async Task CloseDrawer_ExactCount_IsReconciledStraightAway()
+    {
+        _uowMock.Setup(u => u.CashDrawerStore.GetByIdAsync(_drawer.Id)).ReturnsAsync(_drawer);
+        _uowMock.Setup(u => u.CashDrawerStore.GetTotalsByTypeAsync(_drawer.Id))
+            .ReturnsAsync(new Dictionary<CashMovementType, double> { [CashMovementType.OpeningFloat] = 500000 });
+
+        var result = await _sut.CloseDrawerAsync(_theaterId, _staff.Id, new CloseDrawerRequest { SessionId = _drawer.Id, CountedCash = 500000 });
+
+        result.NeedsReconciliation.Should().BeFalse();
+        result.Status.Should().Be(CashDrawerStatus.Reconciled);
+    }
+
+    [Fact]
+    public async Task DailyClose_TotalsEqualTheInvoicePaymentSumsOfTheBusinessDay()
+    {
+        var expectedWindow = Cinema.Business.Helpers.BusinessCalendar.WindowOf(new DateTime(2026, 10, 4), 6);
+        expectedWindow.FromUtc.Should().Be(new DateTime(2026, 10, 3, 23, 0, 0), "06:00 in UTC+7 is 23:00 UTC the day before");
+        expectedWindow.ToUtc.Should().Be(new DateTime(2026, 10, 4, 23, 0, 0));
+
+        _uowMock.Setup(u => u.AfterSalesStore.GetTenderTotalsAsync(_theaterId, expectedWindow.FromUtc, expectedWindow.ToUtc))
+            .ReturnsAsync(new List<TenderTotalRow>
+            {
+                new() { Method = PaymentTender.Cash, Amount = 300000, Count = 3 },
+                new() { Method = PaymentTender.Card, Amount = 200000, Count = 2 },
+                new() { Method = PaymentTender.Points, Amount = 5000, Count = 1 },
+            });
+        _uowMock.Setup(u => u.AfterSalesStore.GetRefundedInvoicesAsync(_theaterId, expectedWindow.FromUtc, expectedWindow.ToUtc))
+            .ReturnsAsync(new List<RefundedInvoiceRow>
+            {
+                new() { Id = Guid.NewGuid(), FinalAmount = 100000 },
+                new() { Id = Guid.NewGuid(), FinalAmount = 160000, ReplacementFinalAmount = 100000 },
+            });
+        _uowMock.Setup(u => u.AfterSalesStore.GetSalesVolumeAsync(_theaterId, expectedWindow.FromUtc, expectedWindow.ToUtc))
+            .ReturnsAsync(new SalesVolumeRow { TicketsSold = 5, FoodItemsSold = 4, FoodRevenue = 120000 });
+        _uowMock.Setup(u => u.AfterSalesStore.GetAuditTotalsAsync(_theaterId, AuditAction.Compensation, expectedWindow.FromUtc, expectedWindow.ToUtc))
+            .ReturnsAsync((1, 50000.0));
+        _uowMock.Setup(u => u.AfterSalesStore.GetDrawerSessionsAsync(_theaterId, expectedWindow.FromUtc, expectedWindow.ToUtc))
+            .ReturnsAsync(new List<DrawerSessionRow>
+            {
+                new() { Id = Guid.NewGuid(), TerminalName = "POS-1", Status = CashDrawerStatus.Closed, OpenedAt = DateTime.UtcNow, ExpectedCash = 700000, CountedCash = 690000, Variance = -10000 },
+            });
+        var daily = new DailyCloseManager(_uowMock.Object, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(), TimeProvider.System);
+
+        var close = await daily.GetDailyCloseAsync(_theaterId, new DateTime(2026, 10, 4));
+
+        close.PaymentsTotal.Should().Be(505000);
+        close.MoneyCollected.Should().Be(500000);
+        close.RefundCount.Should().Be(1);
+        close.ExchangeCount.Should().Be(1);
+        close.RefundAmount.Should().Be(100000 + 60000);
+        close.NetCollected.Should().Be(340000);
+        close.TicketsSold.Should().Be(5);
+        close.FoodItemsSold.Should().Be(4);
+        close.CompAmount.Should().Be(50000);
+        close.UnreconciledDrawerCount.Should().Be(1);
+        close.TotalVariance.Should().Be(-10000);
     }
 }
