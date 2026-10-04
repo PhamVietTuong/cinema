@@ -737,6 +737,391 @@
         ]
       }
     },
+    "/api/CustomerService/LookupCustomer": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_LookupCustomer",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LookupCustomerRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerLookupDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/CustomerService/ResendETicket": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_ResendETicket",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendETicketRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendETicketResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/CustomerService/CreateComplaint": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_CreateComplaint",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComplaintRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "RegionalManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/CustomerService/GetComplaints": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_GetComplaints",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfComplaintDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "RegionalManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/CustomerService/GetComplaint": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_GetComplaint",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetComplaintRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "RegionalManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/CustomerService/UpdateComplaint": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_UpdateComplaint",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateComplaintRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "RegionalManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/CustomerService/StartComplaintReview": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_StartComplaintReview",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartComplaintReviewRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "RegionalManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/CustomerService/RejectComplaint": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_RejectComplaint",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectComplaintRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "RegionalManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/CustomerService/ResolveComplaint": {
+      "post": {
+        "tags": [
+          "CustomerService"
+        ],
+        "operationId": "CustomerService_ResolveComplaint",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveComplaintRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff",
+              "RegionalManager"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Gate/Scan": {
       "post": {
         "tags": [
@@ -3447,6 +3832,555 @@
           }
         }
       },
+      "CustomerLookupDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "found": {
+            "type": "boolean"
+          },
+          "customer": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CustomerCardDTO"
+              }
+            ]
+          },
+          "invoices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerInvoiceDTO"
+            }
+          }
+        }
+      },
+      "CustomerCardDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "maskedEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "maskedPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "membershipName": {
+            "type": "string",
+            "nullable": true
+          },
+          "points": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CustomerInvoiceDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "theaterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/InvoiceStatus"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/SalesChannel"
+          },
+          "finalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "movieTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstShowStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "ticketCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LookupCustomerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        }
+      },
+      "ResendETicketResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "invoiceCode": {
+            "type": "string"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/ETicketChannel"
+          },
+          "maskedAddress": {
+            "type": "string"
+          },
+          "remainingThisHour": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ETicketChannel": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Email",
+          "Sms"
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "ResendETicketRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/ETicketChannel"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "ComplaintDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "customerUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "invoiceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/ComplaintCategory"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ComplaintStatus"
+          },
+          "resolution": {
+            "$ref": "#/components/schemas/ComplaintResolution"
+          },
+          "compensationAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "compensationRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedToUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "assignedToName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "createdByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "resolvedByUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "resolvedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolutionNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ComplaintCategory": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Other",
+          "Service",
+          "Booking",
+          "Payment",
+          "Projection",
+          "Sound",
+          "FoodAndDrink",
+          "Facilities",
+          "Staff"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "ComplaintStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Open",
+          "InReview",
+          "Resolved",
+          "Rejected"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "ComplaintResolution": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "None",
+          "Refund",
+          "GiftCard",
+          "Points",
+          "Apology"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "CreateComplaintRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "description"
+        ],
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/ComplaintCategory"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "customerUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "DefaultSearchResultsOfComplaintDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfComplaintDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfComplaintDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComplaintDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagingSearchDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "pageIndex": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 0.0
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 200.0,
+            "minimum": 0.0
+          },
+          "filters": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "sort": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortDTO"
+              }
+            ]
+          }
+        }
+      },
+      "SortDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "ascending": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GetComplaintRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "complaintId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
+      },
+      "UpdateComplaintRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "description"
+        ],
+        "properties": {
+          "complaintId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ComplaintCategory"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        }
+      },
+      "StartComplaintReviewRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "complaintId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "assignToUserId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "RejectComplaintRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "complaintId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        }
+      },
+      "ResolveComplaintRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "complaintId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "resolution": {
+            "$ref": "#/components/schemas/ComplaintResolution"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "refundTender": {
+            "$ref": "#/components/schemas/PaymentTender"
+          },
+          "refundReference": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0,
+            "nullable": true
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
       "ScanTicketResultDTO": {
         "type": "object",
         "additionalProperties": false,
@@ -3957,51 +4891,6 @@
           "page": {
             "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "PagingSearchDTO": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32",
-            "maximum": 2147483647.0,
-            "minimum": 0.0
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32",
-            "maximum": 200.0,
-            "minimum": 0.0
-          },
-          "filters": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "sort": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SortDTO"
-              }
-            ]
-          }
-        }
-      },
-      "SortDTO": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "ascending": {
-            "type": "boolean"
           }
         }
       },

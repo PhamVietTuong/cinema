@@ -978,6 +978,498 @@ export class ConcessionHttpService implements IConcessionHttpService {
     }
 }
 
+export interface ICustomerServiceHttpService {
+    lookupCustomer(request: LookupCustomerRequest): Observable<CustomerLookupDTO>;
+    resendETicket(request: ResendETicketRequest): Observable<ResendETicketResultDTO>;
+    createComplaint(request: CreateComplaintRequest): Observable<ComplaintDTO>;
+    getComplaints(search: PagingSearchDTO): Observable<DefaultSearchResultsOfComplaintDTO>;
+    getComplaint(request: GetComplaintRequest): Observable<ComplaintDTO>;
+    updateComplaint(request: UpdateComplaintRequest): Observable<ComplaintDTO>;
+    startComplaintReview(request: StartComplaintReviewRequest): Observable<ComplaintDTO>;
+    rejectComplaint(request: RejectComplaintRequest): Observable<ComplaintDTO>;
+    resolveComplaint(request: ResolveComplaintRequest): Observable<ComplaintDTO>;
+}
+
+@Injectable()
+export class CustomerServiceHttpService implements ICustomerServiceHttpService {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(STAFF_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "localhost:5102";
+    }
+
+    lookupCustomer(request: LookupCustomerRequest): Observable<CustomerLookupDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/LookupCustomer";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processLookupCustomer(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processLookupCustomer(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CustomerLookupDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CustomerLookupDTO>;
+        }));
+    }
+
+    protected processLookupCustomer(response: HttpResponseBase): Observable<CustomerLookupDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CustomerLookupDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    resendETicket(request: ResendETicketRequest): Observable<ResendETicketResultDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/ResendETicket";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processResendETicket(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processResendETicket(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ResendETicketResultDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ResendETicketResultDTO>;
+        }));
+    }
+
+    protected processResendETicket(response: HttpResponseBase): Observable<ResendETicketResultDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ResendETicketResultDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createComplaint(request: CreateComplaintRequest): Observable<ComplaintDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/CreateComplaint";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateComplaint(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateComplaint(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ComplaintDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ComplaintDTO>;
+        }));
+    }
+
+    protected processCreateComplaint(response: HttpResponseBase): Observable<ComplaintDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ComplaintDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getComplaints(search: PagingSearchDTO): Observable<DefaultSearchResultsOfComplaintDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/GetComplaints";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetComplaints(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetComplaints(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfComplaintDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfComplaintDTO>;
+        }));
+    }
+
+    protected processGetComplaints(response: HttpResponseBase): Observable<DefaultSearchResultsOfComplaintDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfComplaintDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getComplaint(request: GetComplaintRequest): Observable<ComplaintDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/GetComplaint";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetComplaint(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetComplaint(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ComplaintDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ComplaintDTO>;
+        }));
+    }
+
+    protected processGetComplaint(response: HttpResponseBase): Observable<ComplaintDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ComplaintDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateComplaint(request: UpdateComplaintRequest): Observable<ComplaintDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/UpdateComplaint";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateComplaint(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateComplaint(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ComplaintDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ComplaintDTO>;
+        }));
+    }
+
+    protected processUpdateComplaint(response: HttpResponseBase): Observable<ComplaintDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ComplaintDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    startComplaintReview(request: StartComplaintReviewRequest): Observable<ComplaintDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/StartComplaintReview";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processStartComplaintReview(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processStartComplaintReview(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ComplaintDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ComplaintDTO>;
+        }));
+    }
+
+    protected processStartComplaintReview(response: HttpResponseBase): Observable<ComplaintDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ComplaintDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    rejectComplaint(request: RejectComplaintRequest): Observable<ComplaintDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/RejectComplaint";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRejectComplaint(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRejectComplaint(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ComplaintDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ComplaintDTO>;
+        }));
+    }
+
+    protected processRejectComplaint(response: HttpResponseBase): Observable<ComplaintDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ComplaintDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    resolveComplaint(request: ResolveComplaintRequest): Observable<ComplaintDTO> {
+        let url_ = this.baseUrl + "/api/CustomerService/ResolveComplaint";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processResolveComplaint(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processResolveComplaint(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ComplaintDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ComplaintDTO>;
+        }));
+    }
+
+    protected processResolveComplaint(response: HttpResponseBase): Observable<ComplaintDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ComplaintDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
 export interface IGateHttpService {
     scan(request: ScanTicketRequest): Observable<ScanTicketResultDTO>;
     lookup(request: GateLookupRequest): Observable<GateLookupResultDTO[]>;
@@ -4964,6 +5456,931 @@ export interface ILookupPickupRequest {
     code: string;
 }
 
+export class CustomerLookupDTO implements ICustomerLookupDTO {
+    found?: boolean;
+    customer?: CustomerCardDTO | undefined;
+    invoices?: CustomerInvoiceDTO[];
+
+    constructor(data?: ICustomerLookupDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.found = _data["found"];
+            this.customer = _data["customer"] ? CustomerCardDTO.fromJS(_data["customer"]) : <any>undefined;
+            if (Array.isArray(_data["invoices"])) {
+                this.invoices = [] as any;
+                for (let item of _data["invoices"])
+                    this.invoices!.push(CustomerInvoiceDTO.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): CustomerLookupDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new CustomerLookupDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["found"] = this.found;
+        data["customer"] = this.customer ? this.customer.toJSON() : <any>undefined;
+        if (Array.isArray(this.invoices)) {
+            data["invoices"] = [];
+            for (let item of this.invoices)
+                data["invoices"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ICustomerLookupDTO {
+    found?: boolean;
+    customer?: CustomerCardDTO | undefined;
+    invoices?: CustomerInvoiceDTO[];
+}
+
+export class CustomerCardDTO implements ICustomerCardDTO {
+    id?: string;
+    name?: string;
+    maskedEmail?: string | undefined;
+    maskedPhone?: string | undefined;
+    membershipName?: string | undefined;
+    points?: number;
+
+    constructor(data?: ICustomerCardDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.maskedEmail = _data["maskedEmail"];
+            this.maskedPhone = _data["maskedPhone"];
+            this.membershipName = _data["membershipName"];
+            this.points = _data["points"];
+        }
+    }
+
+    static fromJS(data: any): CustomerCardDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new CustomerCardDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["maskedEmail"] = this.maskedEmail;
+        data["maskedPhone"] = this.maskedPhone;
+        data["membershipName"] = this.membershipName;
+        data["points"] = this.points;
+        return data;
+    }
+}
+
+export interface ICustomerCardDTO {
+    id?: string;
+    name?: string;
+    maskedEmail?: string | undefined;
+    maskedPhone?: string | undefined;
+    membershipName?: string | undefined;
+    points?: number;
+}
+
+export class CustomerInvoiceDTO implements ICustomerInvoiceDTO {
+    id?: string;
+    code?: string;
+    theaterId?: string | undefined;
+    theaterName?: string | undefined;
+    status?: InvoiceStatus;
+    channel?: SalesChannel;
+    finalAmount?: number;
+    paidAt?: Date | undefined;
+    creationTime?: Date;
+    movieTitle?: string | undefined;
+    firstShowStart?: Date | undefined;
+    ticketCount?: number;
+
+    constructor(data?: ICustomerInvoiceDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.theaterId = _data["theaterId"];
+            this.theaterName = _data["theaterName"];
+            this.status = _data["status"];
+            this.channel = _data["channel"];
+            this.finalAmount = _data["finalAmount"];
+            this.paidAt = _data["paidAt"] ? new Date(_data["paidAt"].toString()) : <any>undefined;
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+            this.movieTitle = _data["movieTitle"];
+            this.firstShowStart = _data["firstShowStart"] ? new Date(_data["firstShowStart"].toString()) : <any>undefined;
+            this.ticketCount = _data["ticketCount"];
+        }
+    }
+
+    static fromJS(data: any): CustomerInvoiceDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new CustomerInvoiceDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["theaterId"] = this.theaterId;
+        data["theaterName"] = this.theaterName;
+        data["status"] = this.status;
+        data["channel"] = this.channel;
+        data["finalAmount"] = this.finalAmount;
+        data["paidAt"] = this.paidAt ? this.paidAt.toISOString() : <any>undefined;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        data["movieTitle"] = this.movieTitle;
+        data["firstShowStart"] = this.firstShowStart ? this.firstShowStart.toISOString() : <any>undefined;
+        data["ticketCount"] = this.ticketCount;
+        return data;
+    }
+}
+
+export interface ICustomerInvoiceDTO {
+    id?: string;
+    code?: string;
+    theaterId?: string | undefined;
+    theaterName?: string | undefined;
+    status?: InvoiceStatus;
+    channel?: SalesChannel;
+    finalAmount?: number;
+    paidAt?: Date | undefined;
+    creationTime?: Date;
+    movieTitle?: string | undefined;
+    firstShowStart?: Date | undefined;
+    ticketCount?: number;
+}
+
+export class LookupCustomerRequest implements ILookupCustomerRequest {
+    query!: string;
+
+    constructor(data?: ILookupCustomerRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.query = _data["query"];
+        }
+    }
+
+    static fromJS(data: any): LookupCustomerRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new LookupCustomerRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["query"] = this.query;
+        return data;
+    }
+}
+
+export interface ILookupCustomerRequest {
+    query: string;
+}
+
+export class ResendETicketResultDTO implements IResendETicketResultDTO {
+    invoiceId?: string;
+    invoiceCode?: string;
+    channel?: ETicketChannel;
+    maskedAddress?: string;
+    remainingThisHour?: number;
+
+    constructor(data?: IResendETicketResultDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.invoiceId = _data["invoiceId"];
+            this.invoiceCode = _data["invoiceCode"];
+            this.channel = _data["channel"];
+            this.maskedAddress = _data["maskedAddress"];
+            this.remainingThisHour = _data["remainingThisHour"];
+        }
+    }
+
+    static fromJS(data: any): ResendETicketResultDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResendETicketResultDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["invoiceId"] = this.invoiceId;
+        data["invoiceCode"] = this.invoiceCode;
+        data["channel"] = this.channel;
+        data["maskedAddress"] = this.maskedAddress;
+        data["remainingThisHour"] = this.remainingThisHour;
+        return data;
+    }
+}
+
+export interface IResendETicketResultDTO {
+    invoiceId?: string;
+    invoiceCode?: string;
+    channel?: ETicketChannel;
+    maskedAddress?: string;
+    remainingThisHour?: number;
+}
+
+export enum ETicketChannel {
+    Email = 0,
+    Sms = 1,
+}
+
+export class ResendETicketRequest implements IResendETicketRequest {
+    theaterId?: string | undefined;
+    invoiceId?: string;
+    channel?: ETicketChannel;
+    address?: string | undefined;
+
+    constructor(data?: IResendETicketRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+            this.invoiceId = _data["invoiceId"];
+            this.channel = _data["channel"];
+            this.address = _data["address"];
+        }
+    }
+
+    static fromJS(data: any): ResendETicketRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResendETicketRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        data["invoiceId"] = this.invoiceId;
+        data["channel"] = this.channel;
+        data["address"] = this.address;
+        return data;
+    }
+}
+
+export interface IResendETicketRequest {
+    theaterId?: string | undefined;
+    invoiceId?: string;
+    channel?: ETicketChannel;
+    address?: string | undefined;
+}
+
+export class ComplaintDTO implements IComplaintDTO {
+    id?: string;
+    theaterId?: string;
+    customerUserId?: string | undefined;
+    customerName?: string | undefined;
+    invoiceId?: string | undefined;
+    invoiceCode?: string | undefined;
+    category?: ComplaintCategory;
+    description?: string;
+    status?: ComplaintStatus;
+    resolution?: ComplaintResolution;
+    compensationAmount?: number | undefined;
+    compensationRef?: string | undefined;
+    assignedToUserId?: string | undefined;
+    assignedToName?: string | undefined;
+    createdByUserId?: string;
+    createdByName?: string | undefined;
+    resolvedByUserId?: string | undefined;
+    resolvedByName?: string | undefined;
+    resolvedAt?: Date | undefined;
+    resolutionNote?: string | undefined;
+    creationTime?: Date;
+
+    constructor(data?: IComplaintDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.theaterId = _data["theaterId"];
+            this.customerUserId = _data["customerUserId"];
+            this.customerName = _data["customerName"];
+            this.invoiceId = _data["invoiceId"];
+            this.invoiceCode = _data["invoiceCode"];
+            this.category = _data["category"];
+            this.description = _data["description"];
+            this.status = _data["status"];
+            this.resolution = _data["resolution"];
+            this.compensationAmount = _data["compensationAmount"];
+            this.compensationRef = _data["compensationRef"];
+            this.assignedToUserId = _data["assignedToUserId"];
+            this.assignedToName = _data["assignedToName"];
+            this.createdByUserId = _data["createdByUserId"];
+            this.createdByName = _data["createdByName"];
+            this.resolvedByUserId = _data["resolvedByUserId"];
+            this.resolvedByName = _data["resolvedByName"];
+            this.resolvedAt = _data["resolvedAt"] ? new Date(_data["resolvedAt"].toString()) : <any>undefined;
+            this.resolutionNote = _data["resolutionNote"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): ComplaintDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ComplaintDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["theaterId"] = this.theaterId;
+        data["customerUserId"] = this.customerUserId;
+        data["customerName"] = this.customerName;
+        data["invoiceId"] = this.invoiceId;
+        data["invoiceCode"] = this.invoiceCode;
+        data["category"] = this.category;
+        data["description"] = this.description;
+        data["status"] = this.status;
+        data["resolution"] = this.resolution;
+        data["compensationAmount"] = this.compensationAmount;
+        data["compensationRef"] = this.compensationRef;
+        data["assignedToUserId"] = this.assignedToUserId;
+        data["assignedToName"] = this.assignedToName;
+        data["createdByUserId"] = this.createdByUserId;
+        data["createdByName"] = this.createdByName;
+        data["resolvedByUserId"] = this.resolvedByUserId;
+        data["resolvedByName"] = this.resolvedByName;
+        data["resolvedAt"] = this.resolvedAt ? this.resolvedAt.toISOString() : <any>undefined;
+        data["resolutionNote"] = this.resolutionNote;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IComplaintDTO {
+    id?: string;
+    theaterId?: string;
+    customerUserId?: string | undefined;
+    customerName?: string | undefined;
+    invoiceId?: string | undefined;
+    invoiceCode?: string | undefined;
+    category?: ComplaintCategory;
+    description?: string;
+    status?: ComplaintStatus;
+    resolution?: ComplaintResolution;
+    compensationAmount?: number | undefined;
+    compensationRef?: string | undefined;
+    assignedToUserId?: string | undefined;
+    assignedToName?: string | undefined;
+    createdByUserId?: string;
+    createdByName?: string | undefined;
+    resolvedByUserId?: string | undefined;
+    resolvedByName?: string | undefined;
+    resolvedAt?: Date | undefined;
+    resolutionNote?: string | undefined;
+    creationTime?: Date;
+}
+
+export enum ComplaintCategory {
+    Other = 0,
+    Service = 1,
+    Booking = 2,
+    Payment = 3,
+    Projection = 4,
+    Sound = 5,
+    FoodAndDrink = 6,
+    Facilities = 7,
+    Staff = 8,
+}
+
+export enum ComplaintStatus {
+    Open = 0,
+    InReview = 1,
+    Resolved = 2,
+    Rejected = 3,
+}
+
+export enum ComplaintResolution {
+    None = 0,
+    Refund = 1,
+    GiftCard = 2,
+    Points = 3,
+    Apology = 4,
+}
+
+export class CreateComplaintRequest implements ICreateComplaintRequest {
+    theaterId?: string | undefined;
+    category?: ComplaintCategory;
+    description!: string;
+    customerUserId?: string | undefined;
+    invoiceId?: string | undefined;
+
+    constructor(data?: ICreateComplaintRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+            this.category = _data["category"];
+            this.description = _data["description"];
+            this.customerUserId = _data["customerUserId"];
+            this.invoiceId = _data["invoiceId"];
+        }
+    }
+
+    static fromJS(data: any): CreateComplaintRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateComplaintRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        data["category"] = this.category;
+        data["description"] = this.description;
+        data["customerUserId"] = this.customerUserId;
+        data["invoiceId"] = this.invoiceId;
+        return data;
+    }
+}
+
+export interface ICreateComplaintRequest {
+    theaterId?: string | undefined;
+    category?: ComplaintCategory;
+    description: string;
+    customerUserId?: string | undefined;
+    invoiceId?: string | undefined;
+}
+
+export abstract class BaseSearchResultsOfComplaintDTO implements IBaseSearchResultsOfComplaintDTO {
+    results?: ComplaintDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfComplaintDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(ComplaintDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfComplaintDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfComplaintDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfComplaintDTO {
+    results?: ComplaintDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfComplaintDTO extends BaseSearchResultsOfComplaintDTO implements IDefaultSearchResultsOfComplaintDTO {
+
+    constructor(data?: IDefaultSearchResultsOfComplaintDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfComplaintDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfComplaintDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfComplaintDTO extends IBaseSearchResultsOfComplaintDTO {
+}
+
+export class PagingSearchDTO implements IPagingSearchDTO {
+    pageIndex?: number;
+    pageSize?: number;
+    filters?: { [key: string]: string; } | undefined;
+    sort?: SortDTO | undefined;
+
+    constructor(data?: IPagingSearchDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.pageIndex = _data["pageIndex"];
+            this.pageSize = _data["pageSize"];
+            if (_data["filters"]) {
+                this.filters = {} as any;
+                for (let key in _data["filters"]) {
+                    if (_data["filters"].hasOwnProperty(key))
+                        (<any>this.filters)![key] = _data["filters"][key];
+                }
+            }
+            this.sort = _data["sort"] ? SortDTO.fromJS(_data["sort"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): PagingSearchDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PagingSearchDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["pageIndex"] = this.pageIndex;
+        data["pageSize"] = this.pageSize;
+        if (this.filters) {
+            data["filters"] = {};
+            for (let key in this.filters) {
+                if (this.filters.hasOwnProperty(key))
+                    (<any>data["filters"])[key] = (<any>this.filters)[key];
+            }
+        }
+        data["sort"] = this.sort ? this.sort.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IPagingSearchDTO {
+    pageIndex?: number;
+    pageSize?: number;
+    filters?: { [key: string]: string; } | undefined;
+    sort?: SortDTO | undefined;
+}
+
+export class SortDTO implements ISortDTO {
+    field?: string;
+    ascending?: boolean;
+
+    constructor(data?: ISortDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.field = _data["field"];
+            this.ascending = _data["ascending"];
+        }
+    }
+
+    static fromJS(data: any): SortDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new SortDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["field"] = this.field;
+        data["ascending"] = this.ascending;
+        return data;
+    }
+}
+
+export interface ISortDTO {
+    field?: string;
+    ascending?: boolean;
+}
+
+export class GetComplaintRequest implements IGetComplaintRequest {
+    complaintId?: string;
+
+    constructor(data?: IGetComplaintRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.complaintId = _data["complaintId"];
+        }
+    }
+
+    static fromJS(data: any): GetComplaintRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetComplaintRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["complaintId"] = this.complaintId;
+        return data;
+    }
+}
+
+export interface IGetComplaintRequest {
+    complaintId?: string;
+}
+
+export class UpdateComplaintRequest implements IUpdateComplaintRequest {
+    complaintId?: string;
+    category?: ComplaintCategory;
+    description!: string;
+
+    constructor(data?: IUpdateComplaintRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.complaintId = _data["complaintId"];
+            this.category = _data["category"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): UpdateComplaintRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateComplaintRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["complaintId"] = this.complaintId;
+        data["category"] = this.category;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface IUpdateComplaintRequest {
+    complaintId?: string;
+    category?: ComplaintCategory;
+    description: string;
+}
+
+export class StartComplaintReviewRequest implements IStartComplaintReviewRequest {
+    complaintId?: string;
+    assignToUserId?: string | undefined;
+
+    constructor(data?: IStartComplaintReviewRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.complaintId = _data["complaintId"];
+            this.assignToUserId = _data["assignToUserId"];
+        }
+    }
+
+    static fromJS(data: any): StartComplaintReviewRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new StartComplaintReviewRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["complaintId"] = this.complaintId;
+        data["assignToUserId"] = this.assignToUserId;
+        return data;
+    }
+}
+
+export interface IStartComplaintReviewRequest {
+    complaintId?: string;
+    assignToUserId?: string | undefined;
+}
+
+export class RejectComplaintRequest implements IRejectComplaintRequest {
+    complaintId?: string;
+    reason!: string;
+
+    constructor(data?: IRejectComplaintRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.complaintId = _data["complaintId"];
+            this.reason = _data["reason"];
+        }
+    }
+
+    static fromJS(data: any): RejectComplaintRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RejectComplaintRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["complaintId"] = this.complaintId;
+        data["reason"] = this.reason;
+        return data;
+    }
+}
+
+export interface IRejectComplaintRequest {
+    complaintId?: string;
+    reason: string;
+}
+
+export class ResolveComplaintRequest implements IResolveComplaintRequest {
+    complaintId?: string;
+    resolution?: ComplaintResolution;
+    amount?: number | undefined;
+    note?: string | undefined;
+    refundTender?: PaymentTender;
+    refundReference?: string | undefined;
+    override?: ManagerOverrideDTO | undefined;
+
+    constructor(data?: IResolveComplaintRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.complaintId = _data["complaintId"];
+            this.resolution = _data["resolution"];
+            this.amount = _data["amount"];
+            this.note = _data["note"];
+            this.refundTender = _data["refundTender"];
+            this.refundReference = _data["refundReference"];
+            this.override = _data["override"] ? ManagerOverrideDTO.fromJS(_data["override"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): ResolveComplaintRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResolveComplaintRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["complaintId"] = this.complaintId;
+        data["resolution"] = this.resolution;
+        data["amount"] = this.amount;
+        data["note"] = this.note;
+        data["refundTender"] = this.refundTender;
+        data["refundReference"] = this.refundReference;
+        data["override"] = this.override ? this.override.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IResolveComplaintRequest {
+    complaintId?: string;
+    resolution?: ComplaintResolution;
+    amount?: number | undefined;
+    note?: string | undefined;
+    refundTender?: PaymentTender;
+    refundReference?: string | undefined;
+    override?: ManagerOverrideDTO | undefined;
+}
+
 export class ScanTicketResultDTO implements IScanTicketResultDTO {
     outcome?: ScanOutcome;
     invoiceCode?: string;
@@ -5772,106 +7189,6 @@ export class DefaultSearchResultsOfIncidentDTO extends BaseSearchResultsOfIncide
 }
 
 export interface IDefaultSearchResultsOfIncidentDTO extends IBaseSearchResultsOfIncidentDTO {
-}
-
-export class PagingSearchDTO implements IPagingSearchDTO {
-    pageIndex?: number;
-    pageSize?: number;
-    filters?: { [key: string]: string; } | undefined;
-    sort?: SortDTO | undefined;
-
-    constructor(data?: IPagingSearchDTO) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.pageIndex = _data["pageIndex"];
-            this.pageSize = _data["pageSize"];
-            if (_data["filters"]) {
-                this.filters = {} as any;
-                for (let key in _data["filters"]) {
-                    if (_data["filters"].hasOwnProperty(key))
-                        (<any>this.filters)![key] = _data["filters"][key];
-                }
-            }
-            this.sort = _data["sort"] ? SortDTO.fromJS(_data["sort"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): PagingSearchDTO {
-        data = typeof data === 'object' ? data : {};
-        let result = new PagingSearchDTO();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["pageIndex"] = this.pageIndex;
-        data["pageSize"] = this.pageSize;
-        if (this.filters) {
-            data["filters"] = {};
-            for (let key in this.filters) {
-                if (this.filters.hasOwnProperty(key))
-                    (<any>data["filters"])[key] = (<any>this.filters)[key];
-            }
-        }
-        data["sort"] = this.sort ? this.sort.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IPagingSearchDTO {
-    pageIndex?: number;
-    pageSize?: number;
-    filters?: { [key: string]: string; } | undefined;
-    sort?: SortDTO | undefined;
-}
-
-export class SortDTO implements ISortDTO {
-    field?: string;
-    ascending?: boolean;
-
-    constructor(data?: ISortDTO) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.field = _data["field"];
-            this.ascending = _data["ascending"];
-        }
-    }
-
-    static fromJS(data: any): SortDTO {
-        data = typeof data === 'object' ? data : {};
-        let result = new SortDTO();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["field"] = this.field;
-        data["ascending"] = this.ascending;
-        return data;
-    }
-}
-
-export interface ISortDTO {
-    field?: string;
-    ascending?: boolean;
 }
 
 export class GetIncidentRequest implements IGetIncidentRequest {
