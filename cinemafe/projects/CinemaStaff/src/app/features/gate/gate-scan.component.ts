@@ -43,56 +43,47 @@ const CAMERA_SCAN_INTERVAL_MS = 300;
   imports: [SharedModule, StatusPillComponent, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-@if (!theaterId()) {
-  <mat-card class="ad-card--pad-0">
-    <cl-empty-state icon="theaters" messageKey="gate.pickTheater" hintKey="gate.pickTheaterHint" />
-  </mat-card>
-} @else {
-  <div class="scan-panel ad-card">
-    <label class="scan-label" for="gate-scan-input">{{ 'gate.scanLabel' | translate }}</label>
-    <div class="scan-row">
-      <input #scanInput id="gate-scan-input" class="ad-input scan-input" type="text" autocomplete="off" autofocus
-             [placeholder]="'gate.scanPlaceholder' | translate"
-             [disabled]="busy()"
-             (keydown.enter)="submit(scanInput.value); scanInput.value = ''">
-      @if (cameraSupported) {
-        <button mat-stroked-button type="button" (click)="toggleCamera()">
-          <mat-icon>{{ cameraOn() ? 'videocam_off' : 'photo_camera' }}</mat-icon>
-          {{ (cameraOn() ? 'gate.cameraStop' : 'gate.cameraStart') | translate }}
-        </button>
-      }
-    </div>
-    @if (cameraOn()) {
-      <video #cameraVideo class="camera" autoplay playsinline muted></video>
+<h2 class="ad-card-title">{{ 'gate.scanLabel' | translate }}</h2>
+<div class="step">
+  <span class="step-num">1</span><span class="muted">{{ 'gate.stepShowTime' | translate }}</span>
+</div>
+<mat-form-field appearance="outline" class="showtime-filter">
+  <mat-label>{{ 'gate.showTimeFilter' | translate }}</mat-label>
+  <mat-select [value]="showTimeId()" [disabled]="!showTimes().length" (selectionChange)="showTimeId.set($event.value)">
+    <mat-option value="">{{ 'gate.anyShowTime' | translate }}</mat-option>
+    @for (option of showTimes(); track option.id) {
+      <mat-option [value]="option.id">{{ option.label }}</mat-option>
     }
-    @if (showTimes().length) {
-      <mat-form-field appearance="outline" class="showtime-filter">
-        <mat-label>{{ 'gate.showTimeFilter' | translate }}</mat-label>
-        <mat-select [value]="showTimeId()" (selectionChange)="showTimeId.set($event.value)">
-          <mat-option value="">{{ 'gate.anyShowTime' | translate }}</mat-option>
-          @for (option of showTimes(); track option.id) {
-            <mat-option [value]="option.id">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    }
-  </div>
+  </mat-select>
+</mat-form-field>
+<div class="step"><span class="step-num">2</span><span class="muted">{{ 'gate.stepScan' | translate }}</span></div>
+<input #scanInput id="gate-scan-input" class="ad-input scan-input" type="text" autocomplete="off" autofocus
+       [attr.aria-label]="'gate.scanLabel' | translate"
+       [placeholder]="'gate.scanPlaceholder' | translate"
+       [disabled]="busy()"
+       (keydown.enter)="submit(scanInput.value); scanInput.value = ''">
+@if (cameraSupported) {
+  <button mat-stroked-button type="button" class="camera-btn" (click)="toggleCamera()">
+    <mat-icon>{{ cameraOn() ? 'videocam_off' : 'photo_camera' }}</mat-icon>
+    {{ (cameraOn() ? 'gate.cameraStop' : 'gate.cameraStart') | translate }}
+  </button>
+}
+@if (cameraOn()) {
+  <video #cameraVideo class="camera" autoplay playsinline muted></video>
+}
 
-  <h2 class="recent-title">{{ 'gate.recent' | translate }}</h2>
-  @if (recent().length) {
-    <div class="ad-card recent">
-      @for (scan of recent(); track $index) {
-        <div class="recent-row">
-          <cl-status-pill kind="scanOutcome" [value]="scan.outcome" />
-          <strong>{{ scan.seatLabel }}</strong>
-          <span class="recent-movie">{{ scan.movieTitle }}</span>
-          <span class="recent-time">{{ scan.at | date: 'HH:mm:ss' }}</span>
-        </div>
-      }
+<h3 class="recent-title">{{ 'gate.recent' | translate }}</h3>
+@if (recent().length) {
+  @for (scan of recent(); track $index) {
+    <div class="recent-row">
+      <cl-status-pill kind="scanOutcome" [value]="scan.outcome" />
+      <strong>{{ scan.seatLabel }}</strong>
+      <span class="recent-movie">{{ scan.movieTitle }}</span>
+      <span class="recent-time">{{ scan.at | date: 'HH:mm:ss' }}</span>
     </div>
-  } @else {
-    <mat-card class="ad-card--pad-0"><cl-empty-state icon="qr_code_scanner" messageKey="gate.recentEmpty" /></mat-card>
   }
+} @else {
+  <cl-empty-state icon="qr_code_scanner" messageKey="gate.recentEmpty" />
 }
 
 @if (result(); as r) {
@@ -128,13 +119,14 @@ const CAMERA_SCAN_INTERVAL_MS = 300;
 }
 `,
   styles: [`
-    .scan-panel { display: flex; flex-direction: column; gap: 12px; padding: 24px; }
-    .scan-label { font-weight: 600; color: var(--ml-ink); }
-    .scan-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .scan-input { flex: 1 1 280px; font-size: 1.4rem; padding: 14px 16px; }
-    .camera { width: 100%; max-width: 420px; border-radius: 8px; }
-    .showtime-filter { max-width: 420px; }
-    .recent-title { font-family: var(--ml-font-head); text-transform: uppercase; font-size: 1rem; margin: 24px 0 8px; color: var(--ml-ink); }
+    .muted { color: var(--ml-muted); }
+    .step { display: flex; gap: 10px; align-items: center; margin: 14px 0 8px; }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 0.85rem; background: var(--ml-action); color: var(--ml-on-action); }
+    .scan-input { width: 100%; font-size: 1.4rem; padding: 14px 16px; }
+    .camera-btn { margin-top: 12px; }
+    .camera { display: block; margin-top: 12px; width: 100%; max-width: 420px; border-radius: 8px; }
+    .showtime-filter { width: 100%; }
+    .recent-title { font-family: var(--ml-font-head); text-transform: uppercase; font-size: 1rem; margin: 24px 0 4px; color: var(--ml-ink); }
     .recent-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--ml-panel-3, rgba(0, 0, 0, 0.08)); }
     .recent-movie { flex: 1; color: var(--ml-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .recent-time { color: var(--ml-muted); font-variant-numeric: tabular-nums; }

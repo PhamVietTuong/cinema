@@ -13,6 +13,15 @@ import {
 import { TheaterContextService } from '../../core/theater-context.service';
 import { buildScanRequest, isAdmitted, needsAgePrompt } from './gate-scan.state';
 
+type InvoiceStatus = 'unused' | 'partial' | 'used';
+
+/** Pill shown on each booking, derived from how many of its tickets are already used. */
+const INVOICE_STATUS_SPEC: Record<InvoiceStatus, { labelKey: string; pillClass: string }> = {
+  unused: { labelKey: 'gate.lookup.unused', pillClass: 'ad-pill--success' },
+  partial: { labelKey: 'gate.lookup.partlyUsed', pillClass: 'ad-pill--warn' },
+  used: { labelKey: 'gate.lookup.used', pillClass: 'ad-pill--neutral' },
+};
+
 /**
  * Gate lookup: find today's paid tickets by invoice code or phone number and admit them one by one
  * when the patron has no scannable QR. "Admit" is a Gate/Scan with that ticket's QR code.
@@ -23,33 +32,33 @@ import { buildScanRequest, isAdmitted, needsAgePrompt } from './gate-scan.state'
   imports: [SharedModule, StatusPillComponent, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-@if (!theaterId()) {
-  <mat-card class="ad-card--pad-0">
-    <cl-empty-state icon="theaters" messageKey="gate.pickTheater" hintKey="gate.pickTheaterHint" />
-  </mat-card>
-} @else {
-  <form class="ad-card lookup-form" [formGroup]="form" (ngSubmit)="search()">
-    <mat-form-field appearance="outline">
-      <mat-label>{{ 'gate.lookup.invoiceCode' | translate }}</mat-label>
-      <input matInput formControlName="invoiceCode" autocomplete="off">
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>{{ 'gate.lookup.phone' | translate }}</mat-label>
-      <input matInput formControlName="phone" inputmode="tel" autocomplete="off">
-    </mat-form-field>
-    <button mat-raised-button color="primary" type="submit" [disabled]="loading()">
-      <mat-icon>search</mat-icon> {{ 'gate.lookup.search' | translate }}
-    </button>
-  </form>
-  <p class="hint">{{ 'gate.lookup.hint' | translate }}</p>
+<h2 class="ad-card-title">{{ 'gate.lookup.title' | translate }}</h2>
+<form class="lookup-form" [formGroup]="form" (ngSubmit)="search()">
+  <div class="ad-field">
+    <label class="ad-label" for="gate-lookup-invoice">{{ 'gate.lookup.invoiceCode' | translate }}</label>
+    <input id="gate-lookup-invoice" class="ad-input" formControlName="invoiceCode" autocomplete="off">
+  </div>
+  <div class="or">{{ 'gate.lookup.or' | translate }}</div>
+  <div class="ad-field">
+    <label class="ad-label" for="gate-lookup-phone">{{ 'gate.lookup.phone' | translate }}</label>
+    <input id="gate-lookup-phone" class="ad-input" formControlName="phone" inputmode="tel" autocomplete="off">
+  </div>
+  <button class="ad-btn ad-btn--primary ad-btn--block" type="submit" [disabled]="loading()">
+    <mat-icon>search</mat-icon> {{ 'gate.lookup.search' | translate }}
+  </button>
+</form>
+<p class="hint">{{ 'gate.lookup.hint' | translate }}</p>
 
-  @for (invoice of invoices(); track invoice.invoiceCode) {
-    <mat-card class="invoice">
-      <div class="invoice-head">
+@for (invoice of invoices(); track invoice.invoiceCode) {
+  @let status = statusSpec(invoice);
+  <div class="invoice">
+    <div class="invoice-head">
+      <div>
         <strong>{{ invoice.invoiceCode }}</strong>
-        <span>{{ invoice.customerName }}</span>
-        <span class="muted">{{ invoice.maskedPhone }}</span>
+        <small class="muted">{{ invoice.customerName }} &middot; {{ invoice.maskedPhone }} &middot; {{ 'gate.lookup.ticketCount' | translate: { count: (invoice.tickets ?? []).length } }}</small>
       </div>
+      <span [class]="'ad-pill ' + status.pillClass">{{ status.labelKey | translate }}</span>
+    </div>
       @for (ticket of invoice.tickets ?? []; track ticket.qrCode) {
         <div class="ticket-row">
           <strong class="seat">{{ ticket.seatLabel }}</strong>
@@ -66,22 +75,26 @@ import { buildScanRequest, isAdmitted, needsAgePrompt } from './gate-scan.state'
           </button>
         </div>
       }
-    </mat-card>
-  } @empty {
-    @if (searched()) {
-      <mat-card class="ad-card--pad-0"><cl-empty-state icon="confirmation_number" messageKey="gate.lookup.empty" /></mat-card>
-    }
+  </div>
+} @empty {
+  @if (searched()) {
+    <cl-empty-state icon="confirmation_number" messageKey="gate.lookup.empty" />
   }
 }
 `,
   styles: [`
-    .lookup-form { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; padding: 16px 24px 0; }
+    .lookup-form { display: flex; flex-direction: column; gap: 4px; }
+    .or { display: flex; align-items: center; gap: 10px; color: var(--ml-muted); font-size: 0.8rem; margin: 8px 0; }
+    .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--ml-rule); }
+    .lookup-form button { margin-top: 12px; }
     .hint, .muted { color: var(--ml-muted); }
-    .invoice { margin-bottom: 12px; padding: 12px 16px; }
-    .invoice-head { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
-    .ticket-row { display: flex; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--ml-panel-3, rgba(0, 0, 0, 0.08)); }
+    .hint { font-size: 0.85rem; margin: 10px 0 0; }
+    .invoice { border: 1px solid var(--ml-rule); border-radius: 10px; padding: 12px; margin-top: 10px; }
+    .invoice-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .invoice-head small { display: block; }
+    .ticket-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--ml-panel-3, rgba(0, 0, 0, 0.08)); }
     .seat { min-width: 48px; }
-    .info { flex: 1; }
+    .info { flex: 1 1 160px; }
   `],
 })
 export class GateLookupComponent {
@@ -104,6 +117,19 @@ export class GateLookupComponent {
 
   outcomeOf(qrCode?: string): StaffServiceAgent.ScanTicketResultDTO | null {
     return this._outcomes()[qrCode ?? ''] ?? null;
+  }
+
+  /** Pill spec of a booking: used once every ticket is used or admitted during this lookup. */
+  statusSpec(invoice: StaffServiceAgent.GateLookupResultDTO): { labelKey: string; pillClass: string } {
+    const tickets = invoice.tickets ?? [];
+    const usedCount = tickets.filter(ticket => ticket.isUsed || isAdmitted(this.outcomeOf(ticket.qrCode))).length;
+    if (usedCount === 0) {
+      return INVOICE_STATUS_SPEC.unused;
+    }
+    if (usedCount === tickets.length) {
+      return INVOICE_STATUS_SPEC.used;
+    }
+    return INVOICE_STATUS_SPEC.partial;
   }
 
   needsAge(qrCode?: string): boolean {

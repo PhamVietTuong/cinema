@@ -235,8 +235,8 @@
     "pageTitle": "Cổng Soát Vé",
     "title": "Cổng soát vé",
     "subtitle": "Quét vé tại cửa vào, hoặc tra cứu đặt vé theo mã hoặc số điện thoại.",
-    "tabScan": "Quét vé",
-    "tabLookup": "Tra cứu",
+    "stepShowTime": "Chọn suất chiếu (không bắt buộc)",
+    "stepScan": "Quét hoặc nhập mã",
     "pickTheater": "Hãy chọn rạp trước",
     "pickTheaterHint": "Chọn rạp bạn đang làm việc ở thanh trên cùng để quét vé.",
     "scanLabel": "Quét mã QR trên vé",
@@ -265,6 +265,11 @@
       "ageCheckRequired": "Cần kiểm tra độ tuổi"
     },
     "lookup": {
+      "title": "Tra cứu đặt vé",
+      "or": "hoặc",
+      "ticketCount": "{{count}} vé",
+      "unused": "Chưa dùng",
+      "partlyUsed": "Đã dùng một phần",
       "invoiceCode": "Mã đặt vé",
       "phone": "Số điện thoại",
       "search": "Tìm kiếm",

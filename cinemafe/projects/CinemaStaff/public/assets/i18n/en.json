@@ -235,8 +235,8 @@
     "pageTitle": "Ticket Gate",
     "title": "Ticket gate",
     "subtitle": "Scan tickets at the entrance, or look a booking up by code or phone.",
-    "tabScan": "Scan",
-    "tabLookup": "Lookup",
+    "stepShowTime": "Pick a showtime (optional)",
+    "stepScan": "Scan or type the code",
     "pickTheater": "Choose a theater first",
     "pickTheaterHint": "Pick the theater you are working at in the top bar to scan tickets.",
     "scanLabel": "Scan the ticket QR code",
@@ -265,6 +265,11 @@
       "ageCheckRequired": "Age check required"
     },
     "lookup": {
+      "title": "Booking lookup",
+      "or": "or",
+      "ticketCount": "{{count}} ticket(s)",
+      "unused": "Not used",
+      "partlyUsed": "Partly used",
       "invoiceCode": "Booking code",
       "phone": "Phone number",
       "search": "Search",
