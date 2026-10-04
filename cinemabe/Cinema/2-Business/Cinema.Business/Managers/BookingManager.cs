@@ -1203,8 +1203,11 @@ public class BookingManager : IBookingManager
         invoice.PaidAt           = DateTime.UtcNow;
         if (invoice.FinalAmount > 0)
         {
+            // The invoice is already tracked, so a child with a pre-set Guid key would be tracked as Modified
+            // (UPDATE ... 0 rows -> DbUpdateConcurrencyException). An empty Id makes EF treat it as new.
             invoice.Payments.Add(new InvoicePayment
             {
+                Id        = Guid.Empty,
                 Method    = PaymentTender.Online,
                 Amount    = invoice.FinalAmount,
                 Reference = paymentReference,

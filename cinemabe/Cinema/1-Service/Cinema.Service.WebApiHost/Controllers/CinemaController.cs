@@ -1400,7 +1400,8 @@ public class CinemaController : ApiControllerBase
     #endregion
 
     #region Room seat map (seat-type assignment + double-seat grouping)
-    [Authorize(Roles = _adminRole)]
+    // Read-only layout: the staff app's seat picker (block a seat, report an incident) needs it for non-admin roles too.
+    [Authorize(Roles = RoleNames.StaffApp)]
     [HttpGet]
     [ProducesResponseType(typeof(List<RoomSeatDTO>), 200)]
     public Task<IActionResult> GetRoomSeatMap([FromQuery] Guid roomId)

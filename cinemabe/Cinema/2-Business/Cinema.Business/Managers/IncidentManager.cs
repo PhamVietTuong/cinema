@@ -83,7 +83,11 @@ public class IncidentManager : IIncidentManager
             throw new KeyNotFoundException("Incident not found.");
         }
         EnsureInScope(scopeTheaterIds, incident.TheaterId);
-        if (incident.Status == IncidentStatus.Resolved)
+        // A resolved incident may still be holding a seat/room block (it was resolved without unblocking):
+        // resolving again with Unblock releases it. Otherwise a resolved incident is final.
+        var alreadyResolved = incident.Status == IncidentStatus.Resolved;
+        var stillBlocking = incident.BlocksSeat || incident.BlocksRoom;
+        if (alreadyResolved && !(request.Unblock && stillBlocking))
         {
             throw new InvalidOperationException("The incident is already resolved.");
         }
@@ -132,10 +136,13 @@ public class IncidentManager : IIncidentManager
                     new { incidentId = incident.Id, unblock = true }));
             }
 
-            incident.Status = IncidentStatus.Resolved;
-            incident.ResolvedByUserId = actorUserId;
-            incident.ResolvedAt = DateTime.UtcNow;
-            incident.ResolutionNote = request.ResolutionNote?.Trim();
+            if (!alreadyResolved)
+            {
+                incident.Status = IncidentStatus.Resolved;
+                incident.ResolvedByUserId = actorUserId;
+                incident.ResolvedAt = DateTime.UtcNow;
+                incident.ResolutionNote = request.ResolutionNote?.Trim();
+            }
             await _uow.IncidentStore.UpdateAsync(incident);
             await _uow.SaveChangesAsync();
             await _uow.CommitTransactionAsync();
