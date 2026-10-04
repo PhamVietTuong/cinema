@@ -3,6 +3,7 @@ import { map, tap } from 'rxjs/operators';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SnackBarComponent } from '../../components/snackbar';
+import { translateApiError } from '../../services/api-error';
 import * as NotificationActions from '../actions/notification.actions';
 
 @Injectable()
@@ -66,11 +67,11 @@ export class NotificationEffects {
     if (error.isApiException) {
       try {
         const body = JSON.parse(error.response);
-        return body.Message || body.message || body.error || error.response || fallback;
+        return translateApiError(body.Message || body.message || body.error || error.response || fallback);
       } catch {
-        return error.response || error.message || fallback;
+        return translateApiError(error.response || error.message || fallback);
       }
     }
-    return typeof error === 'string' ? error : (error.message || fallback);
+    return translateApiError(typeof error === 'string' ? error : (error.message || fallback));
   }
 }

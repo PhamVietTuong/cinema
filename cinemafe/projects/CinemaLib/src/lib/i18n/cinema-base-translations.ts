@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { TranslateLoader, TranslationObject } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { API_ERRORS_EN, API_ERRORS_VI } from './api-error-translations';
 
 /**
  * Keys every app shares (shell chrome and the sign-in form). They are merged UNDER each app's own
@@ -10,6 +11,12 @@ import { catchError, map } from 'rxjs/operators';
  */
 export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
   vi: {
+    apiErrors: API_ERRORS_VI,
+    errors: {
+      network: 'Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.',
+      forbidden: 'Bạn không có quyền thực hiện thao tác này.',
+      server: 'Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.',
+    },
     nav: { logout: 'Đăng Xuất' },
     seatMap: {
       screen: 'MÀN HÌNH',
@@ -127,6 +134,12 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
     },
   },
   en: {
+    apiErrors: API_ERRORS_EN,
+    errors: {
+      network: 'Cannot reach the server. Please check your connection.',
+      forbidden: 'You are not allowed to do this.',
+      server: 'A server error occurred. Please try again later.',
+    },
     nav: { logout: 'Log Out' },
     seatMap: {
       screen: 'SCREEN',

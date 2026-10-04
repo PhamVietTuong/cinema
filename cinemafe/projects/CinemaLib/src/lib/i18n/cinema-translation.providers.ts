@@ -4,7 +4,8 @@ import {
   inject,
   provideAppInitializer,
 } from '@angular/core';
-import { TranslateLoader, provideTranslateService } from '@ngx-translate/core';
+import { TranslateLoader, TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { registerApiErrorTranslator } from '../services/api-error';
 import { LanguageService } from './language.service';
 import { CinemaTranslateLoader } from './cinema-base-translations';
 
@@ -23,5 +24,13 @@ export function provideCinemaTranslation(): (Provider | EnvironmentProviders)[] 
       fallbackLang: 'vi',
     }),
     provideAppInitializer(() => inject(LanguageService).init()),
+    provideAppInitializer(() => {
+      const translate = inject(TranslateService);
+      registerApiErrorTranslator((key, params) => {
+        const path = `apiErrors.${key}`;
+        const text = translate.instant(path, params);
+        return text === path ? null : text;
+      });
+    }),
   ];
 }
