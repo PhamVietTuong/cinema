@@ -30,6 +30,10 @@ public interface IBookingManager
     /// <summary>Refunds a Paid invoice: returns money via the gateway (or, for an admin, records an
     /// out-of-band refund), frees the seats, and reverses accrued loyalty points and promo-code usage.</summary>
     Task<bool>                          RefundBookingAsync(Guid userId, Guid invoiceId, bool isAdmin);
+    /// <summary>Undoes everything a sale did (status Refunded, seats freed, points, promo usage, gift card, food stock via
+    /// the ledger) for a tracked, fully loaded invoice. The caller owns the transaction and the SaveChanges; used by
+    /// the owner refund and by staff refund/exchange. Returns the customer adjusted (null for a walk-in sale).</summary>
+    Task<User?>                         ReverseInvoiceEffectsAsync(Invoice invoice, Guid actorUserId, string reason);
     /// <summary>Cancels Pending invoices older than <paramref name="age"/> (frees their held seats). Returns the count expired.</summary>
     Task<int>                           ExpireStalePendingBookingsAsync(TimeSpan age);
     void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);

@@ -222,6 +222,19 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
+            // Exchange: the old invoice is reversed first, inside this same transaction, so its seats are free for
+            // the new sale and everything commits or rolls back together.
+            var exchangedFrom = context.ExchangedFrom;
+            if (exchangedFrom is not null)
+            {
+                if (!await _uow.AfterSalesStore.TryClaimRefundAsync(exchangedFrom.Id, context.ExchangeReasonCode, DateTime.UtcNow))
+                {
+                    throw new InvalidOperationException("This invoice can no longer be exchanged.");
+                }
+                exchangedFrom.RefundReasonCode = context.ExchangeReasonCode;
+                await ReverseInvoiceEffectsAsync(exchangedFrom, context.StaffUserId, "Exchanged");
+            }
+
             var composed = await ComposeInvoiceAsync(BuildCounterInput(context, dryRun: false));
             var invoice = composed.Invoice;
             if (composed.Overrides.Count > 0 && context.ApproverUserId is null)
@@ -229,8 +242,17 @@ public class BookingManager : IBookingManager
                 throw new AccessDeniedException("Manager approval is required for a price override.");
             }
 
-            // Tenders are settled against the final amount, before anything is written for the sale.
-            var settlement = TenderSettlement.Settle(invoice.FinalAmount, request.Tenders);
+            // Tenders are settled against what is still owed: the whole final amount, or in an exchange only the
+            // difference over the invoice being replaced (a cheaper replacement is paid back instead).
+            var amountDue = invoice.FinalAmount;
+            double refundBack = 0;
+            if (exchangedFrom is not null)
+            {
+                var difference = Money(invoice.FinalAmount - exchangedFrom.FinalAmount, true);
+                amountDue = Math.Max(difference, 0);
+                refundBack = Math.Max(-difference, 0);
+            }
+            var settlement = TenderSettlement.Settle(amountDue, request.Tenders);
             if (settlement.CashApplied > 0 && context.CashDrawerSessionId is null)
             {
                 throw new InvalidOperationException("Open a cash drawer before taking cash.");
@@ -251,6 +273,7 @@ public class BookingManager : IBookingManager
                 invoice.FoodHandedOverAt       = paidAt;
                 invoice.FoodHandedOverByUserId = context.StaffUserId;
             }
+            invoice.ExchangedFromInvoiceId = exchangedFrom?.Id;
 
             if (composed.PointsValue > 0)
             {
@@ -285,6 +308,54 @@ public class BookingManager : IBookingManager
                     InvoiceId           = invoice.Id,
                     UserId              = context.StaffUserId,
                     Note                = invoice.Code,
+                });
+            }
+            if (refundBack > 0 && context.ExchangeRefundTender == PaymentTender.Cash)
+            {
+                if (context.CashDrawerSessionId is null)
+                {
+                    throw new InvalidOperationException("Open a cash drawer before paying cash back.");
+                }
+                var drawerTotals = await _uow.CashDrawerStore.GetTotalsByTypeAsync(context.CashDrawerSessionId.Value);
+                if (drawerTotals.Values.Sum() + settlement.CashApplied < refundBack)
+                {
+                    throw new InvalidOperationException("The drawer does not hold enough cash to pay the difference back.");
+                }
+                _uow.CashDrawerStore.StageMovement(new CashMovement
+                {
+                    CashDrawerSessionId = context.CashDrawerSessionId.Value,
+                    TheaterId           = context.TheaterId,
+                    Type                = CashMovementType.Refund,
+                    Amount              = -refundBack,
+                    InvoiceId           = exchangedFrom!.Id,
+                    UserId              = context.StaffUserId,
+                    Note                = $"Exchange {exchangedFrom.Code} -> {invoice.Code}",
+                });
+            }
+            if (exchangedFrom is not null)
+            {
+                _uow.AuditLogStore.Stage(new AuditLog
+                {
+                    TheaterId      = context.TheaterId,
+                    ActorUserId    = context.StaffUserId,
+                    ApproverUserId = context.ApproverUserId,
+                    Action         = AuditAction.Exchange,
+                    EntityType     = nameof(Invoice),
+                    EntityId       = invoice.Id,
+                    Amount         = invoice.FinalAmount,
+                    ReasonCode     = context.ExchangeReasonCode,
+                    Reason         = context.ExchangeNote,
+                    DataJson       = JsonSerializer.Serialize(new
+                    {
+                        FromInvoiceId = exchangedFrom.Id,
+                        FromInvoiceCode = exchangedFrom.Code,
+                        FromFinalAmount = exchangedFrom.FinalAmount,
+                        ToInvoiceCode = invoice.Code,
+                        ToFinalAmount = invoice.FinalAmount,
+                        AmountCollected = amountDue,
+                        RefundedBack = refundBack,
+                        RefundTender = refundBack > 0 ? context.ExchangeRefundTender : (PaymentTender?)null,
+                    }),
                 });
             }
             if (composed.Overrides.Count > 0)
@@ -1583,6 +1654,59 @@ public class BookingManager : IBookingManager
         }
     }
 
+    // Everything a refund undoes for one invoice, shared by the owner/admin refund and the staff refund/exchange:
+    // marks it Refunded, frees the seats, reverses the loyalty points accrued and gives back points spent, returns the
+    // promo-code usage and the gift-card balance, and restores the sold food stock from the ledger. The caller owns the
+    // transaction and the SaveChanges. Returns the customer account that was adjusted (null for a walk-in sale).
+    public async Task<User?> ReverseInvoiceEffectsAsync(Invoice invoice, Guid actorUserId, string reason)
+    {
+        // Mark refunded. Because seat occupancy counts only Pending/Paid invoices, this frees the seats.
+        invoice.Status     = InvoiceStatus.Refunded;
+        invoice.RefundedAt = DateTime.UtcNow;
+        CancelFoodOrder(invoice);
+        await _uow.InvoiceStore.UpdateAsync(invoice);
+        await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
+
+        // Reverse the loyalty points accrued at payment, give back any points spent on this booking,
+        // and re-evaluate the membership tier.
+        // A walk-in counter invoice has no customer account to adjust.
+        var user = invoice.UserId is Guid refundOwnerId
+            ? invoice.User ?? await _uow.UserStore.GetByIdAsync(refundOwnerId)
+            : null;
+        if (user is not null)
+        {
+            user.Points -= (int)(invoice.FinalAmount / _pointsPerUnit);
+            user.Points += invoice.PointsRedeemed;
+            if (user.Points < 0)
+            {
+                user.Points = 0;
+            }
+            var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
+            var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
+            user.MemberShipId = tier?.Id;
+            await _uow.UserStore.UpdateAsync(user);
+        }
+
+        // Give the promo code's usage back.
+        if (invoice.DiscountId is Guid usedDiscountId)
+        {
+            var discount = invoice.Discount ?? await _uow.DiscountStore.GetByIdAsync(usedDiscountId);
+            if (discount is not null && discount.UsedCount > 0)
+            {
+                discount.UsedCount -= 1;
+                await _uow.DiscountStore.UpdateAsync(discount);
+            }
+        }
+
+        // Give the gift-card balance back.
+        await RestoreGiftCardAsync(invoice);
+
+        // Put the sold food/drink stock back.
+        await RestoreFoodStockAsync(new[] { invoice }, reason, actorUserId);
+
+        return user;
+    }
+
     public async Task<bool> RefundBookingAsync(Guid userId, Guid invoiceId, bool isAdmin)
     {
         var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(invoiceId);
@@ -1635,49 +1759,7 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
-            // Mark refunded. Because seat occupancy counts only Pending/Paid invoices, this frees the seats.
-            invoice.Status     = InvoiceStatus.Refunded;
-            invoice.RefundedAt = DateTime.UtcNow;
-            CancelFoodOrder(invoice);
-            await _uow.InvoiceStore.UpdateAsync(invoice);
-            await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-
-            // Reverse the loyalty points accrued at payment, give back any points spent on this booking,
-            // and re-evaluate the membership tier.
-            // A walk-in counter invoice has no customer account to adjust.
-            user = invoice.UserId is Guid refundOwnerId
-                ? invoice.User ?? await _uow.UserStore.GetByIdAsync(refundOwnerId)
-                : null;
-            if (user is not null)
-            {
-                user.Points -= (int)(invoice.FinalAmount / _pointsPerUnit);
-                user.Points += invoice.PointsRedeemed;
-                if (user.Points < 0)
-                {
-                    user.Points = 0;
-                }
-                var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
-                var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
-                user.MemberShipId = tier?.Id;
-                await _uow.UserStore.UpdateAsync(user);
-            }
-
-            // Give the promo code's usage back.
-            if (invoice.DiscountId is Guid usedDiscountId)
-            {
-                var discount = invoice.Discount ?? await _uow.DiscountStore.GetByIdAsync(usedDiscountId);
-                if (discount is not null && discount.UsedCount > 0)
-                {
-                    discount.UsedCount -= 1;
-                    await _uow.DiscountStore.UpdateAsync(discount);
-                }
-            }
-
-            // Give the gift-card balance back.
-            await RestoreGiftCardAsync(invoice);
-
-            // Put the sold food/drink stock back.
-            await RestoreFoodStockAsync(new[] { invoice }, "Refunded", userId);
+            user = await ReverseInvoiceEffectsAsync(invoice, userId, "Refunded");
 
             await _uow.SaveChangesAsync();
             await _uow.CommitTransactionAsync();

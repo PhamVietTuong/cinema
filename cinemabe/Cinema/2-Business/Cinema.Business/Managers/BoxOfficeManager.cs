@@ -1,14 +1,16 @@
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Payments;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.BoxOffice;
 using Cinema.Business.DTO.Staff;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
+using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Managers;
 
-public class BoxOfficeManager : IBoxOfficeManager
+public partial class BoxOfficeManager : IBoxOfficeManager
 {
     private const int _recentMovementCount = 20;
 
@@ -16,13 +18,20 @@ public class BoxOfficeManager : IBoxOfficeManager
     private readonly IBookingManager _booking;
     private readonly IManagerOverrideService _overrides;
     private readonly IAuditLogger _audit;
+    private readonly IConfiguration _config;
+    private readonly IPaymentGatewayResolver _gateways;
+    private readonly TimeProvider _clock;
 
-    public BoxOfficeManager(IApplicationUnitOfWork uow, IBookingManager booking, IManagerOverrideService overrides, IAuditLogger audit)
+    public BoxOfficeManager(IApplicationUnitOfWork uow, IBookingManager booking, IManagerOverrideService overrides, IAuditLogger audit,
+        IConfiguration config, IPaymentGatewayResolver gateways, TimeProvider clock)
     {
         _uow = uow;
         _booking = booking;
         _overrides = overrides;
         _audit = audit;
+        _config = config;
+        _gateways = gateways;
+        _clock = clock;
     }
 
     public async Task<CounterQuoteDTO> QuoteAsync(Guid theaterId, CounterSaleRequest request)
