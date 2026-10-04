@@ -59,6 +59,9 @@ public class AuthUserTheaterTests
     [Theory]
     [InlineData(RoleNames.TheaterStaff)]
     [InlineData(RoleNames.TheaterManager)]
+    [InlineData(RoleNames.BoxOfficeStaff)]
+    [InlineData(RoleNames.GateStaff)]
+    [InlineData(RoleNames.KitchenStaff)]
     public async Task CreateUser_TheaterRoleWithoutTheater_Throws(string role)
     {
         var typeId = SetupRole(role);
@@ -72,6 +75,9 @@ public class AuthUserTheaterTests
     [Theory]
     [InlineData(RoleNames.TheaterStaff)]
     [InlineData(RoleNames.TheaterManager)]
+    [InlineData(RoleNames.BoxOfficeStaff)]
+    [InlineData(RoleNames.GateStaff)]
+    [InlineData(RoleNames.KitchenStaff)]
     public async Task CreateUser_TheaterRoleWithUnknownTheater_Throws(string role)
     {
         var typeId = SetupRole(role);
@@ -85,6 +91,9 @@ public class AuthUserTheaterTests
     [Theory]
     [InlineData(RoleNames.TheaterStaff)]
     [InlineData(RoleNames.TheaterManager)]
+    [InlineData(RoleNames.BoxOfficeStaff)]
+    [InlineData(RoleNames.GateStaff)]
+    [InlineData(RoleNames.KitchenStaff)]
     public async Task CreateUser_TheaterRoleWithValidTheater_KeepsTheater(string role)
     {
         var typeId = SetupRole(role);
@@ -98,6 +107,7 @@ public class AuthUserTheaterTests
     [Theory]
     [InlineData(RoleNames.Customer)]
     [InlineData(RoleNames.Admin)]
+    [InlineData(RoleNames.RegionalManager)]
     public async Task CreateUser_NonTheaterRole_ForcesTheaterNull(string role)
     {
         var typeId = SetupRole(role);
@@ -127,6 +137,9 @@ public class AuthUserTheaterTests
     [Theory]
     [InlineData(RoleNames.TheaterStaff)]
     [InlineData(RoleNames.TheaterManager)]
+    [InlineData(RoleNames.BoxOfficeStaff)]
+    [InlineData(RoleNames.GateStaff)]
+    [InlineData(RoleNames.KitchenStaff)]
     public async Task UpdateUser_TheaterRoleWithoutTheater_Throws(string role)
     {
         var typeId = SetupRole(role);
@@ -141,6 +154,9 @@ public class AuthUserTheaterTests
     [Theory]
     [InlineData(RoleNames.TheaterStaff)]
     [InlineData(RoleNames.TheaterManager)]
+    [InlineData(RoleNames.BoxOfficeStaff)]
+    [InlineData(RoleNames.GateStaff)]
+    [InlineData(RoleNames.KitchenStaff)]
     public async Task UpdateUser_TheaterRoleWithUnknownTheater_Throws(string role)
     {
         var typeId = SetupRole(role);
@@ -154,6 +170,7 @@ public class AuthUserTheaterTests
     [Theory]
     [InlineData(RoleNames.Customer)]
     [InlineData(RoleNames.Admin)]
+    [InlineData(RoleNames.RegionalManager)]
     public async Task UpdateUser_NonTheaterRole_ForcesTheaterNull(string role)
     {
         var typeId = SetupRole(role);

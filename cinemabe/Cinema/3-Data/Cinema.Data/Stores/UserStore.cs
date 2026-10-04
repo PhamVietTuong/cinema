@@ -1,6 +1,7 @@
 using Cinema.Data.Contexts;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Data.Stores;
@@ -47,5 +48,18 @@ public class UserStore : GenericStore<User>, IUserStore
             return new Dictionary<Guid, string>();
         }
         return await DbSet.AsNoTracking().Where(u => ids.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.Name);
+    }
+
+    public async Task<List<(Guid Id, string Name)>> GetApproversAsync(
+        Guid theaterId, IReadOnlyCollection<string> theaterRoleNames, IReadOnlyCollection<string> globalRoleNames)
+    {
+        var rows = await DbSet.AsNoTracking()
+            .Where(u => u.Status == UserStatus.Active
+                && ((u.TheaterId == theaterId && theaterRoleNames.Contains(u.UserType.Name))
+                    || globalRoleNames.Contains(u.UserType.Name)))
+            .OrderBy(u => u.Name)
+            .Select(u => new { u.Id, u.Name })
+            .ToListAsync();
+        return rows.Select(r => (r.Id, r.Name)).ToList();
     }
 }

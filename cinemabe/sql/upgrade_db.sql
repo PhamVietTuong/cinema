@@ -146,6 +146,71 @@ BEGIN
 END
 
 -- ============================================================
+-- Staff security foundation: roles, override PIN, audit log
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'BoxOfficeStaff')
+BEGIN
+    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'BoxOfficeStaff', GETUTCDATE());
+END
+
+IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'GateStaff')
+BEGIN
+    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'GateStaff', GETUTCDATE());
+END
+
+IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'KitchenStaff')
+BEGIN
+    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'KitchenStaff', GETUTCDATE());
+END
+
+IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'RegionalManager')
+BEGIN
+    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'RegionalManager', GETUTCDATE());
+END
+
+IF COL_LENGTH('dbo.User', 'OverridePinHash') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [OverridePinHash] varbinary(64) NULL;
+END
+
+IF COL_LENGTH('dbo.User', 'OverridePinSalt') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [OverridePinSalt] varbinary(128) NULL;
+END
+
+IF COL_LENGTH('dbo.User', 'OverridePinFailedCount') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [OverridePinFailedCount] int NOT NULL CONSTRAINT [DF_User_OverridePinFailedCount] DEFAULT 0;
+END
+
+IF COL_LENGTH('dbo.User', 'OverridePinLockoutEndUtc') IS NULL
+BEGIN
+    ALTER TABLE [User] ADD [OverridePinLockoutEndUtc] datetime NULL;
+END
+
+IF OBJECT_ID('dbo.AuditLog', 'U') IS NULL
+BEGIN
+    CREATE TABLE [AuditLog] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NULL,
+        [ActorUserId] uniqueidentifier NOT NULL,
+        [ApproverUserId] uniqueidentifier NULL,
+        [Action] int NOT NULL,
+        [EntityType] nvarchar(100) NOT NULL,
+        [EntityId] uniqueidentifier NULL,
+        [Amount] float NULL,
+        [ReasonCode] int NULL,
+        [Reason] nvarchar(500) NULL,
+        [DataJson] nvarchar(max) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_AuditLog] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_AuditLog_TheaterId_CreationTime] ON [AuditLog] ([TheaterId], [CreationTime]);
+    CREATE INDEX [IX_AuditLog_ActorUserId_CreationTime] ON [AuditLog] ([ActorUserId], [CreationTime]);
+END
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

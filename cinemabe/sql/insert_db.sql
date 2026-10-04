@@ -30,7 +30,11 @@ INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES
 (@UserTypeAdmin,    N'Admin',        GETUTCDATE()),
 (@UserTypeCustomer, N'Customer',     GETUTCDATE()),
 (@UserTypeStaff,    N'TheaterStaff', GETUTCDATE()),
-(NEWID(),           N'TheaterManager', GETUTCDATE());
+(NEWID(),           N'TheaterManager', GETUTCDATE()),
+(NEWID(),           N'BoxOfficeStaff', GETUTCDATE()),
+(NEWID(),           N'GateStaff', GETUTCDATE()),
+(NEWID(),           N'KitchenStaff', GETUTCDATE()),
+(NEWID(),           N'RegionalManager', GETUTCDATE());
 
 -- ── Membership tiers ─────────────────────────────────────────────────────────
 DECLARE @MemberBronze  uniqueidentifier = NEWID();

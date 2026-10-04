@@ -32,6 +32,7 @@ public interface IApplicationUnitOfWork : IDisposable
     IComboItemStore ComboItemStore { get; }
     IStockMovementStore StockMovementStore { get; }
     IStoragePlanStore StoragePlanStore { get; }
+    IAuditLogStore AuditLogStore { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

@@ -25,6 +25,11 @@ $controllers += @{
     CopyToLib          = $true
     WebApiPort         = "5102"
 }
+$controllers += @{
+    ApiName            = 'Staff'
+    CopyToLib          = $true
+    WebApiPort         = "5102"
+}
 
 # Resolve master generator script
 $scriptPath = "$PSScriptRoot\..\..\..\..\Tools\Generator\GenerateNswag.ps1"

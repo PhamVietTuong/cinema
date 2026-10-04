@@ -160,6 +160,15 @@ builder.Services.AddOpenApiDocument(cfg =>
     ConfigureSecurity(cfg);
 });
 
+builder.Services.AddOpenApiDocument(cfg =>
+{
+    cfg.DocumentName  = "staff";
+    cfg.Title         = "Staff API";
+    cfg.Version       = "v1";
+    cfg.ApiGroupNames = new[] { "staff" };
+    ConfigureSecurity(cfg);
+});
+
 var app = builder.Build();
 
 // Seed database
@@ -177,6 +186,7 @@ if (app.Environment.IsDevelopment())
         settings.SwaggerRoutes.Add(new NSwag.AspNetCore.SwaggerUiRoute("Cinema API",    "/swagger/cinema/swagger.json"));
         settings.SwaggerRoutes.Add(new NSwag.AspNetCore.SwaggerUiRoute("Payment API",   "/swagger/payment/swagger.json"));
         settings.SwaggerRoutes.Add(new NSwag.AspNetCore.SwaggerUiRoute("Identity API",  "/swagger/identity/swagger.json"));
+        settings.SwaggerRoutes.Add(new NSwag.AspNetCore.SwaggerUiRoute("Staff API",     "/swagger/staff/swagger.json"));
     });
     app.UseReDoc(settings =>
     {

@@ -34,6 +34,11 @@ public class User : BaseEntity
     public bool TwoFactorEnabled { get; set; } = false;
     public string? TwoFactorCodeHash { get; set; }
     public DateTime? TwoFactorCodeExpiresAt { get; set; }
+    // Manager-override PIN (staff terminals): salted PBKDF2 hash, consecutive-failure counter and lockout end (UTC).
+    public byte[]? OverridePinHash { get; set; }
+    public byte[]? OverridePinSalt { get; set; }
+    public int OverridePinFailedCount { get; set; } = 0;
+    public DateTime? OverridePinLockoutEndUtc { get; set; }
     public UserType UserType { get; set; } = null!;
     public MemberShip? MemberShip { get; set; }
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();

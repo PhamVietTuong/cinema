@@ -10,6 +10,8 @@
 -- table it references (FK target) — otherwise SQL Server refuses the drop.
 IF OBJECT_ID('dbo.__EFMigrationsHistory', 'U') IS NOT NULL
 DROP TABLE dbo.__EFMigrationsHistory;
+IF OBJECT_ID('dbo.AuditLog', 'U') IS NOT NULL
+DROP TABLE dbo.AuditLog;
 IF OBJECT_ID('dbo.StoragePlanItem', 'U') IS NOT NULL
 DROP TABLE dbo.StoragePlanItem;
 IF OBJECT_ID('dbo.StoragePlan', 'U') IS NOT NULL
@@ -339,6 +341,10 @@ CREATE TABLE [User] (
     [TwoFactorEnabled] bit NOT NULL DEFAULT 0,
     [TwoFactorCodeHash] nvarchar(max) NULL,
     [TwoFactorCodeExpiresAt] datetime NULL,
+    [OverridePinHash] varbinary(64) NULL,
+    [OverridePinSalt] varbinary(128) NULL,
+    [OverridePinFailedCount] int NOT NULL DEFAULT 0,
+    [OverridePinLockoutEndUtc] datetime NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_User] PRIMARY KEY ([Id]),
@@ -680,6 +686,26 @@ CREATE INDEX [IX_User_UserTypeId] ON [User] ([UserTypeId]);
 CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_ReminderLog_UserId_ShowTimeId] ON [ReminderLog] ([UserId], [ShowTimeId]);
 CREATE UNIQUE INDEX [IX_GiftCard_Code] ON [GiftCard] ([Code]);
+
+-- Insert-only audit trail of sensitive staff actions (no FKs, so it survives deletions).
+CREATE TABLE [AuditLog] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NULL,
+    [ActorUserId] uniqueidentifier NOT NULL,
+    [ApproverUserId] uniqueidentifier NULL,
+    [Action] int NOT NULL,
+    [EntityType] nvarchar(100) NOT NULL,
+    [EntityId] uniqueidentifier NULL,
+    [Amount] float NULL,
+    [ReasonCode] int NULL,
+    [Reason] nvarchar(500) NULL,
+    [DataJson] nvarchar(max) NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_AuditLog] PRIMARY KEY ([Id])
+);
+CREATE INDEX [IX_AuditLog_TheaterId_CreationTime] ON [AuditLog] ([TheaterId], [CreationTime]);
+CREATE INDEX [IX_AuditLog_ActorUserId_CreationTime] ON [AuditLog] ([ActorUserId], [CreationTime]);
 
 -- ============================================================
 -- EF Core migrations baseline

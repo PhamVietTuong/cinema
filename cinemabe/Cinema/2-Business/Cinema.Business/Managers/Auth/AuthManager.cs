@@ -6,6 +6,7 @@ using Cinema.Business.DTO;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
+using Cinema.Business.Security;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
@@ -544,7 +545,7 @@ public class AuthManager : IAuthManager
     }
 
     /// <summary>
-    /// Theater staff and managers must belong to an existing theater; every other role is theater-less.
+    /// Theater-scoped staff roles (<see cref="RoleNames.TheaterScopedRoles"/>) must belong to an existing theater; every other role is theater-less.
     /// </summary>
     private async Task<Guid?> ResolveTheaterIdAsync(Guid userTypeId, Guid? requestedTheaterId)
     {
@@ -554,7 +555,7 @@ public class AuthManager : IAuthManager
             throw new InvalidOperationException("User type not found.");
         }
 
-        if (userType.Name != RoleNames.TheaterStaff && userType.Name != RoleNames.TheaterManager)
+        if (!RoleNames.TheaterScopedRoles.Split(',').Contains(userType.Name))
         {
             return null;
         }
@@ -604,37 +605,18 @@ public class AuthManager : IAuthManager
         return dto;
     }
 
-    // PBKDF2 (SHA-256) key-stretching parameters.
-    private const int    _pbkdf2SaltSize   = 16;
-    private const int    _pbkdf2KeySize    = 32;
-    private const int    _pbkdf2Iterations = 100_000;
-    private static readonly HashAlgorithmName _pbkdf2Algorithm = HashAlgorithmName.SHA256;
-
     private static void CreatePasswordHash(string password, out byte[] hash, out byte[] salt)
     {
-        salt = RandomNumberGenerator.GetBytes(_pbkdf2SaltSize);
-        hash = Rfc2898DeriveBytes.Pbkdf2(
-            Encoding.UTF8.GetBytes(password), salt, _pbkdf2Iterations, _pbkdf2Algorithm, _pbkdf2KeySize);
+        PasswordHasher.CreateHash(password, out hash, out salt);
     }
 
     private static bool VerifyPassword(string password, byte[] hash, byte[] salt)
     {
-        if (IsLegacyHash(salt))
-        {
-            // Legacy scheme: single-round HMAC-SHA512 keyed by the stored salt.
-            using var hmac = new HMACSHA512(salt);
-            var legacy = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return CryptographicOperations.FixedTimeEquals(legacy, hash);
-        }
-
-        var computed = Rfc2898DeriveBytes.Pbkdf2(
-            Encoding.UTF8.GetBytes(password), salt, _pbkdf2Iterations, _pbkdf2Algorithm, _pbkdf2KeySize);
-        return CryptographicOperations.FixedTimeEquals(computed, hash);
+        return PasswordHasher.Verify(password, hash, salt);
     }
 
-    // New PBKDF2 salts are exactly _pbkdf2SaltSize bytes; the old HMAC-SHA512 key salts are 128 bytes.
     private static bool IsLegacyHash(byte[] salt)
     {
-        return salt.Length != _pbkdf2SaltSize;
+        return PasswordHasher.IsLegacy(salt);
     }
 }

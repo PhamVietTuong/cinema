@@ -41,6 +41,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IComboItemStore ComboItemStore { get; }
     public IStockMovementStore StockMovementStore { get; }
     public IStoragePlanStore StoragePlanStore { get; }
+    public IAuditLogStore AuditLogStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
     {
@@ -75,6 +76,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         ComboItemStore = new ComboItemStore(db);
         StockMovementStore = new StockMovementStore(db);
         StoragePlanStore = new StoragePlanStore(db);
+        AuditLogStore = new AuditLogStore(db);
     }
 
     public Task<int> SaveChangesAsync()
