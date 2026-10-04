@@ -478,5 +478,221 @@
       "payIn": "Pay-in",
       "payOut": "Pay-out"
     }
+  },
+  "opsCommon": {
+    "pickTheater": "Pick a theater to continue",
+    "pickTheaterHint": "Choose a theater in the top bar; this data is kept per theater.",
+    "date": "Date",
+    "refresh": "Refresh",
+    "back": "Back",
+    "from": "From",
+    "to": "To",
+    "note": "Note"
+  },
+  "schedule": {
+    "section": "Operations",
+    "nav": "Schedule",
+    "title": "Schedule board",
+    "subtitle": "Showtimes per room for the day. Click a showtime to open its checklist.",
+    "prevDay": "Previous day",
+    "nextDay": "Next day",
+    "today": "Today",
+    "seats": "seats",
+    "legend": {
+      "showtime": "Showtime",
+      "buffer": "Turnover buffer"
+    },
+    "bufferTitle": "Turnover buffer: {{minutes}} min",
+    "openChecklist": "Open the checklist",
+    "empty": "No rooms in this theater."
+  },
+  "incidents": {
+    "nav": "Incidents",
+    "list": {
+      "title": "Incidents",
+      "subtitle": "Faults and issues reported in this theater.",
+      "report": "Report incident",
+      "empty": "No incidents match the filters."
+    },
+    "fields": {
+      "title": "Title",
+      "category": "Category",
+      "severity": "Severity",
+      "description": "Description",
+      "room": "Room",
+      "noRoom": "No room",
+      "seat": "Seat",
+      "noSeat": "No seat",
+      "location": "Location",
+      "reportedBy": "Reported by"
+    },
+    "report": {
+      "title": "Report an incident",
+      "submit": "Report"
+    },
+    "detail": {
+      "blocking": "Blocking",
+      "blocksSeat": "Seat blocked",
+      "blocksRoom": "Room blocked",
+      "resolution": "Resolution",
+      "notFound": "Incident not found."
+    },
+    "block": {
+      "title": "Block from sale",
+      "hintApprover": "Blocked seats and rooms cannot be sold. Upcoming tickets are listed so you can move the guests; nothing is cancelled automatically.",
+      "hintOverride": "Blocking needs a manager: you will be asked for an approver and their PIN. Upcoming tickets are listed afterwards; nothing is cancelled automatically.",
+      "seat": "Block seat",
+      "room": "Block room"
+    },
+    "resolve": {
+      "title": "Resolve incident",
+      "unblock": "Unblock the seat or room",
+      "unblockHint": "Re-opens what this incident blocked for sale. Needs a manager.",
+      "action": "Resolve",
+      "note": "Resolution note"
+    },
+    "affected": {
+      "title": "Affected upcoming tickets",
+      "hint": "Move these guests to other seats or showtimes. Nothing was cancelled.",
+      "invoice": "Invoice",
+      "customer": "Customer",
+      "movie": "Movie",
+      "start": "Start",
+      "none": "No upcoming tickets are affected."
+    },
+    "toast": {
+      "reported": "Incident reported.",
+      "resolved": "Incident resolved.",
+      "blocked": "Blocked."
+    }
+  },
+  "checklists": {
+    "nav": "Checklists",
+    "title": "Checklists",
+    "subtitle": "Pre-show and post-show checks for each showtime.",
+    "templates": {
+      "open": "Edit templates",
+      "title": "Checklist templates",
+      "subtitle": "The items staff tick off before and after each showtime.",
+      "new": "New template",
+      "items": "items",
+      "inactive": "Inactive",
+      "name": "Name",
+      "kind": "Type",
+      "active": "Active",
+      "itemsTitle": "Items",
+      "itemText": "Item",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "addItem": "Add item",
+      "empty": "No templates yet."
+    },
+    "home": {
+      "time": "Time",
+      "movie": "Movie",
+      "empty": "No showtimes on this day."
+    },
+    "run": {
+      "title": "Checklist",
+      "noTemplate": "No checklist available",
+      "noTemplateHint": "There is no active template of this type for the theater.",
+      "progress": "{{done}} of {{total}} done",
+      "completedAt": "Completed {{time}}",
+      "required": "Required",
+      "note": "Note",
+      "missing": "{{count}} required item(s) still open",
+      "complete": "Complete checklist"
+    },
+    "toast": {
+      "completed": "Checklist completed.",
+      "templateSaved": "Template saved."
+    }
+  },
+  "roster": {
+    "nav": "Roster",
+    "title": "Roster",
+    "subtitle": "Weekly shifts. Click a day to add a shift, click a shift to edit it.",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "thisWeek": "This week",
+    "staff": "Staff",
+    "hours": "Hours",
+    "empty": "No staff in this theater.",
+    "dialog": {
+      "new": "New shift",
+      "edit": "Edit shift",
+      "start": "Start",
+      "end": "End",
+      "overnightHint": "An end time at or before the start means the shift ends the next day."
+    },
+    "errors": {
+      "invalidTime": "Enter a valid date and times."
+    },
+    "toast": {
+      "saved": "Shift saved.",
+      "deleted": "Shift deleted."
+    }
+  },
+  "timeClock": {
+    "section": "Workforce",
+    "nav": "Time clock",
+    "title": "Time clock",
+    "subtitle": "Clock in and out, and see your upcoming shifts.",
+    "clockedIn": "Clocked in",
+    "clockedOut": "Clocked out",
+    "since": "Since {{time}}",
+    "clockIn": "Clock in",
+    "clockOut": "Clock out",
+    "myShifts": "My shifts (next 14 days)",
+    "time": "Time",
+    "noShifts": "No shifts scheduled.",
+    "timeSheet": "Time sheet",
+    "load": "Load",
+    "in": "In",
+    "out": "Out",
+    "duration": "Duration",
+    "open": "Open",
+    "total": "Total",
+    "sheetEmpty": "No clock entries in this range.",
+    "toast": {
+      "in": "Clocked in.",
+      "out": "Clocked out."
+    },
+    "errors": {
+      "range": "Choose a valid range of at most {{days}} days."
+    }
+  },
+  "tasks": {
+    "nav": "My tasks",
+    "boardNav": "Task board",
+    "my": {
+      "title": "My tasks",
+      "subtitle": "Tasks assigned to you.",
+      "showClosed": "Show done and cancelled",
+      "empty": "No tasks.",
+      "start": "Start",
+      "done": "Mark done",
+      "reopen": "Reopen"
+    },
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "assignee": "Assignee",
+      "dueAt": "Due",
+      "createdBy": "Assigned by"
+    },
+    "board": {
+      "title": "Task board",
+      "subtitle": "Assign and follow up tasks for this theater.",
+      "new": "New task",
+      "empty": "No tasks match the filters."
+    },
+    "dialog": {
+      "new": "New task",
+      "edit": "Edit task"
+    },
+    "toast": {
+      "saved": "Task saved."
+    }
   }
 }

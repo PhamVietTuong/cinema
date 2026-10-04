@@ -147,7 +147,7 @@ export const StockLevelPills: Record<StockLevel, { labelKey: string; cssClass: s
 };
 
 /** What `cl-status-pill` can render; each kind maps its `value` to a label key and pill class in this file. */
-export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction';
+export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction' | 'incident' | 'incidentSeverity' | 'staffTask' | 'roomStatus';
 
 /** Traffic-light tone of a gate scan result: green admits, amber needs the gate keeper's judgement, red refuses. */
 export type ScanTone = 'success' | 'warn' | 'danger';
@@ -215,6 +215,116 @@ export function auditActionPillClass(action?: StaffServiceAgent.AuditAction): st
   }
 }
 
+// ── Operations and workforce (staff app) ─────────────────────────────────────────────────────────────
+
+/** i18n-key label for each Operations IncidentCategory value. */
+export const IncidentCategoryValues: { value: StaffServiceAgent.IncidentCategory; name: string }[] = [
+  { value: StaffServiceAgent.IncidentCategory.Other, name: 'staffEnums.incidentCategory.other' },
+  { value: StaffServiceAgent.IncidentCategory.Seat, name: 'staffEnums.incidentCategory.seat' },
+  { value: StaffServiceAgent.IncidentCategory.Room, name: 'staffEnums.incidentCategory.room' },
+  { value: StaffServiceAgent.IncidentCategory.Projection, name: 'staffEnums.incidentCategory.projection' },
+  { value: StaffServiceAgent.IncidentCategory.Sound, name: 'staffEnums.incidentCategory.sound' },
+  { value: StaffServiceAgent.IncidentCategory.Safety, name: 'staffEnums.incidentCategory.safety' },
+  { value: StaffServiceAgent.IncidentCategory.Customer, name: 'staffEnums.incidentCategory.customer' },
+  { value: StaffServiceAgent.IncidentCategory.Cleanliness, name: 'staffEnums.incidentCategory.cleanliness' },
+];
+
+/** i18n key for an incident category (falls back to Other). */
+export function incidentCategoryLabel(c?: StaffServiceAgent.IncidentCategory): string {
+  return IncidentCategoryValues.find(v => v.value === c)?.name ?? IncidentCategoryValues[0].name;
+}
+
+/** i18n-key label for each IncidentSeverity value. */
+export const IncidentSeverityValues: { value: StaffServiceAgent.IncidentSeverity; name: string }[] = [
+  { value: StaffServiceAgent.IncidentSeverity.Low, name: 'staffEnums.incidentSeverity.low' },
+  { value: StaffServiceAgent.IncidentSeverity.Medium, name: 'staffEnums.incidentSeverity.medium' },
+  { value: StaffServiceAgent.IncidentSeverity.High, name: 'staffEnums.incidentSeverity.high' },
+  { value: StaffServiceAgent.IncidentSeverity.Critical, name: 'staffEnums.incidentSeverity.critical' },
+];
+
+/** i18n key for an incident severity (falls back to Low). */
+export function incidentSeverityLabel(s?: StaffServiceAgent.IncidentSeverity): string {
+  return IncidentSeverityValues.find(v => v.value === s)?.name ?? IncidentSeverityValues[0].name;
+}
+
+/** CSS pill class for each IncidentSeverity value. */
+export function incidentSeverityPillClass(s?: StaffServiceAgent.IncidentSeverity): string {
+  switch (s) {
+    case StaffServiceAgent.IncidentSeverity.Critical: return 'ad-pill--danger';
+    case StaffServiceAgent.IncidentSeverity.High: return 'ad-pill--warn';
+    case StaffServiceAgent.IncidentSeverity.Medium: return 'ad-pill--violet';
+    default: return 'ad-pill--neutral';
+  }
+}
+
+/** i18n-key label for each IncidentStatus value. */
+export const IncidentStatusValues: { value: StaffServiceAgent.IncidentStatus; name: string }[] = [
+  { value: StaffServiceAgent.IncidentStatus.Open, name: 'staffEnums.incidentStatus.open' },
+  { value: StaffServiceAgent.IncidentStatus.Resolved, name: 'staffEnums.incidentStatus.resolved' },
+];
+
+/** i18n key for an incident status (falls back to Open). */
+export function incidentStatusLabel(s?: StaffServiceAgent.IncidentStatus): string {
+  return IncidentStatusValues.find(v => v.value === s)?.name ?? IncidentStatusValues[0].name;
+}
+
+/** CSS pill class for each IncidentStatus value. */
+export function incidentStatusPillClass(s?: StaffServiceAgent.IncidentStatus): string {
+  return s === StaffServiceAgent.IncidentStatus.Resolved ? 'ad-pill--success' : 'ad-pill--warn';
+}
+
+/** i18n-key label for each ChecklistKind value. */
+export const ChecklistKindValues: { value: StaffServiceAgent.ChecklistKind; name: string }[] = [
+  { value: StaffServiceAgent.ChecklistKind.PreShow, name: 'staffEnums.checklistKind.preShow' },
+  { value: StaffServiceAgent.ChecklistKind.PostShow, name: 'staffEnums.checklistKind.postShow' },
+];
+
+/** i18n key for a checklist kind (falls back to PreShow). */
+export function checklistKindLabel(k?: StaffServiceAgent.ChecklistKind): string {
+  return ChecklistKindValues.find(v => v.value === k)?.name ?? ChecklistKindValues[0].name;
+}
+
+/** i18n-key label for each StaffTaskStatus value. */
+export const StaffTaskStatusValues: { value: StaffServiceAgent.StaffTaskStatus; name: string }[] = [
+  { value: StaffServiceAgent.StaffTaskStatus.Open, name: 'staffEnums.taskStatus.open' },
+  { value: StaffServiceAgent.StaffTaskStatus.InProgress, name: 'staffEnums.taskStatus.inProgress' },
+  { value: StaffServiceAgent.StaffTaskStatus.Done, name: 'staffEnums.taskStatus.done' },
+  { value: StaffServiceAgent.StaffTaskStatus.Cancelled, name: 'staffEnums.taskStatus.cancelled' },
+];
+
+/** i18n key for a staff task status (falls back to Open). */
+export function staffTaskStatusLabel(s?: StaffServiceAgent.StaffTaskStatus): string {
+  return StaffTaskStatusValues.find(v => v.value === s)?.name ?? StaffTaskStatusValues[0].name;
+}
+
+/** CSS pill class for each StaffTaskStatus value. */
+export function staffTaskStatusPillClass(s?: StaffServiceAgent.StaffTaskStatus): string {
+  switch (s) {
+    case StaffServiceAgent.StaffTaskStatus.Done: return 'ad-pill--success';
+    case StaffServiceAgent.StaffTaskStatus.InProgress: return 'ad-pill--violet';
+    case StaffServiceAgent.StaffTaskStatus.Open: return 'ad-pill--warn';
+    default: return 'ad-pill--neutral';
+  }
+}
+
+/** i18n key for a room status shown on the staff schedule board (the enum values match the Cinema API's RoomStatus). */
+export function roomStatusLabel(s?: number): string {
+  switch (s) {
+    case 1: return 'staffEnums.roomStatus.maintenance';
+    case 2: return 'staffEnums.roomStatus.inactive';
+    default: return 'staffEnums.roomStatus.active';
+  }
+}
+
+/** CSS pill class for a room status (0 Active, 1 Maintenance, 2 Inactive). */
+export function roomStatusPillClass(s?: number): string {
+  switch (s) {
+    case 1: return 'ad-pill--warn';
+    case 2: return 'ad-pill--neutral';
+    default: return 'ad-pill--success';
+  }
+}
+
 /** Label (i18n key) and CSS class a `cl-status-pill` shows for a kind/value pair. */
 export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey: string; cssClass: string } {
   switch (kind) {
@@ -239,6 +349,22 @@ export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey
     }
     case 'stockLevel': {
       return StockLevelPills[(value as StockLevel) ?? 'untracked'] ?? StockLevelPills.untracked;
+    }
+    case 'incident': {
+      const status = value as StaffServiceAgent.IncidentStatus;
+      return { labelKey: incidentStatusLabel(status), cssClass: incidentStatusPillClass(status) };
+    }
+    case 'incidentSeverity': {
+      const severity = value as StaffServiceAgent.IncidentSeverity;
+      return { labelKey: incidentSeverityLabel(severity), cssClass: incidentSeverityPillClass(severity) };
+    }
+    case 'staffTask': {
+      const status = value as StaffServiceAgent.StaffTaskStatus;
+      return { labelKey: staffTaskStatusLabel(status), cssClass: staffTaskStatusPillClass(status) };
+    }
+    case 'roomStatus': {
+      const status = value as number;
+      return { labelKey: roomStatusLabel(status), cssClass: roomStatusPillClass(status) };
     }
   }
 }
