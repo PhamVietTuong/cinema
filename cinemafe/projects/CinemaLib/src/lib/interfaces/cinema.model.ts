@@ -242,3 +242,39 @@ export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey
     }
   }
 }
+
+import { StaffServiceAgent } from '../services/staff-http.service';
+
+/** i18n-key label for each counter payment tender a cashier can take. */
+export const CounterTenderValues: { value: StaffServiceAgent.PaymentTender; name: string }[] = [
+  { value: StaffServiceAgent.PaymentTender.Cash, name: 'pos.tender.cash' },
+  { value: StaffServiceAgent.PaymentTender.Card, name: 'pos.tender.card' },
+  { value: StaffServiceAgent.PaymentTender.QrWallet, name: 'pos.tender.qrWallet' },
+];
+
+/** i18n-key label for each cash-drawer movement type. */
+export const CashMovementTypeValues: { value: StaffServiceAgent.CashMovementType; name: string }[] = [
+  { value: StaffServiceAgent.CashMovementType.OpeningFloat, name: 'drawer.movement.openingFloat' },
+  { value: StaffServiceAgent.CashMovementType.Sale, name: 'drawer.movement.sale' },
+  { value: StaffServiceAgent.CashMovementType.Refund, name: 'drawer.movement.refund' },
+  { value: StaffServiceAgent.CashMovementType.PayIn, name: 'drawer.movement.payIn' },
+  { value: StaffServiceAgent.CashMovementType.PayOut, name: 'drawer.movement.payOut' },
+];
+
+export function cashMovementTypeLabel(type?: StaffServiceAgent.CashMovementType): string {
+  return CashMovementTypeValues.find(v => v.value === type)?.name ?? CashMovementTypeValues[0].name;
+}
+
+/**
+ * Max orderable quantity of a food or combo: 0 when sold out, the public availability cap when stock is
+ * tracked, null when unlimited. Shared by the customer booking page and the counter POS.
+ */
+export function foodOrderCap(f: { isOutOfStock?: boolean; availableQuantity?: number | null }): number | null {
+  if (f.isOutOfStock) {
+    return 0;
+  }
+  if (f.availableQuantity === null || f.availableQuantity === undefined) {
+    return null;
+  }
+  return Math.max(0, f.availableQuantity);
+}

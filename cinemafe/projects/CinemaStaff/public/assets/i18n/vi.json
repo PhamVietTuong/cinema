@@ -327,5 +327,156 @@
     "mismatch": "Hai mã PIN không khớp.",
     "save": "Lưu mã PIN",
     "saved": "Đã lưu mã PIN."
+  },
+  "pos": {
+    "section": "Quầy vé",
+    "nav": {
+      "counter": "Bán vé tại quầy"
+    },
+    "pageTitle": {
+      "counter": "Bán vé tại quầy"
+    },
+    "title": "Bán vé tại quầy",
+    "subtitle": "Bán vé và bắp nước tại quầy.",
+    "drawer": {
+      "open": "Két đang mở: {{terminal}}",
+      "closed": "Chưa mở két tiền.",
+      "openLink": "Mở két"
+    },
+    "tender": {
+      "cash": "Tiền mặt",
+      "card": "Thẻ",
+      "qrWallet": "Ví QR"
+    },
+    "showtimes": {
+      "title": "Suất chiếu hôm nay",
+      "fnbOnly": "Chỉ bắp nước",
+      "empty": "Hôm nay không có suất chiếu."
+    },
+    "seats": {
+      "title": "Ghế",
+      "noCategory": "Suất chiếu này chưa có loại vé nào cho loại ghế này."
+    },
+    "food": {
+      "title": "Bắp nước & combo",
+      "empty": "Rạp chưa có món nào.",
+      "combo": "Combo",
+      "soldOut": "Hết hàng",
+      "left": "Còn {{count}}"
+    },
+    "member": {
+      "title": "Thành viên",
+      "phone": "Số điện thoại",
+      "find": "Tìm",
+      "walkIn": "Chưa gắn thành viên: khách vãng lai, không tích điểm.",
+      "notFound": "Không có thành viên với số điện thoại này.",
+      "failed": "Không tra cứu được thành viên.",
+      "points": "{{points}} điểm",
+      "detach": "Bỏ thành viên",
+      "redeem": "Điểm muốn đổi",
+      "redeemHint": "Tối đa {{max}} điểm"
+    },
+    "codes": {
+      "title": "Mã",
+      "discount": "Mã giảm giá",
+      "giftCard": "Mã thẻ quà tặng"
+    },
+    "quote": {
+      "title": "Tổng đơn hàng",
+      "empty": "Chọn ghế hoặc bắp nước để bắt đầu.",
+      "failed": "Không tính được giá đơn hàng.",
+      "discount": "Giảm giá",
+      "points": "Điểm đã đổi",
+      "giftCard": "Thẻ quà tặng"
+    },
+    "pay": {
+      "title": "Thanh toán",
+      "tendered": "Tiền khách đưa",
+      "amount": "Số tiền",
+      "reference": "Mã giao dịch / mã QR",
+      "fill": "Điền số tiền còn lại",
+      "due": "Cần thanh toán",
+      "tenderedTotal": "Đã nhận",
+      "remaining": "Còn phải thu",
+      "change": "Tiền thối lại",
+      "nonCashExcess": "Thẻ và QR không được vượt quá số tiền cần thanh toán.",
+      "missingReference": "Nhập mã giao dịch hoặc mã QR cho mọi khoản thẻ và QR.",
+      "needDrawer": "Thu tiền mặt cần mở két."
+    },
+    "sell": {
+      "action": "Hoàn tất bán hàng",
+      "success": "Đã bán đơn {{code}}.",
+      "failed": "Không hoàn tất được đơn hàng."
+    },
+    "override": {
+      "title": "Đổi giá",
+      "newPrice": "Giá mới (VND)",
+      "invalid": "Nhập giá từ 0 trở lên.",
+      "hint": "Đổi giá cần quản lý xác nhận.",
+      "apply": "Áp dụng",
+      "reset": "Về giá niêm yết",
+      "action": "Đổi giá",
+      "active": "Giá đã được quản lý thay đổi"
+    },
+    "receipt": {
+      "done": "Đã bán xong",
+      "changeDue": "Tiền thối",
+      "format": "Khổ giấy",
+      "print": "In",
+      "newSale": "Đơn mới"
+    }
+  },
+  "drawer": {
+    "nav": {
+      "drawer": "Két tiền"
+    },
+    "pageTitle": {
+      "drawer": "Két tiền"
+    },
+    "title": "Két tiền",
+    "subtitle": "Mở két, ghi nhận thu chi tiền mặt và theo dõi số tiền dự kiến.",
+    "amountInvalid": "Nhập số tiền hợp lệ.",
+    "failed": "Thao tác với két không thành công.",
+    "open": {
+      "title": "Mở két",
+      "hint": "Đếm tiền đầu ca và nhập cùng tên máy.",
+      "terminal": "Tên máy",
+      "float": "Tiền đầu ca (VND)",
+      "action": "Mở két",
+      "done": "Đã mở két."
+    },
+    "status": {
+      "title": "Két {{terminal}}",
+      "openedAt": "Mở lúc",
+      "openingFloat": "Tiền đầu ca",
+      "cashSales": "Bán tiền mặt",
+      "payIns": "Nộp thêm",
+      "payOuts": "Chi ra",
+      "refunds": "Hoàn tiền mặt",
+      "expected": "Tiền mặt dự kiến"
+    },
+    "move": {
+      "title": "Nộp thêm / chi ra",
+      "amount": "Số tiền (VND)",
+      "note": "Lý do",
+      "payOutApproval": "Chi ra cần quản lý xác nhận.",
+      "record": "Ghi nhận",
+      "done": "Đã ghi nhận."
+    },
+    "movements": {
+      "title": "Giao dịch gần đây",
+      "empty": "Chưa có giao dịch nào.",
+      "time": "Giờ",
+      "type": "Loại",
+      "amount": "Số tiền",
+      "note": "Ghi chú"
+    },
+    "movement": {
+      "openingFloat": "Tiền đầu ca",
+      "sale": "Bán tiền mặt",
+      "refund": "Hoàn tiền",
+      "payIn": "Nộp thêm",
+      "payOut": "Chi ra"
+    }
   }
 }

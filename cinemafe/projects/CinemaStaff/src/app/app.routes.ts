@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
+import { authGuard, roleGuard, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
 
 /**
  * Where each role lands from '/'. Everyone goes to /home until the role-specific pages
@@ -10,9 +10,9 @@ const STAFF_LANDING: Record<string, string> = {
   [UserRoles.TheaterManager]: '/home',
   [UserRoles.TheaterStaff]: '/home',
   [UserRoles.RegionalManager]: '/home',
-  [UserRoles.BoxOfficeStaff]: '/home',
   [UserRoles.KitchenStaff]: '/home',
   [UserRoles.GateStaff]: '/gate',
+  [UserRoles.BoxOfficeStaff]: '/pos',
 };
 
 export const routes: Routes = [
@@ -64,6 +64,18 @@ export const routes: Routes = [
         path: '',
         canActivate: [roleGuard(BACK_OFFICE_ROLES)],
         loadChildren: () => import('./features/warehouse/warehouse.module').then(m => m.WarehouseModule)
+      },
+      // Counter POS (sellers): one pass-through entry loading PosModule, whose route matches /pos.
+      {
+        path: '',
+        canActivate: [roleGuard(SELLER_ROLES)],
+        loadChildren: () => import('./features/pos/pos.module').then(m => m.PosModule)
+      },
+      // Cash drawer (sellers): loads DrawerModule, whose route matches /drawer.
+      {
+        path: '',
+        canActivate: [roleGuard(SELLER_ROLES)],
+        loadChildren: () => import('./features/drawer/drawer.module').then(m => m.DrawerModule)
       }
     ]
   },
