@@ -41,3 +41,18 @@ export const homeRedirectGuard: CanActivateFn = () => {
     })
   );
 };
+
+/**
+ * Role-aware landing redirect for an app root: sends each role to its own start page
+ * (`landingByRole`), and any role not listed to `fallback` (default /forbidden).
+ */
+export function homeRedirectByRole(landingByRole: Readonly<Record<string, string>>, fallback = '/forbidden'): CanActivateFn {
+  return () => {
+    const store = inject(Store);
+    const router = inject(Router);
+    return store.select(selectCurrentUser).pipe(
+      take(1),
+      map(user => router.createUrlTree([landingByRole[user?.userTypeName ?? ''] ?? fallback]))
+    );
+  };
+}

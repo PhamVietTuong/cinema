@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "home": "Home"
+  },
+  "pageTitle": {
+    "home": "Staff Home",
+    "default": "Staff Tools"
+  },
+  "staff": {
+    "userFallback": "Staff"
+  },
+  "theaterPicker": {
+    "label": "Choose working theater",
+    "placeholder": "Choose theater..."
+  },
+  "home": {
+    "welcome": "Hello, {{name}}",
+    "theater": "You are working at {{name}}.",
+    "pickTheater": "Pick a theater in the top bar to get started.",
+    "noTheater": "Your account has no theater assigned. Please contact an administrator.",
+    "comingSoon": "Ticketing, gate and warehouse tools will appear here soon."
+  },
+  "login": {
+    "heroTitleLine1": "Staff",
+    "heroTitleLine2": "Tools",
+    "heroSubtitle": "Sell tickets, scan at the gate and manage stock at the counter.",
+    "statPos": "Ticketing",
+    "statGate": "Gate",
+    "statWarehouse": "Warehouse",
+    "title": "Staff Login",
+    "subtitle": "Please sign in with a theater staff account.",
+    "footer": "© 2026 Cinema. Internal staff system.",
+    "notStaffAccount": "This account is not a theater staff account. Please sign in with a staff account."
+  },
+  "forbidden": {
+    "title": "Access denied",
+    "message": "This account may not use the staff tools. Please sign in with a staff account.",
+    "switchAccount": "Sign in with another account"
+  }
+}

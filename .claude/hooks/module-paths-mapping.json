@@ -44,6 +44,8 @@
         "jwttokenservice",
         "/features/auth/",
         "/store/auth/",
+        "/projects/cinemastaff/",
+        "/components/auth/",
         "auth.effects",
         "authinterceptor",
         "auth.guard"

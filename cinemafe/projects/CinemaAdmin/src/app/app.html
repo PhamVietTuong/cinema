@@ -1,117 +1,13 @@
-<ng-container *ngIf="isBackOffice$ | async; else loginView">
-  <mat-sidenav-container class="admin-shell">
-    <mat-sidenav class="sidebar" [mode]="isMobile ? 'over' : 'side'" [opened]="isMobile ? menuOpen : true" (openedChange)="onSidenavOpenedChange($event)">
-      <div class="brand">
-        <span class="brand-mark"><mat-icon>movie_filter</mat-icon></span>
-        <span class="brand-text">CINEMA<strong>ADMIN</strong></span>
-      </div>
-
-      <nav class="nav">
-        <ng-container *ngIf="isAdmin$ | async">
-        <a routerLink="/dashboard" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>dashboard</mat-icon><span>{{ 'nav.dashboard' | translate }}</span>
-        </a>
-        <a routerLink="/reports" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>bar_chart</mat-icon><span>{{ 'nav.reports' | translate }}</span>
-        </a>
-        <a routerLink="/movies" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>movie</mat-icon><span>{{ 'nav.movies' | translate }}</span>
-        </a>
-        <a routerLink="/showtimes" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>event</mat-icon><span>{{ 'nav.showtimes' | translate }}</span>
-        </a>
-        <a routerLink="/theaters" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>theaters</mat-icon><span>{{ 'nav.theaters' | translate }}</span>
-        </a>
-        <a routerLink="/users" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>group</mat-icon><span>{{ 'nav.users' | translate }}</span>
-        </a>
-
-        <span class="nav-section">{{ 'section.catalog' | translate }}</span>
-        <a routerLink="/movie-types" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>category</mat-icon><span>{{ 'nav.movieTypes' | translate }}</span>
-        </a>
-        <a routerLink="/age-restrictions" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>shield</mat-icon><span>{{ 'nav.ageRestrictions' | translate }}</span>
-        </a>
-        <a routerLink="/discount-types" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>sell</mat-icon><span>{{ 'nav.discountTypes' | translate }}</span>
-        </a>
-        <a routerLink="/memberships" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>card_membership</mat-icon><span>{{ 'nav.memberships' | translate }}</span>
-        </a>
-        <a routerLink="/user-types" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>badge</mat-icon><span>{{ 'nav.userTypes' | translate }}</span>
-        </a>
-        <a routerLink="/holidays" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>celebration</mat-icon><span>{{ 'nav.holidays' | translate }}</span>
-        </a>
-        <a routerLink="/news" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>article</mat-icon><span>{{ 'nav.news' | translate }}</span>
-        </a>
-
-        <span class="nav-section">{{ 'section.operations' | translate }}</span>
-        <a routerLink="/discounts" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>local_offer</mat-icon><span>{{ 'nav.discounts' | translate }}</span>
-        </a>
-        <a routerLink="/invoices" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>receipt_long</mat-icon><span>{{ 'nav.invoices' | translate }}</span>
-        </a>
-        <a routerLink="/comments" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>forum</mat-icon><span>{{ 'nav.comments' | translate }}</span>
-        </a>
-        <a routerLink="/gift-cards" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>card_giftcard</mat-icon><span>{{ 'nav.giftCards' | translate }}</span>
-        </a>
-        </ng-container>
-
-        <span class="nav-section">{{ 'warehouse.section' | translate }}</span>
-        <a routerLink="/inventory" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>inventory_2</mat-icon><span>{{ 'warehouse.nav.inventory' | translate }}</span>
-        </a>
-        <a routerLink="/storage-plans" routerLinkActive="is-active" class="nav-item">
-          <mat-icon>assignment</mat-icon><span>{{ 'warehouse.nav.storagePlans' | translate }}</span>
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <a class="profile" routerLink="/profile" *ngIf="user$ | async as user" [title]="'profile.myProfile' | translate">
-          <span class="ad-avatar">{{ (user.name || 'QT') | slice:0:1 }}</span>
-          <div class="profile-meta">
-            <span class="profile-name">{{ user.name || ('profile.adminFallback' | translate) }}</span>
-            <span class="profile-mail">{{ user.email || 'admin@cinema.vn' }}</span>
-          </div>
-        </a>
-        <button type="button" class="nav-item logout" (click)="doLogout()">
-          <mat-icon>logout</mat-icon><span>{{ 'nav.logout' | translate }}</span>
-        </button>
-      </div>
-    </mat-sidenav>
-
-    <!-- Main -->
-    <mat-sidenav-content class="main">
-      <header class="topbar">
-        <button type="button" class="menu-toggle ad-icon-btn" (click)="toggleMenu()" aria-label="Menu">
-          <mat-icon>menu</mat-icon>
-        </button>
-        <h2 class="topbar-title">{{ ((pageTitleKey$ | async) ?? '') | translate }}</h2>
-        <div class="topbar-right">
-          <cl-language-switcher></cl-language-switcher>
-          <button type="button" class="ad-icon-btn" (click)="toggleTheme()" [attr.aria-label]="(theme.isDark() ? 'topbar.lightMode' : 'topbar.darkMode') | translate" [title]="(theme.isDark() ? 'topbar.lightMode' : 'topbar.darkMode') | translate">
-            <mat-icon>{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-          </button>
-          <button type="button" class="ad-icon-btn" [attr.aria-label]="'topbar.notifications' | translate"><mat-icon>notifications_none</mat-icon></button>
-          <span class="ad-avatar" *ngIf="user$ | async as user">{{ (user.name || 'QT') | slice:0:1 }}</span>
-        </div>
-      </header>
-
-      <main class="content">
-        <router-outlet></router-outlet>
-      </main>
-    </mat-sidenav-content>
-  </mat-sidenav-container>
-</ng-container>
-
-<ng-template #loginView>
+@if (isBackOffice$ | async) {
+  <cl-app-shell
+    [brand]="brand"
+    [menu]="menu"
+    [user]="user$ | async"
+    [userFallback]="userFallback"
+    defaultTitleKey="pageTitle.default"
+    (logout)="doLogout()">
+    <router-outlet></router-outlet>
+  </cl-app-shell>
+} @else {
   <router-outlet></router-outlet>
-</ng-template>
+}

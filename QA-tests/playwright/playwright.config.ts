@@ -1,9 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// CinemaUser (public site) on 4202, CinemaAdmin (back-office) on 4201 (per angular.json serve ports).
+// CinemaUser (public site) on 4202, CinemaAdmin (back-office) on 4201, CinemaStaff (theater staff) on 4203 (per angular.json serve ports).
 // Override via env vars when serving on other ports.
 const BASE_URL_USER = process.env.CINEMA_USER_URL || 'http://localhost:4202';
 const BASE_URL_ADMIN = process.env.CINEMA_ADMIN_URL || 'http://localhost:4201';
+const BASE_URL_STAFF = process.env.CINEMA_STAFF_URL || 'http://localhost:4203';
 
 export default defineConfig({
   testDir: './specs',
@@ -30,13 +31,19 @@ export default defineConfig({
       // Public-facing CinemaUser app — smoke + booking specs.
       name: 'cinema-user-chromium',
       use: { ...devices['Desktop Chrome'], baseURL: BASE_URL_USER },
-      testIgnore: /.*\/admin\/.*\.spec\.ts/,
+      testIgnore: /.*\/(admin|staff)\/.*\.spec\.ts/,
     },
     {
       // Back-office CinemaAdmin app — only specs under specs/admin/.
       name: 'cinema-admin-chromium',
       use: { ...devices['Desktop Chrome'], baseURL: BASE_URL_ADMIN },
       testMatch: /.*\/admin\/.*\.spec\.ts/,
+    },
+    {
+      // Theater-staff CinemaStaff app — only specs under specs/staff/.
+      name: 'cinema-staff-chromium',
+      use: { ...devices['Desktop Chrome'], baseURL: BASE_URL_STAFF },
+      testMatch: /.*\/staff\/.*\.spec\.ts/,
     },
   ],
 });

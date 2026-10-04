@@ -5,7 +5,7 @@
 export interface Persona {
   email: string;
   password: string;
-  role: 'Admin' | 'User';
+  role: 'Admin' | 'User' | 'Staff';
   label: string;
 }
 
@@ -21,5 +21,11 @@ export const PERSONAS: Record<string, Persona> = {
     password: 'User@123',
     role: 'User',
     label: 'Seeded standard user account',
+  },
+  staff: {
+    email: 'staff@cinema.vn',
+    password: 'Staff@123',
+    role: 'Staff',
+    label: 'Seeded theater staff account (needs a theater)',
   },
 };

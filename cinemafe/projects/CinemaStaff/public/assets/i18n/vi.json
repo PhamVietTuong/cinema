@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "home": "Trang Chủ"
+  },
+  "pageTitle": {
+    "home": "Trang Chủ Nhân Viên",
+    "default": "Công Cụ Nhân Viên"
+  },
+  "staff": {
+    "userFallback": "Nhân Viên"
+  },
+  "theaterPicker": {
+    "label": "Chọn rạp làm việc",
+    "placeholder": "Chọn rạp..."
+  },
+  "home": {
+    "welcome": "Xin chào, {{name}}",
+    "theater": "Bạn đang làm việc tại rạp {{name}}.",
+    "pickTheater": "Hãy chọn một rạp ở thanh trên cùng để bắt đầu.",
+    "noTheater": "Tài khoản của bạn chưa được gán rạp. Vui lòng liên hệ quản trị viên.",
+    "comingSoon": "Các công cụ bán vé, soát vé và kho sẽ sớm có mặt tại đây."
+  },
+  "login": {
+    "heroTitleLine1": "Công Cụ",
+    "heroTitleLine2": "Nhân Viên",
+    "heroSubtitle": "Bán vé, soát vé và quản lý kho tại quầy của rạp.",
+    "statPos": "Bán vé",
+    "statGate": "Soát vé",
+    "statWarehouse": "Kho",
+    "title": "Đăng Nhập Nhân Viên",
+    "subtitle": "Vui lòng đăng nhập bằng tài khoản nhân viên rạp.",
+    "footer": "© 2026 Cinema. Hệ thống nội bộ dành cho nhân viên.",
+    "notStaffAccount": "Tài khoản này không phải nhân viên rạp. Vui lòng đăng nhập bằng tài khoản nhân viên."
+  },
+  "forbidden": {
+    "title": "Không có quyền truy cập",
+    "message": "Tài khoản này không có quyền dùng công cụ nhân viên. Vui lòng đăng nhập bằng tài khoản nhân viên.",
+    "switchAccount": "Đăng nhập tài khoản khác"
+  }
+}

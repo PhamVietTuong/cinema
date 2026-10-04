@@ -1,37 +1,28 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { Store } from '@ngrx/store';
-import { SharedModule, login, selectAuthLoading, selectAuthError } from 'CinemaLib';
+import { LoginFormComponent, LoginStat, ShellBrand } from 'CinemaLib';
 
+/** Admin sign-in: the shared CinemaLib login layout with the admin copy. */
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [SharedModule],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  imports: [LoginFormComponent],
+  template: `
+    <cl-login-form
+      [brand]="brand"
+      titleKey="login.title"
+      subtitleKey="login.subtitle"
+      heroTitleLine1Key="login.heroTitleLine1"
+      heroTitleLine2Key="login.heroTitleLine2"
+      heroSubtitleKey="login.heroSubtitle"
+      [stats]="stats"
+      footerKey="login.footer" />
+  `,
 })
 export class LoginComponent {
-  hidePass = true;
-  loading$: Observable<boolean>;
-  error$: Observable<string | null>;
-  form: FormGroup;
-
-  constructor(
-    private _store: Store,
-    private _fb: FormBuilder,
-  ) {
-    this.loading$ = this._store.select(selectAuthLoading);
-    this.error$ = this._store.select(selectAuthError);
-    this.form = this._fb.group({
-      emailOrPhone: ['', Validators.required],
-      password: ['', Validators.required],
-    });
-  }
-
-  onSubmit(): void {
-    if (this.form.valid) {
-      this._store.dispatch(login({ request: this.form.value as any }));
-    }
-  }
+  readonly brand: ShellBrand = { name: 'CINEMA', strong: 'ADMIN' };
+  readonly stats: LoginStat[] = [
+    { icon: 'movie', labelKey: 'login.statMovies' },
+    { icon: 'theaters', labelKey: 'login.statTheaters' },
+    { icon: 'confirmation_number', labelKey: 'login.statTickets' },
+  ];
 }

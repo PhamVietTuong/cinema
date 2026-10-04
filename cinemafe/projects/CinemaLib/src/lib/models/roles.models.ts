@@ -18,3 +18,10 @@ export const STOCK_APPROVER_ROLES: readonly string[] = [
   UserRoles.Admin,
   UserRoles.TheaterManager,
 ];
+
+/** Roles allowed to sign in to the CinemaStaff app (existing roles only until the staff roles land). */
+export const STAFF_APP_ROLES: readonly string[] = [
+  UserRoles.Admin,
+  UserRoles.TheaterManager,
+  UserRoles.TheaterStaff,
+];

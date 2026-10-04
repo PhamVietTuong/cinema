@@ -16,8 +16,7 @@
     "discounts": "Mã Giảm Giá",
     "invoices": "Hóa Đơn",
     "comments": "Kiểm Duyệt",
-    "giftCards": "Thẻ Quà Tặng",
-    "logout": "Đăng Xuất"
+    "giftCards": "Thẻ Quà Tặng"
   },
   "section": {
     "catalog": "Danh Mục",
@@ -40,11 +39,6 @@
     "discounts": "Quản Lý Mã Giảm Giá",
     "invoices": "Quản Lý Hóa Đơn",
     "default": "Bảng Điều Khiển"
-  },
-  "topbar": {
-    "lightMode": "Chế độ sáng",
-    "darkMode": "Chế độ tối",
-    "notifications": "Thông báo"
   },
   "profile": {
     "myProfile": "Hồ sơ của tôi",
@@ -120,14 +114,6 @@
     "statTickets": "3.4K Vé bán",
     "title": "Đăng Nhập Quản Trị",
     "subtitle": "Vui lòng đăng nhập bằng tài khoản quản trị viên.",
-    "emailOrPhoneLabel": "Email hoặc Số Điện Thoại",
-    "emailOrPhonePlaceholder": "Nhập email hoặc số điện thoại",
-    "passwordLabel": "Mật Khẩu",
-    "showPassword": "Hiện mật khẩu",
-    "hidePassword": "Ẩn mật khẩu",
-    "rememberMe": "Ghi nhớ đăng nhập",
-    "forgotPassword": "Quên mật khẩu?",
-    "submit": "Đăng Nhập",
     "footer": "© 2026 Cinema. Hệ thống quản trị nội bộ."
   },
   "dashboard": {
