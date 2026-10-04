@@ -38,6 +38,8 @@ export interface IHttpService {
     createUser(request: CreateUserRequest): Observable<UserDTO>;
     updateUser(request: UpdateUserRequest): Observable<UserDTO>;
     deleteUser(id?: string | undefined): Observable<void>;
+    getUserTheaters(id?: string | undefined): Observable<UserTheatersDTO>;
+    setUserTheaters(request: UserTheatersDTO): Observable<UserTheatersDTO>;
 }
 
 @Injectable()
@@ -938,6 +940,110 @@ export class HttpService implements IHttpService {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getUserTheaters(id?: string | undefined): Observable<UserTheatersDTO> {
+        let url_ = this.baseUrl + "/api/Identity/GetUserTheaters?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUserTheaters(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUserTheaters(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserTheatersDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserTheatersDTO>;
+        }));
+    }
+
+    protected processGetUserTheaters(response: HttpResponseBase): Observable<UserTheatersDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UserTheatersDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    setUserTheaters(request: UserTheatersDTO): Observable<UserTheatersDTO> {
+        let url_ = this.baseUrl + "/api/Identity/SetUserTheaters";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetUserTheaters(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetUserTheaters(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserTheatersDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserTheatersDTO>;
+        }));
+    }
+
+    protected processSetUserTheaters(response: HttpResponseBase): Observable<UserTheatersDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UserTheatersDTO.fromJS(resultData200);
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -1921,6 +2027,54 @@ export interface IUpdateUserRequest {
     userTypeId: string;
     theaterId?: string | undefined;
     status?: UserStatus;
+}
+
+export class UserTheatersDTO implements IUserTheatersDTO {
+    userId?: string;
+    theaterIds?: string[];
+
+    constructor(data?: IUserTheatersDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            if (Array.isArray(_data["theaterIds"])) {
+                this.theaterIds = [] as any;
+                for (let item of _data["theaterIds"])
+                    this.theaterIds!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): UserTheatersDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new UserTheatersDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        if (Array.isArray(this.theaterIds)) {
+            data["theaterIds"] = [];
+            for (let item of this.theaterIds)
+                data["theaterIds"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IUserTheatersDTO {
+    userId?: string;
+    theaterIds?: string[];
 }
 
 export class ApiException extends Error {

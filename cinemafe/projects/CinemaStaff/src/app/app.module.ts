@@ -51,6 +51,7 @@ import { App } from './app';
     StaffServiceAgent.OperationsHttpService,
     StaffServiceAgent.WorkforceHttpService,
     StaffServiceAgent.StaffReportHttpService,
+    StaffServiceAgent.ConcessionHttpService,
   ],
   bootstrap: [App],
 })

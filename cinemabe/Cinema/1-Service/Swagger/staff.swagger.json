@@ -303,6 +303,440 @@
         ]
       }
     },
+    "/api/BoxOffice/FindInvoice": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_FindInvoice",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindInvoiceRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AfterSalesInvoiceDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/StaffRefund": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_StaffRefund",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffRefundRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffRefundResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/Exchange": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_Exchange",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/Reprint": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_Reprint",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReprintRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReprintResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/CloseDrawer": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_CloseDrawer",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseDrawerRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloseDrawerResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/BoxOffice/ReconcileDrawer": {
+      "post": {
+        "tags": [
+          "BoxOffice"
+        ],
+        "operationId": "BoxOffice_ReconcileDrawer",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileDrawerRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloseDrawerResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager",
+              "TheaterStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Concession/GetPickupQueue": {
+      "post": {
+        "tags": [
+          "Concession"
+        ],
+        "operationId": "Concession_GetPickupQueue",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetPickupQueueRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PickupOrderDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Concession/SetFoodStatus": {
+      "post": {
+        "tags": [
+          "Concession"
+        ],
+        "operationId": "Concession_SetFoodStatus",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetFoodStatusRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickupOrderDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Concession/GetLowStock": {
+      "post": {
+        "tags": [
+          "Concession"
+        ],
+        "operationId": "Concession_GetLowStock",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetLowStockRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LowStockItemDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Concession/LookupPickup": {
+      "post": {
+        "tags": [
+          "Concession"
+        ],
+        "operationId": "Concession_LookupPickup",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LookupPickupRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickupOrderDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff",
+              "BoxOfficeStaff"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Gate/Scan": {
       "post": {
         "tags": [
@@ -952,6 +1386,170 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DefaultSearchResultsOfAuditLogDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/StaffReport/GetSales": {
+      "post": {
+        "tags": [
+          "StaffReport"
+        ],
+        "operationId": "StaffReport_GetSales",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffReportRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesReportDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/StaffReport/GetOccupancy": {
+      "post": {
+        "tags": [
+          "StaffReport"
+        ],
+        "operationId": "StaffReport_GetOccupancy",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffReportRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyReportDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/StaffReport/GetKpis": {
+      "post": {
+        "tags": [
+          "StaffReport"
+        ],
+        "operationId": "StaffReport_GetKpis",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffReportRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffKpisDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "RegionalManager",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/StaffReport/GetDailyClose": {
+      "post": {
+        "tags": [
+          "StaffReport"
+        ],
+        "operationId": "StaffReport_GetDailyClose",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DailyCloseRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyCloseDTO"
                 }
               }
             }
@@ -1739,6 +2337,9 @@
                 "$ref": "#/components/schemas/ManagerOverrideDTO"
               }
             ]
+          },
+          "holdForPickup": {
+            "type": "boolean"
           }
         }
       },
@@ -2200,6 +2801,648 @@
           "phone": {
             "type": "string",
             "maxLength": 30,
+            "minLength": 0
+          }
+        }
+      },
+      "AfterSalesInvoiceDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InvoiceStatus"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/SalesChannel"
+          },
+          "finalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "refundedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "ticketCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usedTicketCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasFood": {
+            "type": "boolean"
+          },
+          "firstShowStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "movieTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "exchangedFromInvoiceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "showStarted": {
+            "type": "boolean"
+          },
+          "canRefund": {
+            "type": "boolean"
+          }
+        }
+      },
+      "InvoiceStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Pending",
+          "Paid",
+          "Cancelled",
+          "Failed",
+          "Refunded"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "SalesChannel": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Online",
+          "Counter"
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "FindInvoiceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0,
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "StaffRefundResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "invoiceCode": {
+            "type": "string"
+          },
+          "refundedAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundTender": {
+            "$ref": "#/components/schemas/PaymentTender"
+          },
+          "cashReturned": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "afterShowStart": {
+            "type": "boolean"
+          },
+          "outOfBand": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StaffRefundRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "reasonCode": {
+            "$ref": "#/components/schemas/StaffReasonCode"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          },
+          "refundTender": {
+            "$ref": "#/components/schemas/PaymentTender"
+          },
+          "refundReference": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0,
+            "nullable": true
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "StaffReasonCode": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Other",
+          "CustomerRequest",
+          "WrongShowtime",
+          "DuplicateSale",
+          "ServiceFailure",
+          "TechnicalIssue",
+          "PriceMatch",
+          "Compensation"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "ExchangeResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "oldInvoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "oldInvoiceCode": {
+            "type": "string"
+          },
+          "newSale": {
+            "$ref": "#/components/schemas/CounterSaleResultDTO"
+          },
+          "amountCollected": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundedBack": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ExchangeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "newSale"
+        ],
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "newSale": {
+            "$ref": "#/components/schemas/CounterSaleRequest"
+          },
+          "reasonCode": {
+            "$ref": "#/components/schemas/StaffReasonCode"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          },
+          "refundTender": {
+            "$ref": "#/components/schemas/PaymentTender"
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "ReprintResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "invoiceCode": {
+            "type": "string"
+          },
+          "finalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "movieTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "roomName": {
+            "type": "string",
+            "nullable": true
+          },
+          "showStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "tickets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketItemDTO"
+            }
+          }
+        }
+      },
+      "ReprintRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "CloseDrawerResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CashDrawerStatus"
+          },
+          "expectedCash": {
+            "type": "number",
+            "format": "double"
+          },
+          "countedCash": {
+            "type": "number",
+            "format": "double"
+          },
+          "variance": {
+            "type": "number",
+            "format": "double"
+          },
+          "needsReconciliation": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CashDrawerStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Open",
+          "Closed",
+          "Reconciled"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
+      },
+      "CloseDrawerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "countedCash": {
+            "type": "number",
+            "format": "double",
+            "maximum": 100000000000.0,
+            "minimum": 0.0
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "ReconcileDrawerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "note"
+        ],
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "override": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagerOverrideDTO"
+              }
+            ]
+          }
+        }
+      },
+      "PickupOrderDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "invoiceCode": {
+            "type": "string"
+          },
+          "invoiceStatus": {
+            "$ref": "#/components/schemas/InvoiceStatus"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/SalesChannel"
+          },
+          "foodStatus": {
+            "$ref": "#/components/schemas/FoodOrderStatus"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "foodHandedOverAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "showTimeStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "movieTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "roomName": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PickupItemDTO"
+            }
+          }
+        }
+      },
+      "FoodOrderStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "None",
+          "Pending",
+          "Preparing",
+          "Ready",
+          "HandedOver",
+          "Cancelled"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "PickupItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GetPickupQueueRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "day": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SetFoodStatusRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FoodOrderStatus"
+          }
+        }
+      },
+      "LowStockItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "foodAndDrinkId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantityOnHand": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lowStockThreshold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "targetStockLevel": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GetLowStockRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "LookupPickupRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 50,
             "minLength": 0
           }
         }
@@ -3321,7 +4564,8 @@
           "ResendTicket",
           "BlockSeat",
           "BlockRoom",
-          "TicketAdmitOverride"
+          "TicketAdmitOverride",
+          "UserTheatersChanged"
         ],
         "enum": [
           0,
@@ -3339,21 +4583,46 @@
           12,
           13,
           14,
-          15
+          15,
+          16
         ]
       },
-      "StaffReasonCode": {
+      "SalesReportDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "groupBy": {
+            "$ref": "#/components/schemas/SalesGroupBy"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesReportRowDTO"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/SalesReportRowDTO"
+          }
+        }
+      },
+      "SalesGroupBy": {
         "type": "integer",
         "description": "",
         "x-enumNames": [
-          "Other",
-          "CustomerRequest",
-          "WrongShowtime",
-          "DuplicateSale",
-          "ServiceFailure",
-          "TechnicalIssue",
-          "PriceMatch",
-          "Compensation"
+          "Day",
+          "Movie",
+          "Theater",
+          "PaymentMethod",
+          "Staff",
+          "Channel"
         ],
         "enum": [
           0,
@@ -3361,10 +4630,375 @@
           2,
           3,
           4,
-          5,
-          6,
-          7
+          5
         ]
+      },
+      "SalesReportRowDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "invoiceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ticketRevenue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "foodRevenue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "discountAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "netRevenue": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "refundAmount": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "StaffReportRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "theaterIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          "groupBy": {
+            "$ref": "#/components/schemas/SalesGroupBy"
+          }
+        }
+      },
+      "OccupancyReportDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OccupancyRowDTO"
+            }
+          },
+          "totalSoldSeats": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalActiveSeats": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "occupancyRate": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "OccupancyRowDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "showTimeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterName": {
+            "type": "string"
+          },
+          "roomName": {
+            "type": "string"
+          },
+          "movieTitle": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "soldSeats": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeSeats": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "occupancyRate": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "StaffKpisDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "paidInvoices": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ticketInvoices": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ticketInvoicesWithFood": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attachRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "ticketsSold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageSpendPerHead": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "refundAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundRateByCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundRateByAmount": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "DailyCloseDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "businessDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fromUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "toUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tenders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyCloseTenderDTO"
+            }
+          },
+          "paymentsTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "moneyCollected": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "refundAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "exchangeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "compCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "compAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "netCollected": {
+            "type": "number",
+            "format": "double"
+          },
+          "ticketsSold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "foodItemsSold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "foodRevenue": {
+            "type": "number",
+            "format": "double"
+          },
+          "drawers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyCloseDrawerDTO"
+            }
+          },
+          "unreconciledDrawerCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalVariance": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "DailyCloseTenderDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "method": {
+            "$ref": "#/components/schemas/PaymentTender"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DailyCloseDrawerDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "terminalName": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/CashDrawerStatus"
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "openingFloat": {
+            "type": "number",
+            "format": "double"
+          },
+          "expectedCash": {
+            "type": "number",
+            "format": "double"
+          },
+          "countedCash": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "variance": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "DailyCloseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "businessDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
       },
       "SetOverridePinRequest": {
         "type": "object",
