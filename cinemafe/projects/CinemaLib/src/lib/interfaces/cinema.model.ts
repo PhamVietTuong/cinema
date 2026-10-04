@@ -200,7 +200,7 @@ export const StockLevelPills: Record<StockLevel, { labelKey: string; cssClass: s
 };
 
 /** What `cl-status-pill` can render; each kind maps its `value` to a label key and pill class in this file. */
-export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction' | 'incident' | 'incidentSeverity' | 'staffTask' | 'roomStatus' | 'foodOrder' | 'drawerStatus';
+export type StatusPillKind = 'invoice' | 'storagePlan' | 'stockLevel' | 'scanOutcome' | 'auditAction' | 'incident' | 'incidentSeverity' | 'staffTask' | 'roomStatus' | 'foodOrder' | 'drawerStatus' | 'complaint';
 
 /** i18n label key (under `kitchen.status`) and pill class for each FoodOrderStatus. */
 export const FoodOrderStatusSpecs: Record<StaffServiceAgent.FoodOrderStatus, { labelKey: string; cssClass: string }> = {
@@ -390,6 +390,72 @@ export function staffTaskStatusPillClass(s?: StaffServiceAgent.StaffTaskStatus):
   }
 }
 
+/** i18n-key label for each ComplaintStatus value. */
+export const ComplaintStatusValues: { value: StaffServiceAgent.ComplaintStatus; name: string }[] = [
+  { value: StaffServiceAgent.ComplaintStatus.Open, name: 'staffEnums.complaintStatus.open' },
+  { value: StaffServiceAgent.ComplaintStatus.InReview, name: 'staffEnums.complaintStatus.inReview' },
+  { value: StaffServiceAgent.ComplaintStatus.Resolved, name: 'staffEnums.complaintStatus.resolved' },
+  { value: StaffServiceAgent.ComplaintStatus.Rejected, name: 'staffEnums.complaintStatus.rejected' },
+];
+
+/** i18n key for a complaint status (falls back to Open). */
+export function complaintStatusLabel(s?: StaffServiceAgent.ComplaintStatus): string {
+  return ComplaintStatusValues.find(v => v.value === s)?.name ?? ComplaintStatusValues[0].name;
+}
+
+/** CSS pill class for each ComplaintStatus value. */
+export function complaintStatusPillClass(s?: StaffServiceAgent.ComplaintStatus): string {
+  switch (s) {
+    case StaffServiceAgent.ComplaintStatus.Resolved: return 'ad-pill--success';
+    case StaffServiceAgent.ComplaintStatus.InReview: return 'ad-pill--violet';
+    case StaffServiceAgent.ComplaintStatus.Rejected: return 'ad-pill--neutral';
+    default: return 'ad-pill--warn';
+  }
+}
+
+/** i18n-key label for each ComplaintCategory value. */
+export const ComplaintCategoryValues: { value: StaffServiceAgent.ComplaintCategory; name: string }[] = [
+  { value: StaffServiceAgent.ComplaintCategory.Other, name: 'staffEnums.complaintCategory.other' },
+  { value: StaffServiceAgent.ComplaintCategory.Service, name: 'staffEnums.complaintCategory.service' },
+  { value: StaffServiceAgent.ComplaintCategory.Booking, name: 'staffEnums.complaintCategory.booking' },
+  { value: StaffServiceAgent.ComplaintCategory.Payment, name: 'staffEnums.complaintCategory.payment' },
+  { value: StaffServiceAgent.ComplaintCategory.Projection, name: 'staffEnums.complaintCategory.projection' },
+  { value: StaffServiceAgent.ComplaintCategory.Sound, name: 'staffEnums.complaintCategory.sound' },
+  { value: StaffServiceAgent.ComplaintCategory.FoodAndDrink, name: 'staffEnums.complaintCategory.foodAndDrink' },
+  { value: StaffServiceAgent.ComplaintCategory.Facilities, name: 'staffEnums.complaintCategory.facilities' },
+  { value: StaffServiceAgent.ComplaintCategory.Staff, name: 'staffEnums.complaintCategory.staff' },
+];
+
+/** i18n key for a complaint category (falls back to Other). */
+export function complaintCategoryLabel(c?: StaffServiceAgent.ComplaintCategory): string {
+  return ComplaintCategoryValues.find(v => v.value === c)?.name ?? ComplaintCategoryValues[0].name;
+}
+
+/** i18n-key label for each ComplaintResolution value. */
+export const ComplaintResolutionValues: { value: StaffServiceAgent.ComplaintResolution; name: string }[] = [
+  { value: StaffServiceAgent.ComplaintResolution.None, name: 'staffEnums.complaintResolution.none' },
+  { value: StaffServiceAgent.ComplaintResolution.Refund, name: 'staffEnums.complaintResolution.refund' },
+  { value: StaffServiceAgent.ComplaintResolution.GiftCard, name: 'staffEnums.complaintResolution.giftCard' },
+  { value: StaffServiceAgent.ComplaintResolution.Points, name: 'staffEnums.complaintResolution.points' },
+  { value: StaffServiceAgent.ComplaintResolution.Apology, name: 'staffEnums.complaintResolution.apology' },
+];
+
+/** i18n key for a complaint resolution (falls back to None). */
+export function complaintResolutionLabel(r?: StaffServiceAgent.ComplaintResolution): string {
+  return ComplaintResolutionValues.find(v => v.value === r)?.name ?? ComplaintResolutionValues[0].name;
+}
+
+/** i18n-key label for each ETicketChannel value. */
+export const ETicketChannelValues: { value: StaffServiceAgent.ETicketChannel; name: string }[] = [
+  { value: StaffServiceAgent.ETicketChannel.Email, name: 'staffEnums.eTicketChannel.email' },
+  { value: StaffServiceAgent.ETicketChannel.Sms, name: 'staffEnums.eTicketChannel.sms' },
+];
+
+/** i18n key for an e-ticket channel (falls back to Email). */
+export function eTicketChannelLabel(c?: StaffServiceAgent.ETicketChannel): string {
+  return ETicketChannelValues.find(v => v.value === c)?.name ?? ETicketChannelValues[0].name;
+}
+
 /** i18n key for a room status shown on the staff schedule board (the enum values match the Cinema API's RoomStatus). */
 export function roomStatusLabel(s?: number): string {
   switch (s) {
@@ -458,6 +524,10 @@ export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey
     case 'roomStatus': {
       const status = value as number;
       return { labelKey: roomStatusLabel(status), cssClass: roomStatusPillClass(status) };
+    }
+    case 'complaint': {
+      const status = value as StaffServiceAgent.ComplaintStatus;
+      return { labelKey: complaintStatusLabel(status), cssClass: complaintStatusPillClass(status) };
     }
   }
 }

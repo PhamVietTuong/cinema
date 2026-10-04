@@ -44,6 +44,13 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       checklistKind: { preShow: 'Trước suất chiếu', postShow: 'Sau suất chiếu' },
       taskStatus: { open: 'Mới', inProgress: 'Đang làm', done: 'Hoàn thành', cancelled: 'Đã hủy' },
       roomStatus: { active: 'Hoạt động', maintenance: 'Bảo trì', inactive: 'Ngừng hoạt động' },
+      complaintStatus: { open: 'Mới', inReview: 'Đang xử lý', resolved: 'Đã giải quyết', rejected: 'Từ chối' },
+      complaintCategory: {
+        other: 'Khác', service: 'Dịch vụ', booking: 'Đặt vé', payment: 'Thanh toán', projection: 'Hình ảnh chiếu',
+        sound: 'Âm thanh', foodAndDrink: 'Đồ ăn thức uống', facilities: 'Cơ sở vật chất', staff: 'Nhân viên',
+      },
+      complaintResolution: { none: 'Chưa có', refund: 'Hoàn tiền', giftCard: 'Thẻ quà tặng', points: 'Cộng điểm', apology: 'Xin lỗi' },
+      eTicketChannel: { email: 'Email', sms: 'SMS' },
     },
     invoices: {
       statusPending: 'Chờ thanh toán',
@@ -153,6 +160,13 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       checklistKind: { preShow: 'Pre-show', postShow: 'Post-show' },
       taskStatus: { open: 'Open', inProgress: 'In progress', done: 'Done', cancelled: 'Cancelled' },
       roomStatus: { active: 'Active', maintenance: 'Maintenance', inactive: 'Inactive' },
+      complaintStatus: { open: 'Open', inReview: 'In review', resolved: 'Resolved', rejected: 'Rejected' },
+      complaintCategory: {
+        other: 'Other', service: 'Service', booking: 'Booking', payment: 'Payment', projection: 'Projection',
+        sound: 'Sound', foodAndDrink: 'Food and drink', facilities: 'Facilities', staff: 'Staff',
+      },
+      complaintResolution: { none: 'None', refund: 'Refund', giftCard: 'Gift card', points: 'Points', apology: 'Apology' },
+      eTicketChannel: { email: 'Email', sms: 'SMS' },
     },
     invoices: {
       statusPending: 'Pending',

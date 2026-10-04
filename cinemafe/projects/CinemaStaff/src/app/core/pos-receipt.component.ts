@@ -27,8 +27,9 @@ export interface SaleReceipt {
   template: `
     <div class="pos-receipt-toolbar ad-card">
       <div>
-        <h2 class="pos-receipt-title">{{ 'pos.receipt.done' | translate }}</h2>
+        <h2 class="pos-receipt-title">{{ titleKey() | translate }}</h2>
         <p class="pos-receipt-code">{{ receipt().result.invoiceCode }}</p>
+        <ng-content />
         @if ((receipt().result.changeDue ?? 0) > 0) {
           <p class="pos-receipt-change">{{ 'pos.receipt.changeDue' | translate }}: <strong>{{ receipt().result.changeDue | number:'1.0-0' }}đ</strong></p>
         }
@@ -42,7 +43,7 @@ export interface SaleReceipt {
           <mat-icon>print</mat-icon> {{ 'pos.receipt.print' | translate }}
         </button>
         <button mat-raised-button type="button" (click)="newSale.emit()">
-          <mat-icon>add_shopping_cart</mat-icon> {{ 'pos.receipt.newSale' | translate }}
+          <mat-icon>{{ doneIcon() }}</mat-icon> {{ doneKey() | translate }}
         </button>
       </div>
     </div>
@@ -99,6 +100,10 @@ export interface SaleReceipt {
 export class PosReceiptComponent {
   readonly receipt = input.required<SaleReceipt>();
   readonly newSale = output<void>();
+  /** Heading, and label / icon of the closing button (the exchange dialog reuses the view with its own wording). */
+  readonly titleKey = input('pos.receipt.done');
+  readonly doneKey = input('pos.receipt.newSale');
+  readonly doneIcon = input('add_shopping_cart');
 
   protected readonly format = signal<'a6' | 'roll'>('a6');
 

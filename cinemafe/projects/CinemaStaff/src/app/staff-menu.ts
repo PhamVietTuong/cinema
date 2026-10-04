@@ -1,4 +1,4 @@
-import { APPROVER_ROLES, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES, SELLER_ROLES, CONCESSION_ROLES } from 'CinemaLib';
+import { APPROVER_ROLES, BACK_OFFICE_ROLES, COMPLAINT_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES, SELLER_ROLES, CONCESSION_ROLES } from 'CinemaLib';
 import { LOW_STOCK_BADGE } from './core/staff-live.service';
 
 /**
@@ -33,6 +33,13 @@ export const STAFF_MENU: NavSection[] = [
     titleKey: 'afterSales.section',
     items: [
       { icon: 'assignment_return', labelKey: 'afterSales.nav.afterSales', route: '/after-sales', titleKey: 'afterSales.pageTitle', roles: SELLER_ROLES },
+    ],
+  },
+  {
+    titleKey: 'customerService.section',
+    items: [
+      { icon: 'person_search', labelKey: 'customerService.nav.lookup', route: '/customer-service/lookup', titleKey: 'customerService.lookup.title', roles: SELLER_ROLES },
+      { icon: 'report_problem', labelKey: 'customerService.nav.complaints', route: '/customer-service/complaints', titleKey: 'customerService.list.title', roles: COMPLAINT_ROLES },
     ],
   },
   {

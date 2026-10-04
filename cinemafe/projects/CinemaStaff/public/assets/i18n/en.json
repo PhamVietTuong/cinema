@@ -851,8 +851,34 @@
     },
     "exchange": {
       "button": "Exchange",
-      "disabledTip": "Exchange is coming soon: it needs the replacement-sale picker from the point of sale.",
-      "notEligibleTip": "Only paid counter sales without used tickets can be exchanged (and exchange is not available yet)."
+      "tip": "Replace this counter sale with a new one; only the price difference changes hands.",
+      "notEligibleTip": "Only paid counter sales without used tickets can be exchanged.",
+      "title": "Exchange {{code}}",
+      "oldInvoice": "Invoice being replaced",
+      "hint": "Pick the replacement showtime, seats and food. The seats of the old invoice are released when the exchange is confirmed.",
+      "difference": "Price difference",
+      "oldAmount": "Old invoice",
+      "newAmount": "New total",
+      "collect": "To collect",
+      "payBack": "To pay back",
+      "even": "Same price, nothing to settle",
+      "refundTender": "Pay the difference back by",
+      "collectTitle": "Collect the difference",
+      "confirm": "Confirm exchange",
+      "reasonTitle": "Exchange reason",
+      "reasonHint": "The exchange is audited and needs a manager approval. Give the reason.",
+      "done": "Exchange completed",
+      "collected": "Collected",
+      "paidBack": "Paid back",
+      "success": "Exchanged. New invoice {{code}}.",
+      "failed": "The exchange failed.",
+      "error": {
+        "noItems": "Pick the replacement seats or food first.",
+        "noQuote": "Waiting for the new total...",
+        "tendersIncomplete": "The payments do not cover the difference yet.",
+        "drawer": "Open your cash drawer first.",
+        "busy": "Exchange in progress..."
+      }
     },
     "reprint": {
       "button": "Reprint",
@@ -940,6 +966,102 @@
       "confirm": "Reconcile",
       "note": "Note",
       "done": "Drawer reconciled."
+    }
+  },
+  "customerService": {
+    "section": "Customer service",
+    "nav": {
+      "lookup": "Customer lookup",
+      "complaints": "Complaints"
+    },
+    "lookup": {
+      "title": "Customer lookup",
+      "subtitle": "Find a customer and their latest bookings, re-send an e-ticket or file a complaint.",
+      "query": "E-mail, phone or booking code",
+      "queryHint": "An e-mail (contains @), an exact phone number or an invoice code",
+      "search": "Search",
+      "hint": "Search for a customer to see their card and bookings.",
+      "notFound": "No customer or booking matches this search.",
+      "noTier": "No membership",
+      "points": "{{points}} points"
+    },
+    "invoices": {
+      "code": "Booking",
+      "theater": "Theater",
+      "movie": "Movie",
+      "showtime": "Showtime",
+      "amount": "Amount"
+    },
+    "resend": {
+      "button": "Resend e-ticket",
+      "tip": "Send the e-ticket again by e-mail or SMS",
+      "exhausted": "No resends left for this booking this hour",
+      "title": "Resend e-ticket {{code}}",
+      "hint": "Sent to the contact on file unless you type another address. Walk-in sales without a contact need an address.",
+      "remaining": "Resends left this hour: {{remaining}} of {{max}}",
+      "channel": "Channel",
+      "address": "Address (optional)",
+      "addressHint": "E-mail address or phone number",
+      "send": "Send",
+      "success": "E-ticket {{code}} sent to {{address}}. Resends left this hour: {{remaining}}.",
+      "failed": "The e-ticket could not be sent.",
+      "error": {
+        "email": "Enter a valid e-mail address.",
+        "phone": "Enter a valid phone number."
+      }
+    },
+    "complaint": {
+      "new": "New complaint",
+      "createTitle": "New complaint",
+      "editTitle": "Edit complaint",
+      "category": "Category",
+      "description": "Description",
+      "customer": "Customer",
+      "invoice": "Booking",
+      "assignedTo": "Assigned to",
+      "fileFor": "File a complaint for this booking",
+      "created": "Complaint filed.",
+      "saveFailed": "The complaint could not be saved."
+    },
+    "list": {
+      "title": "Complaints",
+      "subtitle": "Customer complaints of your theaters.",
+      "empty": "No complaints match."
+    },
+    "detail": {
+      "workflow": "Workflow",
+      "edit": "Edit",
+      "startReview": "Start review",
+      "reject": "Reject",
+      "rejectTitle": "Reject complaint",
+      "rejectHint": "The customer's complaint is closed without compensation. Give the reason.",
+      "rejectReason": "Reason",
+      "resolve": "Resolve",
+      "reviewStarted": "Review started.",
+      "rejected": "Complaint rejected.",
+      "resolved": "Complaint resolved: {{resolution}}.",
+      "outcome": "Outcome",
+      "notFound": "Complaint not found."
+    },
+    "resolve": {
+      "title": "Resolve complaint",
+      "approverHint": "This compensation is recorded with you as the approver.",
+      "pinHint": "This compensation needs a manager approval: you will be asked for a manager PIN.",
+      "resolution": "Resolution",
+      "amount": "Amount (VND)",
+      "points": "Points",
+      "refundHint": "The whole booking {{code}} is refunded.",
+      "refundTender": "Refund by",
+      "refundReference": "Reference",
+      "note": "Note",
+      "confirm": "Resolve",
+      "error": {
+        "resolution": "Choose a resolution the complaint allows.",
+        "amount": "Enter an amount greater than zero.",
+        "pointsWhole": "Points must be a whole number.",
+        "tender": "Choose how to refund.",
+        "reference": "A card or QR refund needs a reference."
+      }
     }
   }
 }

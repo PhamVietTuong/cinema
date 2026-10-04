@@ -48,6 +48,12 @@ export const SELLER_ROLES: readonly string[] = [
   UserRoles.BoxOfficeStaff,
 ];
 
+/** Customer-service complaints (create, review, resolve): sellers plus regional managers. Mirrors the CustomerServiceController. */
+export const COMPLAINT_ROLES: readonly string[] = [
+  ...SELLER_ROLES,
+  UserRoles.RegionalManager,
+];
+
 /** Ticket scanning / admission at the gate. */
 export const GATE_KEEPER_ROLES: readonly string[] = [
   UserRoles.Admin,

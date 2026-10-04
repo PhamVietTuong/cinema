@@ -23,16 +23,17 @@ import {
   showLoading,
   showSuccess,
 } from 'CinemaLib';
+import { SensitiveCallService } from '../../core/sensitive-call.service';
 import { TheaterContextService } from '../../core/theater-context.service';
 import {
   canExchangeInvoice,
   canReprintInvoice,
   hasSearchCriteria,
-  isOverrideRejection,
   isValidReprintReason,
   needsManagerOverride,
   refundTenderErrors,
 } from './after-sales.logic';
+import { ExchangeDialogComponent, ExchangeDialogData } from './exchange.dialog';
 import { ReprintTicketsDialogComponent } from './reprint-tickets.dialog';
 
 /**
@@ -142,9 +143,8 @@ import { ReprintTicketsDialogComponent } from './reprint-tickets.dialog';
           <button mat-raised-button color="warn" type="button" [disabled]="busy() || !invoice.canRefund" (click)="refund(invoice)">
             <mat-icon>undo</mat-icon> {{ 'afterSales.refund.button' | translate }}
           </button>
-          <span [matTooltip]="(canExchange() ? 'afterSales.exchange.disabledTip' : 'afterSales.exchange.notEligibleTip') | translate">
-            <!-- TODO(P5-exchange): enable once the POS replacement-sale picker lands (needs CinemaLib seat map + POS cart). -->
-            <button mat-stroked-button type="button" disabled>
+          <span [matTooltip]="(canExchange() ? 'afterSales.exchange.tip' : 'afterSales.exchange.notEligibleTip') | translate">
+            <button mat-stroked-button type="button" [disabled]="busy() || !canExchange()" (click)="exchange(invoice)">
               <mat-icon>swap_horiz</mat-icon> {{ 'afterSales.exchange.button' | translate }}
             </button>
           </span>
@@ -177,6 +177,7 @@ export class AfterSalesComponent {
   private readonly _store = inject(Store);
   private readonly _dialogs = inject(DialogService);
   private readonly _matDialog = inject(MatDialog);
+  private readonly _sensitive = inject(SensitiveCallService);
   private readonly _translate = inject(TranslateService);
   private readonly _fb = inject(FormBuilder);
   private readonly _destroyRef = inject(DestroyRef);
@@ -300,6 +301,22 @@ export class AfterSalesComponent {
     });
   }
 
+  /** Opens the exchange dialog (replacement sale at the counter); refreshes the list once an exchange went through. */
+  exchange(invoice: StaffServiceAgent.AfterSalesInvoiceDTO): void {
+    this._matDialog.open<ExchangeDialogComponent, ExchangeDialogData, boolean>(ExchangeDialogComponent, {
+      width: '1240px',
+      maxWidth: '98vw',
+      maxHeight: '96vh',
+      autoFocus: false,
+      disableClose: true,
+      data: { invoice },
+    }).afterClosed().subscribe(exchanged => {
+      if (exchanged) {
+        this.search();
+      }
+    });
+  }
+
   reprint(invoice: StaffServiceAgent.AfterSalesInvoiceDTO): void {
     this._dialogs.openReasonDialog({
       titleKey: 'afterSales.reprint.title',
@@ -335,44 +352,20 @@ export class AfterSalesComponent {
     });
   }
 
-  /**
-   * Runs a sensitive call. `askPin` opens the manager PIN dialog first; otherwise the call goes without an override and a 403
-   * about the approval reopens the dialog and retries with the PIN.
-   */
+  /** Runs a sensitive call through the shared manager-override flow (PIN first when `askPin`, otherwise only after a 403 about the approval). */
   private _execute<T>(
     askPin: boolean,
     call: (override?: StaffServiceAgent.ManagerOverrideDTO) => Observable<T>,
     onDone: (result: T) => void,
   ): void {
-    const prompt = () => {
-      this._dialogs.openManagerOverrideDialog({ theaterId: this.theaterId() ?? undefined }).afterClosed().subscribe(override => {
-        if (override) {
-          attempt(override);
-        }
-      });
-    };
-    const attempt = (override?: StaffServiceAgent.ManagerOverrideDTO) => {
-      this.busy.set(true);
-      this._store.dispatch(showLoading());
-      call(override).subscribe({
-        next: onDone,
-        error: error => {
-          if (isOverrideRejection(error)) {
-            prompt();
-          } else {
-            this._store.dispatch(showException({ error }));
-          }
-        },
-      }).add(() => {
-        this.busy.set(false);
-        this._store.dispatch(hideLoading());
-      });
-    };
-
-    if (askPin) {
-      prompt();
-    } else {
-      attempt();
-    }
+    this.busy.set(true);
+    this._store.dispatch(showLoading());
+    this._sensitive.run(this.theaterId() ?? undefined, askPin, call).subscribe({
+      next: onDone,
+      error: error => this._store.dispatch(showException({ error })),
+    }).add(() => {
+      this.busy.set(false);
+      this._store.dispatch(hideLoading());
+    });
   }
 }
