@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroupDirective, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
   EmptyStateComponent, SharedModule, StaffServiceAgent, ToastService, apiErrorMessage, cashMovementTypeLabel,
@@ -70,7 +70,7 @@ const TERMINAL_STORAGE_KEY = 'cinema_staff_terminal';
 
         <section class="ad-card drawer-card">
           <h2 class="ad-card-title">{{ 'drawer.move.title' | translate }}</h2>
-          <form [formGroup]="moveForm" (ngSubmit)="move()" class="drawer-form">
+          <form [formGroup]="moveForm" #moveDirective="ngForm" (ngSubmit)="move(moveDirective)" class="drawer-form">
             <mat-button-toggle-group formControlName="type">
               <mat-button-toggle [value]="CashMovementType.PayIn">{{ 'drawer.movement.payIn' | translate }}</mat-button-toggle>
               <mat-button-toggle [value]="CashMovementType.PayOut">{{ 'drawer.movement.payOut' | translate }}</mat-button-toggle>
@@ -198,7 +198,7 @@ export class DrawerComponent {
     });
   }
 
-  move(): void {
+  move(directive: FormGroupDirective): void {
     if (this.moveForm.invalid) {
       this.moveForm.markAllAsTouched();
       return;
@@ -208,21 +208,21 @@ export class DrawerComponent {
       // A pay-out takes cash out of the till: it needs a manager unless the caller is one.
       this._approval.request().subscribe(approval => {
         if (approval) {
-          this._record(type, amount, note, approval.override);
+          this._record(type, amount, note, directive, approval.override);
         }
       });
     } else {
-      this._record(type, amount, note);
+      this._record(type, amount, note, directive);
     }
   }
 
-  private _record(type: StaffServiceAgent.CashMovementType, amount: number, note: string, override?: StaffServiceAgent.ManagerOverrideDTO): void {
+  private _record(type: StaffServiceAgent.CashMovementType, amount: number, note: string, directive: FormGroupDirective, override?: StaffServiceAgent.ManagerOverrideDTO): void {
     this.busy.set(true);
     this.drawerSvc.payInOut(type, Math.round(amount), note.trim(), override).subscribe({
       next: () => {
         this.busy.set(false);
-        this.moveForm.patchValue({ amount: 0, note: '' });
-        this.moveForm.markAsUntouched();
+        // resetForm clears the directive's "submitted" state too, which is what makes mat-error show.
+        directive.resetForm({ type, amount: 0, note: '' });
         this._toast.success(this._translate.instant('drawer.move.done'));
       },
       error: err => this._fail(err),

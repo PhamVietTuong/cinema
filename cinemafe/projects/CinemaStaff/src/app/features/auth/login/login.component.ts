@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { LoginFormComponent, LoginStat, STAFF_APP_ROLES, ShellBrand, logout } from 'CinemaLib';
@@ -20,7 +21,7 @@ import { LoginFormComponent, LoginStat, STAFF_APP_ROLES, ShellBrand, logout } fr
       footerKey="login.footer"
       icon="badge"
       [allowedRoles]="allowedRoles"
-      [noticeKey]="rejectedNotice"
+      [noticeKey]="rejectedNotice()"
       (rejected)="onRejected()" />
   `,
 })
@@ -36,9 +37,13 @@ export class LoginComponent {
     { icon: 'inventory_2', labelKey: 'login.statWarehouse' },
   ];
   /** Shown after a non-staff account was signed in and bounced back here. */
-  readonly rejectedNotice: string | null = inject(ActivatedRoute).snapshot.queryParamMap.has('rejected')
-    ? 'login.notStaffAccount'
-    : null;
+  private readonly _queryParams = toSignal(inject(ActivatedRoute).queryParamMap);
+  readonly rejectedNotice = computed(() => {
+    if (this._queryParams()?.has('rejected')) {
+      return 'login.notStaffAccount';
+    }
+    return null;
+  });
 
   /**
    * A non-staff account signed in. The auth effects are about to navigate to the return URL, so sign out
