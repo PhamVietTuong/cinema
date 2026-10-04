@@ -43,6 +43,7 @@ public class CinemaContext : DbContext
     public DbSet<StoragePlan> StoragePlan => Set<StoragePlan>();
     public DbSet<StoragePlanItem> StoragePlanItem => Set<StoragePlanItem>();
     public DbSet<AuditLog> AuditLog => Set<AuditLog>();
+    public DbSet<Incident> Incident => Set<Incident>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

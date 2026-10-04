@@ -10,6 +10,8 @@
 -- table it references (FK target) — otherwise SQL Server refuses the drop.
 IF OBJECT_ID('dbo.__EFMigrationsHistory', 'U') IS NOT NULL
 DROP TABLE dbo.__EFMigrationsHistory;
+IF OBJECT_ID('dbo.Incident', 'U') IS NOT NULL
+DROP TABLE dbo.Incident;
 IF OBJECT_ID('dbo.AuditLog', 'U') IS NOT NULL
 DROP TABLE dbo.AuditLog;
 IF OBJECT_ID('dbo.StoragePlanItem', 'U') IS NOT NULL
@@ -706,6 +708,32 @@ CREATE TABLE [AuditLog] (
 );
 CREATE INDEX [IX_AuditLog_TheaterId_CreationTime] ON [AuditLog] ([TheaterId], [CreationTime]);
 CREATE INDEX [IX_AuditLog_ActorUserId_CreationTime] ON [AuditLog] ([ActorUserId], [CreationTime]);
+
+-- ── P8a incidents ────────────────────────────────────────────────────────────
+-- Staff incident reports (seat/room blocks reference them). No FKs, like AuditLog: the history survives deletions.
+CREATE TABLE [Incident] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NOT NULL,
+    [RoomId] uniqueidentifier NULL,
+    [SeatId] uniqueidentifier NULL,
+    [ShowTimeId] uniqueidentifier NULL,
+    [Category] int NOT NULL,
+    [Severity] int NOT NULL,
+    [Status] int NOT NULL,
+    [Title] nvarchar(200) NOT NULL,
+    [Description] nvarchar(2000) NULL,
+    [ReportedByUserId] uniqueidentifier NOT NULL,
+    [ResolvedByUserId] uniqueidentifier NULL,
+    [ResolvedAt] datetime NULL,
+    [ResolutionNote] nvarchar(1000) NULL,
+    [BlocksSeat] bit NOT NULL DEFAULT 0,
+    [BlocksRoom] bit NOT NULL DEFAULT 0,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_Incident] PRIMARY KEY ([Id])
+);
+CREATE INDEX [IX_Incident_TheaterId_Status_CreationTime] ON [Incident] ([TheaterId], [Status], [CreationTime]);
+-- ── end P8a incidents ────────────────────────────────────────────────────────
 
 -- ============================================================
 -- EF Core migrations baseline
