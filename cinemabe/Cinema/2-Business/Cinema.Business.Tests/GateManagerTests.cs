@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Cinema.Business.DTO.Gate;
 using Cinema.Business.Managers;
 using Cinema.Data.Contracts;
+using Cinema.Data.Entities;
 using Cinema.Data.Enums;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +33,7 @@ public class GateManagerTests
     private readonly Guid _theaterId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();
     private readonly DateTime _now = new(2026, 10, 4, 18, 0, 0);
+    private readonly List<AuditLog> _logs = new();
 
     private GateTicketRow _ticket;
 
@@ -57,12 +60,14 @@ public class GateManagerTests
         _uowMock.Setup(u => u.InvoiceStore.TryAdmitTicketAsync(
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<DateTime>()))
             .ReturnsAsync(true);
+        _uowMock.Setup(u => u.AuditLogStore.Stage(It.IsAny<AuditLog>())).Callback<AuditLog>(row => _logs.Add(row));
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
     }
 
     private GateManager Sut(Dictionary<string, string?>? settings = null)
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings ?? new Dictionary<string, string?>()).Build();
-        return new GateManager(_uowMock.Object, config, new FixedClock(_now));
+        return new GateManager(_uowMock.Object, new AuditLogger(_uowMock.Object), config, new FixedClock(_now));
     }
 
     private Task<ScanTicketResultDTO> Scan(ScanTicketRequest? request = null, GateManager? sut = null)
@@ -280,6 +285,177 @@ public class GateManagerTests
 
         results.Count(r => r.Outcome == ScanOutcome.Admitted).Should().Be(1);
         results.Count(r => r.Outcome == ScanOutcome.AlreadyUsed).Should().Be(1);
+    }
+
+    private AuditLog SingleLog()
+    {
+        return _logs.Should().ContainSingle().Subject;
+    }
+
+    private static JsonElement LogData(AuditLog log)
+    {
+        return JsonDocument.Parse(log.DataJson!).RootElement;
+    }
+
+    private static int LoggedOutcome(AuditLog log)
+    {
+        return LogData(log).GetProperty(nameof(ScanTicketResultDTO.Outcome)).GetInt32();
+    }
+
+    [Fact]
+    public async Task Log_UnknownCode_StagesNotFound_WithNoIdsAndNoSnapshot()
+    {
+        await Scan(new ScanTicketRequest { Code = "nope" });
+
+        var log = SingleLog();
+        log.Action.Should().Be(AuditAction.GateScan);
+        log.TheaterId.Should().Be(_theaterId);
+        log.ActorUserId.Should().Be(_userId);
+        log.EntityId.Should().BeNull();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.NotFound);
+        var data = LogData(log);
+        data.GetProperty("InvoiceId").ValueKind.Should().Be(JsonValueKind.Null);
+        data.GetProperty("Snapshot").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Theory]
+    [InlineData(InvoiceStatus.Pending)]
+    public async Task Log_NotPaid_StagesOutcome_WithIdsButNoSnapshot(InvoiceStatus status)
+    {
+        _ticket.InvoiceStatus = status;
+
+        await Scan();
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.NotPaid);
+        log.EntityId.Should().Be(_ticket.InvoiceId);
+        LogData(log).GetProperty("Snapshot").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Log_WrongTheater_StagesOutcome_WithIdsButNoSnapshot()
+    {
+        _ticket.TheaterId = Guid.NewGuid();
+
+        await Scan();
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.WrongTheater);
+        log.EntityId.Should().Be(_ticket.InvoiceId);
+        LogData(log).GetProperty("Snapshot").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Log_AlreadyUsed_StagesOutcome_WithSnapshot()
+    {
+        _ticket.IsUsed = true;
+
+        await Scan();
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.AlreadyUsed);
+        log.EntityId.Should().Be(_ticket.InvoiceId);
+        LogData(log).GetProperty("Snapshot").GetProperty("InvoiceCode").GetString().Should().Be("CIN1");
+    }
+
+    [Fact]
+    public async Task Log_WrongShowTime_StagesOutcome_WithSnapshot()
+    {
+        await Scan(new ScanTicketRequest { Code = _qr, ShowTimeId = Guid.NewGuid() });
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.WrongShowTime);
+        LogData(log).GetProperty("Snapshot").GetProperty("SeatLabel").GetString().Should().Be("A1");
+    }
+
+    [Fact]
+    public async Task Log_TooEarly_StagesOutcome_WithSnapshot()
+    {
+        _ticket.StartTime = _now.AddMinutes(31);
+        _ticket.EndTime = _now.AddMinutes(150);
+
+        await Scan();
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.TooEarly);
+        LogData(log).GetProperty("Snapshot").ValueKind.Should().NotBe(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Log_Expired_StagesOutcome_WithSnapshot()
+    {
+        _ticket.StartTime = _now.AddMinutes(-130);
+        _ticket.EndTime = _now.AddMinutes(-1);
+
+        await Scan();
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.Expired);
+        LogData(log).GetProperty("Snapshot").ValueKind.Should().NotBe(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Log_AgeCheckRequired_StagesOutcome_WithSnapshot()
+    {
+        _ticket.AgeRatingCode = "T18";
+        _ticket.MinAge = 18;
+
+        await Scan();
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.AgeCheckRequired);
+        LogData(log).GetProperty("Snapshot").ValueKind.Should().NotBe(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Log_Admitted_StagesOutcome_WithSnapshotAndRequestedShowTimeId()
+    {
+        var requestedShowTimeId = _ticket.ShowTimeId;
+
+        await Scan(new ScanTicketRequest { Code = _qr, ShowTimeId = requestedShowTimeId });
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be((int)ScanOutcome.Admitted);
+        log.EntityId.Should().Be(_ticket.InvoiceId);
+        var data = LogData(log);
+        data.GetProperty("RequestedShowTimeId").GetGuid().Should().Be(requestedShowTimeId);
+        data.GetProperty("Snapshot").GetProperty("MovieTitle").GetString().Should().Be("Movie");
+    }
+
+    [Fact]
+    public async Task Log_ConcurrentDoubleScan_LogsExactlyOneAdmittedAndOneAlreadyUsed()
+    {
+        var winners = 0;
+        _uowMock.Setup(u => u.InvoiceStore.TryAdmitTicketAsync(
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(() => Interlocked.Increment(ref winners) == 1);
+
+        await Task.WhenAll(Scan(), Scan());
+
+        _logs.Should().HaveCount(2);
+        _logs.Count(l => LoggedOutcome(l) == (int)ScanOutcome.Admitted).Should().Be(1);
+        _logs.Count(l => LoggedOutcome(l) == (int)ScanOutcome.AlreadyUsed).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Log_SaveChangesThrows_ScanStillReturnsCorrectResult_AndDoesNotThrow()
+    {
+        _uowMock.Setup(u => u.SaveChangesAsync()).ThrowsAsync(new InvalidOperationException("db down"));
+
+        var result = await Scan();
+
+        result.Outcome.Should().Be(ScanOutcome.Admitted);
+    }
+
+    [Fact]
+    public async Task Log_OverlongCode_IsTruncatedTo200Chars()
+    {
+        var longCode = new string('x', 250);
+
+        await Scan(new ScanTicketRequest { Code = longCode });
+
+        var log = SingleLog();
+        LogData(log).GetProperty("Code").GetString().Should().HaveLength(200);
     }
 
     [Fact]

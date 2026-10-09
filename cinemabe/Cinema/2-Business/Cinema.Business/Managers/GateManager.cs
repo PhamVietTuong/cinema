@@ -1,7 +1,11 @@
+using System.Text.Json;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Gate;
+using Cinema.Business.DTO.Staff;
 using Cinema.Data.Contracts;
+using Cinema.Data.Entities;
 using Cinema.Data.Enums;
+using Cinema.Foundation.Logging;
 using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Managers;
@@ -13,15 +17,18 @@ public class GateManager : IGateManager
     private const int _defaultAdmitBeforeMinutes = 30;
     private const int _defaultAgePromptMinAge = 16;
     private const int _visiblePhoneDigits = 3;
+    private const int _maxLoggedCodeLength = 200;
 
     private readonly IApplicationUnitOfWork _uow;
+    private readonly IAuditLogger _auditLogger;
     private readonly TimeProvider _clock;
     private readonly int _admitBeforeMinutes;
     private readonly int _agePromptMinAge;
 
-    public GateManager(IApplicationUnitOfWork uow, IConfiguration config, TimeProvider clock)
+    public GateManager(IApplicationUnitOfWork uow, IAuditLogger auditLogger, IConfiguration config, TimeProvider clock)
     {
         _uow = uow;
+        _auditLogger = auditLogger;
         _clock = clock;
         _admitBeforeMinutes = ReadInt(config, _admitBeforeMinutesKey, _defaultAdmitBeforeMinutes);
         _agePromptMinAge = ReadInt(config, _agePromptMinAgeKey, _defaultAgePromptMinAge);
@@ -34,55 +41,63 @@ public class GateManager : IGateManager
 
     public async Task<ScanTicketResultDTO> ScanAsync(Guid theaterId, Guid userId, ScanTicketRequest request)
     {
+        var (result, ticket) = await EvaluateScanAsync(theaterId, userId, request);
+        await LogScanAttemptAsync(theaterId, userId, request, result, ticket);
+        return result;
+    }
+
+    private async Task<(ScanTicketResultDTO Result, GateTicketRow? Ticket)> EvaluateScanAsync(
+        Guid theaterId, Guid userId, ScanTicketRequest request)
+    {
         var code = request.Code?.Trim() ?? string.Empty;
         if (code.Length == 0)
         {
-            return new ScanTicketResultDTO { Outcome = ScanOutcome.NotFound };
+            return (new ScanTicketResultDTO { Outcome = ScanOutcome.NotFound }, null);
         }
 
         var ticket = await _uow.InvoiceStore.GetGateTicketByQrAsync(code);
         if (ticket == null)
         {
-            return new ScanTicketResultDTO { Outcome = ScanOutcome.NotFound };
+            return (new ScanTicketResultDTO { Outcome = ScanOutcome.NotFound }, null);
         }
 
         if (ticket.InvoiceStatus != InvoiceStatus.Paid || !ticket.IsActive)
         {
-            return new ScanTicketResultDTO { Outcome = ScanOutcome.NotPaid };
+            return (new ScanTicketResultDTO { Outcome = ScanOutcome.NotPaid }, ticket);
         }
 
         // Another theater's ticket reveals nothing about the movie, the patron or who admitted it — not even
         // when it was already used — so the theater is checked before the used flag.
         if (ticket.TheaterId != theaterId)
         {
-            return new ScanTicketResultDTO { Outcome = ScanOutcome.WrongTheater };
+            return (new ScanTicketResultDTO { Outcome = ScanOutcome.WrongTheater }, ticket);
         }
 
         if (ticket.IsUsed)
         {
-            return Result(ScanOutcome.AlreadyUsed, ticket);
+            return (Result(ScanOutcome.AlreadyUsed, ticket), ticket);
         }
 
         if (request.ShowTimeId.HasValue && request.ShowTimeId.Value != ticket.ShowTimeId)
         {
-            return Result(ScanOutcome.WrongShowTime, ticket);
+            return (Result(ScanOutcome.WrongShowTime, ticket), ticket);
         }
 
         // Showtimes are stored in the theater's local time.
         var now = _clock.GetLocalNow().DateTime;
         if (now < ticket.StartTime.AddMinutes(-_admitBeforeMinutes))
         {
-            return Result(ScanOutcome.TooEarly, ticket);
+            return (Result(ScanOutcome.TooEarly, ticket), ticket);
         }
 
         if (now > ticket.EndTime)
         {
-            return Result(ScanOutcome.Expired, ticket);
+            return (Result(ScanOutcome.Expired, ticket), ticket);
         }
 
         if (ticket.MinAge >= _agePromptMinAge && !request.AgeConfirmed)
         {
-            return Result(ScanOutcome.AgeCheckRequired, ticket);
+            return (Result(ScanOutcome.AgeCheckRequired, ticket), ticket);
         }
 
         var admitted = await _uow.InvoiceStore.TryAdmitTicketAsync(
@@ -90,12 +105,68 @@ public class GateManager : IGateManager
         if (!admitted)
         {
             // Lost the race against a concurrent scan of the same ticket; the winner is not known here, so
-            // re-read for the "used at / by" details.
+            // re-read for the "used at / by" details, but log against the original ticket reference for id stability.
             var current = await _uow.InvoiceStore.GetGateTicketByQrAsync(code);
-            return Result(ScanOutcome.AlreadyUsed, current ?? ticket);
+            return (Result(ScanOutcome.AlreadyUsed, current ?? ticket), ticket);
         }
 
-        return Result(ScanOutcome.Admitted, ticket);
+        return (Result(ScanOutcome.Admitted, ticket), ticket);
+    }
+
+    /// <summary>
+    /// Records every scan attempt (every outcome, not just admits) as an AuditLog row, best-effort: a failure here
+    /// must never fail the scan response, since it is not transactionally coupled to the ticket admit.
+    /// </summary>
+    private async Task LogScanAttemptAsync(
+        Guid theaterId, Guid userId, ScanTicketRequest request, ScanTicketResultDTO result, GateTicketRow? ticket)
+    {
+        try
+        {
+            var code = (request.Code ?? string.Empty).Trim();
+            if (code.Length > _maxLoggedCodeLength)
+            {
+                code = code[.._maxLoggedCodeLength];
+            }
+
+            object? snapshot = string.IsNullOrEmpty(result.InvoiceCode)
+                ? null
+                : new
+                {
+                    result.InvoiceCode,
+                    result.SeatLabel,
+                    result.MovieTitle,
+                    result.RoomName,
+                    ShowStartTime = result.ShowTime
+                };
+
+            var dataJson = JsonSerializer.Serialize(new
+            {
+                Code = code,
+                result.Outcome,
+                request.AgeConfirmed,
+                RequestedShowTimeId = request.ShowTimeId,
+                ticket?.InvoiceId,
+                ticket?.ShowTimeId,
+                ticket?.SeatId,
+                TicketTheaterId = ticket?.TheaterId,
+                Snapshot = snapshot
+            });
+
+            await _auditLogger.LogAsync(new AuditEntry
+            {
+                TheaterId = theaterId,
+                ActorUserId = userId,
+                Action = AuditAction.GateScan,
+                EntityType = nameof(InvoiceTicket),
+                EntityId = ticket?.InvoiceId,
+                DataJson = dataJson
+            });
+            await _uow.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Error(e, $"{GetType().Name}.{nameof(LogScanAttemptAsync)} failed to persist scan log: {e.Message}");
+        }
     }
 
     public async Task<List<GateLookupResultDTO>> LookupAsync(Guid theaterId, GateLookupRequest request)
