@@ -142,6 +142,7 @@ When editing `CinemaLib`, rebuild it (or `ng build CinemaLib --watch`) before th
 - **Don't hand-edit NSwag-generated files** (`Cinema.Service.Clients/**`, `projects/CinemaLib/src/lib/services/*-http.service.ts`). Regenerate via the PowerShell script.
 - **All list/search endpoints take `PagingSearchDTO` in the body via POST** and return `DefaultSearchResults<T>`. Filters use `search.Filters.GetGuid("key")` etc. (extension methods in `Cinema.Business/Extensions/FilterExtensions.cs`).
 - **Controllers follow a try/catch + `LogProvider.Current` pattern** (`{GetType().Name}.{Method} being awakened…` on entry, `Fatal` on exception, then `StatusCode(500, e.Message)`). New endpoints should match.
+- **Never add a 4th controller.** The Web API host must stay at exactly `CinemaController`, `IdentityController`, `PaymentController` — enforced by `ControllerArchitectureTests.OnlyThreeControllersExist`. New endpoints (including anything that would once have been its own "staff" controller — box office, gate, workforce, etc.) go into `CinemaController`, organized with a `#region <Area>` block. Do not split `CinemaController` into `partial class` files.
 - **Layer dependency**: never reference a higher-numbered project from a lower-numbered one. Keep DTOs in `Cinema.Business.DTO`, entities in `Cinema.Data.Entities`.
 - **Datetime mapping**: new entities pick up the `datetime` column type automatically via `CinemaContext.OnModelCreating` — don't override unless intentional.
 
