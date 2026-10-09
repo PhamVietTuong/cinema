@@ -1,0 +1,18 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'gate.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'gate.subtitle' | translate }}</p>
+    </div>
+  </div>
+  @if (!theaterId()) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="theaters" messageKey="gate.pickTheater" hintKey="gate.pickTheaterHint" />
+    </mat-card>
+  } @else {
+    <div class="gate-grid">
+      <staff-gate-scan class="ad-card" />
+      <staff-gate-lookup class="ad-card" />
+    </div>
+  }
+</div>
