@@ -1,4 +1,3 @@
-using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.BoxOffice;
 using Cinema.Foundation.Logging;
@@ -8,21 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cinema.Service.WebApiHost.Controllers;
 
-/// <summary>Staff point of sale: counter ticket and food sales with split tenders, and the cashier's cash drawer.</summary>
-[ApiController]
-[Route("api/[controller]/[action]")]
-[ApiExplorerSettings(GroupName = "staff")]
-[Authorize(Roles = RoleNames.Sellers)]
-public class BoxOfficeController : ApiControllerBase
+public partial class CinemaController
 {
-    private readonly IBoxOfficeManager _boxOffice;
-
-    public BoxOfficeController(IBoxOfficeManager boxOffice)
-    {
-        _boxOffice = boxOffice;
-    }
+    #region BoxOffice
 
     /// <summary>Prices a counter sale (seats and/or food) without changing anything.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(CounterQuoteDTO), 200)]
     public async Task<IActionResult> Quote([FromBody] CounterSaleRequest request)
@@ -44,6 +34,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>Rings up a counter sale: a Paid invoice with its tenders, never a Pending one.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(CounterSaleResultDTO), 200)]
     public async Task<IActionResult> Sell([FromBody] CounterSaleRequest request)
@@ -64,6 +55,7 @@ public class BoxOfficeController : ApiControllerBase
         }
     }
 
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(CashDrawerDTO), 200)]
     public async Task<IActionResult> OpenDrawer([FromBody] OpenDrawerRequest request)
@@ -85,6 +77,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>The caller's open drawer with totals; <c>IsOpen = false</c> when there is none.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(CashDrawerDTO), 200)]
     public async Task<IActionResult> GetMyDrawer([FromBody] BoxOfficeScopeRequest request)
@@ -106,6 +99,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>Records cash put into or taken out of the drawer. A pay-out needs a manager override.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(CashDrawerDTO), 200)]
     public async Task<IActionResult> PayInOut([FromBody] PayInOutRequest request)
@@ -127,6 +121,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>The theater's showtimes of a business day (default today), one row per showtime and room.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(List<CounterShowtimeDTO>), 200)]
     public async Task<IActionResult> GetShowtimesToday([FromBody] ShowtimesTodayRequest request)
@@ -148,6 +143,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>Finds a member by exact phone number to attach to a sale (404 when none).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(CounterCustomerDTO), 200)]
     public async Task<IActionResult> FindCustomer([FromBody] FindCustomerRequest request)
@@ -164,6 +160,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>After-sales search by exact invoice code and/or customer phone, scoped to the theater.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(List<AfterSalesInvoiceDTO>), 200)]
     public async Task<IActionResult> FindInvoice([FromBody] FindInvoiceRequest request)
@@ -185,6 +182,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>Refunds a whole paid invoice. 403 without a manager approval (unless the caller is a manager).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(StaffRefundResultDTO), 200)]
     public async Task<IActionResult> StaffRefund([FromBody] StaffRefundRequest request)
@@ -206,6 +204,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>Replaces a counter invoice by a new sale in one transaction. 403 without a manager approval (unless the caller is a manager).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(ExchangeResultDTO), 200)]
     public async Task<IActionResult> Exchange([FromBody] ExchangeRequest request)
@@ -227,6 +226,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>Returns the tickets of a paid invoice again (audited; a manager approves when a ticket was used).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(ReprintResultDTO), 200)]
     public async Task<IActionResult> Reprint([FromBody] ReprintRequest request)
@@ -248,6 +248,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>Closes the caller's own drawer with the counted cash; a variance beyond the tolerance needs reconciliation.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [HttpPost]
     [ProducesResponseType(typeof(CloseDrawerResultDTO), 200)]
     public async Task<IActionResult> CloseDrawer([FromBody] CloseDrawerRequest request)
@@ -269,6 +270,7 @@ public class BoxOfficeController : ApiControllerBase
     }
 
     /// <summary>A manager accepts the variance of a closed drawer.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
     [Authorize(Roles = RoleNames.Approvers)]
     [HttpPost]
     [ProducesResponseType(typeof(CloseDrawerResultDTO), 200)]
@@ -289,4 +291,6 @@ public class BoxOfficeController : ApiControllerBase
             return HandleException(e, nameof(ReconcileDrawer));
         }
     }
+
+    #endregion
 }
