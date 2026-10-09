@@ -19,7 +19,10 @@ internal static class CinemaControllerFactory
         IBoxOfficeManager? boxOffice = null,
         ICustomerServiceManager? customerService = null,
         IStaffReportManager? reports = null,
-        IDailyCloseManager? dailyClose = null)
+        IDailyCloseManager? dailyClose = null,
+        IScheduleBoardManager? board = null,
+        IIncidentManager? incidents = null,
+        IChecklistManager? checklists = null)
     {
         var controller = new CinemaController(
             movieManager: null!,
@@ -50,7 +53,10 @@ internal static class CinemaControllerFactory
             boxOffice: boxOffice!,
             customerService: customerService!,
             reports: reports!,
-            dailyClose: dailyClose!)
+            dailyClose: dailyClose!,
+            board: board!,
+            incidents: incidents!,
+            checklists: checklists!)
         {
             ControllerContext = new ControllerContext
             {

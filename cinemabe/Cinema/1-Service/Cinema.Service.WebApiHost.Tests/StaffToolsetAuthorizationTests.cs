@@ -50,9 +50,9 @@ public class StaffToolsetAuthorizationTests
         {
             yield return new object[] { typeof(WorkforceController), action };
         }
-        foreach (var action in new[] { nameof(OperationsController.GetChecklistTemplates), nameof(OperationsController.SaveChecklistTemplate) })
+        foreach (var action in new[] { nameof(CinemaController.GetChecklistTemplates), nameof(CinemaController.SaveChecklistTemplate) })
         {
-            yield return new object[] { typeof(OperationsController), action };
+            yield return new object[] { typeof(CinemaController), action };
         }
     }
 
@@ -63,10 +63,10 @@ public class StaffToolsetAuthorizationTests
         {
             yield return new object[] { typeof(WorkforceController), action };
         }
-        foreach (var action in new[] { nameof(OperationsController.GetScheduleBoard), nameof(OperationsController.ReportIncident), nameof(OperationsController.GetIncidents),
-            nameof(OperationsController.OpenChecklist), nameof(OperationsController.SetChecklistItem), nameof(OperationsController.CompleteChecklist) })
+        foreach (var action in new[] { nameof(CinemaController.GetScheduleBoard), nameof(CinemaController.ReportIncident), nameof(CinemaController.GetIncidents),
+            nameof(CinemaController.OpenChecklist), nameof(CinemaController.SetChecklistItem), nameof(CinemaController.CompleteChecklist) })
         {
-            yield return new object[] { typeof(OperationsController), action };
+            yield return new object[] { typeof(CinemaController), action };
         }
     }
 
@@ -101,11 +101,8 @@ public class StaffToolsetAuthorizationTests
     }
 
     [Fact]
-    public void WorkforceAndOperations_AreInTheStaffSwaggerGroup()
+    public void Workforce_IsInTheStaffSwaggerGroup()
     {
-        foreach (var controller in new[] { typeof(WorkforceController), typeof(OperationsController) })
-        {
-            controller.GetCustomAttribute<Microsoft.AspNetCore.Mvc.ApiExplorerSettingsAttribute>()!.GroupName.Should().Be("staff");
-        }
+        typeof(WorkforceController).GetCustomAttribute<Microsoft.AspNetCore.Mvc.ApiExplorerSettingsAttribute>()!.GroupName.Should().Be("staff");
     }
 }
