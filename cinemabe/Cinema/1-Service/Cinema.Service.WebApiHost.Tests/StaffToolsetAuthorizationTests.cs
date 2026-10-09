@@ -72,21 +72,16 @@ public class StaffToolsetAuthorizationTests
 
     [Theory]
     [MemberData(nameof(ApproverOnlyActions))]
-    public async Task GateStaff_CannotUseApproverEndpoints_SoRosterEditIs403(Type controller, string action)
+    public async Task TheaterStaff_CannotUseApproverEndpoints_SoRosterEditIs403(Type controller, string action)
     {
-        (await IsAllowedAsync(controller, action, RoleNames.GateStaff)).Should().BeFalse();
-        (await IsAllowedAsync(controller, action, RoleNames.BoxOfficeStaff)).Should().BeFalse();
-        (await IsAllowedAsync(controller, action, RoleNames.KitchenStaff)).Should().BeFalse();
         (await IsAllowedAsync(controller, action, RoleNames.TheaterStaff)).Should().BeFalse();
     }
 
     [Theory]
     [MemberData(nameof(ApproverOnlyActions))]
-    public async Task Managers_CanUseApproverEndpoints(Type controller, string action)
+    public async Task Admin_CanUseApproverEndpoints(Type controller, string action)
     {
-        (await IsAllowedAsync(controller, action, RoleNames.TheaterManager)).Should().BeTrue();
         (await IsAllowedAsync(controller, action, RoleNames.Admin)).Should().BeTrue();
-        (await IsAllowedAsync(controller, action, RoleNames.RegionalManager)).Should().BeTrue();
     }
 
     [Theory]

@@ -338,37 +338,4 @@ public class IdentityController : ApiControllerBase
         }
     }
 
-    /// <summary>The theaters assigned to a RegionalManager account (admin only).</summary>
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(typeof(UserTheatersDTO), 200)]
-    public async Task<IActionResult> GetUserTheaters([FromQuery] Guid id)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetUserTheaters)} being awakened to process request...");
-        try
-        {
-            return Ok(await _authManager.GetUserTheatersAsync(id));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetUserTheaters));
-        }
-    }
-
-    /// <summary>Replaces a RegionalManager's theater assignments with exactly the given set (admin only).</summary>
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(typeof(UserTheatersDTO), 200)]
-    public async Task<IActionResult> SetUserTheaters([FromBody] UserTheatersDTO request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(SetUserTheaters)} being awakened to process request...");
-        try
-        {
-            return Ok(await _authManager.SetUserTheatersAsync(request));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(SetUserTheaters));
-        }
-    }
 }

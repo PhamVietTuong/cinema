@@ -61,9 +61,9 @@ public class GateControllerTests
     }
 
     [Fact]
-    public async Task Scan_GateStaffWithoutTheaterClaim_IsForbidden()
+    public async Task Scan_TheaterStaffWithoutTheaterClaim_IsForbidden()
     {
-        var result = await Controller(new FakeGate(), RoleNames.GateStaff)
+        var result = await Controller(new FakeGate(), RoleNames.TheaterStaff)
             .Scan(new ScanTicketRequest { Code = "x" });
 
         result.Should().BeOfType<ForbidResult>();
@@ -74,7 +74,7 @@ public class GateControllerTests
     {
         var gate = new FakeGate();
 
-        var result = await Controller(gate, RoleNames.GateStaff, _theaterA)
+        var result = await Controller(gate, RoleNames.TheaterStaff, _theaterA)
             .Scan(new ScanTicketRequest { Code = "x", TheaterId = _theaterB });
 
         result.Should().BeOfType<ObjectResult>().Which.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
@@ -86,7 +86,7 @@ public class GateControllerTests
     {
         var gate = new FakeGate();
 
-        var result = await Controller(gate, RoleNames.GateStaff, _theaterA)
+        var result = await Controller(gate, RoleNames.TheaterStaff, _theaterA)
             .Scan(new ScanTicketRequest { Code = "x" });
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;

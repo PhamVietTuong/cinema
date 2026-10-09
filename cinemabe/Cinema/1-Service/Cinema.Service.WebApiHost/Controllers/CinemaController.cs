@@ -2158,7 +2158,7 @@ public class CinemaController : ApiControllerBase
     #region CustomerService
 
     /// <summary>Sellers plus the regional manager, who may follow up and approve compensation.</summary>
-    private const string _complaintRoles = RoleNames.Sellers + "," + RoleNames.RegionalManager;
+    private const string _complaintRoles = RoleNames.Sellers;
 
     /// <summary>Finds a member by email, phone or invoice code: masked contact, tier, points and the last 20 invoices of the caller's theaters.</summary>
     [Authorize(Roles = RoleNames.Sellers)]

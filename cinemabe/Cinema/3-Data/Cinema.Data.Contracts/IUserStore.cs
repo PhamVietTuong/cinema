@@ -19,12 +19,5 @@ public interface IUserStore : IGenericStore<User>
     Task<List<(Guid Id, string Name)>> GetApproversAsync(
         Guid theaterId,
         IReadOnlyCollection<string> theaterRoleNames,
-        IReadOnlyCollection<string> globalRoleNames,
-        IReadOnlyCollection<string> assignedRoleNames);
-
-    /// <summary>The theaters a user (RegionalManager) is assigned to, untracked (one query).</summary>
-    Task<List<Guid>> GetAssignedTheaterIdsAsync(Guid userId);
-
-    /// <summary>Stages the user's assignment set to exactly <paramref name="theaterIds"/> WITHOUT saving (one read).</summary>
-    Task ReplaceAssignedTheatersAsync(Guid userId, IReadOnlyCollection<Guid> theaterIds);
+        IReadOnlyCollection<string> globalRoleNames);
 }

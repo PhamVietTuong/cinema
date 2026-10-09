@@ -29,8 +29,8 @@ public class AuditOverrideTests
         _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _uowMock.Setup(u => u.UserStore.UpdateAsync(It.IsAny<User>())).ReturnsAsync((User user) => user);
 
-        _staff = NewUser(RoleNames.BoxOfficeStaff, _theaterId);
-        _manager = NewUser(RoleNames.TheaterManager, _theaterId);
+        _staff = NewUser(RoleNames.TheaterStaff, _theaterId);
+        _manager = NewUser(RoleNames.Admin, _theaterId);
         PasswordHasher.CreateHash(_pin, out var hash, out var salt);
         _manager.OverridePinHash = hash;
         _manager.OverridePinSalt = salt;
@@ -120,20 +120,6 @@ public class AuditOverrideTests
     }
 
     [Fact]
-    public async Task Verify_ApproverFromAnotherTheater_IsRefused_AndAudited()
-    {
-        var otherTheaterManager = NewUser(RoleNames.TheaterManager, Guid.NewGuid());
-        PasswordHasher.CreateHash(_pin, out var hash, out var salt);
-        otherTheaterManager.OverridePinHash = hash;
-        otherTheaterManager.OverridePinSalt = salt;
-
-        var act = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(otherTheaterManager, _pin), AuditAction.Refund);
-
-        await act.Should().ThrowAsync<AccessDeniedException>();
-        _staged.Should().ContainSingle(r => r.Action == AuditAction.OverrideFailed);
-    }
-
-    [Fact]
     public async Task Verify_ApproverWhoIsNotAnApproverRole_IsRefused()
     {
         var colleague = NewUser(RoleNames.TheaterStaff, _theaterId);
@@ -155,15 +141,6 @@ public class AuditOverrideTests
     }
 
     [Fact]
-    public async Task Verify_ActorIsAManagerOfTheTheater_NeedsNoPin()
-    {
-        var approverId = await _sut.VerifyAsync(_theaterId, _manager.Id, null, AuditAction.Refund);
-
-        approverId.Should().Be(_manager.Id);
-        _staged.Should().BeEmpty();
-    }
-
-    [Fact]
     public async Task Verify_ActorIsAdmin_NeedsNoPin()
     {
         var admin = NewUser(RoleNames.Admin, null);
@@ -171,16 +148,6 @@ public class AuditOverrideTests
         var approverId = await _sut.VerifyAsync(_theaterId, admin.Id, null, AuditAction.PriceOverride);
 
         approverId.Should().Be(admin.Id);
-    }
-
-    [Fact]
-    public async Task Verify_ActorIsManagerOfAnotherTheater_StillNeedsAPin()
-    {
-        var foreignManager = NewUser(RoleNames.TheaterManager, Guid.NewGuid());
-
-        var act = () => _sut.VerifyAsync(_theaterId, foreignManager.Id, null, AuditAction.Refund);
-
-        await act.Should().ThrowAsync<AccessDeniedException>();
     }
 
     [Theory]

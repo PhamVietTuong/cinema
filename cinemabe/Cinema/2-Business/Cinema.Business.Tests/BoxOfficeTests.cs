@@ -55,8 +55,8 @@ public class BoxOfficeTests
         var overrides = new ManagerOverrideService(_uowMock.Object, audit);
         _sut = new BoxOfficeManager(_uowMock.Object, _booking, overrides, audit, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(), gateways, TimeProvider.System);
 
-        _staff = NewUser(RoleNames.BoxOfficeStaff, _theaterId);
-        _manager = NewUser(RoleNames.TheaterManager, _theaterId);
+        _staff = NewUser(RoleNames.TheaterStaff, _theaterId);
+        _manager = NewUser(RoleNames.Admin, _theaterId);
         PasswordHasher.CreateHash(_pin, out var hash, out var salt);
         _manager.OverridePinHash = hash;
         _manager.OverridePinSalt = salt;
@@ -756,7 +756,7 @@ public class BoxOfficeTests
     }
 
     [Fact]
-    public async Task StaffRefund_ByBoxOfficeStaffWithoutPin_IsForbidden()
+    public async Task StaffRefund_ByTheaterStaffWithoutPin_IsForbidden()
     {
         var invoice = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
 

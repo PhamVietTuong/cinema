@@ -44,8 +44,8 @@ public class OperationsBoardAndIncidentTests
         _room = new Room { Id = Guid.NewGuid(), Name = "Room 1", TheaterId = _theaterId, Status = RoomStatus.Active };
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(_room.Id)).ReturnsAsync(_room);
 
-        _staff = NewUser(RoleNames.BoxOfficeStaff);
-        _manager = NewUser(RoleNames.TheaterManager);
+        _staff = NewUser(RoleNames.TheaterStaff);
+        _manager = NewUser(RoleNames.Admin);
         PasswordHasher.CreateHash(_pin, out var hash, out var salt);
         _manager.OverridePinHash = hash;
         _manager.OverridePinSalt = salt;
