@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard, COMPLAINT_ROLES, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles, CONCESSION_ROLES } from 'CinemaLib';
+import { ForbiddenPageComponent, authGuard, roleGuard, COMPLAINT_ROLES, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles, CONCESSION_ROLES } from 'CinemaLib';
 
 /**
  * Where each role lands from '/'. Everyone goes to /home until the role-specific pages
@@ -26,7 +26,7 @@ export const routes: Routes = [
   // otherwise redirecting here would be guarded again and loop forever.
   {
     path: 'forbidden',
-    loadComponent: () => import('./features/forbidden/forbidden.component').then(m => m.ForbiddenComponent)
+    component: ForbiddenPageComponent
   },
   {
     path: '',

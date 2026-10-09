@@ -11,3 +11,5 @@ export * from './qr';
 export * from './ticket';
 export * from './price';
 export * from './bar-chart';
+export * from './forbidden';
+export * from './profile';
