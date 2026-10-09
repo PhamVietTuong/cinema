@@ -25,7 +25,9 @@ public class StaffReportRequest
 /// <summary>
 /// One group of a sales report. Revenue is net of refunds: sold in the range minus invoices refunded in the range.
 /// <see cref="TicketRevenue"/>/<see cref="FoodRevenue"/> are null where the grouping cannot attribute them
-/// (food has no movie; a tender covers the whole invoice, not one product line).
+/// (food has no movie; a tender covers the whole invoice, not one product line). Movie and PaymentMethod
+/// groupings also carry one row with an empty <see cref="Key"/> (no movie / F&amp;B, no payment line) so every
+/// grouping adds up to the same net revenue and refunds for the same period.
 /// </summary>
 public class SalesReportRowDTO
 {

@@ -80,6 +80,15 @@ public partial class StaffReportManager
             ? rows.Values.OrderBy(r => r.Key, StringComparer.Ordinal).ToList()
             : rows.Values.OrderByDescending(r => r.NetRevenue).ThenBy(r => r.Label, StringComparer.Ordinal).ToList();
         report.Totals = SumRows(report.Rows);
+        if (aggregates.SoldInvoices.HasValue)
+        {
+            // One invoice can sit in several groups (two movies, two tenders): the header counts it once.
+            report.Totals.InvoiceCount = aggregates.SoldInvoices.Value;
+        }
+        if (aggregates.RefundedInvoices.HasValue)
+        {
+            report.Totals.RefundCount = aggregates.RefundedInvoices.Value;
+        }
         return report;
     }
 
@@ -255,6 +264,14 @@ public partial class StaffReportManager
     private async Task FillLabelsAsync(IEnumerable<SalesReportRowDTO> rows, SalesGroupBy groupBy)
     {
         var list = rows.ToList();
+        if (groupBy == SalesGroupBy.PaymentMethod)
+        {
+            foreach (var row in list.Where(r => r.Key.Length == 0))
+            {
+                row.Label = _unattributedLabel;
+            }
+            return;
+        }
         if (groupBy is not (SalesGroupBy.Movie or SalesGroupBy.Theater or SalesGroupBy.Staff))
         {
             return;
@@ -288,14 +305,17 @@ public partial class StaffReportManager
         }
     }
 
-    /// <summary>Movie rows know ticket revenue only; tender rows know neither split (see <see cref="SalesReportRowDTO"/>).</summary>
+    /// <summary>
+    /// Movie rows know ticket revenue only (the movie-less row keeps the F&amp;B and discount); tender rows know neither
+    /// split (see <see cref="SalesReportRowDTO"/>).
+    /// </summary>
     private static void ClearUnattributedMeasures(IEnumerable<SalesReportRowDTO> rows, SalesGroupBy groupBy)
     {
         foreach (var row in rows)
         {
             switch (groupBy)
             {
-                case SalesGroupBy.Movie:
+                case SalesGroupBy.Movie when row.Key.Length > 0:
                     row.FoodRevenue = null;
                     row.DiscountAmount = null;
                     break;

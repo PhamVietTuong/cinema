@@ -125,6 +125,62 @@ public class StaffReportTests
     }
 
     [Fact]
+    public async Task Sales_ByMovie_MovieLessRow_ReconcilesWithInvoiceTotals_AndCountsInvoicesOnce()
+    {
+        var movieId = Guid.NewGuid();
+        SetupSales(new SalesAggregates
+        {
+            Sold = new List<SalesAggregateRow>
+            {
+                new() { GuidKey = movieId, InvoiceCount = 4, TicketAmount = 400, FinalAmount = 400 },
+                new() { InvoiceCount = 1, FoodAmount = 150, DiscountAmount = 20, FinalAmount = 130 }
+            },
+            Refunded = new List<SalesAggregateRow>
+            {
+                new() { GuidKey = movieId, InvoiceCount = 1, TicketAmount = 100, FinalAmount = 100 },
+                new() { InvoiceCount = 1, FoodAmount = 30, FinalAmount = 30 }
+            },
+            SoldInvoices = 5,
+            RefundedInvoices = 2
+        });
+        _uowMock.Setup(u => u.StaffReportStore.GetMovieTitlesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, string> { [movieId] = "Dune" });
+
+        var report = await Sut().GetSalesAsync(Request(SalesGroupBy.Movie), null);
+
+        var noMovie = report.Rows.Single(r => r.Key.Length == 0);
+        noMovie.FoodRevenue.Should().Be(120);
+        noMovie.DiscountAmount.Should().Be(20);
+        noMovie.NetRevenue.Should().Be(100);
+        report.Rows.Single(r => r.Key.Length > 0).FoodRevenue.Should().BeNull();
+        report.Totals.NetRevenue.Should().Be(400);
+        report.Totals.RefundAmount.Should().Be(130);
+        report.Totals.InvoiceCount.Should().Be(5);
+        report.Totals.RefundCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Sales_ByPaymentMethod_TenderLessRow_ReconcilesWithInvoiceTotals()
+    {
+        SetupSales(new SalesAggregates
+        {
+            Sold = new List<SalesAggregateRow>
+            {
+                new() { IntKey = (int)PaymentTender.Cash, InvoiceCount = 2, FinalAmount = 150 },
+                new() { InvoiceCount = 1, FinalAmount = 250 }
+            },
+            SoldInvoices = 3
+        });
+
+        var report = await Sut().GetSalesAsync(Request(SalesGroupBy.PaymentMethod), null);
+
+        report.Rows.Select(r => r.Key).Should().Equal("", "Cash");
+        report.Rows[0].Label.Should().Be("Unattributed");
+        report.Totals.NetRevenue.Should().Be(400);
+        report.Totals.InvoiceCount.Should().Be(3);
+    }
+
+    [Fact]
     public async Task Sales_TheaterManagerRequestingAnotherTheater_Throws403Exception()
     {
         var act = () => Sut().GetSalesAsync(Request(SalesGroupBy.Day, _theaterB), new[] { _theaterA });

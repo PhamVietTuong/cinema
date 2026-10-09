@@ -41,11 +41,18 @@ public class StaffReportStore : IStaffReportStore
 
     public async Task<SalesAggregates> GetSalesAsync(SalesQuery query)
     {
-        return new SalesAggregates
+        var aggregates = new SalesAggregates
         {
             Sold = await AggregateAsync(query, refunds: false),
             Refunded = await AggregateAsync(query, refunds: true)
         };
+        if (query.GroupBy is SalesGroupBy.Movie or SalesGroupBy.PaymentMethod)
+        {
+            // An invoice can sit in several groups (two movies, two tenders), so the real totals are counted apart.
+            aggregates.SoldInvoices = await InvoicesFor(query, refunds: false).CountAsync();
+            aggregates.RefundedInvoices = await InvoicesFor(query, refunds: true).CountAsync();
+        }
+        return aggregates;
     }
 
     private async Task<List<SalesAggregateRow>> AggregateAsync(SalesQuery query, bool refunds)
@@ -157,12 +164,16 @@ public class StaffReportStore : IStaffReportStore
         }
     }
 
-    /// <summary>Movie: ticket lines only (food has no movie). 1 query.</summary>
+    /// <summary>
+    /// Movie: one row per movie (ticket lines only, food has no movie) plus a movie-less row (null key) that carries
+    /// everything a movie cannot: the F&amp;B lines, the invoice discounts and the food-only invoices, so the rows add
+    /// up to the invoice totals. 5 queries.
+    /// </summary>
     private async Task<List<SalesAggregateRow>> AggregateByMovieAsync(IQueryable<Invoice> invoices)
     {
-        return await (from t in _db.InvoiceTicket
-                      join i in invoices on t.InvoiceId equals i.Id
-                      select new { MovieId = t.ShowTimeRoom.ShowTime.MovieId, t.InvoiceId, t.Price })
+        var rows = await (from t in _db.InvoiceTicket
+                          join i in invoices on t.InvoiceId equals i.Id
+                          select new { MovieId = t.ShowTimeRoom.ShowTime.MovieId, t.InvoiceId, t.Price })
             .GroupBy(x => x.MovieId)
             .Select(g => new SalesAggregateRow
             {
@@ -172,14 +183,42 @@ public class StaffReportStore : IStaffReportStore
                 FinalAmount = g.Sum(x => x.Price)
             })
             .ToListAsync();
+
+        var totals = await invoices
+            .GroupBy(i => 1)
+            .Select(g => new { Final = g.Sum(i => i.FinalAmount), Discount = g.Sum(i => i.DiscountAmount) })
+            .FirstOrDefaultAsync();
+        var food = await _db.InvoiceFoodAndDrink.AsNoTracking()
+            .Where(f => invoices.Any(i => i.Id == f.InvoiceId))
+            .GroupBy(f => 1)
+            .Select(g => g.Sum(f => f.TotalPrice))
+            .FirstOrDefaultAsync();
+        var foodOnlyInvoices = await invoices.CountAsync(i => !i.InvoiceTickets.Any());
+
+        var remainder = (totals?.Final ?? 0) - rows.Sum(r => r.FinalAmount);
+        if (foodOnlyInvoices > 0 || food != 0 || remainder != 0)
+        {
+            rows.Add(new SalesAggregateRow
+            {
+                InvoiceCount = foodOnlyInvoices,
+                FoodAmount = food,
+                DiscountAmount = totals?.Discount ?? 0,
+                FinalAmount = remainder
+            });
+        }
+        return rows;
     }
 
-    /// <summary>PaymentMethod: the per-tender rows (what each tender contributed to the invoices). 1 query.</summary>
+    /// <summary>
+    /// PaymentMethod: the per-tender rows (what each tender contributed to the invoices) plus a tender-less row (null
+    /// key) for invoices with no payment lines or whose lines do not cover the final amount, so the rows add up to
+    /// the invoice totals. 3 queries.
+    /// </summary>
     private async Task<List<SalesAggregateRow>> AggregateByTenderAsync(IQueryable<Invoice> invoices)
     {
-        return await (from p in _db.InvoicePayment
-                      join i in invoices on p.InvoiceId equals i.Id
-                      select new { p.Method, p.InvoiceId, p.Amount })
+        var rows = await (from p in _db.InvoicePayment
+                          join i in invoices on p.InvoiceId equals i.Id
+                          select new { p.Method, p.InvoiceId, p.Amount })
             .GroupBy(x => x.Method)
             .Select(g => new SalesAggregateRow
             {
@@ -188,6 +227,19 @@ public class StaffReportStore : IStaffReportStore
                 FinalAmount = g.Sum(x => x.Amount)
             })
             .ToListAsync();
+
+        var totalFinal = await invoices
+            .GroupBy(i => 1)
+            .Select(g => g.Sum(i => i.FinalAmount))
+            .FirstOrDefaultAsync();
+        var withoutPayment = await invoices.CountAsync(i => !i.Payments.Any());
+
+        var remainder = totalFinal - rows.Sum(r => r.FinalAmount);
+        if (withoutPayment > 0 || remainder != 0)
+        {
+            rows.Add(new SalesAggregateRow { InvoiceCount = withoutPayment, FinalAmount = remainder });
+        }
+        return rows;
     }
 
     public async Task<Dictionary<Guid, string>> GetMovieTitlesAsync(IReadOnlyCollection<Guid> ids)

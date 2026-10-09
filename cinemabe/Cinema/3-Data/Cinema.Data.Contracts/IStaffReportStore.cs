@@ -18,7 +18,8 @@ public record SalesQuery(
 /// <summary>
 /// One group of a sales aggregate. Exactly one of the key fields is filled, depending on the dimension:
 /// <see cref="DayKey"/> (Day), <see cref="GuidKey"/> (Theater, Staff, Movie) or <see cref="IntKey"/> (Channel,
-/// PaymentMethod). Measures that a dimension cannot attribute are left 0.
+/// PaymentMethod). Movie and PaymentMethod also yield one row with every key null: what no movie / no tender line
+/// can claim, so the rows add up to the invoice totals. Measures that a dimension cannot attribute are left 0.
 /// </summary>
 public class SalesAggregateRow
 {
@@ -37,6 +38,12 @@ public class SalesAggregates
 {
     public List<SalesAggregateRow> Sold { get; set; } = new();
     public List<SalesAggregateRow> Refunded { get; set; } = new();
+    /// <summary>
+    /// Distinct invoice counts, set only for dimensions where one invoice can fall in several groups (Movie,
+    /// PaymentMethod), where summing the group counts would double-count. Null = the group counts add up.
+    /// </summary>
+    public int? SoldInvoices { get; set; }
+    public int? RefundedInvoices { get; set; }
 }
 
 /// <summary>Showtime-room screenings whose local start lies in [From, To), optionally limited to theaters.</summary>
@@ -75,7 +82,7 @@ public class KpiRaw
 /// <summary>Read-only management reports. Every method issues a fixed number of queries regardless of row count.</summary>
 public interface IStaffReportStore
 {
-    /// <summary>Sales grouped by <see cref="SalesQuery.GroupBy"/>: at most 6 grouped queries.</summary>
+    /// <summary>Sales grouped by <see cref="SalesQuery.GroupBy"/>: at most 12 grouped queries.</summary>
     Task<SalesAggregates> GetSalesAsync(SalesQuery query);
 
     /// <summary>Movie titles by id (one query). Unknown ids are absent.</summary>
