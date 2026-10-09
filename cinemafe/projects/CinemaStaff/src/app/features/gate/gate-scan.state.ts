@@ -1,9 +1,9 @@
-import { ScanTone, StaffServiceAgent, scanOutcomeSpec } from 'CinemaLib';
+import { ScanTone, CinemaServiceAgent, scanOutcomeSpec } from 'CinemaLib';
 
 /** One line of the "recent scans" list. */
 export interface RecentScan {
   code: string;
-  outcome: StaffServiceAgent.ScanOutcome;
+  outcome: CinemaServiceAgent.ScanOutcome;
   tone: ScanTone;
   seatLabel: string;
   movieTitle: string;
@@ -26,8 +26,8 @@ export interface ScanOptions {
 }
 
 /** Builds the Gate/Scan request; empty optional ids are sent as absent. */
-export function buildScanRequest(code: string, options: ScanOptions = {}): StaffServiceAgent.ScanTicketRequest {
-  return StaffServiceAgent.ScanTicketRequest.fromJS({
+export function buildScanRequest(code: string, options: ScanOptions = {}): CinemaServiceAgent.ScanTicketRequest {
+  return CinemaServiceAgent.ScanTicketRequest.fromJS({
     code: normalizeScanCode(code),
     theaterId: options.theaterId || undefined,
     showTimeId: options.showTimeId || undefined,
@@ -36,18 +36,18 @@ export function buildScanRequest(code: string, options: ScanOptions = {}): Staff
 }
 
 /** The ticket is not used yet and waits for the gate keeper to confirm the patron's age. */
-export function needsAgePrompt(result: StaffServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
-  return result?.outcome === StaffServiceAgent.ScanOutcome.AgeCheckRequired;
+export function needsAgePrompt(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
+  return result?.outcome === CinemaServiceAgent.ScanOutcome.AgeCheckRequired;
 }
 
 /** Whether the scan let the patron in. */
-export function isAdmitted(result: StaffServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
-  return result?.outcome === StaffServiceAgent.ScanOutcome.Admitted;
+export function isAdmitted(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
+  return result?.outcome === CinemaServiceAgent.ScanOutcome.Admitted;
 }
 
 /** Whether the "who/when" of an earlier admission should be shown. */
-export function showsUsageDetails(result: StaffServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
-  return result?.outcome === StaffServiceAgent.ScanOutcome.AlreadyUsed;
+export function showsUsageDetails(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
+  return result?.outcome === CinemaServiceAgent.ScanOutcome.AlreadyUsed;
 }
 
 /**
@@ -56,9 +56,9 @@ export function showsUsageDetails(result: StaffServiceAgent.ScanTicketResultDTO 
  */
 export function buildAgeConfirmRequest(
   code: string,
-  result: StaffServiceAgent.ScanTicketResultDTO | null | undefined,
+  result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined,
   options: ScanOptions = {},
-): StaffServiceAgent.ScanTicketRequest | null {
+): CinemaServiceAgent.ScanTicketRequest | null {
   if (!needsAgePrompt(result)) {
     return null;
   }
@@ -69,7 +69,7 @@ export function buildAgeConfirmRequest(
 export function pushRecentScan(
   recent: readonly RecentScan[],
   code: string,
-  result: StaffServiceAgent.ScanTicketResultDTO,
+  result: CinemaServiceAgent.ScanTicketResultDTO,
   at: Date,
   limit: number = RECENT_SCAN_LIMIT,
 ): RecentScan[] {
@@ -78,7 +78,7 @@ export function pushRecentScan(
   }
   const entry: RecentScan = {
     code,
-    outcome: result.outcome ?? StaffServiceAgent.ScanOutcome.NotFound,
+    outcome: result.outcome ?? CinemaServiceAgent.ScanOutcome.NotFound,
     tone: scanOutcomeSpec(result.outcome).tone,
     seatLabel: result.seatLabel ?? '',
     movieTitle: result.movieTitle ?? '',

@@ -1,4 +1,4 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 import {
   applyQueued,
   applyUpdated,
@@ -10,10 +10,10 @@ import {
   ordersInColumn,
 } from './kitchen.state';
 
-const Status = StaffServiceAgent.FoodOrderStatus;
+const Status = CinemaServiceAgent.FoodOrderStatus;
 
-function order(invoiceId: string, foodStatus: StaffServiceAgent.FoodOrderStatus, showTimeStart = '2026-10-04T18:00:00'): StaffServiceAgent.PickupOrderDTO {
-  return StaffServiceAgent.PickupOrderDTO.fromJS({ invoiceId, invoiceCode: 'INV-' + invoiceId, foodStatus, showTimeStart, items: [] });
+function order(invoiceId: string, foodStatus: CinemaServiceAgent.FoodOrderStatus, showTimeStart = '2026-10-04T18:00:00'): CinemaServiceAgent.PickupOrderDTO {
+  return CinemaServiceAgent.PickupOrderDTO.fromJS({ invoiceId, invoiceCode: 'INV-' + invoiceId, foodStatus, showTimeStart, items: [] });
 }
 
 describe('food status transitions', () => {

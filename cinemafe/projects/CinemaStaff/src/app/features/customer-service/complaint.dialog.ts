@@ -2,18 +2,18 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal }
 import { FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { ComplaintCategoryValues, SharedModule, StaffServiceAgent, apiErrorMessage } from 'CinemaLib';
+import { ComplaintCategoryValues, SharedModule, CinemaServiceAgent, apiErrorMessage } from 'CinemaLib';
 import { isValidComplaintDescription } from './customer-service.logic';
 
 export interface ComplaintDialogData {
   /** Theater to file the complaint under (an Admin's picked theater); the API uses the caller's own otherwise. */
   theaterId?: string;
   /** Customer the complaint is about, from the lookup. */
-  customer?: StaffServiceAgent.CustomerCardDTO | null;
+  customer?: CinemaServiceAgent.CustomerCardDTO | null;
   /** Invoice the complaint is about, from the lookup. */
   invoice?: { id: string; code: string } | null;
   /** Set to edit an open or in-review complaint instead of creating one. */
-  complaint?: StaffServiceAgent.ComplaintDTO;
+  complaint?: CinemaServiceAgent.ComplaintDTO;
 }
 
 /** Creates a complaint (prefilled from the looked-up customer / invoice) or edits its category and description. Closes with the saved complaint. */
@@ -68,14 +68,14 @@ export interface ComplaintDialogData {
 })
 export class ComplaintDialogComponent {
   readonly data = inject<ComplaintDialogData>(MAT_DIALOG_DATA);
-  private readonly _ref = inject(MatDialogRef<ComplaintDialogComponent, StaffServiceAgent.ComplaintDTO>);
-  private readonly _api = inject(StaffServiceAgent.CustomerServiceHttpService);
+  private readonly _ref = inject(MatDialogRef<ComplaintDialogComponent, CinemaServiceAgent.ComplaintDTO>);
+  private readonly _api = inject(CinemaServiceAgent.HttpService);
   private readonly _translate = inject(TranslateService);
   private readonly _cdr = inject(ChangeDetectorRef);
 
   readonly categories = ComplaintCategoryValues;
   readonly form = inject(FormBuilder).group({
-    category: [this.data.complaint?.category ?? StaffServiceAgent.ComplaintCategory.Other, Validators.required],
+    category: [this.data.complaint?.category ?? CinemaServiceAgent.ComplaintCategory.Other, Validators.required],
     description: [this.data.complaint?.description ?? '', Validators.required],
   });
   readonly busy = signal(false);
@@ -99,12 +99,12 @@ export class ComplaintDialogComponent {
     const { category, description } = this.form.getRawValue();
     this.busy.set(true);
     const call = this.data.complaint
-      ? this._api.updateComplaint(StaffServiceAgent.UpdateComplaintRequest.fromJS({
+      ? this._api.updateComplaint(CinemaServiceAgent.UpdateComplaintRequest.fromJS({
         complaintId: this.data.complaint.id,
         category,
         description: (description ?? '').trim(),
       }))
-      : this._api.createComplaint(StaffServiceAgent.CreateComplaintRequest.fromJS({
+      : this._api.createComplaint(CinemaServiceAgent.CreateComplaintRequest.fromJS({
         theaterId: this.data.theaterId || undefined,
         category,
         description: (description ?? '').trim(),

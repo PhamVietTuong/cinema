@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 import { TheaterContextService } from './theater-context.service';
 
 /**
@@ -10,34 +10,34 @@ import { TheaterContextService } from './theater-context.service';
  */
 @Injectable({ providedIn: 'root' })
 export class CashDrawerService {
-  private readonly _svc = inject(StaffServiceAgent.BoxOfficeHttpService);
+  private readonly _svc = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
 
   /** Latest drawer state; null until the first load. */
-  readonly drawer = signal<StaffServiceAgent.CashDrawerDTO | null>(null);
+  readonly drawer = signal<CinemaServiceAgent.CashDrawerDTO | null>(null);
   readonly isOpen = computed(() => !!this.drawer()?.isOpen);
 
   private get _theaterId(): string | undefined {
     return this._theater.currentTheaterId() ?? undefined;
   }
 
-  refresh(): Observable<StaffServiceAgent.CashDrawerDTO> {
+  refresh(): Observable<CinemaServiceAgent.CashDrawerDTO> {
     return this._svc
-      .getMyDrawer(StaffServiceAgent.BoxOfficeScopeRequest.fromJS({ theaterId: this._theaterId }))
+      .getMyDrawer(CinemaServiceAgent.BoxOfficeScopeRequest.fromJS({ theaterId: this._theaterId }))
       .pipe(tap(d => this.drawer.set(d)));
   }
 
-  open(terminalName: string, openingFloat: number): Observable<StaffServiceAgent.CashDrawerDTO> {
+  open(terminalName: string, openingFloat: number): Observable<CinemaServiceAgent.CashDrawerDTO> {
     return this._svc
-      .openDrawer(StaffServiceAgent.OpenDrawerRequest.fromJS({ theaterId: this._theaterId, terminalName, openingFloat }))
+      .openDrawer(CinemaServiceAgent.OpenDrawerRequest.fromJS({ theaterId: this._theaterId, terminalName, openingFloat }))
       .pipe(tap(d => this.drawer.set(d)));
   }
 
   payInOut(
-    type: StaffServiceAgent.CashMovementType, amount: number, note: string, override?: StaffServiceAgent.ManagerOverrideDTO,
-  ): Observable<StaffServiceAgent.CashDrawerDTO> {
+    type: CinemaServiceAgent.CashMovementType, amount: number, note: string, override?: CinemaServiceAgent.ManagerOverrideDTO,
+  ): Observable<CinemaServiceAgent.CashDrawerDTO> {
     return this._svc
-      .payInOut(StaffServiceAgent.PayInOutRequest.fromJS({ theaterId: this._theaterId, type, amount, note, override }))
+      .payInOut(CinemaServiceAgent.PayInOutRequest.fromJS({ theaterId: this._theaterId, type, amount, note, override }))
       .pipe(tap(d => this.drawer.set(d)));
   }
 }

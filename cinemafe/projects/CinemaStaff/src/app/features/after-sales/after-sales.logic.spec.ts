@@ -1,4 +1,4 @@
-import { StaffServiceAgent, UserRoles } from 'CinemaLib';
+import { CinemaServiceAgent, UserRoles } from 'CinemaLib';
 import {
   canExchangeInvoice,
   canReprintInvoice,
@@ -9,8 +9,8 @@ import {
   refundFormErrors,
 } from './after-sales.logic';
 
-const Reason = StaffServiceAgent.StaffReasonCode;
-const Tender = StaffServiceAgent.PaymentTender;
+const Reason = CinemaServiceAgent.StaffReasonCode;
+const Tender = CinemaServiceAgent.PaymentTender;
 
 describe('after-sales logic', () => {
   describe('needsManagerOverride', () => {
@@ -78,9 +78,9 @@ describe('after-sales logic', () => {
   });
 
   describe('invoice action rules', () => {
-    const invoice = (patch: Partial<StaffServiceAgent.IAfterSalesInvoiceDTO>) => StaffServiceAgent.AfterSalesInvoiceDTO.fromJS({
-      status: StaffServiceAgent.InvoiceStatus.Paid,
-      channel: StaffServiceAgent.SalesChannel.Counter,
+    const invoice = (patch: Partial<CinemaServiceAgent.IAfterSalesInvoiceDTO>) => CinemaServiceAgent.AfterSalesInvoiceDTO.fromJS({
+      status: CinemaServiceAgent.InvoiceStatus.Paid,
+      channel: CinemaServiceAgent.SalesChannel.Counter,
       usedTicketCount: 0,
       canRefund: true,
       ...patch,
@@ -88,15 +88,15 @@ describe('after-sales logic', () => {
 
     it('exchanges only paid, unused, refundable counter sales', () => {
       expect(canExchangeInvoice(invoice({}))).toBe(true);
-      expect(canExchangeInvoice(invoice({ channel: StaffServiceAgent.SalesChannel.Online }))).toBe(false);
+      expect(canExchangeInvoice(invoice({ channel: CinemaServiceAgent.SalesChannel.Online }))).toBe(false);
       expect(canExchangeInvoice(invoice({ usedTicketCount: 1 }))).toBe(false);
       expect(canExchangeInvoice(invoice({ canRefund: false }))).toBe(false);
-      expect(canExchangeInvoice(invoice({ status: StaffServiceAgent.InvoiceStatus.Refunded }))).toBe(false);
+      expect(canExchangeInvoice(invoice({ status: CinemaServiceAgent.InvoiceStatus.Refunded }))).toBe(false);
     });
 
     it('reprints only paid invoices', () => {
       expect(canReprintInvoice(invoice({}))).toBe(true);
-      expect(canReprintInvoice(invoice({ status: StaffServiceAgent.InvoiceStatus.Pending }))).toBe(false);
+      expect(canReprintInvoice(invoice({ status: CinemaServiceAgent.InvoiceStatus.Pending }))).toBe(false);
     });
   });
 });

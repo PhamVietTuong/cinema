@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  EmptyStateComponent, SharedModule, StaffServiceAgent, StatusPillComponent, ToastService, hideLoading, showException, showLoading,
+  EmptyStateComponent, SharedModule, CinemaServiceAgent, StatusPillComponent, ToastService, hideLoading, showException, showLoading,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
 import { ComplaintDialogComponent, ComplaintDialogData } from './complaint.dialog';
@@ -136,7 +136,7 @@ import { ResendETicketDialogComponent, ResendETicketDialogData } from './resend-
   `],
 })
 export class CustomerLookupComponent {
-  private readonly _api = inject(StaffServiceAgent.CustomerServiceHttpService);
+  private readonly _api = inject(CinemaServiceAgent.HttpService);
   private readonly _dialog = inject(MatDialog);
   private readonly _store = inject(Store);
   private readonly _translate = inject(TranslateService);
@@ -144,17 +144,17 @@ export class CustomerLookupComponent {
   private readonly _theater = inject(TheaterContextService);
 
   readonly max = MAX_RESENDS_PER_HOUR;
-  readonly paid = StaffServiceAgent.InvoiceStatus.Paid;
+  readonly paid = CinemaServiceAgent.InvoiceStatus.Paid;
   readonly query = signal('');
   readonly loading = signal(false);
-  readonly result = signal<StaffServiceAgent.CustomerLookupDTO | null>(null);
+  readonly result = signal<CinemaServiceAgent.CustomerLookupDTO | null>(null);
   private readonly _quotas = signal<Record<string, ResendQuota>>({});
 
-  remaining(invoice: StaffServiceAgent.CustomerInvoiceDTO): number {
+  remaining(invoice: CinemaServiceAgent.CustomerInvoiceDTO): number {
     return resendRemaining(this._quotas()[invoice.id ?? ''], Date.now());
   }
 
-  exhausted(invoice: StaffServiceAgent.CustomerInvoiceDTO): boolean {
+  exhausted(invoice: CinemaServiceAgent.CustomerInvoiceDTO): boolean {
     return resendExhausted(this._quotas()[invoice.id ?? ''], Date.now());
   }
 
@@ -165,7 +165,7 @@ export class CustomerLookupComponent {
     }
     this.loading.set(true);
     this._store.dispatch(showLoading());
-    this._api.lookupCustomer(StaffServiceAgent.LookupCustomerRequest.fromJS({ query })).subscribe({
+    this._api.lookupCustomer(CinemaServiceAgent.LookupCustomerRequest.fromJS({ query })).subscribe({
       next: result => this.result.set(result),
       error: error => this._store.dispatch(showException({ error })),
     }).add(() => {
@@ -174,9 +174,9 @@ export class CustomerLookupComponent {
     });
   }
 
-  resend(invoice: StaffServiceAgent.CustomerInvoiceDTO): void {
+  resend(invoice: CinemaServiceAgent.CustomerInvoiceDTO): void {
     const data: ResendETicketDialogData = { invoice, remaining: this.remaining(invoice) };
-    this._dialog.open<ResendETicketDialogComponent, ResendETicketDialogData, StaffServiceAgent.ResendETicketResultDTO>(
+    this._dialog.open<ResendETicketDialogComponent, ResendETicketDialogData, CinemaServiceAgent.ResendETicketResultDTO>(
       ResendETicketDialogComponent, { width: '460px', maxWidth: '95vw', data },
     ).afterClosed().subscribe(sent => {
       if (!sent) {
@@ -193,7 +193,7 @@ export class CustomerLookupComponent {
     this._openComplaint({ customer: this.result()?.customer ?? null });
   }
 
-  complaintFor(invoice: StaffServiceAgent.CustomerInvoiceDTO): void {
+  complaintFor(invoice: CinemaServiceAgent.CustomerInvoiceDTO): void {
     this._openComplaint({
       customer: this.result()?.customer ?? null,
       invoice: { id: invoice.id ?? '', code: invoice.code ?? '' },
@@ -203,7 +203,7 @@ export class CustomerLookupComponent {
 
   private _openComplaint(extra: Partial<ComplaintDialogData>): void {
     const data: ComplaintDialogData = { theaterId: this._theater.isAdmin() ? (this._theater.currentTheaterId() ?? undefined) : undefined, ...extra };
-    this._dialog.open<ComplaintDialogComponent, ComplaintDialogData, StaffServiceAgent.ComplaintDTO>(
+    this._dialog.open<ComplaintDialogComponent, ComplaintDialogData, CinemaServiceAgent.ComplaintDTO>(
       ComplaintDialogComponent, { width: '520px', maxWidth: '95vw', data },
     ).afterClosed().subscribe(complaint => {
       if (complaint) {

@@ -1,4 +1,4 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 import { MAX_REPORT_DAYS, buildReportRequest, localDayString, rangeDays, salesChartRows, toDayString, validateRange } from './sales-reports.state';
 
 describe('validateRange', () => {
@@ -33,21 +33,21 @@ describe('localDayString', () => {
 
 describe('buildReportRequest', () => {
   it('sends UTC midnight dates and omits an empty theater list', () => {
-    const request = buildReportRequest('2026-10-01', '2026-10-04', StaffServiceAgent.SalesGroupBy.Movie, []);
+    const request = buildReportRequest('2026-10-01', '2026-10-04', CinemaServiceAgent.SalesGroupBy.Movie, []);
     expect(toDayString(request.from as Date)).toBe('2026-10-01');
     expect(request.theaterIds).toBeUndefined();
-    expect(request.groupBy).toBe(StaffServiceAgent.SalesGroupBy.Movie);
+    expect(request.groupBy).toBe(CinemaServiceAgent.SalesGroupBy.Movie);
   });
 
   it('passes the selected theaters', () => {
-    const request = buildReportRequest('2026-10-01', '2026-10-04', StaffServiceAgent.SalesGroupBy.Day, ['t1', 't2']);
+    const request = buildReportRequest('2026-10-01', '2026-10-04', CinemaServiceAgent.SalesGroupBy.Day, ['t1', 't2']);
     expect(request.theaterIds).toEqual(['t1', 't2']);
   });
 });
 
 describe('salesChartRows', () => {
   it('maps net revenue per group', () => {
-    const rows = [StaffServiceAgent.SalesReportRowDTO.fromJS({ key: 'a', label: 'Movie A', netRevenue: 500 })];
+    const rows = [CinemaServiceAgent.SalesReportRowDTO.fromJS({ key: 'a', label: 'Movie A', netRevenue: 500 })];
     expect(salesChartRows(rows, v => v + 'd')).toEqual([{ label: 'Movie A', value: 500, valueLabel: '500d' }]);
   });
 });

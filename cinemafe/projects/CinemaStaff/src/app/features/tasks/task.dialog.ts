@@ -3,12 +3,12 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, StaffServiceAgent, StaffTaskStatusValues, hideLoading, showException, showLoading, showSuccess, toWallClockUtc } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, StaffTaskStatusValues, hideLoading, showException, showLoading, showSuccess, toWallClockUtc } from 'CinemaLib';
 
 export interface TaskDialogData {
   theaterId: string;
-  staff: StaffServiceAgent.TheaterStaffDTO[];
-  task?: StaffServiceAgent.StaffTaskDTO;
+  staff: CinemaServiceAgent.TheaterStaffDTO[];
+  task?: CinemaServiceAgent.StaffTaskDTO;
 }
 
 /** Local `yyyy-MM-ddTHH:mm` for a datetime-local input. */
@@ -84,7 +84,7 @@ export class TaskDialog {
 
   constructor(
     fb: FormBuilder,
-    private _workforce: StaffServiceAgent.WorkforceHttpService,
+    private _workforce: CinemaServiceAgent.HttpService,
     private _store: Store<any>,
     private _translate: TranslateService,
     private _dialogRef: MatDialogRef<TaskDialog, boolean>,
@@ -96,7 +96,7 @@ export class TaskDialog {
       description: [task?.description ?? ''],
       assignedToUserId: [task?.assignedToUserId ?? '', Validators.required],
       dueAt: [toLocalInput(task?.dueAt)],
-      status: [task?.status ?? StaffServiceAgent.StaffTaskStatus.Open],
+      status: [task?.status ?? CinemaServiceAgent.StaffTaskStatus.Open],
     });
   }
 
@@ -107,7 +107,7 @@ export class TaskDialog {
     }
     const v = this.form.value;
     this._store.dispatch(showLoading());
-    this._workforce.saveTask(StaffServiceAgent.SaveStaffTaskRequest.fromJS({
+    this._workforce.saveTask(CinemaServiceAgent.SaveStaffTaskRequest.fromJS({
       id: this.data.task?.id,
       theaterId: this.data.theaterId,
       assignedToUserId: v.assignedToUserId,

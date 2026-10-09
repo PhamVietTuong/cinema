@@ -4,11 +4,11 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { PriceBreakdownAdjustment, PriceBreakdownComponent, PriceBreakdownLine, StaffServiceAgent, TicketCardComponent } from 'CinemaLib';
+import { PriceBreakdownAdjustment, PriceBreakdownComponent, PriceBreakdownLine, CinemaServiceAgent, ServerUtcPipe, TicketCardComponent } from 'CinemaLib';
 
 /** What the print view needs after a sale: the API result plus the showtime context captured at sale time. */
 export interface SaleReceipt {
-  result: StaffServiceAgent.CounterSaleResultDTO;
+  result: CinemaServiceAgent.CounterSaleResultDTO;
   movieTitle: string;
   roomName: string;
   showTime?: Date;
@@ -23,7 +23,7 @@ export interface SaleReceipt {
   selector: 'staff-pos-receipt',
   standalone: true,
   encapsulation: ViewEncapsulation.None,
-  imports: [DatePipe, DecimalPipe, TranslatePipe, MatButtonModule, MatButtonToggleModule, MatIconModule, TicketCardComponent, PriceBreakdownComponent],
+  imports: [DatePipe, DecimalPipe, TranslatePipe, MatButtonModule, MatButtonToggleModule, MatIconModule, TicketCardComponent, PriceBreakdownComponent, ServerUtcPipe],
   template: `
     <div class="pos-receipt-toolbar ad-card">
       <div>

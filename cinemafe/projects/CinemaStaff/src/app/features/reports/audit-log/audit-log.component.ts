@@ -9,7 +9,7 @@ import {
   FilterBarComponent,
   FilterBarField,
   SharedModule,
-  StaffServiceAgent,
+  CinemaServiceAgent,
   StatusPillComponent,
   hideLoading,
   showException,
@@ -94,7 +94,7 @@ export class AuditLogComponent implements OnInit {
   ];
 
   searchForm: FormGroup;
-  rows: StaffServiceAgent.AuditLogDTO[] = [];
+  rows: CinemaServiceAgent.AuditLogDTO[] = [];
   total = 0;
   pageIndex = 0; // 0-based for the paginator
   loading = false;
@@ -103,7 +103,7 @@ export class AuditLogComponent implements OnInit {
   private readonly _filterChange$ = new Subject<void>();
 
   constructor(
-    private _report: StaffServiceAgent.StaffReportHttpService,
+    private _report: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
     private _store: Store<any>,
     private _cd: ChangeDetectorRef,
@@ -149,7 +149,7 @@ export class AuditLogComponent implements OnInit {
     }
     this.loading = true;
     this._store.dispatch(showLoading());
-    this._report.getAuditLog(StaffServiceAgent.PagingSearchDTO.fromJS({
+    this._report.getAuditLog(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: this.pageIndex + 1, pageSize: this.pageSize, filters,
     })).subscribe({
       next: r => {

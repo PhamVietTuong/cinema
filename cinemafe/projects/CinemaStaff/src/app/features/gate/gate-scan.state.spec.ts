@@ -1,4 +1,4 @@
-import { StaffServiceAgent, scanOutcomeSpec, statusPillSpec } from 'CinemaLib';
+import { CinemaServiceAgent, scanOutcomeSpec, statusPillSpec } from 'CinemaLib';
 import {
   RECENT_SCAN_LIMIT,
   buildAgeConfirmRequest,
@@ -10,10 +10,10 @@ import {
   showsUsageDetails,
 } from './gate-scan.state';
 
-const Outcome = StaffServiceAgent.ScanOutcome;
+const Outcome = CinemaServiceAgent.ScanOutcome;
 
-function result(outcome: StaffServiceAgent.ScanOutcome, extra: Partial<StaffServiceAgent.IScanTicketResultDTO> = {}) {
-  return StaffServiceAgent.ScanTicketResultDTO.fromJS({ outcome, seatLabel: 'A1', movieTitle: 'Movie', ...extra });
+function result(outcome: CinemaServiceAgent.ScanOutcome, extra: Partial<CinemaServiceAgent.IScanTicketResultDTO> = {}) {
+  return CinemaServiceAgent.ScanTicketResultDTO.fromJS({ outcome, seatLabel: 'A1', movieTitle: 'Movie', ...extra });
 }
 
 describe('scan outcome tone mapping', () => {

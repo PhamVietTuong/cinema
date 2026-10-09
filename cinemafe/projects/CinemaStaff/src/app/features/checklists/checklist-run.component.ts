@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  EmptyStateComponent, SharedModule, StaffServiceAgent, checklistKindLabel,
+  EmptyStateComponent, SharedModule, CinemaServiceAgent, checklistKindLabel,
   hideLoading, showException, showLoading, showSuccess,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
@@ -98,10 +98,10 @@ import { canComplete, checklistProgress, missingRequired } from './checklist-rul
   `],
 })
 export class ChecklistRunComponent implements OnInit {
-  readonly Kind = StaffServiceAgent.ChecklistKind;
+  readonly Kind = CinemaServiceAgent.ChecklistKind;
 
-  run: StaffServiceAgent.ChecklistRunDTO | null = null;
-  kind: StaffServiceAgent.ChecklistKind = StaffServiceAgent.ChecklistKind.PreShow;
+  run: CinemaServiceAgent.ChecklistRunDTO | null = null;
+  kind: CinemaServiceAgent.ChecklistKind = CinemaServiceAgent.ChecklistKind.PreShow;
   noTemplate = false;
   busy = false;
   /** Draft note text per run item id (saved on blur). */
@@ -110,7 +110,7 @@ export class ChecklistRunComponent implements OnInit {
   private _showTimeId = '';
   private _roomId = '';
 
-  private readonly _ops = inject(StaffServiceAgent.OperationsHttpService);
+  private readonly _ops = inject(CinemaServiceAgent.HttpService);
   private readonly _route = inject(ActivatedRoute);
   private readonly _router = inject(Router);
   private readonly _store = inject(Store);
@@ -138,8 +138,8 @@ export class ChecklistRunComponent implements OnInit {
     combineLatest([this._route.paramMap, this._route.queryParamMap]).subscribe(([params, query]) => {
       this._showTimeId = params.get('showTimeId') ?? '';
       this._roomId = params.get('roomId') ?? '';
-      const kind = Number(query.get('kind') ?? StaffServiceAgent.ChecklistKind.PreShow);
-      this.kind = kind === StaffServiceAgent.ChecklistKind.PostShow ? StaffServiceAgent.ChecklistKind.PostShow : StaffServiceAgent.ChecklistKind.PreShow;
+      const kind = Number(query.get('kind') ?? CinemaServiceAgent.ChecklistKind.PreShow);
+      this.kind = kind === CinemaServiceAgent.ChecklistKind.PostShow ? CinemaServiceAgent.ChecklistKind.PostShow : CinemaServiceAgent.ChecklistKind.PreShow;
       this._open();
     });
   }
@@ -148,11 +148,11 @@ export class ChecklistRunComponent implements OnInit {
     this._router.navigate(['/checklists']);
   }
 
-  switchKind(kind: StaffServiceAgent.ChecklistKind): void {
+  switchKind(kind: CinemaServiceAgent.ChecklistKind): void {
     this._router.navigate([], { relativeTo: this._route, queryParams: { kind } });
   }
 
-  toggle(item: StaffServiceAgent.ChecklistRunItemDTO, isDone: boolean): void {
+  toggle(item: CinemaServiceAgent.ChecklistRunItemDTO, isDone: boolean): void {
     this._setItem(item, isDone);
   }
 
@@ -161,7 +161,7 @@ export class ChecklistRunComponent implements OnInit {
   }
 
   /** Saves the note when it differs from what the server holds. */
-  saveNote(item: StaffServiceAgent.ChecklistRunItemDTO): void {
+  saveNote(item: CinemaServiceAgent.ChecklistRunItemDTO): void {
     const draft = (this.notes[item.id!] ?? '').trim();
     if (draft === (item.note ?? '')) {
       return;
@@ -175,7 +175,7 @@ export class ChecklistRunComponent implements OnInit {
     }
     this.busy = true;
     this._store.dispatch(showLoading());
-    this._ops.completeChecklist(StaffServiceAgent.CompleteChecklistRequest.fromJS({ runId: this.run.id })).subscribe({
+    this._ops.completeChecklist(CinemaServiceAgent.CompleteChecklistRequest.fromJS({ runId: this.run.id })).subscribe({
       next: run => {
         this._applyRun(run);
         this._store.dispatch(showSuccess({ message: this._translate.instant('checklists.toast.completed') }));
@@ -192,7 +192,7 @@ export class ChecklistRunComponent implements OnInit {
     this.noTemplate = false;
     this.busy = true;
     this._store.dispatch(showLoading());
-    this._ops.openChecklist(StaffServiceAgent.OpenChecklistRequest.fromJS({
+    this._ops.openChecklist(CinemaServiceAgent.OpenChecklistRequest.fromJS({
       theaterId: this._theaterContext.currentTheaterId() ?? undefined,
       showTimeId: this._showTimeId,
       roomId: this._roomId,
@@ -206,11 +206,11 @@ export class ChecklistRunComponent implements OnInit {
     }).add(() => this._finish());
   }
 
-  private _setItem(item: StaffServiceAgent.ChecklistRunItemDTO, isDone: boolean): void {
+  private _setItem(item: CinemaServiceAgent.ChecklistRunItemDTO, isDone: boolean): void {
     this.busy = true;
     this._store.dispatch(showLoading());
     const note = (this.notes[item.id!] ?? item.note ?? '').trim();
-    this._ops.setChecklistItem(StaffServiceAgent.SetChecklistItemRequest.fromJS({
+    this._ops.setChecklistItem(CinemaServiceAgent.SetChecklistItemRequest.fromJS({
       runItemId: item.id, isDone, note: note || undefined,
     })).subscribe({
       next: run => this._applyRun(run),
@@ -221,7 +221,7 @@ export class ChecklistRunComponent implements OnInit {
     }).add(() => this._finish());
   }
 
-  private _applyRun(run: StaffServiceAgent.ChecklistRunDTO): void {
+  private _applyRun(run: CinemaServiceAgent.ChecklistRunDTO): void {
     this.run = run;
     this.notes = {};
     for (const item of run.items ?? []) {

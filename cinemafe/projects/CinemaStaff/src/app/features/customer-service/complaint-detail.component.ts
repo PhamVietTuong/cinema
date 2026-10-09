@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import {
-  DialogService, EmptyStateComponent, SharedModule, StaffServiceAgent, StatusPillComponent, complaintCategoryLabel, complaintResolutionLabel,
+  DialogService, EmptyStateComponent, SharedModule, CinemaServiceAgent, StatusPillComponent, complaintCategoryLabel, complaintResolutionLabel,
   hideLoading, showException, showLoading, showSuccess,
 } from 'CinemaLib';
 import { OverrideFlowService } from '../../core/override-flow.service';
@@ -105,13 +105,13 @@ import { ResolveComplaintChoice, ResolveComplaintDialogComponent, ResolveComplai
 export class ComplaintDetailComponent implements OnInit {
   readonly categoryLabel = complaintCategoryLabel;
   readonly resolutionLabel = complaintResolutionLabel;
-  readonly resolvedStatus = StaffServiceAgent.ComplaintStatus.Resolved;
+  readonly resolvedStatus = CinemaServiceAgent.ComplaintStatus.Resolved;
 
-  complaint: StaffServiceAgent.ComplaintDTO | null = null;
+  complaint: CinemaServiceAgent.ComplaintDTO | null = null;
   loading = false;
   busy = false;
 
-  private readonly _api = inject(StaffServiceAgent.CustomerServiceHttpService);
+  private readonly _api = inject(CinemaServiceAgent.HttpService);
   private readonly _route = inject(ActivatedRoute);
   private readonly _router = inject(Router);
   private readonly _store = inject(Store);
@@ -133,7 +133,7 @@ export class ComplaintDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.loading = true;
-    this._api.getComplaint(StaffServiceAgent.GetComplaintRequest.fromJS({ complaintId: this._route.snapshot.paramMap.get('id') })).subscribe({
+    this._api.getComplaint(CinemaServiceAgent.GetComplaintRequest.fromJS({ complaintId: this._route.snapshot.paramMap.get('id') })).subscribe({
       next: complaint => {
         this.complaint = complaint;
         this._cd.markForCheck();
@@ -151,7 +151,7 @@ export class ComplaintDetailComponent implements OnInit {
 
   edit(): void {
     const data: ComplaintDialogData = { complaint: this.complaint! };
-    this._dialog.open<ComplaintDialogComponent, ComplaintDialogData, StaffServiceAgent.ComplaintDTO>(
+    this._dialog.open<ComplaintDialogComponent, ComplaintDialogData, CinemaServiceAgent.ComplaintDTO>(
       ComplaintDialogComponent, { width: '520px', maxWidth: '95vw', data },
     ).afterClosed().subscribe(updated => {
       if (updated) {
@@ -161,7 +161,7 @@ export class ComplaintDetailComponent implements OnInit {
   }
 
   startReview(): void {
-    this._run(this._api.startComplaintReview(StaffServiceAgent.StartComplaintReviewRequest.fromJS({ complaintId: this.complaint!.id })), 'customerService.detail.reviewStarted');
+    this._run(this._api.startComplaintReview(CinemaServiceAgent.StartComplaintReviewRequest.fromJS({ complaintId: this.complaint!.id })), 'customerService.detail.reviewStarted');
   }
 
   reject(): void {
@@ -175,7 +175,7 @@ export class ComplaintDetailComponent implements OnInit {
       if (!result?.note) {
         return;
       }
-      this._run(this._api.rejectComplaint(StaffServiceAgent.RejectComplaintRequest.fromJS({ complaintId: this.complaint!.id, reason: result.note })), 'customerService.detail.rejected');
+      this._run(this._api.rejectComplaint(CinemaServiceAgent.RejectComplaintRequest.fromJS({ complaintId: this.complaint!.id, reason: result.note })), 'customerService.detail.rejected');
     });
   }
 
@@ -193,7 +193,7 @@ export class ComplaintDetailComponent implements OnInit {
       this._sensitive.run(
         complaint.theaterId ?? this._theater.currentTheaterId() ?? undefined,
         resolutionNeedsPin(choice.resolution, this._overrides.isApprover()),
-        override => this._api.resolveComplaint(StaffServiceAgent.ResolveComplaintRequest.fromJS({
+        override => this._api.resolveComplaint(CinemaServiceAgent.ResolveComplaintRequest.fromJS({
           complaintId: complaint.id,
           resolution: choice.resolution,
           amount: choice.amount,
@@ -216,7 +216,7 @@ export class ComplaintDetailComponent implements OnInit {
     });
   }
 
-  private _run(call: Observable<StaffServiceAgent.ComplaintDTO>, successKey: string): void {
+  private _run(call: Observable<CinemaServiceAgent.ComplaintDTO>, successKey: string): void {
     this.busy = true;
     this._store.dispatch(showLoading());
     call.subscribe({
@@ -232,7 +232,7 @@ export class ComplaintDetailComponent implements OnInit {
     });
   }
 
-  private _set(complaint: StaffServiceAgent.ComplaintDTO): void {
+  private _set(complaint: CinemaServiceAgent.ComplaintDTO): void {
     this.complaint = complaint;
     this._cd.markForCheck();
   }

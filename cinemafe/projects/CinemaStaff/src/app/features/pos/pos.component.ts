@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { EmptyStateComponent, SeatLockSessionService, SharedModule, StaffServiceAgent, ToastService, apiErrorMessage } from 'CinemaLib';
+import { EmptyStateComponent, SeatLockSessionService, SharedModule, CinemaServiceAgent, ToastService, apiErrorMessage } from 'CinemaLib';
 import { CashDrawerService } from '../../core/cash-drawer.service';
 import { CounterCartComponent } from '../../core/counter-cart.component';
 import { CounterCartService } from '../../core/counter-cart.service';
@@ -25,7 +25,7 @@ import { TheaterContextService } from '../../core/theater-context.service';
   styleUrl: './pos.component.scss',
 })
 export class PosComponent {
-  private readonly _box = inject(StaffServiceAgent.BoxOfficeHttpService);
+  private readonly _box = inject(CinemaServiceAgent.HttpService);
   private readonly _translate = inject(TranslateService);
   private readonly _toast = inject(ToastService);
   readonly cart = inject(CounterCartService);
@@ -74,7 +74,7 @@ export class PosComponent {
       })),
     };
     this.selling.set(true);
-    this._box.sell(StaffServiceAgent.CounterSaleRequest.fromJS(full)).subscribe({
+    this._box.sell(CinemaServiceAgent.CounterSaleRequest.fromJS(full)).subscribe({
       next: result => {
         this.selling.set(false);
         this.receipt.set({

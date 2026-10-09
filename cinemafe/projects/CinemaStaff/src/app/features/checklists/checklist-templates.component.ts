@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  ChecklistKindValues, EmptyStateComponent, SharedModule, StaffServiceAgent,
+  ChecklistKindValues, EmptyStateComponent, SharedModule, CinemaServiceAgent,
   hideLoading, showException, showLoading, showSuccess,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
@@ -118,11 +118,11 @@ import { moveItem } from './checklist-rules';
 export class ChecklistTemplatesComponent {
   readonly kinds = ChecklistKindValues;
 
-  templates: StaffServiceAgent.ChecklistTemplateDTO[] = [];
+  templates: CinemaServiceAgent.ChecklistTemplateDTO[] = [];
   form: FormGroup | null = null;
   editingId: string | null = null;
 
-  private readonly _ops = inject(StaffServiceAgent.OperationsHttpService);
+  private readonly _ops = inject(CinemaServiceAgent.HttpService);
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _router = inject(Router);
@@ -147,7 +147,7 @@ export class ChecklistTemplatesComponent {
     return this.form!.get('items') as FormArray;
   }
 
-  kindLabel(kind?: StaffServiceAgent.ChecklistKind): string {
+  kindLabel(kind?: CinemaServiceAgent.ChecklistKind): string {
     return this.kinds.find(k => k.value === kind)?.name ?? this.kinds[0].name;
   }
 
@@ -163,7 +163,7 @@ export class ChecklistTemplatesComponent {
       return;
     }
     this._store.dispatch(showLoading());
-    this._ops.getChecklistTemplates(StaffServiceAgent.GetChecklistTemplatesRequest.fromJS({ theaterId })).subscribe({
+    this._ops.getChecklistTemplates(CinemaServiceAgent.GetChecklistTemplatesRequest.fromJS({ theaterId })).subscribe({
       next: templates => {
         this.templates = templates ?? [];
         this._cd.markForCheck();
@@ -181,7 +181,7 @@ export class ChecklistTemplatesComponent {
     this._cd.markForCheck();
   }
 
-  edit(template: StaffServiceAgent.ChecklistTemplateDTO): void {
+  edit(template: CinemaServiceAgent.ChecklistTemplateDTO): void {
     this.editingId = template.id ?? null;
     this.form = this._buildForm(template);
     this._cd.markForCheck();
@@ -215,7 +215,7 @@ export class ChecklistTemplatesComponent {
     }
     const value = this.form.value;
     this._store.dispatch(showLoading());
-    this._ops.saveChecklistTemplate(StaffServiceAgent.SaveChecklistTemplateRequest.fromJS({
+    this._ops.saveChecklistTemplate(CinemaServiceAgent.SaveChecklistTemplateRequest.fromJS({
       id: this.editingId ?? undefined,
       theaterId: this.theaterId,
       name: (value.name as string).trim(),
@@ -238,16 +238,16 @@ export class ChecklistTemplatesComponent {
     });
   }
 
-  private _buildForm(template: StaffServiceAgent.ChecklistTemplateDTO | null): FormGroup {
+  private _buildForm(template: CinemaServiceAgent.ChecklistTemplateDTO | null): FormGroup {
     return this._fb.group({
       name: [template?.name ?? '', [Validators.required, Validators.pattern(/\S/)]],
-      kind: [template?.kind ?? StaffServiceAgent.ChecklistKind.PreShow],
+      kind: [template?.kind ?? CinemaServiceAgent.ChecklistKind.PreShow],
       isActive: [template?.isActive ?? true],
       items: this._fb.array((template?.items ?? []).map(item => this._itemGroup(item))),
     });
   }
 
-  private _itemGroup(item: StaffServiceAgent.ChecklistTemplateItemDTO | null): FormGroup {
+  private _itemGroup(item: CinemaServiceAgent.ChecklistTemplateItemDTO | null): FormGroup {
     return this._fb.group({
       id: [item?.id ?? ''],
       text: [item?.text ?? '', [Validators.required, Validators.pattern(/\S/)]],

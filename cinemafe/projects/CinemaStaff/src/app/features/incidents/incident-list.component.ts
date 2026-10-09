@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import {
   EmptyStateComponent, FilterBarComponent, FilterBarField, IncidentCategoryValues, IncidentStatusValues,
-  SharedModule, StaffServiceAgent, StatusPillComponent, incidentCategoryLabel, hideLoading, showException, showLoading,
+  SharedModule, CinemaServiceAgent, StatusPillComponent, incidentCategoryLabel, hideLoading, showException, showLoading,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
 import { ReportIncidentDialog } from './report-incident.dialog';
@@ -94,12 +94,12 @@ export class IncidentListComponent implements OnInit {
   ];
 
   searchForm: FormGroup;
-  rows: StaffServiceAgent.IncidentDTO[] = [];
+  rows: CinemaServiceAgent.IncidentDTO[] = [];
   total = 0;
   pageIndex = 0;
   loading = false;
 
-  private readonly _ops = inject(StaffServiceAgent.OperationsHttpService);
+  private readonly _ops = inject(CinemaServiceAgent.HttpService);
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _router = inject(Router);
@@ -154,7 +154,7 @@ export class IncidentListComponent implements OnInit {
     }
     this.loading = true;
     this._store.dispatch(showLoading());
-    this._ops.getIncidents(StaffServiceAgent.PagingSearchDTO.fromJS({
+    this._ops.getIncidents(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: this.pageIndex + 1, pageSize: this.pageSize, filters,
     })).subscribe({
       next: result => {
@@ -179,7 +179,7 @@ export class IncidentListComponent implements OnInit {
       });
   }
 
-  open(row: StaffServiceAgent.IncidentDTO): void {
+  open(row: CinemaServiceAgent.IncidentDTO): void {
     this._router.navigate(['/incidents', row.id]);
   }
 }

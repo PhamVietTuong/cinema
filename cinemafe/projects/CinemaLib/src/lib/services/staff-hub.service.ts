@@ -4,14 +4,14 @@ import { Store } from '@ngrx/store';
 import { BehaviorSubject, Subject, firstValueFrom } from 'rxjs';
 import { selectToken } from '../store/auth/auth.selectors';
 import { HUB_BASE_URL } from '../tokens';
-import { StaffServiceAgent } from './staff-http.service';
+import { CinemaServiceAgent } from './cinema-http.service';
 
 /** Payload of the `FoodOrderUpdated` hub event. */
 export interface FoodOrderUpdatedEvent {
   invoiceId: string;
   theaterId: string;
   invoiceCode?: string;
-  foodStatus: StaffServiceAgent.FoodOrderStatus;
+  foodStatus: CinemaServiceAgent.FoodOrderStatus;
   foodHandedOverAt?: Date;
 }
 
@@ -29,10 +29,10 @@ export class StaffHubService implements OnDestroy {
   private _starting: Promise<void> | null = null;
   private _theaterId: string | null = null;
 
-  readonly foodOrderQueued$ = new Subject<StaffServiceAgent.PickupOrderDTO>();
+  readonly foodOrderQueued$ = new Subject<CinemaServiceAgent.PickupOrderDTO>();
   readonly foodOrderUpdated$ = new Subject<FoodOrderUpdatedEvent>();
-  readonly stockLow$ = new Subject<StaffServiceAgent.LowStockItemDTO[]>();
-  readonly incidentRaised$ = new Subject<StaffServiceAgent.IncidentDTO>();
+  readonly stockLow$ = new Subject<CinemaServiceAgent.LowStockItemDTO[]>();
+  readonly incidentRaised$ = new Subject<CinemaServiceAgent.IncidentDTO>();
   readonly connected$ = new BehaviorSubject<boolean>(false);
   /** Emits after an automatic reconnect: events may have been missed, so screens refetch. */
   readonly reconnected$ = new Subject<void>();
@@ -89,7 +89,7 @@ export class StaffHubService implements OnDestroy {
       .build();
 
     connection.on('FoodOrderQueued', (order: unknown) =>
-      this.foodOrderQueued$.next(StaffServiceAgent.PickupOrderDTO.fromJS(order)));
+      this.foodOrderQueued$.next(CinemaServiceAgent.PickupOrderDTO.fromJS(order)));
     connection.on('FoodOrderUpdated', (event: FoodOrderUpdatedEvent) => {
       this.foodOrderUpdated$.next({
         ...event,
@@ -97,9 +97,9 @@ export class StaffHubService implements OnDestroy {
       });
     });
     connection.on('StockLow', (items: unknown[]) =>
-      this.stockLow$.next((items ?? []).map(item => StaffServiceAgent.LowStockItemDTO.fromJS(item))));
+      this.stockLow$.next((items ?? []).map(item => CinemaServiceAgent.LowStockItemDTO.fromJS(item))));
     connection.on('IncidentRaised', (incident: unknown) =>
-      this.incidentRaised$.next(StaffServiceAgent.IncidentDTO.fromJS(incident)));
+      this.incidentRaised$.next(CinemaServiceAgent.IncidentDTO.fromJS(incident)));
 
     connection.onreconnecting(() => this.connected$.next(false));
     connection.onreconnected(async () => {

@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import {
   EmptyStateComponent,
   SharedModule,
-  StaffServiceAgent,
+  CinemaServiceAgent,
   StatusPillComponent,
   hideLoading,
   showException,
@@ -98,7 +98,7 @@ const INVOICE_STATUS_SPEC: Record<InvoiceStatus, { labelKey: string; pillClass: 
   `],
 })
 export class GateLookupComponent {
-  private readonly _gate = inject(StaffServiceAgent.GateHttpService);
+  private readonly _gate = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _fb = inject(FormBuilder);
@@ -109,18 +109,18 @@ export class GateLookupComponent {
     phone: ['', [Validators.maxLength(20)]],
   });
 
-  readonly invoices = signal<StaffServiceAgent.GateLookupResultDTO[]>([]);
+  readonly invoices = signal<CinemaServiceAgent.GateLookupResultDTO[]>([]);
   readonly loading = signal(false);
   readonly searched = signal(false);
   /** Latest admit result per ticket QR code. */
-  private readonly _outcomes = signal<Record<string, StaffServiceAgent.ScanTicketResultDTO>>({});
+  private readonly _outcomes = signal<Record<string, CinemaServiceAgent.ScanTicketResultDTO>>({});
 
-  outcomeOf(qrCode?: string): StaffServiceAgent.ScanTicketResultDTO | null {
+  outcomeOf(qrCode?: string): CinemaServiceAgent.ScanTicketResultDTO | null {
     return this._outcomes()[qrCode ?? ''] ?? null;
   }
 
   /** Pill spec of a booking: used once every ticket is used or admitted during this lookup. */
-  statusSpec(invoice: StaffServiceAgent.GateLookupResultDTO): { labelKey: string; pillClass: string } {
+  statusSpec(invoice: CinemaServiceAgent.GateLookupResultDTO): { labelKey: string; pillClass: string } {
     const tickets = invoice.tickets ?? [];
     const usedCount = tickets.filter(ticket => ticket.isUsed || isAdmitted(this.outcomeOf(ticket.qrCode))).length;
     if (usedCount === 0) {
@@ -137,7 +137,7 @@ export class GateLookupComponent {
   }
 
   /** A ticket can be admitted until it is used or an admit already succeeded. */
-  canAdmit(ticket: StaffServiceAgent.GateLookupTicketDTO): boolean {
+  canAdmit(ticket: CinemaServiceAgent.GateLookupTicketDTO): boolean {
     return !ticket.isUsed && !isAdmitted(this.outcomeOf(ticket.qrCode)) && !this.loading();
   }
 
@@ -150,7 +150,7 @@ export class GateLookupComponent {
     }
     this.loading.set(true);
     this._store.dispatch(showLoading());
-    this._gate.lookup(StaffServiceAgent.GateLookupRequest.fromJS({
+    this._gate.lookup(CinemaServiceAgent.GateLookupRequest.fromJS({
       invoiceCode: invoiceCode || undefined,
       phone: phone || undefined,
       theaterId: this.theaterId() ?? undefined,
@@ -167,7 +167,7 @@ export class GateLookupComponent {
     });
   }
 
-  admit(ticket: StaffServiceAgent.GateLookupTicketDTO): void {
+  admit(ticket: CinemaServiceAgent.GateLookupTicketDTO): void {
     const code = ticket.qrCode ?? '';
     if (!code) {
       return;

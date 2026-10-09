@@ -6,7 +6,7 @@ import {
   EmptyStateComponent,
   SharedModule,
   StaffHubService,
-  StaffServiceAgent,
+  CinemaServiceAgent,
   StatusPillComponent,
   showException,
 } from 'CinemaLib';
@@ -22,20 +22,20 @@ import {
   ordersInColumn,
 } from './kitchen.state';
 
-type Order = StaffServiceAgent.PickupOrderDTO;
+type Order = CinemaServiceAgent.PickupOrderDTO;
 
 /** i18n key of the action button that advances an order out of the given status. */
-const ACTION_KEYS: Partial<Record<StaffServiceAgent.FoodOrderStatus, string>> = {
-  [StaffServiceAgent.FoodOrderStatus.Pending]: 'kitchen.action.start',
-  [StaffServiceAgent.FoodOrderStatus.Preparing]: 'kitchen.action.ready',
-  [StaffServiceAgent.FoodOrderStatus.Ready]: 'kitchen.action.handOver',
+const ACTION_KEYS: Partial<Record<CinemaServiceAgent.FoodOrderStatus, string>> = {
+  [CinemaServiceAgent.FoodOrderStatus.Pending]: 'kitchen.action.start',
+  [CinemaServiceAgent.FoodOrderStatus.Preparing]: 'kitchen.action.ready',
+  [CinemaServiceAgent.FoodOrderStatus.Ready]: 'kitchen.action.handOver',
 };
 
 /** i18n key of each board column heading. */
-const COLUMN_KEYS: Partial<Record<StaffServiceAgent.FoodOrderStatus, string>> = {
-  [StaffServiceAgent.FoodOrderStatus.Pending]: 'kitchen.status.pending',
-  [StaffServiceAgent.FoodOrderStatus.Preparing]: 'kitchen.status.preparing',
-  [StaffServiceAgent.FoodOrderStatus.Ready]: 'kitchen.status.ready',
+const COLUMN_KEYS: Partial<Record<CinemaServiceAgent.FoodOrderStatus, string>> = {
+  [CinemaServiceAgent.FoodOrderStatus.Pending]: 'kitchen.status.pending',
+  [CinemaServiceAgent.FoodOrderStatus.Preparing]: 'kitchen.status.preparing',
+  [CinemaServiceAgent.FoodOrderStatus.Ready]: 'kitchen.status.ready',
 };
 
 /**
@@ -181,7 +181,7 @@ const COLUMN_KEYS: Partial<Record<StaffServiceAgent.FoodOrderStatus, string>> = 
 export class KitchenComponent {
   readonly hub = inject(StaffHubService);
   readonly live = inject(StaffLiveService);
-  private readonly _concession = inject(StaffServiceAgent.ConcessionHttpService);
+  private readonly _concession = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _fb = inject(FormBuilder);
@@ -232,16 +232,16 @@ export class KitchenComponent {
     this.hub.reconnected$.pipe(takeUntilDestroyed()).subscribe(() => this.load());
   }
 
-  ordersOf(status: StaffServiceAgent.FoodOrderStatus): Order[] {
+  ordersOf(status: CinemaServiceAgent.FoodOrderStatus): Order[] {
     return ordersInColumn(this.queue(), status);
   }
 
-  columnKey(status: StaffServiceAgent.FoodOrderStatus): string {
+  columnKey(status: CinemaServiceAgent.FoodOrderStatus): string {
     return COLUMN_KEYS[status] ?? '';
   }
 
   actionKey(order: Order): string | null {
-    return ACTION_KEYS[order.foodStatus as StaffServiceAgent.FoodOrderStatus] ?? null;
+    return ACTION_KEYS[order.foodStatus as CinemaServiceAgent.FoodOrderStatus] ?? null;
   }
 
   minutesAgo(order: Order): number {
@@ -253,7 +253,7 @@ export class KitchenComponent {
     if (!theaterId) {
       return;
     }
-    this._concession.getPickupQueue(StaffServiceAgent.GetPickupQueueRequest.fromJS({ theaterId })).subscribe({
+    this._concession.getPickupQueue(CinemaServiceAgent.GetPickupQueueRequest.fromJS({ theaterId })).subscribe({
       next: orders => this.queue.set(orders ?? []),
       error: error => this._store.dispatch(showException({ error })),
     });
@@ -266,7 +266,7 @@ export class KitchenComponent {
       return;
     }
     this._setBusy(invoiceId, true);
-    this._concession.setFoodStatus(StaffServiceAgent.SetFoodStatusRequest.fromJS({
+    this._concession.setFoodStatus(CinemaServiceAgent.SetFoodStatusRequest.fromJS({
       theaterId: this.theaterId() ?? undefined,
       invoiceId,
       status: next,
@@ -289,7 +289,7 @@ export class KitchenComponent {
       return;
     }
     this.lookupMissing.set(false);
-    this._concession.lookupPickup(StaffServiceAgent.LookupPickupRequest.fromJS({
+    this._concession.lookupPickup(CinemaServiceAgent.LookupPickupRequest.fromJS({
       theaterId: this.theaterId() ?? undefined,
       code,
     })).subscribe({
@@ -305,8 +305,8 @@ export class KitchenComponent {
     });
   }
 
-  private _withStatus(order: Order, status: StaffServiceAgent.FoodOrderStatus): Order {
-    const copy = StaffServiceAgent.PickupOrderDTO.fromJS(order.toJSON());
+  private _withStatus(order: Order, status: CinemaServiceAgent.FoodOrderStatus): Order {
+    const copy = CinemaServiceAgent.PickupOrderDTO.fromJS(order.toJSON());
     copy.foodStatus = status;
     return copy;
   }

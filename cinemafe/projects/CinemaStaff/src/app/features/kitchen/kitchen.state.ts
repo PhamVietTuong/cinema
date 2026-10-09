@@ -1,7 +1,7 @@
-import { StaffServiceAgent, fromServerUtc, serverUtcMs } from 'CinemaLib';
+import { CinemaServiceAgent, fromServerUtc, serverUtcMs } from 'CinemaLib';
 
-type FoodOrderStatus = StaffServiceAgent.FoodOrderStatus;
-const Status = StaffServiceAgent.FoodOrderStatus;
+type FoodOrderStatus = CinemaServiceAgent.FoodOrderStatus;
+const Status = CinemaServiceAgent.FoodOrderStatus;
 
 /** Board columns, left to right. HandedOver and Cancelled orders leave the board. */
 export const QUEUE_COLUMNS: readonly FoodOrderStatus[] = [Status.Pending, Status.Preparing, Status.Ready];
@@ -28,14 +28,14 @@ export function isLegalTransition(from?: FoodOrderStatus, to?: FoodOrderStatus):
 }
 
 /** Orders of one column, earliest showtime first (the API's own order), then earliest payment. */
-export function ordersInColumn(queue: readonly StaffServiceAgent.PickupOrderDTO[], status: FoodOrderStatus): StaffServiceAgent.PickupOrderDTO[] {
+export function ordersInColumn(queue: readonly CinemaServiceAgent.PickupOrderDTO[], status: FoodOrderStatus): CinemaServiceAgent.PickupOrderDTO[] {
   return queue
     .filter(order => order.foodStatus === status)
     .sort((a, b) => time(a.showTimeStart) - time(b.showTimeStart) || utcTime(a.paidAt) - utcTime(b.paidAt));
 }
 
 /** Reducer for `FoodOrderQueued`: adds the order, or replaces it when already on the board. Off-board statuses are ignored. */
-export function applyQueued(queue: readonly StaffServiceAgent.PickupOrderDTO[], order: StaffServiceAgent.PickupOrderDTO): StaffServiceAgent.PickupOrderDTO[] {
+export function applyQueued(queue: readonly CinemaServiceAgent.PickupOrderDTO[], order: CinemaServiceAgent.PickupOrderDTO): CinemaServiceAgent.PickupOrderDTO[] {
   const others = queue.filter(existing => existing.invoiceId !== order.invoiceId);
   return isOnBoard(order.foodStatus) ? [...others, order] : others;
 }
@@ -45,9 +45,9 @@ export function applyQueued(queue: readonly StaffServiceAgent.PickupOrderDTO[], 
  * An update for an order the board does not hold changes nothing; the caller refetches via `needsRefetch`.
  */
 export function applyUpdated(
-  queue: readonly StaffServiceAgent.PickupOrderDTO[],
+  queue: readonly CinemaServiceAgent.PickupOrderDTO[],
   event: { invoiceId: string; foodStatus: FoodOrderStatus },
-): StaffServiceAgent.PickupOrderDTO[] {
+): CinemaServiceAgent.PickupOrderDTO[] {
   if (!isOnBoard(event.foodStatus)) {
     return queue.filter(order => order.invoiceId !== event.invoiceId);
   }
@@ -56,7 +56,7 @@ export function applyUpdated(
 
 /** True when an event announces an on-board order the board has never seen (a missed `FoodOrderQueued`). */
 export function needsRefetch(
-  queue: readonly StaffServiceAgent.PickupOrderDTO[],
+  queue: readonly CinemaServiceAgent.PickupOrderDTO[],
   event: { invoiceId: string; foodStatus: FoodOrderStatus },
 ): boolean {
   return isOnBoard(event.foodStatus) && !queue.some(order => order.invoiceId === event.invoiceId);
@@ -71,8 +71,8 @@ export function minutesSince(from: Date | undefined, now: Date): number {
   return Math.max(0, Math.floor((now.getTime() - start.getTime()) / 60000));
 }
 
-function cloneWithStatus(order: StaffServiceAgent.PickupOrderDTO, status: FoodOrderStatus): StaffServiceAgent.PickupOrderDTO {
-  const copy = StaffServiceAgent.PickupOrderDTO.fromJS(order.toJSON());
+function cloneWithStatus(order: CinemaServiceAgent.PickupOrderDTO, status: FoodOrderStatus): CinemaServiceAgent.PickupOrderDTO {
+  const copy = CinemaServiceAgent.PickupOrderDTO.fromJS(order.toJSON());
   copy.foodStatus = status;
   return copy;
 }

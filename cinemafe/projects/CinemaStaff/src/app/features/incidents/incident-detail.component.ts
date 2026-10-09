@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import {
-  DialogService, EmptyStateComponent, SharedModule, StaffServiceAgent, StatusPillComponent, incidentCategoryLabel,
+  DialogService, EmptyStateComponent, SharedModule, CinemaServiceAgent, StatusPillComponent, incidentCategoryLabel,
   hideLoading, showException, showLoading, showSuccess,
 } from 'CinemaLib';
 import { OverrideFlowService } from '../../core/override-flow.service';
@@ -143,8 +143,8 @@ import { RoomSeatPickerComponent } from '../../core/room-seat-picker.component';
   `],
 })
 export class IncidentDetailComponent implements OnInit {
-  incident: StaffServiceAgent.IncidentDTO | null = null;
-  blockResult: StaffServiceAgent.BlockResultDTO | null = null;
+  incident: CinemaServiceAgent.IncidentDTO | null = null;
+  blockResult: CinemaServiceAgent.BlockResultDTO | null = null;
   blockForm: FormGroup;
   unblock = false;
   busy = false;
@@ -153,7 +153,7 @@ export class IncidentDetailComponent implements OnInit {
   readonly overrides = inject(OverrideFlowService);
   readonly categoryLabel = incidentCategoryLabel;
 
-  private readonly _ops = inject(StaffServiceAgent.OperationsHttpService);
+  private readonly _ops = inject(CinemaServiceAgent.HttpService);
   private readonly _route = inject(ActivatedRoute);
   private readonly _router = inject(Router);
   private readonly _store = inject(Store);
@@ -166,7 +166,7 @@ export class IncidentDetailComponent implements OnInit {
   }
 
   get isOpen(): boolean {
-    return this.incident?.status === StaffServiceAgent.IncidentStatus.Open;
+    return this.incident?.status === CinemaServiceAgent.IncidentStatus.Open;
   }
 
   ngOnInit(): void {
@@ -185,7 +185,7 @@ export class IncidentDetailComponent implements OnInit {
     if (!incident || !seatId) {
       return;
     }
-    this._block(incident, override => this._ops.blockSeat(StaffServiceAgent.BlockSeatRequest.fromJS({
+    this._block(incident, override => this._ops.blockSeat(CinemaServiceAgent.BlockSeatRequest.fromJS({
       theaterId: incident.theaterId, seatId, incidentId: incident.id, override,
     })));
   }
@@ -196,7 +196,7 @@ export class IncidentDetailComponent implements OnInit {
     if (!incident || !roomId) {
       return;
     }
-    this._block(incident, override => this._ops.blockRoom(StaffServiceAgent.BlockRoomRequest.fromJS({
+    this._block(incident, override => this._ops.blockRoom(CinemaServiceAgent.BlockRoomRequest.fromJS({
       theaterId: incident.theaterId, roomId, incidentId: incident.id, override,
     })));
   }
@@ -215,11 +215,11 @@ export class IncidentDetailComponent implements OnInit {
         return;
       }
       const unblock = this.unblock && !!(incident.blocksSeat || incident.blocksRoom);
-      const call = (override?: StaffServiceAgent.ManagerOverrideDTO) => this._ops.resolveIncident(StaffServiceAgent.ResolveIncidentRequest.fromJS({
+      const call = (override?: CinemaServiceAgent.ManagerOverrideDTO) => this._ops.resolveIncident(CinemaServiceAgent.ResolveIncidentRequest.fromJS({
         incidentId: incident.id, resolutionNote: result.note || undefined, unblock, override,
       }));
       // Unblocking re-opens seats for sale, so it needs an approver (or PIN); a plain resolve does not.
-      const request$: Observable<StaffServiceAgent.IncidentDTO> = unblock ? this.overrides.run(incident.theaterId, call) : call();
+      const request$: Observable<CinemaServiceAgent.IncidentDTO> = unblock ? this.overrides.run(incident.theaterId, call) : call();
       this._run(request$, () => {
         this._store.dispatch(showSuccess({ message: this._translate.instant('incidents.toast.resolved') }));
         this.blockResult = null;
@@ -228,7 +228,7 @@ export class IncidentDetailComponent implements OnInit {
     });
   }
 
-  private _block(incident: StaffServiceAgent.IncidentDTO, call: (override?: StaffServiceAgent.ManagerOverrideDTO) => Observable<StaffServiceAgent.BlockResultDTO>): void {
+  private _block(incident: CinemaServiceAgent.IncidentDTO, call: (override?: CinemaServiceAgent.ManagerOverrideDTO) => Observable<CinemaServiceAgent.BlockResultDTO>): void {
     this._run(this.overrides.run(incident.theaterId, call), result => {
       this.blockResult = result;
       this._store.dispatch(showSuccess({ message: this._translate.instant('incidents.toast.blocked') }));
@@ -253,7 +253,7 @@ export class IncidentDetailComponent implements OnInit {
     if (!id) {
       return;
     }
-    this._ops.getIncident(StaffServiceAgent.GetIncidentRequest.fromJS({ incidentId: id })).subscribe({
+    this._ops.getIncident(CinemaServiceAgent.GetIncidentRequest.fromJS({ incidentId: id })).subscribe({
       next: incident => {
         this.incident = incident;
         this.notFound = false;

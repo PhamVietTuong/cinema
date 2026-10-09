@@ -1,4 +1,4 @@
-import { BarChartRow, StaffServiceAgent } from 'CinemaLib';
+import { BarChartRow, CinemaServiceAgent } from 'CinemaLib';
 
 /** The API limit: a report range spans at most this many business dates, both ends included. */
 export const MAX_REPORT_DAYS = 92;
@@ -52,10 +52,10 @@ export function localDayString(now: Date, daysBack = 0): string {
 export function buildReportRequest(
   from: string,
   to: string,
-  groupBy: StaffServiceAgent.SalesGroupBy,
+  groupBy: CinemaServiceAgent.SalesGroupBy,
   theaterIds: readonly string[],
-): StaffServiceAgent.StaffReportRequest {
-  return StaffServiceAgent.StaffReportRequest.fromJS({
+): CinemaServiceAgent.StaffReportRequest {
+  return CinemaServiceAgent.StaffReportRequest.fromJS({
     from: parseDay(from),
     to: parseDay(to),
     groupBy,
@@ -64,12 +64,12 @@ export function buildReportRequest(
 }
 
 /** Bars of the sales chart: net revenue per group. */
-export function salesChartRows(rows: readonly StaffServiceAgent.SalesReportRowDTO[], formatValue: (value: number) => string): BarChartRow[] {
+export function salesChartRows(rows: readonly CinemaServiceAgent.SalesReportRowDTO[], formatValue: (value: number) => string): BarChartRow[] {
   return rows.map(row => ({ label: row.label ?? row.key ?? '', value: row.netRevenue ?? 0, valueLabel: formatValue(row.netRevenue ?? 0) }));
 }
 
 /** Bars of the occupancy chart: one per row, scaled 0 to 1. */
-export function occupancyChartRows(rows: readonly StaffServiceAgent.OccupancyRowDTO[], formatValue: (value: number) => string): BarChartRow[] {
+export function occupancyChartRows(rows: readonly CinemaServiceAgent.OccupancyRowDTO[], formatValue: (value: number) => string): BarChartRow[] {
   return rows.map(row => ({
     label: [row.theaterName, row.roomName, row.movieTitle].filter(Boolean).join(' / '),
     value: row.occupancyRate ?? 0,

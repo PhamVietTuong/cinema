@@ -1,6 +1,6 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 
-type Tender = StaffServiceAgent.PaymentTender;
+type Tender = CinemaServiceAgent.PaymentTender;
 
 /** One tender line the cashier is entering (amount in whole dong). */
 export interface TenderEntry {
@@ -66,7 +66,7 @@ export interface Settlement {
 const round = (n: number): number => Math.round(n);
 
 export function isCash(method: Tender): boolean {
-  return method === StaffServiceAgent.PaymentTender.Cash;
+  return method === CinemaServiceAgent.PaymentTender.Cash;
 }
 
 /** Price of one ticket: the manager override if set, otherwise the list price of its category. */

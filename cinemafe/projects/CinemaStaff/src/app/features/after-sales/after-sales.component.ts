@@ -14,7 +14,7 @@ import {
   RefundTenderValues,
   SharedModule,
   StaffReasonCodeValues,
-  StaffServiceAgent,
+  CinemaServiceAgent,
   StatusPillComponent,
   hideLoading,
   selectCurrentUser,
@@ -172,7 +172,7 @@ import { ReprintTicketsDialogComponent } from './reprint-tickets.dialog';
   `],
 })
 export class AfterSalesComponent {
-  private readonly _boxOffice = inject(StaffServiceAgent.BoxOfficeHttpService);
+  private readonly _boxOffice = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _dialogs = inject(DialogService);
@@ -184,18 +184,18 @@ export class AfterSalesComponent {
 
   readonly theaterId = this._theater.currentTheaterId;
   readonly tenders = RefundTenderValues;
-  readonly cashTender = StaffServiceAgent.PaymentTender.Cash;
+  readonly cashTender = CinemaServiceAgent.PaymentTender.Cash;
 
   readonly filterFields: FilterBarField[] = [
     { key: 'code', type: 'text', labelKey: 'afterSales.search.code' },
     { key: 'phone', type: 'text', labelKey: 'afterSales.search.phone' },
   ];
   readonly searchForm = this._fb.group({ code: [''], phone: [''] });
-  readonly tenderControl = this._fb.control<StaffServiceAgent.PaymentTender>(StaffServiceAgent.PaymentTender.Cash);
+  readonly tenderControl = this._fb.control<CinemaServiceAgent.PaymentTender>(CinemaServiceAgent.PaymentTender.Cash);
   readonly referenceControl = this._fb.control('');
 
-  readonly invoices = signal<StaffServiceAgent.AfterSalesInvoiceDTO[]>([]);
-  readonly selected = signal<StaffServiceAgent.AfterSalesInvoiceDTO | null>(null);
+  readonly invoices = signal<CinemaServiceAgent.AfterSalesInvoiceDTO[]>([]);
+  readonly selected = signal<CinemaServiceAgent.AfterSalesInvoiceDTO | null>(null);
   readonly loading = signal(false);
   readonly searched = signal(false);
   readonly busy = signal(false);
@@ -221,9 +221,9 @@ export class AfterSalesComponent {
     this._filterChange$.next();
   }
 
-  select(invoice: StaffServiceAgent.AfterSalesInvoiceDTO): void {
+  select(invoice: CinemaServiceAgent.AfterSalesInvoiceDTO): void {
     this.selected.set(invoice);
-    this.tenderControl.setValue(StaffServiceAgent.PaymentTender.Cash);
+    this.tenderControl.setValue(CinemaServiceAgent.PaymentTender.Cash);
     this.referenceControl.setValue('');
   }
 
@@ -237,7 +237,7 @@ export class AfterSalesComponent {
     }
     this.loading.set(true);
     this._store.dispatch(showLoading());
-    this._boxOffice.findInvoice(StaffServiceAgent.FindInvoiceRequest.fromJS({
+    this._boxOffice.findInvoice(CinemaServiceAgent.FindInvoiceRequest.fromJS({
       theaterId: this.theaterId() ?? undefined,
       code: (code ?? '').trim() || undefined,
       phone: (phone ?? '').trim() || undefined,
@@ -254,7 +254,7 @@ export class AfterSalesComponent {
     });
   }
 
-  refund(invoice: StaffServiceAgent.AfterSalesInvoiceDTO): void {
+  refund(invoice: CinemaServiceAgent.AfterSalesInvoiceDTO): void {
     const tender = this.tenderControl.value;
     const reference = (this.referenceControl.value ?? '').trim();
     const tenderErrors = refundTenderErrors(tender, reference);
@@ -271,7 +271,7 @@ export class AfterSalesComponent {
       codes: { labelKey: 'afterSales.refund.reason', options: StaffReasonCodeValues.map(r => ({ value: r.value, labelKey: r.name })) },
       note: {
         labelKey: 'afterSales.refund.note',
-        requiredWhenCode: StaffServiceAgent.StaffReasonCode.Other,
+        requiredWhenCode: CinemaServiceAgent.StaffReasonCode.Other,
       },
     }).afterClosed().subscribe(result => {
       if (!result) {
@@ -279,7 +279,7 @@ export class AfterSalesComponent {
       }
       this._execute(
         this.needsPin(),
-        override => this._boxOffice.staffRefund(StaffServiceAgent.StaffRefundRequest.fromJS({
+        override => this._boxOffice.staffRefund(CinemaServiceAgent.StaffRefundRequest.fromJS({
           theaterId: this.theaterId() ?? undefined,
           invoiceId: invoice.id,
           reasonCode: result.code,
@@ -302,7 +302,7 @@ export class AfterSalesComponent {
   }
 
   /** Opens the exchange dialog (replacement sale at the counter); refreshes the list once an exchange went through. */
-  exchange(invoice: StaffServiceAgent.AfterSalesInvoiceDTO): void {
+  exchange(invoice: CinemaServiceAgent.AfterSalesInvoiceDTO): void {
     this._matDialog.open<ExchangeDialogComponent, ExchangeDialogData, boolean>(ExchangeDialogComponent, {
       width: '1240px',
       maxWidth: '98vw',
@@ -317,7 +317,7 @@ export class AfterSalesComponent {
     });
   }
 
-  reprint(invoice: StaffServiceAgent.AfterSalesInvoiceDTO): void {
+  reprint(invoice: CinemaServiceAgent.AfterSalesInvoiceDTO): void {
     this._dialogs.openReasonDialog({
       titleKey: 'afterSales.reprint.title',
       hintKey: (invoice.usedTicketCount ?? 0) > 0 ? 'afterSales.reprint.hintUsed' : 'afterSales.reprint.hint',
@@ -335,7 +335,7 @@ export class AfterSalesComponent {
       // The API asks for an override on reprint only when a ticket was already used; a 403 reopens the prompt anyway.
       this._execute(
         this.needsPin() && (invoice.usedTicketCount ?? 0) > 0,
-        override => this._boxOffice.reprint(StaffServiceAgent.ReprintRequest.fromJS({
+        override => this._boxOffice.reprint(CinemaServiceAgent.ReprintRequest.fromJS({
           theaterId: this.theaterId() ?? undefined,
           invoiceId: invoice.id,
           reason,
@@ -355,7 +355,7 @@ export class AfterSalesComponent {
   /** Runs a sensitive call through the shared manager-override flow (PIN first when `askPin`, otherwise only after a 403 about the approval). */
   private _execute<T>(
     askPin: boolean,
-    call: (override?: StaffServiceAgent.ManagerOverrideDTO) => Observable<T>,
+    call: (override?: CinemaServiceAgent.ManagerOverrideDTO) => Observable<T>,
     onDone: (result: T) => void,
   ): void {
     this.busy.set(true);

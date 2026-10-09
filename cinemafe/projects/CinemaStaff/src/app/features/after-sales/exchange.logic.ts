@@ -1,4 +1,4 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 import { Settlement, TenderEntry, settle } from '../../core/pos-calc';
 
 /** What changes hands in an exchange: the new total against the final amount of the invoice being replaced. */
@@ -28,8 +28,8 @@ export function exchangeSettlement(diff: ExchangeDifference, tenders: readonly T
 }
 
 /** A cash drawer is needed to take cash or to pay a cheaper replacement back in cash. */
-export function exchangeNeedsDrawer(diff: ExchangeDifference, settlement: Settlement, refundTender: StaffServiceAgent.PaymentTender): boolean {
-  return settlement.usesCash || (diff.payBack > 0 && refundTender === StaffServiceAgent.PaymentTender.Cash);
+export function exchangeNeedsDrawer(diff: ExchangeDifference, settlement: Settlement, refundTender: CinemaServiceAgent.PaymentTender): boolean {
+  return settlement.usesCash || (diff.payBack > 0 && refundTender === CinemaServiceAgent.PaymentTender.Cash);
 }
 
 export interface ExchangeSubmitState {
@@ -40,7 +40,7 @@ export interface ExchangeSubmitState {
   diff: ExchangeDifference;
   settlement: Settlement;
   drawerOpen: boolean;
-  refundTender: StaffServiceAgent.PaymentTender;
+  refundTender: CinemaServiceAgent.PaymentTender;
 }
 
 /** i18n keys (under `afterSales.exchange.error`) of everything still blocking the Confirm button; empty means ready. */

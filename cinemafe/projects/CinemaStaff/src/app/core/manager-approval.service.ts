@@ -2,12 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
-import { APPROVER_ROLES, DialogService, StaffServiceAgent, selectCurrentUser } from 'CinemaLib';
+import { APPROVER_ROLES, DialogService, CinemaServiceAgent, selectCurrentUser } from 'CinemaLib';
 import { TheaterContextService } from './theater-context.service';
 
 /** Outcome of asking for manager approval: `override` is absent when the caller is an approver (no PIN needed). */
 export interface ApprovalResult {
-  override?: StaffServiceAgent.ManagerOverrideDTO;
+  override?: CinemaServiceAgent.ManagerOverrideDTO;
 }
 
 /**

@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
-  EmptyStateComponent, SharedModule, StaffServiceAgent, StatusPillComponent, hideLoading, showException, showLoading,
+  EmptyStateComponent, SharedModule, CinemaServiceAgent, StatusPillComponent, hideLoading, showException, showLoading,
 } from 'CinemaLib';
 
 /** The signed-in staff member's own tasks, with quick status changes. */
@@ -64,14 +64,14 @@ import {
   `],
 })
 export class MyTasksComponent implements OnInit {
-  readonly Status = StaffServiceAgent.StaffTaskStatus;
+  readonly Status = CinemaServiceAgent.StaffTaskStatus;
 
-  tasks: StaffServiceAgent.StaffTaskDTO[] = [];
+  tasks: CinemaServiceAgent.StaffTaskDTO[] = [];
   includeClosed = false;
   loading = false;
   busy = false;
 
-  private readonly _workforce = inject(StaffServiceAgent.WorkforceHttpService);
+  private readonly _workforce = inject(CinemaServiceAgent.HttpService);
   private readonly _store = inject(Store);
   private readonly _cd = inject(ChangeDetectorRef);
 
@@ -87,7 +87,7 @@ export class MyTasksComponent implements OnInit {
   load(): void {
     this.loading = true;
     this._store.dispatch(showLoading());
-    this._workforce.getMyTasks(StaffServiceAgent.MyTasksRequest.fromJS({ includeClosed: this.includeClosed })).subscribe({
+    this._workforce.getMyTasks(CinemaServiceAgent.MyTasksRequest.fromJS({ includeClosed: this.includeClosed })).subscribe({
       next: tasks => {
         this.tasks = tasks ?? [];
         this._cd.markForCheck();
@@ -100,10 +100,10 @@ export class MyTasksComponent implements OnInit {
     });
   }
 
-  setStatus(task: StaffServiceAgent.StaffTaskDTO, status: StaffServiceAgent.StaffTaskStatus): void {
+  setStatus(task: CinemaServiceAgent.StaffTaskDTO, status: CinemaServiceAgent.StaffTaskStatus): void {
     this.busy = true;
     this._store.dispatch(showLoading());
-    this._workforce.setMyTaskStatus(StaffServiceAgent.SetMyTaskStatusRequest.fromJS({ taskId: task.id, status })).subscribe({
+    this._workforce.setMyTaskStatus(CinemaServiceAgent.SetMyTaskStatusRequest.fromJS({ taskId: task.id, status })).subscribe({
       next: () => this.load(),
       error: error => this._store.dispatch(showException({ error })),
     }).add(() => {

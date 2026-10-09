@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { EMPTY, Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
-import { DialogService, StaffServiceAgent, rawApiErrorMessage } from 'CinemaLib';
+import { DialogService, CinemaServiceAgent, rawApiErrorMessage } from 'CinemaLib';
 
 /** Server answer for a sensitive action sent without (or with a wrong) manager override. */
 const OVERRIDE_REJECTION = /approval/i;
@@ -23,12 +23,12 @@ export class SensitiveCallService {
   run<T>(
     theaterId: string | undefined,
     askPin: boolean,
-    call: (override?: StaffServiceAgent.ManagerOverrideDTO) => Observable<T>,
+    call: (override?: CinemaServiceAgent.ManagerOverrideDTO) => Observable<T>,
   ): Observable<T> {
     const prompt = (): Observable<T> => this._dialogs.openManagerOverrideDialog({ theaterId }).afterClosed().pipe(
       switchMap(override => (override ? attempt(override) : EMPTY)),
     );
-    const attempt = (override?: StaffServiceAgent.ManagerOverrideDTO): Observable<T> => call(override).pipe(
+    const attempt = (override?: CinemaServiceAgent.ManagerOverrideDTO): Observable<T> => call(override).pipe(
       catchError(error => (isOverrideRejection(error) ? prompt() : throwError(() => error))),
     );
     return askPin ? prompt() : attempt();

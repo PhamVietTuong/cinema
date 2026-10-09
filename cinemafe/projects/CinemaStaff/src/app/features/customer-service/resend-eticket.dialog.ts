@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject
 import { FormBuilder } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { ETicketChannelValues, SharedModule, StaffServiceAgent, apiErrorMessage } from 'CinemaLib';
+import { ETicketChannelValues, SharedModule, CinemaServiceAgent, apiErrorMessage } from 'CinemaLib';
 import { MAX_RESENDS_PER_HOUR, resendAddressErrors } from './customer-service.logic';
 
 export interface ResendETicketDialogData {
-  invoice: StaffServiceAgent.CustomerInvoiceDTO;
+  invoice: CinemaServiceAgent.CustomerInvoiceDTO;
   /** Resends left this hour according to the last answer (the full allowance when unknown). */
   remaining: number;
 }
@@ -66,15 +66,15 @@ export interface ResendETicketDialogData {
 })
 export class ResendETicketDialogComponent {
   readonly data = inject<ResendETicketDialogData>(MAT_DIALOG_DATA);
-  private readonly _ref = inject(MatDialogRef<ResendETicketDialogComponent, StaffServiceAgent.ResendETicketResultDTO>);
-  private readonly _api = inject(StaffServiceAgent.CustomerServiceHttpService);
+  private readonly _ref = inject(MatDialogRef<ResendETicketDialogComponent, CinemaServiceAgent.ResendETicketResultDTO>);
+  private readonly _api = inject(CinemaServiceAgent.HttpService);
   private readonly _translate = inject(TranslateService);
   private readonly _cdr = inject(ChangeDetectorRef);
 
   readonly channels = ETicketChannelValues;
   readonly max = MAX_RESENDS_PER_HOUR;
   readonly form = inject(FormBuilder).group({
-    channel: [StaffServiceAgent.ETicketChannel.Email as StaffServiceAgent.ETicketChannel],
+    channel: [CinemaServiceAgent.ETicketChannel.Email as CinemaServiceAgent.ETicketChannel],
     address: [''],
   });
   readonly busy = signal(false);
@@ -101,7 +101,7 @@ export class ResendETicketDialogComponent {
   send(): void {
     const { channel, address } = this.form.getRawValue();
     this.busy.set(true);
-    this._api.resendETicket(StaffServiceAgent.ResendETicketRequest.fromJS({
+    this._api.resendETicket(CinemaServiceAgent.ResendETicketRequest.fromJS({
       theaterId: this.data.invoice.theaterId ?? undefined,
       invoiceId: this.data.invoice.id,
       channel,

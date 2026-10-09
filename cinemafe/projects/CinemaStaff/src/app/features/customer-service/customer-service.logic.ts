@@ -1,9 +1,9 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 
-type Status = StaffServiceAgent.ComplaintStatus;
-type Resolution = StaffServiceAgent.ComplaintResolution;
-type Channel = StaffServiceAgent.ETicketChannel;
-type Tender = StaffServiceAgent.PaymentTender;
+type Status = CinemaServiceAgent.ComplaintStatus;
+type Resolution = CinemaServiceAgent.ComplaintResolution;
+type Channel = CinemaServiceAgent.ETicketChannel;
+type Tender = CinemaServiceAgent.PaymentTender;
 
 // ── E-ticket resend limiter ─────────────────────────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ export function resendAddressErrors(channel: Channel | null | undefined, address
   if (!value) {
     return [];
   }
-  if (channel === StaffServiceAgent.ETicketChannel.Sms) {
+  if (channel === CinemaServiceAgent.ETicketChannel.Sms) {
     return PHONE.test(value) ? [] : ['customerService.resend.error.phone'];
   }
   return EMAIL.test(value) ? [] : ['customerService.resend.error.email'];
@@ -54,9 +54,9 @@ export type ComplaintAction = 'edit' | 'startReview' | 'reject' | 'resolve';
 /** Open -> InReview -> Resolved | Rejected; an open or in-review complaint can also be rejected / resolved directly or edited. */
 export function complaintActions(status: Status | undefined): ComplaintAction[] {
   switch (status) {
-    case StaffServiceAgent.ComplaintStatus.Open:
+    case CinemaServiceAgent.ComplaintStatus.Open:
       return ['edit', 'startReview', 'reject', 'resolve'];
-    case StaffServiceAgent.ComplaintStatus.InReview:
+    case CinemaServiceAgent.ComplaintStatus.InReview:
       return ['edit', 'reject', 'resolve'];
     default:
       return [];
@@ -64,14 +64,14 @@ export function complaintActions(status: Status | undefined): ComplaintAction[] 
 }
 
 export function isComplaintClosed(status: Status | undefined): boolean {
-  return status === StaffServiceAgent.ComplaintStatus.Resolved || status === StaffServiceAgent.ComplaintStatus.Rejected;
+  return status === CinemaServiceAgent.ComplaintStatus.Resolved || status === CinemaServiceAgent.ComplaintStatus.Rejected;
 }
 
 /** Everything but an apology is a compensation that needs an approver or a manager PIN override. */
 export function resolutionNeedsApproval(resolution: Resolution | null | undefined): boolean {
-  return resolution === StaffServiceAgent.ComplaintResolution.Refund
-    || resolution === StaffServiceAgent.ComplaintResolution.GiftCard
-    || resolution === StaffServiceAgent.ComplaintResolution.Points;
+  return resolution === CinemaServiceAgent.ComplaintResolution.Refund
+    || resolution === CinemaServiceAgent.ComplaintResolution.GiftCard
+    || resolution === CinemaServiceAgent.ComplaintResolution.Points;
 }
 
 /** The PIN prompt opens first unless the user is an approver or the resolution is an apology. */
@@ -83,12 +83,12 @@ export function resolutionNeedsPin(resolution: Resolution | null | undefined, is
 export function availableResolutions(link: { hasInvoice: boolean; hasCustomer: boolean }): Resolution[] {
   const result: Resolution[] = [];
   if (link.hasInvoice) {
-    result.push(StaffServiceAgent.ComplaintResolution.Refund);
+    result.push(CinemaServiceAgent.ComplaintResolution.Refund);
   }
   if (link.hasCustomer) {
-    result.push(StaffServiceAgent.ComplaintResolution.GiftCard, StaffServiceAgent.ComplaintResolution.Points);
+    result.push(CinemaServiceAgent.ComplaintResolution.GiftCard, CinemaServiceAgent.ComplaintResolution.Points);
   }
-  result.push(StaffServiceAgent.ComplaintResolution.Apology);
+  result.push(CinemaServiceAgent.ComplaintResolution.Apology);
   return result;
 }
 
@@ -105,22 +105,22 @@ export interface ResolveForm {
 export function resolveErrors(form: ResolveForm): string[] {
   const errors: string[] = [];
   const resolution = form.resolution;
-  if (resolution === null || resolution === undefined || resolution === StaffServiceAgent.ComplaintResolution.None
+  if (resolution === null || resolution === undefined || resolution === CinemaServiceAgent.ComplaintResolution.None
     || !availableResolutions(form).includes(resolution)) {
     return ['customerService.resolve.error.resolution'];
   }
-  if (resolution === StaffServiceAgent.ComplaintResolution.GiftCard || resolution === StaffServiceAgent.ComplaintResolution.Points) {
+  if (resolution === CinemaServiceAgent.ComplaintResolution.GiftCard || resolution === CinemaServiceAgent.ComplaintResolution.Points) {
     const amount = form.amount ?? 0;
     if (!(amount > 0)) {
       errors.push('customerService.resolve.error.amount');
-    } else if (resolution === StaffServiceAgent.ComplaintResolution.Points && amount !== Math.floor(amount)) {
+    } else if (resolution === CinemaServiceAgent.ComplaintResolution.Points && amount !== Math.floor(amount)) {
       errors.push('customerService.resolve.error.pointsWhole');
     }
   }
-  if (resolution === StaffServiceAgent.ComplaintResolution.Refund) {
+  if (resolution === CinemaServiceAgent.ComplaintResolution.Refund) {
     if (form.refundTender === null || form.refundTender === undefined) {
       errors.push('customerService.resolve.error.tender');
-    } else if (form.refundTender !== StaffServiceAgent.PaymentTender.Cash && !(form.refundReference ?? '').trim()) {
+    } else if (form.refundTender !== CinemaServiceAgent.PaymentTender.Cash && !(form.refundReference ?? '').trim()) {
       errors.push('customerService.resolve.error.reference');
     }
   }

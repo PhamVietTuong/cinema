@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '@ngx-translate/core';
-import { StaffServiceAgent } from '../../services/staff-http.service';
+import { CinemaServiceAgent } from '../../services/cinema-http.service';
 
 export interface ManagerOverrideDialogData {
   /** Theater whose on-duty approvers may confirm (admins must pass one). */
@@ -23,7 +23,7 @@ export interface ManagerOverrideDialogData {
  * In-place manager approval: pick an approver on duty and type their PIN. Resolves the `ManagerOverrideDTO` to send
  * with the sensitive request, or undefined on cancel. A caller who is already an approver must NOT open this dialog
  * (the API needs no PIN for them). The PIN is never cached: the form is destroyed with the dialog.
- * Opened through `DialogService.openManagerOverrideDialog()`; the app must provide `StaffServiceAgent.WorkforceHttpService`.
+ * Opened through `DialogService.openManagerOverrideDialog()`; the app must provide `CinemaServiceAgent.HttpService`.
  */
 @Component({
   selector: 'cl-manager-override-dialog',
@@ -81,14 +81,14 @@ export interface ManagerOverrideDialogData {
 })
 export class ManagerOverrideDialogComponent implements OnInit {
   form: FormGroup;
-  approvers: StaffServiceAgent.OverrideApproverDTO[] = [];
+  approvers: CinemaServiceAgent.OverrideApproverDTO[] = [];
   loaded = false;
 
   constructor(
     fb: FormBuilder,
-    private _workforce: StaffServiceAgent.WorkforceHttpService,
+    private _workforce: CinemaServiceAgent.HttpService,
     private _cdr: ChangeDetectorRef,
-    private _dialogRef: MatDialogRef<ManagerOverrideDialogComponent, StaffServiceAgent.ManagerOverrideDTO | undefined>,
+    private _dialogRef: MatDialogRef<ManagerOverrideDialogComponent, CinemaServiceAgent.ManagerOverrideDTO | undefined>,
     @Inject(MAT_DIALOG_DATA) public data: ManagerOverrideDialogData,
   ) {
     this.form = fb.group({
@@ -98,7 +98,7 @@ export class ManagerOverrideDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this._workforce.getOverrideApprovers(StaffServiceAgent.OverrideApproversRequest.fromJS({ theaterId: this.data.theaterId })).subscribe({
+    this._workforce.getOverrideApprovers(CinemaServiceAgent.OverrideApproversRequest.fromJS({ theaterId: this.data.theaterId })).subscribe({
       next: approvers => {
         this.approvers = approvers ?? [];
         if (this.approvers.length === 1) {
@@ -119,7 +119,7 @@ export class ManagerOverrideDialogComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    this._dialogRef.close(StaffServiceAgent.ManagerOverrideDTO.fromJS({
+    this._dialogRef.close(CinemaServiceAgent.ManagerOverrideDTO.fromJS({
       approverUserId: this.form.value.approverUserId,
       pin: this.form.value.pin,
     }));
