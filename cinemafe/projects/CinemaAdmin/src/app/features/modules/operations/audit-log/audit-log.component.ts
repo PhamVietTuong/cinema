@@ -25,7 +25,10 @@ type Dto = CinemaServiceAgent.AuditLogDTO;
 export class AuditLogManagementComponent extends BaseTableComponent<Dto> {
   override pageSize = 20;
 
-  theaters: CinemaServiceAgent.TheaterDTO[] = [];
+  filterFields: FilterBarField[] = [
+    { key: 'theaterId', type: 'select', labelKey: 'auditLog.theater', options: [] },
+    ...AUDIT_LOG_FILTER_FIELDS,
+  ];
 
   constructor(
     cd: ChangeDetectorRef,
@@ -40,19 +43,19 @@ export class AuditLogManagementComponent extends BaseTableComponent<Dto> {
   override ngOnInit(): void {
     super.ngOnInit();
     this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
-      .subscribe(r => { this.theaters = r.results ?? []; this._cd.markForCheck(); });
-  }
-
-  get filterFields(): FilterBarField[] {
-    return [
-      {
-        key: 'theaterId',
-        type: 'select',
-        labelKey: 'auditLog.theater',
-        options: this.theaters.map(t => ({ value: t.id ?? '', label: t.name ?? '' })),
-      },
-      ...AUDIT_LOG_FILTER_FIELDS,
-    ];
+      .subscribe(r => {
+        const theaters = r.results ?? [];
+        this.filterFields = [
+          {
+            key: 'theaterId',
+            type: 'select',
+            labelKey: 'auditLog.theater',
+            options: theaters.map(t => ({ value: t.id ?? '', label: t.name ?? '' })),
+          },
+          ...AUDIT_LOG_FILTER_FIELDS,
+        ];
+        this._cd.markForCheck();
+      });
   }
 
   protected override _createSearchForm(): void {

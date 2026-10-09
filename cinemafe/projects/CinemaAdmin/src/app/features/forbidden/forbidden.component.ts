@@ -23,6 +23,10 @@ export class ForbiddenComponent {
   /** Staff accounts (any staff-app role) get a link to the Staff app instead of a dead end. */
   readonly isStaff = computed(() => STAFF_APP_ROLES.includes(this._user()?.userTypeName ?? ''));
 
-  readonly staffLink = computed<ForbiddenExtraLink | null>(() =>
-    this.isStaff() ? { href: this.staffAppUrl, labelKey: 'forbidden.openStaffApp', icon: 'open_in_new' } : null);
+  readonly staffLink = computed<ForbiddenExtraLink | null>(() => {
+    if (!this.isStaff()) {
+      return null;
+    }
+    return { href: this.staffAppUrl, labelKey: 'forbidden.openStaffApp', icon: 'open_in_new' };
+  });
 }
