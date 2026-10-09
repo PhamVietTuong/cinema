@@ -29,9 +29,7 @@ public class StaffScopeTests
 
     [Theory]
     [InlineData(RoleNames.TheaterStaff)]
-    [InlineData(RoleNames.TheaterManager)]
-    [InlineData(RoleNames.KitchenStaff)]
-    public void BackOfficeScope_StaffAndKitchen_ArePinnedToTheirTheater(string role)
+    public void BackOfficeScope_StaffIsPinnedToTheirTheater(string role)
     {
         var ok = Principal(role, _theaterA).TryGetBackOfficeScope(out var scope);
 
@@ -40,10 +38,8 @@ public class StaffScopeTests
     }
 
     [Theory]
-    [InlineData(RoleNames.GateStaff)]
-    [InlineData(RoleNames.BoxOfficeStaff)]
     [InlineData(RoleNames.Customer)]
-    public void BackOfficeScope_GateBoxOfficeAndCustomers_AreRefused(string role)
+    public void BackOfficeScope_Customers_AreRefused(string role)
     {
         Principal(role, _theaterA).TryGetBackOfficeScope(out _).Should().BeFalse();
     }
@@ -58,19 +54,15 @@ public class StaffScopeTests
     }
 
     [Fact]
-    public void BackOfficeScope_KitchenWithoutTheaterClaim_IsRefused()
+    public void BackOfficeScope_TheaterStaffWithoutTheaterClaim_IsRefused()
     {
-        Principal(RoleNames.KitchenStaff).TryGetBackOfficeScope(out _).Should().BeFalse();
+        Principal(RoleNames.TheaterStaff).TryGetBackOfficeScope(out _).Should().BeFalse();
     }
 
     // ── Staff scope ──────────────────────────────────────────────────────────
 
     [Theory]
     [InlineData(RoleNames.TheaterStaff)]
-    [InlineData(RoleNames.TheaterManager)]
-    [InlineData(RoleNames.BoxOfficeStaff)]
-    [InlineData(RoleNames.GateStaff)]
-    [InlineData(RoleNames.KitchenStaff)]
     public void StaffScope_TheaterRoles_GetTheirTheater_AndOmittedTheaterDefaultsToIt(string role)
     {
         var ok = Principal(role, _theaterA).TryGetStaffScope(out var scope);
@@ -85,7 +77,7 @@ public class StaffScopeTests
     [Fact]
     public void StaffScope_TheaterRoleWithoutTheaterClaim_IsRefused()
     {
-        Principal(RoleNames.GateStaff).TryGetStaffScope(out _).Should().BeFalse();
+        Principal(RoleNames.TheaterStaff).TryGetStaffScope(out _).Should().BeFalse();
     }
 
     [Fact]
@@ -97,7 +89,7 @@ public class StaffScopeTests
     [Fact]
     public void StaffScope_OutOfScopeTheater_ThrowsAccessDenied()
     {
-        Principal(RoleNames.BoxOfficeStaff, _theaterA).TryGetStaffScope(out var scope);
+        Principal(RoleNames.TheaterStaff, _theaterA).TryGetStaffScope(out var scope);
 
         var act = () => scope.Resolve(_theaterB);
 
@@ -114,30 +106,6 @@ public class StaffScopeTests
         scope.Resolve(_theaterB).Should().Be(_theaterB);
         var act = () => scope.Resolve(null);
         act.Should().Throw<InvalidOperationException>();
-    }
-
-    [Fact]
-    public void StaffScope_RegionalManager_CarriesSeveralTheaters()
-    {
-        Principal(RoleNames.RegionalManager, _theaterA, _theaterB).TryGetStaffScope(out var scope);
-
-        scope.IsAll.Should().BeFalse();
-        scope.TheaterIds.Should().BeEquivalentTo(new[] { _theaterA, _theaterB });
-        scope.Resolve(_theaterB).Should().Be(_theaterB);
-        var act = () => scope.Resolve(null);
-        act.Should().Throw<InvalidOperationException>();
-        var outside = () => scope.Resolve(Guid.NewGuid());
-        outside.Should().Throw<AccessDeniedException>();
-    }
-
-    [Fact]
-    public void StaffScope_RegionalManagerWithoutTheaters_CanResolveNothing()
-    {
-        Principal(RoleNames.RegionalManager).TryGetStaffScope(out var scope).Should().BeTrue();
-
-        var act = () => scope.Resolve(_theaterA);
-
-        act.Should().Throw<AccessDeniedException>();
     }
 
     // ── Exception mapping: authorization failures are 403, never 401 ─────────
@@ -170,7 +138,7 @@ public class StaffScopeTests
     [Fact]
     public void OutOfScopeStaffRequest_EndsAs403_NotAs401()
     {
-        Principal(RoleNames.BoxOfficeStaff, _theaterA).TryGetStaffScope(out var scope);
+        Principal(RoleNames.TheaterStaff, _theaterA).TryGetStaffScope(out var scope);
 
         IActionResult result;
         try

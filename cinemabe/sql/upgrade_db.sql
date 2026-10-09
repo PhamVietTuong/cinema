@@ -137,37 +137,8 @@ BEGIN
 END
 
 -- ============================================================
--- Staff roles: TheaterManager user type
+-- Staff security foundation: override PIN, audit log
 -- ============================================================
-IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'TheaterManager')
-BEGIN
-    INSERT INTO [UserType] ([Id], [Name], [CreationTime])
-    VALUES (NEWID(), N'TheaterManager', GETUTCDATE());
-END
-
--- ============================================================
--- Staff security foundation: roles, override PIN, audit log
--- ============================================================
-IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'BoxOfficeStaff')
-BEGIN
-    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'BoxOfficeStaff', GETUTCDATE());
-END
-
-IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'GateStaff')
-BEGIN
-    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'GateStaff', GETUTCDATE());
-END
-
-IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'KitchenStaff')
-BEGIN
-    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'KitchenStaff', GETUTCDATE());
-END
-
-IF NOT EXISTS (SELECT 1 FROM [UserType] WHERE [Name] = N'RegionalManager')
-BEGIN
-    INSERT INTO [UserType] ([Id], [Name], [CreationTime]) VALUES (NEWID(), N'RegionalManager', GETUTCDATE());
-END
-
 IF COL_LENGTH('dbo.User', 'OverridePinHash') IS NULL
 BEGIN
     ALTER TABLE [User] ADD [OverridePinHash] varbinary(64) NULL;
@@ -496,22 +467,6 @@ BEGIN
 END
 -- ===== end P4 box office =====
 
--- ===== P9 reporting =====
--- Theater assignments of a RegionalManager (decision D12). Composite PK; NO ACTION FKs (users are soft-deleted,
--- a theater with assignments cannot be removed by surprise).
-IF OBJECT_ID('dbo.UserTheater', 'U') IS NULL
-BEGIN
-    CREATE TABLE [UserTheater] (
-        [UserId] uniqueidentifier NOT NULL,
-        [TheaterId] uniqueidentifier NOT NULL,
-        CONSTRAINT [PK_UserTheater] PRIMARY KEY ([UserId], [TheaterId]),
-        CONSTRAINT [FK_UserTheater_User_UserId] FOREIGN KEY ([UserId]) REFERENCES [User] ([Id]) ON DELETE NO ACTION,
-        CONSTRAINT [FK_UserTheater_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
-    );
-    CREATE INDEX [IX_UserTheater_TheaterId] ON [UserTheater] ([TheaterId]);
-END
--- ===== end P9 reporting =====
-
 -- ============================================================
 -- P6 food pickup: kitchen queue state on the invoice
 -- ============================================================
@@ -591,6 +546,25 @@ BEGIN
     CREATE INDEX [IX_Complaint_TheaterId_Status_CreationTime] ON [Complaint] ([TheaterId], [Status], [CreationTime]);
 END
 -- ── end P7 customer service ──────────────────────────────────────────────────
+
+-- ============================================================
+-- Removed staff roles cleanup: TheaterManager, BoxOfficeStaff, GateStaff, KitchenStaff, RegionalManager
+-- ============================================================
+IF EXISTS (
+    SELECT 1 FROM [User] u
+    JOIN [UserType] ut ON ut.Id = u.UserTypeId
+    WHERE ut.[Name] IN (N'TheaterManager', N'BoxOfficeStaff', N'GateStaff', N'KitchenStaff', N'RegionalManager')
+)
+BEGIN
+    THROW 50001, 'Users still hold a removed role (TheaterManager/BoxOfficeStaff/GateStaff/KitchenStaff/RegionalManager). Reassign them to another role before re-running this script.', 1;
+END
+
+IF OBJECT_ID('dbo.UserTheater', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE dbo.UserTheater;
+END
+
+DELETE FROM [UserType] WHERE [Name] IN (N'TheaterManager', N'BoxOfficeStaff', N'GateStaff', N'KitchenStaff', N'RegionalManager');
 
 -- ============================================================
 -- EF Core migrations baseline

@@ -4,8 +4,7 @@ namespace Cinema.Service.WebApiHost.Helpers;
 
 /// <summary>
 /// The theaters a staff caller may act on. Admins are <see cref="IsAll"/> (every theater, but must name one per
-/// request). Theater-scoped roles carry their theater; a RegionalManager carries several (one claim each, filled
-/// from the user-theater assignments in a later phase), hence a collection.
+/// request). Theater-scoped roles carry their theater, hence a collection.
 /// </summary>
 public sealed class StaffScope
 {

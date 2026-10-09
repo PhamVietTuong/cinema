@@ -33,8 +33,7 @@ interface UserRow {
 export class UsersManagementComponent extends BaseTableComponent {
   readonly UserRole = UserRole;
   readonly roles: UserRole[] = [
-    UserRole.Admin, UserRole.RegionalManager, UserRole.TheaterManager, UserRole.TheaterStaff,
-    UserRole.BoxOfficeStaff, UserRole.GateStaff, UserRole.KitchenStaff, UserRole.Customer,
+    UserRole.Admin, UserRole.TheaterStaff, UserRole.Customer,
   ];
 
   constructor(
@@ -78,12 +77,7 @@ export class UsersManagementComponent extends BaseTableComponent {
   private _toRole(userTypeName?: string): UserRole {
     switch (userTypeName) {
       case UserRoles.Admin: return UserRole.Admin;
-      case UserRoles.TheaterManager: return UserRole.TheaterManager;
       case UserRoles.TheaterStaff: return UserRole.TheaterStaff;
-      case UserRoles.BoxOfficeStaff: return UserRole.BoxOfficeStaff;
-      case UserRoles.GateStaff: return UserRole.GateStaff;
-      case UserRoles.KitchenStaff: return UserRole.KitchenStaff;
-      case UserRoles.RegionalManager: return UserRole.RegionalManager;
       default: return UserRole.Customer;
     }
   }

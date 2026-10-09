@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Staff;
@@ -7,7 +6,6 @@ using Cinema.Business.Security;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
-using Cinema.Data.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -181,7 +179,7 @@ public class StaffReportTests
     }
 
     [Fact]
-    public async Task Sales_TheaterManagerRequestingAnotherTheater_Throws403Exception()
+    public async Task Sales_ScopedCallerRequestingAnotherTheater_Throws403Exception()
     {
         var act = () => Sut().GetSalesAsync(Request(SalesGroupBy.Day, _theaterB), new[] { _theaterA });
 
@@ -190,7 +188,7 @@ public class StaffReportTests
     }
 
     [Fact]
-    public async Task Sales_RegionalManager_WithoutRequestedTheaters_IsLimitedToAssignedTheaters()
+    public async Task Sales_MultiTheaterScope_WithoutRequestedTheaters_IsLimitedToScopedTheaters()
     {
         SetupSales(new SalesAggregates());
 
@@ -200,7 +198,7 @@ public class StaffReportTests
     }
 
     [Fact]
-    public async Task Sales_RegionalManagerWithNoAssignments_GetsEmptyReport_WithoutQuerying()
+    public async Task Sales_EmptyScope_GetsEmptyReport_WithoutQuerying()
     {
         var report = await Sut().GetSalesAsync(Request(SalesGroupBy.Day), Array.Empty<Guid>());
 
@@ -284,75 +282,12 @@ public class StaffReportTests
         kpis.RefundRateByAmount.Should().Be(0);
     }
 
-    // ── RegionalManager assignments ──────────────────────────────────────────
-
-    private static User Regional(params Guid[] theaters)
-    {
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Email = "r@x.vn",
-            Name = "Regional",
-            Status = UserStatus.Active,
-            UserType = new UserType { Id = Guid.NewGuid(), Name = RoleNames.RegionalManager }
-        };
-        foreach (var id in theaters)
-        {
-            user.UserTheaters.Add(new UserTheater { UserId = user.Id, TheaterId = id });
-        }
-        return user;
-    }
-
     [Fact]
-    public void Jwt_RegionalManager_GetsOneTheaterClaimPerAssignment_AndOtherRolesKeepSingleClaim()
-    {
-        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            ["JWT:Secret"] = "0123456789abcdef0123456789abcdef",
-            ["JWT:Issuer"] = "i",
-            ["JWT:Audience"] = "a"
-        }).Build();
-        var sut = new JwtTokenService(config);
-
-        var regional = new JwtSecurityTokenHandler().ReadJwtToken(sut.GenerateToken(Regional(_theaterA, _theaterB)));
-        regional.Claims.Where(c => c.Type == "theaterId").Select(c => c.Value)
-            .Should().BeEquivalentTo(new[] { _theaterA.ToString(), _theaterB.ToString() });
-
-        var manager = Regional();
-        manager.UserType.Name = RoleNames.TheaterManager;
-        manager.TheaterId = _theaterA;
-        var single = new JwtSecurityTokenHandler().ReadJwtToken(sut.GenerateToken(manager));
-        single.Claims.Where(c => c.Type == "theaterId").Should().ContainSingle();
-    }
-
-    private ManagerOverrideService Overrides(User approver, out List<AuditLog> staged)
-    {
-        var rows = new List<AuditLog>();
-        staged = rows;
-        _uowMock.Setup(u => u.AuditLogStore.Stage(It.IsAny<AuditLog>())).Callback<AuditLog>(rows.Add);
-        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _uowMock.Setup(u => u.UserStore.GetByIdAsync(approver.Id)).ReturnsAsync(approver);
-        return new ManagerOverrideService(_uowMock.Object, new AuditLogger(_uowMock.Object));
-    }
-
-    [Fact]
-    public async Task Override_RegionalManager_ApprovesOnlyAssignedTheaters()
-    {
-        var regional = Regional(_theaterA);
-        var sut = Overrides(regional, out _);
-
-        (await sut.VerifyAsync(_theaterA, regional.Id, null, AuditAction.Refund)).Should().Be(regional.Id);
-
-        var act = () => sut.VerifyAsync(_theaterB, regional.Id, null, AuditAction.Refund);
-        await act.Should().ThrowAsync<AccessDeniedException>();
-    }
-
-    [Fact]
-    public async Task GetApprovers_AsksTheStoreToIncludeAssignedRegionalManagers()
+    public async Task GetApprovers_PassesAdminAsGlobalRole()
     {
         _uowMock.Setup(u => u.UserStore.GetApproversAsync(
-                _theaterA, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>()))
-            .ReturnsAsync(new List<(Guid, string)> { (Guid.NewGuid(), "Regional") });
+                _theaterA, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>()))
+            .ReturnsAsync(new List<(Guid, string)> { (Guid.NewGuid(), "Admin") });
         var sut = new ManagerOverrideService(_uowMock.Object, new AuditLogger(_uowMock.Object));
 
         var approvers = await sut.GetApproversAsync(_theaterA);
@@ -361,7 +296,6 @@ public class StaffReportTests
         _uowMock.Verify(u => u.UserStore.GetApproversAsync(
             _theaterA,
             It.IsAny<IReadOnlyCollection<string>>(),
-            It.IsAny<IReadOnlyCollection<string>>(),
-            It.Is<IReadOnlyCollection<string>>(r => r.Contains(RoleNames.RegionalManager))), Times.Once);
+            It.Is<IReadOnlyCollection<string>>(r => r.Contains(RoleNames.Admin))), Times.Once);
     }
 }

@@ -745,9 +745,5 @@
   "warehouse": {
     "userTheater": "Rạp",
     "userTheaterSelect": "Chọn rạp"
-  },
-  "adminUserTheaters": {
-    "label": "Rạp phụ trách",
-    "select": "Chọn rạp"
   }
 }

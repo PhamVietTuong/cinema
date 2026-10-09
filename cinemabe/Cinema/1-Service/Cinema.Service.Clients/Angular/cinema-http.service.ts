@@ -20913,7 +20913,6 @@ export enum AuditAction {
     BlockSeat = 13,
     BlockRoom = 14,
     TicketAdmitOverride = 15,
-    UserTheatersChanged = 16,
     GateScan = 17,
 }
 

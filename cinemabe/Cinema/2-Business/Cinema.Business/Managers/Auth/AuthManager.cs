@@ -587,45 +587,6 @@ public class AuthManager : IAuthManager
         await _uow.SaveChangesAsync();
     }
 
-    public async Task<UserTheatersDTO> GetUserTheatersAsync(Guid userId)
-    {
-        await LoadRegionalManagerAsync(userId);
-        return new UserTheatersDTO { UserId = userId, TheaterIds = await _uow.UserStore.GetAssignedTheaterIdsAsync(userId) };
-    }
-
-    public async Task<UserTheatersDTO> SetUserTheatersAsync(UserTheatersDTO request)
-    {
-        await LoadRegionalManagerAsync(request.UserId);
-
-        var theaterIds = (request.TheaterIds ?? new List<Guid>()).Distinct().ToList();
-        if (theaterIds.Count > 0)
-        {
-            var existing = await _uow.TheaterStore.CountAsync(t => theaterIds.Contains(t.Id));
-            if (existing != theaterIds.Count)
-            {
-                throw new InvalidOperationException("Theater not found.");
-            }
-        }
-
-        await _uow.UserStore.ReplaceAssignedTheatersAsync(request.UserId, theaterIds);
-        await _uow.SaveChangesAsync();
-        return new UserTheatersDTO { UserId = request.UserId, TheaterIds = theaterIds };
-    }
-
-    /// <summary>Theater assignments only exist for RegionalManagers (every other role uses <c>User.TheaterId</c>).</summary>
-    private async Task LoadRegionalManagerAsync(Guid userId)
-    {
-        var user = await _uow.UserStore.GetByIdAsync(userId);
-        if (user == null)
-        {
-            throw new KeyNotFoundException("User not found.");
-        }
-        if (user.UserType?.Name != RoleNames.RegionalManager)
-        {
-            throw new InvalidOperationException($"Theater assignments only apply to the {RoleNames.RegionalManager} role.");
-        }
-    }
-
     private AuthResponse BuildAuthResponse(User user)
     {
         return new()

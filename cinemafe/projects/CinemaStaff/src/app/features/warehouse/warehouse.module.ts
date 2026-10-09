@@ -7,7 +7,7 @@ import { StoragePlanListComponent } from './storage-plans/storage-plan-list.comp
 import { StoragePlanDetailComponent } from './storage-plans/storage-plan-detail.component';
 
 /**
- * Warehouse pages for all back-office roles (Admin, TheaterManager, TheaterStaff):
+ * Warehouse pages for all back-office roles (Admin, TheaterStaff):
  * inventory and storage (restock) plans. Mounted behind roleGuard(BACK_OFFICE_ROLES)
  * via one pass-through entry in app.routes.ts. Every page is scoped to the theater from
  * TheaterContextService.

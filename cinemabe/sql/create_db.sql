@@ -29,7 +29,7 @@ DROP TABLE dbo.Incident;
 -- P7 customer service
 IF OBJECT_ID('dbo.Complaint', 'U') IS NOT NULL
 DROP TABLE dbo.Complaint;
--- P9 reporting
+-- legacy (removed staff roles)
 IF OBJECT_ID('dbo.UserTheater', 'U') IS NOT NULL
 DROP TABLE dbo.UserTheater;
 -- P4 box office
@@ -992,22 +992,6 @@ BEGIN
     CREATE INDEX [IX_CashMovement_CashDrawerSessionId] ON [CashMovement] ([CashDrawerSessionId]);
 END
 -- ===== end P4 box office =====
-
--- ===== P9 reporting =====
--- Theater assignments of a RegionalManager (decision D12). Composite PK; NO ACTION FKs (users are soft-deleted,
--- a theater with assignments cannot be removed by surprise).
-IF OBJECT_ID('dbo.UserTheater', 'U') IS NULL
-BEGIN
-    CREATE TABLE [UserTheater] (
-        [UserId] uniqueidentifier NOT NULL,
-        [TheaterId] uniqueidentifier NOT NULL,
-        CONSTRAINT [PK_UserTheater] PRIMARY KEY ([UserId], [TheaterId]),
-        CONSTRAINT [FK_UserTheater_User_UserId] FOREIGN KEY ([UserId]) REFERENCES [User] ([Id]) ON DELETE NO ACTION,
-        CONSTRAINT [FK_UserTheater_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
-    );
-    CREATE INDEX [IX_UserTheater_TheaterId] ON [UserTheater] ([TheaterId]);
-END
--- ===== end P9 reporting =====
 
 -- ============================================================
 -- P6 food pickup: kitchen queue state on the invoice

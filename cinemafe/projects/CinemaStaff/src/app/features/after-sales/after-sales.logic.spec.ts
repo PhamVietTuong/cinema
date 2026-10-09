@@ -15,15 +15,12 @@ const Tender = CinemaServiceAgent.PaymentTender;
 describe('after-sales logic', () => {
   describe('needsManagerOverride', () => {
     it('is required for sellers who are not approvers', () => {
-      expect(needsManagerOverride(UserRoles.BoxOfficeStaff)).toBe(true);
       expect(needsManagerOverride(UserRoles.TheaterStaff)).toBe(true);
       expect(needsManagerOverride(null)).toBe(true);
     });
 
     it('is skipped for approver roles', () => {
       expect(needsManagerOverride(UserRoles.Admin)).toBe(false);
-      expect(needsManagerOverride(UserRoles.TheaterManager)).toBe(false);
-      expect(needsManagerOverride(UserRoles.RegionalManager)).toBe(false);
     });
   });
 

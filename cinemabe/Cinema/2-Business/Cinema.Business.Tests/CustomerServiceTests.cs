@@ -43,8 +43,8 @@ public class CustomerServiceTests
         _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<MemberShip, bool>>>()))
             .ReturnsAsync(new List<MemberShip>());
 
-        _staff = NewUser(RoleNames.BoxOfficeStaff);
-        _manager = NewUser(RoleNames.TheaterManager);
+        _staff = NewUser(RoleNames.TheaterStaff);
+        _manager = NewUser(RoleNames.Admin);
         PasswordHasher.CreateHash(_pin, out var hash, out var salt);
         _manager.OverridePinHash = hash;
         _manager.OverridePinSalt = salt;

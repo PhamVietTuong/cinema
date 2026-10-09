@@ -7,12 +7,7 @@ import { authGuard, roleGuard, COMPLAINT_ROLES, homeRedirectByRole, BACK_OFFICE_
  */
 const STAFF_LANDING: Record<string, string> = {
   [UserRoles.Admin]: '/home',
-  [UserRoles.TheaterManager]: '/home',
   [UserRoles.TheaterStaff]: '/home',
-  [UserRoles.RegionalManager]: '/home',
-  [UserRoles.KitchenStaff]: '/kitchen',
-  [UserRoles.GateStaff]: '/gate',
-  [UserRoles.BoxOfficeStaff]: '/pos',
 };
 
 export const routes: Routes = [

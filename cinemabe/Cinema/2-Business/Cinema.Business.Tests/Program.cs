@@ -43,11 +43,11 @@ await CreateAccount(services,
     userTypeName: "Customer",
     label:        "User");
 
-// ─── Theater staff accounts (need a theater) ─────────────────────────────────
+// ─── Theater staff account (needs a theater) ──────────────────────────────────
 var seedTheaterId = await GetFirstTheaterId(services);
 if (seedTheaterId == null)
 {
-    Console.WriteLine("[Staff] No theaters found — skipped the theater staff accounts (staff, manager, boxoffice, gate, kitchen). Seed theaters, then re-run.");
+    Console.WriteLine("[Staff] No theaters found — skipped the theater staff account. Seed theaters, then re-run.");
 }
 else
 {
@@ -59,52 +59,7 @@ else
         userTypeName: "TheaterStaff",
         label:        "Staff",
         theaterId:    seedTheaterId);
-
-    await CreateAccount(services,
-        name:         "Theater Manager",
-        email:        "manager@cinema.vn",
-        phone:        "0900000003",
-        password:     "Manager@123",
-        userTypeName: "TheaterManager",
-        label:        "Manager",
-        theaterId:    seedTheaterId);
-
-    await CreateAccount(services,
-        name:         "Box Office Staff",
-        email:        "boxoffice@cinema.vn",
-        phone:        "0900000004",
-        password:     "Box@12345",
-        userTypeName: "BoxOfficeStaff",
-        label:        "BoxOffice",
-        theaterId:    seedTheaterId);
-
-    await CreateAccount(services,
-        name:         "Gate Staff",
-        email:        "gate@cinema.vn",
-        phone:        "0900000005",
-        password:     "Gate@12345",
-        userTypeName: "GateStaff",
-        label:        "Gate",
-        theaterId:    seedTheaterId);
-
-    await CreateAccount(services,
-        name:         "Kitchen Staff",
-        email:        "kitchen@cinema.vn",
-        phone:        "0900000006",
-        password:     "Kitchen@123",
-        userTypeName: "KitchenStaff",
-        label:        "Kitchen",
-        theaterId:    seedTheaterId);
 }
-
-// ─── Regional manager (no theater; theater assignments arrive in a later phase) ──
-await CreateAccount(services,
-    name:         "Regional Manager",
-    email:        "regional@cinema.vn",
-    phone:        "0900000007",
-    password:     "Regional@123",
-    userTypeName: "RegionalManager",
-    label:        "Regional");
 
 Console.WriteLine();
 Console.WriteLine("Done.");

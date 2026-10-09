@@ -25,9 +25,6 @@ public static class ClaimsPrincipalExtensions
     public static bool IsTheaterStaff(this ClaimsPrincipal principal)
         => principal.IsInRole(RoleNames.TheaterStaff);
 
-    public static bool IsTheaterManager(this ClaimsPrincipal principal)
-        => principal.IsInRole(RoleNames.TheaterManager);
-
     /// <summary>The theater a staff account manages, or null (admins/customers have no scope).</summary>
     public static Guid? GetTheaterId(this ClaimsPrincipal principal)
         => Guid.TryParse(principal.FindFirstValue("theaterId"), out var id) ? id : null;
@@ -70,8 +67,8 @@ public static class ClaimsPrincipalExtensions
 
     /// <summary>
     /// Resolves the scope of a staff-app caller (<see cref="RoleNames.StaffApp"/>). Admin: every theater.
-    /// RegionalManager: the theaters in their claims (possibly none yet). Theater-scoped roles: their theater,
-    /// and false (caller answers 403, never 401) when the token carries none or the role is not a staff role.
+    /// Theater-scoped roles: their theater, and false (caller answers 403, never 401) when the token carries
+    /// none or the role is not a staff role.
     /// </summary>
     public static bool TryGetStaffScope(this ClaimsPrincipal principal, out StaffScope scope)
     {
@@ -79,11 +76,6 @@ public static class ClaimsPrincipalExtensions
         if (principal.IsAdmin())
         {
             scope = new StaffScope(true, Array.Empty<Guid>());
-            return true;
-        }
-        if (principal.IsInRole(RoleNames.RegionalManager))
-        {
-            scope = new StaffScope(false, principal.GetTheaterIds());
             return true;
         }
         if (IsInAnyRole(principal, _theaterScopedRoles))

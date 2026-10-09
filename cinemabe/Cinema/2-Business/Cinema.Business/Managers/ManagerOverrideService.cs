@@ -117,28 +117,15 @@ public class ManagerOverrideService : IManagerOverrideService
     {
         var approvers = await _uow.UserStore.GetApproversAsync(
             theaterId,
-            new[] { RoleNames.TheaterManager },
-            new[] { RoleNames.Admin },
-            new[] { RoleNames.RegionalManager });
+            Array.Empty<string>(),
+            new[] { RoleNames.Admin });
         return approvers.Select(a => new OverrideApproverDTO { Id = a.Id, Name = a.Name }).ToList();
     }
 
-    /// <summary>
-    /// Admin approves anywhere; a TheaterManager only in their own theater; a RegionalManager only in the theaters
-    /// assigned to them (<see cref="User.UserTheaters"/>, loaded by the user store).
-    /// </summary>
+    /// <summary>Admin approves anywhere; no other role is an approver.</summary>
     private static bool IsApproverFor(User user, Guid theaterId)
     {
-        var role = user.UserType?.Name;
-        if (role == RoleNames.Admin)
-        {
-            return true;
-        }
-        if (role == RoleNames.RegionalManager)
-        {
-            return user.UserTheaters.Any(ut => ut.TheaterId == theaterId);
-        }
-        return role == RoleNames.TheaterManager && user.TheaterId == theaterId;
+        return user.UserType?.Name == RoleNames.Admin;
     }
 
     private async Task RecordFailureAsync(Guid theaterId, Guid actorUserId, Guid approverUserId, AuditAction attemptedAction, string cause)

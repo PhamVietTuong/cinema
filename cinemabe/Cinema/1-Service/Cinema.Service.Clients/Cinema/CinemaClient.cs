@@ -19654,8 +19654,6 @@ namespace Cinema.Service.Clients.Cinema
 
         TicketAdmitOverride = 15,
 
-        UserTheatersChanged = 16,
-
         GateScan = 17,
 
     }

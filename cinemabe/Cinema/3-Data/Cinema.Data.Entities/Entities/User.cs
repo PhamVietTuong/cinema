@@ -41,8 +41,6 @@ public class User : BaseEntity
     public DateTime? OverridePinLockoutEndUtc { get; set; }
     public UserType UserType { get; set; } = null!;
     public MemberShip? MemberShip { get; set; }
-    /// <summary>The theaters of a RegionalManager (empty for every other role).</summary>
-    public ICollection<UserTheater> UserTheaters { get; set; } = new List<UserTheater>();
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public ICollection<Evaluation> Evaluations { get; set; } = new List<Evaluation>();

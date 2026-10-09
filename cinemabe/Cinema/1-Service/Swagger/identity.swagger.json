@@ -603,83 +603,6 @@
           }
         ]
       }
-    },
-    "/api/Identity/GetUserTheaters": {
-      "post": {
-        "tags": [
-          "Identity"
-        ],
-        "operationId": "Identity_GetUserTheaters",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserTheatersDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Identity/SetUserTheaters": {
-      "post": {
-        "tags": [
-          "Identity"
-        ],
-        "operationId": "Identity_SetUserTheaters",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserTheatersDTO"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserTheatersDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
     }
   },
   "components": {
@@ -1210,23 +1133,6 @@
           },
           "status": {
             "$ref": "#/components/schemas/UserStatus"
-          }
-        }
-      },
-      "UserTheatersDTO": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "theaterIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "guid"
-            }
           }
         }
       }
