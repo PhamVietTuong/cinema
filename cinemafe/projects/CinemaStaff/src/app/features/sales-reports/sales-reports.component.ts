@@ -12,7 +12,6 @@ import {
   FilterBarOption,
   SalesGroupByValues,
   SharedModule,
-  StaffServiceAgent,
   UserRoles,
   hideLoading,
   selectCurrentUser,
@@ -189,7 +188,6 @@ export class SalesReportsComponent {
   private readonly _fb = inject(FormBuilder);
   private readonly _store = inject(Store);
   private readonly _cinema = inject(CinemaServiceAgent.HttpService);
-  private readonly _staff = inject(StaffServiceAgent.StaffReportHttpService);
 
   private readonly _user = this._store.selectSignal(selectCurrentUser);
   /** A TheaterManager is pinned to their own theater and gets no theater picker. */
@@ -199,7 +197,7 @@ export class SalesReportsComponent {
   readonly form = this._fb.group({
     from: [localDayString(new Date(), 6)],
     to: [localDayString(new Date())],
-    groupBy: ['' + StaffServiceAgent.SalesGroupBy.Day],
+    groupBy: ['' + CinemaServiceAgent.SalesGroupBy.Day],
     theaterIds: [[] as string[]],
   });
 
@@ -221,9 +219,9 @@ export class SalesReportsComponent {
 
   readonly rangeError = signal<RangeError | null>(null);
   readonly loaded = signal(false);
-  readonly sales = signal<StaffServiceAgent.SalesReportDTO | null>(null);
-  readonly occupancy = signal<StaffServiceAgent.OccupancyReportDTO | null>(null);
-  readonly kpis = signal<StaffServiceAgent.StaffKpisDTO | null>(null);
+  readonly sales = signal<CinemaServiceAgent.SalesReportDTO | null>(null);
+  readonly occupancy = signal<CinemaServiceAgent.OccupancyReportDTO | null>(null);
+  readonly kpis = signal<CinemaServiceAgent.StaffKpisDTO | null>(null);
 
   readonly salesBars = computed(() => salesChartRows(this.sales()?.rows ?? [], value => `${Math.round(value).toLocaleString('vi-VN')}đ`));
   readonly occupancyRows = computed(() => (this.occupancy()?.rows ?? []).slice(0, MAX_OCCUPANCY_ROWS));
@@ -243,7 +241,7 @@ export class SalesReportsComponent {
     this.rangeError.set(validateRange(value.from, value.to));
   }
 
-  rateBar(row: StaffServiceAgent.OccupancyRowDTO) {
+  rateBar(row: CinemaServiceAgent.OccupancyRowDTO) {
     return occupancyChartRows([row], rate => `${Math.round(rate * 100)}%`).map(bar => ({ ...bar, label: '' }));
   }
 
@@ -257,14 +255,14 @@ export class SalesReportsComponent {
     const request = buildReportRequest(
       value.from ?? '',
       value.to ?? '',
-      Number(value.groupBy) as StaffServiceAgent.SalesGroupBy,
+      Number(value.groupBy) as CinemaServiceAgent.SalesGroupBy,
       pinned ? [pinned] : (value.theaterIds ?? []),
     );
     this._store.dispatch(showLoading());
     forkJoin({
-      sales: this._staff.getSales(request),
-      occupancy: this._staff.getOccupancy(request),
-      kpis: this._staff.getKpis(request),
+      sales: this._cinema.getSales(request),
+      occupancy: this._cinema.getOccupancy(request),
+      kpis: this._cinema.getKpis(request),
     }).subscribe({
       next: result => {
         this.sales.set(result.sales);

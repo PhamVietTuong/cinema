@@ -3,7 +3,7 @@ import { Store } from '@ngrx/store';
 import {
   EmptyStateComponent,
   SharedModule,
-  StaffServiceAgent,
+  CinemaServiceAgent,
   StatusPillComponent,
   scanOutcomeSpec,
   showException,
@@ -145,8 +145,7 @@ const CAMERA_SCAN_INTERVAL_MS = 300;
   `],
 })
 export class GateScanComponent implements OnDestroy {
-  private readonly _gate = inject(StaffServiceAgent.GateHttpService);
-  private readonly _operations = inject(StaffServiceAgent.OperationsHttpService);
+  private readonly _gate = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
   private readonly _store = inject(Store);
 
@@ -159,7 +158,7 @@ export class GateScanComponent implements OnDestroy {
 
   readonly theaterId = this._theater.currentTheaterId;
   readonly busy = signal(false);
-  readonly result = signal<StaffServiceAgent.ScanTicketResultDTO | null>(null);
+  readonly result = signal<CinemaServiceAgent.ScanTicketResultDTO | null>(null);
   readonly recent = signal<RecentScan[]>([]);
   readonly showTimes = signal<ShowTimeOption[]>([]);
   readonly showTimeId = signal<string>('');
@@ -251,7 +250,7 @@ export class GateScanComponent implements OnDestroy {
     return { theaterId: this.theaterId(), showTimeId: this.showTimeId(), ageConfirmed };
   }
 
-  private _scan(request: StaffServiceAgent.ScanTicketRequest): void {
+  private _scan(request: CinemaServiceAgent.ScanTicketRequest): void {
     this.busy.set(true);
     this._gate.scan(request).subscribe({
       next: result => {
@@ -275,7 +274,7 @@ export class GateScanComponent implements OnDestroy {
       this.showTimes.set([]);
       return;
     }
-    this._operations.getScheduleBoard(StaffServiceAgent.ScheduleBoardRequest.fromJS({ theaterId, date: new Date() })).subscribe({
+    this._gate.getScheduleBoard(CinemaServiceAgent.ScheduleBoardRequest.fromJS({ theaterId, date: new Date() })).subscribe({
       next: board => {
         const options: { id: string; label: string; start: number }[] = [];
         for (const room of board.rooms ?? []) {
@@ -300,7 +299,7 @@ export class GateScanComponent implements OnDestroy {
   }
 
   /** Sound and vibration cue; best effort, never blocks the scan. */
-  private _cue(result: StaffServiceAgent.ScanTicketResultDTO): void {
+  private _cue(result: CinemaServiceAgent.ScanTicketResultDTO): void {
     try {
       const tone = scanOutcomeSpec(result.outcome).tone;
       navigator.vibrate?.(tone === 'success' ? 80 : [200, 100, 200]);

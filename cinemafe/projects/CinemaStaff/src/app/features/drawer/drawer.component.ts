@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { FormBuilder, FormGroupDirective, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  EmptyStateComponent, SharedModule, StaffServiceAgent, ToastService, apiErrorMessage, cashMovementTypeLabel,
+  EmptyStateComponent, SharedModule, CinemaServiceAgent, ToastService, apiErrorMessage, cashMovementTypeLabel,
 } from 'CinemaLib';
 import { CashDrawerService } from '../../core/cash-drawer.service';
 import { ManagerApprovalService } from '../../core/manager-approval.service';
@@ -141,7 +141,7 @@ const TERMINAL_STORAGE_KEY = 'cinema_staff_terminal';
   `],
 })
 export class DrawerComponent {
-  readonly CashMovementType = StaffServiceAgent.CashMovementType;
+  readonly CashMovementType = CinemaServiceAgent.CashMovementType;
   readonly typeLabel = cashMovementTypeLabel;
   readonly theaterCtx = inject(TheaterContextService);
   readonly drawerSvc = inject(CashDrawerService);
@@ -160,7 +160,7 @@ export class DrawerComponent {
   });
 
   readonly moveForm = this._fb.nonNullable.group({
-    type: [StaffServiceAgent.CashMovementType.PayIn as StaffServiceAgent.CashMovementType],
+    type: [CinemaServiceAgent.CashMovementType.PayIn as CinemaServiceAgent.CashMovementType],
     amount: [0, [Validators.required, Validators.min(1)]],
     note: ['', Validators.required],
   });
@@ -204,7 +204,7 @@ export class DrawerComponent {
       return;
     }
     const { type, amount, note } = this.moveForm.getRawValue();
-    if (type === StaffServiceAgent.CashMovementType.PayOut) {
+    if (type === CinemaServiceAgent.CashMovementType.PayOut) {
       // A pay-out takes cash out of the till: it needs a manager unless the caller is one.
       this._approval.request().subscribe(approval => {
         if (approval) {
@@ -216,7 +216,7 @@ export class DrawerComponent {
     }
   }
 
-  private _record(type: StaffServiceAgent.CashMovementType, amount: number, note: string, directive: FormGroupDirective, override?: StaffServiceAgent.ManagerOverrideDTO): void {
+  private _record(type: CinemaServiceAgent.CashMovementType, amount: number, note: string, directive: FormGroupDirective, override?: CinemaServiceAgent.ManagerOverrideDTO): void {
     this.busy.set(true);
     this.drawerSvc.payInOut(type, Math.round(amount), note.trim(), override).subscribe({
       next: () => {

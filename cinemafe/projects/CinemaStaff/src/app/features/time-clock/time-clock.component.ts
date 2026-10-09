@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import {
-  APPROVER_ROLES, EmptyStateComponent, MAX_RANGE_DAYS, SharedModule, StaffServiceAgent, addDays, hideLoading, isRangeWithin,
+  APPROVER_ROLES, EmptyStateComponent, MAX_RANGE_DAYS, SharedModule, CinemaServiceAgent, addDays, hideLoading, isRangeWithin,
   parseDateKey, selectCurrentUser, showError, showException, showLoading, showSuccess, startOfDay, toDateKey, toWallClockUtc,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
@@ -148,17 +148,17 @@ export function formatMinutes(minutes: number | undefined): string {
   `],
 })
 export class TimeClockComponent implements OnInit {
-  status: StaffServiceAgent.ClockStatusDTO | null = null;
-  myShifts: StaffServiceAgent.StaffShiftDTO[] = [];
-  sheet: StaffServiceAgent.TimeClockEntryDTO[] = [];
-  staff: StaffServiceAgent.TheaterStaffDTO[] = [];
+  status: CinemaServiceAgent.ClockStatusDTO | null = null;
+  myShifts: CinemaServiceAgent.StaffShiftDTO[] = [];
+  sheet: CinemaServiceAgent.TimeClockEntryDTO[] = [];
+  staff: CinemaServiceAgent.TheaterStaffDTO[] = [];
   sheetLoaded = false;
   note = '';
   busy = false;
   sheetForm: FormGroup;
   readonly format = formatMinutes;
 
-  private readonly _workforce = inject(StaffServiceAgent.WorkforceHttpService);
+  private readonly _workforce = inject(CinemaServiceAgent.HttpService);
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _translate = inject(TranslateService);
@@ -195,7 +195,7 @@ export class TimeClockComponent implements OnInit {
     this._store.dispatch(showLoading());
     forkJoin({
       status: this._workforce.getMyClockStatus(),
-      shifts: this._workforce.getMyShifts(StaffServiceAgent.MyShiftsRequest.fromJS({
+      shifts: this._workforce.getMyShifts(CinemaServiceAgent.MyShiftsRequest.fromJS({
         from: toWallClockUtc(today), to: toWallClockUtc(addDays(today, 14)),
       })),
     }).subscribe({
@@ -213,7 +213,7 @@ export class TimeClockComponent implements OnInit {
 
   clockIn(): void {
     this._act(
-      this._workforce.clockIn(StaffServiceAgent.ClockInRequest.fromJS({
+      this._workforce.clockIn(CinemaServiceAgent.ClockInRequest.fromJS({
         theaterId: this._theaterContext.currentTheaterId() ?? undefined, note: this.note.trim() || undefined,
       })),
       'timeClock.toast.in',
@@ -222,7 +222,7 @@ export class TimeClockComponent implements OnInit {
 
   clockOut(): void {
     this._act(
-      this._workforce.clockOut(StaffServiceAgent.ClockOutRequest.fromJS({ note: this.note.trim() || undefined })),
+      this._workforce.clockOut(CinemaServiceAgent.ClockOutRequest.fromJS({ note: this.note.trim() || undefined })),
       'timeClock.toast.out',
     );
   }
@@ -241,7 +241,7 @@ export class TimeClockComponent implements OnInit {
       return;
     }
     this._store.dispatch(showLoading());
-    this._workforce.getTimeSheet(StaffServiceAgent.TimeSheetRequest.fromJS({
+    this._workforce.getTimeSheet(CinemaServiceAgent.TimeSheetRequest.fromJS({
       theaterId: this.theaterId, from: toWallClockUtc(from), to: toWallClockUtc(to), userId: v.userId || undefined,
     })).subscribe({
       next: entries => {
@@ -256,7 +256,7 @@ export class TimeClockComponent implements OnInit {
     });
   }
 
-  private _act(request$: ReturnType<StaffServiceAgent.WorkforceHttpService['clockIn']>, toastKey: string): void {
+  private _act(request$: ReturnType<CinemaServiceAgent.HttpService['clockIn']>, toastKey: string): void {
     this.busy = true;
     this._store.dispatch(showLoading());
     request$.subscribe({
@@ -281,7 +281,7 @@ export class TimeClockComponent implements OnInit {
   }
 
   private _loadStaff(theaterId: string): void {
-    this._workforce.getTheaterStaff(StaffServiceAgent.GetTheaterStaffRequest.fromJS({ theaterId })).subscribe({
+    this._workforce.getTheaterStaff(CinemaServiceAgent.GetTheaterStaffRequest.fromJS({ theaterId })).subscribe({
       next: staff => {
         this.staff = staff ?? [];
         this._cd.markForCheck();

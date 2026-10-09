@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import {
-  EmptyStateComponent, FilterBarComponent, FilterBarField, SharedModule, StaffServiceAgent, StaffTaskStatusValues,
+  EmptyStateComponent, FilterBarComponent, FilterBarField, SharedModule, CinemaServiceAgent, StaffTaskStatusValues,
   StatusPillComponent, hideLoading, showException, showLoading,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
@@ -85,13 +85,13 @@ export class TaskBoardComponent implements OnInit {
   ];
 
   searchForm: FormGroup;
-  rows: StaffServiceAgent.StaffTaskDTO[] = [];
-  staff: StaffServiceAgent.TheaterStaffDTO[] = [];
+  rows: CinemaServiceAgent.StaffTaskDTO[] = [];
+  staff: CinemaServiceAgent.TheaterStaffDTO[] = [];
   total = 0;
   pageIndex = 0;
   loading = false;
 
-  private readonly _workforce = inject(StaffServiceAgent.WorkforceHttpService);
+  private readonly _workforce = inject(CinemaServiceAgent.HttpService);
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _dialog = inject(MatDialog);
@@ -148,7 +148,7 @@ export class TaskBoardComponent implements OnInit {
     }
     this.loading = true;
     this._store.dispatch(showLoading());
-    this._workforce.getTasks(StaffServiceAgent.PagingSearchDTO.fromJS({
+    this._workforce.getTasks(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: this.pageIndex + 1, pageSize: this.pageSize, filters,
     })).subscribe({
       next: result => {
@@ -164,7 +164,7 @@ export class TaskBoardComponent implements OnInit {
     });
   }
 
-  openDialog(task?: StaffServiceAgent.StaffTaskDTO): void {
+  openDialog(task?: CinemaServiceAgent.StaffTaskDTO): void {
     this._dialog.open(TaskDialog, { width: '520px', maxWidth: '95vw', data: { theaterId: this.theaterId, staff: this.staff, task } })
       .afterClosed().subscribe(saved => {
         if (saved) {
@@ -174,7 +174,7 @@ export class TaskBoardComponent implements OnInit {
   }
 
   private _loadStaff(theaterId: string): void {
-    this._workforce.getTheaterStaff(StaffServiceAgent.GetTheaterStaffRequest.fromJS({ theaterId })).subscribe({
+    this._workforce.getTheaterStaff(CinemaServiceAgent.GetTheaterStaffRequest.fromJS({ theaterId })).subscribe({
       next: staff => {
         this.staff = staff ?? [];
         // New array so the filter bar re-renders with the assignee options.

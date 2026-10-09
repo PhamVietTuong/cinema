@@ -3,7 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { forkJoin } from 'rxjs';
 import {
-  EmptyStateComponent, MAX_RANGE_DAYS, SharedModule, StaffServiceAgent, addDays, hideLoading, isRangeWithin,
+  EmptyStateComponent, MAX_RANGE_DAYS, SharedModule, CinemaServiceAgent, addDays, hideLoading, isRangeWithin,
   showException, showLoading, startOfWeek, toWallClockUtc, weekDays,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
@@ -89,11 +89,11 @@ import { shiftsOnDay, totalShiftHours } from './shift-times';
 export class RosterComponent {
   weekStart = startOfWeek(new Date());
   days = weekDays(this.weekStart);
-  staff: StaffServiceAgent.TheaterStaffDTO[] = [];
-  shifts: StaffServiceAgent.StaffShiftDTO[] = [];
+  staff: CinemaServiceAgent.TheaterStaffDTO[] = [];
+  shifts: CinemaServiceAgent.StaffShiftDTO[] = [];
   loading = false;
 
-  private readonly _workforce = inject(StaffServiceAgent.WorkforceHttpService);
+  private readonly _workforce = inject(CinemaServiceAgent.HttpService);
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _dialog = inject(MatDialog);
@@ -118,7 +118,7 @@ export class RosterComponent {
     this._setWeek(startOfWeek(new Date()));
   }
 
-  shiftsFor(userId: string, day: Date): StaffServiceAgent.StaffShiftDTO[] {
+  shiftsFor(userId: string, day: Date): CinemaServiceAgent.StaffShiftDTO[] {
     return shiftsOnDay(this.shifts, userId, day);
   }
 
@@ -126,11 +126,11 @@ export class RosterComponent {
     return totalShiftHours(this.shifts.filter(shift => shift.userId === userId));
   }
 
-  addShift(member: StaffServiceAgent.TheaterStaffDTO, day: Date): void {
+  addShift(member: CinemaServiceAgent.TheaterStaffDTO, day: Date): void {
     this._openDialog({ theaterId: this.theaterId, userId: member.id!, userName: member.name ?? '', day });
   }
 
-  editShift(member: StaffServiceAgent.TheaterStaffDTO, shift: StaffServiceAgent.StaffShiftDTO, event: Event): void {
+  editShift(member: CinemaServiceAgent.TheaterStaffDTO, shift: CinemaServiceAgent.StaffShiftDTO, event: Event): void {
     event.stopPropagation();
     this._openDialog({ theaterId: this.theaterId, userId: member.id!, userName: member.name ?? '', day: shift.startTime!, shift });
   }
@@ -148,8 +148,8 @@ export class RosterComponent {
     this.loading = true;
     this._store.dispatch(showLoading());
     forkJoin({
-      staff: this._workforce.getTheaterStaff(StaffServiceAgent.GetTheaterStaffRequest.fromJS({ theaterId })),
-      shifts: this._workforce.getRoster(StaffServiceAgent.RosterRequest.fromJS({
+      staff: this._workforce.getTheaterStaff(CinemaServiceAgent.GetTheaterStaffRequest.fromJS({ theaterId })),
+      shifts: this._workforce.getRoster(CinemaServiceAgent.RosterRequest.fromJS({
         theaterId, from: toWallClockUtc(from), to: toWallClockUtc(to),
       })),
     }).subscribe({
@@ -172,7 +172,7 @@ export class RosterComponent {
     this.load();
   }
 
-  private _openDialog(data: { theaterId: string; userId: string; userName: string; day: Date; shift?: StaffServiceAgent.StaffShiftDTO }): void {
+  private _openDialog(data: { theaterId: string; userId: string; userName: string; day: Date; shift?: CinemaServiceAgent.StaffShiftDTO }): void {
     this._dialog.open(ShiftDialog, { width: '420px', maxWidth: '95vw', data }).afterClosed().subscribe(changed => {
       if (changed) {
         this.load();

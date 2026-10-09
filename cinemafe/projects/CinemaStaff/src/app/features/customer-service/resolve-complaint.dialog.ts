@@ -1,21 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ComplaintResolutionValues, RefundTenderValues, SharedModule, StaffServiceAgent } from 'CinemaLib';
+import { ComplaintResolutionValues, RefundTenderValues, SharedModule, CinemaServiceAgent } from 'CinemaLib';
 import { availableResolutions, resolutionNeedsApproval, resolveErrors } from './customer-service.logic';
 
 export interface ResolveComplaintDialogData {
-  complaint: StaffServiceAgent.ComplaintDTO;
+  complaint: CinemaServiceAgent.ComplaintDTO;
   /** The signed-in user is an approver: no manager PIN will be asked. */
   isApprover: boolean;
 }
 
 /** What the dialog collects; the page sends it (with the manager override) through ResolveComplaint. */
 export interface ResolveComplaintChoice {
-  resolution: StaffServiceAgent.ComplaintResolution;
+  resolution: CinemaServiceAgent.ComplaintResolution;
   amount?: number;
   note?: string;
-  refundTender: StaffServiceAgent.PaymentTender;
+  refundTender: CinemaServiceAgent.PaymentTender;
   refundReference?: string;
 }
 
@@ -98,22 +98,22 @@ export class ResolveComplaintDialogComponent {
   private readonly _ref = inject(MatDialogRef<ResolveComplaintDialogComponent, ResolveComplaintChoice>);
 
   readonly tenders = RefundTenderValues;
-  readonly cashTender = StaffServiceAgent.PaymentTender.Cash;
+  readonly cashTender = CinemaServiceAgent.PaymentTender.Cash;
   private readonly _link = { hasInvoice: !!this.data.complaint.invoiceId, hasCustomer: !!this.data.complaint.customerUserId };
   readonly options = ComplaintResolutionValues.filter(v => availableResolutions(this._link).includes(v.value));
 
   readonly form = inject(FormBuilder).group({
-    resolution: [this.options[0]?.value as StaffServiceAgent.ComplaintResolution | null],
+    resolution: [this.options[0]?.value as CinemaServiceAgent.ComplaintResolution | null],
     amount: [null as number | null],
-    refundTender: [StaffServiceAgent.PaymentTender.Cash as StaffServiceAgent.PaymentTender],
+    refundTender: [CinemaServiceAgent.PaymentTender.Cash as CinemaServiceAgent.PaymentTender],
     refundReference: [''],
     note: [''],
   });
   private readonly _value = signal(this.form.getRawValue());
 
-  readonly isRefund = computed(() => this._value().resolution === StaffServiceAgent.ComplaintResolution.Refund);
-  readonly isPoints = computed(() => this._value().resolution === StaffServiceAgent.ComplaintResolution.Points);
-  readonly isMoney = computed(() => this.isPoints() || this._value().resolution === StaffServiceAgent.ComplaintResolution.GiftCard);
+  readonly isRefund = computed(() => this._value().resolution === CinemaServiceAgent.ComplaintResolution.Refund);
+  readonly isPoints = computed(() => this._value().resolution === CinemaServiceAgent.ComplaintResolution.Points);
+  readonly isMoney = computed(() => this.isPoints() || this._value().resolution === CinemaServiceAgent.ComplaintResolution.GiftCard);
   readonly needsApproval = computed(() => resolutionNeedsApproval(this._value().resolution));
   readonly errors = computed(() => resolveErrors({ ...this._value(), ...this._link }));
 
@@ -130,12 +130,12 @@ export class ResolveComplaintDialogComponent {
       return;
     }
     const v = this.form.getRawValue();
-    const refund = v.resolution === StaffServiceAgent.ComplaintResolution.Refund;
+    const refund = v.resolution === CinemaServiceAgent.ComplaintResolution.Refund;
     this._ref.close({
       resolution: v.resolution!,
       amount: this.isMoney() ? (v.amount ?? undefined) : undefined,
       note: (v.note ?? '').trim() || undefined,
-      refundTender: refund ? v.refundTender : StaffServiceAgent.PaymentTender.Cash,
+      refundTender: refund ? v.refundTender : CinemaServiceAgent.PaymentTender.Cash,
       refundReference: refund && v.refundTender !== this.cashTender ? (v.refundReference ?? '').trim() || undefined : undefined,
     });
   }

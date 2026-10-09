@@ -3,7 +3,7 @@ import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import {
-  APPROVER_ROLES, EmptyStateComponent, SharedModule, StaffServiceAgent, StatusPillComponent, selectCurrentUser,
+  APPROVER_ROLES, EmptyStateComponent, SharedModule, CinemaServiceAgent, StatusPillComponent, selectCurrentUser,
   addDays, hideLoading, parseDateKey, showException, showLoading, startOfDay, toDateKey, toWallClockUtc,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
@@ -84,13 +84,13 @@ import { TheaterContextService } from '../../core/theater-context.service';
   `],
 })
 export class ChecklistsHomeComponent {
-  readonly Kind = StaffServiceAgent.ChecklistKind;
+  readonly Kind = CinemaServiceAgent.ChecklistKind;
   readonly dateControl = new FormControl<string>(toDateKey(new Date()), { nonNullable: true });
 
-  rooms: StaffServiceAgent.ScheduleBoardRoomDTO[] = [];
+  rooms: CinemaServiceAgent.ScheduleBoardRoomDTO[] = [];
   loading = false;
 
-  private readonly _ops = inject(StaffServiceAgent.OperationsHttpService);
+  private readonly _ops = inject(CinemaServiceAgent.HttpService);
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _router = inject(Router);
@@ -132,7 +132,7 @@ export class ChecklistsHomeComponent {
     }
     this.loading = true;
     this._store.dispatch(showLoading());
-    this._ops.getScheduleBoard(StaffServiceAgent.ScheduleBoardRequest.fromJS({
+    this._ops.getScheduleBoard(CinemaServiceAgent.ScheduleBoardRequest.fromJS({
       theaterId, date: toWallClockUtc(day),
     })).subscribe({
       next: board => {
@@ -147,7 +147,7 @@ export class ChecklistsHomeComponent {
     });
   }
 
-  run(showTime: StaffServiceAgent.ScheduleBoardShowTimeDTO, room: StaffServiceAgent.ScheduleBoardRoomDTO, kind: StaffServiceAgent.ChecklistKind): void {
+  run(showTime: CinemaServiceAgent.ScheduleBoardShowTimeDTO, room: CinemaServiceAgent.ScheduleBoardRoomDTO, kind: CinemaServiceAgent.ChecklistKind): void {
     this._router.navigate(['/checklists/run', showTime.showTimeId, room.roomId], { queryParams: { kind } });
   }
 

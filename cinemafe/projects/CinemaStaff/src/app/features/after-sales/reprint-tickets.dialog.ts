@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject }
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
-import { SharedModule, StaffServiceAgent } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 import { buildTicketsPrintHtml } from './ticket-print';
 
 export interface ReprintTicketsDialogData {
-  result: StaffServiceAgent.ReprintResultDTO;
+  result: CinemaServiceAgent.ReprintResultDTO;
 }
 
 /** Shows the reprinted tickets with their QR codes and prints them (A6 / 80 mm layout in a print window). */

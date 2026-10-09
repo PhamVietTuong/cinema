@@ -1,4 +1,4 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 
 export function escapeHtml(value: string | null | undefined): string {
   return (value ?? '')
@@ -14,7 +14,7 @@ export function escapeHtml(value: string | null | undefined): string {
  * `qrImages[i]` is the data URL for `result.tickets[i]` (empty string = no QR).
  */
 export function buildTicketsPrintHtml(
-  result: StaffServiceAgent.ReprintResultDTO,
+  result: CinemaServiceAgent.ReprintResultDTO,
   qrImages: readonly string[],
   options: { title: string },
 ): string {

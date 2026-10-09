@@ -1,4 +1,4 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 
 function escapeHtml(value: string | number | null | undefined): string {
   return String(value ?? '')
@@ -17,13 +17,13 @@ export interface DailyClosePrintLabels {
   count: string;
   summary: Record<'paymentsTotal' | 'moneyCollected' | 'refunds' | 'exchanges' | 'comps' | 'netCollected' | 'tickets' | 'foodItems' | 'foodRevenue' | 'totalVariance', string>;
   /** Translated tender name for a PaymentTender. */
-  tenderName: (tender?: StaffServiceAgent.PaymentTender) => string;
+  tenderName: (tender?: CinemaServiceAgent.PaymentTender) => string;
   /** Formats a money amount. */
   money: (value?: number) => string;
 }
 
 /** Printable daily-close sheet (popup window), laid out from an already-loaded report. */
-export function buildDailyClosePrintHtml(report: StaffServiceAgent.DailyCloseDTO, labels: DailyClosePrintLabels): string {
+export function buildDailyClosePrintHtml(report: CinemaServiceAgent.DailyCloseDTO, labels: DailyClosePrintLabels): string {
   const s = labels.summary;
   const tenderRows = (report.tenders ?? []).map(t =>
     `<tr><td>${escapeHtml(labels.tenderName(t.method))}</td><td class="n">${escapeHtml(t.count)}</td><td class="n">${escapeHtml(labels.money(t.amount))}</td></tr>`).join('');

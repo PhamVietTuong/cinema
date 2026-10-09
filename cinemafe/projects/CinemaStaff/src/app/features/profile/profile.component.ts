@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import {
   APPROVER_ROLES,
   SharedModule,
-  StaffServiceAgent,
+  CinemaServiceAgent,
   hideLoading,
   selectCurrentUser,
   showException,
@@ -73,7 +73,7 @@ import { OVERRIDE_PIN_PATTERN, pinsMatchValidator } from './override-pin';
 })
 export class ProfileComponent {
   private readonly _store = inject(Store);
-  private readonly _workforce = inject(StaffServiceAgent.WorkforceHttpService);
+  private readonly _workforce = inject(CinemaServiceAgent.HttpService);
   private readonly _translate = inject(TranslateService);
   private readonly _fb = inject(FormBuilder);
 
@@ -95,7 +95,7 @@ export class ProfileComponent {
     }
     this.saving.set(true);
     this._store.dispatch(showLoading());
-    this._workforce.setMyOverridePin(StaffServiceAgent.SetOverridePinRequest.fromJS({ pin: this.form.controls.pin.value })).subscribe({
+    this._workforce.setMyOverridePin(CinemaServiceAgent.SetOverridePinRequest.fromJS({ pin: this.form.controls.pin.value })).subscribe({
       next: () => {
         // Never keep the PIN around once saved.
         this.form.reset({ pin: '', confirmPin: '' });

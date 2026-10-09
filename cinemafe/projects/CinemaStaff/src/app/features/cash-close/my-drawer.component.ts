@@ -6,7 +6,7 @@ import {
   DialogService,
   EmptyStateComponent,
   SharedModule,
-  StaffServiceAgent,
+  CinemaServiceAgent,
   StatusPillComponent,
   hideLoading,
   showException,
@@ -108,7 +108,7 @@ import { drawerVariance, isValidCount, needsReconciliation, varianceTone } from 
   `],
 })
 export class MyDrawerComponent {
-  private readonly _boxOffice = inject(StaffServiceAgent.BoxOfficeHttpService);
+  private readonly _boxOffice = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _dialogs = inject(DialogService);
@@ -118,8 +118,8 @@ export class MyDrawerComponent {
   readonly countControl = new FormControl<number | null>(null);
   readonly noteControl = new FormControl('');
 
-  readonly drawer = signal<StaffServiceAgent.CashDrawerDTO | null>(null);
-  readonly result = signal<StaffServiceAgent.CloseDrawerResultDTO | null>(null);
+  readonly drawer = signal<CinemaServiceAgent.CashDrawerDTO | null>(null);
+  readonly result = signal<CinemaServiceAgent.CloseDrawerResultDTO | null>(null);
   readonly busy = signal(false);
 
   private readonly _count = signal<number | null>(null);
@@ -146,13 +146,13 @@ export class MyDrawerComponent {
 
   load(): void {
     this._store.dispatch(showLoading());
-    this._boxOffice.getMyDrawer(StaffServiceAgent.BoxOfficeScopeRequest.fromJS({ theaterId: this.theaterId() ?? undefined })).subscribe({
+    this._boxOffice.getMyDrawer(CinemaServiceAgent.BoxOfficeScopeRequest.fromJS({ theaterId: this.theaterId() ?? undefined })).subscribe({
       next: drawer => this.drawer.set(drawer),
       error: error => this._store.dispatch(showException({ error })),
     }).add(() => this._store.dispatch(hideLoading()));
   }
 
-  close(drawer: StaffServiceAgent.CashDrawerDTO): void {
+  close(drawer: CinemaServiceAgent.CashDrawerDTO): void {
     const counted = this._count();
     if (!isValidCount(counted)) {
       return;
@@ -166,7 +166,7 @@ export class MyDrawerComponent {
       }
       this.busy.set(true);
       this._store.dispatch(showLoading());
-      this._boxOffice.closeDrawer(StaffServiceAgent.CloseDrawerRequest.fromJS({
+      this._boxOffice.closeDrawer(CinemaServiceAgent.CloseDrawerRequest.fromJS({
         theaterId: this.theaterId() ?? undefined,
         sessionId: drawer.id,
         countedCash: counted,

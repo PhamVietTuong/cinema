@@ -1,12 +1,12 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 import {
   MAX_RESENDS_PER_HOUR, ResolveForm, availableResolutions, complaintActions, complaintFilters, isComplaintClosed, isValidComplaintDescription,
   resendAddressErrors, resendExhausted, resendRemaining, resolutionNeedsApproval, resolutionNeedsPin, resolveErrors,
 } from './customer-service.logic';
 
-const Status = StaffServiceAgent.ComplaintStatus;
-const Resolution = StaffServiceAgent.ComplaintResolution;
-const Tender = StaffServiceAgent.PaymentTender;
+const Status = CinemaServiceAgent.ComplaintStatus;
+const Resolution = CinemaServiceAgent.ComplaintResolution;
+const Tender = CinemaServiceAgent.PaymentTender;
 const HOUR = 60 * 60 * 1000;
 
 function form(over: Partial<ResolveForm> = {}): ResolveForm {
@@ -31,11 +31,11 @@ describe('resend limiter', () => {
   });
 
   it('accepts a blank address and checks a typed one for its channel', () => {
-    expect(resendAddressErrors(StaffServiceAgent.ETicketChannel.Email, '  ')).toEqual([]);
-    expect(resendAddressErrors(StaffServiceAgent.ETicketChannel.Email, 'a@b.vn')).toEqual([]);
-    expect(resendAddressErrors(StaffServiceAgent.ETicketChannel.Email, '0901234567')).toEqual(['customerService.resend.error.email']);
-    expect(resendAddressErrors(StaffServiceAgent.ETicketChannel.Sms, '0901234567')).toEqual([]);
-    expect(resendAddressErrors(StaffServiceAgent.ETicketChannel.Sms, 'a@b.vn')).toEqual(['customerService.resend.error.phone']);
+    expect(resendAddressErrors(CinemaServiceAgent.ETicketChannel.Email, '  ')).toEqual([]);
+    expect(resendAddressErrors(CinemaServiceAgent.ETicketChannel.Email, 'a@b.vn')).toEqual([]);
+    expect(resendAddressErrors(CinemaServiceAgent.ETicketChannel.Email, '0901234567')).toEqual(['customerService.resend.error.email']);
+    expect(resendAddressErrors(CinemaServiceAgent.ETicketChannel.Sms, '0901234567')).toEqual([]);
+    expect(resendAddressErrors(CinemaServiceAgent.ETicketChannel.Sms, 'a@b.vn')).toEqual(['customerService.resend.error.phone']);
   });
 });
 

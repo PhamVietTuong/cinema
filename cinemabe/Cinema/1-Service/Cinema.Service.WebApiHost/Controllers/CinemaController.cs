@@ -1,9 +1,15 @@
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
+using Cinema.Business.DTO.BoxOffice;
 using Cinema.Business.DTO.Catalog;
+using Cinema.Business.DTO.Concession;
+using Cinema.Business.DTO.CustomerService;
+using Cinema.Business.DTO.Gate;
 using Cinema.Business.DTO.Inventory;
 using Cinema.Business.DTO.Movies;
+using Cinema.Business.DTO.Operations;
 using Cinema.Business.DTO.Requests;
+using Cinema.Business.DTO.Staff;
 using Cinema.Business.DTO.Theaters;
 using Cinema.Data.Entities;
 using Cinema.Foundation.Logging;
@@ -19,6 +25,7 @@ namespace Cinema.Service.WebApiHost.Controllers;
 public class CinemaController : ApiControllerBase
 {
     private const string _adminRole = "Admin";
+    private const string _theaterIdFilter = "theaterId";
 
     private readonly IMovieManager   _movieManager;
     private readonly ITheaterManager _theaterManager;
@@ -44,6 +51,19 @@ public class CinemaController : ApiControllerBase
     private readonly IComboManager               _combos;
     private readonly IWebHostEnvironment         _env;
 
+    // Staff
+    private readonly IConcessionManager _concessions;
+    private readonly IGateManager _gate;
+    private readonly IBoxOfficeManager _boxOffice;
+    private readonly ICustomerServiceManager _customerService;
+    private readonly IStaffReportManager _reports;
+    private readonly IDailyCloseManager _dailyClose;
+    private readonly IScheduleBoardManager _board;
+    private readonly IIncidentManager _incidents;
+    private readonly IChecklistManager _checklists;
+    private readonly IManagerOverrideService _overrides;
+    private readonly IWorkforceManager _workforce;
+
     public CinemaController(
         IMovieManager movieManager,
         ITheaterManager theaterManager,
@@ -67,9 +87,32 @@ public class CinemaController : ApiControllerBase
         IPatronCategoryManager patronCategories,
         IRoomTypePatronCategoryPriceManager roomTypePatronCategoryPrices,
         IComboManager combos,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        // Staff
+        IConcessionManager concessions,
+        IGateManager gate,
+        IBoxOfficeManager boxOffice,
+        ICustomerServiceManager customerService,
+        IStaffReportManager reports,
+        IDailyCloseManager dailyClose,
+        IScheduleBoardManager board,
+        IIncidentManager incidents,
+        IChecklistManager checklists,
+        IManagerOverrideService overrides,
+        IWorkforceManager workforce)
     {
         _combos              = combos;
+        _concessions         = concessions;
+        _gate                = gate;
+        _boxOffice           = boxOffice;
+        _customerService     = customerService;
+        _reports             = reports;
+        _dailyClose          = dailyClose;
+        _board               = board;
+        _incidents           = incidents;
+        _checklists          = checklists;
+        _overrides           = overrides;
+        _workforce           = workforce;
         _movieManager    = movieManager;
         _theaterManager  = theaterManager;
         _ageRestrictions = ageRestrictions;
@@ -1680,6 +1723,1362 @@ public class CinemaController : ApiControllerBase
             return Task.FromResult<IActionResult>(Forbid());
         }
         return Run(nameof(CreateStoragePlanFromLowStock), () => plans.CreateFromLowStockAsync(request, User.GetUserId(), scope));
+    }
+    #endregion
+
+    // ════════════════════════════════════════════════════════════════════════════
+    //  Staff
+    // ════════════════════════════════════════════════════════════════════════════
+
+    #region Concession
+
+    /// <summary>Paid orders waiting to be prepared or handed over, by earliest showtime. Day null = today.</summary>
+    [Authorize(Roles = RoleNames.Concession)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<PickupOrderDTO>), 200)]
+    public async Task<IActionResult> GetPickupQueue([FromBody] GetPickupQueueRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetPickupQueue)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _concessions.GetPickupQueueAsync(theaterId, request.Day));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetPickupQueue));
+        }
+    }
+
+    /// <summary>Moves an order one step (Preparing, Ready, HandedOver). An illegal move is 400.</summary>
+    [Authorize(Roles = RoleNames.Concession)]
+    [HttpPost]
+    [ProducesResponseType(typeof(PickupOrderDTO), 200)]
+    public async Task<IActionResult> SetFoodStatus([FromBody] SetFoodStatusRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(SetFoodStatus)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _concessions.SetFoodStatusAsync(theaterId, User.GetUserId(), request.InvoiceId, request.Status));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SetFoodStatus));
+        }
+    }
+
+    /// <summary>Tracked items at or under their low-stock threshold.</summary>
+    [Authorize(Roles = RoleNames.Concession)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<LowStockItemDTO>), 200)]
+    public async Task<IActionResult> GetLowStock([FromBody] GetLowStockRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetLowStock)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _concessions.GetLowStockAsync(theaterId));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetLowStock));
+        }
+    }
+
+    /// <summary>Finds an order by the invoice code the customer shows (404 when unknown or another theater's).</summary>
+    [Authorize(Roles = RoleNames.Concession)]
+    [HttpPost]
+    [ProducesResponseType(typeof(PickupOrderDTO), 200)]
+    public async Task<IActionResult> LookupPickup([FromBody] LookupPickupRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(LookupPickup)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _concessions.LookupPickupAsync(theaterId, request.Code));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(LookupPickup));
+        }
+    }
+    #endregion
+
+    #region Gate
+
+    /// <summary>
+    /// Scans a ticket QR code. A refused scan is still HTTP 200 with the reason in <c>Outcome</c>, so the client's
+    /// error interceptor stays quiet; only authorization problems are 403.
+    /// </summary>
+    [Authorize(Roles = RoleNames.GateKeepers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ScanTicketResultDTO), 200)]
+    public async Task<IActionResult> Scan([FromBody] ScanTicketRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(Scan)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+
+            return Ok(await _gate.ScanAsync(scope.Resolve(request.TheaterId), User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(Scan));
+        }
+    }
+
+    /// <summary>Finds today's paid tickets of the theater by invoice code or phone (at least one required).</summary>
+    [Authorize(Roles = RoleNames.GateKeepers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<GateLookupResultDTO>), 200)]
+    public async Task<IActionResult> Lookup([FromBody] GateLookupRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(Lookup)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+
+            return Ok(await _gate.LookupAsync(scope.Resolve(request.TheaterId), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(Lookup));
+        }
+    }
+    #endregion
+
+    #region BoxOffice
+
+    /// <summary>Prices a counter sale (seats and/or food) without changing anything.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CounterQuoteDTO), 200)]
+    public async Task<IActionResult> Quote([FromBody] CounterSaleRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(Quote)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.QuoteAsync(theaterId, request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(Quote));
+        }
+    }
+
+    /// <summary>Rings up a counter sale: a Paid invoice with its tenders, never a Pending one.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CounterSaleResultDTO), 200)]
+    public async Task<IActionResult> Sell([FromBody] CounterSaleRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(Sell)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.SellAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(Sell));
+        }
+    }
+
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CashDrawerDTO), 200)]
+    public async Task<IActionResult> OpenDrawer([FromBody] OpenDrawerRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(OpenDrawer)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.OpenDrawerAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(OpenDrawer));
+        }
+    }
+
+    /// <summary>The caller's open drawer with totals; <c>IsOpen = false</c> when there is none.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CashDrawerDTO), 200)]
+    public async Task<IActionResult> GetMyDrawer([FromBody] BoxOfficeScopeRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetMyDrawer)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.GetMyDrawerAsync(theaterId, User.GetUserId()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetMyDrawer));
+        }
+    }
+
+    /// <summary>Records cash put into or taken out of the drawer. A pay-out needs a manager override.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CashDrawerDTO), 200)]
+    public async Task<IActionResult> PayInOut([FromBody] PayInOutRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(PayInOut)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.PayInOutAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(PayInOut));
+        }
+    }
+
+    /// <summary>The theater's showtimes of a business day (default today), one row per showtime and room.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<CounterShowtimeDTO>), 200)]
+    public async Task<IActionResult> GetShowtimesToday([FromBody] ShowtimesTodayRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetShowtimesToday)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.GetShowtimesTodayAsync(theaterId, request.Date));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetShowtimesToday));
+        }
+    }
+
+    /// <summary>Finds a member by exact phone number to attach to a sale (404 when none).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CounterCustomerDTO), 200)]
+    public async Task<IActionResult> FindCustomer([FromBody] FindCustomerRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(FindCustomer)} being awakened to process request...");
+        try
+        {
+            return Ok(await _boxOffice.FindCustomerAsync(request.Phone));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(FindCustomer));
+        }
+    }
+
+    /// <summary>After-sales search by exact invoice code and/or customer phone, scoped to the theater.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<AfterSalesInvoiceDTO>), 200)]
+    public async Task<IActionResult> FindInvoice([FromBody] FindInvoiceRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(FindInvoice)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.FindInvoiceAsync(theaterId, request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(FindInvoice));
+        }
+    }
+
+    /// <summary>Refunds a whole paid invoice. 403 without a manager approval (unless the caller is a manager).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StaffRefundResultDTO), 200)]
+    public async Task<IActionResult> StaffRefund([FromBody] StaffRefundRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(StaffRefund)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.StaffRefundAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(StaffRefund));
+        }
+    }
+
+    /// <summary>Replaces a counter invoice by a new sale in one transaction. 403 without a manager approval (unless the caller is a manager).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ExchangeResultDTO), 200)]
+    public async Task<IActionResult> Exchange([FromBody] ExchangeRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(Exchange)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.ExchangeAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(Exchange));
+        }
+    }
+
+    /// <summary>Returns the tickets of a paid invoice again (audited; a manager approves when a ticket was used).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ReprintResultDTO), 200)]
+    public async Task<IActionResult> Reprint([FromBody] ReprintRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(Reprint)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.ReprintAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(Reprint));
+        }
+    }
+
+    /// <summary>Closes the caller's own drawer with the counted cash; a variance beyond the tolerance needs reconciliation.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CloseDrawerResultDTO), 200)]
+    public async Task<IActionResult> CloseDrawer([FromBody] CloseDrawerRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(CloseDrawer)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.CloseDrawerAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(CloseDrawer));
+        }
+    }
+
+    /// <summary>A manager accepts the variance of a closed drawer.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CloseDrawerResultDTO), 200)]
+    public async Task<IActionResult> ReconcileDrawer([FromBody] ReconcileDrawerRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ReconcileDrawer)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _boxOffice.ReconcileDrawerAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ReconcileDrawer));
+        }
+    }
+    #endregion
+
+    #region CustomerService
+
+    /// <summary>Sellers plus the regional manager, who may follow up and approve compensation.</summary>
+    private const string _complaintRoles = RoleNames.Sellers + "," + RoleNames.RegionalManager;
+
+    /// <summary>Finds a member by email, phone or invoice code: masked contact, tier, points and the last 20 invoices of the caller's theaters.</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(CustomerLookupDTO), 200)]
+    public async Task<IActionResult> LookupCustomer([FromBody] LookupCustomerRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(LookupCustomer)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _customerService.LookupCustomerAsync(scope.ToTheaterFilter(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(LookupCustomer));
+        }
+    }
+
+    /// <summary>Sends the e-ticket of a paid invoice again by email or SMS (audited, 3 per hour per invoice).</summary>
+    [Authorize(Roles = RoleNames.Sellers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ResendETicketResultDTO), 200)]
+    public async Task<IActionResult> ResendETicket([FromBody] ResendETicketRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ResendETicket)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _customerService.ResendETicketAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ResendETicket));
+        }
+    }
+
+    [Authorize(Roles = _complaintRoles)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ComplaintDTO), 200)]
+    public async Task<IActionResult> CreateComplaint([FromBody] CreateComplaintRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(CreateComplaint)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _customerService.CreateComplaintAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(CreateComplaint));
+        }
+    }
+
+    /// <summary>Complaint page, newest first. Filters: status, category, assignedTo, customerId, invoiceId, theaterId (must be in scope, else 403).</summary>
+    [Authorize(Roles = _complaintRoles)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<ComplaintDTO>), 200)]
+    public async Task<IActionResult> GetComplaints([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetComplaints)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+
+            IReadOnlyCollection<Guid>? theaterIds = scope.ToTheaterFilter();
+            if (search?.Filters != null
+                && search.Filters.TryGetValue(_theaterIdFilter, out var requested)
+                && Guid.TryParse(requested, out var requestedTheaterId))
+            {
+                theaterIds = new[] { scope.Resolve(requestedTheaterId) };
+            }
+
+            return Ok(await _customerService.SearchComplaintsAsync(theaterIds, search ?? new PagingSearchDTO()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetComplaints));
+        }
+    }
+
+    [Authorize(Roles = _complaintRoles)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ComplaintDTO), 200)]
+    public async Task<IActionResult> GetComplaint([FromBody] GetComplaintRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetComplaint)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _customerService.GetComplaintAsync(scope.ToTheaterFilter(), request.ComplaintId));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetComplaint));
+        }
+    }
+
+    [Authorize(Roles = _complaintRoles)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ComplaintDTO), 200)]
+    public async Task<IActionResult> UpdateComplaint([FromBody] UpdateComplaintRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(UpdateComplaint)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _customerService.UpdateComplaintAsync(scope.ToTheaterFilter(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(UpdateComplaint));
+        }
+    }
+
+    /// <summary>Open to InReview, assigned to a staff member (default: the caller).</summary>
+    [Authorize(Roles = _complaintRoles)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ComplaintDTO), 200)]
+    public async Task<IActionResult> StartComplaintReview([FromBody] StartComplaintReviewRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(StartComplaintReview)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _customerService.StartComplaintReviewAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(StartComplaintReview));
+        }
+    }
+
+    [Authorize(Roles = _complaintRoles)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ComplaintDTO), 200)]
+    public async Task<IActionResult> RejectComplaint([FromBody] RejectComplaintRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(RejectComplaint)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _customerService.RejectComplaintAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(RejectComplaint));
+        }
+    }
+
+    /// <summary>Resolves a complaint with Refund, GiftCard, Points or Apology. Compensation needs an approver or a manager override (else 403).</summary>
+    [Authorize(Roles = _complaintRoles)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ComplaintDTO), 200)]
+    public async Task<IActionResult> ResolveComplaint([FromBody] ResolveComplaintRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ResolveComplaint)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _customerService.ResolveComplaintAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ResolveComplaint));
+        }
+    }
+    #endregion
+
+    #region StaffReport
+
+    /// <summary>
+    /// Audit trail, newest first. Filters: action, from, to, actorId, and optionally theaterId (must be inside the
+    /// caller's scope, else 403). Admins see every theater; managers only their own.
+    /// </summary>
+    [Authorize(Roles = RoleNames.Reporting)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<AuditLogDTO>), 200)]
+    public async Task<IActionResult> GetAuditLog([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetAuditLog)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+
+            IReadOnlyCollection<Guid>? theaterIds = scope.ToTheaterFilter();
+            if (search?.Filters != null
+                && search.Filters.TryGetValue(_theaterIdFilter, out var requested)
+                && Guid.TryParse(requested, out var requestedTheaterId))
+            {
+                theaterIds = new[] { scope.Resolve(requestedTheaterId) };
+            }
+
+            return Ok(await _reports.GetAuditLogAsync(search ?? new PagingSearchDTO(), theaterIds));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetAuditLog));
+        }
+    }
+
+    // ── P9 reporting (append new actions below) ──────────────────────────────
+
+    /// <summary>
+    /// Sales grouped by Day, Movie, Theater, PaymentMethod, Staff or Channel: ticket and F&amp;B revenue separate, net of
+    /// refunds. Range of business dates, at most 92 days. A theater outside the caller's scope is refused with 403.
+    /// </summary>
+    [Authorize(Roles = RoleNames.Reporting)]
+    [HttpPost]
+    [ProducesResponseType(typeof(SalesReportDTO), 200)]
+    public async Task<IActionResult> GetSales([FromBody] StaffReportRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetSales)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _reports.GetSalesAsync(request, scope.ToTheaterFilter()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetSales));
+        }
+    }
+
+    /// <summary>Sold / active seats per screening starting in the range. Scope and range rules as for sales.</summary>
+    [Authorize(Roles = RoleNames.Reporting)]
+    [HttpPost]
+    [ProducesResponseType(typeof(OccupancyReportDTO), 200)]
+    public async Task<IActionResult> GetOccupancy([FromBody] StaffReportRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetOccupancy)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _reports.GetOccupancyAsync(request, scope.ToTheaterFilter()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetOccupancy));
+        }
+    }
+
+    /// <summary>Attach rate, refund rate (count and amount) and average spend per head. Scope and range rules as for sales.</summary>
+    [Authorize(Roles = RoleNames.Reporting)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StaffKpisDTO), 200)]
+    public async Task<IActionResult> GetKpis([FromBody] StaffReportRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetKpis)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _reports.GetKpisAsync(request, scope.ToTheaterFilter()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetKpis));
+        }
+    }
+
+    // ── P5 after-sales ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// End-of-day cash close of one theater for a business day (Asia/Ho_Chi_Minh, 06:00 cut-off by default): totals by
+    /// tender, refunds, exchanges, comps, tickets and food sold and the drawer sessions with their variance.
+    /// </summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DailyCloseDTO), 200)]
+    public async Task<IActionResult> GetDailyClose([FromBody] DailyCloseRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetDailyClose)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _dailyClose.GetDailyCloseAsync(theaterId, request.BusinessDate));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetDailyClose));
+        }
+    }
+    #endregion
+
+    #region Operations
+
+    /// <summary>One theater's rooms with the day's showtimes: start, end, bufferEnd, movie, sold, capacity and room status.</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ScheduleBoardDTO), 200)]
+    public async Task<IActionResult> GetScheduleBoard([FromBody] ScheduleBoardRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetScheduleBoard)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _board.GetScheduleBoardAsync(theaterId, request.Date));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetScheduleBoard));
+        }
+    }
+
+    /// <summary>Reports an incident (every staff role).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(IncidentDTO), 200)]
+    public async Task<IActionResult> ReportIncident([FromBody] ReportIncidentRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ReportIncident)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _incidents.ReportAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ReportIncident));
+        }
+    }
+
+    /// <summary>Incident page, newest first. Filters: status, category, from, to, theaterId (must be in scope, else 403).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<IncidentDTO>), 200)]
+    public async Task<IActionResult> GetIncidents([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetIncidents)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+
+            IReadOnlyCollection<Guid>? theaterIds = scope.ToTheaterFilter();
+            if (search?.Filters != null
+                && search.Filters.TryGetValue(_theaterIdFilter, out var requested)
+                && Guid.TryParse(requested, out var requestedTheaterId))
+            {
+                theaterIds = new[] { scope.Resolve(requestedTheaterId) };
+            }
+
+            return Ok(await _incidents.SearchAsync(theaterIds, search ?? new PagingSearchDTO()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetIncidents));
+        }
+    }
+
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(IncidentDTO), 200)]
+    public async Task<IActionResult> GetIncident([FromBody] GetIncidentRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetIncident)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _incidents.GetAsync(scope.ToTheaterFilter(), request.IncidentId));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetIncident));
+        }
+    }
+
+    /// <summary>Closes an incident; with Unblock it also reopens the blocked seat/room (approver or manager override).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(IncidentDTO), 200)]
+    public async Task<IActionResult> ResolveIncident([FromBody] ResolveIncidentRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ResolveIncident)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _incidents.ResolveAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ResolveIncident));
+        }
+    }
+
+    /// <summary>
+    /// Takes a seat (and its double-seat partner) out of sale. Approvers, or any staff with a manager override (403
+    /// without one). Returns the upcoming tickets on the seat; nothing is cancelled.
+    /// </summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(BlockResultDTO), 200)]
+    public async Task<IActionResult> BlockSeat([FromBody] BlockSeatRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(BlockSeat)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _incidents.BlockSeatAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(BlockSeat));
+        }
+    }
+
+    /// <summary>
+    /// Puts a room into maintenance. Approvers, or any staff with a manager override (403 without one). Returns the
+    /// upcoming tickets in the room; nothing is cancelled.
+    /// </summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(BlockResultDTO), 200)]
+    public async Task<IActionResult> BlockRoom([FromBody] BlockRoomRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(BlockRoom)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _incidents.BlockRoomAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(BlockRoom));
+        }
+    }
+
+    /// <summary>The theater's checklist templates (approvers manage them).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<ChecklistTemplateDTO>), 200)]
+    public async Task<IActionResult> GetChecklistTemplates([FromBody] GetChecklistTemplatesRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetChecklistTemplates)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _checklists.GetTemplatesAsync(theaterId));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetChecklistTemplates));
+        }
+    }
+
+    /// <summary>Creates or edits a checklist template (approvers only; one active template per theater and kind).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ChecklistTemplateDTO), 200)]
+    public async Task<IActionResult> SaveChecklistTemplate([FromBody] SaveChecklistTemplateRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(SaveChecklistTemplate)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _checklists.SaveTemplateAsync(scope.ToTheaterFilter(), theaterId, request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SaveChecklistTemplate));
+        }
+    }
+
+    /// <summary>Opens a showtime's checklist, creating the run from the active template the first time (every staff role).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ChecklistRunDTO), 200)]
+    public async Task<IActionResult> OpenChecklist([FromBody] OpenChecklistRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(OpenChecklist)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _checklists.OpenAsync(theaterId, request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(OpenChecklist));
+        }
+    }
+
+    /// <summary>Ticks or unticks one checklist item (every staff role).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ChecklistRunDTO), 200)]
+    public async Task<IActionResult> SetChecklistItem([FromBody] SetChecklistItemRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(SetChecklistItem)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _checklists.SetItemAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SetChecklistItem));
+        }
+    }
+
+    /// <summary>Completes a checklist; every required item must be done (400 otherwise).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ChecklistRunDTO), 200)]
+    public async Task<IActionResult> CompleteChecklist([FromBody] CompleteChecklistRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(CompleteChecklist)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            return Ok(await _checklists.CompleteAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(CompleteChecklist));
+        }
+    }
+    #endregion
+
+    #region Workforce
+
+    /// <summary>Sets the caller's own manager-override PIN (approver roles only).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> SetMyOverridePin([FromBody] SetOverridePinRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(SetMyOverridePin)} being awakened to process request...");
+        try
+        {
+            await _overrides.SetPinAsync(User.GetUserId(), request.Pin);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SetMyOverridePin));
+        }
+    }
+
+    /// <summary>Active approvers (Id, Name) who can authorise an override in the theater.</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<OverrideApproverDTO>), 200)]
+    public async Task<IActionResult> GetOverrideApprovers([FromBody] OverrideApproversRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetOverrideApprovers)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _overrides.GetApproversAsync(theaterId));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetOverrideApprovers));
+        }
+    }
+
+    // ── Roster (approvers manage it; every staff member reads their own shifts) ─
+
+    /// <summary>Active staff of the theater, for the roster and task pickers (approvers only).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<TheaterStaffDTO>), 200)]
+    public async Task<IActionResult> GetTheaterStaff([FromBody] GetTheaterStaffRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetTheaterStaff)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _workforce.GetTheaterStaffAsync(theaterId));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetTheaterStaff));
+        }
+    }
+
+    /// <summary>Shifts of a theater in a range of at most 31 days (approvers only).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<StaffShiftDTO>), 200)]
+    public async Task<IActionResult> GetRoster([FromBody] RosterRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetRoster)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _workforce.GetRosterAsync(theaterId, request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetRoster));
+        }
+    }
+
+    /// <summary>Creates or edits a roster shift (approvers only: 403 for every other staff role).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StaffShiftDTO), 200)]
+    public async Task<IActionResult> SaveShift([FromBody] SaveStaffShiftRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(SaveShift)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _workforce.SaveShiftAsync(scope.ToTheaterFilter(), theaterId, request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SaveShift));
+        }
+    }
+
+    /// <summary>Deletes a roster shift (approvers only).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeleteShift([FromBody] DeleteStaffShiftRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(DeleteShift)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            await _workforce.DeleteShiftAsync(scope.ToTheaterFilter(), request);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(DeleteShift));
+        }
+    }
+
+    /// <summary>The caller's own shifts in a range of at most 31 days (every staff role).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<StaffShiftDTO>), 200)]
+    public async Task<IActionResult> GetMyShifts([FromBody] MyShiftsRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetMyShifts)} being awakened to process request...");
+        try
+        {
+            return Ok(await _workforce.GetMyShiftsAsync(User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetMyShifts));
+        }
+    }
+
+    // ── Time clock (every staff role; reporting only, never required to sell) ──
+
+    /// <summary>Clocks the caller in. 400 when they are already clocked in.</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(TimeClockEntryDTO), 200)]
+    public async Task<IActionResult> ClockIn([FromBody] ClockInRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ClockIn)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _workforce.ClockInAsync(theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ClockIn));
+        }
+    }
+
+    /// <summary>Clocks the caller out. 400 when they are not clocked in.</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(TimeClockEntryDTO), 200)]
+    public async Task<IActionResult> ClockOut([FromBody] ClockOutRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ClockOut)} being awakened to process request...");
+        try
+        {
+            return Ok(await _workforce.ClockOutAsync(User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ClockOut));
+        }
+    }
+
+    /// <summary>Whether the caller is clocked in (every staff role).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(ClockStatusDTO), 200)]
+    public async Task<IActionResult> GetMyClockStatus()
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetMyClockStatus)} being awakened to process request...");
+        try
+        {
+            return Ok(await _workforce.GetMyClockStatusAsync(User.GetUserId()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetMyClockStatus));
+        }
+    }
+
+    /// <summary>Clock entries of a theater with worked minutes, range of at most 31 days (approvers only).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<TimeClockEntryDTO>), 200)]
+    public async Task<IActionResult> GetTimeSheet([FromBody] TimeSheetRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetTimeSheet)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _workforce.GetTimeSheetAsync(theaterId, request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetTimeSheet));
+        }
+    }
+
+    // ── Tasks (approvers assign; every staff member works their own) ───────────
+
+    /// <summary>Creates or edits a task assigned to a staff member, optionally linked to an incident or checklist run (approvers only).</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StaffTaskDTO), 200)]
+    public async Task<IActionResult> SaveTask([FromBody] SaveStaffTaskRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(SaveTask)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+            var theaterId = scope.Resolve(request.TheaterId);
+            return Ok(await _workforce.SaveTaskAsync(scope.ToTheaterFilter(), theaterId, User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SaveTask));
+        }
+    }
+
+    /// <summary>Task page, newest first. Filters: assignedTo, status, theaterId (must be in scope, else 403). Approvers only.</summary>
+    [Authorize(Roles = RoleNames.Approvers)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<StaffTaskDTO>), 200)]
+    public async Task<IActionResult> GetTasks([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetTasks)} being awakened to process request...");
+        try
+        {
+            if (!User.TryGetStaffScope(out var scope))
+            {
+                return Forbid();
+            }
+
+            IReadOnlyCollection<Guid>? theaterIds = scope.ToTheaterFilter();
+            if (search?.Filters != null
+                && search.Filters.TryGetValue(_theaterIdFilter, out var requested)
+                && Guid.TryParse(requested, out var requestedTheaterId))
+            {
+                theaterIds = new[] { scope.Resolve(requestedTheaterId) };
+            }
+
+            return Ok(await _workforce.GetTasksAsync(theaterIds, search ?? new PagingSearchDTO()));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetTasks));
+        }
+    }
+
+    /// <summary>The caller's own tasks (every staff role).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<StaffTaskDTO>), 200)]
+    public async Task<IActionResult> GetMyTasks([FromBody] MyTasksRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetMyTasks)} being awakened to process request...");
+        try
+        {
+            return Ok(await _workforce.GetMyTasksAsync(User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetMyTasks));
+        }
+    }
+
+    /// <summary>Moves one of the caller's own tasks between Open, InProgress and Done (403 for someone else's task).</summary>
+    [Authorize(Roles = RoleNames.StaffApp)]
+    [HttpPost]
+    [ProducesResponseType(typeof(StaffTaskDTO), 200)]
+    public async Task<IActionResult> SetMyTaskStatus([FromBody] SetMyTaskStatusRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(SetMyTaskStatus)} being awakened to process request...");
+        try
+        {
+            return Ok(await _workforce.SetMyTaskStatusAsync(User.GetUserId(), request));
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SetMyTaskStatus));
+        }
     }
     #endregion
 }

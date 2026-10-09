@@ -3,20 +3,20 @@ import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import {
-  EmptyStateComponent, SharedModule, StaffServiceAgent, StatusPillComponent,
+  EmptyStateComponent, SharedModule, CinemaServiceAgent, StatusPillComponent,
   addDays, hideLoading, parseDateKey, showException, showLoading, startOfDay, toDateKey, toWallClockUtc,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
 import { TimelineBlock, TimelineTick, TimelineWindow, computeWindow, hourTicks, layoutShowTime, soldPercent } from './timeline-layout';
 
 interface BoardShowTime {
-  source: StaffServiceAgent.ScheduleBoardShowTimeDTO;
+  source: CinemaServiceAgent.ScheduleBoardShowTimeDTO;
   block: TimelineBlock;
   soldPct: number;
 }
 
 interface BoardRoom {
-  source: StaffServiceAgent.ScheduleBoardRoomDTO;
+  source: CinemaServiceAgent.ScheduleBoardRoomDTO;
   showTimes: BoardShowTime[];
 }
 
@@ -132,7 +132,7 @@ export class ScheduleBoardComponent {
   ticks: TimelineTick[] = [];
   loading = false;
 
-  private readonly _ops = inject(StaffServiceAgent.OperationsHttpService);
+  private readonly _ops = inject(CinemaServiceAgent.HttpService);
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _router = inject(Router);
@@ -172,7 +172,7 @@ export class ScheduleBoardComponent {
     }
     this.loading = true;
     this._store.dispatch(showLoading());
-    this._ops.getScheduleBoard(StaffServiceAgent.ScheduleBoardRequest.fromJS({
+    this._ops.getScheduleBoard(CinemaServiceAgent.ScheduleBoardRequest.fromJS({
       theaterId, date: toWallClockUtc(day),
     })).subscribe({
       next: board => {
@@ -187,13 +187,13 @@ export class ScheduleBoardComponent {
     });
   }
 
-  openChecklist(showTime: StaffServiceAgent.ScheduleBoardShowTimeDTO, room: StaffServiceAgent.ScheduleBoardRoomDTO): void {
+  openChecklist(showTime: CinemaServiceAgent.ScheduleBoardShowTimeDTO, room: CinemaServiceAgent.ScheduleBoardRoomDTO): void {
     this._router.navigate(['/checklists/run', showTime.showTimeId, room.roomId], {
-      queryParams: { kind: StaffServiceAgent.ChecklistKind.PreShow },
+      queryParams: { kind: CinemaServiceAgent.ChecklistKind.PreShow },
     });
   }
 
-  private _apply(board: StaffServiceAgent.ScheduleBoardDTO, day: Date): void {
+  private _apply(board: CinemaServiceAgent.ScheduleBoardDTO, day: Date): void {
     const all = (board.rooms ?? []).flatMap(room => room.showTimes ?? []);
     const window: TimelineWindow = computeWindow(all.map(s => ({ start: s.start!, end: s.end!, bufferEnd: s.bufferEnd! })), day);
     this.ticks = hourTicks(window);

@@ -1,10 +1,10 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 import {
   PosFoodLine, PosTicket, TenderEntry, defaultPriceRow, foodItems, foodsTotal, hasOverride, remainingAfter, seatItems, selectionTotal, settle, ticketPrice, ticketsTotal,
 } from './pos-calc';
 
-const T = StaffServiceAgent.PaymentTender;
-const tender = (method: StaffServiceAgent.PaymentTender, amount: number, reference = ''): TenderEntry => ({ method, amount, reference });
+const T = CinemaServiceAgent.PaymentTender;
+const tender = (method: CinemaServiceAgent.PaymentTender, amount: number, reference = ''): TenderEntry => ({ method, amount, reference });
 const rows = [{ patronCategoryId: 'adult', price: 100000 }, { patronCategoryId: 'couple', price: 220000 }];
 const single: PosTicket = { seatIds: ['a1'], label: 'A1', isDouble: false, patronCategoryId: 'adult' };
 const couple: PosTicket = { seatIds: ['b1', 'b2'], label: 'B1-B2', isDouble: true, patronCategoryId: 'couple' };

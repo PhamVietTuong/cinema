@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { EMPTY, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { APPROVER_ROLES, DialogService, StaffServiceAgent, selectCurrentUser } from 'CinemaLib';
+import { APPROVER_ROLES, DialogService, CinemaServiceAgent, selectCurrentUser } from 'CinemaLib';
 
 /** True when the role may perform an approver-only action directly (no PIN override needed). */
 export function isApproverRole(role: string | null | undefined): boolean {
@@ -23,7 +23,7 @@ export class OverrideFlowService {
     return isApproverRole(this._user()?.userTypeName);
   }
 
-  run<T>(theaterId: string | undefined, call: (override?: StaffServiceAgent.ManagerOverrideDTO) => Observable<T>): Observable<T> {
+  run<T>(theaterId: string | undefined, call: (override?: CinemaServiceAgent.ManagerOverrideDTO) => Observable<T>): Observable<T> {
     if (this.isApprover()) {
       return call(undefined);
     }

@@ -6,7 +6,7 @@ import { Store } from '@ngrx/store';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import {
-  ComplaintCategoryValues, ComplaintStatusValues, EmptyStateComponent, FilterBarComponent, FilterBarField, SharedModule, StaffServiceAgent,
+  ComplaintCategoryValues, ComplaintStatusValues, EmptyStateComponent, FilterBarComponent, FilterBarField, SharedModule, CinemaServiceAgent,
   SELLER_ROLES, StatusPillComponent, complaintCategoryLabel, hideLoading, selectCurrentUser, showException, showLoading,
 } from 'CinemaLib';
 import { TheaterContextService } from '../../core/theater-context.service';
@@ -91,12 +91,12 @@ export class ComplaintListComponent implements OnInit {
   ];
 
   searchForm: FormGroup;
-  rows: StaffServiceAgent.ComplaintDTO[] = [];
+  rows: CinemaServiceAgent.ComplaintDTO[] = [];
   total = 0;
   pageIndex = 0;
   loading = false;
 
-  private readonly _api = inject(StaffServiceAgent.CustomerServiceHttpService);
+  private readonly _api = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _user = this._store.selectSignal(selectCurrentUser);
@@ -141,7 +141,7 @@ export class ComplaintListComponent implements OnInit {
     const filters = complaintFilters(this.searchForm.value as Record<string, unknown>, theaterId);
     this.loading = true;
     this._store.dispatch(showLoading());
-    this._api.getComplaints(StaffServiceAgent.PagingSearchDTO.fromJS({ pageIndex: this.pageIndex + 1, pageSize: this.pageSize, filters })).subscribe({
+    this._api.getComplaints(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: this.pageIndex + 1, pageSize: this.pageSize, filters })).subscribe({
       next: result => {
         this.rows = result.results ?? [];
         this.total = result.totalCount ?? 0;
@@ -157,7 +157,7 @@ export class ComplaintListComponent implements OnInit {
 
   create(): void {
     const data: ComplaintDialogData = { theaterId: this._theater.isAdmin() ? (this._theater.currentTheaterId() ?? undefined) : undefined };
-    this._dialog.open<ComplaintDialogComponent, ComplaintDialogData, StaffServiceAgent.ComplaintDTO>(
+    this._dialog.open<ComplaintDialogComponent, ComplaintDialogData, CinemaServiceAgent.ComplaintDTO>(
       ComplaintDialogComponent, { width: '520px', maxWidth: '95vw', data },
     ).afterClosed().subscribe(complaint => {
       if (complaint?.id) {
@@ -166,7 +166,7 @@ export class ComplaintListComponent implements OnInit {
     });
   }
 
-  open(row: StaffServiceAgent.ComplaintDTO): void {
+  open(row: CinemaServiceAgent.ComplaintDTO): void {
     this._router.navigate(['/customer-service/complaints', row.id]);
   }
 }

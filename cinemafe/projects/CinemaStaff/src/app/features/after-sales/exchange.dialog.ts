@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  DialogService, RefundTenderValues, SeatLockSessionService, SharedModule, StaffReasonCodeValues, StaffServiceAgent, ToastService, apiErrorMessage,
+  DialogService, RefundTenderValues, SeatLockSessionService, SharedModule, StaffReasonCodeValues, CinemaServiceAgent, ToastService, apiErrorMessage,
 } from 'CinemaLib';
 import { CashDrawerService } from '../../core/cash-drawer.service';
 import { CounterCartComponent } from '../../core/counter-cart.component';
@@ -17,7 +17,7 @@ import { TheaterContextService } from '../../core/theater-context.service';
 import { exchangeDifference, exchangeNeedsDrawer, exchangeSettlement, exchangeSubmitErrors } from './exchange.logic';
 
 export interface ExchangeDialogData {
-  invoice: StaffServiceAgent.AfterSalesInvoiceDTO;
+  invoice: CinemaServiceAgent.AfterSalesInvoiceDTO;
 }
 
 /**
@@ -122,7 +122,7 @@ export interface ExchangeDialogData {
 export class ExchangeDialogComponent {
   readonly data = inject<ExchangeDialogData>(MAT_DIALOG_DATA);
   private readonly _ref = inject(MatDialogRef<ExchangeDialogComponent, boolean>);
-  private readonly _box = inject(StaffServiceAgent.BoxOfficeHttpService);
+  private readonly _box = inject(CinemaServiceAgent.HttpService);
   private readonly _dialogs = inject(DialogService);
   private readonly _sensitive = inject(SensitiveCallService);
   private readonly _override = inject(OverrideFlowService);
@@ -133,10 +133,10 @@ export class ExchangeDialogComponent {
   readonly drawer = inject(CashDrawerService);
 
   readonly refundTenders = RefundTenderValues;
-  readonly refundTender = signal<StaffServiceAgent.PaymentTender>(StaffServiceAgent.PaymentTender.Cash);
+  readonly refundTender = signal<CinemaServiceAgent.PaymentTender>(CinemaServiceAgent.PaymentTender.Cash);
   readonly tenders = signal<TenderEntry[]>([]);
   readonly submitting = signal(false);
-  readonly done = signal<StaffServiceAgent.ExchangeResultDTO | null>(null);
+  readonly done = signal<CinemaServiceAgent.ExchangeResultDTO | null>(null);
   readonly receipt = signal<SaleReceipt | null>(null);
 
   readonly oldAmount = computed(() => this.data.invoice.finalAmount ?? 0);
@@ -184,7 +184,7 @@ export class ExchangeDialogComponent {
       hintKey: 'afterSales.exchange.reasonHint',
       confirmKey: 'afterSales.exchange.confirm',
       codes: { labelKey: 'afterSales.refund.reason', options: StaffReasonCodeValues.map(r => ({ value: r.value, labelKey: r.name })) },
-      note: { labelKey: 'afterSales.refund.note', requiredWhenCode: StaffServiceAgent.StaffReasonCode.Other },
+      note: { labelKey: 'afterSales.refund.note', requiredWhenCode: CinemaServiceAgent.StaffReasonCode.Other },
     }).afterClosed().subscribe(result => {
       if (!result) {
         return;
@@ -192,7 +192,7 @@ export class ExchangeDialogComponent {
       const theaterId = this._theater.currentTheaterId() ?? undefined;
       this.submitting.set(true);
       // One approval covers the exchange and any price override on the replacement, so the sale itself carries none.
-      this._sensitive.run(theaterId, this.needsPin(), override => this._box.exchange(StaffServiceAgent.ExchangeRequest.fromJS({
+      this._sensitive.run(theaterId, this.needsPin(), override => this._box.exchange(CinemaServiceAgent.ExchangeRequest.fromJS({
         theaterId,
         invoiceId: this.data.invoice.id,
         reasonCode: result.code,

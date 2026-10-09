@@ -6,14 +6,14 @@ import { EMPTY } from 'rxjs';
 import { catchError, debounceTime, switchMap, tap } from 'rxjs/operators';
 import {
   CinemaServiceAgent, PaymentServiceAgent, PriceBreakdownAdjustment, PriceBreakdownLine, SeatLockSessionService, SelectableSeat,
-  StaffServiceAgent, apiErrorMessage, foodOrderCap, isGroupBlocked, seatGroupOf, seatLabel,
+  apiErrorMessage, foodOrderCap, isGroupBlocked, seatGroupOf, seatLabel,
 } from 'CinemaLib';
 import { ManagerApprovalService } from './manager-approval.service';
 import { PosFoodLine, PosTicket, defaultPriceRow, foodItems, foodUnitPrice, seatItems, ticketPrice } from './pos-calc';
 import { PriceOverrideDialog } from './price-override.dialog';
 import { TheaterContextService } from './theater-context.service';
 
-export type CounterShowtime = StaffServiceAgent.CounterShowtimeDTO;
+export type CounterShowtime = CinemaServiceAgent.CounterShowtimeDTO;
 export type CounterPriceRow = PaymentServiceAgent.ShowTimePriceDTO;
 export type CounterFood = CinemaServiceAgent.FoodAndDrinkDTO;
 
@@ -25,7 +25,6 @@ export type CounterFood = CinemaServiceAgent.FoodAndDrinkDTO;
  */
 @Injectable()
 export class CounterCartService implements OnDestroy {
-  private readonly _box = inject(StaffServiceAgent.BoxOfficeHttpService);
   private readonly _payment = inject(PaymentServiceAgent.HttpService);
   private readonly _cinema = inject(CinemaServiceAgent.HttpService);
   private readonly _session = inject(SeatLockSessionService);
@@ -62,16 +61,16 @@ export class CounterCartService implements OnDestroy {
 
   // ---- member, codes, override
   readonly phone = signal('');
-  readonly customer = signal<StaffServiceAgent.CounterCustomerDTO | null>(null);
+  readonly customer = signal<CinemaServiceAgent.CounterCustomerDTO | null>(null);
   readonly customerError = signal('');
   readonly points = signal(0);
   readonly discountCode = signal('');
   readonly giftCardCode = signal('');
   /** Manager approval kept while any price override is in force; absent for an approver. */
-  private readonly _override = signal<StaffServiceAgent.ManagerOverrideDTO | undefined>(undefined);
+  private readonly _override = signal<CinemaServiceAgent.ManagerOverrideDTO | undefined>(undefined);
 
   // ---- quote
-  readonly quote = signal<StaffServiceAgent.CounterQuoteDTO | null>(null);
+  readonly quote = signal<CinemaServiceAgent.CounterQuoteDTO | null>(null);
   readonly quoting = signal(false);
   readonly quoteError = signal('');
 
@@ -141,7 +140,7 @@ export class CounterCartService implements OnDestroy {
           return EMPTY;
         }
         const full = { ...req, tenders: [], connectionId: this._session.connectionId ?? undefined };
-        return this._box.quote(StaffServiceAgent.CounterSaleRequest.fromJS(full)).pipe(
+        return this._cinema.quote(CinemaServiceAgent.CounterSaleRequest.fromJS(full)).pipe(
           tap(q => {
             this.quote.set(q);
             this.quoteError.set('');
@@ -180,7 +179,7 @@ export class CounterCartService implements OnDestroy {
       return;
     }
     this.loadingShowtimes.set(true);
-    this._box.getShowtimesToday(StaffServiceAgent.ShowtimesTodayRequest.fromJS({ theaterId })).subscribe({
+    this._cinema.getShowtimesToday(CinemaServiceAgent.ShowtimesTodayRequest.fromJS({ theaterId })).subscribe({
       next: list => {
         this.showtimes.set(list ?? []);
         this.loadingShowtimes.set(false);
@@ -483,7 +482,7 @@ export class CounterCartService implements OnDestroy {
       return;
     }
     this.customerError.set('');
-    this._box.findCustomer(StaffServiceAgent.FindCustomerRequest.fromJS({ phone })).subscribe({
+    this._cinema.findCustomer(CinemaServiceAgent.FindCustomerRequest.fromJS({ phone })).subscribe({
       next: c => {
         this.customer.set(c);
         this.points.set(0);

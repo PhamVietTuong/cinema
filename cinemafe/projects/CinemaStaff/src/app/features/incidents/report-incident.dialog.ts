@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  IncidentCategoryValues, IncidentSeverityValues, SharedModule, StaffServiceAgent,
+  IncidentCategoryValues, IncidentSeverityValues, SharedModule, CinemaServiceAgent,
   hideLoading, showException, showLoading, showSuccess,
 } from 'CinemaLib';
 import { RoomSeatPickerComponent } from '../../core/room-seat-picker.component';
@@ -72,15 +72,15 @@ export class ReportIncidentDialog {
 
   constructor(
     fb: FormBuilder,
-    private _ops: StaffServiceAgent.OperationsHttpService,
+    private _ops: CinemaServiceAgent.HttpService,
     private _store: Store<any>,
     private _translate: TranslateService,
-    private _dialogRef: MatDialogRef<ReportIncidentDialog, StaffServiceAgent.IncidentDTO | undefined>,
+    private _dialogRef: MatDialogRef<ReportIncidentDialog, CinemaServiceAgent.IncidentDTO | undefined>,
     @Inject(MAT_DIALOG_DATA) public data: ReportIncidentDialogData,
   ) {
     this.form = fb.group({
-      category: [StaffServiceAgent.IncidentCategory.Other],
-      severity: [StaffServiceAgent.IncidentSeverity.Low],
+      category: [CinemaServiceAgent.IncidentCategory.Other],
+      severity: [CinemaServiceAgent.IncidentSeverity.Low],
       title: ['', [Validators.required, Validators.pattern(/\S/)]],
       description: [''],
       roomId: [''],
@@ -95,7 +95,7 @@ export class ReportIncidentDialog {
     }
     const v = this.form.value;
     this._store.dispatch(showLoading());
-    this._ops.reportIncident(StaffServiceAgent.ReportIncidentRequest.fromJS({
+    this._ops.reportIncident(CinemaServiceAgent.ReportIncidentRequest.fromJS({
       theaterId: this.data.theaterId,
       category: v.category,
       severity: v.severity,

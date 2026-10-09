@@ -1,4 +1,4 @@
-import { APPROVER_ROLES, StaffServiceAgent } from 'CinemaLib';
+import { APPROVER_ROLES, CinemaServiceAgent } from 'CinemaLib';
 
 export { isOverrideRejection } from '../../core/sensitive-call.service';
 
@@ -13,21 +13,21 @@ export function hasSearchCriteria(code: string | null | undefined, phone: string
 }
 
 export interface RefundFormValue {
-  reasonCode: StaffServiceAgent.StaffReasonCode | null | undefined;
+  reasonCode: CinemaServiceAgent.StaffReasonCode | null | undefined;
   note: string | null | undefined;
-  tender: StaffServiceAgent.PaymentTender | null | undefined;
+  tender: CinemaServiceAgent.PaymentTender | null | undefined;
   reference: string | null | undefined;
 }
 
 /** Rules for the refund tender part of the form (the panel checks them before the reason dialog opens). */
 export function refundTenderErrors(
-  tender: StaffServiceAgent.PaymentTender | null | undefined,
+  tender: CinemaServiceAgent.PaymentTender | null | undefined,
   reference: string | null | undefined,
 ): string[] {
   if (tender === null || tender === undefined) {
     return ['afterSales.refund.error.tenderRequired'];
   }
-  if (tender !== StaffServiceAgent.PaymentTender.Cash && !(reference ?? '').trim()) {
+  if (tender !== CinemaServiceAgent.PaymentTender.Cash && !(reference ?? '').trim()) {
     return ['afterSales.refund.error.referenceRequired'];
   }
   return [];
@@ -35,13 +35,13 @@ export function refundTenderErrors(
 
 /** Rules for the reason part: a code is required and reason Other needs a note. */
 export function refundReasonErrors(
-  reasonCode: StaffServiceAgent.StaffReasonCode | null | undefined,
+  reasonCode: CinemaServiceAgent.StaffReasonCode | null | undefined,
   note: string | null | undefined,
 ): string[] {
   if (reasonCode === null || reasonCode === undefined) {
     return ['afterSales.refund.error.reasonRequired'];
   }
-  if (reasonCode === StaffServiceAgent.StaffReasonCode.Other && !(note ?? '').trim()) {
+  if (reasonCode === CinemaServiceAgent.StaffReasonCode.Other && !(note ?? '').trim()) {
     return ['afterSales.refund.error.noteRequired'];
   }
   return [];
@@ -61,14 +61,14 @@ export function isValidReprintReason(reason: string | null | undefined): boolean
 }
 
 /** Only counter sales that are paid, unrefunded and have no used ticket can be exchanged. */
-export function canExchangeInvoice(invoice: StaffServiceAgent.AfterSalesInvoiceDTO): boolean {
-  return invoice.channel === StaffServiceAgent.SalesChannel.Counter
-    && invoice.status === StaffServiceAgent.InvoiceStatus.Paid
+export function canExchangeInvoice(invoice: CinemaServiceAgent.AfterSalesInvoiceDTO): boolean {
+  return invoice.channel === CinemaServiceAgent.SalesChannel.Counter
+    && invoice.status === CinemaServiceAgent.InvoiceStatus.Paid
     && (invoice.usedTicketCount ?? 0) === 0
     && !!invoice.canRefund;
 }
 
 /** Only paid invoices have tickets worth reprinting. */
-export function canReprintInvoice(invoice: StaffServiceAgent.AfterSalesInvoiceDTO): boolean {
-  return invoice.status === StaffServiceAgent.InvoiceStatus.Paid;
+export function canReprintInvoice(invoice: CinemaServiceAgent.AfterSalesInvoiceDTO): boolean {
+  return invoice.status === CinemaServiceAgent.InvoiceStatus.Paid;
 }

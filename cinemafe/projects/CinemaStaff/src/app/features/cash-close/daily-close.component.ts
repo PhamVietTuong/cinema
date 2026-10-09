@@ -7,7 +7,7 @@ import {
   DialogService,
   EmptyStateComponent,
   SharedModule,
-  StaffServiceAgent,
+  CinemaServiceAgent,
   StatusPillComponent,
   hideLoading,
   paymentTenderLabel,
@@ -171,8 +171,7 @@ import { buildDailyClosePrintHtml } from './daily-close-print';
   `],
 })
 export class DailyCloseComponent {
-  private readonly _report = inject(StaffServiceAgent.StaffReportHttpService);
-  private readonly _boxOffice = inject(StaffServiceAgent.BoxOfficeHttpService);
+  private readonly _report = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
   private readonly _store = inject(Store);
   private readonly _dialogs = inject(DialogService);
@@ -183,13 +182,13 @@ export class DailyCloseComponent {
   /** Empty = the server's current business day; filled with the day the server answered for. */
   readonly dateControl = new FormControl('');
 
-  readonly report = signal<StaffServiceAgent.DailyCloseDTO | null>(null);
+  readonly report = signal<CinemaServiceAgent.DailyCloseDTO | null>(null);
   readonly loading = signal(false);
   readonly busy = signal(false);
 
   /** Closed drawers whose variance still waits for a manager. */
   readonly pending = computed(() => (this.report()?.drawers ?? [])
-    .filter(d => d.status === StaffServiceAgent.CashDrawerStatus.Closed));
+    .filter(d => d.status === CinemaServiceAgent.CashDrawerStatus.Closed));
 
   constructor() {
     effect(() => {
@@ -201,7 +200,7 @@ export class DailyCloseComponent {
     });
   }
 
-  tenderName(tender?: StaffServiceAgent.PaymentTender): string {
+  tenderName(tender?: CinemaServiceAgent.PaymentTender): string {
     return paymentTenderLabel(tender);
   }
 
@@ -212,7 +211,7 @@ export class DailyCloseComponent {
   load(): void {
     this.loading.set(true);
     this._store.dispatch(showLoading());
-    this._report.getDailyClose(StaffServiceAgent.DailyCloseRequest.fromJS({
+    this._report.getDailyClose(CinemaServiceAgent.DailyCloseRequest.fromJS({
       theaterId: this.theaterId() ?? undefined,
       businessDate: fromDateInputValue(this.dateControl.value),
     })).subscribe({
@@ -230,7 +229,7 @@ export class DailyCloseComponent {
   }
 
   /** Approvers reconcile without a PIN (the API audits them); the note records why the variance is accepted. */
-  reconcile(drawer: StaffServiceAgent.DailyCloseDrawerDTO): void {
+  reconcile(drawer: CinemaServiceAgent.DailyCloseDrawerDTO): void {
     this._dialogs.openReasonDialog({
       titleKey: 'cashClose.reconcile.title',
       hintKey: 'cashClose.reconcile.hint',
@@ -242,7 +241,7 @@ export class DailyCloseComponent {
       }
       this.busy.set(true);
       this._store.dispatch(showLoading());
-      this._boxOffice.reconcileDrawer(StaffServiceAgent.ReconcileDrawerRequest.fromJS({
+      this._report.reconcileDrawer(CinemaServiceAgent.ReconcileDrawerRequest.fromJS({
         theaterId: this.theaterId() ?? undefined,
         sessionId: drawer.sessionId,
         note: result.note ?? '',

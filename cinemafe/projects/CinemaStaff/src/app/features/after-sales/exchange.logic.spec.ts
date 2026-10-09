@@ -1,8 +1,8 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent } from 'CinemaLib';
 import { TenderEntry } from '../../core/pos-calc';
 import { ExchangeSubmitState, exchangeDifference, exchangeNeedsDrawer, exchangeSettlement, exchangeSubmitErrors } from './exchange.logic';
 
-const Tender = StaffServiceAgent.PaymentTender;
+const Tender = CinemaServiceAgent.PaymentTender;
 
 const cash = (amount: number): TenderEntry => ({ method: Tender.Cash, amount, reference: '' });
 const card = (amount: number, reference = ''): TenderEntry => ({ method: Tender.Card, amount, reference });

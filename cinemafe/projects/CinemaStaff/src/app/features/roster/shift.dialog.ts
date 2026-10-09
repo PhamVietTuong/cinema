@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, StaffServiceAgent, hideLoading, showError, showException, showLoading, showSuccess, toDateKey, toTimeKey, toWallClockUtc } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, hideLoading, showError, showException, showLoading, showSuccess, toDateKey, toTimeKey, toWallClockUtc } from 'CinemaLib';
 import { buildShiftSlot } from './shift-times';
 
 export interface ShiftDialogData {
@@ -13,7 +13,7 @@ export interface ShiftDialogData {
   /** Day the shift begins (new shift) . */
   day: Date;
   /** Existing shift when editing. */
-  shift?: StaffServiceAgent.StaffShiftDTO;
+  shift?: CinemaServiceAgent.StaffShiftDTO;
 }
 
 /** Create, edit or delete one shift. Resolves true when the roster changed. */
@@ -73,7 +73,7 @@ export class ShiftDialog {
 
   constructor(
     fb: FormBuilder,
-    private _workforce: StaffServiceAgent.WorkforceHttpService,
+    private _workforce: CinemaServiceAgent.HttpService,
     private _store: Store<any>,
     private _translate: TranslateService,
     private _dialogRef: MatDialogRef<ShiftDialog, boolean>,
@@ -100,7 +100,7 @@ export class ShiftDialog {
       return;
     }
     this._store.dispatch(showLoading());
-    this._workforce.saveShift(StaffServiceAgent.SaveStaffShiftRequest.fromJS({
+    this._workforce.saveShift(CinemaServiceAgent.SaveStaffShiftRequest.fromJS({
       id: this.data.shift?.id,
       theaterId: this.data.theaterId,
       userId: this.data.userId,
@@ -121,7 +121,7 @@ export class ShiftDialog {
       return;
     }
     this._store.dispatch(showLoading());
-    this._workforce.deleteShift(StaffServiceAgent.DeleteStaffShiftRequest.fromJS({ shiftId: this.data.shift.id })).subscribe({
+    this._workforce.deleteShift(CinemaServiceAgent.DeleteStaffShiftRequest.fromJS({ shiftId: this.data.shift.id })).subscribe({
       next: () => {
         this._store.dispatch(showSuccess({ message: this._translate.instant('roster.toast.deleted') }));
         this._dialogRef.close(true);
