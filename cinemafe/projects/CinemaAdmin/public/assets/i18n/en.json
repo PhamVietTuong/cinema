@@ -16,7 +16,8 @@
     "discounts": "Discount Codes",
     "invoices": "Invoices",
     "comments": "Moderation",
-    "giftCards": "Gift Cards"
+    "giftCards": "Gift Cards",
+    "auditLog": "Audit Log"
   },
   "section": {
     "catalog": "Catalog",
@@ -38,6 +39,7 @@
     "news": "News Management",
     "discounts": "Discount Code Management",
     "invoices": "Invoice Management",
+    "auditLog": "Audit Log",
     "default": "Control Panel"
   },
   "profile": {
@@ -635,6 +637,41 @@
     "pageInfo": "Page {{current}} / {{total}}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "auditLog": {
+    "title": "Audit log",
+    "subtitle": "Sensitive staff actions, who did them and who approved them.",
+    "theater": "Theater",
+    "from": "From date",
+    "to": "To date",
+    "empty": "No audit entries match these filters.",
+    "col": {
+      "action": "Action",
+      "actor": "Performed by",
+      "approver": "Approved by",
+      "entity": "Entity",
+      "amount": "Amount",
+      "reason": "Reason"
+    },
+    "action": {
+      "other": "Other",
+      "overrideFailed": "Override failed",
+      "overridePinChanged": "Override PIN changed",
+      "priceOverride": "Price override",
+      "refund": "Refund",
+      "exchange": "Exchange",
+      "reprint": "Reprint",
+      "voidSale": "Void sale",
+      "cashPayOut": "Cash pay-out",
+      "drawerReconcile": "Drawer reconciliation",
+      "compensation": "Compensation",
+      "pointsAdjust": "Points adjustment",
+      "resendTicket": "Resend ticket",
+      "blockSeat": "Block seat",
+      "blockRoom": "Block room",
+      "ticketAdmitOverride": "Ticket admit override",
+      "gateScan": "Gate scan"
+    }
   },
   "news": {
     "title": "News Management",

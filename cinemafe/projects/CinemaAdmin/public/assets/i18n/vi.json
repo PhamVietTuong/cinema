@@ -16,7 +16,8 @@
     "discounts": "Mã Giảm Giá",
     "invoices": "Hóa Đơn",
     "comments": "Kiểm Duyệt",
-    "giftCards": "Thẻ Quà Tặng"
+    "giftCards": "Thẻ Quà Tặng",
+    "auditLog": "Nhật Ký Thao Tác"
   },
   "section": {
     "catalog": "Danh Mục",
@@ -38,6 +39,7 @@
     "news": "Quản Lý Tin Tức",
     "discounts": "Quản Lý Mã Giảm Giá",
     "invoices": "Quản Lý Hóa Đơn",
+    "auditLog": "Nhật Ký Thao Tác",
     "default": "Bảng Điều Khiển"
   },
   "profile": {
@@ -635,6 +637,41 @@
     "pageInfo": "Trang {{current}} / {{total}}",
     "prev": "Trước",
     "next": "Sau"
+  },
+  "auditLog": {
+    "title": "Nhật ký thao tác",
+    "subtitle": "Các thao tác nhạy cảm của nhân viên: ai thực hiện và ai phê duyệt.",
+    "theater": "Rạp chiếu",
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "empty": "Không có bản ghi nào khớp với bộ lọc.",
+    "col": {
+      "action": "Thao tác",
+      "actor": "Người thực hiện",
+      "approver": "Người duyệt",
+      "entity": "Đối tượng",
+      "amount": "Số tiền",
+      "reason": "Lý do"
+    },
+    "action": {
+      "other": "Khác",
+      "overrideFailed": "Xác nhận quản lý thất bại",
+      "overridePinChanged": "Đổi mã PIN quản lý",
+      "priceOverride": "Sửa giá",
+      "refund": "Hoàn tiền",
+      "exchange": "Đổi vé",
+      "reprint": "In lại",
+      "voidSale": "Hủy giao dịch",
+      "cashPayOut": "Chi tiền mặt",
+      "drawerReconcile": "Đối soát két",
+      "compensation": "Đền bù",
+      "pointsAdjust": "Điều chỉnh điểm",
+      "resendTicket": "Gửi lại vé",
+      "blockSeat": "Khóa ghế",
+      "blockRoom": "Khóa phòng",
+      "ticketAdmitOverride": "Cho vào ngoại lệ",
+      "gateScan": "Quét vé cổng"
+    }
   },
   "news": {
     "title": "Quản Lý Tin Tức",

@@ -4,10 +4,9 @@ import { Store } from '@ngrx/store';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import {
-  AuditActionValues,
+  AUDIT_LOG_FILTER_FIELDS,
   EmptyStateComponent,
   FilterBarComponent,
-  FilterBarField,
   SharedModule,
   CinemaServiceAgent,
   StatusPillComponent,
@@ -28,16 +27,7 @@ import { TheaterContextService } from '../../../core/theater-context.service';
 export class AuditLogComponent implements OnInit {
   readonly pageSize = 20;
 
-  readonly filterFields: FilterBarField[] = [
-    {
-      key: 'action',
-      type: 'select',
-      labelKey: 'auditLog.col.action',
-      options: AuditActionValues.map(a => ({ value: String(a.value), labelKey: a.name })),
-    },
-    { key: 'from', type: 'date', labelKey: 'auditLog.from' },
-    { key: 'to', type: 'date', labelKey: 'auditLog.to' },
-  ];
+  readonly filterFields = AUDIT_LOG_FILTER_FIELDS;
 
   searchForm: FormGroup;
   rows: CinemaServiceAgent.AuditLogDTO[] = [];
