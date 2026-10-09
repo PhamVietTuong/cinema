@@ -7,8 +7,8 @@ import {
   loadNowShowing, loadComingSoon,
   selectNowShowing, selectComingSoon, selectMoviesLoading,
 } from 'CinemaLib';
-import { MovieCardComponent } from '../../shared/movie-card/movie-card.component';
-import { SiteFooterComponent } from '../../shared/site-footer/site-footer.component';
+import { MovieCardComponent } from '../../../../shared/movie-card/movie-card.component';
+import { SiteFooterComponent } from '../../../../shared/site-footer/site-footer.component';
 
 @Component({
   selector: 'app-home',

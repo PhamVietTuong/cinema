@@ -8,8 +8,8 @@ import {
   SharedModule, loadMovies, loadNowShowing, loadComingSoon, MOVIE_PAGE_SIZE,
   selectPagedMovies, selectNowShowing, selectNowShowingTotal, selectComingSoon, selectComingSoonTotal, selectMoviesLoading,
 } from 'CinemaLib';
-import { MovieCardComponent } from '../../../shared/movie-card/movie-card.component';
-import { SiteFooterComponent } from '../../../shared/site-footer/site-footer.component';
+import { MovieCardComponent } from '../../../../../shared/movie-card/movie-card.component';
+import { SiteFooterComponent } from '../../../../../shared/site-footer/site-footer.component';
 
 type Mode = 'all' | 'now' | 'coming';
 

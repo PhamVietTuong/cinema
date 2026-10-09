@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, ToastService } from 'CinemaLib';
-import { BookingSelectionComponent } from '../../booking/booking-selection/booking-selection.component';
+import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 
 @Component({
   selector: 'app-movie-detail',
