@@ -297,9 +297,9 @@ public class GateManagerTests
         return JsonDocument.Parse(log.DataJson!).RootElement;
     }
 
-    private static int LoggedOutcome(AuditLog log)
+    private static string LoggedOutcome(AuditLog log)
     {
-        return LogData(log).GetProperty(nameof(ScanTicketResultDTO.Outcome)).GetInt32();
+        return LogData(log).GetProperty(nameof(ScanTicketResultDTO.Outcome)).GetString()!;
     }
 
     [Fact]
@@ -312,7 +312,7 @@ public class GateManagerTests
         log.TheaterId.Should().Be(_theaterId);
         log.ActorUserId.Should().Be(_userId);
         log.EntityId.Should().BeNull();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.NotFound);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.NotFound));
         var data = LogData(log);
         data.GetProperty("InvoiceId").ValueKind.Should().Be(JsonValueKind.Null);
         data.GetProperty("Snapshot").ValueKind.Should().Be(JsonValueKind.Null);
@@ -327,7 +327,20 @@ public class GateManagerTests
         await Scan();
 
         var log = SingleLog();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.NotPaid);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.NotPaid));
+        log.EntityId.Should().Be(_ticket.InvoiceId);
+        LogData(log).GetProperty("Snapshot").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Log_InactiveTicket_StagesNotPaid_WithIdsButNoSnapshot()
+    {
+        _ticket.IsActive = false;
+
+        await Scan();
+
+        var log = SingleLog();
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.NotPaid));
         log.EntityId.Should().Be(_ticket.InvoiceId);
         LogData(log).GetProperty("Snapshot").ValueKind.Should().Be(JsonValueKind.Null);
     }
@@ -340,7 +353,7 @@ public class GateManagerTests
         await Scan();
 
         var log = SingleLog();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.WrongTheater);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.WrongTheater));
         log.EntityId.Should().Be(_ticket.InvoiceId);
         LogData(log).GetProperty("Snapshot").ValueKind.Should().Be(JsonValueKind.Null);
     }
@@ -353,7 +366,7 @@ public class GateManagerTests
         await Scan();
 
         var log = SingleLog();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.AlreadyUsed);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.AlreadyUsed));
         log.EntityId.Should().Be(_ticket.InvoiceId);
         LogData(log).GetProperty("Snapshot").GetProperty("InvoiceCode").GetString().Should().Be("CIN1");
     }
@@ -364,7 +377,7 @@ public class GateManagerTests
         await Scan(new ScanTicketRequest { Code = _qr, ShowTimeId = Guid.NewGuid() });
 
         var log = SingleLog();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.WrongShowTime);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.WrongShowTime));
         LogData(log).GetProperty("Snapshot").GetProperty("SeatLabel").GetString().Should().Be("A1");
     }
 
@@ -377,7 +390,7 @@ public class GateManagerTests
         await Scan();
 
         var log = SingleLog();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.TooEarly);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.TooEarly));
         LogData(log).GetProperty("Snapshot").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
@@ -390,7 +403,7 @@ public class GateManagerTests
         await Scan();
 
         var log = SingleLog();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.Expired);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.Expired));
         LogData(log).GetProperty("Snapshot").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
@@ -403,7 +416,7 @@ public class GateManagerTests
         await Scan();
 
         var log = SingleLog();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.AgeCheckRequired);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.AgeCheckRequired));
         LogData(log).GetProperty("Snapshot").ValueKind.Should().NotBe(JsonValueKind.Null);
     }
 
@@ -415,7 +428,7 @@ public class GateManagerTests
         await Scan(new ScanTicketRequest { Code = _qr, ShowTimeId = requestedShowTimeId });
 
         var log = SingleLog();
-        LoggedOutcome(log).Should().Be((int)ScanOutcome.Admitted);
+        LoggedOutcome(log).Should().Be(nameof(ScanOutcome.Admitted));
         log.EntityId.Should().Be(_ticket.InvoiceId);
         var data = LogData(log);
         data.GetProperty("RequestedShowTimeId").GetGuid().Should().Be(requestedShowTimeId);
@@ -423,18 +436,45 @@ public class GateManagerTests
     }
 
     [Fact]
-    public async Task Log_ConcurrentDoubleScan_LogsExactlyOneAdmittedAndOneAlreadyUsed()
+    public async Task Log_ConcurrentDoubleScan_LogsExactlyOneAdmittedAndOneAlreadyUsed_AgainstTheOriginalTicket()
     {
         var winners = 0;
         _uowMock.Setup(u => u.InvoiceStore.TryAdmitTicketAsync(
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<DateTime>()))
             .ReturnsAsync(() => Interlocked.Increment(ref winners) == 1);
 
+        // The loser re-reads the ticket after losing the race; that re-read returns a DIFFERENT instance
+        // (e.g. refreshed used-by/used-at), so the test can tell whether the logged ids come from the
+        // original ticket reference (the claimed id-stability behavior) or from the re-read.
+        var rereadTicket = new GateTicketRow
+        {
+            InvoiceId = Guid.NewGuid(),
+            ShowTimeId = _ticket.ShowTimeId,
+            SeatId = _ticket.SeatId,
+            IsActive = true,
+            InvoiceStatus = InvoiceStatus.Paid,
+            InvoiceCode = "CIN-REREAD",
+            SeatLabel = _ticket.SeatLabel,
+            MovieTitle = _ticket.MovieTitle,
+            RoomName = _ticket.RoomName,
+            TheaterId = _theaterId,
+            StartTime = _ticket.StartTime,
+            EndTime = _ticket.EndTime,
+            IsUsed = true,
+            UsedAt = _now,
+            UsedByName = "Someone Else"
+        };
+        var fetchCount = 0;
+        _uowMock.Setup(u => u.InvoiceStore.GetGateTicketByQrAsync(_qr))
+            .ReturnsAsync(() => Interlocked.Increment(ref fetchCount) <= 2 ? _ticket : rereadTicket);
+
         await Task.WhenAll(Scan(), Scan());
 
         _logs.Should().HaveCount(2);
-        _logs.Count(l => LoggedOutcome(l) == (int)ScanOutcome.Admitted).Should().Be(1);
-        _logs.Count(l => LoggedOutcome(l) == (int)ScanOutcome.AlreadyUsed).Should().Be(1);
+        _logs.Count(l => LoggedOutcome(l) == nameof(ScanOutcome.Admitted)).Should().Be(1);
+        var alreadyUsedLog = _logs.Single(l => LoggedOutcome(l) == nameof(ScanOutcome.AlreadyUsed));
+        alreadyUsedLog.EntityId.Should().Be(_ticket.InvoiceId);
+        LogData(alreadyUsedLog).GetProperty("InvoiceId").GetGuid().Should().Be(_ticket.InvoiceId);
     }
 
     [Fact]

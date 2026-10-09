@@ -142,7 +142,7 @@ public class GateManager : IGateManager
             var dataJson = JsonSerializer.Serialize(new
             {
                 Code = code,
-                result.Outcome,
+                Outcome = result.Outcome.ToString(),
                 request.AgeConfirmed,
                 RequestedShowTimeId = request.ShowTimeId,
                 ticket?.InvoiceId,
