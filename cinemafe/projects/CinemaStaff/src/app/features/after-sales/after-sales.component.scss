@@ -1,0 +1,11 @@
+.num { text-align: right; }
+.muted { color: var(--ml-muted); font-size: 12px; }
+.row { cursor: pointer; }
+.row.selected { background: var(--ml-action-soft, rgba(0, 0, 0, 0.04)); }
+.flags { display: flex; gap: 6px; flex-wrap: wrap; }
+.panel { margin-top: 16px; padding: 16px 24px; }
+.panel-title { margin: 0 0 12px; font-size: 16px; }
+.notice { display: flex; align-items: center; gap: 8px; color: var(--ml-muted); margin: 4px 0; }
+.notice.warn { color: var(--ml-warn-ink); }
+.refund-fields { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }

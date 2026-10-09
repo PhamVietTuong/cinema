@@ -1,0 +1,20 @@
+.pos-receipt-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.pos-receipt-title { margin: 0; font-size: 1.2rem; }
+.pos-receipt-code { margin: 4px 0; color: var(--ml-muted); font-family: var(--ml-font-data); }
+.pos-receipt-change { margin: 4px 0; font-size: 1.1rem; }
+.pos-receipt-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+.pos-print-area { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.pos-print-sheet { background: #fff; color: #000; border: 1px dashed var(--ml-rule); padding: 12px; }
+.pos-print-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; font-size: 0.85rem; }
+.pos-print-change { margin: 8px 0 0; font-weight: 700; }
+.pos-print-area--roll .pos-print-sheet { max-width: 72mm; }
+
+@page { margin: 4mm; size: A6; }
+@media print {
+  body * { visibility: hidden !important; }
+  .pos-print-area, .pos-print-area * { visibility: visible !important; }
+  .pos-print-area { position: absolute; left: 0; top: 0; width: 100%; display: block; }
+  .pos-print-sheet { border: 0; padding: 0 0 6mm; break-after: page; page-break-after: always; }
+  .pos-print-sheet:last-child { break-after: auto; page-break-after: auto; }
+}

@@ -36,6 +36,7 @@ export const ADMIN_MENU: NavSection[] = [
       { icon: 'receipt_long', labelKey: 'nav.invoices', route: '/invoices', titleKey: 'pageTitle.invoices', roles: ADMIN_ONLY },
       { icon: 'forum', labelKey: 'nav.comments', route: '/comments', roles: ADMIN_ONLY },
       { icon: 'card_giftcard', labelKey: 'nav.giftCards', route: '/gift-cards', roles: ADMIN_ONLY },
+      { icon: 'fact_check', labelKey: 'nav.auditLog', route: '/audit-log', titleKey: 'pageTitle.auditLog', roles: ADMIN_ONLY },
     ],
   },
 ];

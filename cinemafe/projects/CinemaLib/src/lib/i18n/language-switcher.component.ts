@@ -15,37 +15,8 @@ import { AppLanguage, LanguageService } from './language.service';
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatMenuModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <button
-      mat-button
-      [matMenuTriggerFor]="langMenu"
-      class="cl-language-switcher"
-      aria-label="Language">
-      <mat-icon>language</mat-icon>
-      <span class="cl-language-switcher__code">{{ lang.current() | uppercase }}</span>
-    </button>
-    <mat-menu #langMenu="matMenu">
-      @for (option of lang.languages; track option.code) {
-        <button mat-menu-item (click)="select(option.code)">
-          @if (option.code === lang.current()) {
-            <mat-icon>check</mat-icon>
-          } @else {
-            <mat-icon>&nbsp;</mat-icon>
-          }
-          <span>{{ option.label }}</span>
-        </button>
-      }
-    </mat-menu>
-  `,
-  styles: [
-    `
-      .cl-language-switcher__code {
-        margin-left: 4px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-      }
-    `,
-  ],
+  templateUrl: './language-switcher.component.html',
+  styleUrl: './language-switcher.component.scss',
 })
 export class LanguageSwitcherComponent {
   readonly lang = inject(LanguageService);

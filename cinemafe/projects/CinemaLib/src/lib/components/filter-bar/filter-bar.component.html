@@ -1,0 +1,51 @@
+<mat-card class="ad-filter-card">
+  <mat-card-content>
+    <h3 class="ad-card-title">{{ titleKey() | translate }}</h3>
+    <form [formGroup]="form()" class="ad-filter-grid">
+      @for (field of fields(); track field.key) {
+        @switch (field.type) {
+          @case ('text') {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ field.labelKey | translate }}</mat-label>
+              <input matInput [formControlName]="field.key" (input)="filtersChange.emit()">
+            </mat-form-field>
+          }
+          @case ('date') {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ field.labelKey | translate }}</mat-label>
+              <input matInput type="date" [formControlName]="field.key" (change)="filtersChange.emit()">
+            </mat-form-field>
+          }
+          @case ('select') {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ field.labelKey | translate }}</mat-label>
+              <mat-select [formControlName]="field.key" (selectionChange)="filtersChange.emit()">
+                @if (field.allowEmpty !== false) {
+                  <mat-option value="">{{ (field.allLabelKey ?? 'common.all') | translate }}</mat-option>
+                }
+                @for (option of field.options ?? []; track option.value) {
+                  <mat-option [value]="option.value">{{ option.labelKey ? (option.labelKey | translate) : option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+          @case ('multiselect') {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ field.labelKey | translate }}</mat-label>
+              <mat-select multiple [formControlName]="field.key" (selectionChange)="filtersChange.emit()">
+                @for (option of field.options ?? []; track option.value) {
+                  <mat-option [value]="option.value">{{ option.labelKey ? (option.labelKey | translate) : option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+          @case ('toggle') {
+            <div class="cl-filter-toggle">
+              <mat-slide-toggle [formControlName]="field.key" (change)="filtersChange.emit()">{{ field.labelKey | translate }}</mat-slide-toggle>
+            </div>
+          }
+        }
+      }
+    </form>
+  </mat-card-content>
+</mat-card>

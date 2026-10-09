@@ -1,0 +1,53 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'tasks.board.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'tasks.board.subtitle' | translate }}</p>
+    </div>
+    @if (theaterId) {
+      <div class="ad-toolbar">
+        <button mat-raised-button color="primary" type="button" (click)="openDialog()"><mat-icon>add_task</mat-icon> {{ 'tasks.board.new' | translate }}</button>
+      </div>
+    }
+  </div>
+
+  @if (!theaterId) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="theaters" messageKey="opsCommon.pickTheater" hintKey="opsCommon.pickTheaterHint" />
+    </mat-card>
+  } @else {
+    <cl-filter-bar [form]="searchForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
+    <mat-card class="ad-card--pad-0">
+      <div class="ad-table-wrap">
+        <table class="ad-table">
+          <thead>
+            <tr>
+              <th>{{ 'tasks.fields.title' | translate }}</th>
+              <th>{{ 'tasks.fields.assignee' | translate }}</th>
+              <th>{{ 'common.status' | translate }}</th>
+              <th>{{ 'tasks.fields.dueAt' | translate }}</th>
+              <th>{{ 'tasks.fields.createdBy' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track row.id) {
+              <tr class="clickable" (click)="openDialog(row)">
+                <td><strong>{{ row.title }}</strong></td>
+                <td>{{ row.assignedToName }}</td>
+                <td><cl-status-pill kind="staffTask" [value]="row.status" /></td>
+                <td>{{ row.dueAt | date: 'dd/MM HH:mm' }}</td>
+                <td>{{ row.createdByName }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (!rows.length && !loading) {
+        <cl-empty-state messageKey="tasks.board.empty" />
+      }
+      @if (total > 0) {
+        <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageIndex" [hidePageSize]="true" (page)="onPage($event.pageIndex)"></mat-paginator>
+      }
+    </mat-card>
+  }
+</div>

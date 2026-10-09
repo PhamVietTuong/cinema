@@ -1,0 +1,72 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'schedule.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'schedule.subtitle' | translate }}</p>
+    </div>
+    <div class="ad-toolbar day-nav">
+      <button mat-icon-button type="button" [attr.aria-label]="'schedule.prevDay' | translate" (click)="shiftDay(-1)"><mat-icon>chevron_left</mat-icon></button>
+      <input class="ad-input" type="date" [formControl]="dateControl" (change)="load()" [attr.aria-label]="'opsCommon.date' | translate">
+      <button mat-icon-button type="button" [attr.aria-label]="'schedule.nextDay' | translate" (click)="shiftDay(1)"><mat-icon>chevron_right</mat-icon></button>
+      <button mat-stroked-button type="button" (click)="today()">{{ 'schedule.today' | translate }}</button>
+      <button mat-icon-button type="button" [attr.aria-label]="'opsCommon.refresh' | translate" (click)="load()"><mat-icon>refresh</mat-icon></button>
+    </div>
+  </div>
+
+  @if (!theaterId) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="theaters" messageKey="opsCommon.pickTheater" hintKey="opsCommon.pickTheaterHint" />
+    </mat-card>
+  } @else {
+    <div class="legend">
+      <span><i class="swatch swatch--show"></i> {{ 'schedule.legend.showtime' | translate }}</span>
+      <span><i class="swatch swatch--buffer"></i> {{ 'schedule.legend.buffer' | translate }}</span>
+    </div>
+
+    <mat-card class="ad-card--pad-0">
+      @if (!rooms.length && !loading) {
+        <cl-empty-state icon="movie" messageKey="schedule.empty" />
+      }
+      @if (rooms.length) {
+        <div class="board-scroll">
+          <div class="board">
+            <div class="board-row board-head">
+              <div class="room-cell"></div>
+              <div class="track track--head">
+                @for (tick of ticks; track tick.label) {
+                  <span class="tick-label" [style.left.%]="tick.leftPct">{{ tick.label }}</span>
+                }
+              </div>
+            </div>
+            @for (room of rooms; track room.source.roomId) {
+              <div class="board-row">
+                <div class="room-cell">
+                  <strong>{{ room.source.roomName }}</strong>
+                  <span class="muted">{{ room.source.roomTypeName }} · {{ room.source.capacity }} {{ 'schedule.seats' | translate }}</span>
+                  <cl-status-pill kind="roomStatus" [value]="room.source.roomStatus" />
+                </div>
+                <div class="track">
+                  @for (tick of ticks; track tick.label) {
+                    <span class="grid-line" [style.left.%]="tick.leftPct"></span>
+                  }
+                  @for (st of room.showTimes; track st.source.showTimeId) {
+                    <span class="buffer" [style.left.%]="st.block.bufferLeftPct" [style.width.%]="st.block.bufferWidthPct"
+                      [title]="'schedule.bufferTitle' | translate: { minutes: room.source.turnoverBufferMinutes }"></span>
+                    <button type="button" class="show" [style.left.%]="st.block.leftPct" [style.width.%]="st.block.widthPct"
+                      [title]="'schedule.openChecklist' | translate"
+                      (click)="openChecklist(st.source, room.source)">
+                      <strong class="show-title">{{ st.source.movieTitle }}</strong>
+                      <span class="show-time">{{ st.source.start | date: 'HH:mm' }} - {{ st.source.end | date: 'HH:mm' }}</span>
+                      <span class="show-sold">{{ st.source.sold }}/{{ st.source.capacity }}</span>
+                      <span class="fill" [style.width.%]="st.soldPct"></span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </mat-card>
+  }
+</div>

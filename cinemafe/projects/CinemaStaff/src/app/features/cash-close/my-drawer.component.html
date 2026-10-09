@@ -1,0 +1,67 @@
+@if (!theaterId()) {
+  <mat-card class="ad-card--pad-0">
+    <cl-empty-state icon="theaters" messageKey="cashClose.pickTheater" hintKey="cashClose.pickTheaterHint" />
+  </mat-card>
+} @else if (result(); as closed) {
+  <mat-card class="panel">
+    <h2 class="panel-title">{{ 'cashClose.drawer.closedTitle' | translate }}</h2>
+    <dl class="summary">
+      <dt>{{ 'cashClose.drawer.status' | translate }}</dt><dd><cl-status-pill kind="drawerStatus" [value]="closed.status" /></dd>
+      <dt>{{ 'cashClose.drawer.expected' | translate }}</dt><dd>{{ closed.expectedCash | currency: 'VND':'symbol':'1.0-0' }}</dd>
+      <dt>{{ 'cashClose.drawer.counted' | translate }}</dt><dd>{{ closed.countedCash | currency: 'VND':'symbol':'1.0-0' }}</dd>
+      <dt>{{ 'cashClose.drawer.variance' | translate }}</dt>
+      <dd [class]="'variance variance--' + toneOf(closed.variance)">{{ closed.variance | currency: 'VND':'symbol':'1.0-0' }}</dd>
+    </dl>
+    @if (closed.needsReconciliation) {
+      <p class="notice warn"><mat-icon>warning</mat-icon> {{ 'cashClose.drawer.needsReconciliation' | translate }}</p>
+    }
+    <button mat-stroked-button type="button" (click)="result.set(null)">{{ 'common.close' | translate }}</button>
+  </mat-card>
+} @else if (drawer(); as d) {
+  @if (!d.isOpen) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="point_of_sale" messageKey="cashClose.drawer.noOpenDrawer" hintKey="cashClose.drawer.noOpenDrawerHint" />
+    </mat-card>
+  } @else {
+    <mat-card class="panel">
+      <h2 class="panel-title">{{ 'cashClose.drawer.title' | translate: { terminal: d.terminalName } }}</h2>
+      <dl class="summary">
+        <dt>{{ 'cashClose.drawer.openedAt' | translate }}</dt><dd>{{ d.openedAt | serverUtc | date: 'HH:mm dd/MM/yyyy' }}</dd>
+        <dt>{{ 'cashClose.drawer.openingFloat' | translate }}</dt><dd>{{ d.openingFloat | currency: 'VND':'symbol':'1.0-0' }}</dd>
+        <dt>{{ 'cashClose.drawer.cashSales' | translate }}</dt><dd>{{ d.cashSales | currency: 'VND':'symbol':'1.0-0' }}</dd>
+        <dt>{{ 'cashClose.drawer.payIns' | translate }}</dt><dd>{{ d.payIns | currency: 'VND':'symbol':'1.0-0' }}</dd>
+        <dt>{{ 'cashClose.drawer.payOuts' | translate }}</dt><dd>{{ d.payOuts | currency: 'VND':'symbol':'1.0-0' }}</dd>
+        <dt>{{ 'cashClose.drawer.refunds' | translate }}</dt><dd>{{ d.refunds | currency: 'VND':'symbol':'1.0-0' }}</dd>
+        <dt><strong>{{ 'cashClose.drawer.expected' | translate }}</strong></dt>
+        <dd><strong>{{ d.expectedCash | currency: 'VND':'symbol':'1.0-0' }}</strong></dd>
+      </dl>
+
+      <div class="count-fields">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'cashClose.drawer.counted' | translate }}</mat-label>
+          <input matInput type="number" min="0" step="1000" inputmode="numeric" [formControl]="countControl">
+          @if (countControl.value !== null && !validCount()) {
+            <mat-error>{{ 'cashClose.drawer.countInvalid' | translate }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="note">
+          <mat-label>{{ 'cashClose.drawer.note' | translate }}</mat-label>
+          <input matInput maxlength="500" [formControl]="noteControl" autocomplete="off">
+        </mat-form-field>
+      </div>
+
+      @if (variance() !== null) {
+        <p [class]="'variance variance--' + tone()">
+          {{ 'cashClose.drawer.variancePreview' | translate }}: {{ variance() | currency: 'VND':'symbol':'1.0-0' }}
+        </p>
+        @if (previewReconcile()) {
+          <p class="notice warn"><mat-icon>warning</mat-icon> {{ 'cashClose.drawer.reconcileHint' | translate }}</p>
+        }
+      }
+
+      <button mat-raised-button color="primary" type="button" [disabled]="busy() || !validCount()" (click)="close(d)">
+        <mat-icon>lock</mat-icon> {{ 'cashClose.drawer.close' | translate }}
+      </button>
+    </mat-card>
+  }
+}

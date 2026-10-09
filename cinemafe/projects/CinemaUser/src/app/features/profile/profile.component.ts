@@ -1,8 +1,6 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, profileUpdated } from 'CinemaLib';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, inject } from '@angular/core';
+import { ValidatorFn, Validators } from '@angular/forms';
+import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase } from 'CinemaLib';
 import * as QRCode from 'qrcode';
 
 /** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
@@ -15,15 +13,10 @@ const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })
-export class ProfileComponent implements OnInit {
-  private _identity = inject(IdentityServiceAgent.HttpService);
+export class ProfileComponent extends ProfileFormBase {
   private _payment = inject(PaymentServiceAgent.HttpService);
   private _cinema = inject(CinemaServiceAgent.HttpService);
-  private _fb = inject(FormBuilder);
-  private _cdr = inject(ChangeDetectorRef);
-  private _translate = inject(TranslateService);
   private _toast = inject(ToastService);
-  private _store = inject(Store);
 
   avatarUploading = false;
   avatarErr = '';
@@ -41,42 +34,35 @@ export class ProfileComponent implements OnInit {
     { icon: 'star', text: 'profile.perkEarnPoints' },
   ];
 
-  user: IdentityServiceAgent.UserDTO | null = null;
   invoices: PaymentServiceAgent.InvoiceDTO[] = [];
   invoicesLoading = false;
   expandedId: string | null = null;
   /** Per-ticket e-ticket QR data URLs, keyed by the ticket's QR token. */
   qrMap: Record<string, string> = {};
 
-  profileForm: FormGroup = this._fb.group({
-    name: ['', Validators.required],
-    phone: ['', Validators.pattern(PHONE_PATTERN)],
-    avatar: [''],
-  });
-  passwordForm: FormGroup = this._fb.group({
-    currentPassword: ['', Validators.required],
-    newPassword: ['', [Validators.required, Validators.minLength(6)]],
-    confirmNewPassword: ['', Validators.required],
-  });
-
-  profileMsg = ''; profileErr = '';
-  passwordMsg = ''; passwordErr = '';
-
-  ngOnInit(): void {
-    this._identity.getProfile().subscribe({
-      next: u => {
-        this.user = u;
-        this.profileForm.patchValue({ name: u.name ?? '', phone: u.phone ?? '', avatar: u.avatar ?? '' });
-        this.notif = {
-          booking: u.notifyBookingEmails ?? true,
-          promos: u.notifyPromotionEmails ?? false,
-          reminders: u.notifyReminderEmails ?? true,
-        };
-        this._cdr.markForCheck();
-      },
-      error: () => this._cdr.markForCheck(),
-    });
+  override ngOnInit(): void {
+    super.ngOnInit();
     this.loadInvoices();
+  }
+
+  protected override _phoneValidators(): ValidatorFn[] {
+    return [Validators.pattern(PHONE_PATTERN)];
+  }
+
+  protected override _profileI18n(): { updateSuccess: string; updateFailed: string } {
+    return { updateSuccess: 'profile.updateSuccess', updateFailed: 'profile.updateFailed' };
+  }
+
+  protected override _initialsFallback(): string {
+    return 'U';
+  }
+
+  protected override _onProfileLoaded(u: IdentityServiceAgent.UserDTO): void {
+    this.notif = {
+      booking: u.notifyBookingEmails ?? true,
+      promos: u.notifyPromotionEmails ?? false,
+      reminders: u.notifyReminderEmails ?? true,
+    };
   }
 
   loadInvoices(): void {
@@ -113,26 +99,6 @@ export class ProfileComponent implements OnInit {
     return status === this.InvoiceStatus.Paid;
   }
 
-  saveProfile(): void {
-    if (this.profileForm.invalid) { this.profileForm.markAllAsTouched(); return; }
-    this.profileMsg = ''; this.profileErr = '';
-    this._identity.updateProfile(IdentityServiceAgent.UpdateProfileRequest.fromJS(this.profileForm.value))
-      .subscribe({
-        next: () => {
-          this.profileMsg = this._translate.instant('profile.updateSuccess');
-          this._identity.getProfile().subscribe(u => {
-            this.user = u;
-            // Refresh the cached auth user too, otherwise the header keeps showing the old
-            // name — and keeps showing it after a reload, since storage still holds the old copy.
-            this._store.dispatch(profileUpdated({ user: u }));
-            this._cdr.markForCheck();
-          });
-          this._cdr.markForCheck();
-        },
-        error: e => { this.profileErr = this._err(e, this._translate.instant('profile.updateFailed')); this._cdr.markForCheck(); },
-      });
-  }
-
   onPickAvatar(e: Event): void {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) { return; }
@@ -141,18 +107,6 @@ export class ProfileComponent implements OnInit {
       next: r => { this.profileForm.patchValue({ avatar: r.url ?? '' }); this.avatarUploading = false; this._cdr.markForCheck(); },
       error: () => { this.avatarErr = this._translate.instant('profile.uploadFailed'); this.avatarUploading = false; this._cdr.markForCheck(); },
     });
-  }
-
-  changePassword(): void {
-    if (this.passwordForm.invalid) { this.passwordForm.markAllAsTouched(); return; }
-    const v = this.passwordForm.value;
-    this.passwordMsg = ''; this.passwordErr = '';
-    if (v.newPassword !== v.confirmNewPassword) { this.passwordErr = this._translate.instant('profile.passwordMismatch'); return; }
-    this._identity.changePassword(IdentityServiceAgent.ChangePasswordRequest.fromJS(v))
-      .subscribe({
-        next: () => { this.passwordMsg = this._translate.instant('profile.passwordChangeSuccess'); this.passwordForm.reset(); this._cdr.markForCheck(); },
-        error: e => { this.passwordErr = this._err(e, this._translate.instant('profile.passwordChangeFailed')); this._cdr.markForCheck(); },
-      });
   }
 
   saveNotifications(): void {
@@ -239,10 +193,6 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  initials(name?: string): string {
-    const parts = (name ?? '').trim().split(/\s+/);
-    return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase() || 'U';
-  }
   statusLabel(s?: PaymentServiceAgent.InvoiceStatus): string {
     switch (s) {
       case this.InvoiceStatus.Paid: return this._translate.instant('profile.statusPaid');
@@ -260,10 +210,5 @@ export class ProfileComponent implements OnInit {
       case this.InvoiceStatus.Refunded: return 'is-refunded';
       default: return 'is-cancelled';
     }
-  }
-
-  private _err(e: any, fallback: string): string {
-    const x = e?.error;
-    return (typeof x === 'string' && x) ? x : (x?.error || x?.message || fallback);
   }
 }

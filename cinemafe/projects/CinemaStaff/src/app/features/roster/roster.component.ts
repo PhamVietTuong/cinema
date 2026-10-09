@@ -15,76 +15,8 @@ import { shiftsOnDay, totalShiftHours } from './shift-times';
   selector: 'staff-roster',
   standalone: true,
   imports: [SharedModule, EmptyStateComponent],
-  template: `
-<div class="ad-page">
-  <div class="ad-page-header">
-    <div>
-      <h1 class="ad-h1">{{ 'roster.title' | translate }}</h1>
-      <p class="ad-sub">{{ 'roster.subtitle' | translate }}</p>
-    </div>
-    <div class="ad-toolbar nav">
-      <button mat-icon-button type="button" [attr.aria-label]="'roster.prevWeek' | translate" (click)="shiftWeek(-1)"><mat-icon>chevron_left</mat-icon></button>
-      <strong>{{ weekStart | date: 'dd/MM' }} - {{ days[6] | date: 'dd/MM/yyyy' }}</strong>
-      <button mat-icon-button type="button" [attr.aria-label]="'roster.nextWeek' | translate" (click)="shiftWeek(1)"><mat-icon>chevron_right</mat-icon></button>
-      <button mat-stroked-button type="button" (click)="thisWeek()">{{ 'roster.thisWeek' | translate }}</button>
-    </div>
-  </div>
-
-  @if (!theaterId) {
-    <mat-card class="ad-card--pad-0">
-      <cl-empty-state icon="theaters" messageKey="opsCommon.pickTheater" hintKey="opsCommon.pickTheaterHint" />
-    </mat-card>
-  } @else {
-    <mat-card class="ad-card--pad-0">
-      @if (!staff.length && !loading) {
-        <cl-empty-state icon="groups" messageKey="roster.empty" />
-      } @else {
-        <div class="scroll">
-          <table class="ad-table grid">
-            <thead>
-              <tr>
-                <th>{{ 'roster.staff' | translate }}</th>
-                @for (day of days; track day.getTime()) {
-                  <th>{{ day | date: 'EEE dd/MM' }}</th>
-                }
-                <th class="num">{{ 'roster.hours' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (member of staff; track member.id) {
-                <tr>
-                  <td><strong>{{ member.name }}</strong><br><span class="muted">{{ member.roleName }}</span></td>
-                  @for (day of days; track day.getTime()) {
-                    <td class="cell" (click)="addShift(member, day)">
-                      @for (shift of shiftsFor(member.id!, day); track shift.id) {
-                        <button type="button" class="chip" (click)="editShift(member, shift, $event)">
-                          {{ shift.startTime | date: 'HH:mm' }}-{{ shift.endTime | date: 'HH:mm' }}
-                        </button>
-                      }
-                    </td>
-                  }
-                  <td class="num">{{ hoursFor(member.id!) }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    </mat-card>
-  }
-</div>
-`,
-  styles: [`
-    .nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .scroll { overflow-x: auto; }
-    .grid { min-width: 900px; }
-    .cell { cursor: pointer; vertical-align: top; min-width: 100px; }
-    .cell:hover { background: var(--ml-panel-3, rgba(0, 0, 0, 0.04)); }
-    .chip { display: block; width: 100%; margin-bottom: 4px; border: 0; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 12px;
-      background: var(--ml-action-soft); color: var(--ml-action-strong); }
-    .muted { color: var(--ml-muted); font-size: 12px; }
-    .num { text-align: right; }
-  `],
+  templateUrl: './roster.component.html',
+  styleUrl: './roster.component.scss',
 })
 export class RosterComponent {
   weekStart = startOfWeek(new Date());

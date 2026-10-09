@@ -20,49 +20,8 @@ export interface ResendETicketDialogData {
   standalone: true,
   imports: [SharedModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-<div mat-dialog-title class="dialog-title">{{ 'customerService.resend.title' | translate: { code: data.invoice.code } }}</div>
-<mat-dialog-content>
-  <p class="hint">{{ 'customerService.resend.hint' | translate }}</p>
-  <p class="quota" [class.quota--none]="data.remaining === 0">
-    {{ 'customerService.resend.remaining' | translate: { remaining: data.remaining, max: max } }}
-  </p>
-  <form [formGroup]="form" class="fields">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ 'customerService.resend.channel' | translate }}</mat-label>
-      <mat-select formControlName="channel">
-        @for (option of channels; track option.value) {
-          <mat-option [value]="option.value">{{ option.name | translate }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ 'customerService.resend.address' | translate }}</mat-label>
-      <input matInput formControlName="address" autocomplete="off" maxlength="120">
-      <mat-hint>{{ 'customerService.resend.addressHint' | translate }}</mat-hint>
-    </mat-form-field>
-  </form>
-  @if (errors().length) {
-    <p class="error">{{ errors()[0] | translate }}</p>
-  }
-  @if (serverError()) {
-    <p class="error">{{ serverError() }}</p>
-  }
-</mat-dialog-content>
-<div mat-dialog-actions class="dialog-actions">
-  <button mat-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-  <button mat-raised-button color="primary" type="button" [disabled]="busy() || data.remaining === 0 || errors().length > 0" (click)="send()">
-    <mat-icon>forward_to_inbox</mat-icon> {{ 'customerService.resend.send' | translate }}
-  </button>
-</div>
-`,
-  styles: [`
-    .hint { color: var(--ml-muted); margin: 0 0 8px; }
-    .quota { margin: 0 0 12px; font-weight: 600; }
-    .quota--none { color: var(--ml-warn-ink); }
-    .fields { display: flex; flex-direction: column; gap: 12px; min-width: 320px; }
-    .error { color: var(--ml-warn-ink); margin: 8px 0 0; }
-  `],
+  templateUrl: './resend-eticket.dialog.html',
+  styleUrl: './resend-eticket.dialog.scss',
 })
 export class ResendETicketDialogComponent {
   readonly data = inject<ResendETicketDialogData>(MAT_DIALOG_DATA);

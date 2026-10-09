@@ -1,0 +1,7 @@
+.card { padding: 16px; margin-bottom: 16px; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+.facts dt { color: var(--ml-muted); }
+.facts dd { margin: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+.hint { color: var(--ml-muted); font-size: 13px; margin: 4px 0 12px; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.panel-head { padding: 16px 16px 0; }

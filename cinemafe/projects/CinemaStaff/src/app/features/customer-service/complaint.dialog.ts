@@ -22,49 +22,8 @@ export interface ComplaintDialogData {
   standalone: true,
   imports: [SharedModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-<div mat-dialog-title class="dialog-title">{{ (data.complaint ? 'customerService.complaint.editTitle' : 'customerService.complaint.createTitle') | translate }}</div>
-<mat-dialog-content>
-  @if (linkedCustomer || linkedInvoice) {
-    <p class="links">
-      @if (linkedCustomer) {
-        <span class="ad-pill ad-pill--neutral">{{ 'customerService.complaint.customer' | translate }}: {{ linkedCustomer }}</span>
-      }
-      @if (linkedInvoice) {
-        <span class="ad-pill ad-pill--neutral">{{ 'customerService.complaint.invoice' | translate }}: {{ linkedInvoice }}</span>
-      }
-    </p>
-  }
-  <form [formGroup]="form" class="fields">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ 'customerService.complaint.category' | translate }}</mat-label>
-      <mat-select formControlName="category">
-        @for (option of categories; track option.value) {
-          <mat-option [value]="option.value">{{ option.name | translate }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ 'customerService.complaint.description' | translate }}</mat-label>
-      <textarea matInput rows="5" maxlength="2000" formControlName="description"></textarea>
-    </mat-form-field>
-  </form>
-  @if (serverError()) {
-    <p class="error">{{ serverError() }}</p>
-  }
-</mat-dialog-content>
-<div mat-dialog-actions class="dialog-actions">
-  <button mat-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-  <button mat-raised-button color="primary" type="button" [disabled]="busy() || !valid()" (click)="save()">
-    {{ 'common.save' | translate }}
-  </button>
-</div>
-`,
-  styles: [`
-    .links { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
-    .fields { display: flex; flex-direction: column; gap: 12px; min-width: 360px; }
-    .error { color: var(--ml-warn-ink); margin: 8px 0 0; }
-  `],
+  templateUrl: './complaint.dialog.html',
+  styleUrl: './complaint.dialog.scss',
 })
 export class ComplaintDialogComponent {
   readonly data = inject<ComplaintDialogData>(MAT_DIALOG_DATA);

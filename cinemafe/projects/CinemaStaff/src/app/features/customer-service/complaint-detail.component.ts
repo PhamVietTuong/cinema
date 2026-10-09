@@ -23,84 +23,8 @@ import { ResolveComplaintChoice, ResolveComplaintDialogComponent, ResolveComplai
   selector: 'staff-complaint-detail',
   standalone: true,
   imports: [SharedModule, StatusPillComponent, EmptyStateComponent],
-  template: `
-<div class="ad-page">
-  @if (complaint; as c) {
-    <div class="ad-page-header">
-      <div>
-        <button class="ad-btn ad-btn--ghost" type="button" (click)="back()"><mat-icon>arrow_back</mat-icon> {{ 'opsCommon.back' | translate }}</button>
-        <h1 class="ad-h1">{{ categoryLabel(c.category) | translate }}
-          <cl-status-pill kind="complaint" [value]="c.status" />
-        </h1>
-        <p class="ad-sub">{{ c.createdByName }} · {{ c.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</p>
-      </div>
-    </div>
-
-    <mat-card class="card">
-      <dl class="facts">
-        <dt>{{ 'customerService.complaint.description' | translate }}</dt>
-        <dd class="text">{{ c.description }}</dd>
-        @if (c.customerName) {
-          <dt>{{ 'customerService.complaint.customer' | translate }}</dt>
-          <dd>{{ c.customerName }}</dd>
-        }
-        @if (c.invoiceCode) {
-          <dt>{{ 'customerService.complaint.invoice' | translate }}</dt>
-          <dd>{{ c.invoiceCode }}</dd>
-        }
-        @if (c.assignedToName) {
-          <dt>{{ 'customerService.complaint.assignedTo' | translate }}</dt>
-          <dd>{{ c.assignedToName }}</dd>
-        }
-        @if (closed) {
-          <dt>{{ 'customerService.detail.outcome' | translate }}</dt>
-          <dd>
-            @if (c.status === resolvedStatus) {
-              <strong>{{ resolutionLabel(c.resolution) | translate }}</strong>
-              @if (c.compensationAmount) { · {{ c.compensationAmount | number:'1.0-0' }} }
-              @if (c.compensationRef) { · {{ c.compensationRef }} }
-            }
-            {{ c.resolvedByName }} · {{ c.resolvedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}
-            @if (c.resolutionNote) { <br>{{ c.resolutionNote }} }
-          </dd>
-        }
-      </dl>
-    </mat-card>
-
-    @if (actions.length) {
-      <mat-card class="card">
-        <h3 class="ad-card-title">{{ 'customerService.detail.workflow' | translate }}</h3>
-        <div class="actions">
-          @if (actions.includes('edit')) {
-            <button mat-stroked-button type="button" [disabled]="busy" (click)="edit()"><mat-icon>edit</mat-icon> {{ 'customerService.detail.edit' | translate }}</button>
-          }
-          @if (actions.includes('startReview')) {
-            <button mat-stroked-button type="button" [disabled]="busy" (click)="startReview()"><mat-icon>play_arrow</mat-icon> {{ 'customerService.detail.startReview' | translate }}</button>
-          }
-          @if (actions.includes('reject')) {
-            <button mat-stroked-button color="warn" type="button" [disabled]="busy" (click)="reject()"><mat-icon>block</mat-icon> {{ 'customerService.detail.reject' | translate }}</button>
-          }
-          @if (actions.includes('resolve')) {
-            <button mat-raised-button color="primary" type="button" [disabled]="busy" (click)="resolve()"><mat-icon>task_alt</mat-icon> {{ 'customerService.detail.resolve' | translate }}</button>
-          }
-        </div>
-      </mat-card>
-    }
-  } @else if (!loading) {
-    <mat-card class="ad-card--pad-0">
-      <cl-empty-state icon="report_problem" messageKey="customerService.detail.notFound" />
-    </mat-card>
-  }
-</div>
-`,
-  styles: [`
-    .card { padding: 16px 24px; margin-bottom: 16px; }
-    .facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 24px; margin: 0; }
-    .facts dt { color: var(--ml-muted); }
-    .facts dd { margin: 0; }
-    .text { white-space: pre-wrap; }
-    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-  `],
+  templateUrl: './complaint-detail.component.html',
+  styleUrl: './complaint-detail.component.scss',
 })
 export class ComplaintDetailComponent implements OnInit {
   readonly categoryLabel = complaintCategoryLabel;

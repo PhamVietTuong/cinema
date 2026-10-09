@@ -1,0 +1,48 @@
+<div class="pos-receipt-toolbar ad-card">
+  <div>
+    <h2 class="pos-receipt-title">{{ titleKey() | translate }}</h2>
+    <p class="pos-receipt-code">{{ receipt().result.invoiceCode }}</p>
+    <ng-content />
+    @if ((receipt().result.changeDue ?? 0) > 0) {
+      <p class="pos-receipt-change">{{ 'pos.receipt.changeDue' | translate }}: <strong>{{ receipt().result.changeDue | number:'1.0-0' }}đ</strong></p>
+    }
+  </div>
+  <div class="pos-receipt-actions">
+    <mat-button-toggle-group [value]="format()" (change)="format.set($event.value)" [attr.aria-label]="'pos.receipt.format' | translate">
+      <mat-button-toggle value="a6">A6</mat-button-toggle>
+      <mat-button-toggle value="roll">80 mm</mat-button-toggle>
+    </mat-button-toggle-group>
+    <button mat-raised-button color="primary" type="button" (click)="print()">
+      <mat-icon>print</mat-icon> {{ 'pos.receipt.print' | translate }}
+    </button>
+    <button mat-raised-button type="button" (click)="newSale.emit()">
+      <mat-icon>{{ doneIcon() }}</mat-icon> {{ doneKey() | translate }}
+    </button>
+  </div>
+</div>
+
+<div class="pos-print-area" [class.pos-print-area--roll]="format() === 'roll'">
+  <section class="pos-print-sheet">
+    <header class="pos-print-head">
+      <strong>{{ receipt().theaterName }}</strong>
+      <span>{{ receipt().result.paidAt | serverUtc | date:'dd/MM/yyyy HH:mm' }}</span>
+      <span>{{ 'ticket.order' | translate }} {{ receipt().result.invoiceCode }}</span>
+    </header>
+    <cl-price-breakdown [lines]="lines()" [adjustments]="adjustments()" [total]="receipt().result.finalAmount ?? 0" />
+    @if ((receipt().result.changeDue ?? 0) > 0) {
+      <p class="pos-print-change">{{ 'pos.receipt.changeDue' | translate }}: {{ receipt().result.changeDue | number:'1.0-0' }}đ</p>
+    }
+  </section>
+
+  @for (t of receipt().result.tickets ?? []; track $index) {
+    <section class="pos-print-sheet pos-print-ticket">
+      <cl-ticket-card [ticket]="t"
+                      [movieTitle]="receipt().movieTitle"
+                      [roomName]="receipt().roomName"
+                      [showTime]="receipt().showTime"
+                      [theaterName]="receipt().theaterName"
+                      [invoiceCode]="receipt().result.invoiceCode ?? ''"
+                      [print]="true" />
+    </section>
+  }
+</div>

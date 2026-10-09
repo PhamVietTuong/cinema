@@ -20,56 +20,8 @@ import { OVERRIDE_PIN_PATTERN, pinsMatchValidator } from './override-pin';
   standalone: true,
   imports: [SharedModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-<div class="ad-page">
-  <div class="ad-page-header">
-    <div>
-      <h1 class="ad-h1">{{ 'profile.title' | translate }}</h1>
-      <p class="ad-sub">{{ 'profile.subtitle' | translate }}</p>
-    </div>
-  </div>
-
-  <mat-card class="ad-card section">
-    <h3 class="ad-card-title">{{ 'profile.account' | translate }}</h3>
-    <p><strong>{{ user()?.name }}</strong></p>
-    <p class="muted">{{ user()?.email }}</p>
-    <p class="muted">{{ user()?.userTypeName }}</p>
-  </mat-card>
-
-  @if (isApprover()) {
-    <mat-card class="ad-card section">
-      <h3 class="ad-card-title">{{ 'pinSettings.title' | translate }}</h3>
-      <p class="muted">{{ 'pinSettings.hint' | translate }}</p>
-      <form [formGroup]="form" (ngSubmit)="save()" class="pin-form">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'pinSettings.pin' | translate }}</mat-label>
-          <input matInput type="password" inputmode="numeric" maxlength="8" autocomplete="new-password" formControlName="pin">
-          @if (form.controls.pin.invalid && form.controls.pin.touched) {
-            <mat-error>{{ 'pinSettings.pinInvalid' | translate }}</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'pinSettings.confirmPin' | translate }}</mat-label>
-          <input matInput type="password" inputmode="numeric" maxlength="8" autocomplete="new-password" formControlName="confirmPin">
-          @if (form.hasError('pinMismatch') && form.controls.confirmPin.touched) {
-            <mat-error>{{ 'pinSettings.mismatch' | translate }}</mat-error>
-          }
-        </mat-form-field>
-        <div>
-          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving()">
-            <mat-icon>lock</mat-icon> {{ 'pinSettings.save' | translate }}
-          </button>
-        </div>
-      </form>
-    </mat-card>
-  }
-</div>
-`,
-  styles: [`
-    .section { max-width: 520px; margin-bottom: 16px; padding: 16px 24px; }
-    .muted { color: var(--ml-muted); }
-    .pin-form { display: flex; flex-direction: column; gap: 4px; }
-  `],
+  templateUrl: './profile.component.html',
+  styleUrl: './profile.component.scss',
 })
 export class ProfileComponent {
   private readonly _store = inject(Store);

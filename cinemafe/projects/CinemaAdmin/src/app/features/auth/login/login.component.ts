@@ -9,22 +9,7 @@ import { environment } from '../../../../environments/environment';
   selector: 'app-login',
   standalone: true,
   imports: [LoginFormComponent],
-  template: `
-    <cl-login-form
-      [brand]="brand"
-      titleKey="login.title"
-      subtitleKey="login.subtitle"
-      heroTitleLine1Key="login.heroTitleLine1"
-      heroTitleLine2Key="login.heroTitleLine2"
-      heroSubtitleKey="login.heroSubtitle"
-      [stats]="stats"
-      footerKey="login.footer"
-      [allowedRoles]="allowedRoles"
-      [noticeKey]="rejectedNotice"
-      [noticeLinkKey]="rejectedNotice ? 'forbidden.openStaffApp' : null"
-      [noticeLinkUrl]="staffAppUrl"
-      (rejected)="onRejected()" />
-  `,
+  templateUrl: './login.component.html',
 })
 export class LoginComponent {
   private readonly _store = inject(Store);

@@ -25,58 +25,8 @@ function toLocalInput(date: Date | undefined): string {
   selector: 'staff-task-dialog',
   standalone: true,
   imports: [SharedModule],
-  template: `
-    <div mat-dialog-title class="dialog-title">{{ (data.task ? 'tasks.dialog.edit' : 'tasks.dialog.new') | translate }}</div>
-    <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
-        <div class="fields">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'tasks.fields.title' | translate }}</mat-label>
-            <input matInput maxlength="200" formControlName="title">
-            <mat-error>{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'tasks.fields.description' | translate }}</mat-label>
-            <textarea matInput rows="3" maxlength="1000" formControlName="description"></textarea>
-          </mat-form-field>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'tasks.fields.assignee' | translate }}</mat-label>
-            <mat-select formControlName="assignedToUserId">
-              @for (member of data.staff; track member.id) {
-                <mat-option [value]="member.id">{{ member.name }}</mat-option>
-              }
-            </mat-select>
-            <mat-error>{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
-          <div class="row">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ 'tasks.fields.dueAt' | translate }}</mat-label>
-              <input matInput type="datetime-local" formControlName="dueAt">
-            </mat-form-field>
-            @if (data.task) {
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ 'common.status' | translate }}</mat-label>
-                <mat-select formControlName="status">
-                  @for (s of statuses; track s.value) {
-                    <mat-option [value]="s.value">{{ s.name | translate }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            }
-          </div>
-        </div>
-      </mat-dialog-content>
-      <div mat-dialog-actions class="dialog-actions">
-        <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-        <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
-      </div>
-    </form>
-    <button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()"><mat-icon>close</mat-icon></button>
-  `,
-  styles: [`
-    .fields { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  `],
+  templateUrl: './task.dialog.html',
+  styleUrl: './task.dialog.scss',
 })
 export class TaskDialog {
   readonly statuses = StaffTaskStatusValues;

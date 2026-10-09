@@ -1,0 +1,14 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'cashClose.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'cashClose.subtitle' | translate }}</p>
+    </div>
+  </div>
+  <mat-tab-group animationDuration="0ms">
+    <mat-tab [label]="'cashClose.tabDrawer' | translate"><div class="tab-body"><staff-my-drawer /></div></mat-tab>
+    @if (isApprover()) {
+      <mat-tab [label]="'cashClose.tabDaily' | translate"><div class="tab-body"><staff-daily-close /></div></mat-tab>
+    }
+  </mat-tab-group>
+</div>

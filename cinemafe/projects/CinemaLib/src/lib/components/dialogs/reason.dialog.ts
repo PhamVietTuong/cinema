@@ -71,82 +71,8 @@ export interface ReasonDialogResult {
     CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule,
     MatIconModule, MatInputModule, MatSelectModule, TranslatePipe,
   ],
-  template: `
-<div mat-dialog-title class="dialog-title">{{ data.titleKey | translate }}</div>
-
-<form [formGroup]="form" (ngSubmit)="submit()">
-  <mat-dialog-content>
-    @if (data.hintKey) {
-      <p class="cl-reason-hint">{{ data.hintKey | translate }}</p>
-    }
-    <div class="cl-reason-fields">
-      @if (data.codes; as codes) {
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ codes.labelKey | translate }}</mat-label>
-          <mat-select formControlName="code">
-            @for (option of codes.options; track option.value) {
-              <mat-option [value]="option.value">{{ option.labelKey | translate }}</mat-option>
-            }
-          </mat-select>
-          @if (form.controls['code'].hasError('required')) {
-            <mat-error>{{ 'common.required' | translate }}</mat-error>
-          }
-        </mat-form-field>
-      }
-
-      @if (data.note; as note) {
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ note.labelKey | translate }}</mat-label>
-          <textarea matInput rows="4" maxlength="500" formControlName="note"
-            [placeholder]="note.placeholderKey ? (note.placeholderKey | translate) : ''"></textarea>
-          @if (form.controls['note'].hasError('required') || form.controls['note'].hasError('pattern')) {
-            <mat-error>{{ 'common.required' | translate }}</mat-error>
-          }
-        </mat-form-field>
-      }
-
-      @if (data.lines; as lines) {
-        <div formArrayName="lines" class="cl-reason-lines">
-          @for (item of lines.items; track item.id; let i = $index) {
-            <div class="cl-reason-line" [formGroupName]="i">
-              <div class="cl-reason-line-name">
-                <strong>{{ item.label }}</strong>
-                @if (item.hint) {
-                  <span class="cl-reason-hint">{{ item.hint }}</span>
-                }
-              </div>
-              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="cl-reason-qty">
-                <mat-label>{{ lines.labelKey | translate }}</mat-label>
-                <input matInput type="number" min="0" [max]="maxQuantity" step="1" formControlName="quantity">
-                @if (lineGroup(i).controls['quantity'].invalid) {
-                  <mat-error>{{ lines.errorKey | translate }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
-          }
-        </div>
-      }
-    </div>
-  </mat-dialog-content>
-
-  <div mat-dialog-actions class="dialog-actions">
-    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-    <button mat-raised-button [color]="data.confirmColor ?? 'primary'" type="submit">{{ data.confirmKey | translate }}</button>
-  </div>
-</form>
-
-<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
-  <mat-icon>close</mat-icon>
-</button>
-`,
-  styles: [`
-    .cl-reason-hint { color: var(--ml-muted, #777); font-size: 13px; }
-    .cl-reason-fields { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
-    .cl-reason-lines { display: flex; flex-direction: column; gap: 12px; }
-    .cl-reason-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .cl-reason-line-name { display: flex; flex-direction: column; min-width: 140px; flex: 1 1 160px; }
-    .cl-reason-qty { width: 140px; }
-  `],
+  templateUrl: './reason.dialog.html',
+  styleUrl: './reason.dialog.scss',
 })
 export class ReasonDialogComponent {
   readonly maxQuantity: number;

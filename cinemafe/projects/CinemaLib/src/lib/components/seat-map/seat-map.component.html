@@ -1,0 +1,41 @@
+<div class="screen-wrap">
+  <div class="screen-arc"></div>
+  <span class="screen-label">{{ 'seatMap.screen' | translate }}</span>
+</div>
+
+<div class="seat-grid" [class.not-ready]="!ready">
+  @for (row of rows; track row) {
+    <div class="seat-row">
+      <div class="row-label">{{ row }}</div>
+      @for (seat of seatsOf(row); track seat.id) {
+        <div class="seat"
+             role="button"
+             [attr.aria-label]="label(seat)"
+             [class.unavailable-category]="seat.isAllowedForPatronCategory === false"
+             [class.not-selectable]="seat.isAllowedForPatronCategory !== false && seat.isSelectable === false"
+             [title]="titleOf(seat) | translate"
+             [ngClass]="{
+               'available': state(seat) === 'available',
+               'selected': state(seat) === 'selected',
+               'occupied': state(seat) === 'occupied',
+               'locked': state(seat) === 'locked',
+               'double': seat.isDouble
+             }"
+             (click)="seatToggle.emit(seat)">{{ label(seat) }}</div>
+      }
+    </div>
+  }
+</div>
+
+<div class="legend">
+  <span class="legend-item"><span class="legend-dot available"></span> {{ 'seatMap.legendAvailable' | translate }}</span>
+  <span class="legend-item"><span class="legend-dot selected"></span> {{ 'seatMap.legendSelected' | translate }}</span>
+  <span class="legend-item"><span class="legend-dot occupied"></span> {{ 'seatMap.legendOccupied' | translate }}</span>
+  @if (showLockedLegend) {
+    <span class="legend-item"><span class="legend-dot locked"></span> {{ 'seatMap.legendLocked' | translate }}</span>
+  }
+  <span class="legend-item"><span class="legend-dot double available"></span> {{ 'seatMap.legendDouble' | translate }}</span>
+  @if (showCategoryLegend) {
+    <span class="legend-item"><span class="legend-dot unavailable-category"></span> {{ 'seatMap.notAvailableForCategory' | translate }}</span>
+  }
+</div>

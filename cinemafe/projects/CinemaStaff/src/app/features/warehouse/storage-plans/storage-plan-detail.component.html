@@ -1,0 +1,186 @@
+@if (noTheater) {
+  <div class="ad-page">
+    <cl-empty-state icon="theaters" messageKey="warehouse.pickTheater" hintKey="warehouse.pickTheaterHint" />
+  </div>
+} @else {
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="goBack()"><mat-icon>arrow_back</mat-icon> {{ 'storagePlans.detail.back' | translate }}</button>
+      <h1 class="ad-h1">
+        {{ (plan ? plan.code : ('storagePlans.detail.newTitle' | translate)) }}
+        @if (plan) {
+          <cl-status-pill class="status-pill" kind="storagePlan" [value]="plan.status" />
+        }
+      </h1>
+      <p class="ad-sub">{{ 'storagePlans.detail.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  @if (plan && plan.status === Status.Rejected) {
+    <div class="reject-banner">
+      <mat-icon>report</mat-icon>
+      <div>
+        <strong>{{ 'storagePlans.detail.rejectedBanner' | translate }}</strong>
+        <div>{{ plan.rejectionReason }}</div>
+        <small>{{ 'storagePlans.detail.rejectedHint' | translate }}</small>
+      </div>
+    </div>
+  }
+
+  <div class="ad-card">
+    <h3 class="ad-card-title">{{ 'storagePlans.detail.infoTitle' | translate }}</h3>
+    <form [formGroup]="form" class="plan-form">
+      <div class="ad-field">
+        <label class="ad-label">{{ 'storagePlans.list.theater' | translate }}</label>
+        <input class="ad-input" [value]="theaterLabel" readonly>
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">{{ 'storagePlans.list.targetDate' | translate }}</label>
+        <input class="ad-input" type="date" formControlName="targetDate" [min]="today">
+        @if (showError('targetDate')) {
+          <span class="ad-field-err">{{ (form.controls['targetDate'].hasError('past') ? 'storagePlans.errors.datePast' : 'common.required') | translate }}</span>
+        }
+      </div>
+      <div class="ad-field">
+        <label class="ad-label">{{ 'storagePlans.list.supplier' | translate }}</label>
+        <input class="ad-input" formControlName="supplier" maxlength="200">
+      </div>
+      <div class="ad-field full-span">
+        <label class="ad-label">{{ 'storagePlans.detail.note' | translate }}</label>
+        <textarea class="ad-input" rows="2" formControlName="note" maxlength="1000"></textarea>
+      </div>
+    </form>
+
+    @if (plan) {
+      <dl class="meta-grid">
+        <div><dt>{{ 'storagePlans.list.createdBy' | translate }}</dt><dd>{{ plan.createdByName || '-' }} · {{ plan.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        @if (plan.submittedAt) {
+          <div><dt>{{ 'storagePlans.detail.submittedAt' | translate }}</dt><dd>{{ plan.submittedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        }
+        @if (plan.decidedAt) {
+          <div><dt>{{ (plan.status === Status.Rejected ? 'storagePlans.detail.rejectedBy' : 'storagePlans.detail.approvedBy') | translate }}</dt><dd>{{ plan.decidedByName || '-' }} · {{ plan.decidedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        }
+        @if (plan.receivedAt) {
+          <div><dt>{{ 'storagePlans.detail.receivedBy' | translate }}</dt><dd>{{ plan.receivedByName || '-' }} · {{ plan.receivedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        }
+      </dl>
+    }
+  </div>
+
+  <div class="ad-card">
+    <div class="items-head">
+      <h3 class="ad-card-title">{{ 'storagePlans.detail.itemsTitle' | translate }}</h3>
+      @if (editable) {
+        <div class="items-tools">
+          <select class="ad-select" [value]="''" #picker (change)="addItem(picker.value); picker.value = ''" [disabled]="!availableItems.length">
+            <option value="">{{ 'storagePlans.detail.addProduct' | translate }}</option>
+            @for (i of availableItems; track i.id) {
+              <option [value]="i.id">{{ i.name }}</option>
+            }
+          </select>
+          <button class="ad-btn ad-btn--ghost" type="button" (click)="addLowStock()" [disabled]="!lowStockItems.length">
+            <mat-icon>playlist_add</mat-icon> {{ 'storagePlans.detail.addLowStock' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="ad-table-wrap">
+      <table class="ad-table items-table">
+        <thead>
+          <tr>
+            <th>{{ 'storagePlans.detail.product' | translate }}</th>
+            <th class="num">{{ 'storagePlans.detail.onHand' | translate }}</th>
+            <th class="num">{{ 'storagePlans.detail.planned' | translate }}</th>
+            @if (plan && plan.status === Status.Received) {
+              <th class="num">{{ 'storagePlans.detail.received' | translate }}</th>
+            }
+            <th class="num">{{ 'storagePlans.detail.unitCost' | translate }}</th>
+            <th>{{ 'storagePlans.detail.itemNote' | translate }}</th>
+            @if (editable) {
+              <th></th>
+            }
+          </tr>
+        </thead>
+        <tbody [formGroup]="form">
+          <ng-container formArrayName="items">
+            @for (g of itemGroups; track g; let i = $index) {
+              <tr [formGroup]="g">
+                <td>
+                  <strong>{{ meta(g).name }}</strong>
+                  @if (editable && meta(g).target > 0) {
+                    <div class="hint">{{ 'storagePlans.detail.targetLevel' | translate }}: {{ meta(g).target }}</div>
+                  }
+                  @if (editable && meta(g).suggested > 0) {
+                    <div class="hint">
+                      {{ 'storagePlans.detail.suggested' | translate }}: {{ meta(g).suggested }}
+                      <a href="javascript:void(0)" (click)="useSuggested(g)">{{ 'storagePlans.detail.useSuggested' | translate }}</a>
+                    </div>
+                  }
+                </td>
+                <td class="num">{{ meta(g).onHand }}</td>
+                <td class="num">
+                  <input class="ad-input qty" type="number" min="1" [max]="maxQuantity" step="1" formControlName="plannedQuantity">
+                  @if (g.controls['plannedQuantity'].invalid && g.controls['plannedQuantity'].touched) {
+                    <span class="ad-field-err">{{ 'storagePlans.errors.plannedRange' | translate }}</span>
+                  }
+                </td>
+                @if (plan && plan.status === Status.Received) {
+                  <td class="num">{{ receivedOf(g) }}</td>
+                }
+                <td class="num">
+                  <input class="ad-input cost" type="number" min="0" step="any" formControlName="unitCost">
+                  @if (g.controls['unitCost'].invalid && g.controls['unitCost'].touched) {
+                    <span class="ad-field-err">{{ 'storagePlans.errors.costNegative' | translate }}</span>
+                  }
+                </td>
+                <td><input class="ad-input" formControlName="note" maxlength="500"></td>
+                @if (editable) {
+                  <td>
+                    <button mat-icon-button type="button" (click)="removeItem(i)" [matTooltip]="'common.remove' | translate"><mat-icon>delete</mat-icon></button>
+                  </td>
+                }
+              </tr>
+            }
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+    @if (!itemGroups.length) {
+      <cl-empty-state messageKey="storagePlans.detail.noItems" />
+    }
+  </div>
+
+  <div class="action-bar">
+    @if (editable) {
+      <button mat-raised-button type="button" (click)="saveDraft()" [disabled]="busy">
+        <mat-icon>save</mat-icon> {{ 'storagePlans.actions.saveDraft' | translate }}
+      </button>
+    }
+    @if (canSubmit) {
+      <button mat-raised-button color="primary" type="button" (click)="submitPlan()" [disabled]="busy">
+        <mat-icon>send</mat-icon> {{ 'storagePlans.actions.submit' | translate }}
+      </button>
+    }
+    @if (canDecide) {
+      <button mat-raised-button color="primary" type="button" (click)="approve()" [disabled]="busy">
+        <mat-icon>check_circle</mat-icon> {{ 'storagePlans.actions.approve' | translate }}
+      </button>
+      <button mat-raised-button color="warn" type="button" (click)="reject()" [disabled]="busy">
+        <mat-icon>cancel</mat-icon> {{ 'storagePlans.actions.reject' | translate }}
+      </button>
+    }
+    @if (plan && plan.status === Status.Approved) {
+      <button mat-raised-button color="primary" type="button" (click)="receive()" [disabled]="busy">
+        <mat-icon>move_to_inbox</mat-icon> {{ 'storagePlans.actions.receive' | translate }}
+      </button>
+    }
+    @if (canCancel) {
+      <button mat-raised-button type="button" (click)="cancelPlan()" [disabled]="busy">
+        <mat-icon>block</mat-icon> {{ 'storagePlans.actions.cancel' | translate }}
+      </button>
+    }
+  </div>
+</div>
+}

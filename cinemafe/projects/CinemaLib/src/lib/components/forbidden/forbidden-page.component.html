@@ -1,0 +1,18 @@
+<div class="fb-wrap">
+  <div class="ad-card fb-card">
+    <mat-icon class="fb-icon">block</mat-icon>
+    <h1>{{ 'forbidden.title' | translate }}</h1>
+    <p>{{ 'forbidden.message' | translate }}</p>
+    @if (extraLink(); as link) {
+      <a class="ad-btn ad-btn--primary fb-extra-link" [href]="link.href">
+        @if (link.icon) {
+          <mat-icon>{{ link.icon }}</mat-icon>
+        }
+        {{ link.labelKey | translate }}
+      </a>
+    }
+    <button type="button" class="ad-btn ad-btn--primary" (click)="signOut()">
+      {{ 'forbidden.switchAccount' | translate }}
+    </button>
+  </div>
+</div>

@@ -15,34 +15,8 @@ export interface ReprintTicketsDialogData {
   standalone: true,
   imports: [SharedModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-<div mat-dialog-title class="dialog-title">{{ 'afterSales.reprint.ticketsTitle' | translate: { code: data.result.invoiceCode } }}</div>
-<mat-dialog-content>
-  <p class="meta">{{ data.result.movieTitle }} &middot; {{ data.result.roomName }} &middot; {{ data.result.showStart | date: 'HH:mm dd/MM/yyyy' }}</p>
-  <div class="tickets">
-    @for (ticket of data.result.tickets ?? []; track $index) {
-      <div class="ticket">
-        @if (qr[$index]; as src) {
-          <img [src]="src" width="120" height="120" [alt]="'afterSales.reprint.qrAlt' | translate">
-        }
-        <strong>{{ ticket.seatLabel }}</strong>
-        <span class="meta">{{ ticket.seatType }}</span>
-      </div>
-    }
-  </div>
-</mat-dialog-content>
-<div mat-dialog-actions class="dialog-actions">
-  <button mat-raised-button type="button" (click)="close()">{{ 'common.close' | translate }}</button>
-  <button mat-raised-button color="primary" type="button" (click)="print()">
-    <mat-icon>print</mat-icon> {{ 'afterSales.reprint.print' | translate }}
-  </button>
-</div>
-`,
-  styles: [`
-    .meta { color: var(--ml-muted, #777); font-size: 13px; }
-    .tickets { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
-    .ticket { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border: 1px solid var(--ml-panel-3, rgba(0, 0, 0, 0.12)); border-radius: 8px; }
-  `],
+  templateUrl: './reprint-tickets.dialog.html',
+  styleUrl: './reprint-tickets.dialog.scss',
 })
 export class ReprintTicketsDialogComponent implements OnInit {
   readonly data = inject<ReprintTicketsDialogData>(MAT_DIALOG_DATA);

@@ -17,70 +17,8 @@ import { ReportIncidentDialog } from './report-incident.dialog';
   selector: 'staff-incident-list',
   standalone: true,
   imports: [SharedModule, StatusPillComponent, EmptyStateComponent, FilterBarComponent],
-  template: `
-<div class="ad-page">
-  <div class="ad-page-header">
-    <div>
-      <h1 class="ad-h1">{{ 'incidents.list.title' | translate }}</h1>
-      <p class="ad-sub">{{ 'incidents.list.subtitle' | translate }}</p>
-    </div>
-    @if (theaterId) {
-      <div class="ad-toolbar">
-        <button mat-raised-button color="primary" type="button" (click)="report()"><mat-icon>report</mat-icon> {{ 'incidents.list.report' | translate }}</button>
-      </div>
-    }
-  </div>
-
-  @if (!theaterId) {
-    <mat-card class="ad-card--pad-0">
-      <cl-empty-state icon="theaters" messageKey="opsCommon.pickTheater" hintKey="opsCommon.pickTheaterHint" />
-    </mat-card>
-  } @else {
-    <cl-filter-bar [form]="searchForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
-
-    <mat-card class="ad-card--pad-0">
-      <div class="ad-table-wrap">
-        <table class="ad-table">
-          <thead>
-            <tr>
-              <th>{{ 'incidents.fields.title' | translate }}</th>
-              <th>{{ 'incidents.fields.category' | translate }}</th>
-              <th>{{ 'incidents.fields.severity' | translate }}</th>
-              <th>{{ 'common.status' | translate }}</th>
-              <th>{{ 'incidents.fields.location' | translate }}</th>
-              <th>{{ 'incidents.fields.reportedBy' | translate }}</th>
-              <th>{{ 'common.createdAt' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of rows; track row.id) {
-              <tr class="clickable" (click)="open(row)">
-                <td><strong>{{ row.title }}</strong></td>
-                <td>{{ categoryLabel(row.category) | translate }}</td>
-                <td><cl-status-pill kind="incidentSeverity" [value]="row.severity" /></td>
-                <td><cl-status-pill kind="incident" [value]="row.status" /></td>
-                <td>{{ row.roomName }} {{ row.seatLabel }}</td>
-                <td>{{ row.reportedByName }}</td>
-                <td>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      @if (!rows.length && !loading) {
-        <cl-empty-state messageKey="incidents.list.empty" />
-      }
-      @if (total > 0) {
-        <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageIndex" [hidePageSize]="true" (page)="onPage($event.pageIndex)"></mat-paginator>
-      }
-    </mat-card>
-  }
-</div>
-`,
-  styles: [`
-    .clickable { cursor: pointer; }
-    .clickable:hover { background: var(--ml-panel-3, rgba(0, 0, 0, 0.04)); }
-  `],
+  templateUrl: './incident-list.component.html',
+  styleUrl: './incident-list.component.scss',
 })
 export class IncidentListComponent implements OnInit {
   readonly pageSize = 10;

@@ -31,67 +31,8 @@ export interface PriceBreakdownAdjustment {
   standalone: true,
   imports: [DecimalPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="cl-pb">
-      @for (line of lines(); track $index) {
-        <div class="cl-pb__row">
-          <span class="cl-pb__label">
-            @if (line.quantity && line.quantity > 1) {
-              <span class="cl-pb__qty">{{ line.quantity }} ×</span>
-            }
-            {{ line.label }}
-            @if (line.detail) {
-              <small class="cl-pb__detail">{{ line.detail }}</small>
-            }
-          </span>
-          <span class="cl-pb__amount">
-            @if (line.listAmount !== undefined && line.listAmount !== line.amount) {
-              <s class="cl-pb__list">{{ line.listAmount | number:'1.0-0' }}</s>
-            }
-            {{ line.amount | number:'1.0-0' }}{{ currency() }}
-          </span>
-        </div>
-      }
-      @if (lines().length === 0) {
-        <div class="cl-pb__empty">{{ (emptyKey()) | translate }}</div>
-      }
-      @if (subtotalVisible()) {
-        <div class="cl-pb__row cl-pb__row--sub">
-          <span>{{ 'priceBreakdown.subtotal' | translate }}</span>
-          <span class="cl-pb__amount">{{ subtotal() | number:'1.0-0' }}{{ currency() }}</span>
-        </div>
-      }
-      @for (adj of adjustments(); track adj.labelKey) {
-        @if (adj.amount > 0) {
-          <div class="cl-pb__row cl-pb__row--adj">
-            <span>{{ adj.labelKey | translate }}</span>
-            <span class="cl-pb__amount">−{{ adj.amount | number:'1.0-0' }}{{ currency() }}</span>
-          </div>
-        }
-      }
-      <div class="cl-pb__row cl-pb__row--total">
-        <span>{{ totalLabelKey() | translate }}</span>
-        <span class="cl-pb__amount">{{ total() | number:'1.0-0' }}{{ currency() }}</span>
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host { display: block; }
-    .cl-pb { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
-    .cl-pb__row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
-    .cl-pb__label { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
-    .cl-pb__qty { color: var(--ml-muted, #777); font-variant-numeric: tabular-nums; }
-    .cl-pb__detail { color: var(--ml-muted, #777); }
-    .cl-pb__amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .cl-pb__list { color: var(--ml-muted, #777); margin-right: 6px; }
-    .cl-pb__empty { color: var(--ml-muted, #777); font-style: italic; }
-    .cl-pb__row--sub { border-top: 1px dashed var(--ml-rule, #d8d2c4); padding-top: 6px; color: var(--ml-muted, #777); }
-    .cl-pb__row--adj { color: var(--ml-success, #2e7d32); }
-    .cl-pb__row--total {
-      border-top: 1px solid var(--ml-rule-strong, #bbb); padding-top: 8px; margin-top: 2px;
-      font-size: 1.1rem; font-weight: 700;
-    }
-  `],
+  templateUrl: './price-breakdown.component.html',
+  styleUrl: './price-breakdown.component.scss',
 })
 export class PriceBreakdownComponent {
   readonly lines = input<readonly PriceBreakdownLine[]>([]);

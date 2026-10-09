@@ -1,0 +1,53 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'auditLog.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'auditLog.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <cl-filter-bar [form]="searchForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
+
+  <mat-card class="ad-card--pad-0">
+    <div class="ad-table-wrap">
+      <table class="ad-table">
+        <thead>
+          <tr>
+            <th>{{ 'common.createdAt' | translate }}</th>
+            <th>{{ 'auditLog.col.action' | translate }}</th>
+            <th>{{ 'auditLog.col.actor' | translate }}</th>
+            <th>{{ 'auditLog.col.approver' | translate }}</th>
+            <th>{{ 'auditLog.col.entity' | translate }}</th>
+            <th class="num">{{ 'auditLog.col.amount' | translate }}</th>
+            <th>{{ 'auditLog.col.reason' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track row.id) {
+            <tr>
+              <td>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+              <td><cl-status-pill kind="auditAction" [value]="row.action" /></td>
+              <td>{{ row.actorName }}</td>
+              <td>{{ row.approverName }}</td>
+              <td>{{ row.entityType }}</td>
+              <td class="num">{{ row.amount | number: '1.0-0' }}</td>
+              <td>{{ row.reason }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (!rows.length && !loading) {
+      <cl-empty-state icon="fact_check" messageKey="auditLog.empty" />
+    }
+    @if (total > 0) {
+      <mat-paginator
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [hidePageSize]="true"
+        (page)="onPage($event.pageIndex)">
+      </mat-paginator>
+    }
+  </mat-card>
+</div>

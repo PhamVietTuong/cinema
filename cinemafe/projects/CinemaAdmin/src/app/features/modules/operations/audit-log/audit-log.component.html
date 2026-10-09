@@ -1,0 +1,92 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'auditLog.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'auditLog.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <cl-filter-bar [form]="searchForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
+
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'auditLog.empty' | translate, selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'common.createdAt' | translate" prop="creationTime" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.creationTime | serverUtc | date:'dd/MM/yyyy HH:mm:ss' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'auditLog.col.action' | translate" prop="action" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template><cl-status-pill kind="auditAction" [value]="row.action" /></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'auditLog.col.actor' | translate" prop="actorName" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.actorName }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'auditLog.col.approver' | translate" prop="approverName" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.approverName }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'auditLog.col.entity' | translate" prop="entityType" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.entityType }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'auditLog.col.amount' | translate" prop="amount" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.amount | number:'1.0-0' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'auditLog.col.reason' | translate" prop="reason" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.reason }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-footer>
+          <ng-template ngx-datatable-footer-template>
+            <div class="page-count">{{ 'common.totalEntries' | translate }} {{ total }}</div>
+            <ngx-datatable-pager *ngIf="total > pageSize"></ngx-datatable-pager>
+          </ng-template>
+        </ngx-datatable-footer>
+      </ngx-datatable>
+    </div>
+
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><cl-status-pill kind="auditAction" [value]="row.action" /></div>
+          <div class="ad-mobile-card-row"><span>{{ 'common.createdAt' | translate }}</span><span>{{ row.creationTime | serverUtc | date:'dd/MM/yyyy HH:mm:ss' }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'auditLog.col.actor' | translate }}</span><span>{{ row.actorName }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'auditLog.col.approver' | translate }}</span><span>{{ row.approverName }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'auditLog.col.entity' | translate }}</span><span>{{ row.entityType }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'auditLog.col.amount' | translate }}</span><span>{{ row.amount | number:'1.0-0' }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'auditLog.col.reason' | translate }}</span><span>{{ row.reason }}</span></div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>fact_check</mat-icon><p>{{ 'auditLog.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
+    </div>
+  </mat-card>
+</div>

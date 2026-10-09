@@ -1,0 +1,33 @@
+<article class="cl-ticket" [class.cl-ticket--print]="print()">
+  <header class="cl-ticket__head">
+    @if (theaterName()) {
+      <span class="cl-ticket__theater">{{ theaterName() }}</span>
+    }
+    <h3 class="cl-ticket__movie">{{ movieTitle() }}</h3>
+  </header>
+
+  <div class="cl-ticket__body">
+    <dl class="cl-ticket__facts">
+      @if (showTime()) {
+        <div><dt>{{ 'ticket.showTime' | translate }}</dt><dd>{{ showTime() | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+      }
+      @if (roomName()) {
+        <div><dt>{{ 'ticket.room' | translate }}</dt><dd>{{ roomName() }}</dd></div>
+      }
+      <div><dt>{{ 'ticket.seat' | translate }}</dt><dd class="cl-ticket__seat">{{ ticket().seatLabel }}</dd></div>
+      @if (ticket().patronCategory) {
+        <div><dt>{{ 'ticket.category' | translate }}</dt><dd>{{ ticket().patronCategory }}</dd></div>
+      }
+      @if (ticket().price !== undefined && ticket().price !== null) {
+        <div><dt>{{ 'ticket.price' | translate }}</dt><dd>{{ ticket().price | number:'1.0-0' }}đ</dd></div>
+      }
+    </dl>
+    @if (ticket().qrCode) {
+      <cl-qr-code class="cl-ticket__qr" [value]="ticket().qrCode" [size]="print() ? 120 : 132" />
+    }
+  </div>
+
+  @if (invoiceCode()) {
+    <footer class="cl-ticket__foot">{{ 'ticket.order' | translate }} {{ invoiceCode() }}</footer>
+  }
+</article>

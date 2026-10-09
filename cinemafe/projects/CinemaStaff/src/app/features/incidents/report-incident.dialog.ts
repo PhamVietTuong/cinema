@@ -18,52 +18,8 @@ export interface ReportIncidentDialogData {
   selector: 'staff-report-incident-dialog',
   standalone: true,
   imports: [SharedModule, RoomSeatPickerComponent],
-  template: `
-    <div mat-dialog-title class="dialog-title">{{ 'incidents.report.title' | translate }}</div>
-    <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
-        <div class="fields">
-          <div class="row">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ 'incidents.fields.category' | translate }}</mat-label>
-              <mat-select formControlName="category">
-                @for (c of categories; track c.value) {
-                  <mat-option [value]="c.value">{{ c.name | translate }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ 'incidents.fields.severity' | translate }}</mat-label>
-              <mat-select formControlName="severity">
-                @for (s of severities; track s.value) {
-                  <mat-option [value]="s.value">{{ s.name | translate }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          </div>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'incidents.fields.title' | translate }}</mat-label>
-            <input matInput maxlength="200" formControlName="title">
-            <mat-error>{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'incidents.fields.description' | translate }}</mat-label>
-            <textarea matInput rows="4" maxlength="1000" formControlName="description"></textarea>
-          </mat-form-field>
-          <staff-room-seat-picker [group]="form" [theaterId]="data.theaterId" />
-        </div>
-      </mat-dialog-content>
-      <div mat-dialog-actions class="dialog-actions">
-        <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-        <button mat-raised-button color="primary" type="submit">{{ 'incidents.report.submit' | translate }}</button>
-      </div>
-    </form>
-    <button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()"><mat-icon>close</mat-icon></button>
-  `,
-  styles: [`
-    .fields { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  `],
+  templateUrl: './report-incident.dialog.html',
+  styleUrl: './report-incident.dialog.scss',
 })
 export class ReportIncidentDialog {
   readonly categories = IncidentCategoryValues;

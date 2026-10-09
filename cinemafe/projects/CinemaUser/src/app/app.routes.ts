@@ -1,84 +1,31 @@
 import { Routes } from '@angular/router';
 import { authGuard } from 'CinemaLib';
 
+/**
+ * Feature groups, mirroring CinemaAdmin's domain-module convention: auth and profile stay flat,
+ * everything else is grouped under features/modules/<domain>/.
+ */
 export const routes: Routes = [
-  {
-    path: '',
-    loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent)
-  },
   { path: 'login', redirectTo: 'auth/login', pathMatch: 'full' },
   {
     path: 'auth',
-    children: [
-      {
-        path: 'login',
-        loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
-      },
-      {
-        path: 'register',
-        loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent)
-      },
-      {
-        path: 'forgot-password',
-        loadComponent: () => import('./features/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
-      },
-      {
-        path: 'reset-password',
-        loadComponent: () => import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
-      },
-      {
-        path: 'verify-email',
-        loadComponent: () => import('./features/auth/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
-      }
-    ]
-  },
-  {
-    path: 'movies',
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/movies/movie-list/movie-list.component').then(m => m.MovieListComponent)
-      },
-      {
-        path: ':id',
-        loadComponent: () => import('./features/movies/movie-detail/movie-detail.component').then(m => m.MovieDetailComponent)
-      }
-    ]
-  },
-  {
-    path: 'theaters',
-    loadComponent: () => import('./features/theaters/theaters.component').then(m => m.TheatersComponent)
-  },
-  {
-    path: 'promotions',
-    loadComponent: () => import('./features/promotions/promotions.component').then(m => m.PromotionsComponent)
-  },
-  {
-    path: 'membership',
-    loadComponent: () => import('./features/membership/membership.component').then(m => m.MembershipComponent)
+    loadChildren: () => import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
   },
   {
     path: 'booking',
     canActivate: [authGuard],
-    children: [
-      {
-        path: 'seats',
-        loadComponent: () => import('./features/booking/booking-page/booking-page.component').then(m => m.BookingPageComponent)
-      },
-      {
-        path: 'checkout',
-        loadComponent: () => import('./features/booking/booking-checkout/booking-checkout.component').then(m => m.BookingCheckoutComponent)
-      },
-      {
-        path: 'payment-return',
-        loadComponent: () => import('./features/booking/payment-return/payment-return.component').then(m => m.PaymentReturnComponent)
-      }
-    ]
+    loadChildren: () => import('./features/modules/booking/booking.routes').then(m => m.BOOKING_ROUTES)
   },
   {
     path: 'profile',
     canActivate: [authGuard],
     loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+  },
+  // Public browse/marketing pages (home, movies, theaters, promotions, membership): pass-through,
+  // must stay after every specific segment above.
+  {
+    path: '',
+    loadChildren: () => import('./features/modules/discover/discover.routes').then(m => m.DISCOVER_ROUTES)
   },
   { path: '**', redirectTo: '' }
 ];

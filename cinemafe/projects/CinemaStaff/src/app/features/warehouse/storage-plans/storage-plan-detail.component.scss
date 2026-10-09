@@ -1,0 +1,19 @@
+.status-pill { margin-left: 8px; vertical-align: middle; }
+.plan-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 16px; }
+.plan-form .full-span { grid-column: 1 / -1; }
+.meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 16px; margin: 16px 0 0; }
+.meta-grid dt { font-size: 12px; color: var(--ml-muted, #777); }
+.meta-grid dd { margin: 2px 0 0; }
+.reject-banner { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; margin-bottom: 16px; border-radius: 8px;
+  background: var(--ml-danger-soft, #fde8e8); color: var(--ml-danger-ink, #9b1c1c); }
+.items-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.items-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.items-table { min-width: 640px; }
+.items-table .num { text-align: right; }
+.items-table .qty { width: 100px; text-align: right; }
+.items-table .cost { width: 120px; text-align: right; }
+.hint { font-size: 12px; color: var(--ml-muted, #777); }
+.action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+@media (max-width: 600px) {
+  .action-bar button { flex: 1 1 100%; }
+}
