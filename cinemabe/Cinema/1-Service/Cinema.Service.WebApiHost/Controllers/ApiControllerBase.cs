@@ -1,3 +1,4 @@
+using Cinema.Business.Contracts.Exceptions;
 using Cinema.Foundation.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +35,11 @@ public abstract class ApiControllerBase : ControllerBase
             case KeyNotFoundException:
                 LogProvider.Current.Warning(e, $"{GetType().Name}.{action}->NotFound: {e.Message}");
                 return NotFound(new { error = e.Message, statusCode = StatusCodes.Status404NotFound });
+
+            case AccessDeniedException:
+                // 403, never 401: the frontend logs the user out on 401, and these callers are authenticated.
+                LogProvider.Current.Warning(e, $"{GetType().Name}.{action}->Forbidden: {e.Message}");
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = e.Message, statusCode = StatusCodes.Status403Forbidden });
 
             case UnauthorizedAccessException:
                 LogProvider.Current.Warning(e, $"{GetType().Name}.{action}->Unauthorized: {e.Message}");

@@ -16,8 +16,7 @@
     "discounts": "Discount Codes",
     "invoices": "Invoices",
     "comments": "Moderation",
-    "giftCards": "Gift Cards",
-    "logout": "Log Out"
+    "giftCards": "Gift Cards"
   },
   "section": {
     "catalog": "Catalog",
@@ -40,11 +39,6 @@
     "discounts": "Discount Code Management",
     "invoices": "Invoice Management",
     "default": "Control Panel"
-  },
-  "topbar": {
-    "lightMode": "Light mode",
-    "darkMode": "Dark mode",
-    "notifications": "Notifications"
   },
   "profile": {
     "myProfile": "My profile",
@@ -120,15 +114,8 @@
     "statTickets": "3.4K Tickets sold",
     "title": "Admin Login",
     "subtitle": "Please sign in with an administrator account.",
-    "emailOrPhoneLabel": "Email or Phone Number",
-    "emailOrPhonePlaceholder": "Enter email or phone number",
-    "passwordLabel": "Password",
-    "showPassword": "Show password",
-    "hidePassword": "Hide password",
-    "rememberMe": "Remember me",
-    "forgotPassword": "Forgot password?",
-    "submit": "Sign In",
-    "footer": "© 2026 Cinema. Internal administration system."
+    "footer": "© 2026 Cinema. Internal administration system.",
+    "notAdminAccount": "This account cannot use the Admin app. Staff accounts sign in to the Staff app instead."
   },
   "dashboard": {
     "title": "System Overview",
@@ -360,7 +347,7 @@
       "pricePlaceholder": "90000"
     },
     "food": {
-      "subtitle": "Popcorn, drinks and combos sold at this theater.",
+      "subtitle": "Popcorn and drinks sold at this theater (combos are in the Combos tab).",
       "add": "Add Item",
       "editTitle": "Edit Item",
       "newTitle": "New Item",
@@ -678,6 +665,8 @@
     "prevWeek": "Previous week",
     "nextWeek": "Next week",
     "allMovies": "All movies",
+    "allCinemas": "All cinemas",
+    "allFormats": "All formats",
     "addShowTime": "Add Showtime",
     "typeNormal": "Standard",
     "typePremiere": "Premiere",
@@ -722,11 +711,43 @@
   "forbidden": {
     "title": "Access denied",
     "message": "This account is not an administrator. Please sign in with an admin account.",
-    "switchAccount": "Sign in with another account"
+    "switchAccount": "Sign in with another account",
+    "openStaffApp": "Open Staff app"
+  },
+  "combo": {
+    "isCombo": "Combo item",
+    "hint": "A combo is made of other items of this theater; selling it consumes its components.",
+    "trackedHint": "Items with inventory tracking cannot be combos.",
+    "components": "Components",
+    "selectItem": "Select item",
+    "quantity": "Qty",
+    "addRow": "Add component",
+    "removeRow": "Remove",
+    "atLeastOne": "A combo needs at least one component.",
+    "badge": "Combo",
+    "stock": "Stock",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "untracked": "Untracked"
+  },
+  "comboTab": {
+    "tab": "Combos",
+    "subtitle": "Combos sold at this theater, made of several items.",
+    "add": "Add Combo",
+    "components": "Components",
+    "empty": "This theater has no combos yet."
   },
   "errors": {
     "network": "Cannot reach the server. Please check your network connection.",
     "forbidden": "You do not have permission to perform this action.",
     "server": "A server error occurred. Please try again later."
+  },
+  "warehouse": {
+    "userTheater": "Theater",
+    "userTheaterSelect": "Select a theater"
+  },
+  "adminUserTheaters": {
+    "label": "Theaters managed",
+    "select": "Select theaters"
   }
 }

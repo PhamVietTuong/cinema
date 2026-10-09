@@ -4106,6 +4106,700 @@
           }
         ]
       }
+    },
+    "/api/Cinema/GetComboComponents": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetComboComponents",
+        "parameters": [
+          {
+            "name": "comboId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ComboComponentDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/SaveComboComposition": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_SaveComboComposition",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveComboRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetInventory": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetInventory",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfInventoryItemDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/UpdateInventorySettings": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpdateInventorySettings",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInventorySettingsRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/RecordStockMovement": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_RecordStockMovement",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordStockMovementRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/RecordStockCount": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_RecordStockCount",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordStockCountRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetStockMovements": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetStockMovements",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfStockMovementDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetStoragePlans": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetStoragePlans",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfStoragePlanListItemDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetStoragePlan": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetStoragePlan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/CreateStoragePlan": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_CreateStoragePlan",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStoragePlanRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/UpdateStoragePlan": {
+      "put": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpdateStoragePlan",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStoragePlanRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/SubmitStoragePlan": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_SubmitStoragePlan",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragePlanDecisionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/ApproveStoragePlan": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_ApproveStoragePlan",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragePlanDecisionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/RejectStoragePlan": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_RejectStoragePlan",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragePlanDecisionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/ReceiveStoragePlan": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_ReceiveStoragePlan",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiveStoragePlanRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/CancelStoragePlan": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_CancelStoragePlan",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragePlanDecisionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/CreateStoragePlanFromLowStock": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_CreateStoragePlanFromLowStock",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanFromLowStockRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin",
+              "TheaterManager",
+              "TheaterStaff",
+              "KitchenStaff"
+            ]
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -6384,6 +7078,20 @@
           },
           "isAvailable": {
             "type": "boolean"
+          },
+          "trackInventory": {
+            "type": "boolean"
+          },
+          "isCombo": {
+            "type": "boolean"
+          },
+          "availableQuantity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isOutOfStock": {
+            "type": "boolean"
           }
         }
       },
@@ -7158,7 +7866,8 @@
           },
           "userId": {
             "type": "string",
-            "format": "guid"
+            "format": "guid",
+            "nullable": true
           },
           "userName": {
             "type": "string"
@@ -7224,6 +7933,705 @@
           },
           "status": {
             "$ref": "#/components/schemas/InvoiceStatus"
+          }
+        }
+      },
+      "ComboComponentDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "componentId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "trackInventory": {
+            "type": "boolean"
+          },
+          "isAvailable": {
+            "type": "boolean"
+          },
+          "quantityOnHand": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "SaveComboRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "comboId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "isCombo": {
+            "type": "boolean"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComboComponentItem"
+            }
+          }
+        }
+      },
+      "ComboComponentItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "componentId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100.0,
+            "minimum": 1.0
+          }
+        }
+      },
+      "DefaultSearchResultsOfInventoryItemDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfInventoryItemDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfInventoryItemDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryItemDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "InventoryItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "isAvailable": {
+            "type": "boolean"
+          },
+          "trackInventory": {
+            "type": "boolean"
+          },
+          "quantityOnHand": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lowStockThreshold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "targetStockLevel": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isLowStock": {
+            "type": "boolean"
+          },
+          "isOutOfStock": {
+            "type": "boolean"
+          },
+          "suggestedReorderQuantity": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UpdateInventorySettingsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "foodAndDrinkId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "trackInventory": {
+            "type": "boolean"
+          },
+          "lowStockThreshold": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100000.0,
+            "minimum": 0.0
+          },
+          "targetStockLevel": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100000.0,
+            "minimum": 0.0
+          },
+          "openingQuantity": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "RecordStockMovementRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "foodAndDrinkId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/StockMovementType"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reasonCode": {
+            "$ref": "#/components/schemas/StockReasonCode"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "StockMovementType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Receive",
+          "Sale",
+          "SaleReversal",
+          "Adjust",
+          "Waste"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "StockReasonCode": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Other",
+          "Expired",
+          "Damaged",
+          "Spilled",
+          "TheftOrLoss",
+          "StockCountCorrection",
+          "OpeningBalance"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "RecordStockCountRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "foodAndDrinkId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "countedQuantity": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100000.0,
+            "minimum": 0.0
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "DefaultSearchResultsOfStockMovementDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfStockMovementDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfStockMovementDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockMovementDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "StockMovementDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "foodAndDrinkId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "foodAndDrinkName": {
+            "type": "string",
+            "nullable": true
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/StockMovementType"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StockReasonCode"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "invoiceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "storagePlanId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "storagePlanCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DefaultSearchResultsOfStoragePlanListItemDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfStoragePlanListItemDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfStoragePlanListItemDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoragePlanListItemDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "StoragePlanListItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/StoragePlanStatus"
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "supplier": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPlannedQuantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StoragePlanStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Draft",
+          "Submitted",
+          "Approved",
+          "Rejected",
+          "Received",
+          "Cancelled"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "StoragePlanDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StoragePlanListItemDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "note": {
+                "type": "string",
+                "nullable": true
+              },
+              "submittedAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "decidedByName": {
+                "type": "string",
+                "nullable": true
+              },
+              "decidedAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "rejectionReason": {
+                "type": "string",
+                "nullable": true
+              },
+              "receivedByName": {
+                "type": "string",
+                "nullable": true
+              },
+              "receivedAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoragePlanItemDTO"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "StoragePlanItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "foodAndDrinkId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "foodAndDrinkName": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantityOnHand": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "plannedQuantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "receivedQuantity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "unitCost": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SaveStoragePlanRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "supplier": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0,
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/SaveStoragePlanItem"
+            }
+          }
+        }
+      },
+      "SaveStoragePlanItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "foodAndDrinkId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "plannedQuantity": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100000.0,
+            "minimum": 1.0
+          },
+          "unitCost": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0.0,
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "StoragePlanDecisionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
+      "ReceiveStoragePlanRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "items": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ReceiveStoragePlanItem"
+            }
+          }
+        }
+      },
+      "ReceiveStoragePlanItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "storagePlanItemId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "receivedQuantity": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100000.0,
+            "minimum": 0.0
+          }
+        }
+      },
+      "CreatePlanFromLowStockRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
           }
         }
       }

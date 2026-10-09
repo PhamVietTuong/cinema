@@ -1,0 +1,80 @@
+import { Component, inject } from '@angular/core';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { PriceBreakdownComponent, SharedModule } from 'CinemaLib';
+import { CounterCartService } from './counter-cart.service';
+
+/** Member, discount / gift-card codes and the server-quoted totals of the counter cart. */
+@Component({
+  selector: 'staff-counter-summary',
+  standalone: true,
+  imports: [SharedModule, MatProgressBarModule, PriceBreakdownComponent],
+  template: `
+    <!-- Member -->
+    <section class="ad-card">
+      <h2 class="ad-card-title">{{ 'pos.member.title' | translate }}</h2>
+      @if (cart.customer(); as c) {
+        <div class="pos-member">
+          <div>
+            <strong>{{ c.name }}</strong>
+            <div class="pos-muted">{{ c.phone }}</div>
+            <div>
+              @if (c.memberShipName) {
+                <span class="pos-badge">{{ c.memberShipName }}</span>
+              }
+              <span class="pos-muted">{{ 'pos.member.points' | translate: { points: c.points } }}</span>
+            </div>
+          </div>
+          <button mat-icon-button type="button" (click)="cart.detachMember()" [matTooltip]="'pos.member.detach' | translate"><mat-icon>close</mat-icon></button>
+        </div>
+        @if ((c.points ?? 0) > 0) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-full">
+            <mat-label>{{ 'pos.member.redeem' | translate }}</mat-label>
+            <input matInput type="number" min="0" [max]="c.points ?? 0" [ngModel]="cart.points()" (ngModelChange)="cart.setPoints($event)">
+            <mat-hint>{{ 'pos.member.redeemHint' | translate: { max: c.points } }}</mat-hint>
+          </mat-form-field>
+        }
+      } @else {
+        <div class="pos-inline">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-grow">
+            <mat-label>{{ 'pos.member.phone' | translate }}</mat-label>
+            <input matInput inputmode="tel" [ngModel]="cart.phone()" (ngModelChange)="cart.phone.set($event)" (keydown.enter)="cart.findMember()">
+          </mat-form-field>
+          <button mat-raised-button type="button" (click)="cart.findMember()" [disabled]="!cart.phone().trim()">{{ 'pos.member.find' | translate }}</button>
+        </div>
+        @if (cart.customerError()) {
+          <p class="pos-warn">{{ cart.customerError() }}</p>
+        }
+        <p class="pos-muted">{{ 'pos.member.walkIn' | translate }}</p>
+      }
+    </section>
+
+    <!-- Codes -->
+    <section class="ad-card">
+      <h2 class="ad-card-title">{{ 'pos.codes.title' | translate }}</h2>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-full">
+        <mat-label>{{ 'pos.codes.discount' | translate }}</mat-label>
+        <input matInput [ngModel]="cart.discountCode()" (ngModelChange)="cart.discountCode.set($event)">
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-full">
+        <mat-label>{{ 'pos.codes.giftCard' | translate }}</mat-label>
+        <input matInput [ngModel]="cart.giftCardCode()" (ngModelChange)="cart.giftCardCode.set($event)">
+      </mat-form-field>
+    </section>
+
+    <!-- Totals -->
+    <section class="ad-card">
+      <h2 class="ad-card-title">{{ 'pos.quote.title' | translate }}</h2>
+      @if (cart.quoteError()) {
+        <p class="pos-warn">{{ cart.quoteError() }}</p>
+      }
+      <cl-price-breakdown [lines]="cart.breakdownLines()" [adjustments]="cart.breakdownAdjustments()" [total]="cart.due()" emptyKey="pos.quote.empty" />
+      @if (cart.quoting()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+    </section>
+  `,
+  styleUrl: './counter-summary.component.scss',
+})
+export class CounterSummaryComponent {
+  protected readonly cart = inject(CounterCartService);
+}

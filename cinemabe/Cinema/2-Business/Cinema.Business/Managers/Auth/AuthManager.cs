@@ -6,6 +6,7 @@ using Cinema.Business.DTO;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
+using Cinema.Business.Security;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
@@ -501,6 +502,8 @@ public class AuthManager : IAuthManager
             userTypeId = customerType.Id;
         }
 
+        var theaterId = await ResolveTheaterIdAsync(userTypeId, request.TheaterId);
+
         CreatePasswordHash(request.Password, out var hash, out var salt);
         var user = new User
         {
@@ -510,7 +513,7 @@ public class AuthManager : IAuthManager
             PasswordHash = hash,
             PasswordSalt = salt,
             UserTypeId   = userTypeId,
-            TheaterId    = request.TheaterId,
+            TheaterId    = theaterId,
             Status       = request.Status,
         };
         await _uow.UserStore.CreateAsync(user);
@@ -524,6 +527,9 @@ public class AuthManager : IAuthManager
         {
             throw new KeyNotFoundException("User not found.");
         }
+        var targetUserTypeId = request.UserTypeId != Guid.Empty ? request.UserTypeId : user.UserTypeId;
+        var theaterId = await ResolveTheaterIdAsync(targetUserTypeId, request.TheaterId);
+
         user.Name   = request.Name;
         user.Phone  = request.Phone;
         user.Status = request.Status;
@@ -531,14 +537,41 @@ public class AuthManager : IAuthManager
         {
             user.Avatar = request.Avatar;
         }
-        if (request.UserTypeId != Guid.Empty)
-        {
-            user.UserTypeId = request.UserTypeId;
-        }
-        user.TheaterId = request.TheaterId;
+        user.UserTypeId = targetUserTypeId;
+        user.TheaterId = theaterId;
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
         return ToUserDTO(await _uow.UserStore.GetByIdAsync(request.Id) ?? user);
+    }
+
+    /// <summary>
+    /// Theater-scoped staff roles (<see cref="RoleNames.TheaterScopedRoles"/>) must belong to an existing theater; every other role is theater-less.
+    /// </summary>
+    private async Task<Guid?> ResolveTheaterIdAsync(Guid userTypeId, Guid? requestedTheaterId)
+    {
+        var userType = await _uow.UserTypeStore.GetByIdAsync(userTypeId);
+        if (userType == null)
+        {
+            throw new InvalidOperationException("User type not found.");
+        }
+
+        if (!RoleNames.TheaterScopedRoles.Split(',').Contains(userType.Name))
+        {
+            return null;
+        }
+
+        if (requestedTheaterId == null || requestedTheaterId == Guid.Empty)
+        {
+            throw new InvalidOperationException($"A theater is required for the {userType.Name} role.");
+        }
+
+        var theaterId = requestedTheaterId.Value;
+        if (!await _uow.TheaterStore.ExistsAsync(t => t.Id == theaterId))
+        {
+            throw new InvalidOperationException("Theater not found.");
+        }
+
+        return theaterId;
     }
 
     public async Task DeleteUserAsync(Guid id)
@@ -552,6 +585,45 @@ public class AuthManager : IAuthManager
         user.Status = UserStatus.Inactive;
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
+    }
+
+    public async Task<UserTheatersDTO> GetUserTheatersAsync(Guid userId)
+    {
+        await LoadRegionalManagerAsync(userId);
+        return new UserTheatersDTO { UserId = userId, TheaterIds = await _uow.UserStore.GetAssignedTheaterIdsAsync(userId) };
+    }
+
+    public async Task<UserTheatersDTO> SetUserTheatersAsync(UserTheatersDTO request)
+    {
+        await LoadRegionalManagerAsync(request.UserId);
+
+        var theaterIds = (request.TheaterIds ?? new List<Guid>()).Distinct().ToList();
+        if (theaterIds.Count > 0)
+        {
+            var existing = await _uow.TheaterStore.CountAsync(t => theaterIds.Contains(t.Id));
+            if (existing != theaterIds.Count)
+            {
+                throw new InvalidOperationException("Theater not found.");
+            }
+        }
+
+        await _uow.UserStore.ReplaceAssignedTheatersAsync(request.UserId, theaterIds);
+        await _uow.SaveChangesAsync();
+        return new UserTheatersDTO { UserId = request.UserId, TheaterIds = theaterIds };
+    }
+
+    /// <summary>Theater assignments only exist for RegionalManagers (every other role uses <c>User.TheaterId</c>).</summary>
+    private async Task LoadRegionalManagerAsync(Guid userId)
+    {
+        var user = await _uow.UserStore.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
+        if (user.UserType?.Name != RoleNames.RegionalManager)
+        {
+            throw new InvalidOperationException($"Theater assignments only apply to the {RoleNames.RegionalManager} role.");
+        }
     }
 
     private AuthResponse BuildAuthResponse(User user)
@@ -572,37 +644,18 @@ public class AuthManager : IAuthManager
         return dto;
     }
 
-    // PBKDF2 (SHA-256) key-stretching parameters.
-    private const int    _pbkdf2SaltSize   = 16;
-    private const int    _pbkdf2KeySize    = 32;
-    private const int    _pbkdf2Iterations = 100_000;
-    private static readonly HashAlgorithmName _pbkdf2Algorithm = HashAlgorithmName.SHA256;
-
     private static void CreatePasswordHash(string password, out byte[] hash, out byte[] salt)
     {
-        salt = RandomNumberGenerator.GetBytes(_pbkdf2SaltSize);
-        hash = Rfc2898DeriveBytes.Pbkdf2(
-            Encoding.UTF8.GetBytes(password), salt, _pbkdf2Iterations, _pbkdf2Algorithm, _pbkdf2KeySize);
+        PasswordHasher.CreateHash(password, out hash, out salt);
     }
 
     private static bool VerifyPassword(string password, byte[] hash, byte[] salt)
     {
-        if (IsLegacyHash(salt))
-        {
-            // Legacy scheme: single-round HMAC-SHA512 keyed by the stored salt.
-            using var hmac = new HMACSHA512(salt);
-            var legacy = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return CryptographicOperations.FixedTimeEquals(legacy, hash);
-        }
-
-        var computed = Rfc2898DeriveBytes.Pbkdf2(
-            Encoding.UTF8.GetBytes(password), salt, _pbkdf2Iterations, _pbkdf2Algorithm, _pbkdf2KeySize);
-        return CryptographicOperations.FixedTimeEquals(computed, hash);
+        return PasswordHasher.Verify(password, hash, salt);
     }
 
-    // New PBKDF2 salts are exactly _pbkdf2SaltSize bytes; the old HMAC-SHA512 key salts are 128 bytes.
     private static bool IsLegacyHash(byte[] salt)
     {
-        return salt.Length != _pbkdf2SaltSize;
+        return PasswordHasher.IsLegacy(salt);
     }
 }

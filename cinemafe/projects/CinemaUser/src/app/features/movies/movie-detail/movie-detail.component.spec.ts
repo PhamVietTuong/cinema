@@ -135,15 +135,15 @@ describe('MovieDetailComponent', () => {
       expect(router.navigate).not.toHaveBeenCalled();
     });
 
-    it('redirects an anonymous visitor to login instead of opening the panel', () => {
+    it('opens the inline panel for an anonymous visitor too — login is deferred to checkout', () => {
       isAuthenticated = false;
       const c = build();
       c.ngOnInit();
 
       c.selectShowTime(showTime({ id: 'st-9' }));
 
-      expect(c.selectedShowTimeId).toBe('');
-      expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], { queryParams: { returnUrl: '/movies/movie-1' } });
+      expect(c.selectedShowTimeId).toBe('st-9');
+      expect(router.navigate).not.toHaveBeenCalled();
     });
   });
 

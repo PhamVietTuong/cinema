@@ -41,7 +41,8 @@ public class ShowtimeReminderService : BackgroundService
 
                 foreach (var group in tickets.GroupBy(t => new { t.Invoice.UserId, t.ShowTimeRoom.ShowTimeId }))
                 {
-                    var userId     = group.Key.UserId;
+                    // A walk-in counter sale has no account to remind.
+                    if (group.Key.UserId is not Guid userId) { continue; }
                     var showTimeId = group.Key.ShowTimeId;
                     // Persisted dedup: survives restarts, and the unique index dedups across instances.
                     if (await uow.ReminderLogStore.WasSentAsync(userId, showTimeId)) { continue; }

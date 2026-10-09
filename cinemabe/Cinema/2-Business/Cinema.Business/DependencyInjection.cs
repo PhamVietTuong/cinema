@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<INewsManager, NewsManager>();
         services.AddScoped<IDiscountManager, DiscountManager>();
         services.AddScoped<IFoodAndDrinkManager, FoodAndDrinkManager>();
+        services.AddScoped<IComboManager, ComboManager>();
         services.AddScoped<IRoomManager, RoomManager>();
         services.AddScoped<IShowTimeManager, ShowTimeManager>();
         services.AddScoped<IMovieTypeDetailManager, MovieTypeDetailManager>();
@@ -45,6 +46,22 @@ public static class DependencyInjection
         services.AddScoped<ITimeSlotManager, TimeSlotManager>();
         services.AddScoped<ITicketPriceManager, TicketPriceManager>();
         services.AddScoped<IRoomTypePatronCategoryPriceManager, RoomTypePatronCategoryPriceManager>();
+        services.AddScoped<IInventoryManager, InventoryManager>();
+        services.AddScoped<IStoragePlanManager, StoragePlanManager>();
+        services.AddScoped<IAuditLogger, AuditLogger>();
+        services.AddScoped<IManagerOverrideService, ManagerOverrideService>();
+        services.AddScoped<IStaffReportManager, StaffReportManager>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<IGateManager, GateManager>();
+        services.AddScoped<IScheduleBoardManager, ScheduleBoardManager>();
+        services.AddScoped<IIncidentManager, IncidentManager>();
+        services.AddScoped<IChecklistManager, ChecklistManager>();
+        services.AddScoped<IWorkforceManager, WorkforceManager>();
+        services.AddScoped<IBoxOfficeManager, BoxOfficeManager>();
+        services.AddSingleton<IStaffNotificationService, NoOpStaffNotificationService>();
+        services.AddScoped<IConcessionManager, ConcessionManager>();
+        services.AddScoped<IDailyCloseManager, DailyCloseManager>();
+        services.AddScoped<ICustomerServiceManager, CustomerServiceManager>();
         return services;
     }
 }

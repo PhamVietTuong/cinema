@@ -25,6 +25,14 @@ $controllers += @{
     CopyToLib          = $true
     WebApiPort         = "5102"
 }
+$controllers += @{
+    ApiName            = 'Staff'
+    CopyToLib          = $true
+    WebApiPort         = "5102"
+    # The staff group has several controllers (Gate, BoxOffice, Operations, Workforce, StaffReport): one client class each.
+    TSClassName        = '{controller}HttpService'
+    CSClassName        = 'Staff{controller}Client'
+}
 
 # Resolve master generator script
 $scriptPath = "$PSScriptRoot\..\..\..\..\Tools\Generator\GenerateNswag.ps1"

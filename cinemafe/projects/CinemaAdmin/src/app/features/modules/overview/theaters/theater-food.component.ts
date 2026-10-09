@@ -3,6 +3,7 @@ import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import {
   CinemaServiceAgent,
@@ -41,8 +42,13 @@ export class TheaterFoodComponent extends BaseTableComponent<Dto> {
   }
 
   protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {
+    // Combos live in their own tab: load the theater's items (API max page size 200), drop combos and page client-side.
     return this._svc.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: criteria.pageIndex, pageSize: criteria.pageSize, filters: criteria.filters,
+      pageIndex: 1, pageSize: 200, filters: criteria.filters,
+    })).pipe(map(res => {
+      const foods = (res.results ?? []).filter(f => !f.isCombo);
+      const start = (criteria.pageIndex - 1) * criteria.pageSize;
+      return { results: foods.slice(start, start + criteria.pageSize), totalCount: foods.length };
     }));
   }
 

@@ -6,6 +6,8 @@ import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { logout } from '../store/auth/auth.actions';
 import { ToastService } from '../services/toast.service';
+import { matchApiError } from '../services/api-error-catalog';
+import { rawApiErrorMessage, translateApiError } from '../services/api-error';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
@@ -27,7 +29,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       } else if (error.status === 0) {
         toast.error(t('errors.network'));
       } else if (error.status === 403) {
-        toast.error(t('errors.forbidden'));
+        // A 403 can carry a specific reason (e.g. a refused manager PIN); show it translated when known.
+        const raw = rawApiErrorMessage(error);
+        toast.error(raw && matchApiError(raw) ? translateApiError(raw) : t('errors.forbidden'));
       } else if (error.status >= 500) {
         toast.error(t('errors.server'));
       }

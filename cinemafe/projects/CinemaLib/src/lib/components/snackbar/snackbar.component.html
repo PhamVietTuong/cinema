@@ -1,5 +1,5 @@
 <div [class]="data.className">
-  <mat-icon class="snackbar-icon">done</mat-icon>
+  <mat-icon class="snackbar-icon">{{ data.className === 'error' ? 'error' : 'done' }}</mat-icon>
   <span class="snackbar-text" [innerHTML]="data.message"></span>
   <mat-icon class="snackbar-close" role="button" (click)="close()">close</mat-icon>
 </div>

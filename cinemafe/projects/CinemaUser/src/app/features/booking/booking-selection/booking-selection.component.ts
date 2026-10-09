@@ -2,11 +2,13 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Subscription, take } from 'rxjs';
-import { SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, selectIsAuthenticated } from 'CinemaLib';
+import {
+  SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, selectIsAuthenticated,
+  SeatMapComponent, SeatLockSessionService, SelectableSeat, seatRows, seatsByRow, seatLabel, seatGroupOf, isGroupBlocked, physicalSeatPrice, foodOrderCap,
+} from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import { BookingCheckoutState, stashPendingCheckout } from '../booking-checkout/booking-checkout.state';
 
-type SelectableSeat = PaymentServiceAgent.SeatDTO & { isSelected?: boolean; isSelectable?: boolean; isAllowedForPatronCategory?: boolean };
 type ShowTimePriceDTO = PaymentServiceAgent.ShowTimePriceDTO;
 
 /** One ticket the customer is buying: a specific (patron category, seat kind) row — each row already
@@ -29,14 +31,12 @@ interface TicketSlot {
 @Component({
   selector: 'app-booking-selection',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, SeatMapComponent],
   templateUrl: './booking-selection.component.html',
   styleUrl: './booking-selection.component.scss'
 })
 export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   static readonly MAX_TICKETS = 10;
-  /** Mirrors BookingManager.IsSeatLocked's 5-minute expiry — keep in sync with the backend. */
-  private static readonly LOCK_HOLD_MS = 5 * 60 * 1000;
 
   @Input({ required: true }) showTimeId = '';
   @Input({ required: true }) roomId = '';
@@ -76,8 +76,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   holdActive = false;
   holdSecondsLeft = 0;
   holdExpired = false;
-  private _seatLockedAt: Record<string, number> = {};
   private _holdTimer: any;
+  private _lockSession?: SeatLockSessionService;
 
   /** The resolved price list for this showtime+room: one row per (patron category, seat kind)
    * combination actually bookable here (all pricing factors already applied server-side). Each row
@@ -123,12 +123,21 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     private _translate: TranslateService,
   ) {}
 
+  /** The seat-lock session on the booking hub (hold clocks, lock/unlock, room events). Created on
+   * first use so it exists before the first load, and torn down in ngOnDestroy. */
+  private get _session(): SeatLockSessionService {
+    if (!this._lockSession) {
+      this._lockSession = new SeatLockSessionService(this._hub);
+    }
+    return this._lockSession;
+  }
+
   get rows(): string[] {
-    return [...new Set(this.seats.map(s => s.rowName!))];
+    return seatRows(this.seats);
   }
 
   getSeatsByRow(row: string): SelectableSeat[] {
-    return this.seats.filter(s => s.rowName === row).sort((a, b) => (a.colIndex ?? 0) - (b.colIndex ?? 0));
+    return seatsByRow(this.seats, row);
   }
 
   get maxTickets(): number {
@@ -162,7 +171,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
    * when nothing has claimed it yet (shouldn't normally be displayed). */
   seatPrice(seat: SelectableSeat): number {
     const price = this.categoryForSeat(seat.id!)?.price ?? seat.price ?? 0;
-    return seat.isDouble ? price / 2 : price;
+    return physicalSeatPrice(price, seat.isDouble);
   }
 
   get totalPrice(): number {
@@ -179,7 +188,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         const seats = sl.seatIds
           .map(id => this.seats.find(s => s.id === id))
           .filter((s): s is SelectableSeat => !!s);
-        const label = seats.map(s => `${s.rowName}${s.colIndex}`).join('-');
+        const label = seats.map(s => seatLabel(s)).join('-');
         const row = this._rowFor(sl.patronCategoryId);
         return { label, isDouble: sl.isDouble, categoryName: row?.patronCategoryName ?? '', price: row?.price ?? 0 };
       });
@@ -207,15 +216,13 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     // Long-lived, root-provided subjects — subscribed once regardless of how many showtimes this
     // instance goes on to target; re-subscribing per switch would fire each handler N times over.
-    this._subs.add(this._hub.seatLocked$.subscribe(e => {
-      if (e.connectionId === this._hub.connectionId) { return; } // our own lock — ignore
-      this._setLocked(e.seatId, true);
-    }));
-    this._subs.add(this._hub.seatUnlocked$.subscribe(seatId => this._setLocked(seatId, false)));
+    // (The session already drops our own lock broadcasts.)
+    this._subs.add(this._session.locked$.subscribe(seatId => this._setLocked(seatId, true)));
+    this._subs.add(this._session.unlocked$.subscribe(seatId => this._setLocked(seatId, false)));
     // Our lock attempt lost the race — revert the optimistic selection.
-    this._subs.add(this._hub.seatLockFailed$.subscribe(e => this._setLocked(e.seatId, true)));
+    this._subs.add(this._session.lockFailed$.subscribe(seatId => this._setLocked(seatId, true)));
     // Someone completed a booking — those seats are now permanently unavailable.
-    this._subs.add(this._hub.seatBooked$.subscribe(seatIds => this._setBooked(seatIds)));
+    this._subs.add(this._session.booked$.subscribe(seatIds => this._setBooked(seatIds)));
   }
 
   ngOnChanges(): void {
@@ -244,8 +251,9 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     // When moving on to checkout the locks must survive, so only stop here when we are NOT headed
     // there (e.g. the customer navigated away entirely).
     if (!this._navigatingToCheckout) {
-      this._hub.stopConnection();
+      this._session.stop();
     }
+    this._session.ngOnDestroy();
   }
 
   /** Releases the previous showtime's held seats and connection, resets all per-showtime state,
@@ -257,13 +265,13 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     // otherwise land and be mistaken for current).
     this._loadSeq++;
     for (const s of this.selectedSeats) {
-      this._hub.unlockSeat(this._loadedShowTimeId, this._loadedRoomId, s.id!).catch(() => {});
+      this._session.unlock(s.id!); // still targets the showtime being left
     }
     this._resetSelectionState();
-    // stopConnection() also cancels a same-target startConnection() still mid-handshake (SignalR
-    // rejects the pending .start()), which _load()'s own .catch(() => {}) swallows — relied on here
-    // rather than tracked explicitly, since BookingHubService exposes no "wait for pending start".
-    await this._hub.stopConnection();
+    // stop() also cancels a same-target start() still mid-handshake (SignalR rejects the pending
+    // .start()), which the session's own catch swallows — relied on here rather than tracked
+    // explicitly, since BookingHubService exposes no "wait for pending start".
+    await this._session.stop();
     this._load();
   }
 
@@ -275,9 +283,9 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       // this call is queued behind already kicked off a _load() for a target we're now abandoning.
       this._loadSeq++;
       for (const s of this.selectedSeats) {
-        this._hub.unlockSeat(this._loadedShowTimeId, this._loadedRoomId, s.id!).catch(() => {});
+        this._session.unlock(s.id!);
       }
-      await this._hub.stopConnection();
+      await this._session.stop();
       this._resetSelectionState();
       this._currentKey = '';
       this.closed.emit();
@@ -294,7 +302,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this.foodQty = {};
     this._foodImgFailed.clear();
     this.categoryWarning = '';
-    this._seatLockedAt = {};
+    this._session.forgetAll();
     this._theaterId = '';
     this.roomName = '';
     this.loadingSeats = true;
@@ -344,6 +352,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
             .subscribe(r => {
               if (seq !== this._loadSeq) { return; }
               this.foods = (r.results ?? []).filter(f => f.isAvailable);
+              this._clampFoodQty();
               this._cdr.markForCheck();
             });
         },
@@ -369,7 +378,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       },
     });
 
-    this._hub.startConnection(this.showTimeId, this.roomId).catch(() => { /* degrade to non-realtime */ });
+    this._session.start(this.showTimeId, this.roomId); // a failed handshake degrades to non-realtime
   }
 
   incTicket(row: ShowTimePriceDTO): void {
@@ -417,9 +426,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
           }
           seat.isSelected = false;
           this.selectedSeats = this.selectedSeats.filter(x => x.id !== seatId);
-          delete this._seatLockedAt[seatId];
-          this._hub.unlockSeat(this.showTimeId, this.roomId, seatId).catch(() => {});
-          removedLabels.push(`${seat.rowName}${seat.colIndex}`);
+          this._session.unlock(seatId);
+          removedLabels.push(seatLabel(seat));
         }
       }
       for (const index of [...removable].sort((a, b) => b - a)) {
@@ -463,8 +471,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     }
     // Double seats are two linked seats sharing a group id — select/lock them together, as one
     // ticket (one slot), since a couple seat is priced and counted as a single bookable unit.
-    const group = this._groupOf(seat);
-    if (group.some(s => s.status === PaymentServiceAgent.SeatStatus.Occupied || s.isLocked)) {
+    const group = seatGroupOf(this.seats, seat);
+    if (isGroupBlocked(group)) {
       return;
     }
 
@@ -482,8 +490,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         if (!this.selectedSeats.includes(s)) {
           this.selectedSeats.push(s);
         }
-        this._seatLockedAt[s.id!] = Date.now();
-        this._hub.lockSeat(this.showTimeId, this.roomId, s.id!).catch(() => { /* see seatLockFailed$ */ });
+        this._session.lock(s.id!); // a lost race surfaces through lockFailed$
       }
       this.categoryWarning = '';
     } else {
@@ -494,8 +501,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       for (const s of group) {
         s.isSelected = false;
         this.selectedSeats = this.selectedSeats.filter(x => x.id !== s.id);
-        delete this._seatLockedAt[s.id!];
-        this._hub.unlockSeat(this.showTimeId, this.roomId, s.id!).catch(() => {});
+        this._session.unlock(s.id!);
       }
     }
 
@@ -506,13 +512,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   /** The soonest lock-expiry timestamp (ms epoch) among currently selected seats, or null if none
    * are selected. That seat's lock is the first to lapse, so it's the one worth counting down to. */
   private _soonestLockExpiry(): number | null {
-    const timestamps = this.selectedSeats
-      .map(s => this._seatLockedAt[s.id!])
-      .filter((t): t is number => t !== undefined);
-    if (timestamps.length === 0) {
-      return null;
-    }
-    return Math.min(...timestamps) + BookingSelectionComponent.LOCK_HOLD_MS;
+    return this._session.soonestExpiry(this.selectedSeats.map(s => s.id!));
   }
 
   /** Starts/stops the countdown interval as selections come and go, and refreshes it immediately. */
@@ -543,17 +543,6 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this._cdr.markForCheck();
   }
 
-  /** The seat plus any others sharing its group id (a double seat); just the seat itself otherwise. */
-  private _groupOf(seat: SelectableSeat): SelectableSeat[] {
-    if (!seat.seatGroupId) { return [seat]; }
-    const group = this.seats.filter(s => s.seatGroupId === seat.seatGroupId);
-    if (group.length !== 2) {
-      console.warn(`Seat ${seat.id} has an invalid seatGroupId shared by ${group.length} seats; ignoring grouping.`);
-      return [seat];
-    }
-    return group;
-  }
-
   /** Releases the ticket slot holding this seat, if any — frees the WHOLE slot (both halves of a
    * double), since a couple seat is always fully selected or fully unselected together. */
   private _releaseSlotFor(seatId: string): void {
@@ -567,7 +556,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         seat.isSelected = false;
       }
       this.selectedSeats = this.selectedSeats.filter(s => s.id !== id);
-      delete this._seatLockedAt[id];
+      this._session.forget(id);
     }
     slot.seatIds = [];
   }
@@ -596,7 +585,32 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this._refreshHoldTimer();
   }
 
+  /** Max orderable quantity for a food/combo: 0 when sold out, the public availability cap when
+   * tracked, or null when unlimited (untracked). */
+  foodCap(f: CinemaServiceAgent.FoodAndDrinkDTO): number | null {
+    return foodOrderCap(f);
+  }
+
+  canIncFood(f: CinemaServiceAgent.FoodAndDrinkDTO): boolean {
+    const cap = this.foodCap(f);
+    return cap === null || (this.foodQty[f.id!] ?? 0) < cap;
+  }
+
+  /** Clamps every chosen quantity to its (possibly refreshed) cap. */
+  private _clampFoodQty(): void {
+    for (const f of this.foods) {
+      const cap = this.foodCap(f);
+      const qty = this.foodQty[f.id!] ?? 0;
+      if (cap !== null && qty > cap) {
+        this.foodQty[f.id!] = cap;
+      }
+    }
+  }
+
   incFood(f: CinemaServiceAgent.FoodAndDrinkDTO): void {
+    if (!this.canIncFood(f)) {
+      return;
+    }
     this.foodQty[f.id!] = (this.foodQty[f.id!] ?? 0) + 1;
   }
   decFood(f: CinemaServiceAgent.FoodAndDrinkDTO): void {
@@ -631,7 +645,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         const category = this.categoryForSeat(s.id!);
         return {
           seatId: s.id!,
-          label: `${s.rowName}${s.colIndex}`,
+          label: seatLabel(s),
           seatKind: s.isDouble ? 'Double' : 'Standard',
           basePrice: s.price ?? 0,
           price: this.seatPrice(s),

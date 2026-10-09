@@ -175,6 +175,7 @@
     "summary": {
       "subtotal": "Subtotal ({{count}} seats)",
       "comboTotal": "Total",
+      "minutes": "{{count}} min",
       "discountSaves": "{{code}} saves {{amount}}đ",
       "discountInvalid": "This code is not valid for this order.",
       "giftCardNote": "The card balance is deducted from the amount to pay.",
@@ -238,6 +239,7 @@
     "success": {
       "title": "Booking Successful!",
       "subtitle": "Thank you for your booking. Your ticket has been confirmed.",
+      "theaterLabel": "Theater",
       "seatsLabel": "Seats",
       "totalLabel": "Total",
       "qrInstruction": "Present the QR code at the counter or ticket gate",
@@ -254,7 +256,9 @@
     },
     "errors": {
       "bookingFailed": "Booking failed. Please try again.",
-      "paymentFailed": "Payment could not be started. Please try again."
+      "paymentFailed": "Payment could not be started. Please try again.",
+      "outOfStock": "Some snacks or combos in your order are sold out or no longer available in that quantity. Go back to adjust your order - your seats are still held.",
+      "soldOut": "Sold out"
     }
   },
   "home": {
@@ -394,6 +398,8 @@
     "colMovie": "Movie",
     "colDate": "Show Date",
     "colSeats": "Seats",
+    "colFood": "Food & drinks",
+    "foodTitle": "Food & drinks",
     "colStatus": "Status",
     "noTickets": "You don't have any tickets yet.",
     "bookingHistory": "Booking History",

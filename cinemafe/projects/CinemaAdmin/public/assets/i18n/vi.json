@@ -16,8 +16,7 @@
     "discounts": "Mã Giảm Giá",
     "invoices": "Hóa Đơn",
     "comments": "Kiểm Duyệt",
-    "giftCards": "Thẻ Quà Tặng",
-    "logout": "Đăng Xuất"
+    "giftCards": "Thẻ Quà Tặng"
   },
   "section": {
     "catalog": "Danh Mục",
@@ -40,11 +39,6 @@
     "discounts": "Quản Lý Mã Giảm Giá",
     "invoices": "Quản Lý Hóa Đơn",
     "default": "Bảng Điều Khiển"
-  },
-  "topbar": {
-    "lightMode": "Chế độ sáng",
-    "darkMode": "Chế độ tối",
-    "notifications": "Thông báo"
   },
   "profile": {
     "myProfile": "Hồ sơ của tôi",
@@ -120,15 +114,8 @@
     "statTickets": "3.4K Vé bán",
     "title": "Đăng Nhập Quản Trị",
     "subtitle": "Vui lòng đăng nhập bằng tài khoản quản trị viên.",
-    "emailOrPhoneLabel": "Email hoặc Số Điện Thoại",
-    "emailOrPhonePlaceholder": "Nhập email hoặc số điện thoại",
-    "passwordLabel": "Mật Khẩu",
-    "showPassword": "Hiện mật khẩu",
-    "hidePassword": "Ẩn mật khẩu",
-    "rememberMe": "Ghi nhớ đăng nhập",
-    "forgotPassword": "Quên mật khẩu?",
-    "submit": "Đăng Nhập",
-    "footer": "© 2026 Cinema. Hệ thống quản trị nội bộ."
+    "footer": "© 2026 Cinema. Hệ thống quản trị nội bộ.",
+    "notAdminAccount": "Tài khoản này không dùng được ứng dụng Quản trị. Tài khoản nhân viên đăng nhập ở ứng dụng Nhân viên."
   },
   "dashboard": {
     "title": "Tổng Quan Hệ Thống",
@@ -360,7 +347,7 @@
       "pricePlaceholder": "90000"
     },
     "food": {
-      "subtitle": "Bắp, nước và combo bán tại rạp này.",
+      "subtitle": "Bắp và nước bán tại rạp này (combo nằm ở tab Combo).",
       "add": "Thêm Món",
       "editTitle": "Chỉnh Sửa Món",
       "newTitle": "Món Mới",
@@ -678,6 +665,8 @@
     "prevWeek": "Tuần trước",
     "nextWeek": "Tuần sau",
     "allMovies": "Tất cả phim",
+    "allCinemas": "Tất cả rạp",
+    "allFormats": "Tất cả định dạng",
     "addShowTime": "Thêm Suất Chiếu",
     "typeNormal": "Thường",
     "typePremiere": "Công Chiếu",
@@ -722,11 +711,43 @@
   "forbidden": {
     "title": "Không có quyền truy cập",
     "message": "Tài khoản này không phải quản trị viên. Vui lòng đăng nhập bằng tài khoản quản trị.",
-    "switchAccount": "Đăng nhập tài khoản khác"
+    "switchAccount": "Đăng nhập tài khoản khác",
+    "openStaffApp": "Mở ứng dụng Nhân viên"
+  },
+  "combo": {
+    "isCombo": "Món combo",
+    "hint": "Combo gồm các món khác của rạp; khi bán sẽ trừ tồn kho các thành phần.",
+    "trackedHint": "Món đang theo dõi tồn kho không thể là combo.",
+    "components": "Thành phần",
+    "selectItem": "Chọn món",
+    "quantity": "SL",
+    "addRow": "Thêm thành phần",
+    "removeRow": "Xóa",
+    "atLeastOne": "Combo cần ít nhất một thành phần.",
+    "badge": "Combo",
+    "stock": "Tồn kho",
+    "inStock": "Còn hàng",
+    "outOfStock": "Hết hàng",
+    "untracked": "Không theo dõi"
+  },
+  "comboTab": {
+    "tab": "Combo",
+    "subtitle": "Combo bán tại rạp này, gồm nhiều món kết hợp.",
+    "add": "Thêm Combo",
+    "components": "Thành phần",
+    "empty": "Rạp này chưa có combo nào."
   },
   "errors": {
     "network": "Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.",
     "forbidden": "Bạn không có quyền thực hiện thao tác này.",
     "server": "Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau."
+  },
+  "warehouse": {
+    "userTheater": "Rạp",
+    "userTheaterSelect": "Chọn rạp"
+  },
+  "adminUserTheaters": {
+    "label": "Rạp phụ trách",
+    "select": "Chọn rạp"
   }
 }

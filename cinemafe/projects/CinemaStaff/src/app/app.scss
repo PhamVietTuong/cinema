@@ -1,0 +1,24 @@
+:host { display: block; }
+
+// Theater picker projected into the shell's [topbarExtra] slot — sits on the fixed dark topbar chrome.
+.theater-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ml-chrome-muted);
+
+  mat-icon { font-size: 19px; width: 19px; height: 19px; }
+
+  select {
+    min-width: 180px;
+    max-width: 240px;
+    height: 36px;
+    background: var(--ml-chrome-hover);
+    border-color: var(--ml-chrome-rule);
+    color: var(--ml-chrome-ink);
+  }
+}
+
+@media (max-width: 768px) {
+  .theater-picker select { min-width: 0; max-width: 130px; }
+}

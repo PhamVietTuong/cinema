@@ -1,0 +1,42 @@
+<div class="ad-page pos">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'pos.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'pos.subtitle' | translate }}</p>
+    </div>
+    <div class="pos-drawer-chip" [class.is-open]="drawer.isOpen()">
+      <mat-icon>point_of_sale</mat-icon>
+      @if (drawer.isOpen()) {
+        {{ 'pos.drawer.open' | translate: { terminal: drawer.drawer()?.terminalName ?? '' } }}
+      } @else {
+        {{ 'pos.drawer.closed' | translate }}
+        <a routerLink="/drawer">{{ 'pos.drawer.openLink' | translate }}</a>
+      }
+    </div>
+  </div>
+
+  @if (!theaterId()) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="theaters" messageKey="warehouse.pickTheater" hintKey="warehouse.pickTheaterHint" />
+    </mat-card>
+  } @else if (receipt(); as r) {
+    <staff-pos-receipt [receipt]="r" (newSale)="newSale()" />
+  } @else {
+    <div class="pos-layout">
+      <div class="pos-main">
+        <staff-counter-cart [busy]="selling()" />
+      </div>
+
+      <aside class="pos-side">
+        <staff-counter-summary />
+
+        <!-- Payment -->
+        <staff-counter-tender-panel [due]="cart.due()" [disabled]="!cart.quote()" [(tenders)]="tenders">
+          <button mat-raised-button color="primary" type="button" class="pos-sell" [disabled]="!canSell()" (click)="sell()">
+            <mat-icon>receipt_long</mat-icon> {{ 'pos.sell.action' | translate }}
+          </button>
+        </staff-counter-tender-panel>
+      </aside>
+    </div>
+  }
+</div>

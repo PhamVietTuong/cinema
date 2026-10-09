@@ -1,0 +1,1072 @@
+{
+  "nav": {
+    "home": "Home"
+  },
+  "pageTitle": {
+    "home": "Staff Home",
+    "default": "Staff Tools"
+  },
+  "staff": {
+    "userFallback": "Staff"
+  },
+  "theaterPicker": {
+    "label": "Choose working theater",
+    "placeholder": "Choose theater..."
+  },
+  "home": {
+    "welcome": "Hello, {{name}}",
+    "theater": "You are working at {{name}}.",
+    "pickTheater": "Pick a theater in the top bar to get started.",
+    "noTheater": "Your account has no theater assigned. Please contact an administrator.",
+    "comingSoon": "Ticketing, gate and warehouse tools will appear here soon."
+  },
+  "login": {
+    "heroTitleLine1": "Staff",
+    "heroTitleLine2": "Tools",
+    "heroSubtitle": "Sell tickets, scan at the gate and manage stock at the counter.",
+    "statPos": "Ticketing",
+    "statGate": "Gate",
+    "statWarehouse": "Warehouse",
+    "title": "Staff Login",
+    "subtitle": "Please sign in with a theater staff account.",
+    "footer": "© 2026 Cinema. Internal staff system.",
+    "notStaffAccount": "This account is not a theater staff account. Please sign in with a staff account."
+  },
+  "forbidden": {
+    "title": "Access denied",
+    "message": "This account may not use the staff tools. Please sign in with a staff account.",
+    "switchAccount": "Sign in with another account"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "subtitle": "Stock levels of tracked food and drinks per theater.",
+    "createPlan": "Create plan from low stock",
+    "empty": "No items found.",
+    "filters": {
+      "theater": "Theater",
+      "allTheaters": "All theaters",
+      "keyword": "Search by name",
+      "trackedOnly": "Tracked only",
+      "lowStockOnly": "Low stock only"
+    },
+    "columns": {
+      "stock": "In stock",
+      "threshold": "Low-stock threshold",
+      "target": "Target level"
+    },
+    "status": {
+      "untracked": "Not tracked",
+      "ok": "In stock",
+      "low": "Low stock",
+      "outOfStock": "Out of stock"
+    },
+    "actions": {
+      "movement": "Adjust / waste",
+      "count": "Stock count",
+      "history": "History",
+      "settings": "Stock settings"
+    },
+    "settings": {
+      "title": "Stock settings",
+      "track": "Track inventory",
+      "trackHint": "When tracking is on, sales deduct stock and the item cannot be sold when it runs out.",
+      "threshold": "Low-stock threshold",
+      "thresholdHint": "The item is flagged as low stock at or below this quantity.",
+      "target": "Target stock level",
+      "targetHint": "Restock plans suggest topping the item up to this quantity.",
+      "opening": "Opening quantity",
+      "openingHint": "Quantity currently on hand. Required when switching tracking on."
+    },
+    "movement": {
+      "title": "Adjust / waste",
+      "onHand": "Currently in stock",
+      "type": "Type",
+      "quantity": "Quantity",
+      "adjustHint": "Adjustment: enter a signed change, for example 5 to add or -3 to remove.",
+      "wasteHint": "Waste: enter a positive quantity, it cannot exceed the stock on hand.",
+      "reason": "Reason",
+      "note": "Note"
+    },
+    "count": {
+      "title": "Stock count",
+      "current": "Quantity in the system",
+      "counted": "Counted quantity",
+      "difference": "Difference"
+    },
+    "history": {
+      "title": "Stock history",
+      "date": "Date",
+      "type": "Type",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "reference": "Invoice / plan",
+      "user": "User",
+      "empty": "No stock movements yet."
+    },
+    "errors": {
+      "range": "Enter a whole number between 0 and 100000.",
+      "openingRequired": "Opening quantity is required.",
+      "nonZero": "Enter a non-zero whole number.",
+      "positive": "Waste quantity must be positive.",
+      "exceedsOnHand": "Cannot exceed the stock on hand.",
+      "noteRequired": "A note is required when the reason is Other."
+    },
+    "toast": {
+      "settingsSaved": "Stock settings saved.",
+      "movementSaved": "Stock movement recorded.",
+      "countSaved": "Stock count recorded.",
+      "planCreated": "Storage plan created."
+    }
+  },
+  "storagePlans": {
+    "list": {
+      "title": "Storage plans",
+      "subtitle": "Plan, approve and receive stock for your theater.",
+      "newPlan": "New plan",
+      "code": "Plan code",
+      "theater": "Theater",
+      "targetDate": "Target date",
+      "supplier": "Supplier",
+      "itemCount": "Items",
+      "totalQuantity": "Total qty",
+      "createdBy": "Created by",
+      "empty": "No storage plans found."
+    },
+    "detail": {
+      "back": "Back to plans",
+      "newTitle": "New storage plan",
+      "subtitle": "Items can be edited while the plan is a draft or was rejected.",
+      "infoTitle": "Plan details",
+      "selectTheater": "Select a theater",
+      "note": "Note",
+      "submittedAt": "Submitted at",
+      "approvedBy": "Approved by",
+      "rejectedBy": "Rejected by",
+      "receivedBy": "Received by",
+      "rejectedBanner": "This plan was rejected",
+      "rejectedHint": "Edit the plan and save it to return it to draft, then submit it again.",
+      "itemsTitle": "Items",
+      "addProduct": "Add a product...",
+      "addLowStock": "Add all low-stock items",
+      "product": "Product",
+      "onHand": "On hand",
+      "planned": "Planned qty",
+      "received": "Received qty",
+      "unitCost": "Unit cost",
+      "itemNote": "Note",
+      "targetLevel": "Target level",
+      "suggested": "Suggested reorder",
+      "useSuggested": "Use",
+      "noItems": "No items yet. Add at least one product."
+    },
+    "actions": {
+      "saveDraft": "Save draft",
+      "submit": "Submit for approval",
+      "approve": "Approve",
+      "reject": "Reject",
+      "receive": "Receive stock",
+      "cancel": "Cancel plan"
+    },
+    "confirm": {
+      "cancel": "Cancel this storage plan?"
+    },
+    "reject": {
+      "title": "Reject plan",
+      "reason": "Reason",
+      "reasonPlaceholder": "Why is this plan rejected?"
+    },
+    "receive": {
+      "title": "Receive stock",
+      "hint": "Enter the quantity actually received for each item. Stock is increased by these amounts.",
+      "planned": "Planned",
+      "actual": "Received"
+    },
+    "errors": {
+      "datePast": "The target date cannot be in the past.",
+      "plannedRange": "Quantity must be a whole number from 1 to 100000.",
+      "costNegative": "Unit cost cannot be negative.",
+      "receivedRange": "Must be a whole number from 0 to 100000.",
+      "invalidForm": "Please fix the highlighted fields.",
+      "noItems": "Add at least one item to the plan."
+    }
+  },
+  "warehouse": {
+    "pickTheater": "Pick a theater to continue",
+    "pickTheaterHint": "Choose a theater in the top bar; warehouse data is kept per theater.",
+    "nav": {
+      "inventory": "Inventory",
+      "storagePlans": "Storage plans"
+    },
+    "section": "Warehouse",
+    "pageTitle": {
+      "inventory": "Inventory",
+      "storagePlans": "Storage plans"
+    },
+    "movementType": {
+      "receive": "Receive",
+      "sale": "Sale",
+      "saleReversal": "Sale reversal",
+      "adjust": "Adjustment",
+      "waste": "Waste"
+    },
+    "reason": {
+      "other": "Other",
+      "expired": "Expired",
+      "damaged": "Damaged",
+      "spilled": "Spilled",
+      "theftOrLoss": "Theft or loss",
+      "stockCountCorrection": "Stock count correction",
+      "openingBalance": "Opening balance"
+    },
+    "planStatus": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "received": "Received",
+      "cancelled": "Cancelled"
+    }
+  },
+  "gate": {
+    "section": "Gate",
+    "nav": {
+      "gate": "Ticket gate"
+    },
+    "pageTitle": "Ticket Gate",
+    "title": "Ticket gate",
+    "subtitle": "Scan tickets at the entrance, or look a booking up by code or phone.",
+    "stepShowTime": "Pick a showtime (optional)",
+    "stepScan": "Scan or type the code",
+    "pickTheater": "Choose a theater first",
+    "pickTheaterHint": "Pick the theater you are working at in the top bar to scan tickets.",
+    "scanLabel": "Scan the ticket QR code",
+    "scanPlaceholder": "Scan or type the ticket code, then press Enter",
+    "cameraStart": "Use camera",
+    "cameraStop": "Stop camera",
+    "showTimeFilter": "Only admit this showtime",
+    "anyShowTime": "Any showtime today",
+    "recent": "Recent scans",
+    "recentEmpty": "No tickets scanned yet.",
+    "ageRating": "Age rating: {{code}}",
+    "usedAt": "Used by {{by}} at {{at}}",
+    "ageQuestion": "This film is rated {{age}}+. Did you check the patron's age?",
+    "confirmAge": "Age confirmed - admit",
+    "denyAge": "Deny entry",
+    "next": "Next",
+    "outcome": {
+      "admitted": "Admitted",
+      "notFound": "Ticket not found",
+      "notPaid": "Ticket not paid or cancelled",
+      "alreadyUsed": "Ticket already used",
+      "wrongTheater": "Ticket is for another theater",
+      "wrongShowTime": "Wrong showtime",
+      "tooEarly": "Too early to enter",
+      "expired": "Showtime has ended",
+      "ageCheckRequired": "Age check required"
+    },
+    "lookup": {
+      "title": "Booking lookup",
+      "or": "or",
+      "ticketCount": "{{count}} ticket(s)",
+      "unused": "Not used",
+      "partlyUsed": "Partly used",
+      "invoiceCode": "Booking code",
+      "phone": "Phone number",
+      "search": "Search",
+      "hint": "Shows today's paid tickets for this theater.",
+      "used": "Used",
+      "admit": "Admit",
+      "empty": "No matching tickets for today."
+    }
+  },
+  "auditLog": {
+    "section": "Reports",
+    "nav": {
+      "auditLog": "Audit log"
+    },
+    "pageTitle": "Audit Log",
+    "title": "Audit log",
+    "subtitle": "Sensitive staff actions, who did them and who approved them.",
+    "from": "From date",
+    "to": "To date",
+    "empty": "No audit entries match these filters.",
+    "col": {
+      "action": "Action",
+      "actor": "Performed by",
+      "approver": "Approved by",
+      "entity": "Entity",
+      "amount": "Amount",
+      "reason": "Reason"
+    },
+    "action": {
+      "other": "Other",
+      "overrideFailed": "Override failed",
+      "overridePinChanged": "Override PIN changed",
+      "priceOverride": "Price override",
+      "refund": "Refund",
+      "exchange": "Exchange",
+      "reprint": "Reprint",
+      "voidSale": "Void sale",
+      "cashPayOut": "Cash pay-out",
+      "drawerReconcile": "Drawer reconciliation",
+      "compensation": "Compensation",
+      "pointsAdjust": "Points adjustment",
+      "resendTicket": "Resend ticket",
+      "blockSeat": "Block seat",
+      "blockRoom": "Block room",
+      "ticketAdmitOverride": "Ticket admit override"
+    }
+  },
+  "profile": {
+    "myProfile": "My profile",
+    "title": "My profile",
+    "subtitle": "Your account and security settings.",
+    "account": "Account"
+  },
+  "pinSettings": {
+    "title": "Manager override PIN",
+    "hint": "Staff at the counter can ask you to approve sensitive actions by typing this PIN. Choose 4 to 8 digits and keep it private.",
+    "pin": "New PIN",
+    "confirmPin": "Confirm PIN",
+    "pinInvalid": "The PIN must be 4 to 8 digits.",
+    "mismatch": "The two PINs do not match.",
+    "save": "Save PIN",
+    "saved": "Override PIN saved."
+  },
+  "pos": {
+    "section": "Counter",
+    "nav": {
+      "counter": "Counter sale"
+    },
+    "pageTitle": {
+      "counter": "Counter sale"
+    },
+    "title": "Counter sale",
+    "subtitle": "Sell tickets and food at the box office.",
+    "drawer": {
+      "open": "Drawer open: {{terminal}}",
+      "closed": "No cash drawer open.",
+      "openLink": "Open drawer"
+    },
+    "tender": {
+      "cash": "Cash",
+      "card": "Card",
+      "qrWallet": "QR wallet"
+    },
+    "showtimes": {
+      "title": "Today's showtimes",
+      "fnbOnly": "Food & drink only",
+      "empty": "No showtimes today."
+    },
+    "seats": {
+      "title": "Seats",
+      "noCategory": "No ticket category is priced for this seat type in this showtime."
+    },
+    "food": {
+      "title": "Food & combos",
+      "empty": "No food is available at this theater.",
+      "combo": "Combo",
+      "soldOut": "Sold out",
+      "left": "{{count}} left"
+    },
+    "member": {
+      "title": "Member",
+      "phone": "Phone number",
+      "find": "Find",
+      "walkIn": "No member attached: walk-in sale, no points.",
+      "notFound": "No member with this phone number.",
+      "failed": "Could not look up the member.",
+      "points": "{{points}} points",
+      "detach": "Remove member",
+      "redeem": "Points to redeem",
+      "redeemHint": "Up to {{max}} points"
+    },
+    "codes": {
+      "title": "Codes",
+      "discount": "Discount code",
+      "giftCard": "Gift card code"
+    },
+    "quote": {
+      "title": "Order total",
+      "empty": "Pick seats or food to start.",
+      "failed": "Could not price this order.",
+      "discount": "Discount",
+      "points": "Points redeemed",
+      "giftCard": "Gift card"
+    },
+    "pay": {
+      "title": "Payment",
+      "tendered": "Cash received",
+      "amount": "Amount",
+      "reference": "Terminal / QR reference",
+      "fill": "Fill the remaining amount",
+      "due": "Amount due",
+      "tenderedTotal": "Received",
+      "remaining": "Still to collect",
+      "change": "Change to give back",
+      "nonCashExcess": "Card and QR payments cannot exceed the amount due.",
+      "missingReference": "Enter the terminal or QR reference for every card and QR payment.",
+      "needDrawer": "Cash needs an open drawer."
+    },
+    "sell": {
+      "action": "Complete sale",
+      "success": "Sale {{code}} completed.",
+      "failed": "The sale could not be completed."
+    },
+    "override": {
+      "title": "Change price",
+      "newPrice": "New price (VND)",
+      "invalid": "Enter a price of 0 or more.",
+      "hint": "A price change needs a manager's approval.",
+      "apply": "Apply",
+      "reset": "Restore list price",
+      "action": "Change price",
+      "active": "Price changed by a manager"
+    },
+    "receipt": {
+      "done": "Sale completed",
+      "changeDue": "Change",
+      "format": "Paper format",
+      "print": "Print",
+      "newSale": "New sale"
+    }
+  },
+  "drawer": {
+    "nav": {
+      "drawer": "Cash drawer"
+    },
+    "pageTitle": {
+      "drawer": "Cash drawer"
+    },
+    "title": "Cash drawer",
+    "subtitle": "Open your till, record cash in and out, and follow the expected cash.",
+    "amountInvalid": "Enter a valid amount.",
+    "failed": "The drawer action failed.",
+    "open": {
+      "title": "Open the drawer",
+      "hint": "Count the opening float and enter it with the terminal name.",
+      "terminal": "Terminal name",
+      "float": "Opening float (VND)",
+      "action": "Open drawer",
+      "done": "Drawer opened."
+    },
+    "status": {
+      "title": "Drawer {{terminal}}",
+      "openedAt": "Opened at",
+      "openingFloat": "Opening float",
+      "cashSales": "Cash sales",
+      "payIns": "Pay-ins",
+      "payOuts": "Pay-outs",
+      "refunds": "Cash refunds",
+      "expected": "Expected cash"
+    },
+    "move": {
+      "title": "Pay-in / pay-out",
+      "amount": "Amount (VND)",
+      "note": "Reason",
+      "payOutApproval": "A pay-out needs a manager's approval.",
+      "record": "Record",
+      "done": "Movement recorded."
+    },
+    "movements": {
+      "title": "Recent movements",
+      "empty": "No movements yet.",
+      "time": "Time",
+      "type": "Type",
+      "amount": "Amount",
+      "note": "Note"
+    },
+    "movement": {
+      "openingFloat": "Opening float",
+      "sale": "Cash sale",
+      "refund": "Refund",
+      "payIn": "Pay-in",
+      "payOut": "Pay-out"
+    }
+  },
+  "opsCommon": {
+    "pickTheater": "Pick a theater to continue",
+    "pickTheaterHint": "Choose a theater in the top bar; this data is kept per theater.",
+    "date": "Date",
+    "refresh": "Refresh",
+    "back": "Back",
+    "from": "From",
+    "to": "To",
+    "note": "Note"
+  },
+  "schedule": {
+    "section": "Operations",
+    "nav": "Schedule",
+    "title": "Schedule board",
+    "subtitle": "Showtimes per room for the day. Click a showtime to open its checklist.",
+    "prevDay": "Previous day",
+    "nextDay": "Next day",
+    "today": "Today",
+    "seats": "seats",
+    "legend": {
+      "showtime": "Showtime",
+      "buffer": "Turnover buffer"
+    },
+    "bufferTitle": "Turnover buffer: {{minutes}} min",
+    "openChecklist": "Open the checklist",
+    "empty": "No rooms in this theater."
+  },
+  "incidents": {
+    "nav": "Incidents",
+    "list": {
+      "title": "Incidents",
+      "subtitle": "Faults and issues reported in this theater.",
+      "report": "Report incident",
+      "empty": "No incidents match the filters."
+    },
+    "fields": {
+      "title": "Title",
+      "category": "Category",
+      "severity": "Severity",
+      "description": "Description",
+      "room": "Room",
+      "noRoom": "No room",
+      "seat": "Seat",
+      "noSeat": "No seat",
+      "location": "Location",
+      "reportedBy": "Reported by"
+    },
+    "report": {
+      "title": "Report an incident",
+      "submit": "Report"
+    },
+    "detail": {
+      "blocking": "Blocking",
+      "blocksSeat": "Seat blocked",
+      "blocksRoom": "Room blocked",
+      "resolution": "Resolution",
+      "notFound": "Incident not found."
+    },
+    "block": {
+      "title": "Block from sale",
+      "hintApprover": "Blocked seats and rooms cannot be sold. Upcoming tickets are listed so you can move the guests; nothing is cancelled automatically.",
+      "hintOverride": "Blocking needs a manager: you will be asked for an approver and their PIN. Upcoming tickets are listed afterwards; nothing is cancelled automatically.",
+      "seat": "Block seat",
+      "room": "Block room"
+    },
+    "resolve": {
+      "title": "Resolve incident",
+      "unblock": "Unblock the seat or room",
+      "unblockHint": "Re-opens what this incident blocked for sale. Needs a manager.",
+      "action": "Resolve",
+      "note": "Resolution note"
+    },
+    "affected": {
+      "title": "Affected upcoming tickets",
+      "hint": "Move these guests to other seats or showtimes. Nothing was cancelled.",
+      "invoice": "Invoice",
+      "customer": "Customer",
+      "movie": "Movie",
+      "start": "Start",
+      "none": "No upcoming tickets are affected."
+    },
+    "toast": {
+      "reported": "Incident reported.",
+      "resolved": "Incident resolved.",
+      "blocked": "Blocked."
+    }
+  },
+  "checklists": {
+    "nav": "Checklists",
+    "title": "Checklists",
+    "subtitle": "Pre-show and post-show checks for each showtime.",
+    "templates": {
+      "open": "Edit templates",
+      "title": "Checklist templates",
+      "subtitle": "The items staff tick off before and after each showtime.",
+      "new": "New template",
+      "items": "items",
+      "inactive": "Inactive",
+      "name": "Name",
+      "kind": "Type",
+      "active": "Active",
+      "itemsTitle": "Items",
+      "itemText": "Item",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "addItem": "Add item",
+      "empty": "No templates yet."
+    },
+    "home": {
+      "time": "Time",
+      "movie": "Movie",
+      "empty": "No showtimes on this day."
+    },
+    "run": {
+      "title": "Checklist",
+      "noTemplate": "No checklist available",
+      "noTemplateHint": "There is no active template of this type for the theater.",
+      "progress": "{{done}} of {{total}} done",
+      "completedAt": "Completed {{time}}",
+      "required": "Required",
+      "note": "Note",
+      "missing": "{{count}} required item(s) still open",
+      "complete": "Complete checklist"
+    },
+    "toast": {
+      "completed": "Checklist completed.",
+      "templateSaved": "Template saved."
+    }
+  },
+  "roster": {
+    "nav": "Roster",
+    "title": "Roster",
+    "subtitle": "Weekly shifts. Click a day to add a shift, click a shift to edit it.",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "thisWeek": "This week",
+    "staff": "Staff",
+    "hours": "Hours",
+    "empty": "No staff in this theater.",
+    "dialog": {
+      "new": "New shift",
+      "edit": "Edit shift",
+      "start": "Start",
+      "end": "End",
+      "overnightHint": "An end time at or before the start means the shift ends the next day."
+    },
+    "errors": {
+      "invalidTime": "Enter a valid date and times."
+    },
+    "toast": {
+      "saved": "Shift saved.",
+      "deleted": "Shift deleted."
+    }
+  },
+  "timeClock": {
+    "section": "Workforce",
+    "nav": "Time clock",
+    "title": "Time clock",
+    "subtitle": "Clock in and out, and see your upcoming shifts.",
+    "clockedIn": "Clocked in",
+    "clockedOut": "Clocked out",
+    "since": "Since {{time}}",
+    "clockIn": "Clock in",
+    "clockOut": "Clock out",
+    "myShifts": "My shifts (next 14 days)",
+    "time": "Time",
+    "noShifts": "No shifts scheduled.",
+    "timeSheet": "Time sheet",
+    "load": "Load",
+    "in": "In",
+    "out": "Out",
+    "duration": "Duration",
+    "open": "Open",
+    "total": "Total",
+    "sheetEmpty": "No clock entries in this range.",
+    "toast": {
+      "in": "Clocked in.",
+      "out": "Clocked out."
+    },
+    "errors": {
+      "range": "Choose a valid range of at most {{days}} days."
+    }
+  },
+  "tasks": {
+    "nav": "My tasks",
+    "boardNav": "Task board",
+    "my": {
+      "title": "My tasks",
+      "subtitle": "Tasks assigned to you.",
+      "showClosed": "Show done and cancelled",
+      "empty": "No tasks.",
+      "start": "Start",
+      "done": "Mark done",
+      "reopen": "Reopen"
+    },
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "assignee": "Assignee",
+      "dueAt": "Due",
+      "createdBy": "Assigned by"
+    },
+    "board": {
+      "title": "Task board",
+      "subtitle": "Assign and follow up tasks for this theater.",
+      "new": "New task",
+      "empty": "No tasks match the filters."
+    },
+    "dialog": {
+      "new": "New task",
+      "edit": "Edit task"
+    },
+    "toast": {
+      "saved": "Task saved."
+    }
+  },
+  "kitchen": {
+    "section": "Kitchen",
+    "pageTitle": "Pickup queue",
+    "title": "Food pickup queue",
+    "subtitle": "Prepare and hand over food and drink orders as they come in.",
+    "nav": {
+      "kitchen": "Pickup queue"
+    },
+    "live": "Live",
+    "offline": "Offline",
+    "refresh": "Refresh",
+    "pickTheater": "Pick a theater",
+    "pickTheaterHint": "Choose a theater in the top bar to see its pickup queue.",
+    "emptyColumn": "No orders",
+    "paidAgo": "paid {{minutes}} min ago",
+    "action": {
+      "start": "Start preparing",
+      "ready": "Mark ready",
+      "handOver": "Hand over"
+    },
+    "status": {
+      "none": "None",
+      "pending": "Pending",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "handedOver": "Handed over",
+      "cancelled": "Cancelled"
+    },
+    "lookup": {
+      "code": "Pickup / invoice code",
+      "search": "Find",
+      "result": "Lookup result",
+      "notFound": "No order found for this code."
+    }
+  },
+  "stockAlerts": {
+    "title": "Low stock",
+    "none": "All tracked items are above their threshold.",
+    "onHand": "{{qty}} left (alert at {{threshold}})"
+  },
+  "salesReports": {
+    "section": "Reports",
+    "pageTitle": "Sales reports",
+    "title": "Sales reports",
+    "subtitle": "Revenue, occupancy and key figures for a range of business dates.",
+    "nav": {
+      "reports": "Sales reports"
+    },
+    "filters": "Report filters",
+    "from": "From",
+    "to": "To",
+    "groupByLabel": "Group by",
+    "theaters": "Theaters (empty = all)",
+    "run": "Run report",
+    "notRun": "Choose a range and run the report.",
+    "noData": "No data in this range.",
+    "error": {
+      "required": "Pick both dates.",
+      "order": "The end date must not be before the start date.",
+      "tooLong": "The range is limited to 92 days."
+    },
+    "groupBy": {
+      "day": "Day",
+      "movie": "Movie",
+      "theater": "Theater",
+      "paymentMethod": "Payment method",
+      "staff": "Staff",
+      "channel": "Channel"
+    },
+    "kpi": {
+      "paidInvoices": "Paid invoices",
+      "ticketsSold": "Tickets sold",
+      "attachRate": "Food attach rate",
+      "averageSpend": "Average spend per head",
+      "refunds": "Refunds (count, amount)",
+      "refundRate": "Refund rate (count / amount)"
+    },
+    "salesTitle": "Sales",
+    "occupancyTitle": "Occupancy",
+    "occupancySummary": "{{sold}} of {{active}} seats sold",
+    "occupancyTruncated": "Showing {{shown}} of {{total}} showtimes.",
+    "col": {
+      "group": "Group",
+      "invoices": "Invoices",
+      "tickets": "Tickets",
+      "food": "Food",
+      "discount": "Discount",
+      "net": "Net revenue",
+      "refunds": "Refunds",
+      "total": "Total",
+      "theater": "Theater",
+      "room": "Room",
+      "movie": "Movie",
+      "showtime": "Showtime",
+      "seats": "Seats sold",
+      "rate": "Occupancy"
+    }
+  },
+  "afterSales": {
+    "section": "After-sales",
+    "pageTitle": "After-sales",
+    "nav": {
+      "afterSales": "After-sales"
+    },
+    "title": "After-sales desk",
+    "subtitle": "Find an invoice to refund, exchange or reprint its tickets.",
+    "pickTheater": "Pick a theater first.",
+    "pickTheaterHint": "Use the theater picker in the top bar.",
+    "search": {
+      "title": "Find an invoice",
+      "code": "Invoice code",
+      "phone": "Customer phone",
+      "hint": "Type an invoice code or a phone number to search.",
+      "empty": "No invoice matches."
+    },
+    "col": {
+      "code": "Invoice",
+      "customer": "Customer",
+      "movie": "Movie",
+      "showtime": "Showtime",
+      "amount": "Amount",
+      "flags": "Flags"
+    },
+    "flag": {
+      "showStarted": "Show started",
+      "used": "{{used}}/{{total}} tickets used",
+      "food": "Has food",
+      "exchanged": "Exchange"
+    },
+    "panel": {
+      "title": "Invoice {{code}}",
+      "pinRequired": "A manager PIN is required for these actions.",
+      "showStarted": "The showtime has already started. A refund now needs a manager PIN.",
+      "cannotRefund": "This invoice cannot be refunded."
+    },
+    "refund": {
+      "tender": "Refund through",
+      "reference": "Terminal or wallet reference",
+      "button": "Refund",
+      "title": "Refund invoice",
+      "hint": "The whole invoice is refunded and the seats are released.",
+      "hintAfterStart": "The showtime has already started. This refund needs a manager PIN and is recorded as an after-start refund.",
+      "confirm": "Refund",
+      "reason": "Reason",
+      "note": "Note",
+      "success": "Invoice {{code}} refunded: {{amount}}.",
+      "successOutOfBand": "Invoice {{code}} marked refunded ({{amount}}). Return the money outside the system.",
+      "error": {
+        "reasonRequired": "Choose a reason.",
+        "noteRequired": "A note is required when the reason is Other.",
+        "tenderRequired": "Choose how the money is returned.",
+        "referenceRequired": "Enter the terminal or wallet reference for a card or QR refund."
+      }
+    },
+    "exchange": {
+      "button": "Exchange",
+      "tip": "Replace this counter sale with a new one; only the price difference changes hands.",
+      "notEligibleTip": "Only paid counter sales without used tickets can be exchanged.",
+      "title": "Exchange {{code}}",
+      "oldInvoice": "Invoice being replaced",
+      "hint": "Pick the replacement showtime, seats and food. The seats of the old invoice are released when the exchange is confirmed.",
+      "difference": "Price difference",
+      "oldAmount": "Old invoice",
+      "newAmount": "New total",
+      "collect": "To collect",
+      "payBack": "To pay back",
+      "even": "Same price, nothing to settle",
+      "refundTender": "Pay the difference back by",
+      "collectTitle": "Collect the difference",
+      "confirm": "Confirm exchange",
+      "reasonTitle": "Exchange reason",
+      "reasonHint": "The exchange is audited and needs a manager approval. Give the reason.",
+      "done": "Exchange completed",
+      "collected": "Collected",
+      "paidBack": "Paid back",
+      "success": "Exchanged. New invoice {{code}}.",
+      "failed": "The exchange failed.",
+      "error": {
+        "noItems": "Pick the replacement seats or food first.",
+        "noQuote": "Waiting for the new total...",
+        "tendersIncomplete": "The payments do not cover the difference yet.",
+        "drawer": "Open your cash drawer first.",
+        "busy": "Exchange in progress..."
+      }
+    },
+    "reprint": {
+      "button": "Reprint",
+      "title": "Reprint tickets",
+      "hint": "Reprints are audited. Give the reason.",
+      "hintUsed": "A ticket on this invoice was already used: a manager PIN is required to reprint it.",
+      "confirm": "Reprint",
+      "reason": "Reason",
+      "reasonShort": "Give a reason of at least 3 characters.",
+      "ticketsTitle": "Tickets for {{code}}",
+      "qrAlt": "Ticket QR code",
+      "print": "Print",
+      "printTitle": "Tickets {{code}}"
+    }
+  },
+  "cashClose": {
+    "section": "Cash close",
+    "pageTitle": "Cash close",
+    "nav": {
+      "cashClose": "Cash close"
+    },
+    "title": "Cash close",
+    "subtitle": "Close your drawer and review the day.",
+    "tabDrawer": "My drawer",
+    "tabDaily": "Daily close",
+    "pickTheater": "Pick a theater first.",
+    "pickTheaterHint": "Use the theater picker in the top bar.",
+    "drawer": {
+      "title": "Drawer {{terminal}}",
+      "closedTitle": "Drawer closed",
+      "status": "Status",
+      "openedAt": "Opened at",
+      "openingFloat": "Opening float",
+      "cashSales": "Cash sales",
+      "payIns": "Pay-ins",
+      "payOuts": "Pay-outs",
+      "refunds": "Cash refunds",
+      "expected": "Expected cash",
+      "counted": "Counted cash",
+      "variance": "Variance",
+      "variancePreview": "Variance (counted - expected)",
+      "countInvalid": "Enter the amount counted, zero or more.",
+      "note": "Note (optional)",
+      "reconcileHint": "A variance needs a manager to reconcile the drawer after closing.",
+      "needsReconciliation": "The drawer is closed with a variance. A manager must reconcile it.",
+      "close": "Close drawer",
+      "confirmTitle": "Close the drawer?",
+      "confirmMessage": "The count is final once the drawer is closed.",
+      "closedToast": "Drawer closed.",
+      "noOpenDrawer": "You have no open drawer.",
+      "noOpenDrawerHint": "Open a drawer from the point of sale first."
+    },
+    "daily": {
+      "date": "Business day",
+      "dateHint": "Empty means today's business day",
+      "refresh": "Refresh",
+      "print": "Daily close",
+      "pendingTitle": "{{count}} drawer(s) waiting for reconciliation",
+      "pendingHint": "These drawers closed with a variance. Reconcile them once checked.",
+      "reconcile": "Reconcile",
+      "tenders": "Payments by tender",
+      "tender": "Tender",
+      "count": "Count",
+      "amount": "Amount",
+      "paymentsTotal": "Payments total",
+      "summary": "Summary",
+      "moneyCollected": "Money collected",
+      "refunds": "Refunds",
+      "exchanges": "Exchanges",
+      "comps": "Comps",
+      "netCollected": "Net collected",
+      "tickets": "Tickets sold",
+      "foodItems": "Food items sold",
+      "foodRevenue": "Food revenue",
+      "drawers": "Drawers",
+      "terminal": "Terminal",
+      "cashier": "Cashier",
+      "totalVariance": "Total variance",
+      "noDrawers": "No drawer sessions on this day.",
+      "empty": "No report loaded."
+    },
+    "reconcile": {
+      "title": "Reconcile drawer",
+      "hint": "Confirm the variance has been checked. The note is kept in the audit trail.",
+      "confirm": "Reconcile",
+      "note": "Note",
+      "done": "Drawer reconciled."
+    }
+  },
+  "customerService": {
+    "section": "Customer service",
+    "nav": {
+      "lookup": "Customer lookup",
+      "complaints": "Complaints"
+    },
+    "lookup": {
+      "title": "Customer lookup",
+      "subtitle": "Find a customer and their latest bookings, re-send an e-ticket or file a complaint.",
+      "query": "E-mail, phone or booking code",
+      "queryHint": "An e-mail (contains @), an exact phone number or an invoice code",
+      "search": "Search",
+      "hint": "Search for a customer to see their card and bookings.",
+      "notFound": "No customer or booking matches this search.",
+      "noTier": "No membership",
+      "points": "{{points}} points"
+    },
+    "invoices": {
+      "code": "Booking",
+      "theater": "Theater",
+      "movie": "Movie",
+      "showtime": "Showtime",
+      "amount": "Amount"
+    },
+    "resend": {
+      "button": "Resend e-ticket",
+      "tip": "Send the e-ticket again by e-mail or SMS",
+      "exhausted": "No resends left for this booking this hour",
+      "title": "Resend e-ticket {{code}}",
+      "hint": "Sent to the contact on file unless you type another address. Walk-in sales without a contact need an address.",
+      "remaining": "Resends left this hour: {{remaining}} of {{max}}",
+      "channel": "Channel",
+      "address": "Address (optional)",
+      "addressHint": "E-mail address or phone number",
+      "send": "Send",
+      "success": "E-ticket {{code}} sent to {{address}}. Resends left this hour: {{remaining}}.",
+      "failed": "The e-ticket could not be sent.",
+      "error": {
+        "email": "Enter a valid e-mail address.",
+        "phone": "Enter a valid phone number."
+      }
+    },
+    "complaint": {
+      "new": "New complaint",
+      "createTitle": "New complaint",
+      "editTitle": "Edit complaint",
+      "category": "Category",
+      "description": "Description",
+      "customer": "Customer",
+      "invoice": "Booking",
+      "assignedTo": "Assigned to",
+      "fileFor": "File a complaint for this booking",
+      "created": "Complaint filed.",
+      "saveFailed": "The complaint could not be saved."
+    },
+    "list": {
+      "title": "Complaints",
+      "subtitle": "Customer complaints of your theaters.",
+      "empty": "No complaints match."
+    },
+    "detail": {
+      "workflow": "Workflow",
+      "edit": "Edit",
+      "startReview": "Start review",
+      "reject": "Reject",
+      "rejectTitle": "Reject complaint",
+      "rejectHint": "The customer's complaint is closed without compensation. Give the reason.",
+      "rejectReason": "Reason",
+      "resolve": "Resolve",
+      "reviewStarted": "Review started.",
+      "rejected": "Complaint rejected.",
+      "resolved": "Complaint resolved: {{resolution}}.",
+      "outcome": "Outcome",
+      "notFound": "Complaint not found."
+    },
+    "resolve": {
+      "title": "Resolve complaint",
+      "approverHint": "This compensation is recorded with you as the approver.",
+      "pinHint": "This compensation needs a manager approval: you will be asked for a manager PIN.",
+      "resolution": "Resolution",
+      "amount": "Amount (VND)",
+      "points": "Points",
+      "refundHint": "The whole booking {{code}} is refunded.",
+      "refundTender": "Refund by",
+      "refundReference": "Reference",
+      "note": "Note",
+      "confirm": "Resolve",
+      "error": {
+        "resolution": "Choose a resolution the complaint allows.",
+        "amount": "Enter an amount greater than zero.",
+        "pointsWhole": "Points must be a whole number.",
+        "tender": "Choose how to refund.",
+        "reference": "A card or QR refund needs a reference."
+      }
+    }
+  }
+}

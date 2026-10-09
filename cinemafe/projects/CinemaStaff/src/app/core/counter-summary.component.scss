@@ -1,0 +1,4 @@
+@use './counter-shared';
+
+:host { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.pos-member { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }

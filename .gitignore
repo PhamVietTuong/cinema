@@ -22,6 +22,8 @@ QA-tests/
 CLAUDE.md
 .playwright-mcp/
 pagelist.txt
-tasks/
-
+/tasks/
+/.claude/
+/QA-tests/
+/.playwright-mcp/
 logs/

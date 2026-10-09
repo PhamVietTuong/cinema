@@ -9,7 +9,7 @@ import {
   PaymentServiceAgent,
   BaseTableComponent, TablePage, TableSearchCriteria,
   DialogService,
-  InvoiceStatusValues, invoiceStatusPillClass,
+  InvoiceStatusValues,
   showLoading, hideLoading, showSuccess, showException,
 } from 'CinemaLib';
 import { InvoiceStatusDialog } from './invoice-status.dialog';
@@ -102,13 +102,5 @@ export class InvoicesManagementComponent extends BaseTableComponent {
       },
       error: error => this._store.dispatch(showException({ error })),
     }).add(() => this._store.dispatch(hideLoading()));
-  }
-
-  statusLabel(s?: CinemaServiceAgent.InvoiceStatus): string {
-    return this.statuses.find(x => x.value === s)?.name ?? '—';
-  }
-
-  statusClass(s?: CinemaServiceAgent.InvoiceStatus): string {
-    return invoiceStatusPillClass(s);
   }
 }

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Monorepo with two siblings:
 - `cinemabe/` — .NET 9 Web API + SQL Server backend (Visual Studio solution: `cinemabe/Cinema.sln`).
-- `cinemafe/` — Angular 21 workspace containing three sub-projects: `CinemaUser` (port 4200), `CinemaAdmin` (port 4201), and `CinemaLib` (shared library).
+- `cinemafe/` — Angular 21 workspace containing four sub-projects: `CinemaUser` (port 4202), `CinemaAdmin` (port 4201), `CinemaStaff` (port 4203), and `CinemaLib` (shared library).
 
 There is no top-level build/test runner — backend and frontend are operated independently.
 
@@ -91,13 +91,14 @@ This publishes `Cinema.Service.WebApiHost` in Release, runs NSwag for each contr
 
 ### Workspace structure
 
-Single Angular CLI workspace with three projects defined in `angular.json`:
+Single Angular CLI workspace with four projects defined in `angular.json`:
 
 | Project       | Type        | Path                      | `prefix` | Dev port |
 |---------------|-------------|---------------------------|----------|----------|
 | `CinemaLib`   | library     | `projects/CinemaLib`      | `cl`     | —        |
 | `CinemaAdmin` | application | `projects/CinemaAdmin`    | `app`    | 4201     |
-| `CinemaUser`  | application | `projects/CinemaUser`     | `app`    | 4200 (default `ng serve`) |
+| `CinemaUser`  | application | `projects/CinemaUser`     | `app`    | 4202 |
+| `CinemaStaff` | application | `projects/CinemaStaff`    | `staff`  | 4203     |
 | `cinemafe`    | application | root `src/`               | `app`    | (legacy/default) |
 
 Both apps consume `CinemaLib` as a regular import: `import { ... } from 'CinemaLib'`. The library exports through `projects/CinemaLib/src/public-api.ts`: tokens (`API_BASE_URL`, `HUB_BASE_URL`), `SharedModule` (Angular Material barrel), models, NSwag-generated services, guards (`authGuard`, `adminGuard`), HTTP interceptors (`authInterceptor`, `errorInterceptor`), and NgRx feature stores (auth, movies).
@@ -123,8 +124,9 @@ Run from `cinemafe/`:
 
 ```powershell
 npm install
-ng serve CinemaUser                  # http://localhost:4200
+ng serve CinemaUser                  # http://localhost:4202
 ng serve CinemaAdmin                 # http://localhost:4201
+ng serve CinemaStaff                 # http://localhost:4203
 ng build  CinemaUser --configuration production
 ng build  CinemaLib                  # rebuild the library after changes
 ng test   CinemaUser                 # vitest via @angular/build:unit-test
@@ -289,7 +291,7 @@ State these answers in your self-review. "It works" is not sufficient for a read
 
 Two complementary systems live under `QA-tests/` (see `QA-tests/flow-tests/README.md` and `QA-tests/playwright/README.md`):
 
-1. **Flow tests** — `/test-flow <flow-id>` runs static invariant checks + `dotnet build`/`dotnet test` + `ng build` + a manual E2E playbook for a business flow, writing `QA-tests/FLOW-TEST-RESULTS.md` (rolling log) and `QA-tests/reports/<flow>-<date>/REPORT.html`. Real defects → `QA-tests/auto-bugs/BUG-<NNNN>-*.md` (+ optional `patch-suggestions/`). Flows: `booking-seat-lock`, `auth-login`, `movie-admin`.
+1. **Flow tests** — `/test-flow <flow-id>` runs static invariant checks + `dotnet build`/`dotnet test` + `ng build` + a manual E2E playbook for a business flow, writing `QA-tests/FLOW-TEST-RESULTS.md` (rolling log) and `QA-tests/reports/<flow>-<date>/REPORT.html`. Real defects → `QA-tests/auto-bugs/BUG-<NNNN>-*.md` (+ optional `patch-suggestions/`). Flows: `booking-seat-lock`, `auth-login`, `movie-admin`, `inventory-storage-plan`.
 2. **Playwright E2E** — `QA-tests/playwright/` (CinemaUser :4202, CinemaAdmin :4201), `npm test` → HTML report via `npm run report`.
 
 A **PreToolUse hook** (`.claude/hooks/check-business-invariants.js`, wired in `.claude/settings.json`) guards edits in real time against the invariants in `module-paths-mapping.json` + `business-flows.json` (P0 → ask, P1/P2 → soft warning).

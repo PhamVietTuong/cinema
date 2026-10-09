@@ -1,0 +1,16 @@
+@use './counter-shared';
+
+.pos-tender { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.pos-tender-method { width: 120px; }
+.pos-tender-amount { width: 140px; }
+.pos-tender-ref { flex: 1; min-width: 120px; }
+.pos-tender-add { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+
+.pos-settle {
+  margin: 12px 0 0; display: grid; gap: 4px;
+  div { display: flex; justify-content: space-between; }
+  dt { color: var(--ml-muted); }
+  dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .is-warn dd { color: var(--ml-warn-ink); }
+  .is-change dd { color: var(--ml-second); font-size: 1.2rem; }
+}

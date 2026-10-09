@@ -66,7 +66,17 @@ foreach ($ctrl in $Controllers) {
     }
     $localAngularDir = (Resolve-Path $localAngularDir).Path
 
+    # Class names: single-controller groups keep 'HttpService' / '<Api>Client'. A group with several controllers
+    # (e.g. Staff) passes TSClassName / CSClassName containing the NSwag {controller} placeholder so each controller
+    # gets its own class instead of several classes named HttpService.
+    $tsClassName = 'HttpService'
+    if ($ctrl.TSClassName) { $tsClassName = $ctrl.TSClassName }
+    $csClassName = "$($ApiName)Client"
+    if ($ctrl.CSClassName) { $csClassName = $ctrl.CSClassName }
+
     (Get-Content $templateFile) `
+        -replace '\[TSClassName\]',           $tsClassName `
+        -replace '\[CSClassName\]',           $csClassName `
         -replace '\[SystemName\]',            $SystemName `
         -replace '\[PascalCaseController\]',  $ApiName `
         -replace '\[LowerCaseController\]',   $ApiLower `

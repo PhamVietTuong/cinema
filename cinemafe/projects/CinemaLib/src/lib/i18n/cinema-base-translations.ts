@@ -1,0 +1,287 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { TranslateLoader, TranslationObject } from '@ngx-translate/core';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { API_ERRORS_EN, API_ERRORS_VI } from './api-error-translations';
+
+/**
+ * Keys every app shares (shell chrome and the sign-in form). They are merged UNDER each app's own
+ * `/assets/i18n/{lang}.json`, so an app can still override any of them by redefining the key.
+ */
+export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
+  vi: {
+    apiErrors: API_ERRORS_VI,
+    errors: {
+      network: 'Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.',
+      forbidden: 'Bạn không có quyền thực hiện thao tác này.',
+      server: 'Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.',
+    },
+    nav: { logout: 'Đăng Xuất' },
+    seatMap: {
+      screen: 'MÀN HÌNH',
+      legendAvailable: 'Ghế Trống',
+      legendSelected: 'Đang Chọn',
+      legendOccupied: 'Đã Bán',
+      legendLocked: 'Đang Giữ',
+      legendDouble: 'Ghế Đôi',
+      notAvailableForCategory: 'Không khả dụng cho loại vé này',
+      capReached: 'Bạn đã chọn đủ số vé — tăng số lượng để chọn thêm',
+    },
+    ticket: {
+      showTime: 'Suất chiếu',
+      room: 'Phòng',
+      seat: 'Ghế',
+      category: 'Loại vé',
+      price: 'Giá',
+      order: 'Mã đơn',
+    },
+    priceBreakdown: {
+      subtotal: 'Tạm tính',
+      total: 'Tổng cộng',
+      empty: 'Chưa có mục nào',
+    },
+    staffEnums: {
+      incidentCategory: {
+        other: 'Khác', seat: 'Ghế', room: 'Phòng chiếu', projection: 'Máy chiếu',
+        sound: 'Âm thanh', safety: 'An toàn', customer: 'Khách hàng', cleanliness: 'Vệ sinh',
+      },
+      incidentSeverity: { low: 'Thấp', medium: 'Trung bình', high: 'Cao', critical: 'Nghiêm trọng' },
+      incidentStatus: { open: 'Đang mở', resolved: 'Đã xử lý' },
+      checklistKind: { preShow: 'Trước suất chiếu', postShow: 'Sau suất chiếu' },
+      taskStatus: { open: 'Mới', inProgress: 'Đang làm', done: 'Hoàn thành', cancelled: 'Đã hủy' },
+      roomStatus: { active: 'Hoạt động', maintenance: 'Bảo trì', inactive: 'Ngừng hoạt động' },
+      complaintStatus: { open: 'Mới', inReview: 'Đang xử lý', resolved: 'Đã giải quyết', rejected: 'Từ chối' },
+      complaintCategory: {
+        other: 'Khác', service: 'Dịch vụ', booking: 'Đặt vé', payment: 'Thanh toán', projection: 'Hình ảnh chiếu',
+        sound: 'Âm thanh', foodAndDrink: 'Đồ ăn thức uống', facilities: 'Cơ sở vật chất', staff: 'Nhân viên',
+      },
+      complaintResolution: { none: 'Chưa có', refund: 'Hoàn tiền', giftCard: 'Thẻ quà tặng', points: 'Cộng điểm', apology: 'Xin lỗi' },
+      eTicketChannel: { email: 'Email', sms: 'SMS' },
+    },
+    invoices: {
+      statusPending: 'Chờ thanh toán',
+      statusPaid: 'Đã thanh toán',
+      statusCancelled: 'Đã hủy',
+      statusFailed: 'Thất bại',
+      statusRefunded: 'Đã hoàn tiền',
+    },
+    staffReason: {
+      other: 'Lý do khác',
+      customerRequest: 'Khách yêu cầu',
+      wrongShowtime: 'Nhầm suất chiếu',
+      duplicateSale: 'Bán trùng',
+      serviceFailure: 'Sự cố dịch vụ',
+      technicalIssue: 'Sự cố kỹ thuật',
+      priceMatch: 'Khớp giá',
+      compensation: 'Bồi thường',
+    },
+    tender: {
+      cash: 'Tiền mặt',
+      card: 'Thẻ',
+      qrWallet: 'Ví QR',
+      giftCard: 'Thẻ quà tặng',
+      points: 'Điểm thưởng',
+      online: 'Trực tuyến',
+    },
+    drawerStatus: {
+      open: 'Đang mở',
+      closed: 'Đã đóng',
+      reconciled: 'Đã đối soát',
+    },
+    override: {
+      title: 'Cần quản lý xác nhận',
+      hint: 'Thao tác này cần quản lý xác nhận. Chọn người duyệt và nhập mã PIN của họ.',
+      approver: 'Người duyệt',
+      pin: 'Mã PIN',
+      pinInvalid: 'Mã PIN gồm 4-8 chữ số.',
+      noApprovers: 'Không có quản lý nào đang phụ trách rạp này.',
+      confirm: 'Xác nhận',
+    },
+    common: {
+      actions: 'Thao Tác',
+      all: 'Tất Cả',
+      cancel: 'Hủy',
+      close: 'Đóng',
+      confirm: 'Xác nhận',
+      createdAt: 'Ngày Tạo',
+      filters: 'Bộ Lọc',
+      name: 'Tên',
+      remove: 'Xóa',
+      required: 'Trường này là bắt buộc.',
+      save: 'Lưu',
+      status: 'Trạng Thái',
+      totalEntries: 'Tổng cộng',
+    },
+    topbar: {
+      lightMode: 'Chế độ sáng',
+      darkMode: 'Chế độ tối',
+      notifications: 'Thông báo',
+    },
+    shell: {
+      userFallback: 'Người dùng',
+      defaultTitle: 'Bảng Điều Khiển',
+    },
+    login: {
+      emailOrPhoneLabel: 'Email hoặc Số Điện Thoại',
+      emailOrPhonePlaceholder: 'Nhập email hoặc số điện thoại',
+      passwordLabel: 'Mật Khẩu',
+      showPassword: 'Hiện mật khẩu',
+      hidePassword: 'Ẩn mật khẩu',
+      rememberMe: 'Ghi nhớ đăng nhập',
+      forgotPassword: 'Quên mật khẩu?',
+      submit: 'Đăng Nhập',
+    },
+  },
+  en: {
+    apiErrors: API_ERRORS_EN,
+    errors: {
+      network: 'Cannot reach the server. Please check your connection.',
+      forbidden: 'You are not allowed to do this.',
+      server: 'A server error occurred. Please try again later.',
+    },
+    nav: { logout: 'Log Out' },
+    seatMap: {
+      screen: 'SCREEN',
+      legendAvailable: 'Available',
+      legendSelected: 'Selected',
+      legendOccupied: 'Sold',
+      legendLocked: 'Held',
+      legendDouble: 'Double Seat',
+      notAvailableForCategory: 'Not available for this ticket type',
+      capReached: "You've selected all your tickets — increase a quantity to add more",
+    },
+    ticket: {
+      showTime: 'Showtime',
+      room: 'Room',
+      seat: 'Seat',
+      category: 'Ticket type',
+      price: 'Price',
+      order: 'Order',
+    },
+    priceBreakdown: {
+      subtotal: 'Subtotal',
+      total: 'Total',
+      empty: 'Nothing added yet',
+    },
+    staffEnums: {
+      incidentCategory: {
+        other: 'Other', seat: 'Seat', room: 'Room', projection: 'Projection',
+        sound: 'Sound', safety: 'Safety', customer: 'Customer', cleanliness: 'Cleanliness',
+      },
+      incidentSeverity: { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' },
+      incidentStatus: { open: 'Open', resolved: 'Resolved' },
+      checklistKind: { preShow: 'Pre-show', postShow: 'Post-show' },
+      taskStatus: { open: 'Open', inProgress: 'In progress', done: 'Done', cancelled: 'Cancelled' },
+      roomStatus: { active: 'Active', maintenance: 'Maintenance', inactive: 'Inactive' },
+      complaintStatus: { open: 'Open', inReview: 'In review', resolved: 'Resolved', rejected: 'Rejected' },
+      complaintCategory: {
+        other: 'Other', service: 'Service', booking: 'Booking', payment: 'Payment', projection: 'Projection',
+        sound: 'Sound', foodAndDrink: 'Food and drink', facilities: 'Facilities', staff: 'Staff',
+      },
+      complaintResolution: { none: 'None', refund: 'Refund', giftCard: 'Gift card', points: 'Points', apology: 'Apology' },
+      eTicketChannel: { email: 'Email', sms: 'SMS' },
+    },
+    invoices: {
+      statusPending: 'Pending',
+      statusPaid: 'Paid',
+      statusCancelled: 'Cancelled',
+      statusFailed: 'Failed',
+      statusRefunded: 'Refunded',
+    },
+    staffReason: {
+      other: 'Other',
+      customerRequest: 'Customer request',
+      wrongShowtime: 'Wrong showtime',
+      duplicateSale: 'Duplicate sale',
+      serviceFailure: 'Service failure',
+      technicalIssue: 'Technical issue',
+      priceMatch: 'Price match',
+      compensation: 'Compensation',
+    },
+    tender: {
+      cash: 'Cash',
+      card: 'Card',
+      qrWallet: 'QR wallet',
+      giftCard: 'Gift card',
+      points: 'Points',
+      online: 'Online',
+    },
+    drawerStatus: {
+      open: 'Open',
+      closed: 'Closed',
+      reconciled: 'Reconciled',
+    },
+    override: {
+      title: 'Manager approval needed',
+      hint: 'This action needs a manager. Pick the approver and enter their PIN.',
+      approver: 'Approver',
+      pin: 'PIN',
+      pinInvalid: 'The PIN has 4-8 digits.',
+      noApprovers: 'No manager is assigned to this theater.',
+      confirm: 'Approve',
+    },
+    common: {
+      actions: 'Actions',
+      all: 'All',
+      cancel: 'Cancel',
+      close: 'Close',
+      confirm: 'Confirm',
+      createdAt: 'Created At',
+      filters: 'Filters',
+      name: 'Name',
+      remove: 'Remove',
+      required: 'This field is required.',
+      save: 'Save',
+      status: 'Status',
+      totalEntries: 'in total',
+    },
+    topbar: {
+      lightMode: 'Light mode',
+      darkMode: 'Dark mode',
+      notifications: 'Notifications',
+    },
+    shell: {
+      userFallback: 'User',
+      defaultTitle: 'Control Panel',
+    },
+    login: {
+      emailOrPhoneLabel: 'Email or Phone Number',
+      emailOrPhonePlaceholder: 'Enter email or phone number',
+      passwordLabel: 'Password',
+      showPassword: 'Show password',
+      hidePassword: 'Hide password',
+      rememberMe: 'Remember me',
+      forgotPassword: 'Forgot password?',
+      submit: 'Sign In',
+    },
+  },
+};
+
+function isObject(value: unknown): value is TranslationObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function deepMerge(base: TranslationObject, override: TranslationObject): TranslationObject {
+  const result: TranslationObject = { ...base };
+  for (const key of Object.keys(override)) {
+    const baseValue = base[key];
+    const overrideValue = override[key];
+    result[key] = isObject(baseValue) && isObject(overrideValue) ? deepMerge(baseValue, overrideValue) : overrideValue;
+  }
+  return result;
+}
+
+/** Loads the app's `/assets/i18n/{lang}.json` and layers it over {@link CINEMA_BASE_TRANSLATIONS}. */
+@Injectable()
+export class CinemaTranslateLoader extends TranslateLoader {
+  private readonly _http = inject(HttpClient);
+
+  getTranslation(lang: string): Observable<TranslationObject> {
+    const base = CINEMA_BASE_TRANSLATIONS[lang] ?? {};
+    return this._http.get<TranslationObject>(`/assets/i18n/${lang}.json`).pipe(
+      map(app => deepMerge(base, app)),
+      catchError(() => of(base)),
+    );
+  }
+}

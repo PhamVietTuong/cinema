@@ -105,6 +105,19 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
     return (this.invoice?.tickets ?? []).map(t => t.seatLabel).filter((s): s is string => !!s);
   }
 
+  /** Movie / theater / room / showtime are the same on every ticket of one invoice, so read the first. */
+  get firstTicket(): PaymentServiceAgent.InvoiceTicketDTO | undefined {
+    return this.invoice?.tickets?.[0];
+  }
+
+  get ticketTypes(): string {
+    return [...new Set((this.invoice?.tickets ?? []).map(t => t.patronCategoryName).filter((n): n is string => !!n))].join(', ');
+  }
+
+  get foodSummary(): string {
+    return (this.invoice?.foods ?? []).map(f => `${f.quantity} × ${f.foodName}`).join(' · ');
+  }
+
   goProfile(): void {
     this._router.navigate(['/profile']);
   }

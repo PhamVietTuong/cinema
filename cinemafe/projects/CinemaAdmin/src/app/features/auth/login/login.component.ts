@@ -1,37 +1,56 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Component, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { SharedModule, login, selectAuthLoading, selectAuthError } from 'CinemaLib';
+import { LoginFormComponent, LoginStat, ShellBrand, UserRoles, logout } from 'CinemaLib';
+import { environment } from '../../../../environments/environment';
 
+/** Admin sign-in: the shared CinemaLib login layout with the admin copy, restricted to the Admin role. */
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [SharedModule],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  imports: [LoginFormComponent],
+  template: `
+    <cl-login-form
+      [brand]="brand"
+      titleKey="login.title"
+      subtitleKey="login.subtitle"
+      heroTitleLine1Key="login.heroTitleLine1"
+      heroTitleLine2Key="login.heroTitleLine2"
+      heroSubtitleKey="login.heroSubtitle"
+      [stats]="stats"
+      footerKey="login.footer"
+      [allowedRoles]="allowedRoles"
+      [noticeKey]="rejectedNotice"
+      [noticeLinkKey]="rejectedNotice ? 'forbidden.openStaffApp' : null"
+      [noticeLinkUrl]="staffAppUrl"
+      (rejected)="onRejected()" />
+  `,
 })
 export class LoginComponent {
-  hidePass = true;
-  loading$: Observable<boolean>;
-  error$: Observable<string | null>;
-  form: FormGroup;
+  private readonly _store = inject(Store);
+  private readonly _router = inject(Router);
 
-  constructor(
-    private _store: Store,
-    private _fb: FormBuilder,
-  ) {
-    this.loading$ = this._store.select(selectAuthLoading);
-    this.error$ = this._store.select(selectAuthError);
-    this.form = this._fb.group({
-      emailOrPhone: ['', Validators.required],
-      password: ['', Validators.required],
+  readonly brand: ShellBrand = { name: 'CINEMA', strong: 'ADMIN' };
+  readonly allowedRoles: readonly string[] = [UserRoles.Admin];
+  readonly staffAppUrl = environment.staffAppUrl;
+  readonly stats: LoginStat[] = [
+    { icon: 'movie', labelKey: 'login.statMovies' },
+    { icon: 'theaters', labelKey: 'login.statTheaters' },
+    { icon: 'confirmation_number', labelKey: 'login.statTickets' },
+  ];
+  /** Shown after a non-Admin account was signed in and bounced back here. */
+  readonly rejectedNotice: string | null = inject(ActivatedRoute).snapshot.queryParamMap.has('rejected')
+    ? 'login.notAdminAccount'
+    : null;
+
+  /**
+   * A non-Admin account signed in. The auth effects are about to navigate to the return URL, so sign out
+   * and come back here after that navigation settles, carrying a flag that makes the page explain why.
+   */
+  onRejected(): void {
+    setTimeout(() => {
+      this._store.dispatch(logout());
+      this._router.navigate(['/auth/login'], { queryParams: { rejected: 1 } });
     });
-  }
-
-  onSubmit(): void {
-    if (this.form.valid) {
-      this._store.dispatch(login({ request: this.form.value as any }));
-    }
   }
 }

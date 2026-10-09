@@ -48,6 +48,8 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         var q = DbSet
             .Include(i => i.InvoiceTickets).ThenInclude(it => it.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
             .Include(i => i.InvoiceTickets).ThenInclude(it => it.Seat)
+            .Include(i => i.InvoiceFoodAndDrinks).ThenInclude(f => f.FoodAndDrink)
+            .AsSplitQuery()
             .Where(i => i.UserId == userId)
             .OrderByDescending(i => i.CreationTime);
         var total = await q.CountAsync();
@@ -137,8 +139,185 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             .Include(t => t.ShowTimeRoom).ThenInclude(sr => sr.Room)
             .FirstOrDefaultAsync(t => t.QrCode == qrCode);
 
+    public async Task<GateTicketRow?> GetGateTicketByQrAsync(string qrCode)
+        => await Context.InvoiceTicket
+            .AsNoTracking()
+            .Where(t => t.QrCode == qrCode)
+            .Select(t => new GateTicketRow
+            {
+                InvoiceId = t.InvoiceId,
+                ShowTimeId = t.ShowTimeId,
+                SeatId = t.SeatId,
+                IsUsed = t.IsUsed,
+                IsActive = t.IsActive,
+                UsedAt = t.UsedAt,
+                UsedByName = Context.User.Where(u => u.Id == t.UsedByUserId).Select(u => u.Name).FirstOrDefault(),
+                PatronCategoryName = t.PatronCategoryName,
+                InvoiceStatus = t.Invoice.Status,
+                InvoiceCode = t.Invoice.Code,
+                SeatLabel = t.Seat.RowName + t.Seat.ColIndex,
+                MovieTitle = t.ShowTimeRoom.ShowTime.Movie.Title,
+                RoomName = t.ShowTimeRoom.Room.Name,
+                TheaterId = t.ShowTimeRoom.Room.TheaterId,
+                StartTime = t.ShowTimeRoom.ShowTime.StartTime,
+                EndTime = t.ShowTimeRoom.ShowTime.EndTime,
+                AgeRatingCode = t.ShowTimeRoom.ShowTime.Movie.AgeRestriction.Code,
+                MinAge = t.ShowTimeRoom.ShowTime.Movie.AgeRestriction.MinAge
+            })
+            .FirstOrDefaultAsync();
+
+    public async Task<bool> TryAdmitTicketAsync(Guid invoiceId, Guid seatId, Guid showTimeId, Guid userId, DateTime nowUtc)
+    {
+        var rows = await Context.InvoiceTicket
+            .Where(t => t.InvoiceId == invoiceId && t.SeatId == seatId && t.ShowTimeId == showTimeId
+                        && !t.IsUsed && t.IsActive)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(t => t.IsUsed, true)
+                .SetProperty(t => t.UsedAt, (DateTime?)nowUtc)
+                .SetProperty(t => t.UsedByUserId, (Guid?)userId));
+        return rows == 1;
+    }
+
+    public async Task<List<GateLookupRow>> FindTicketsForLookupAsync(
+        Guid theaterId, string? invoiceCode, string? phone, DateTime dayStart, DateTime dayEnd)
+    {
+        var q = Context.InvoiceTicket
+            .AsNoTracking()
+            .Where(t => t.IsActive
+                        && t.Invoice.Status == InvoiceStatus.Paid
+                        && t.ShowTimeRoom.Room.TheaterId == theaterId
+                        && t.ShowTimeRoom.ShowTime.StartTime >= dayStart
+                        && t.ShowTimeRoom.ShowTime.StartTime < dayEnd);
+        if (!string.IsNullOrEmpty(invoiceCode))
+        {
+            q = q.Where(t => t.Invoice.Code == invoiceCode);
+        }
+        if (!string.IsNullOrEmpty(phone))
+        {
+            q = q.Where(t => t.Invoice.User.Phone == phone);
+        }
+        return await q
+            .OrderBy(t => t.ShowTimeRoom.ShowTime.StartTime).ThenBy(t => t.Invoice.Code)
+            .Select(t => new GateLookupRow
+            {
+                InvoiceCode = t.Invoice.Code,
+                CustomerName = t.Invoice.User.Name,
+                CustomerPhone = t.Invoice.User.Phone,
+                QrCode = t.QrCode,
+                SeatLabel = t.Seat.RowName + t.Seat.ColIndex,
+                MovieTitle = t.ShowTimeRoom.ShowTime.Movie.Title,
+                RoomName = t.ShowTimeRoom.Room.Name,
+                StartTime = t.ShowTimeRoom.ShowTime.StartTime,
+                IsUsed = t.IsUsed
+            })
+            .ToListAsync();
+    }
+
     public async Task DeactivateTicketsAsync(Guid invoiceId)
         => await Context.InvoiceTicket
             .Where(t => t.InvoiceId == invoiceId && t.IsActive)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
+
+    // Shared projection of an invoice with food: header, earliest showtime/movie/room and the food lines, one query.
+    private static IQueryable<PickupOrderRow> ProjectPickupOrders(IQueryable<Invoice> invoices)
+    {
+        return invoices.Select(i => new PickupOrderRow
+        {
+            InvoiceId = i.Id,
+            TheaterId = i.TheaterId!.Value,
+            InvoiceCode = i.Code,
+            InvoiceStatus = i.Status,
+            Channel = i.Channel,
+            FoodStatus = i.FoodStatus,
+            PaidAt = i.PaidAt,
+            FoodHandedOverAt = i.FoodHandedOverAt,
+            CustomerName = i.User != null ? i.User.Name : null,
+            ShowTimeStart = i.InvoiceTickets.Min(t => (DateTime?)t.ShowTimeRoom.ShowTime.StartTime),
+            MovieTitle = i.InvoiceTickets
+                .OrderBy(t => t.ShowTimeRoom.ShowTime.StartTime)
+                .Select(t => t.ShowTimeRoom.ShowTime.Movie.Title)
+                .FirstOrDefault(),
+            RoomName = i.InvoiceTickets
+                .OrderBy(t => t.ShowTimeRoom.ShowTime.StartTime)
+                .Select(t => t.ShowTimeRoom.Room.Name)
+                .FirstOrDefault(),
+            Items = i.InvoiceFoodAndDrinks
+                .Select(f => new PickupItemRow { Name = f.FoodAndDrink.Name, Quantity = f.Quantity })
+                .ToList()
+        });
+    }
+
+    public async Task<List<PickupOrderRow>> GetPickupQueueAsync(Guid theaterId, DateTime dayStart, DateTime dayEnd)
+    {
+        var open = new[] { FoodOrderStatus.Pending, FoodOrderStatus.Preparing, FoodOrderStatus.Ready };
+        var invoices = DbSet
+            .AsNoTracking()
+            .Where(i => i.TheaterId == theaterId
+                        && i.Status == InvoiceStatus.Paid
+                        && open.Contains(i.FoodStatus)
+                        && (!i.InvoiceTickets.Any()
+                            || i.InvoiceTickets.Min(t => t.ShowTimeRoom.ShowTime.StartTime) >= dayStart
+                               && i.InvoiceTickets.Min(t => t.ShowTimeRoom.ShowTime.StartTime) < dayEnd));
+        return await ProjectPickupOrders(invoices).ToListAsync();
+    }
+
+    public async Task<PickupOrderRow?> GetPickupOrderByCodeAsync(Guid theaterId, string invoiceCode)
+    {
+        return await ProjectPickupOrders(DbSet.AsNoTracking()
+                .Where(i => i.Code == invoiceCode && i.TheaterId == theaterId && i.FoodStatus != FoodOrderStatus.None))
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<PickupOrderRow?> GetPickupOrderByIdAsync(Guid invoiceId)
+    {
+        return await ProjectPickupOrders(DbSet.AsNoTracking()
+                .Where(i => i.Id == invoiceId && i.TheaterId != null && i.FoodStatus != FoodOrderStatus.None))
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<FoodOrderHeaderRow?> GetFoodOrderHeaderAsync(Guid invoiceId)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Where(i => i.Id == invoiceId && i.TheaterId != null)
+            .Select(i => new FoodOrderHeaderRow
+            {
+                InvoiceId = i.Id,
+                TheaterId = i.TheaterId!.Value,
+                InvoiceCode = i.Code,
+                InvoiceStatus = i.Status,
+                FoodStatus = i.FoodStatus
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<bool> TrySetFoodStatusAsync(Guid invoiceId, FoodOrderStatus from, FoodOrderStatus to, Guid userId, DateTime nowUtc)
+    {
+        var target = DbSet.Where(i => i.Id == invoiceId && i.FoodStatus == from);
+        int rows;
+        if (to == FoodOrderStatus.HandedOver)
+        {
+            rows = await target.ExecuteUpdateAsync(s => s
+                .SetProperty(i => i.FoodStatus, to)
+                .SetProperty(i => i.FoodHandedOverAt, (DateTime?)nowUtc)
+                .SetProperty(i => i.FoodHandedOverByUserId, (Guid?)userId)
+                .SetProperty(i => i.LastUpdatedTime, nowUtc));
+        }
+        else
+        {
+            rows = await target.ExecuteUpdateAsync(s => s
+                .SetProperty(i => i.FoodStatus, to)
+                .SetProperty(i => i.LastUpdatedTime, nowUtc));
+        }
+        return rows == 1;
+    }
+
+    public async Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids)
+    {
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+        return await DbSet.AsNoTracking().Where(i => ids.Contains(i.Id)).ToDictionaryAsync(i => i.Id, i => i.Code);
+    }
 }

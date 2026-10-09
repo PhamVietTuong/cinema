@@ -1,0 +1,19 @@
+@use '../../core/counter-shared';
+
+:host { display: block; }
+
+.pos-layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; align-items: start; }
+.pos-main, .pos-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.pos-side { position: sticky; top: 16px; }
+@media (max-width: 1100px) {
+  .pos-layout { grid-template-columns: 1fr; }
+  .pos-side { position: static; }
+}
+
+.pos-drawer-chip {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
+  border: 1px solid var(--ml-rule); color: var(--ml-muted); font-size: 0.85rem;
+  &.is-open { border-color: var(--ml-second); color: var(--ml-second); }
+}
+
+.pos-sell { width: 100%; margin-top: 16px; height: 48px; font-size: 1rem; }

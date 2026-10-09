@@ -1,6 +1,10 @@
 export { CinemaServiceAgent } from './cinema-http.service';
 export { IdentityServiceAgent } from './identity-http.service';
 export { PaymentServiceAgent } from './payment-http.service';
+export { StaffServiceAgent } from './staff-http.service';
 export * from './booking-hub.service';
 export * from './toast.service';
 export * from './api-error';
+export * from './seat-lock-session.service';
+export * from './staff-hub.service';
+export * from './api-error-catalog';

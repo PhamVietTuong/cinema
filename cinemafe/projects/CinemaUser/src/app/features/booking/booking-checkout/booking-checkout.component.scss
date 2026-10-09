@@ -102,6 +102,18 @@
   &.expired { color: var(--ml-danger); font-weight: 600; }
 }
 .hold-expired-note { margin: -8px 0 16px; font-size: 0.8rem; color: var(--ml-danger-ink); }
+.movie-block { display: flex; gap: 14px; margin-bottom: 16px; }
+.movie-poster {
+  flex: none; width: 72px; aspect-ratio: 2 / 3; object-fit: cover;
+  border-radius: var(--ml-r-md); border: 1px solid var(--ml-rule); background: var(--ml-panel-2);
+}
+.movie-meta { min-width: 0; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+.movie-line { font-size: 0.85rem; color: var(--ml-ink-2); overflow-wrap: anywhere; }
+.format-tag {
+  display: inline-block; padding: 2px 8px; border-radius: var(--ml-r-sm);
+  background: var(--ml-action-soft); border: 1px solid var(--ml-action-ring); color: var(--ml-action-strong);
+  font-family: var(--ml-font-head); font-size: 0.72rem; font-weight: 600; letter-spacing: var(--cx-track-caps);
+}
 .info-block { margin-bottom: 16px; }
 .info-label {
   font-family: var(--ml-font-head); font-size: 0.7rem; font-weight: 500;
@@ -222,6 +234,18 @@
   font-family: var(--ml-font-data); font-size: 1.05rem;
   font-weight: 600; color: var(--ml-ink); letter-spacing: 0.08em;
 }
+.ticket-info { padding: 20px 24px 4px; display: flex; flex-direction: column; gap: 14px; }
+.ticket-movie { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ticket-movie-title { font-family: var(--ml-font-head); font-size: 1.15rem; font-weight: 600; color: var(--ml-ink); }
+.ticket-age {
+  font-size: 0.7rem; font-weight: 700; padding: 2px 8px;
+  border-radius: var(--ml-r-sm); background: var(--ml-action-soft); color: var(--ml-action-strong);
+}
+.ticket-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+.ticket-info-wide { grid-column: 1 / -1; }
+.ticket-info-grid .ticket-detail-label { margin-bottom: 4px; }
+.ticket-info-value { font-size: 0.9rem; font-weight: 500; color: var(--ml-ink); }
+.ticket-info-sub { font-size: 0.8rem; color: var(--ml-muted); margin-top: 2px; }
 .ticket-body {
   padding: 20px 24px;
   display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;

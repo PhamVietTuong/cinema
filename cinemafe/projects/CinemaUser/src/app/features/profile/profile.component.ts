@@ -106,6 +106,9 @@ export class ProfileComponent implements OnInit {
   ticketsOf(id?: string): PaymentServiceAgent.InvoiceTicketDTO[] {
     return this.invoices.find(i => i.id === id)?.tickets ?? [];
   }
+  foodsOf(id?: string): PaymentServiceAgent.InvoiceFoodDTO[] {
+    return this.invoices.find(i => i.id === id)?.foods ?? [];
+  }
   isPaid(status?: PaymentServiceAgent.InvoiceStatus): boolean {
     return status === this.InvoiceStatus.Paid;
   }
@@ -193,12 +196,13 @@ export class ProfileComponent implements OnInit {
     return this.invoices.filter(i => (i.tickets ?? []).some(t => t.showTime && new Date(t.showTime).getTime() > now)).length;
   }
   /** All bookings flattened into table rows. */
-  get bookingRows(): { id?: string; movie: string; date?: Date; seats: string; total?: number; status?: PaymentServiceAgent.InvoiceStatus }[] {
+  get bookingRows(): { id?: string; movie: string; date?: Date; seats: string; foods: string; total?: number; status?: PaymentServiceAgent.InvoiceStatus }[] {
     return this.invoices.map(inv => ({
       id: inv.id,
       movie: inv.tickets?.[0]?.movieTitle ?? '—',
       date: inv.tickets?.[0]?.showTime,
       seats: (inv.tickets ?? []).map(t => t.seatLabel).filter(Boolean).join(', ') || '—',
+      foods: (inv.foods ?? []).map(f => `${f.quantity} × ${f.foodName}`).join(', ') || '—',
       total: inv.finalAmount,
       status: inv.status,
     }));

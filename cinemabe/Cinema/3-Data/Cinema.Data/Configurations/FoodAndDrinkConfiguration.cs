@@ -12,5 +12,6 @@ public class FoodAndDrinkConfiguration : IEntityTypeConfiguration<FoodAndDrink>
         b.Property(f => f.Name).IsRequired().HasMaxLength(200);
         b.Property(f => f.Price).HasColumnType("float");
         b.HasOne(f => f.Theater).WithMany().HasForeignKey(f => f.TheaterId).OnDelete(DeleteBehavior.Cascade);
+        b.ToTable(t => t.HasCheckConstraint("CK_FoodAndDrink_QuantityOnHand", "[QuantityOnHand] >= 0"));
     }
 }

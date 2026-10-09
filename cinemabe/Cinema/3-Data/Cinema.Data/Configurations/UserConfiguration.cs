@@ -16,6 +16,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         b.HasIndex(u => u.Phone).IsUnique();
         b.Property(u => u.PasswordHash).IsRequired();
         b.Property(u => u.PasswordSalt).IsRequired();
+        b.Property(u => u.OverridePinHash).HasMaxLength(64);
+        b.Property(u => u.OverridePinSalt).HasMaxLength(128);
         b.HasOne(u => u.UserType).WithMany(ut => ut.Users).HasForeignKey(u => u.UserTypeId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(u => u.MemberShip).WithMany(m => m.Users).HasForeignKey(u => u.MemberShipId).OnDelete(DeleteBehavior.SetNull);
         // Theater-staff scope (null for admin/customer). No inverse nav needed.

@@ -43,6 +43,69 @@ await CreateAccount(services,
     userTypeName: "Customer",
     label:        "User");
 
+// ─── Theater staff accounts (need a theater) ─────────────────────────────────
+var seedTheaterId = await GetFirstTheaterId(services);
+if (seedTheaterId == null)
+{
+    Console.WriteLine("[Staff] No theaters found — skipped the theater staff accounts (staff, manager, boxoffice, gate, kitchen). Seed theaters, then re-run.");
+}
+else
+{
+    await CreateAccount(services,
+        name:         "Theater Staff",
+        email:        "staff@cinema.vn",
+        phone:        "0900000002",
+        password:     "Staff@123",
+        userTypeName: "TheaterStaff",
+        label:        "Staff",
+        theaterId:    seedTheaterId);
+
+    await CreateAccount(services,
+        name:         "Theater Manager",
+        email:        "manager@cinema.vn",
+        phone:        "0900000003",
+        password:     "Manager@123",
+        userTypeName: "TheaterManager",
+        label:        "Manager",
+        theaterId:    seedTheaterId);
+
+    await CreateAccount(services,
+        name:         "Box Office Staff",
+        email:        "boxoffice@cinema.vn",
+        phone:        "0900000004",
+        password:     "Box@12345",
+        userTypeName: "BoxOfficeStaff",
+        label:        "BoxOffice",
+        theaterId:    seedTheaterId);
+
+    await CreateAccount(services,
+        name:         "Gate Staff",
+        email:        "gate@cinema.vn",
+        phone:        "0900000005",
+        password:     "Gate@12345",
+        userTypeName: "GateStaff",
+        label:        "Gate",
+        theaterId:    seedTheaterId);
+
+    await CreateAccount(services,
+        name:         "Kitchen Staff",
+        email:        "kitchen@cinema.vn",
+        phone:        "0900000006",
+        password:     "Kitchen@123",
+        userTypeName: "KitchenStaff",
+        label:        "Kitchen",
+        theaterId:    seedTheaterId);
+}
+
+// ─── Regional manager (no theater; theater assignments arrive in a later phase) ──
+await CreateAccount(services,
+    name:         "Regional Manager",
+    email:        "regional@cinema.vn",
+    phone:        "0900000007",
+    password:     "Regional@123",
+    userTypeName: "RegionalManager",
+    label:        "Regional");
+
 Console.WriteLine();
 Console.WriteLine("Done.");
 
@@ -56,7 +119,7 @@ if (!Console.IsInputRedirected)
 static async Task CreateAccount(
     IServiceProvider services,
     string name, string email, string phone, string password,
-    string userTypeName, string label)
+    string userTypeName, string label, Guid? theaterId = null)
 {
     try
     {
@@ -89,6 +152,7 @@ static async Task CreateAccount(
             PasswordHash   = hash,
             PasswordSalt   = salt,
             UserTypeId     = userType.Id,
+            TheaterId      = theaterId,
             EmailConfirmed = true, // seeded accounts are pre-verified
         };
 
@@ -105,6 +169,18 @@ static async Task CreateAccount(
         var inner = ex.InnerException;
         while (inner != null) { Console.WriteLine($"  → {inner.Message}"); inner = inner.InnerException; }
     }
+}
+
+static async Task<Guid?> GetFirstTheaterId(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<CinemaContext>();
+    return await db.Theater
+        .AsNoTracking()
+        .OrderBy(t => t.Name)
+        .ThenBy(t => t.Id)
+        .Select(t => (Guid?)t.Id)
+        .FirstOrDefaultAsync();
 }
 
 static void CreatePasswordHash(string password, out byte[] hash, out byte[] salt)

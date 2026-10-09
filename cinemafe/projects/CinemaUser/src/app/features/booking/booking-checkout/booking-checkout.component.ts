@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel } from 'CinemaLib';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, map, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,6 +47,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   paymentMethod = 'Card';
   loading = false;
   error = '';
+  /** The last createBooking failure was a stock problem — show the localized hint to go back and adjust. */
+  stockProblem = false;
   bookingSuccess = false;
   bookingCode = '';
   qrDataUrl = '';
@@ -62,6 +64,12 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   // Order context for the summary card, loaded after arrival; blank until each lookup answers.
   movieTitle = '';
   ageCode = '';
+  moviePosterUrl = '';
+  movieDuration = 0;
+  movieGenres = '';
+  movieLanguage = '';
+  /** e.g. "IMAX 3D": the room type plus the projection dimension of this showtime. */
+  screeningFormat = '';
   theaterName = '';
   theaterAddress = '';
   roomName = '';
@@ -236,12 +244,17 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       next: st => {
         this.startTime = st.startTime ?? null;
         this.roomName = st.roomName ?? '';
+        this.screeningFormat = screeningFormatLabel(st.roomTypeName, st.projectionForm);
         this._cdr.markForCheck();
         if (st.movieId) {
           this._cinemaService.getMovie(st.movieId).subscribe({
             next: m => {
               this.movieTitle = m.title ?? '';
               this.ageCode = m.ageRestrictionCode ?? '';
+              this.moviePosterUrl = m.posterUrl ?? '';
+              this.movieDuration = m.duration ?? 0;
+              this.movieGenres = (m.genres ?? []).join(', ');
+              this.movieLanguage = [m.language, m.subtitle].filter(x => !!x).join(' · ');
               this._cdr.markForCheck();
             },
             error: () => { /* summary stays without a title */ },
@@ -354,6 +367,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this.clampPoints();
     this.loading = true;
     this.error = '';
+    this.stockProblem = false;
     const foods = this.foods.map(f => PaymentServiceAgent.BookingFoodItem.fromJS({
       foodAndDrinkId: f.foodAndDrinkId,
       quantity: f.quantity,
@@ -386,8 +400,19 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         }
         this._initiatePayment(invoiceId, code);
       },
-      error: err => { this.error = this._err(err, this._translate.instant('booking.errors.bookingFailed')); this.loading = false; this._cdr.markForCheck(); },
+      error: err => {
+        this.error = this._err(err, this._translate.instant('booking.errors.bookingFailed'));
+        this.stockProblem = BookingCheckoutComponent.isStockError(this.error);
+        this.loading = false;
+        this._cdr.markForCheck();
+      },
     });
+  }
+
+  /** True when a server error message reports an out-of-stock / insufficient-quantity food or combo. */
+  static isStockError(message: string | null | undefined): boolean {
+    const m = (message ?? '').toLowerCase();
+    return m.includes('out of stock') || m.includes('insufficient');
   }
 
   private _providerFor(method: string): string {

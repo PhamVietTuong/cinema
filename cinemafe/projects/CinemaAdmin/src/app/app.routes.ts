@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard } from 'CinemaLib';
+import { authGuard, adminGuard, homeRedirectGuard } from 'CinemaLib';
 
 export const routes: Routes = [
   // Convenience aliases so /login and /auth/login both work
@@ -21,9 +21,11 @@ export const routes: Routes = [
   },
   {
     path: '',
-    canActivate: [authGuard],
+    // CinemaAdmin is Admin-only: staff roles are sent to /forbidden, which links to the Staff app.
+    canActivate: [authGuard, adminGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      // Landing: Admin -> /dashboard, everyone else -> /forbidden.
+      { path: '', pathMatch: 'full', canActivate: [homeRedirectGuard], children: [] },
       {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)

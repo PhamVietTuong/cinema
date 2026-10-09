@@ -97,6 +97,9 @@
       <div *ngIf="error" class="error-banner">
         <mat-icon>error</mat-icon> {{ error }}
       </div>
+      <div *ngIf="stockProblem" class="error-banner">
+        <mat-icon>inventory_2</mat-icon> {{ 'booking.errors.outOfStock' | translate }}
+      </div>
 
       <div class="action-row">
         <button type="button" class="btn-back" (click)="backToSeats()">{{ 'booking.checkout.backToSeats' | translate }}</button>
@@ -121,6 +124,16 @@
           </span>
         </div>
         <p class="hold-expired-note" *ngIf="holdExpired">{{ 'booking.holdExpired' | translate }}</p>
+
+        <div class="movie-block" *ngIf="moviePosterUrl || movieDuration || movieGenres || movieLanguage || screeningFormat">
+          <img class="movie-poster" *ngIf="moviePosterUrl" [src]="moviePosterUrl" [alt]="movieTitle" loading="lazy">
+          <div class="movie-meta">
+            <div class="movie-line" *ngIf="screeningFormat"><span class="format-tag">{{ screeningFormat }}</span></div>
+            <div class="movie-line" *ngIf="movieDuration">{{ 'booking.summary.minutes' | translate:{ count: movieDuration } }}</div>
+            <div class="movie-line" *ngIf="movieGenres">{{ movieGenres }}</div>
+            <div class="movie-line" *ngIf="movieLanguage">{{ movieLanguage }}</div>
+          </div>
+        </div>
 
         <div class="info-block" *ngIf="theaterName">
           <div class="info-value">{{ theaterName }}</div>
@@ -190,6 +203,37 @@
           <span>Midnight Premium</span>
         </div>
         <div class="ticket-code">{{ bookingCode }}</div>
+      </div>
+
+      <div class="ticket-info">
+        <div class="ticket-movie" *ngIf="movieTitle">
+          <span class="ticket-movie-title">{{ movieTitle }}</span>
+          <span class="format-tag" *ngIf="screeningFormat">{{ screeningFormat }}</span>
+          <span class="ticket-age" *ngIf="ageCode">{{ ageCode }}</span>
+        </div>
+        <div class="ticket-info-grid">
+          <div class="ticket-info-wide" *ngIf="theaterName">
+            <div class="ticket-detail-label">{{ 'booking.success.theaterLabel' | translate }}</div>
+            <div class="ticket-info-value">{{ theaterName }}</div>
+            <div class="ticket-info-sub" *ngIf="theaterAddress">{{ theaterAddress }}</div>
+          </div>
+          <div *ngIf="startTime">
+            <div class="ticket-detail-label">{{ 'booking.summary.showtime' | translate }}</div>
+            <div class="ticket-info-value">{{ startTime | date:'HH:mm · dd/MM/yyyy' }}</div>
+          </div>
+          <div *ngIf="roomName">
+            <div class="ticket-detail-label">{{ 'booking.summary.room' | translate }}</div>
+            <div class="ticket-info-value">{{ roomName }}</div>
+          </div>
+          <div *ngIf="ticketTypes">
+            <div class="ticket-detail-label">{{ 'booking.summary.ticketType' | translate }}</div>
+            <div class="ticket-info-value">{{ ticketTypes }}</div>
+          </div>
+          <div class="ticket-info-wide" *ngIf="foods.length">
+            <div class="ticket-detail-label">{{ 'booking.summary.snacks' | translate }}</div>
+            <div class="ticket-info-value">{{ foodSummary }}</div>
+          </div>
+        </div>
       </div>
 
       <div class="ticket-body">

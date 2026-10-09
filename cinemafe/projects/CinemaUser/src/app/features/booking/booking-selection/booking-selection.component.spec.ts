@@ -690,4 +690,47 @@ describe('BookingSelectionComponent', () => {
       expect(closedSpy).toHaveBeenCalled();
     });
   });
+
+  describe('food stock caps', () => {
+    const food = (over: Record<string, unknown>) => ({ id: 'f1', name: 'Popcorn', price: 50000, isAvailable: true, ...over });
+
+    it('treats untracked items (availableQuantity null) as unlimited', () => {
+      const c = build([seat({})]);
+      const f = food({ availableQuantity: null }) as never;
+      expect(c.foodCap(f)).toBeNull();
+      for (let i = 0; i < 25; i++) {
+        c.incFood(f);
+      }
+      expect(c.foodQty['f1']).toBe(25);
+      expect(c.canIncFood(f)).toBe(true);
+    });
+
+    it('caps the stepper at availableQuantity', () => {
+      const c = build([seat({})]);
+      const f = food({ availableQuantity: 3 }) as never;
+      for (let i = 0; i < 5; i++) {
+        c.incFood(f);
+      }
+      expect(c.foodQty['f1']).toBe(3);
+      expect(c.canIncFood(f)).toBe(false);
+    });
+
+    it('disables increment for sold-out items', () => {
+      const c = build([seat({})]);
+      const f = food({ isOutOfStock: true, availableQuantity: 0 }) as never;
+      expect(c.foodCap(f)).toBe(0);
+      expect(c.canIncFood(f)).toBe(false);
+      c.incFood(f);
+      expect(c.foodQty['f1'] ?? 0).toBe(0);
+    });
+
+    it('keeps sold-out items listed and clamps an exceeding quantity on reload', () => {
+      const c = build([seat({})]);
+      c.foodQty['f1'] = 6;
+      cinema.getFoodAndDrinks.mockReturnValue(of({ results: [food({ availableQuantity: 2 }), food({ id: 'f2', isOutOfStock: true, availableQuantity: 0 })] }));
+      (c as unknown as { _load: () => void })._load();
+      expect(c.foods.map(f => f.id)).toEqual(['f1', 'f2']);
+      expect(c.foodQty['f1']).toBe(2);
+    });
+  });
 });

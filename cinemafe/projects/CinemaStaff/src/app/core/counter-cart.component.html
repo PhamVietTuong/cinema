@@ -1,0 +1,129 @@
+<!-- Showtime picker -->
+<section class="ad-card">
+  <h2 class="ad-card-title">{{ 'pos.showtimes.title' | translate }}</h2>
+  @if (cart.loadingShowtimes()) {
+    <mat-spinner diameter="28" />
+  }
+  <div class="pos-showtimes">
+    @if (allowFnbOnly()) {
+      <button type="button" class="pos-showtime" [class.is-active]="cart.fnbOnly()" (click)="cart.selectFnbOnly()">
+        <mat-icon>local_cafe</mat-icon>
+        <span>{{ 'pos.showtimes.fnbOnly' | translate }}</span>
+      </button>
+    }
+    @for (st of cart.showtimes(); track st.showTimeId) {
+      <button type="button" class="pos-showtime"
+              [class.is-active]="cart.showtime()?.showTimeId === st.showTimeId"
+              [disabled]="st.hasEnded"
+              (click)="cart.selectShowtime(st)">
+        <strong>{{ st.startTime | date:'HH:mm' }}</strong>
+        <span>{{ st.movieTitle }}</span>
+        <small>{{ st.roomName }}</small>
+      </button>
+    }
+  </div>
+  @if (!cart.loadingShowtimes() && cart.showtimes().length === 0) {
+    <p class="pos-muted">{{ 'pos.showtimes.empty' | translate }}</p>
+  }
+</section>
+
+<!-- Seats -->
+@if (cart.showtime(); as st) {
+  <section class="ad-card">
+    <h2 class="ad-card-title">{{ 'pos.seats.title' | translate }} · {{ st.movieTitle }} · {{ st.roomName }}</h2>
+    @if (cart.loadingSeats()) {
+      <mat-spinner diameter="32" />
+    } @else {
+      <cl-seat-map [seats]="cart.seats()" [ready]="true" [showLockedLegend]="true" (seatToggle)="cart.toggleSeat($event, busy())" />
+    }
+    @if (cart.seatWarning()) {
+      <p class="pos-warn">{{ cart.seatWarning() }}</p>
+    }
+
+    @if (cart.tickets().length > 0) {
+      <table class="pos-tickets">
+        <thead>
+          <tr>
+            <th>{{ 'ticket.seat' | translate }}</th>
+            <th>{{ 'ticket.category' | translate }}</th>
+            <th class="num">{{ 'ticket.price' | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of cart.tickets(); track t.seatIds[0]) {
+            <tr>
+              <td><strong>{{ t.label }}</strong> @if (t.isDouble) { <small>({{ 'seatMap.legendDouble' | translate }})</small> }</td>
+              <td>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-cat">
+                  <mat-select [value]="t.patronCategoryId" (selectionChange)="cart.setCategory(t, $event.value)">
+                    @for (row of cart.rowsFor(t.isDouble); track row.patronCategoryId) {
+                      <mat-option [value]="row.patronCategoryId">{{ row.patronCategoryName }} · {{ row.price | number:'1.0-0' }}đ</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </td>
+              <td class="num">
+                {{ cart.priceOf(t) | number:'1.0-0' }}đ
+                @if (t.overridePrice !== undefined) {
+                  <mat-icon class="pos-flag" [matTooltip]="'pos.override.active' | translate">edit</mat-icon>
+                }
+              </td>
+              <td class="pos-row-actions">
+                <button mat-icon-button type="button" (click)="cart.overrideTicket(t)" [matTooltip]="'pos.override.action' | translate"><mat-icon>price_change</mat-icon></button>
+                <button mat-icon-button type="button" (click)="cart.toggleSeatByTicket(t)" [matTooltip]="'common.remove' | translate"><mat-icon>close</mat-icon></button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+}
+
+<!-- Food and combos -->
+<section class="ad-card">
+  <h2 class="ad-card-title">{{ 'pos.food.title' | translate }}</h2>
+  @if (cart.foods().length === 0) {
+    <p class="pos-muted">{{ 'pos.food.empty' | translate }}</p>
+  }
+  <div class="pos-foods">
+    @for (f of cart.foods(); track f.id) {
+      <div class="pos-food" [class.is-sold-out]="cart.cap(f) === 0" [class.is-active]="cart.qtyOf(f) > 0">
+        <div class="pos-food-head">
+          <strong>{{ f.name }}</strong>
+          @if (f.isCombo) {
+            <span class="pos-badge">{{ 'pos.food.combo' | translate }}</span>
+          }
+        </div>
+        <div class="pos-food-price">{{ f.price | number:'1.0-0' }}đ</div>
+        @if (cart.cap(f) === 0) {
+          <span class="pos-badge pos-badge--danger">{{ 'pos.food.soldOut' | translate }}</span>
+        } @else if (cart.cap(f) !== null) {
+          <small class="pos-muted">{{ 'pos.food.left' | translate: { count: cart.cap(f) } }}</small>
+        }
+        <div class="pos-qty">
+          <button mat-icon-button type="button" (click)="cart.decFood(f)" [disabled]="cart.qtyOf(f) === 0"><mat-icon>remove</mat-icon></button>
+          <span>{{ cart.qtyOf(f) }}</span>
+          <button mat-icon-button type="button" (click)="cart.incFood(f)" [disabled]="!cart.canIncFood(f)"><mat-icon>add</mat-icon></button>
+        </div>
+      </div>
+    }
+  </div>
+  @if (cart.foodLines().length > 0) {
+    <div class="pos-food-lines">
+      @for (l of cart.foodLines(); track l.foodAndDrinkId) {
+        <div class="pos-food-line">
+          <span>{{ l.quantity }} × {{ l.name }}</span>
+          <span>
+            {{ cart.foodPrice(l) * l.quantity | number:'1.0-0' }}đ
+            @if (l.overridePrice !== undefined) {
+              <mat-icon class="pos-flag" [matTooltip]="'pos.override.active' | translate">edit</mat-icon>
+            }
+            <button mat-icon-button type="button" (click)="cart.overrideFood(l)" [matTooltip]="'pos.override.action' | translate"><mat-icon>price_change</mat-icon></button>
+          </span>
+        </div>
+      }
+    </div>
+  }
+</section>

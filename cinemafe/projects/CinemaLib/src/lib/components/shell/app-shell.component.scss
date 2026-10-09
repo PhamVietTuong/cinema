@@ -1,0 +1,203 @@
+:host { display: block; }
+
+.admin-shell {
+  height: 100vh;
+}
+
+// ── Sidebar ─────────────────────────────────────────────────────────────────
+// The sidebar is a fixed dark "marquee chrome" — it does NOT follow the
+// light/dark content toggle (--ml-chrome-* tokens are defined once, not
+// per-theme), so the frame reads the same regardless of which mode the page
+// content is in, the way a cinema's own marquee stays lit at any hour.
+// Positioning (static side rail vs. off-canvas 'over' drawer + backdrop) is handled by
+// mat-sidenav itself based on its [mode] input — only visual styling lives here.
+.sidebar {
+  width: var(--ml-sidebar-w);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 16px;
+  background: linear-gradient(180deg, var(--ml-chrome), var(--ml-chrome-2) 70%);
+  border-right: 1px solid var(--ml-chrome-rule);
+  // mat-drawer's own default styles round the top/bottom-right corners
+  // (--mat-sys-corner-large), which clips this gradient and lets the light
+  // mat-sidenav-container's background show through behind the curve. This
+  // chrome rail is meant to be a flush rectangular edge, not a rounded card.
+  border-radius: 0;
+  // No `position` here — mat-sidenav's own structural CSS already sets
+  // `position: absolute` on this element (its off-canvas slide mechanism
+  // depends on it), which already establishes the positioning context the
+  // ::after pseudo-element below needs. Redeclaring `position: relative` at
+  // the same specificity would win the cascade and turn the sidenav into a
+  // normal in-flow block, pushing the content area down by the sidebar's
+  // height instead of laying out beside it.
+
+  // The sprocket rail — a marquee letter-board's own pin row, run down the
+  // sidebar's inner edge. Decorative, but a fixed structural detail of this
+  // chrome rather than an ornament on any one page.
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0; right: -1px; bottom: 0; width: 1px;
+    background-image: radial-gradient(circle, var(--ml-chrome-rule) 1.5px, transparent 2px);
+    background-size: 1px 20px;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 10px 22px;
+}
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--ml-r-md);
+  background: var(--ml-action);
+  color: var(--ml-on-action);
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
+}
+.brand-text {
+  font-family: var(--ml-font-display);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  font-size: 18px;
+  color: var(--ml-chrome-ink-2);
+  strong { color: var(--ml-chrome-ink); font-weight: 400; margin-left: 2px; }
+}
+
+.nav { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--ml-r-md);
+  color: var(--ml-chrome-ink-2);
+  font-weight: 500;
+  font-size: 14.5px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: var(--ml-font-body);
+  transition: all 0.15s ease;
+
+  mat-icon { font-size: 21px; width: 21px; height: 21px; }
+
+  &:hover { color: var(--ml-chrome-ink); background: var(--ml-chrome-hover); text-decoration: none; }
+  &.is-active {
+    color: var(--ml-chrome-ink);
+    background: var(--ml-action-soft);
+    border-color: var(--ml-action-ring);
+    box-shadow: inset 3px 0 0 var(--ml-action);
+    mat-icon { color: var(--ml-action-strong); }
+  }
+}
+
+.sidebar-footer { margin-top: auto; padding-top: 16px; }
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--ml-r-md);
+  background: var(--ml-chrome-hover);
+  border: 1px solid var(--ml-chrome-rule-soft);
+  margin-bottom: 8px;
+}
+.profile-meta { display: flex; flex-direction: column; overflow: hidden; }
+.profile-name { font-weight: 600; font-size: 13.5px; color: var(--ml-chrome-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-mail { font-size: 12px; color: var(--ml-chrome-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.logout {
+  color: var(--ml-danger-ink);
+  &:hover { background: var(--ml-danger-soft); color: var(--ml-danger-ink); }
+  mat-icon { color: inherit; }
+}
+
+// ── Main column ─────────────────────────────────────────────────────────────
+.main { display: flex; flex-direction: column; min-height: 100%; }
+
+// The topbar shares the fixed dark chrome — the boundary between "always
+// marquee" and "switchable content" sits at the topbar's bottom edge.
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--ml-topbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  background: var(--ml-chrome-2);
+  border-bottom: 1px solid var(--ml-chrome-rule);
+}
+.topbar-title { margin: 0; font-family: var(--ml-font-head); font-size: 18px; font-weight: 600; letter-spacing: 0.01em; text-transform: uppercase; color: var(--ml-chrome-ink); }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+
+// Icon buttons in the topbar sit on the dark chrome, not the switchable
+// content palette — .ad-icon-btn's own (light/dark-aware) colours would be
+// wrong here, so the topbar overrides them back to fixed chrome tones.
+.topbar .ad-icon-btn {
+  background: transparent;
+  border-color: var(--ml-chrome-rule);
+  color: var(--ml-chrome-muted);
+
+  &:hover { color: var(--ml-chrome-ink); background: var(--ml-chrome-hover); border-color: var(--ml-chrome-rule); }
+}
+.topbar .ad-avatar {
+  background: var(--ml-chrome-hover);
+  border-color: var(--ml-chrome-rule);
+  color: var(--ml-chrome-ink-2);
+}
+
+.content { flex: 1; min-width: 0; }
+
+// Hamburger is desktop-hidden; revealed at the mobile breakpoint.
+.menu-toggle { display: none; margin-right: 12px; }
+
+// ── Responsive ──────────────────────────────────────────────────────────────
+// Tablet: collapse the sidebar to an icon rail.
+@media (max-width: 1024px) and (min-width: 769px) {
+  .sidebar { width: 76px; padding: 18px 10px; }
+  .brand-text, .nav-item span, .profile-meta, .nav-section { display: none; }
+  .brand { justify-content: center; padding: 4px 0 18px; }
+  .nav-item { justify-content: center; }
+  .profile { justify-content: center; }
+}
+
+// Mobile: sidebar becomes an off-canvas mat-sidenav drawer (mode="over") toggled by the
+// hamburger; the drawer's own slide-in animation and backdrop replace what used to be
+// hand-rolled here.
+@media (max-width: 768px) {
+  .menu-toggle { display: inline-flex; }
+
+  .sidebar { width: min(280px, 84vw); }
+
+  .topbar { padding: 0 16px; }
+  .topbar-title { font-size: 16px; }
+}
+
+// ── Shell additions (not used by the admin menu today) ──────────────────────
+.brand-logo { width: 22px; height: 22px; object-fit: contain; }
+
+.nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ml-action);
+  color: var(--ml-on-action);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+}

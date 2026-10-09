@@ -1,6 +1,7 @@
 using Cinema.Data.Contexts;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Data.Stores;
@@ -49,6 +50,27 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
             .Include(sr => sr.Room).ThenInclude(r => r.Theater)
             .Include(sr => sr.Room).ThenInclude(r => r.RoomType)
             .FirstOrDefaultAsync(sr => sr.ShowTimeId == showTimeId && sr.RoomId == roomId);
+
+    public async Task<IReadOnlyList<TheaterShowTimeRow>> GetByTheaterAndRangeAsync(Guid theaterId, DateTime fromInclusive, DateTime toExclusive)
+        => await Context.ShowTimeRoom
+            .AsNoTracking()
+            .Where(sr => sr.Room.TheaterId == theaterId
+                         && sr.Room.Status == RoomStatus.Active
+                         && sr.ShowTime.IsActive
+                         && sr.ShowTime.StartTime >= fromInclusive
+                         && sr.ShowTime.StartTime < toExclusive)
+            .OrderBy(sr => sr.ShowTime.StartTime)
+            .ThenBy(sr => sr.Room.Name)
+            .Select(sr => new TheaterShowTimeRow(
+                sr.ShowTimeId,
+                sr.RoomId,
+                sr.Room.Name,
+                sr.ShowTime.MovieId,
+                sr.ShowTime.Movie.Title,
+                sr.ShowTime.StartTime,
+                sr.ShowTime.EndTime,
+                sr.ShowTime.ProjectionForm))
+            .ToListAsync();
 
     public async Task<(IReadOnlyList<ShowTime> Items, int Total)> SearchAsync(
         Guid? movieId, Guid? roomId, bool? isActive, DateTime? from, DateTime? to, int page, int pageSize)

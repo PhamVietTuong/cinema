@@ -1,0 +1,193 @@
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
+import { SelectableSeat, seatLabel, seatRows, seatsByRow, seatVisualState } from './seat-selection';
+
+/**
+ * Presentational seat grid: rows of seats with the screen arc and a legend. It owns no selection
+ * logic; the screen mutates the seat flags (`isSelected`, `isSelectable`, `isAllowedForPatronCategory`,
+ * `isLocked`, `status`) and re-renders the map by marking itself for check, then handles `seatToggle`.
+ * Used by the customer booking page and the counter POS.
+ *
+ * Deliberately Default change detection: the seat objects are mutated in place, so an OnPush map
+ * would never repaint.
+ */
+@Component({
+  selector: 'cl-seat-map',
+  standalone: true,
+  imports: [NgClass, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Default,
+  template: `
+    <div class="screen-wrap">
+      <div class="screen-arc"></div>
+      <span class="screen-label">{{ 'seatMap.screen' | translate }}</span>
+    </div>
+
+    <div class="seat-grid" [class.not-ready]="!ready">
+      @for (row of rows; track row) {
+        <div class="seat-row">
+          <div class="row-label">{{ row }}</div>
+          @for (seat of seatsOf(row); track seat.id) {
+            <div class="seat"
+                 role="button"
+                 [attr.aria-label]="label(seat)"
+                 [class.unavailable-category]="seat.isAllowedForPatronCategory === false"
+                 [class.not-selectable]="seat.isAllowedForPatronCategory !== false && seat.isSelectable === false"
+                 [title]="titleOf(seat) | translate"
+                 [ngClass]="{
+                   'available': state(seat) === 'available',
+                   'selected': state(seat) === 'selected',
+                   'occupied': state(seat) === 'occupied',
+                   'locked': state(seat) === 'locked',
+                   'double': seat.isDouble
+                 }"
+                 (click)="seatToggle.emit(seat)">{{ label(seat) }}</div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot available"></span> {{ 'seatMap.legendAvailable' | translate }}</span>
+      <span class="legend-item"><span class="legend-dot selected"></span> {{ 'seatMap.legendSelected' | translate }}</span>
+      <span class="legend-item"><span class="legend-dot occupied"></span> {{ 'seatMap.legendOccupied' | translate }}</span>
+      @if (showLockedLegend) {
+        <span class="legend-item"><span class="legend-dot locked"></span> {{ 'seatMap.legendLocked' | translate }}</span>
+      }
+      <span class="legend-item"><span class="legend-dot double available"></span> {{ 'seatMap.legendDouble' | translate }}</span>
+      @if (showCategoryLegend) {
+        <span class="legend-item"><span class="legend-dot unavailable-category"></span> {{ 'seatMap.notAvailableForCategory' | translate }}</span>
+      }
+    </div>
+  `,
+  styles: [`
+    :host { display: block; }
+
+    .screen-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: var(--cx-space-6, 24px); }
+    .screen-arc {
+      width: 70%; max-width: 480px; height: 30px;
+      border-top: 2px solid var(--ml-action);
+      border-radius: 50% 50% 0 0;
+      background: linear-gradient(180deg, var(--ml-action-soft), transparent);
+    }
+    .screen-label {
+      margin-top: var(--cx-space-2, 8px);
+      font-family: var(--ml-font-data);
+      font-size: 0.68rem; letter-spacing: 0.3em;
+      color: var(--ml-muted); text-transform: uppercase;
+    }
+
+    .seat-grid {
+      display: flex; flex-direction: column; align-items: center; gap: 7px;
+      padding: var(--cx-space-5, 20px) var(--cx-space-4, 16px) var(--cx-space-6, 24px);
+      margin-bottom: var(--cx-space-5, 20px);
+      overflow-x: auto;
+      transition: opacity var(--cx-dur) var(--cx-ease);
+      /* Not selectable yet (e.g. no ticket type chosen): still visible so the layout doesn't jump. */
+      &.not-ready { opacity: 0.45; pointer-events: none; }
+    }
+    .seat-row { display: flex; align-items: center; gap: 7px; }
+    .row-label {
+      width: 34px; flex: none; display: flex; align-items: center; justify-content: center;
+      font-family: var(--ml-font-data); font-size: 0.72rem;
+      font-weight: var(--cx-weight-medium); color: var(--ml-faint);
+    }
+
+    .seat {
+      width: 34px; height: 34px; flex: none;
+      border-radius: var(--ml-r-sm) var(--ml-r-sm) 3px 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--ml-font-data); font-size: 0.55rem; font-weight: var(--cx-weight-medium);
+      color: var(--ml-muted); cursor: pointer;
+      border: 1px solid transparent;
+      background: var(--ml-seat-empty);
+      transition: transform var(--cx-dur-fast) var(--cx-ease),
+                  background var(--cx-dur-fast) var(--cx-ease),
+                  border-color var(--cx-dur-fast) var(--cx-ease);
+
+      &:hover:not(.occupied):not(.locked):not(.unavailable-category) { transform: scale(1.14); }
+
+      &.available:hover {
+        border-color: var(--ml-action); background: var(--ml-action-soft); color: var(--ml-action-strong);
+      }
+      &.selected {
+        background: var(--ml-action); border-color: var(--ml-action); color: var(--ml-on-action);
+        font-weight: var(--cx-weight-semibold); box-shadow: 0 0 0 3px var(--ml-action-soft);
+      }
+      &.occupied {
+        background: var(--ml-seat-taken); border-color: transparent; color: var(--ml-faint); cursor: not-allowed;
+      }
+      /* Held by another user (SignalR) or server-side Reserved: distinct from both "sold" and "mine". */
+      &.locked {
+        background: var(--ml-warn-soft); border-color: var(--ml-warn); color: var(--ml-warn-ink); cursor: not-allowed;
+      }
+      /* A seat kind none of the chosen ticket types may use. */
+      &.unavailable-category { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+      /* Allowed, but every matching ticket already has its seat: neutral dim. */
+      &.not-selectable { opacity: 0.45; cursor: not-allowed; }
+
+      &.double.available {
+        background: var(--ml-success-soft); border-color: var(--ml-second); color: var(--ml-second);
+        &:hover { background: color-mix(in srgb, var(--ml-second) 22%, transparent); border-color: var(--ml-second); }
+      }
+      &.double.selected {
+        background: var(--ml-second); border-color: var(--ml-action); color: var(--ml-paper);
+        box-shadow: 0 0 0 3px var(--ml-action-soft);
+      }
+    }
+
+    .legend {
+      display: flex; gap: var(--cx-space-5, 20px); flex-wrap: wrap; justify-content: center;
+      padding: var(--cx-space-4, 16px); border-top: 1px dashed var(--ml-rule);
+    }
+    .legend-item { display: flex; align-items: center; gap: var(--cx-space-2, 8px); font-size: var(--cx-text-xs); color: var(--ml-muted); }
+    .legend-dot {
+      width: 16px; height: 16px; border-radius: 4px 4px 2px 2px; flex: none;
+      &.available { background: var(--ml-seat-empty); }
+      &.selected { background: var(--ml-action); }
+      &.occupied { background: var(--ml-seat-taken); }
+      &.locked { background: var(--ml-warn-soft); border: 1px solid var(--ml-warn); }
+      &.double.available { background: var(--ml-success-soft); border: 1px solid var(--ml-second); }
+      &.unavailable-category { background: var(--ml-seat-empty); opacity: 0.35; }
+    }
+  `],
+})
+export class SeatMapComponent {
+  /** The seats of the room for the showtime; mutated in place by the owning screen. */
+  @Input() seats: readonly SelectableSeat[] = [];
+  /** False dims the grid and ignores clicks (nothing can be selected yet). */
+  @Input() ready = true;
+  /** Shows the "not available for this ticket type" legend entry. */
+  @Input() showCategoryLegend = false;
+  /** Shows the "held" legend entry (seats locked by another counter or customer). */
+  @Input() showLockedLegend = false;
+  /** Emits the clicked seat; the owner decides whether and how the selection changes. */
+  @Output() seatToggle = new EventEmitter<SelectableSeat>();
+
+  get rows(): string[] {
+    return seatRows(this.seats);
+  }
+
+  seatsOf(row: string): SelectableSeat[] {
+    return seatsByRow(this.seats, row);
+  }
+
+  label(seat: SelectableSeat): string {
+    return seatLabel(seat);
+  }
+
+  state(seat: SelectableSeat): string {
+    return seatVisualState(seat);
+  }
+
+  /** Tooltip i18n key (empty string = no tooltip). */
+  titleOf(seat: SelectableSeat): string {
+    if (seat.isAllowedForPatronCategory === false) {
+      return 'seatMap.notAvailableForCategory';
+    }
+    if (seat.isSelectable === false) {
+      return 'seatMap.capReached';
+    }
+    return '';
+  }
+}

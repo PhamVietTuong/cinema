@@ -1,4 +1,4 @@
-<div mat-dialog-title class="dialog-title">{{ (editingId ? 'theaters.food.editTitle' : 'theaters.food.newTitle') | translate }}</div>
+<div mat-dialog-title class="dialog-title">{{ (isEditMode ? 'theaters.food.editTitle' : 'theaters.food.newTitle') | translate }}</div>
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
@@ -49,6 +49,34 @@
       <div class="dlg-switch">
         <span class="dlg-switch-label" id="fd-isAvailable-lbl">{{ 'theaters.food.available' | translate }}</span>
         <mat-slide-toggle formControlName="isAvailable" aria-labelledby="fd-isAvailable-lbl"></mat-slide-toggle>
+      </div>
+
+      <ng-container *ngIf="showComboControls">
+        <div class="dlg-switch">
+          <span class="dlg-switch-label" id="fd-isCombo-lbl">{{ 'combo.isCombo' | translate }}</span>
+          <mat-slide-toggle formControlName="isCombo" aria-labelledby="fd-isCombo-lbl" (change)="onComboToggle()"></mat-slide-toggle>
+        </div>
+        <p class="dlg-hint" *ngIf="isTracked">{{ 'combo.trackedHint' | translate }}</p>
+        <p class="dlg-hint" *ngIf="!isTracked">{{ 'combo.hint' | translate }}</p>
+      </ng-container>
+
+      <div *ngIf="isCombo" formArrayName="components">
+        <label class="dlg-label">{{ 'combo.components' | translate }}</label>
+        <div class="dlg-row dlg-row--2" *ngFor="let row of rows.controls; let i = index" [formGroupName]="i" style="align-items: center; margin-bottom: 8px;">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="componentId" [placeholder]="'combo.selectItem' | translate">
+              <mat-option *ngFor="let o of optionsFor(i)" [value]="o.id">{{ o.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex: 1 1 auto;">
+              <input matInput type="number" min="1" max="100" formControlName="quantity" [attr.aria-label]="'combo.quantity' | translate" [placeholder]="'combo.quantity' | translate">
+            </mat-form-field>
+            <button mat-icon-button type="button" (click)="removeRow(i)" [attr.aria-label]="'combo.removeRow' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </div>
+        <button mat-stroked-button type="button" (click)="addRow()" [disabled]="rows.length >= componentOptions.length"><mat-icon>add</mat-icon> {{ 'combo.addRow' | translate }}</button>
+        <p class="dlg-hint" style="color: var(--ml-danger-ink, #c62828);" *ngIf="comboRowsError">{{ 'combo.atLeastOne' | translate }}</p>
       </div>
     </div>
   </mat-dialog-content>

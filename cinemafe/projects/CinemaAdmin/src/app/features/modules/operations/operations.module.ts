@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { SharedModule } from 'CinemaLib';
+import { SharedModule, StatusPillComponent } from 'CinemaLib';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { DiscountsManagementComponent } from './discounts/discounts.component';
@@ -40,6 +40,7 @@ const routes: Routes = [
     SharedModule,
     NgxDatatableModule,
     MatCheckboxModule,
+    StatusPillComponent,
     RouterModule.forChild(routes),
   ],
 })

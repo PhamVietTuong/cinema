@@ -42,47 +42,10 @@
     </div>
 
     <ng-container *ngIf="!loadingSeats">
-      <div class="screen-wrap">
-        <div class="screen-arc"></div>
-        <span class="screen-label">{{ 'booking.seats.screen' | translate }}</span>
-      </div>
-
-      <div class="seat-grid" [class.not-ready]="totalTickets === 0">
-        <div class="seat-row" *ngFor="let row of rows">
-          <div class="row-label">{{ row }}</div>
-          <div *ngFor="let seat of getSeatsByRow(row)"
-               class="seat"
-               [class.unavailable-category]="seat.isAllowedForPatronCategory === false"
-               [class.not-selectable]="seat.isAllowedForPatronCategory !== false && seat.isSelectable === false"
-               [title]="seat.isAllowedForPatronCategory === false ? ('booking.seats.notAvailableForCategory' | translate) : (seat.isSelectable === false ? ('booking.tickets.capReached' | translate) : '')"
-               [ngClass]="{
-                 'available': seat.status === SeatStatus.Available && !seat.isSelected && !seat.isLocked && seat.isAllowedForPatronCategory !== false,
-                 'selected':  seat.isSelected,
-                 'occupied':  seat.status === SeatStatus.Occupied,
-                 'locked':    seat.isLocked || seat.status === SeatStatus.Reserved,
-                 'double':    seat.isDouble
-               }"
-               (click)="toggleSeat(seat)">{{ seat.rowName }}{{ seat.colIndex }}</div>
-        </div>
-      </div>
-
-      <div class="legend">
-        <span class="legend-item">
-          <span class="legend-dot available"></span> {{ 'booking.seats.legendAvailable' | translate }}
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot selected"></span> {{ 'booking.seats.legendSelected' | translate }}
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot occupied"></span> {{ 'booking.seats.legendOccupied' | translate }}
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot double available"></span> {{ 'booking.seats.legendDouble' | translate }}
-        </span>
-        <span class="legend-item" *ngIf="totalTickets > 0">
-          <span class="legend-dot unavailable-category"></span> {{ 'booking.seats.notAvailableForCategory' | translate }}
-        </span>
-      </div>
+      <cl-seat-map [seats]="seats"
+                   [ready]="totalTickets > 0"
+                   [showCategoryLegend]="totalTickets > 0"
+                   (seatToggle)="toggleSeat($event)" />
     </ng-container>
   </div>
 </div>
@@ -92,7 +55,7 @@
   <div class="form-card">
     <h3 class="card-title"><i class="fas fa-utensils"></i> {{ 'booking.confirm.concessions' | translate }}</h3>
     <div class="option-grid food-grid">
-      <div class="option-card food-card" *ngFor="let f of foods" [class.active]="foodQty[f.id!] > 0">
+      <div class="option-card food-card" *ngFor="let f of foods" [class.active]="foodQty[f.id!] > 0" [class.sold-out]="f.isOutOfStock">
         <div class="food-media">
           <img *ngIf="!foodImgHidden(f)" [src]="f.imageUrl" [alt]="f.name" loading="lazy" (error)="onFoodImgError(f)">
           <div class="food-media-fallback" *ngIf="foodImgHidden(f)" aria-hidden="true"><mat-icon>restaurant</mat-icon></div>
@@ -101,11 +64,12 @@
           <div class="option-info">
             <span class="option-name">{{ f.name }}</span>
             <span class="option-price">{{ f.price | number:'1.0-0' }}đ</span>
+            <span class="sold-out-badge" *ngIf="f.isOutOfStock">{{ 'booking.errors.soldOut' | translate }}</span>
           </div>
           <div class="option-qty">
             <button type="button" (click)="decFood(f)" [disabled]="!foodQty[f.id!]">−</button>
             <span>{{ foodQty[f.id!] || 0 }}</span>
-            <button type="button" (click)="incFood(f)">+</button>
+            <button type="button" (click)="incFood(f)" [disabled]="!canIncFood(f)">+</button>
           </div>
         </div>
       </div>

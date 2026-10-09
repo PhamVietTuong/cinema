@@ -111,6 +111,7 @@
                   <th>{{ 'profile.colMovieName' | translate }}</th>
                   <th>{{ 'profile.colShowtime' | translate }}</th>
                   <th>{{ 'profile.colSeats' | translate }}</th>
+                  <th>{{ 'profile.colFood' | translate }}</th>
                   <th>{{ 'profile.colTotal' | translate }}</th>
                   <th>{{ 'profile.colStatus' | translate }}</th>
                   <th></th>
@@ -122,6 +123,7 @@
                   <td class="pl-td-movie">{{ r.movie }}</td>
                   <td>{{ r.date | date:'dd/MM/yy HH:mm' }}</td>
                   <td>{{ r.seats }}</td>
+                  <td>{{ r.foods }}</td>
                   <td>{{ r.total | number:'1.0-0' }}đ</td>
                   <td><span class="pl-pill" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></td>
                   <td class="pl-td-actions">
@@ -131,7 +133,7 @@
                   </td>
                 </tr>
                 <tr class="pl-eticket-row" *ngIf="expandedId === r.id">
-                  <td [attr.colspan]="6">
+                  <td [attr.colspan]="7">
                     <div class="pl-etickets">
                       <div class="pl-eticket" *ngFor="let t of ticketsOf(r.id)">
                         <div class="pl-eticket-info">
@@ -144,6 +146,10 @@
                           <img *ngIf="t.qrCode && qrMap[t.qrCode]" [src]="qrMap[t.qrCode]" [alt]="'profile.qrAlt' | translate" width="120" height="120">
                           <mat-icon *ngIf="!(t.qrCode && qrMap[t.qrCode])">qr_code_2</mat-icon>
                         </div>
+                      </div>
+                      <div class="pl-eticket-foods" *ngIf="foodsOf(r.id).length">
+                        <div class="pl-eticket-movie">{{ 'profile.foodTitle' | translate }}</div>
+                        <div class="pl-eticket-meta" *ngFor="let f of foodsOf(r.id)">{{ f.quantity }} × {{ f.foodName }} · {{ f.totalPrice | number:'1.0-0' }}đ</div>
                       </div>
                     </div>
                   </td>

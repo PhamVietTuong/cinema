@@ -21,10 +21,39 @@
         <div class="ticket-code">{{ bookingCode }}</div>
       </div>
 
-      <div class="ticket-body" *ngIf="seatLabels.length">
-        <div class="ticket-detail-label">{{ 'booking.success.seatsLabel' | translate }}</div>
-        <div class="ticket-seats-row">
-          <span class="ticket-seat-chip" *ngFor="let s of seatLabels">{{ s }}</span>
+      <div class="ticket-body" *ngIf="firstTicket as t">
+        <div class="ticket-movie-title" *ngIf="t.movieTitle">{{ t.movieTitle }}</div>
+        <div class="ticket-info-grid">
+          <div class="ticket-info-wide" *ngIf="t.theaterName">
+            <div class="ticket-detail-label">{{ 'booking.success.theaterLabel' | translate }}</div>
+            <div class="ticket-info-value">{{ t.theaterName }}</div>
+          </div>
+          <div *ngIf="t.showTime">
+            <div class="ticket-detail-label">{{ 'booking.summary.showtime' | translate }}</div>
+            <div class="ticket-info-value">{{ t.showTime | date:'HH:mm · dd/MM/yyyy' }}</div>
+          </div>
+          <div *ngIf="t.roomName">
+            <div class="ticket-detail-label">{{ 'booking.summary.room' | translate }}</div>
+            <div class="ticket-info-value">{{ t.roomName }}</div>
+          </div>
+          <div *ngIf="ticketTypes">
+            <div class="ticket-detail-label">{{ 'booking.summary.ticketType' | translate }}</div>
+            <div class="ticket-info-value">{{ ticketTypes }}</div>
+          </div>
+          <div class="ticket-info-wide" *ngIf="seatLabels.length">
+            <div class="ticket-detail-label">{{ 'booking.success.seatsLabel' | translate }}</div>
+            <div class="ticket-seats-row">
+              <span class="ticket-seat-chip" *ngFor="let s of seatLabels">{{ s }}</span>
+            </div>
+          </div>
+          <div class="ticket-info-wide" *ngIf="invoice?.foods?.length">
+            <div class="ticket-detail-label">{{ 'booking.summary.snacks' | translate }}</div>
+            <div class="ticket-info-value">{{ foodSummary }}</div>
+          </div>
+          <div class="ticket-info-wide ticket-total" *ngIf="invoice?.finalAmount != null">
+            <div class="ticket-detail-label">{{ 'booking.success.totalLabel' | translate }}</div>
+            <div class="ticket-info-value">{{ invoice?.finalAmount | number:'1.0-0' }}đ</div>
+          </div>
         </div>
       </div>
 

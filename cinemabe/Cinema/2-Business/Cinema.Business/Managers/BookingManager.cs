@@ -1,14 +1,20 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.Contracts.Payments;
 using Cinema.Business.DTO;
 using Cinema.Business.DTO.Booking;
+using Cinema.Business.DTO.BoxOffice;
+using Cinema.Business.DTO.Concession;
 using Cinema.Business.DTO.Invoices;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
+using Cinema.Business.Notifications;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
+using Cinema.Foundation.Logging;
 
 namespace Cinema.Business.Managers;
 
@@ -30,13 +36,16 @@ public class BookingManager : IBookingManager
     private readonly ISmsNotificationService _sms;
     private readonly ISeatNotificationService _seatNotifications;
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications)
+    private readonly IStaffNotificationService _staffNotifications;
+
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null)
     {
         _uow = uow;
         _gateways = gateways;
         _notifications = notifications;
         _sms = sms;
         _seatNotifications = seatNotifications;
+        _staffNotifications = staffNotifications ?? new NoOpStaffNotificationService();
     }
 
     public async Task<DefaultSearchResults<SeatDTO>> GetSeatsAsync(PagingSearchDTO search)
@@ -108,18 +117,443 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
-            var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(request.ShowTimeId, request.RoomId);
+            var composed = await ComposeInvoiceAsync(new ComposeInput
+            {
+                CustomerUserId = userId,
+                ShowTimeId     = request.ShowTimeId,
+                RoomId         = request.RoomId,
+                Seats          = request.Seats,
+                Foods          = request.Foods,
+                DiscountCode   = request.DiscountCode,
+                PointsToRedeem = request.PointsToRedeem,
+                GiftCardCode   = request.GiftCardCode,
+                ConnectionId   = request.ConnectionId,
+            });
+
+            // An online booking is always created Pending; it becomes Paid only through the payment flow.
+            var invoice = composed.Invoice;
+            invoice.Status        = InvoiceStatus.Pending;
+            invoice.Channel       = SalesChannel.Online;
+            invoice.PaymentMethod = request.PaymentMethod;
+
+            await _uow.InvoiceStore.CreateAsync(invoice);
+            await RecordSaleMovementsAsync(composed.StockDemand, invoice, userId);
+            await _uow.CommitTransactionAsync();
+
+            // Clear the booker's own advisory locks on the seats just booked (SeatBooked below supersedes
+            // them; emitting SeatUnlocked first would briefly flash the seat as available to other viewers)
+            // and tell everyone else in the room these seats are now unavailable.
+            if (!string.IsNullOrEmpty(request.ConnectionId))
+            {
+                foreach (var seatItem in request.Seats)
+                {
+                    UnlockSeat(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId);
+                }
+            }
+            await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId, request.RoomId, request.Seats.Select(s => s.SeatId).ToList());
+            await PushStockLowAsync(composed.StockDemand);
+
+            return new BookingResultDTO
+            {
+                InvoiceId      = invoice.Id,
+                InvoiceCode    = invoice.Code,
+                TotalAmount    = invoice.TotalAmount,
+                DiscountAmount = invoice.DiscountAmount,
+                FinalAmount    = invoice.FinalAmount,
+                PointsRedeemed = invoice.PointsRedeemed,
+                Status         = InvoiceStatus.Pending,
+                Tickets        = composed.TicketItems
+            };
+        }
+        catch (SeatUnavailableException)
+        {
+            // Another booking (possibly on another server instance) claimed a seat first — the DB unique
+            // index rejected the insert. Surface it like the in-process "already booked" check.
+            await _uow.RollbackTransactionAsync();
+            throw new InvalidOperationException("One or more selected seats were just booked by someone else.");
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    // ── Counter (box office) sale ───────────────────────────────────────────────
+
+    public async Task<CounterQuoteDTO> QuoteCounterAsync(CounterSaleContext context)
+    {
+        // Dry run: every check and price is computed, but no stock, points, gift-card or invoice is written, and no
+        // gate or transaction is taken.
+        var composed = await ComposeInvoiceAsync(BuildCounterInput(context, dryRun: true));
+        var invoice = composed.Invoice;
+        return new CounterQuoteDTO
+        {
+            Lines          = composed.Lines,
+            TotalAmount    = invoice.TotalAmount,
+            DiscountAmount = invoice.DiscountAmount - composed.PointsValue - invoice.GiftCardAmount,
+            PointsValue    = composed.PointsValue,
+            GiftCardAmount = invoice.GiftCardAmount,
+            FinalAmount    = invoice.FinalAmount,
+        };
+    }
+
+    public async Task<CounterSaleResultDTO> SellAtCounterAsync(CounterSaleContext context)
+    {
+        var request = context.Request;
+        var hasSeats = request.Seats.Count > 0;
+        if (hasSeats && (request.ShowTimeId is null || request.RoomId is null))
+        {
+            throw new InvalidOperationException("A showtime and room are required to sell seats.");
+        }
+
+        // Same per-showtime+room gate as an online booking, so a counter sale and an online booking can never both
+        // pass the "seat free" check. A food-only sale touches no seat and needs no gate.
+        SemaphoreSlim? gate = null;
+        if (hasSeats)
+        {
+            gate = BookingGate(request.ShowTimeId!.Value, request.RoomId!.Value);
+            await gate.WaitAsync();
+        }
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            // Exchange: the old invoice is reversed first, inside this same transaction, so its seats are free for
+            // the new sale and everything commits or rolls back together.
+            var exchangedFrom = context.ExchangedFrom;
+            if (exchangedFrom is not null)
+            {
+                if (!await _uow.AfterSalesStore.TryClaimRefundAsync(exchangedFrom.Id, context.ExchangeReasonCode, DateTime.UtcNow))
+                {
+                    throw new InvalidOperationException("This invoice can no longer be exchanged.");
+                }
+                exchangedFrom.RefundReasonCode = context.ExchangeReasonCode;
+                await ReverseInvoiceEffectsAsync(exchangedFrom, context.StaffUserId, "Exchanged");
+            }
+
+            var composed = await ComposeInvoiceAsync(BuildCounterInput(context, dryRun: false));
+            var invoice = composed.Invoice;
+            if (composed.Overrides.Count > 0 && context.ApproverUserId is null)
+            {
+                throw new AccessDeniedException("Manager approval is required for a price override.");
+            }
+
+            // Tenders are settled against what is still owed: the whole final amount, or in an exchange only the
+            // difference over the invoice being replaced (a cheaper replacement is paid back instead).
+            var amountDue = invoice.FinalAmount;
+            double refundBack = 0;
+            if (exchangedFrom is not null)
+            {
+                var difference = Money(invoice.FinalAmount - exchangedFrom.FinalAmount, true);
+                amountDue = Math.Max(difference, 0);
+                refundBack = Math.Max(-difference, 0);
+            }
+            var settlement = TenderSettlement.Settle(amountDue, request.Tenders);
+            if (settlement.CashApplied > 0 && context.CashDrawerSessionId is null)
+            {
+                throw new InvalidOperationException("Open a cash drawer before taking cash.");
+            }
+
+            var paidAt = DateTime.UtcNow;
+            invoice.Status              = InvoiceStatus.Paid;
+            invoice.PaidAt              = paidAt;
+            invoice.Channel             = SalesChannel.Counter;
+            invoice.PaymentMethod       = _counterPaymentMethod;
+            invoice.TheaterId           = context.TheaterId;
+            invoice.SoldByUserId        = context.StaffUserId;
+            invoice.CashDrawerSessionId = context.CashDrawerSessionId;
+            if (invoice.FoodStatus == FoodOrderStatus.Pending && !request.HoldForPickup)
+            {
+                // Food handed over at the counter with the receipt, unless the customer asked the kitchen to hold it.
+                invoice.FoodStatus             = FoodOrderStatus.HandedOver;
+                invoice.FoodHandedOverAt       = paidAt;
+                invoice.FoodHandedOverByUserId = context.StaffUserId;
+            }
+            invoice.ExchangedFromInvoiceId = exchangedFrom?.Id;
+
+            if (composed.PointsValue > 0)
+            {
+                invoice.Payments.Add(new InvoicePayment { Method = PaymentTender.Points, Amount = composed.PointsValue });
+            }
+            if (invoice.GiftCardAmount > 0)
+            {
+                invoice.Payments.Add(new InvoicePayment
+                {
+                    Method    = PaymentTender.GiftCard,
+                    Amount    = invoice.GiftCardAmount,
+                    Reference = request.GiftCardCode?.Trim(),
+                });
+            }
+            foreach (var payment in settlement.Payments)
+            {
+                invoice.Payments.Add(payment);
+            }
+
+            await _uow.InvoiceStore.CreateAsync(invoice);
+            await RecordSaleMovementsAsync(composed.StockDemand, invoice, context.StaffUserId);
+            var customer = await ApplyPaidSideEffectsAsync(invoice);
+
+            if (settlement.CashApplied > 0)
+            {
+                _uow.CashDrawerStore.StageMovement(new CashMovement
+                {
+                    CashDrawerSessionId = context.CashDrawerSessionId!.Value,
+                    TheaterId           = context.TheaterId,
+                    Type                = CashMovementType.Sale,
+                    Amount              = settlement.CashApplied,
+                    InvoiceId           = invoice.Id,
+                    UserId              = context.StaffUserId,
+                    Note                = invoice.Code,
+                });
+            }
+            if (refundBack > 0 && context.ExchangeRefundTender == PaymentTender.Cash)
+            {
+                if (context.CashDrawerSessionId is null)
+                {
+                    throw new InvalidOperationException("Open a cash drawer before paying cash back.");
+                }
+                var drawerTotals = await _uow.CashDrawerStore.GetTotalsByTypeAsync(context.CashDrawerSessionId.Value);
+                if (drawerTotals.Values.Sum() + settlement.CashApplied < refundBack)
+                {
+                    throw new InvalidOperationException("The drawer does not hold enough cash to pay the difference back.");
+                }
+                _uow.CashDrawerStore.StageMovement(new CashMovement
+                {
+                    CashDrawerSessionId = context.CashDrawerSessionId.Value,
+                    TheaterId           = context.TheaterId,
+                    Type                = CashMovementType.Refund,
+                    Amount              = -refundBack,
+                    InvoiceId           = exchangedFrom!.Id,
+                    UserId              = context.StaffUserId,
+                    Note                = $"Exchange {exchangedFrom.Code} -> {invoice.Code}",
+                });
+            }
+            if (exchangedFrom is not null)
+            {
+                _uow.AuditLogStore.Stage(new AuditLog
+                {
+                    TheaterId      = context.TheaterId,
+                    ActorUserId    = context.StaffUserId,
+                    ApproverUserId = context.ApproverUserId,
+                    Action         = AuditAction.Exchange,
+                    EntityType     = nameof(Invoice),
+                    EntityId       = invoice.Id,
+                    Amount         = invoice.FinalAmount,
+                    ReasonCode     = context.ExchangeReasonCode,
+                    Reason         = context.ExchangeNote,
+                    DataJson       = JsonSerializer.Serialize(new
+                    {
+                        FromInvoiceId = exchangedFrom.Id,
+                        FromInvoiceCode = exchangedFrom.Code,
+                        FromFinalAmount = exchangedFrom.FinalAmount,
+                        ToInvoiceCode = invoice.Code,
+                        ToFinalAmount = invoice.FinalAmount,
+                        AmountCollected = amountDue,
+                        RefundedBack = refundBack,
+                        RefundTender = refundBack > 0 ? context.ExchangeRefundTender : (PaymentTender?)null,
+                    }),
+                });
+            }
+            if (composed.Overrides.Count > 0)
+            {
+                _uow.AuditLogStore.Stage(new AuditLog
+                {
+                    TheaterId      = context.TheaterId,
+                    ActorUserId    = context.StaffUserId,
+                    ApproverUserId = context.ApproverUserId,
+                    Action         = AuditAction.PriceOverride,
+                    EntityType     = nameof(Invoice),
+                    EntityId       = invoice.Id,
+                    Amount         = composed.Overrides.Sum(o => (o.ListUnitPrice - o.AppliedUnitPrice) * o.Quantity),
+                    DataJson       = JsonSerializer.Serialize(composed.Overrides),
+                });
+            }
+
+            await _uow.SaveChangesAsync();
+            await _uow.CommitTransactionAsync();
+
+            await PushStockLowAsync(composed.StockDemand);
+            await PushFoodOrderQueuedAsync(invoice);
+
+            if (hasSeats)
+            {
+                if (!string.IsNullOrEmpty(request.ConnectionId))
+                {
+                    foreach (var seatItem in request.Seats)
+                    {
+                        UnlockSeat(request.ShowTimeId!.Value, request.RoomId!.Value, seatItem.SeatId, request.ConnectionId);
+                    }
+                }
+                await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId!.Value, request.RoomId!.Value, request.Seats.Select(s => s.SeatId).ToList());
+            }
+
+            if (customer is not null)
+            {
+                try
+                {
+                    await SendConfirmationAsync(invoice, customer);
+                }
+                catch (Exception e)
+                {
+                    // The sale is committed; a failed courtesy email must not fail the cashier's request.
+                    LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(SellAtCounterAsync)} confirmation failed for {invoice.Code}: {e.Message}");
+                }
+            }
+
+            return new CounterSaleResultDTO
+            {
+                InvoiceId      = invoice.Id,
+                InvoiceCode    = invoice.Code,
+                TotalAmount    = invoice.TotalAmount,
+                DiscountAmount = invoice.DiscountAmount - composed.PointsValue - invoice.GiftCardAmount,
+                PointsValue    = composed.PointsValue,
+                GiftCardAmount = invoice.GiftCardAmount,
+                FinalAmount    = invoice.FinalAmount,
+                ChangeDue      = settlement.ChangeDue,
+                PaidAt         = paidAt,
+                Lines          = composed.Lines,
+                Tickets        = composed.TicketItems,
+            };
+        }
+        catch (SeatUnavailableException)
+        {
+            await _uow.RollbackTransactionAsync();
+            throw new InvalidOperationException("One or more selected seats were just booked by someone else.");
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
+        finally
+        {
+            gate?.Release();
+        }
+    }
+
+    private const string _counterPaymentMethod = "Counter";
+
+    private static ComposeInput BuildCounterInput(CounterSaleContext context, bool dryRun)
+    {
+        var request = context.Request;
+        return new ComposeInput
+        {
+            CustomerUserId     = request.CustomerUserId,
+            TheaterId          = context.TheaterId,
+            ShowTimeId         = request.ShowTimeId,
+            RoomId             = request.RoomId,
+            Seats              = request.Seats.Select(s => new BookingSeatItem { SeatId = s.SeatId, PatronCategoryId = s.PatronCategoryId }).ToList(),
+            Foods              = request.Foods.Select(f => new BookingFoodItem { FoodAndDrinkId = f.FoodAndDrinkId, Quantity = f.Quantity }).ToList(),
+            DiscountCode       = request.DiscountCode,
+            PointsToRedeem     = request.PointsToRedeem,
+            GiftCardCode       = request.GiftCardCode,
+            ConnectionId       = request.ConnectionId,
+            IsCounter          = true,
+            DryRun             = dryRun,
+            SeatPriceOverrides = request.Seats.Where(s => s.OverrideUnitPrice.HasValue).ToDictionary(s => s.SeatId, s => s.OverrideUnitPrice!.Value),
+            FoodPriceOverrides = request.Foods.Where(f => f.OverrideUnitPrice.HasValue).ToDictionary(f => f.FoodAndDrinkId, f => f.OverrideUnitPrice!.Value),
+        };
+    }
+
+    // ── Shared invoice composition ──────────────────────────────────────────────
+
+    private sealed class ComposeInput
+    {
+        public Guid? CustomerUserId { get; init; }
+        /// <summary>The theater the sale happens in. Null for an online booking: derived from the showtime's room.</summary>
+        public Guid? TheaterId { get; init; }
+        public Guid? ShowTimeId { get; init; }
+        public Guid? RoomId { get; init; }
+        public IReadOnlyList<BookingSeatItem> Seats { get; init; } = Array.Empty<BookingSeatItem>();
+        public IReadOnlyList<BookingFoodItem> Foods { get; init; } = Array.Empty<BookingFoodItem>();
+        public string? DiscountCode { get; init; }
+        public int PointsToRedeem { get; init; }
+        public string? GiftCardCode { get; init; }
+        public string? ConnectionId { get; init; }
+        /// <summary>Counter sale: whole-VND amounts, the showtime must be sellable and belong to <see cref="TheaterId"/>.</summary>
+        public bool IsCounter { get; init; }
+        /// <summary>Quote: run every check but write nothing (no stock, points or gift-card change, no invoice).</summary>
+        public bool DryRun { get; init; }
+        public IReadOnlyDictionary<Guid, double> SeatPriceOverrides { get; init; } = new Dictionary<Guid, double>();
+        public IReadOnlyDictionary<Guid, double> FoodPriceOverrides { get; init; } = new Dictionary<Guid, double>();
+    }
+
+    private sealed record PriceOverrideLine(string Kind, Guid ItemId, string Description, int Quantity, double ListUnitPrice, double AppliedUnitPrice);
+
+    private sealed class ComposedInvoice
+    {
+        /// <summary>Unsaved invoice (tickets + food lines attached). Status/Channel/payment fields are the caller's.</summary>
+        public Invoice Invoice { get; init; } = null!;
+        public List<TicketItemDTO> TicketItems { get; init; } = new();
+        public List<StockDemand> StockDemand { get; init; } = new();
+        public List<CounterQuoteLineDTO> Lines { get; init; } = new();
+        public List<PriceOverrideLine> Overrides { get; init; } = new();
+        public double PointsValue { get; init; }
+    }
+
+    private static double Money(double value, bool wholeVnd)
+    {
+        return wholeVnd ? Math.Round(value, 0, MidpointRounding.AwayFromZero) : value;
+    }
+
+    /// <summary>
+    /// Everything between "the client sent a cart" and "an unsaved invoice": seat validation (free, not held by another
+    /// connection, in this room, active, double seats whole), pricing, food lines with the stock reservation, membership
+    /// and promo discounts, points and gift card. It runs inside the CALLER's booking gate and transaction and never
+    /// commits, so a thrown exception rolls everything back. Online callers pass no <see cref="ComposeInput.TheaterId"/>
+    /// and get exactly the pre-counter behavior.
+    /// </summary>
+    private async Task<ComposedInvoice> ComposeInvoiceAsync(ComposeInput input)
+    {
+        var wholeVnd = input.IsCounter;
+        double ticketTotal = 0;
+        var tickets     = new List<InvoiceTicket>();
+        var ticketItems = new List<TicketItemDTO>();
+        var lines       = new List<CounterQuoteLineDTO>();
+        var overrides   = new List<PriceOverrideLine>();
+        Guid? invoiceTheaterId = input.TheaterId;
+
+        // An online booking always has a showtime and room; a counter sale only when it sells seats.
+        var hasSeatSection = !input.IsCounter || input.Seats.Count > 0;
+        if (hasSeatSection)
+        {
+            var showTimeId = input.ShowTimeId!.Value;
+            var roomId     = input.RoomId!.Value;
+
+            var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId);
             if (showTimeRoom == null)
             {
                 throw new InvalidOperationException("ShowTime/Room combination not found.");
             }
+            if (showTimeRoom.Room.Status != RoomStatus.Active)
+            {
+                throw new InvalidOperationException("This room is not open for booking.");
+            }
+            if (input.IsCounter)
+            {
+                if (showTimeRoom.Room.TheaterId != input.TheaterId)
+                {
+                    throw new AccessDeniedException("This showtime does not belong to your theater.");
+                }
+                var showTime = showTimeRoom.ShowTime ?? await _uow.ShowTimeStore.GetByIdAsync(showTimeId);
+                // Showtimes are stored in local time (see StartTime comparisons elsewhere); sale stays open until it ends.
+                if (showTime is null || !showTime.IsActive || showTime.EndTime <= DateTime.Now)
+                {
+                    throw new InvalidOperationException("This showtime is not open for sale.");
+                }
+            }
+            invoiceTheaterId ??= showTimeRoom.Room.TheaterId;
             var pricing = await BuildSeatPricingContextAsync(showTimeRoom);
 
-            var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(request.ShowTimeId, request.RoomId)).ToHashSet();
+            var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(showTimeId, roomId)).ToHashSet();
 
             // One batched load for every requested seat — replaces a per-seat SeatStore.GetByIdAsync +
             // SeatTypeStore.GetByIdAsync pair that used to run inside this loop.
-            var seatIds  = request.Seats.Select(s => s.SeatId).Distinct().ToList();
+            var seatIds  = input.Seats.Select(s => s.SeatId).Distinct().ToList();
             var seatsById = await _uow.SeatStore.GetByIdsAsync(seatIds);
 
             // A double seat must be booked whole: if any requested seat is part of a group, every seat
@@ -139,11 +573,7 @@ public class BookingManager : IBookingManager
                 }
             }
 
-            double ticketTotal = 0;
-            var tickets    = new List<InvoiceTicket>();
-            var ticketItems = new List<TicketItemDTO>();
-
-            foreach (var seatItem in request.Seats)
+            foreach (var seatItem in input.Seats)
             {
                 if (bookedIds.Contains(seatItem.SeatId))
                 {
@@ -153,8 +583,8 @@ public class BookingManager : IBookingManager
                 // Reject a seat another user is actively holding (SignalR lock). Enforced only when the
                 // client supplies its connection id, so the booker's own held seats still pass. IsSeatLocked
                 // applies the 5-minute lock expiry and the owner (connection) exclusion.
-                if (!string.IsNullOrEmpty(request.ConnectionId)
-                    && IsSeatLocked(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId))
+                if (!string.IsNullOrEmpty(input.ConnectionId)
+                    && IsSeatLocked(showTimeId, roomId, seatItem.SeatId, input.ConnectionId))
                 {
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
                 }
@@ -162,6 +592,14 @@ public class BookingManager : IBookingManager
                 if (!seatsById.TryGetValue(seatItem.SeatId, out var seat))
                 {
                     throw new KeyNotFoundException($"Seat {seatItem.SeatId} not found.");
+                }
+                if (seat.RoomId != roomId)
+                {
+                    throw new InvalidOperationException($"Seat {seat.RowName}{seat.ColIndex} does not belong to this room.");
+                }
+                if (!seat.IsActive)
+                {
+                    throw new InvalidOperationException($"Seat {seat.RowName}{seat.ColIndex} is blocked and cannot be booked.");
                 }
                 var seatKind = seat.SeatGroupId.HasValue ? SeatKind.Double : SeatKind.Standard;
 
@@ -187,15 +625,22 @@ public class BookingManager : IBookingManager
                 // whole-seat price) but is still two physical Seat rows, each needing its own
                 // InvoiceTicket for occupancy/refund tracking — split the price across the pair so
                 // the two halves sum to the single price the customer was quoted for one seat.
-                var price = seatKind == SeatKind.Double ? category.Price / 2 : category.Price;
+                var listPrice = Money(seatKind == SeatKind.Double ? category.Price / 2 : category.Price, wholeVnd);
+                var price = listPrice;
+                var seatLabel = $"{seat.RowName}{seat.ColIndex}";
+                if (input.SeatPriceOverrides.TryGetValue(seatItem.SeatId, out var seatOverride))
+                {
+                    price = ValidateOverride(seatOverride, listPrice, seatLabel);
+                    overrides.Add(new PriceOverrideLine("Seat", seatItem.SeatId, seatLabel, 1, listPrice, price));
+                }
                 ticketTotal += price;
 
                 // Unguessable per-ticket token; encoded as the e-ticket QR and checked at the gate.
                 var qr = Guid.NewGuid().ToString("N");
                 tickets.Add(new InvoiceTicket
                 {
-                    ShowTimeId            = request.ShowTimeId,
-                    RoomId                = request.RoomId,
+                    ShowTimeId            = showTimeId,
+                    RoomId                = roomId,
                     SeatId                = seatItem.SeatId,
                     Price                 = price,
                     PatronCategoryId      = category.Id,
@@ -206,144 +651,433 @@ public class BookingManager : IBookingManager
 
                 ticketItems.Add(new TicketItemDTO
                 {
-                    SeatLabel      = $"{seat.RowName}{seat.ColIndex}",
+                    SeatLabel      = seatLabel,
                     SeatType       = seatKind == SeatKind.Double ? "Double" : "Single",
                     Price          = price,
                     PatronCategory = category.Name,
                     QrCode         = qr,
                 });
-            }
-
-            double foodTotal = 0;
-            var foods = new List<InvoiceFoodAndDrink>();
-            foreach (var f in request.Foods)
-            {
-                var food = await _uow.FoodAndDrinkStore.GetByIdAsync(f.FoodAndDrinkId);
-                if (food == null)
+                lines.Add(new CounterQuoteLineDTO
                 {
-                    throw new KeyNotFoundException($"Food item {f.FoodAndDrinkId} not found.");
-                }
-                foods.Add(new InvoiceFoodAndDrink
-                {
-                    FoodAndDrinkId = f.FoodAndDrinkId,
-                    Quantity       = f.Quantity,
-                    UnitPrice      = food.Price,
-                    TotalPrice     = food.Price * f.Quantity
+                    Kind          = "Seat",
+                    Description   = $"{seatLabel} - {category.Name}",
+                    Quantity      = 1,
+                    UnitPrice     = price,
+                    ListUnitPrice = listPrice,
+                    LineTotal     = price,
                 });
-                foodTotal += food.Price * f.Quantity;
             }
+        }
 
-            var total = ticketTotal + foodTotal;
-            var (discountAmount, finalAmount, discountId) =
-                await ComputePricingAsync(userId, total, request.DiscountCode, request.RoomId, request.ShowTimeId);
-
-            // Loyalty redemption: spend points for a discount. The points are reserved (deducted) now and
-            // restored if the booking is cancelled, expires, or is refunded. 1 point = _pointValueVnd VND,
-            // capped at the customer's balance and the order total so the amount can't go negative.
-            var pointsRedeemed = 0;
-            if (request.PointsToRedeem > 0)
+        var foodTheaterId = Guid.Empty;
+        if (input.Foods.Count > 0)
+        {
+            if (input.TheaterId is Guid knownTheaterId)
             {
-                var redeemingUser = await _uow.UserStore.GetByIdAsync(userId);
-                if (redeemingUser is not null)
+                foodTheaterId = knownTheaterId;
+            }
+            else
+            {
+                var room = await _uow.RoomStore.GetByIdAsync(input.RoomId!.Value);
+                if (room is null)
                 {
-                    var maxByBalance = redeemingUser.Points;
-                    var maxByAmount  = (int)(finalAmount / _pointValueVnd);
-                    pointsRedeemed = Math.Min(request.PointsToRedeem, Math.Min(maxByBalance, maxByAmount));
-                    if (pointsRedeemed > 0)
+                    throw new InvalidOperationException("ShowTime/Room combination not found.");
+                }
+                foodTheaterId = room.TheaterId;
+            }
+        }
+        var food = await BuildFoodLinesAndReserveStockAsync(input.Foods, foodTheaterId, input.DryRun, input.FoodPriceOverrides, wholeVnd);
+        lines.AddRange(food.QuoteLines);
+        overrides.AddRange(food.Overrides);
+
+        var total = Money(ticketTotal + food.Total, wholeVnd);
+        var (discountAmount, finalAmount, discountId) =
+            await ComputePricingAsync(input.CustomerUserId, total, input.DiscountCode, hasSeatSection ? input.RoomId : null, hasSeatSection ? input.ShowTimeId : null, input.TheaterId);
+        if (wholeVnd)
+        {
+            finalAmount    = Money(finalAmount, true);
+            discountAmount = total - finalAmount;
+        }
+
+        // Loyalty redemption: spend points for a discount. The points are reserved (deducted) now and
+        // restored if the booking is cancelled, expires, or is refunded. 1 point = _pointValueVnd VND,
+        // capped at the customer's balance and the order total so the amount can't go negative.
+        var pointsRedeemed = 0;
+        double pointsValue = 0;
+        if (input.PointsToRedeem > 0 && input.CustomerUserId is Guid pointsUserId)
+        {
+            var redeemingUser = await _uow.UserStore.GetByIdAsync(pointsUserId);
+            if (redeemingUser is not null)
+            {
+                var maxByBalance = redeemingUser.Points;
+                var maxByAmount  = (int)(finalAmount / _pointValueVnd);
+                pointsRedeemed = Math.Min(input.PointsToRedeem, Math.Min(maxByBalance, maxByAmount));
+                if (pointsRedeemed > 0)
+                {
+                    pointsValue     = pointsRedeemed * _pointValueVnd;
+                    finalAmount    -= pointsValue;
+                    discountAmount += pointsValue;
+                    if (!input.DryRun)
                     {
-                        var pointsValue = pointsRedeemed * _pointValueVnd;
-                        finalAmount    -= pointsValue;
-                        discountAmount += pointsValue;
                         redeemingUser.Points -= pointsRedeemed;
                         await _uow.UserStore.UpdateAsync(redeemingUser);
                     }
                 }
             }
+        }
 
-            // Gift card: draw down its balance to cover part (or all) of the remaining amount. Reserved
-            // now and restored if the booking is cancelled, expires, or is refunded. An invalid/expired
-            // code provided by the customer is rejected (so they're never silently charged full price).
-            Guid? giftCardId = null;
-            double giftCardAmount = 0;
-            if (!string.IsNullOrWhiteSpace(request.GiftCardCode))
+        // Gift card: draw down its balance to cover part (or all) of the remaining amount. Reserved
+        // now and restored if the booking is cancelled, expires, or is refunded. An invalid/expired
+        // code provided by the customer is rejected (so they're never silently charged full price).
+        Guid? giftCardId = null;
+        double giftCardAmount = 0;
+        if (!string.IsNullOrWhiteSpace(input.GiftCardCode))
+        {
+            var card = await _uow.GiftCardStore.GetByCodeAsync(input.GiftCardCode.Trim());
+            var usable = card is not null && card.IsActive
+                         && (card.ExpiresAt is null || card.ExpiresAt > DateTime.UtcNow);
+            if (!usable)
             {
-                var card = await _uow.GiftCardStore.GetByCodeAsync(request.GiftCardCode.Trim());
-                var usable = card is not null && card.IsActive
-                             && (card.ExpiresAt is null || card.ExpiresAt > DateTime.UtcNow);
-                if (!usable)
+                throw new InvalidOperationException("Invalid or expired gift card.");
+            }
+            giftCardAmount = Math.Min(card!.Balance, finalAmount);
+            if (wholeVnd)
+            {
+                // Never round up past the card's balance.
+                giftCardAmount = Math.Floor(giftCardAmount);
+            }
+            if (giftCardAmount > 0)
+            {
+                finalAmount    -= giftCardAmount;
+                discountAmount += giftCardAmount;
+                if (!input.DryRun)
                 {
-                    throw new InvalidOperationException("Invalid or expired gift card.");
-                }
-                giftCardAmount = Math.Min(card!.Balance, finalAmount);
-                if (giftCardAmount > 0)
-                {
-                    finalAmount    -= giftCardAmount;
-                    discountAmount += giftCardAmount;
-                    card.Balance   -= giftCardAmount;
+                    card.Balance -= giftCardAmount;
                     await _uow.GiftCardStore.UpdateAsync(card);
-                    giftCardId = card.Id;
                 }
+                giftCardId = card.Id;
             }
+        }
 
-            var invoice = new Invoice
+        var invoice = new Invoice
+        {
+            Code                 = GenerateCode(),
+            UserId               = input.CustomerUserId,
+            TheaterId            = invoiceTheaterId,
+            TotalAmount          = total,
+            DiscountAmount       = discountAmount,
+            FinalAmount          = finalAmount,
+            PointsRedeemed       = pointsRedeemed,
+            GiftCardId           = giftCardId,
+            GiftCardAmount       = giftCardAmount,
+            DiscountId           = discountId,
+            InvoiceTickets       = tickets,
+            InvoiceFoodAndDrinks = food.Lines,
+            FoodStatus           = food.Lines.Count > 0 ? FoodOrderStatus.Pending : FoodOrderStatus.None
+        };
+
+        return new ComposedInvoice
+        {
+            Invoice     = invoice,
+            TicketItems = ticketItems,
+            StockDemand = food.Demand,
+            Lines       = lines,
+            Overrides   = overrides,
+            PointsValue = pointsValue,
+        };
+    }
+
+    // An override may only lower a price: never below zero, never above the list price.
+    private static double ValidateOverride(double overridePrice, double listPrice, string what)
+    {
+        var rounded = Math.Round(overridePrice, 0, MidpointRounding.AwayFromZero);
+        if (rounded < 0 || rounded > listPrice)
+        {
+            throw new InvalidOperationException($"The price override for {what} must be between 0 and its list price.");
+        }
+        return rounded;
+    }
+
+    // Units of one tracked item to take off the shelf for a booking, and the combos (if any) that asked for it.
+    private sealed class StockDemand
+    {
+        public StockDemand(FoodAndDrink food)
+        {
+            Food = food;
+        }
+
+        public FoodAndDrink Food { get; }
+        public int Quantity { get; set; }
+        public List<string> ComboNames { get; } = new();
+    }
+
+    private sealed record FoodBuild(
+        List<InvoiceFoodAndDrink> Lines,
+        double Total,
+        List<StockDemand> Demand,
+        List<CounterQuoteLineDTO> QuoteLines,
+        List<PriceOverrideLine> Overrides);
+
+    // Merges the requested food lines, validates them (theater + availability), expands combos into their
+    // tracked components and takes the stock — all inside the caller's transaction, so a shortage throws and
+    // the caller's catch rolls every stock change back. Fixed query count regardless of line count:
+    // foods (1) + combo recipes (1) + component foods (1). A dry run (quote) checks the stock level but takes none.
+    private async Task<FoodBuild> BuildFoodLinesAndReserveStockAsync(
+        IReadOnlyList<BookingFoodItem> foodItems, Guid theaterId, bool dryRun, IReadOnlyDictionary<Guid, double> priceOverrides, bool wholeVnd)
+    {
+        var lines = new List<InvoiceFoodAndDrink>();
+        var demand = new List<StockDemand>();
+        var quoteLines = new List<CounterQuoteLineDTO>();
+        var overrides = new List<PriceOverrideLine>();
+        if (foodItems.Count == 0)
+        {
+            return new FoodBuild(lines, 0, demand, quoteLines, overrides);
+        }
+
+        // The same food on two lines would collide on the (InvoiceId, FoodAndDrinkId) key; sum them.
+        var merged = foodItems
+            .GroupBy(f => f.FoodAndDrinkId)
+            .Select(g => (FoodAndDrinkId: g.Key, Quantity: g.Sum(x => x.Quantity)))
+            .ToList();
+
+        var foodsById = await _uow.FoodAndDrinkStore.GetByIdsAsync(merged.Select(m => m.FoodAndDrinkId).ToList());
+
+        double total = 0;
+        foreach (var (foodId, quantity) in merged)
+        {
+            if (!foodsById.TryGetValue(foodId, out var food))
             {
-                Code                = GenerateCode(),
-                UserId              = userId,
-                TotalAmount         = total,
-                DiscountAmount      = discountAmount,
-                FinalAmount         = finalAmount,
-                PointsRedeemed      = pointsRedeemed,
-                GiftCardId          = giftCardId,
-                GiftCardAmount      = giftCardAmount,
-                DiscountId          = discountId,
-                Status              = InvoiceStatus.Pending,
-                PaymentMethod       = request.PaymentMethod,
-                InvoiceTickets      = tickets,
-                InvoiceFoodAndDrinks = foods
-            };
+                throw new KeyNotFoundException($"Food item {foodId} not found.");
+            }
+            EnsureOrderable(food, theaterId);
 
-            await _uow.InvoiceStore.CreateAsync(invoice);
-            await _uow.CommitTransactionAsync();
-
-            // Clear the booker's own advisory locks on the seats just booked (SeatBooked below supersedes
-            // them; emitting SeatUnlocked first would briefly flash the seat as available to other viewers)
-            // and tell everyone else in the room these seats are now unavailable.
-            if (!string.IsNullOrEmpty(request.ConnectionId))
+            var listUnitPrice = Money(food.Price, wholeVnd);
+            var unitPrice = listUnitPrice;
+            if (priceOverrides.TryGetValue(foodId, out var foodOverride))
             {
-                foreach (var seatItem in request.Seats)
+                unitPrice = ValidateOverride(foodOverride, listUnitPrice, food.Name);
+                overrides.Add(new PriceOverrideLine("Food", foodId, food.Name, quantity, listUnitPrice, unitPrice));
+            }
+            var lineTotal = Money(unitPrice * quantity, wholeVnd);
+
+            lines.Add(new InvoiceFoodAndDrink
+            {
+                FoodAndDrinkId = foodId,
+                Quantity       = quantity,
+                UnitPrice      = unitPrice,
+                TotalPrice     = lineTotal
+            });
+            quoteLines.Add(new CounterQuoteLineDTO
+            {
+                Kind          = "Food",
+                Description   = food.Name,
+                Quantity      = quantity,
+                UnitPrice     = unitPrice,
+                ListUnitPrice = listUnitPrice,
+                LineTotal     = lineTotal,
+            });
+            total += lineTotal;
+        }
+
+        var demandById = new Dictionary<Guid, StockDemand>();
+        void Add(FoodAndDrink item, int units, string? comboName)
+        {
+            // Untracked items never touch stock.
+            if (!item.TrackInventory)
+            {
+                return;
+            }
+            if (!demandById.TryGetValue(item.Id, out var entry))
+            {
+                entry = new StockDemand(item);
+                demandById[item.Id] = entry;
+            }
+            entry.Quantity += units;
+            if (comboName is not null && !entry.ComboNames.Contains(comboName))
+            {
+                entry.ComboNames.Add(comboName);
+            }
+        }
+
+        var comboLines = merged.Where(m => foodsById[m.FoodAndDrinkId].IsCombo).ToList();
+        foreach (var (foodId, quantity) in merged)
+        {
+            var food = foodsById[foodId];
+            if (!food.IsCombo)
+            {
+                Add(food, quantity, null);
+            }
+        }
+
+        if (comboLines.Count > 0)
+        {
+            var recipes = await _uow.ComboItemStore.GetByCombosAsync(comboLines.Select(c => c.FoodAndDrinkId).ToList());
+            var componentIds = recipes.Select(r => r.ComponentId).Distinct().Where(id => !foodsById.ContainsKey(id)).ToList();
+            var components = componentIds.Count == 0
+                ? new Dictionary<Guid, FoodAndDrink>()
+                : await _uow.FoodAndDrinkStore.GetByIdsAsync(componentIds);
+
+            foreach (var (comboId, comboQuantity) in comboLines)
+            {
+                var combo = foodsById[comboId];
+                foreach (var recipe in recipes.Where(r => r.ComboId == comboId))
                 {
-                    UnlockSeat(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId);
+                    if (!foodsById.TryGetValue(recipe.ComponentId, out var component)
+                        && !components.TryGetValue(recipe.ComponentId, out component))
+                    {
+                        throw new InvalidOperationException($"'{combo.Name}' is no longer available.");
+                    }
+                    EnsureOrderable(component, theaterId);
+                    Add(component, comboQuantity * recipe.Quantity, combo.Name);
                 }
             }
-            await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId, request.RoomId, request.Seats.Select(s => s.SeatId).ToList());
+        }
 
-            return new BookingResultDTO
+        // Fixed (ascending id) order so two bookings contending for the same items can't deadlock.
+        var ordered = demandById.Values.OrderBy(d => d.Food.Id).ToList();
+        foreach (var entry in ordered)
+        {
+            var name = entry.ComboNames.Count > 0 ? entry.ComboNames[0] : entry.Food.Name;
+            if (dryRun)
             {
-                InvoiceId      = invoice.Id,
-                InvoiceCode    = invoice.Code,
-                TotalAmount    = total,
-                DiscountAmount = discountAmount,
-                FinalAmount    = finalAmount,
-                PointsRedeemed = pointsRedeemed,
-                Status         = InvoiceStatus.Pending,
-                Tickets        = ticketItems
-            };
+                // A quote reserves nothing; it only reports a line that could not be sold right now.
+                if (entry.Food.QuantityOnHand < entry.Quantity)
+                {
+                    throw new InvalidOperationException($"'{name}' is out of stock or has insufficient quantity.");
+                }
+                continue;
+            }
+            if (!await _uow.FoodAndDrinkStore.TryApplyStockDeltaAsync(entry.Food.Id, -entry.Quantity))
+            {
+                throw new InvalidOperationException($"'{name}' is out of stock or has insufficient quantity.");
+            }
         }
-        catch (SeatUnavailableException)
+
+        return new FoodBuild(lines, total, ordered, quoteLines, overrides);
+    }
+
+    private static void EnsureOrderable(FoodAndDrink food, Guid theaterId)
+    {
+        if (food.TheaterId != theaterId)
         {
-            // Another booking (possibly on another server instance) claimed a seat first — the DB unique
-            // index rejected the insert. Surface it like the in-process "already booked" check.
-            await _uow.RollbackTransactionAsync();
-            throw new InvalidOperationException("One or more selected seats were just booked by someone else.");
+            throw new InvalidOperationException($"'{food.Name}' is not available at this theater.");
         }
-        catch
+        if (!food.IsAvailable)
         {
-            await _uow.RollbackTransactionAsync();
-            throw;
+            throw new InvalidOperationException($"'{food.Name}' is no longer available.");
         }
-        finally
+    }
+
+    // One Sale ledger row per demanded item (negative quantity), written with the invoice in the same transaction.
+    private async Task RecordSaleMovementsAsync(IReadOnlyList<StockDemand> demand, Invoice invoice, Guid userId)
+    {
+        if (demand.Count == 0)
         {
-            gate.Release();
+            return;
+        }
+
+        var movements = demand.Select(d => new StockMovement
+        {
+            FoodAndDrinkId = d.Food.Id,
+            TheaterId      = d.Food.TheaterId,
+            Type           = StockMovementType.Sale,
+            Quantity       = -d.Quantity,
+            Reason         = d.ComboNames.Count > 0
+                ? $"Sold on {invoice.Code} via combo {string.Join(", ", d.ComboNames)}"
+                : $"Sold on {invoice.Code}",
+            InvoiceId      = invoice.Id,
+            UserId         = userId,
+        }).ToList();
+        await _uow.StockMovementStore.CreateRangeAsync(movements);
+    }
+
+    // Puts sold stock back for invoices that did not complete. Ledger-driven and idempotent (see FoodStockRestorer).
+    private Task RestoreFoodStockAsync(IReadOnlyCollection<Invoice> invoices, string reason, Guid? userId)
+    {
+        return FoodStockRestorer.RestoreAsync(_uow, invoices.Select(i => i.Id).ToList(), reason, userId);
+    }
+
+    // ── Staff push (kitchen queue, low stock) ───────────────────────────────────
+    // Every push runs after the commit and swallows its own failures: the sale/refund is already durable.
+
+    // A cancelled, expired or refunded invoice no longer has food to hand over.
+    private static void CancelFoodOrder(Invoice invoice)
+    {
+        if (invoice.FoodStatus != FoodOrderStatus.None)
+        {
+            invoice.FoodStatus = FoodOrderStatus.Cancelled;
+        }
+    }
+
+    private async Task PushFoodOrderQueuedAsync(Invoice invoice)
+    {
+        if (invoice.FoodStatus != FoodOrderStatus.Pending || invoice.TheaterId is not Guid theaterId)
+        {
+            return;
+        }
+        try
+        {
+            var row = await _uow.InvoiceStore.GetPickupOrderByIdAsync(invoice.Id);
+            if (row != null)
+            {
+                await _staffNotifications.NotifyFoodOrderQueuedAsync(theaterId, ConcessionManager.ToDto(row));
+            }
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(PushFoodOrderQueuedAsync)} failed for {invoice.Code}: {e.Message}");
+        }
+    }
+
+    private async Task PushFoodOrderCancelledAsync(Invoice invoice)
+    {
+        if (invoice.FoodStatus != FoodOrderStatus.Cancelled || invoice.TheaterId is not Guid theaterId)
+        {
+            return;
+        }
+        try
+        {
+            await _staffNotifications.NotifyFoodOrderUpdatedAsync(theaterId, new FoodOrderUpdateDTO
+            {
+                InvoiceId = invoice.Id,
+                TheaterId = theaterId,
+                InvoiceCode = invoice.Code,
+                FoodStatus = FoodOrderStatus.Cancelled,
+                FoodHandedOverAt = invoice.FoodHandedOverAt
+            });
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(PushFoodOrderCancelledAsync)} failed for {invoice.Code}: {e.Message}");
+        }
+    }
+
+    // Items whose stock crossed their low-stock threshold during THIS sale. Computed from the demand list: each entry's
+    // Food was read before the sale took its units, so "was above, is now at or under" holds exactly once per crossing.
+    private async Task PushStockLowAsync(IReadOnlyList<StockDemand> demand)
+    {
+        try
+        {
+            var crossed = demand
+                .Where(d => d.Food.QuantityOnHand > d.Food.LowStockThreshold
+                            && d.Food.QuantityOnHand - d.Quantity <= d.Food.LowStockThreshold)
+                .ToList();
+            foreach (var theaterGroup in crossed.GroupBy(d => d.Food.TheaterId))
+            {
+                var items = theaterGroup.Select(d => new LowStockItemDTO
+                {
+                    FoodAndDrinkId = d.Food.Id,
+                    Name = d.Food.Name,
+                    QuantityOnHand = d.Food.QuantityOnHand - d.Quantity,
+                    LowStockThreshold = d.Food.LowStockThreshold,
+                    TargetStockLevel = d.Food.TargetStockLevel
+                }).ToList();
+                await _staffNotifications.NotifyStockLowAsync(theaterGroup.Key, items);
+            }
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(PushStockLowAsync)} failed: {e.Message}");
         }
     }
 
@@ -460,26 +1194,59 @@ public class BookingManager : IBookingManager
     }
 
     /// <summary>Marks the invoice Paid and applies the side effects: loyalty accrual, tier re-eval,
-    /// promo-code consumption, and the confirmation notification. Caller must have verified payment.</summary>
+    /// promo-code consumption, and the confirmation notification. Caller must have verified payment.
+    /// A walk-in invoice (no customer) skips the loyalty and notification parts.</summary>
     private async Task FinalizePaidInvoiceAsync(Invoice invoice, string paymentReference)
     {
         invoice.Status           = InvoiceStatus.Paid;
         invoice.PaymentReference = paymentReference;
         invoice.PaidAt           = DateTime.UtcNow;
+        if (invoice.FinalAmount > 0)
+        {
+            // The invoice is already tracked, so a child with a pre-set Guid key would be tracked as Modified
+            // (UPDATE ... 0 rows -> DbUpdateConcurrencyException). An empty Id makes EF treat it as new.
+            invoice.Payments.Add(new InvoicePayment
+            {
+                Id        = Guid.Empty,
+                Method    = PaymentTender.Online,
+                Amount    = invoice.FinalAmount,
+                Reference = paymentReference,
+            });
+        }
         await _uow.InvoiceStore.UpdateAsync(invoice);
 
-        // Loyalty: accrue points on the paid amount and re-evaluate the membership tier.
-        var user = await _uow.UserStore.GetByIdAsync(invoice.UserId);
+        var user = await ApplyPaidSideEffectsAsync(invoice);
+
+        await _uow.SaveChangesAsync();
+
+        await PushFoodOrderQueuedAsync(invoice);
+
+        // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
         if (user is not null)
         {
-            user.Points += (int)(invoice.FinalAmount / _pointsPerUnit);
-            var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
-            var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
-            if (tier is not null)
+            await SendConfirmationAsync(invoice, user);
+        }
+    }
+
+    // Loyalty: accrue points on the paid amount and re-evaluate the membership tier (only when the invoice has a
+    // customer), then mark the promo code (if any) as consumed. Does not save; returns the customer, if any.
+    private async Task<User?> ApplyPaidSideEffectsAsync(Invoice invoice)
+    {
+        User? user = null;
+        if (invoice.UserId is Guid customerId)
+        {
+            user = await _uow.UserStore.GetByIdAsync(customerId);
+            if (user is not null)
             {
-                user.MemberShipId = tier.Id;
+                user.Points += (int)(invoice.FinalAmount / _pointsPerUnit);
+                var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
+                var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
+                if (tier is not null)
+                {
+                    user.MemberShipId = tier.Id;
+                }
+                await _uow.UserStore.UpdateAsync(user);
             }
-            await _uow.UserStore.UpdateAsync(user);
         }
 
         // Mark the promo code (if any) as consumed.
@@ -492,24 +1259,25 @@ public class BookingManager : IBookingManager
                 await _uow.DiscountStore.UpdateAsync(discount);
             }
         }
+        return user;
+    }
 
-        await _uow.SaveChangesAsync();
-
-        // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
-        if (user is not null)
+    private async Task SendConfirmationAsync(Invoice invoice, User user)
+    {
+        if (!string.IsNullOrWhiteSpace(user.Email))
         {
             await _notifications.SendAsync(
                 user.Email,
                 $"Booking confirmed — {invoice.Code}",
                 $"Your payment was received. Booking code: {invoice.Code}. " +
                 $"Total paid: {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
+        }
 
-            // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
-            if (!string.IsNullOrWhiteSpace(user.Phone))
-            {
-                await _sms.SendSmsAsync(user.Phone,
-                    $"Cinema: booking {invoice.Code} confirmed. Total {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
-            }
+        // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
+        if (!string.IsNullOrWhiteSpace(user.Phone))
+        {
+            await _sms.SendSmsAsync(user.Phone,
+                $"Cinema: booking {invoice.Code} confirmed. Total {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
         }
     }
 
@@ -670,13 +1438,15 @@ public class BookingManager : IBookingManager
     // this booking. A provided-but-invalid code is rejected so the customer is never silently charged
     // full price. Returns (discountAmount, finalAmount, discountId).
     private async Task<(double DiscountAmount, double FinalAmount, Guid? DiscountId)> ComputePricingAsync(
-        Guid userId, double total, string? discountCode, Guid roomId, Guid showTimeId)
+        Guid? userId, double total, string? discountCode, Guid? roomId, Guid? showTimeId, Guid? theaterIdHint)
     {
         var running = await ApplyMembershipDiscountAsync(userId, total);
 
         var now = DateTime.UtcNow;
-        var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
-        var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeId);
+        // A food-only counter sale has no room or showtime: its theater is the one the sale happens in, and a
+        // showtime-scoped promotion cannot match.
+        var bookingTheaterId = roomId.HasValue ? (await _uow.RoomStore.GetByIdAsync(roomId.Value))?.TheaterId : theaterIdHint;
+        var showTime = showTimeId.HasValue ? await _uow.ShowTimeStore.GetByIdAsync(showTimeId.Value) : null;
 
         Guid? discountId = null;
         if (!string.IsNullOrWhiteSpace(discountCode))
@@ -717,9 +1487,10 @@ public class BookingManager : IBookingManager
     private const string _invalidDiscountMessage = "Discount code is invalid or no longer available.";
 
     // The member's tier discount comes off first, before any promo code.
-    private async Task<double> ApplyMembershipDiscountAsync(Guid userId, double running)
+    private async Task<double> ApplyMembershipDiscountAsync(Guid? userId, double running)
     {
-        var user = await _uow.UserStore.GetByIdAsync(userId);
+        // A walk-in counter sale has no member discount.
+        var user = userId.HasValue ? await _uow.UserStore.GetByIdAsync(userId.Value) : null;
         if (user?.MemberShipId is Guid membershipId)
         {
             var membership = await _uow.MemberShipStore.GetByIdAsync(membershipId);
@@ -831,12 +1602,24 @@ public class BookingManager : IBookingManager
         {
             return false;
         }
-        invoice.Status = InvoiceStatus.Cancelled;
-        await _uow.InvoiceStore.UpdateAsync(invoice);
-        await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-        await RestoreRedeemedPointsAsync(invoice);
-        await RestoreGiftCardAsync(invoice);
-        await _uow.SaveChangesAsync();
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            invoice.Status = InvoiceStatus.Cancelled;
+            CancelFoodOrder(invoice);
+            await _uow.InvoiceStore.UpdateAsync(invoice);
+            await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
+            await RestoreRedeemedPointsAsync(invoice);
+            await RestoreGiftCardAsync(invoice);
+            await RestoreFoodStockAsync(new[] { invoice }, "Cancelled", userId);
+            await _uow.SaveChangesAsync();
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
         return true;
     }
 
@@ -847,7 +1630,11 @@ public class BookingManager : IBookingManager
         {
             return;
         }
-        var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(invoice.UserId);
+        if (invoice.UserId is not Guid ownerId)
+        {
+            return;
+        }
+        var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(ownerId);
         if (user is not null)
         {
             user.Points += invoice.PointsRedeemed;
@@ -870,56 +1657,25 @@ public class BookingManager : IBookingManager
         }
     }
 
-    public async Task<bool> RefundBookingAsync(Guid userId, Guid invoiceId, bool isAdmin)
+    // Everything a refund undoes for one invoice, shared by the owner/admin refund and the staff refund/exchange:
+    // marks it Refunded, frees the seats, reverses the loyalty points accrued and gives back points spent, returns the
+    // promo-code usage and the gift-card balance, and restores the sold food stock from the ledger. The caller owns the
+    // transaction and the SaveChanges. Returns the customer account that was adjusted (null for a walk-in sale).
+    public async Task<User?> ReverseInvoiceEffectsAsync(Invoice invoice, Guid actorUserId, string reason)
     {
-        var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(invoiceId);
-        if (invoice == null)
-        {
-            return false;
-        }
-        // Object-level authorization: the owner, or an admin, may refund.
-        if (!isAdmin && invoice.UserId != userId)
-        {
-            return false;
-        }
-        // Only a Paid invoice can be refunded (Pending is cancelled, not refunded).
-        if (invoice.Status != InvoiceStatus.Paid)
-        {
-            return false;
-        }
-        // Don't refund a ticket that was already checked in at the gate.
-        if (invoice.InvoiceTickets.Any(t => t.IsUsed))
-        {
-            return false;
-        }
-        // Don't refund once the (earliest) showtime has started.
-        var earliestStart = invoice.InvoiceTickets
-            .Select(t => t.ShowTimeRoom?.ShowTime?.StartTime)
-            .Where(s => s.HasValue)
-            .DefaultIfEmpty(null)
-            .Min();
-        if (earliestStart.HasValue && earliestStart.Value <= DateTime.Now)
-        {
-            return false;
-        }
-
-        // Return the money. Stripe/Sandbox process via API; VNPay/MoMo are refunded out-of-band via the
-        // merchant portal, so an admin is allowed to record the refund even when the API declines it.
-        var refund = await _gateways.Resolve(invoice.PaymentMethod).RefundAsync(invoice.PaymentReference ?? "", invoice.FinalAmount);
-        if (!refund.Success && !isAdmin)
-        {
-            return false;
-        }
-
         // Mark refunded. Because seat occupancy counts only Pending/Paid invoices, this frees the seats.
         invoice.Status     = InvoiceStatus.Refunded;
         invoice.RefundedAt = DateTime.UtcNow;
+        CancelFoodOrder(invoice);
         await _uow.InvoiceStore.UpdateAsync(invoice);
         await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
 
         // Reverse the loyalty points accrued at payment, give back any points spent on this booking,
         // and re-evaluate the membership tier.
-        var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(invoice.UserId);
+        // A walk-in counter invoice has no customer account to adjust.
+        var user = invoice.UserId is Guid refundOwnerId
+            ? invoice.User ?? await _uow.UserStore.GetByIdAsync(refundOwnerId)
+            : null;
         if (user is not null)
         {
             user.Points -= (int)(invoice.FinalAmount / _pointsPerUnit);
@@ -948,9 +1704,78 @@ public class BookingManager : IBookingManager
         // Give the gift-card balance back.
         await RestoreGiftCardAsync(invoice);
 
-        await _uow.SaveChangesAsync();
+        // Put the sold food/drink stock back.
+        await RestoreFoodStockAsync(new[] { invoice }, reason, actorUserId);
 
-        if (user is not null)
+        return user;
+    }
+
+    public async Task<bool> RefundBookingAsync(Guid userId, Guid invoiceId, bool isAdmin)
+    {
+        var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(invoiceId);
+        if (invoice == null)
+        {
+            return false;
+        }
+        // Object-level authorization: the owner, or an admin, may refund.
+        if (!isAdmin && invoice.UserId != userId)
+        {
+            return false;
+        }
+        // Only a Paid invoice can be refunded (Pending is cancelled, not refunded).
+        if (invoice.Status != InvoiceStatus.Paid)
+        {
+            return false;
+        }
+        // A counter sale was paid at the box office (cash/card terminal), not through a gateway: it is refunded by
+        // staff at the counter, never through this online path.
+        if (invoice.Channel == SalesChannel.Counter)
+        {
+            return false;
+        }
+        // Don't refund a ticket that was already checked in at the gate.
+        if (invoice.InvoiceTickets.Any(t => t.IsUsed))
+        {
+            return false;
+        }
+        // Don't refund once the (earliest) showtime has started.
+        var earliestStart = invoice.InvoiceTickets
+            .Select(t => t.ShowTimeRoom?.ShowTime?.StartTime)
+            .Where(s => s.HasValue)
+            .DefaultIfEmpty(null)
+            .Min();
+        if (earliestStart.HasValue && earliestStart.Value <= DateTime.Now)
+        {
+            return false;
+        }
+
+        // Return the money. Stripe/Sandbox process via API; VNPay/MoMo are refunded out-of-band via the
+        // merchant portal, so an admin is allowed to record the refund even when the API declines it.
+        var refund = await _gateways.Resolve(invoice.PaymentMethod).RefundAsync(invoice.PaymentReference ?? "", invoice.FinalAmount);
+        if (!refund.Success && !isAdmin)
+        {
+            return false;
+        }
+
+        // The gateway call above can't be rolled back, so the DB writes start their transaction after it.
+        User? user;
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            user = await ReverseInvoiceEffectsAsync(invoice, userId, "Refunded");
+
+            await _uow.SaveChangesAsync();
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
+
+        await PushFoodOrderCancelledAsync(invoice);
+
+        if (user is not null && !string.IsNullOrWhiteSpace(user.Email))
         {
             await _notifications.SendAsync(
                 user.Email,
@@ -969,16 +1794,29 @@ public class BookingManager : IBookingManager
         {
             return 0;
         }
-        foreach (var invoice in stale)
+        await _uow.BeginTransactionAsync();
+        try
         {
-            // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
-            invoice.Status = InvoiceStatus.Cancelled;
-            await _uow.InvoiceStore.UpdateAsync(invoice);
-            await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-            await RestoreRedeemedPointsAsync(invoice);
-            await RestoreGiftCardAsync(invoice);
+            foreach (var invoice in stale)
+            {
+                // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
+                invoice.Status = InvoiceStatus.Cancelled;
+                CancelFoodOrder(invoice);
+                await _uow.InvoiceStore.UpdateAsync(invoice);
+                await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
+                await RestoreRedeemedPointsAsync(invoice);
+                await RestoreGiftCardAsync(invoice);
+            }
+            // One batched ledger read/restock for the whole run, not one per invoice.
+            await RestoreFoodStockAsync(stale.ToList(), "Expired", null);
+            await _uow.SaveChangesAsync();
+            await _uow.CommitTransactionAsync();
         }
-        await _uow.SaveChangesAsync();
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
         return stale.Count;
     }
 

@@ -1,0 +1,44 @@
+// CinemaStaff's visual identity ("Marquee Ledger") is defined once in CinemaLib so
+// any future admin-style app (for a different role) can adopt the same look with
+// this one line, instead of redefining hundreds of lines of tokens/components per app.
+@use 'lib/theme/marquee-ledger';
+
+// Angular Material's own component palette (dialogs, selects, datepickers, menus,
+// checkboxes, etc.) doesn't follow our --ml-* tokens at all — it ships a hardcoded
+// light prebuilt CSS by default. Rather than switching to a different prebuilt file
+// (still hardcoded to one mode) or hand-overriding ~100 individual --mat-*/--mdc-*
+// custom properties, we generate Material's whole M3 token set from SCSS, once per
+// app theme, so every Material surface follows the same light/dark switch as the
+// rest of the app. `mat.$orange-palette` is the closest built-in M3 palette to the
+// marquee gold accent; `mat.$cyan-palette` plays the teal secondary's role. Only
+// `color` is themed (no `typography`/`density`) to keep Material's component shapes
+// close to the previous prebuilt look.
+@use '@angular/material' as mat;
+
+// mat.theme() only emits colour tokens — it does not include the structural/
+// reset CSS (ripple mechanics, CDK overlay base styles, and critically the
+// flex layout mat-sidenav-container needs to lay the sidenav and content out
+// side by side) that used to ship bundled inside the prebuilt theme CSS.
+// Without this, mat-sidenav-container falls back to plain block flow and
+// stacks the sidenav and content vertically instead of side by side.
+@include mat.core();
+
+:root {
+  @include mat.theme((
+    color: (
+      theme-type: light,
+      primary: mat.$orange-palette,
+      tertiary: mat.$cyan-palette,
+    ),
+  ));
+}
+
+:root[data-theme="dark"] {
+  @include mat.theme((
+    color: (
+      theme-type: dark,
+      primary: mat.$orange-palette,
+      tertiary: mat.$cyan-palette,
+    ),
+  ));
+}

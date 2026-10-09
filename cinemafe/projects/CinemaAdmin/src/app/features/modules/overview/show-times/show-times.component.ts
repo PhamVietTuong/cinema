@@ -58,6 +58,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   weekStart!: Date;               // Monday 00:00 of the visible week
   days: DayColumn[] = [];
   filterMovieId = '';
+  filterTheaterId = '';
+  filterForm: CinemaServiceAgent.ProjectionForm | '' = '';
 
   private _showtimes: Dto[] = [];
 
@@ -69,7 +71,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
     this._svc.getTheaters(wide).pipe(takeUntil(this._destroy$))
       .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getRooms(wide).pipe(takeUntil(this._destroy$))
-      .subscribe(r => { this.rooms = r.results ?? []; this._cdr.markForCheck(); });
+      .subscribe(r => { this.rooms = r.results ?? []; this._rebuild(); });
     this.load();
   }
 
@@ -113,6 +115,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
     for (const st of this._showtimes) {
       if (!st.startTime || !st.endTime) { continue; }
       if (this.filterMovieId && st.movieId !== this.filterMovieId) { continue; }
+      if (this.filterForm !== '' && st.projectionForm !== this.filterForm) { continue; }
+      if (this.filterTheaterId && !this._roomInTheater(st.roomId, this.filterTheaterId)) { continue; }
       const start = new Date(st.startTime);
       const end = new Date(st.endTime);
       if (start < this.weekStart || start >= weekEnd) { continue; }
@@ -122,6 +126,10 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       col.blocks.push(this._place(st, start, end));
     }
     this._cdr.markForCheck();
+  }
+
+  private _roomInTheater(roomId: string | undefined, theaterId: string): boolean {
+    return this.rooms.some(r => r.id === roomId && r.theaterId === theaterId);
   }
 
   private _place(st: Dto, start: Date, end: Date): PlacedBlock {

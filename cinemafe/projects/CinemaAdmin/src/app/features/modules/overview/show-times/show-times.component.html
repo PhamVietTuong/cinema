@@ -19,6 +19,18 @@
           <mat-option *ngFor="let m of movies" [value]="m.id">{{ m.title }}</mat-option>
         </mat-select>
       </mat-form-field>
+      <mat-form-field appearance="outline" class="st-movie-filter" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="filterTheaterId" (selectionChange)="onFilterChange()" [attr.aria-label]="'showTimes.allCinemas' | translate">
+          <mat-option value="">{{ 'showTimes.allCinemas' | translate }}</mat-option>
+          <mat-option *ngFor="let t of theaters" [value]="t.id">{{ t.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="st-movie-filter" subscriptSizing="dynamic">
+        <mat-select [(ngModel)]="filterForm" (selectionChange)="onFilterChange()" [attr.aria-label]="'showTimes.allFormats' | translate">
+          <mat-option value="">{{ 'showTimes.allFormats' | translate }}</mat-option>
+          <mat-option *ngFor="let f of projectionForms" [value]="f.value">{{ f.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
       <button mat-raised-button color="primary" type="button" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'showTimes.addShowTime' | translate }}</button>
     </div>
   </div>

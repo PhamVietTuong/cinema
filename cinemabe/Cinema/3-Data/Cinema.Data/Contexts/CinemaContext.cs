@@ -38,6 +38,24 @@ public class CinemaContext : DbContext
     public DbSet<Evaluation> Evaluation => Set<Evaluation>();
     public DbSet<ReminderLog> ReminderLog => Set<ReminderLog>();
     public DbSet<GiftCard> GiftCard => Set<GiftCard>();
+    public DbSet<ComboItem> ComboItem => Set<ComboItem>();
+    public DbSet<StockMovement> StockMovement => Set<StockMovement>();
+    public DbSet<StoragePlan> StoragePlan => Set<StoragePlan>();
+    public DbSet<StoragePlanItem> StoragePlanItem => Set<StoragePlanItem>();
+    public DbSet<AuditLog> AuditLog => Set<AuditLog>();
+    public DbSet<Incident> Incident => Set<Incident>();
+    public DbSet<Complaint> Complaint => Set<Complaint>();
+    public DbSet<ChecklistTemplate> ChecklistTemplate => Set<ChecklistTemplate>();
+    public DbSet<ChecklistTemplateItem> ChecklistTemplateItem => Set<ChecklistTemplateItem>();
+    public DbSet<ChecklistRun> ChecklistRun => Set<ChecklistRun>();
+    public DbSet<ChecklistRunItem> ChecklistRunItem => Set<ChecklistRunItem>();
+    public DbSet<StaffShift> StaffShift => Set<StaffShift>();
+    public DbSet<TimeClockEntry> TimeClockEntry => Set<TimeClockEntry>();
+    public DbSet<StaffTask> StaffTask => Set<StaffTask>();
+    public DbSet<InvoicePayment> InvoicePayment => Set<InvoicePayment>();
+    public DbSet<CashDrawerSession> CashDrawerSession => Set<CashDrawerSession>();
+    public DbSet<CashMovement> CashMovement => Set<CashMovement>();
+    public DbSet<UserTheater> UserTheater => Set<UserTheater>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

@@ -27,4 +27,6 @@ export interface UserProfile {
   userTypeName: string;
   points: number;
   memberShipName?: string;
+  /** Theater a TheaterStaff / TheaterManager user is pinned to. */
+  theaterId?: string;
 }

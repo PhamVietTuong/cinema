@@ -1,0 +1,26 @@
+@if (isStaff$ | async) {
+  <cl-app-shell
+    [brand]="brand"
+    [menu]="menu"
+    [user]="user$ | async"
+    [userFallback]="userFallback"
+    [profileRoute]="'/profile'"
+    [showNotifications]="false"
+    defaultTitleKey="pageTitle.default"
+    (logout)="doLogout()">
+    @if (theaterContext.isAdmin()) {
+      <label topbarExtra class="theater-picker">
+        <mat-icon>theaters</mat-icon>
+        <select class="ad-input" [attr.aria-label]="'theaterPicker.label' | translate" (change)="onTheaterPicked($event)">
+          <option value="" [selected]="!theaterContext.currentTheaterId()">{{ 'theaterPicker.placeholder' | translate }}</option>
+          @for (theater of theaterContext.theaters(); track theater.id) {
+            <option [value]="theater.id" [selected]="theater.id === theaterContext.currentTheaterId()">{{ theater.name }}</option>
+          }
+        </select>
+      </label>
+    }
+    <router-outlet></router-outlet>
+  </cl-app-shell>
+} @else {
+  <router-outlet></router-outlet>
+}

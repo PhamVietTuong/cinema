@@ -18,6 +18,17 @@ public record MovieScheduleRow(
     string TheaterAddress,
     int Capacity);
 
+/// <summary>One ShowTime x Room row of a theater for the box-office showtime picker. Projected + untracked.</summary>
+public record TheaterShowTimeRow(
+    Guid ShowTimeId,
+    Guid RoomId,
+    string RoomName,
+    Guid MovieId,
+    string MovieTitle,
+    DateTime StartTime,
+    DateTime EndTime,
+    ProjectionForm ProjectionForm);
+
 public interface IShowTimeStore : IGenericStore<ShowTime>
 {
     Task<IEnumerable<ShowTime>> GetByMovieAndDateAsync(Guid movieId, Guid theaterId, DateOnly date);
@@ -25,6 +36,8 @@ public interface IShowTimeStore : IGenericStore<ShowTime>
     /// ordered by StartTime. Backs the movie-detail date-tab strip (today + next 3 days).</summary>
     Task<IReadOnlyList<MovieScheduleRow>> GetMovieScheduleAsync(Guid movieId, DateTime fromInclusive, DateTime toExclusive);
     Task<ShowTimeRoom?> GetShowTimeRoomAsync(Guid showTimeId, Guid roomId);
+    /// <summary>Active showtimes in Active rooms of a theater with StartTime in [fromInclusive, toExclusive), ordered by StartTime.</summary>
+    Task<IReadOnlyList<TheaterShowTimeRow>> GetByTheaterAndRangeAsync(Guid theaterId, DateTime fromInclusive, DateTime toExclusive);
     /// <summary>Filtered, DB-side paged showtime list (with room + theater eager-loaded).
     /// <paramref name="from"/>/<paramref name="to"/> bound StartTime as a half-open range: from &lt;= StartTime &lt; to.</summary>
     Task<(IReadOnlyList<ShowTime> Items, int Total)> SearchAsync(

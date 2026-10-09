@@ -13,6 +13,10 @@ public class InvoiceTicket
     public double PatronDiscountPercent { get; set; }
     public string? QrCode { get; set; }
     public bool IsUsed { get; set; } = false;
+    /// <summary>When the ticket was admitted at the gate (UTC); set atomically together with IsUsed.</summary>
+    public DateTime? UsedAt { get; set; }
+    /// <summary>The staff user who admitted the ticket (no FK, like other audit snapshots).</summary>
+    public Guid? UsedByUserId { get; set; }
     /// <summary>Whether this ticket still holds its seat. True while the booking is Pending/Paid; set false
     /// on cancel/expire/refund. A filtered unique index over active (ShowTimeId, RoomId, SeatId) rows gives a
     /// DB-level guarantee that two instances can't double-book the same seat.</summary>

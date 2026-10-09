@@ -131,6 +131,23 @@ export interface IHttpService {
     getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceAdminDTO>;
     updateInvoiceStatus(request: UpdateInvoiceStatusRequest): Observable<InvoiceAdminDTO>;
     deleteInvoice(id?: string | undefined): Observable<void>;
+    getComboComponents(comboId?: string | undefined): Observable<ComboComponentDTO[]>;
+    saveComboComposition(request: SaveComboRequest): Observable<void>;
+    getInventory(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInventoryItemDTO>;
+    updateInventorySettings(request: UpdateInventorySettingsRequest): Observable<InventoryItemDTO>;
+    recordStockMovement(request: RecordStockMovementRequest): Observable<InventoryItemDTO>;
+    recordStockCount(request: RecordStockCountRequest): Observable<InventoryItemDTO>;
+    getStockMovements(search: PagingSearchDTO): Observable<DefaultSearchResultsOfStockMovementDTO>;
+    getStoragePlans(search: PagingSearchDTO): Observable<DefaultSearchResultsOfStoragePlanListItemDTO>;
+    getStoragePlan(id?: string | undefined): Observable<StoragePlanDTO>;
+    createStoragePlan(request: SaveStoragePlanRequest): Observable<StoragePlanDTO>;
+    updateStoragePlan(request: SaveStoragePlanRequest): Observable<StoragePlanDTO>;
+    submitStoragePlan(request: StoragePlanDecisionRequest): Observable<StoragePlanDTO>;
+    approveStoragePlan(request: StoragePlanDecisionRequest): Observable<StoragePlanDTO>;
+    rejectStoragePlan(request: StoragePlanDecisionRequest): Observable<StoragePlanDTO>;
+    receiveStoragePlan(request: ReceiveStoragePlanRequest): Observable<StoragePlanDTO>;
+    cancelStoragePlan(request: StoragePlanDecisionRequest): Observable<StoragePlanDTO>;
+    createStoragePlanFromLowStock(request: CreatePlanFromLowStockRequest): Observable<StoragePlanDTO>;
 }
 
 @Injectable()
@@ -5881,6 +5898,893 @@ export class HttpService implements IHttpService {
         }
         return _observableOf(null as any);
     }
+
+    getComboComponents(comboId?: string | undefined): Observable<ComboComponentDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/GetComboComponents?";
+        if (comboId === null)
+            throw new Error("The parameter 'comboId' cannot be null.");
+        else if (comboId !== undefined)
+            url_ += "comboId=" + encodeURIComponent("" + comboId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetComboComponents(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetComboComponents(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ComboComponentDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ComboComponentDTO[]>;
+        }));
+    }
+
+    protected processGetComboComponents(response: HttpResponseBase): Observable<ComboComponentDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ComboComponentDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    saveComboComposition(request: SaveComboRequest): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/SaveComboComposition";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSaveComboComposition(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSaveComboComposition(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSaveComboComposition(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getInventory(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInventoryItemDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetInventory";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetInventory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetInventory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfInventoryItemDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfInventoryItemDTO>;
+        }));
+    }
+
+    protected processGetInventory(response: HttpResponseBase): Observable<DefaultSearchResultsOfInventoryItemDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfInventoryItemDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateInventorySettings(request: UpdateInventorySettingsRequest): Observable<InventoryItemDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateInventorySettings";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateInventorySettings(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateInventorySettings(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<InventoryItemDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<InventoryItemDTO>;
+        }));
+    }
+
+    protected processUpdateInventorySettings(response: HttpResponseBase): Observable<InventoryItemDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = InventoryItemDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    recordStockMovement(request: RecordStockMovementRequest): Observable<InventoryItemDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/RecordStockMovement";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRecordStockMovement(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRecordStockMovement(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<InventoryItemDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<InventoryItemDTO>;
+        }));
+    }
+
+    protected processRecordStockMovement(response: HttpResponseBase): Observable<InventoryItemDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = InventoryItemDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    recordStockCount(request: RecordStockCountRequest): Observable<InventoryItemDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/RecordStockCount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRecordStockCount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRecordStockCount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<InventoryItemDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<InventoryItemDTO>;
+        }));
+    }
+
+    protected processRecordStockCount(response: HttpResponseBase): Observable<InventoryItemDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = InventoryItemDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getStockMovements(search: PagingSearchDTO): Observable<DefaultSearchResultsOfStockMovementDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetStockMovements";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetStockMovements(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetStockMovements(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfStockMovementDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfStockMovementDTO>;
+        }));
+    }
+
+    protected processGetStockMovements(response: HttpResponseBase): Observable<DefaultSearchResultsOfStockMovementDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfStockMovementDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getStoragePlans(search: PagingSearchDTO): Observable<DefaultSearchResultsOfStoragePlanListItemDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetStoragePlans";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetStoragePlans(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetStoragePlans(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfStoragePlanListItemDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfStoragePlanListItemDTO>;
+        }));
+    }
+
+    protected processGetStoragePlans(response: HttpResponseBase): Observable<DefaultSearchResultsOfStoragePlanListItemDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfStoragePlanListItemDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getStoragePlan(id?: string | undefined): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetStoragePlan?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetStoragePlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetStoragePlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processGetStoragePlan(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createStoragePlan(request: SaveStoragePlanRequest): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateStoragePlan";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateStoragePlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateStoragePlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processCreateStoragePlan(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateStoragePlan(request: SaveStoragePlanRequest): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateStoragePlan";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateStoragePlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateStoragePlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processUpdateStoragePlan(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    submitStoragePlan(request: StoragePlanDecisionRequest): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/SubmitStoragePlan";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSubmitStoragePlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSubmitStoragePlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processSubmitStoragePlan(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    approveStoragePlan(request: StoragePlanDecisionRequest): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/ApproveStoragePlan";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processApproveStoragePlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processApproveStoragePlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processApproveStoragePlan(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    rejectStoragePlan(request: StoragePlanDecisionRequest): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/RejectStoragePlan";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRejectStoragePlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRejectStoragePlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processRejectStoragePlan(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    receiveStoragePlan(request: ReceiveStoragePlanRequest): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/ReceiveStoragePlan";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processReceiveStoragePlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processReceiveStoragePlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processReceiveStoragePlan(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    cancelStoragePlan(request: StoragePlanDecisionRequest): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CancelStoragePlan";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCancelStoragePlan(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCancelStoragePlan(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processCancelStoragePlan(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createStoragePlanFromLowStock(request: CreatePlanFromLowStockRequest): Observable<StoragePlanDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateStoragePlanFromLowStock";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateStoragePlanFromLowStock(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateStoragePlanFromLowStock(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StoragePlanDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StoragePlanDTO>;
+        }));
+    }
+
+    protected processCreateStoragePlanFromLowStock(response: HttpResponseBase): Observable<StoragePlanDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StoragePlanDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export class UploadResultDTO implements IUploadResultDTO {
@@ -10429,6 +11333,10 @@ export class FoodAndDrinkDTO implements IFoodAndDrinkDTO {
     imageUrl?: string | undefined;
     description?: string | undefined;
     isAvailable?: boolean;
+    trackInventory?: boolean;
+    isCombo?: boolean;
+    availableQuantity?: number | undefined;
+    isOutOfStock?: boolean;
 
     constructor(data?: IFoodAndDrinkDTO) {
         if (data) {
@@ -10448,6 +11356,10 @@ export class FoodAndDrinkDTO implements IFoodAndDrinkDTO {
             this.imageUrl = _data["imageUrl"];
             this.description = _data["description"];
             this.isAvailable = _data["isAvailable"];
+            this.trackInventory = _data["trackInventory"];
+            this.isCombo = _data["isCombo"];
+            this.availableQuantity = _data["availableQuantity"];
+            this.isOutOfStock = _data["isOutOfStock"];
         }
     }
 
@@ -10467,6 +11379,10 @@ export class FoodAndDrinkDTO implements IFoodAndDrinkDTO {
         data["imageUrl"] = this.imageUrl;
         data["description"] = this.description;
         data["isAvailable"] = this.isAvailable;
+        data["trackInventory"] = this.trackInventory;
+        data["isCombo"] = this.isCombo;
+        data["availableQuantity"] = this.availableQuantity;
+        data["isOutOfStock"] = this.isOutOfStock;
         return data;
     }
 }
@@ -10479,6 +11395,10 @@ export interface IFoodAndDrinkDTO {
     imageUrl?: string | undefined;
     description?: string | undefined;
     isAvailable?: boolean;
+    trackInventory?: boolean;
+    isCombo?: boolean;
+    availableQuantity?: number | undefined;
+    isOutOfStock?: boolean;
 }
 
 export class CreateFoodAndDrinkRequest implements ICreateFoodAndDrinkRequest {
@@ -12019,7 +12939,7 @@ export interface IDefaultSearchResultsOfInvoiceAdminDTO extends IBaseSearchResul
 export class InvoiceAdminDTO implements IInvoiceAdminDTO {
     id?: string;
     code?: string;
-    userId?: string;
+    userId?: string | undefined;
     userName?: string;
     userEmail?: string;
     totalAmount?: number;
@@ -12084,7 +13004,7 @@ export class InvoiceAdminDTO implements IInvoiceAdminDTO {
 export interface IInvoiceAdminDTO {
     id?: string;
     code?: string;
-    userId?: string;
+    userId?: string | undefined;
     userName?: string;
     userEmail?: string;
     totalAmount?: number;
@@ -12142,6 +13062,1233 @@ export class UpdateInvoiceStatusRequest implements IUpdateInvoiceStatusRequest {
 export interface IUpdateInvoiceStatusRequest {
     id?: string;
     status?: InvoiceStatus;
+}
+
+export class ComboComponentDTO implements IComboComponentDTO {
+    componentId?: string;
+    name?: string;
+    quantity?: number;
+    trackInventory?: boolean;
+    isAvailable?: boolean;
+    quantityOnHand?: number | undefined;
+
+    constructor(data?: IComboComponentDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.componentId = _data["componentId"];
+            this.name = _data["name"];
+            this.quantity = _data["quantity"];
+            this.trackInventory = _data["trackInventory"];
+            this.isAvailable = _data["isAvailable"];
+            this.quantityOnHand = _data["quantityOnHand"];
+        }
+    }
+
+    static fromJS(data: any): ComboComponentDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ComboComponentDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["componentId"] = this.componentId;
+        data["name"] = this.name;
+        data["quantity"] = this.quantity;
+        data["trackInventory"] = this.trackInventory;
+        data["isAvailable"] = this.isAvailable;
+        data["quantityOnHand"] = this.quantityOnHand;
+        return data;
+    }
+}
+
+export interface IComboComponentDTO {
+    componentId?: string;
+    name?: string;
+    quantity?: number;
+    trackInventory?: boolean;
+    isAvailable?: boolean;
+    quantityOnHand?: number | undefined;
+}
+
+export class SaveComboRequest implements ISaveComboRequest {
+    comboId?: string;
+    isCombo?: boolean;
+    components?: ComboComponentItem[];
+
+    constructor(data?: ISaveComboRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.comboId = _data["comboId"];
+            this.isCombo = _data["isCombo"];
+            if (Array.isArray(_data["components"])) {
+                this.components = [] as any;
+                for (let item of _data["components"])
+                    this.components!.push(ComboComponentItem.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SaveComboRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveComboRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["comboId"] = this.comboId;
+        data["isCombo"] = this.isCombo;
+        if (Array.isArray(this.components)) {
+            data["components"] = [];
+            for (let item of this.components)
+                data["components"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ISaveComboRequest {
+    comboId?: string;
+    isCombo?: boolean;
+    components?: ComboComponentItem[];
+}
+
+export class ComboComponentItem implements IComboComponentItem {
+    componentId?: string;
+    quantity?: number;
+
+    constructor(data?: IComboComponentItem) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.componentId = _data["componentId"];
+            this.quantity = _data["quantity"];
+        }
+    }
+
+    static fromJS(data: any): ComboComponentItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new ComboComponentItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["componentId"] = this.componentId;
+        data["quantity"] = this.quantity;
+        return data;
+    }
+}
+
+export interface IComboComponentItem {
+    componentId?: string;
+    quantity?: number;
+}
+
+export abstract class BaseSearchResultsOfInventoryItemDTO implements IBaseSearchResultsOfInventoryItemDTO {
+    results?: InventoryItemDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfInventoryItemDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(InventoryItemDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfInventoryItemDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfInventoryItemDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfInventoryItemDTO {
+    results?: InventoryItemDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfInventoryItemDTO extends BaseSearchResultsOfInventoryItemDTO implements IDefaultSearchResultsOfInventoryItemDTO {
+
+    constructor(data?: IDefaultSearchResultsOfInventoryItemDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfInventoryItemDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfInventoryItemDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfInventoryItemDTO extends IBaseSearchResultsOfInventoryItemDTO {
+}
+
+export class InventoryItemDTO implements IInventoryItemDTO {
+    id?: string;
+    theaterId?: string;
+    name?: string;
+    imageUrl?: string | undefined;
+    price?: number;
+    isAvailable?: boolean;
+    trackInventory?: boolean;
+    quantityOnHand?: number;
+    lowStockThreshold?: number;
+    targetStockLevel?: number;
+    isLowStock?: boolean;
+    isOutOfStock?: boolean;
+    suggestedReorderQuantity?: number;
+
+    constructor(data?: IInventoryItemDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.theaterId = _data["theaterId"];
+            this.name = _data["name"];
+            this.imageUrl = _data["imageUrl"];
+            this.price = _data["price"];
+            this.isAvailable = _data["isAvailable"];
+            this.trackInventory = _data["trackInventory"];
+            this.quantityOnHand = _data["quantityOnHand"];
+            this.lowStockThreshold = _data["lowStockThreshold"];
+            this.targetStockLevel = _data["targetStockLevel"];
+            this.isLowStock = _data["isLowStock"];
+            this.isOutOfStock = _data["isOutOfStock"];
+            this.suggestedReorderQuantity = _data["suggestedReorderQuantity"];
+        }
+    }
+
+    static fromJS(data: any): InventoryItemDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new InventoryItemDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["theaterId"] = this.theaterId;
+        data["name"] = this.name;
+        data["imageUrl"] = this.imageUrl;
+        data["price"] = this.price;
+        data["isAvailable"] = this.isAvailable;
+        data["trackInventory"] = this.trackInventory;
+        data["quantityOnHand"] = this.quantityOnHand;
+        data["lowStockThreshold"] = this.lowStockThreshold;
+        data["targetStockLevel"] = this.targetStockLevel;
+        data["isLowStock"] = this.isLowStock;
+        data["isOutOfStock"] = this.isOutOfStock;
+        data["suggestedReorderQuantity"] = this.suggestedReorderQuantity;
+        return data;
+    }
+}
+
+export interface IInventoryItemDTO {
+    id?: string;
+    theaterId?: string;
+    name?: string;
+    imageUrl?: string | undefined;
+    price?: number;
+    isAvailable?: boolean;
+    trackInventory?: boolean;
+    quantityOnHand?: number;
+    lowStockThreshold?: number;
+    targetStockLevel?: number;
+    isLowStock?: boolean;
+    isOutOfStock?: boolean;
+    suggestedReorderQuantity?: number;
+}
+
+export class UpdateInventorySettingsRequest implements IUpdateInventorySettingsRequest {
+    foodAndDrinkId?: string;
+    trackInventory?: boolean;
+    lowStockThreshold?: number;
+    targetStockLevel?: number;
+    openingQuantity?: number | undefined;
+
+    constructor(data?: IUpdateInventorySettingsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodAndDrinkId = _data["foodAndDrinkId"];
+            this.trackInventory = _data["trackInventory"];
+            this.lowStockThreshold = _data["lowStockThreshold"];
+            this.targetStockLevel = _data["targetStockLevel"];
+            this.openingQuantity = _data["openingQuantity"];
+        }
+    }
+
+    static fromJS(data: any): UpdateInventorySettingsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateInventorySettingsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodAndDrinkId"] = this.foodAndDrinkId;
+        data["trackInventory"] = this.trackInventory;
+        data["lowStockThreshold"] = this.lowStockThreshold;
+        data["targetStockLevel"] = this.targetStockLevel;
+        data["openingQuantity"] = this.openingQuantity;
+        return data;
+    }
+}
+
+export interface IUpdateInventorySettingsRequest {
+    foodAndDrinkId?: string;
+    trackInventory?: boolean;
+    lowStockThreshold?: number;
+    targetStockLevel?: number;
+    openingQuantity?: number | undefined;
+}
+
+export class RecordStockMovementRequest implements IRecordStockMovementRequest {
+    foodAndDrinkId?: string;
+    type?: StockMovementType;
+    quantity?: number;
+    reasonCode?: StockReasonCode;
+    note?: string | undefined;
+
+    constructor(data?: IRecordStockMovementRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodAndDrinkId = _data["foodAndDrinkId"];
+            this.type = _data["type"];
+            this.quantity = _data["quantity"];
+            this.reasonCode = _data["reasonCode"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): RecordStockMovementRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RecordStockMovementRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodAndDrinkId"] = this.foodAndDrinkId;
+        data["type"] = this.type;
+        data["quantity"] = this.quantity;
+        data["reasonCode"] = this.reasonCode;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface IRecordStockMovementRequest {
+    foodAndDrinkId?: string;
+    type?: StockMovementType;
+    quantity?: number;
+    reasonCode?: StockReasonCode;
+    note?: string | undefined;
+}
+
+export enum StockMovementType {
+    Receive = 0,
+    Sale = 1,
+    SaleReversal = 2,
+    Adjust = 3,
+    Waste = 4,
+}
+
+export enum StockReasonCode {
+    Other = 0,
+    Expired = 1,
+    Damaged = 2,
+    Spilled = 3,
+    TheftOrLoss = 4,
+    StockCountCorrection = 5,
+    OpeningBalance = 6,
+}
+
+export class RecordStockCountRequest implements IRecordStockCountRequest {
+    foodAndDrinkId?: string;
+    countedQuantity?: number;
+    note?: string | undefined;
+
+    constructor(data?: IRecordStockCountRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodAndDrinkId = _data["foodAndDrinkId"];
+            this.countedQuantity = _data["countedQuantity"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): RecordStockCountRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RecordStockCountRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodAndDrinkId"] = this.foodAndDrinkId;
+        data["countedQuantity"] = this.countedQuantity;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface IRecordStockCountRequest {
+    foodAndDrinkId?: string;
+    countedQuantity?: number;
+    note?: string | undefined;
+}
+
+export abstract class BaseSearchResultsOfStockMovementDTO implements IBaseSearchResultsOfStockMovementDTO {
+    results?: StockMovementDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfStockMovementDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(StockMovementDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfStockMovementDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfStockMovementDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfStockMovementDTO {
+    results?: StockMovementDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfStockMovementDTO extends BaseSearchResultsOfStockMovementDTO implements IDefaultSearchResultsOfStockMovementDTO {
+
+    constructor(data?: IDefaultSearchResultsOfStockMovementDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfStockMovementDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfStockMovementDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfStockMovementDTO extends IBaseSearchResultsOfStockMovementDTO {
+}
+
+export class StockMovementDTO implements IStockMovementDTO {
+    id?: string;
+    foodAndDrinkId?: string;
+    foodAndDrinkName?: string | undefined;
+    theaterId?: string;
+    type?: StockMovementType;
+    quantity?: number;
+    reasonCode?: StockReasonCode | undefined;
+    reason?: string | undefined;
+    invoiceId?: string | undefined;
+    invoiceCode?: string | undefined;
+    storagePlanId?: string | undefined;
+    storagePlanCode?: string | undefined;
+    userId?: string | undefined;
+    userName?: string | undefined;
+    creationTime?: Date;
+
+    constructor(data?: IStockMovementDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.foodAndDrinkId = _data["foodAndDrinkId"];
+            this.foodAndDrinkName = _data["foodAndDrinkName"];
+            this.theaterId = _data["theaterId"];
+            this.type = _data["type"];
+            this.quantity = _data["quantity"];
+            this.reasonCode = _data["reasonCode"];
+            this.reason = _data["reason"];
+            this.invoiceId = _data["invoiceId"];
+            this.invoiceCode = _data["invoiceCode"];
+            this.storagePlanId = _data["storagePlanId"];
+            this.storagePlanCode = _data["storagePlanCode"];
+            this.userId = _data["userId"];
+            this.userName = _data["userName"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): StockMovementDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new StockMovementDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["foodAndDrinkId"] = this.foodAndDrinkId;
+        data["foodAndDrinkName"] = this.foodAndDrinkName;
+        data["theaterId"] = this.theaterId;
+        data["type"] = this.type;
+        data["quantity"] = this.quantity;
+        data["reasonCode"] = this.reasonCode;
+        data["reason"] = this.reason;
+        data["invoiceId"] = this.invoiceId;
+        data["invoiceCode"] = this.invoiceCode;
+        data["storagePlanId"] = this.storagePlanId;
+        data["storagePlanCode"] = this.storagePlanCode;
+        data["userId"] = this.userId;
+        data["userName"] = this.userName;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IStockMovementDTO {
+    id?: string;
+    foodAndDrinkId?: string;
+    foodAndDrinkName?: string | undefined;
+    theaterId?: string;
+    type?: StockMovementType;
+    quantity?: number;
+    reasonCode?: StockReasonCode | undefined;
+    reason?: string | undefined;
+    invoiceId?: string | undefined;
+    invoiceCode?: string | undefined;
+    storagePlanId?: string | undefined;
+    storagePlanCode?: string | undefined;
+    userId?: string | undefined;
+    userName?: string | undefined;
+    creationTime?: Date;
+}
+
+export abstract class BaseSearchResultsOfStoragePlanListItemDTO implements IBaseSearchResultsOfStoragePlanListItemDTO {
+    results?: StoragePlanListItemDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfStoragePlanListItemDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(StoragePlanListItemDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfStoragePlanListItemDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfStoragePlanListItemDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfStoragePlanListItemDTO {
+    results?: StoragePlanListItemDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfStoragePlanListItemDTO extends BaseSearchResultsOfStoragePlanListItemDTO implements IDefaultSearchResultsOfStoragePlanListItemDTO {
+
+    constructor(data?: IDefaultSearchResultsOfStoragePlanListItemDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfStoragePlanListItemDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfStoragePlanListItemDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfStoragePlanListItemDTO extends IBaseSearchResultsOfStoragePlanListItemDTO {
+}
+
+export class StoragePlanListItemDTO implements IStoragePlanListItemDTO {
+    id?: string;
+    code?: string;
+    theaterId?: string;
+    theaterName?: string | undefined;
+    status?: StoragePlanStatus;
+    targetDate?: Date;
+    supplier?: string | undefined;
+    itemCount?: number;
+    totalPlannedQuantity?: number;
+    createdByName?: string | undefined;
+    creationTime?: Date;
+
+    constructor(data?: IStoragePlanListItemDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.theaterId = _data["theaterId"];
+            this.theaterName = _data["theaterName"];
+            this.status = _data["status"];
+            this.targetDate = _data["targetDate"] ? new Date(_data["targetDate"].toString()) : <any>undefined;
+            this.supplier = _data["supplier"];
+            this.itemCount = _data["itemCount"];
+            this.totalPlannedQuantity = _data["totalPlannedQuantity"];
+            this.createdByName = _data["createdByName"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): StoragePlanListItemDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new StoragePlanListItemDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["theaterId"] = this.theaterId;
+        data["theaterName"] = this.theaterName;
+        data["status"] = this.status;
+        data["targetDate"] = this.targetDate ? this.targetDate.toISOString() : <any>undefined;
+        data["supplier"] = this.supplier;
+        data["itemCount"] = this.itemCount;
+        data["totalPlannedQuantity"] = this.totalPlannedQuantity;
+        data["createdByName"] = this.createdByName;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IStoragePlanListItemDTO {
+    id?: string;
+    code?: string;
+    theaterId?: string;
+    theaterName?: string | undefined;
+    status?: StoragePlanStatus;
+    targetDate?: Date;
+    supplier?: string | undefined;
+    itemCount?: number;
+    totalPlannedQuantity?: number;
+    createdByName?: string | undefined;
+    creationTime?: Date;
+}
+
+export enum StoragePlanStatus {
+    Draft = 0,
+    Submitted = 1,
+    Approved = 2,
+    Rejected = 3,
+    Received = 4,
+    Cancelled = 5,
+}
+
+export class StoragePlanDTO extends StoragePlanListItemDTO implements IStoragePlanDTO {
+    note?: string | undefined;
+    submittedAt?: Date | undefined;
+    decidedByName?: string | undefined;
+    decidedAt?: Date | undefined;
+    rejectionReason?: string | undefined;
+    receivedByName?: string | undefined;
+    receivedAt?: Date | undefined;
+    items?: StoragePlanItemDTO[];
+
+    constructor(data?: IStoragePlanDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.note = _data["note"];
+            this.submittedAt = _data["submittedAt"] ? new Date(_data["submittedAt"].toString()) : <any>undefined;
+            this.decidedByName = _data["decidedByName"];
+            this.decidedAt = _data["decidedAt"] ? new Date(_data["decidedAt"].toString()) : <any>undefined;
+            this.rejectionReason = _data["rejectionReason"];
+            this.receivedByName = _data["receivedByName"];
+            this.receivedAt = _data["receivedAt"] ? new Date(_data["receivedAt"].toString()) : <any>undefined;
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(StoragePlanItemDTO.fromJS(item));
+            }
+        }
+    }
+
+    static override fromJS(data: any): StoragePlanDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new StoragePlanDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["note"] = this.note;
+        data["submittedAt"] = this.submittedAt ? this.submittedAt.toISOString() : <any>undefined;
+        data["decidedByName"] = this.decidedByName;
+        data["decidedAt"] = this.decidedAt ? this.decidedAt.toISOString() : <any>undefined;
+        data["rejectionReason"] = this.rejectionReason;
+        data["receivedByName"] = this.receivedByName;
+        data["receivedAt"] = this.receivedAt ? this.receivedAt.toISOString() : <any>undefined;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IStoragePlanDTO extends IStoragePlanListItemDTO {
+    note?: string | undefined;
+    submittedAt?: Date | undefined;
+    decidedByName?: string | undefined;
+    decidedAt?: Date | undefined;
+    rejectionReason?: string | undefined;
+    receivedByName?: string | undefined;
+    receivedAt?: Date | undefined;
+    items?: StoragePlanItemDTO[];
+}
+
+export class StoragePlanItemDTO implements IStoragePlanItemDTO {
+    id?: string;
+    foodAndDrinkId?: string;
+    foodAndDrinkName?: string | undefined;
+    quantityOnHand?: number;
+    plannedQuantity?: number;
+    receivedQuantity?: number | undefined;
+    unitCost?: number | undefined;
+    note?: string | undefined;
+
+    constructor(data?: IStoragePlanItemDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.foodAndDrinkId = _data["foodAndDrinkId"];
+            this.foodAndDrinkName = _data["foodAndDrinkName"];
+            this.quantityOnHand = _data["quantityOnHand"];
+            this.plannedQuantity = _data["plannedQuantity"];
+            this.receivedQuantity = _data["receivedQuantity"];
+            this.unitCost = _data["unitCost"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): StoragePlanItemDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new StoragePlanItemDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["foodAndDrinkId"] = this.foodAndDrinkId;
+        data["foodAndDrinkName"] = this.foodAndDrinkName;
+        data["quantityOnHand"] = this.quantityOnHand;
+        data["plannedQuantity"] = this.plannedQuantity;
+        data["receivedQuantity"] = this.receivedQuantity;
+        data["unitCost"] = this.unitCost;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface IStoragePlanItemDTO {
+    id?: string;
+    foodAndDrinkId?: string;
+    foodAndDrinkName?: string | undefined;
+    quantityOnHand?: number;
+    plannedQuantity?: number;
+    receivedQuantity?: number | undefined;
+    unitCost?: number | undefined;
+    note?: string | undefined;
+}
+
+export class SaveStoragePlanRequest implements ISaveStoragePlanRequest {
+    id?: string | undefined;
+    theaterId?: string;
+    targetDate?: Date;
+    supplier?: string | undefined;
+    note?: string | undefined;
+    items?: SaveStoragePlanItem[];
+
+    constructor(data?: ISaveStoragePlanRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.theaterId = _data["theaterId"];
+            this.targetDate = _data["targetDate"] ? new Date(_data["targetDate"].toString()) : <any>undefined;
+            this.supplier = _data["supplier"];
+            this.note = _data["note"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(SaveStoragePlanItem.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SaveStoragePlanRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveStoragePlanRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["theaterId"] = this.theaterId;
+        data["targetDate"] = this.targetDate ? this.targetDate.toISOString() : <any>undefined;
+        data["supplier"] = this.supplier;
+        data["note"] = this.note;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ISaveStoragePlanRequest {
+    id?: string | undefined;
+    theaterId?: string;
+    targetDate?: Date;
+    supplier?: string | undefined;
+    note?: string | undefined;
+    items?: SaveStoragePlanItem[];
+}
+
+export class SaveStoragePlanItem implements ISaveStoragePlanItem {
+    foodAndDrinkId?: string;
+    plannedQuantity?: number;
+    unitCost?: number | undefined;
+    note?: string | undefined;
+
+    constructor(data?: ISaveStoragePlanItem) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodAndDrinkId = _data["foodAndDrinkId"];
+            this.plannedQuantity = _data["plannedQuantity"];
+            this.unitCost = _data["unitCost"];
+            this.note = _data["note"];
+        }
+    }
+
+    static fromJS(data: any): SaveStoragePlanItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveStoragePlanItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodAndDrinkId"] = this.foodAndDrinkId;
+        data["plannedQuantity"] = this.plannedQuantity;
+        data["unitCost"] = this.unitCost;
+        data["note"] = this.note;
+        return data;
+    }
+}
+
+export interface ISaveStoragePlanItem {
+    foodAndDrinkId?: string;
+    plannedQuantity?: number;
+    unitCost?: number | undefined;
+    note?: string | undefined;
+}
+
+export class StoragePlanDecisionRequest implements IStoragePlanDecisionRequest {
+    id?: string;
+    reason?: string | undefined;
+
+    constructor(data?: IStoragePlanDecisionRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.reason = _data["reason"];
+        }
+    }
+
+    static fromJS(data: any): StoragePlanDecisionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new StoragePlanDecisionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["reason"] = this.reason;
+        return data;
+    }
+}
+
+export interface IStoragePlanDecisionRequest {
+    id?: string;
+    reason?: string | undefined;
+}
+
+export class ReceiveStoragePlanRequest implements IReceiveStoragePlanRequest {
+    id?: string;
+    items?: ReceiveStoragePlanItem[] | undefined;
+
+    constructor(data?: IReceiveStoragePlanRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ReceiveStoragePlanItem.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ReceiveStoragePlanRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ReceiveStoragePlanRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IReceiveStoragePlanRequest {
+    id?: string;
+    items?: ReceiveStoragePlanItem[] | undefined;
+}
+
+export class ReceiveStoragePlanItem implements IReceiveStoragePlanItem {
+    storagePlanItemId?: string;
+    receivedQuantity?: number;
+
+    constructor(data?: IReceiveStoragePlanItem) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.storagePlanItemId = _data["storagePlanItemId"];
+            this.receivedQuantity = _data["receivedQuantity"];
+        }
+    }
+
+    static fromJS(data: any): ReceiveStoragePlanItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new ReceiveStoragePlanItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["storagePlanItemId"] = this.storagePlanItemId;
+        data["receivedQuantity"] = this.receivedQuantity;
+        return data;
+    }
+}
+
+export interface IReceiveStoragePlanItem {
+    storagePlanItemId?: string;
+    receivedQuantity?: number;
+}
+
+export class CreatePlanFromLowStockRequest implements ICreatePlanFromLowStockRequest {
+    theaterId?: string;
+
+    constructor(data?: ICreatePlanFromLowStockRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+        }
+    }
+
+    static fromJS(data: any): CreatePlanFromLowStockRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreatePlanFromLowStockRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        return data;
+    }
+}
+
+export interface ICreatePlanFromLowStockRequest {
+    theaterId?: string;
 }
 
 function formatDate(d: Date) {

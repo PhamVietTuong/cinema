@@ -62,3 +62,19 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Shared UI inventory
+
+Any UI used by two or more apps lives here as a configurable `cl-*` component. Check this list before writing markup in an app.
+
+| Component | Purpose | Inputs |
+| --- | --- | --- |
+| `cl-app-shell` | Sidenav, topbar, user card, language/theme switch, logout | `brand`, `menu` (`NavSection[]`), `user`, ... |
+| `cl-login-form` | Split-screen sign-in | `brand`, `titleKey`, `allowedRoles`, `noticeKey`, `noticeLinkKey`, `noticeLinkUrl`; output `rejected` |
+| `cl-status-pill` | Coloured status pill; labels/colours from `cinema.model.ts` (`statusPillSpec`) | `kind` (`invoice` / `storagePlan` / `stockLevel`), `value` |
+| `cl-empty-state` | "Nothing here" placeholder | `messageKey`, `hintKey`, `icon` |
+| `cl-filter-bar` | Filter card for paged lists, bound to the page's `searchForm` | `form`, `fields` (`FilterBarField[]`: text / select / toggle), `titleKey`; output `filtersChange` |
+| `cl-reason-dialog` | Confirm / reject / receive with reason code, note and quantity lines; open via `DialogService.openReasonDialog()` | `ReasonDialogData`: `titleKey`, `confirmKey`, `confirmColor`, `hintKey`, `codes`, `note`, `lines` |
+| `cl-confirm-dialog` | Yes/No confirmation (`DialogService.openConfirmDialog()`) | `ConfirmDialogData` |
+
+Enum label maps and pill colours always live in `interfaces/cinema.model.ts`, never inline in a feature component.
