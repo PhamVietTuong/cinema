@@ -1,4 +1,3 @@
-using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Concession;
 using Cinema.Foundation.Logging;
@@ -8,21 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cinema.Service.WebApiHost.Controllers;
 
-/// <summary>Staff-app concessions: the food pickup queue, order hand-over and low-stock alerts.</summary>
-[ApiController]
-[Route("api/[controller]/[action]")]
-[ApiExplorerSettings(GroupName = "staff")]
-[Authorize(Roles = RoleNames.Concession)]
-public class ConcessionController : ApiControllerBase
+public partial class CinemaController
 {
-    private readonly IConcessionManager _concessions;
-
-    public ConcessionController(IConcessionManager concessions)
-    {
-        _concessions = concessions;
-    }
+    #region Concession
 
     /// <summary>Paid orders waiting to be prepared or handed over, by earliest showtime. Day null = today.</summary>
+    [Authorize(Roles = RoleNames.Concession)]
     [HttpPost]
     [ProducesResponseType(typeof(List<PickupOrderDTO>), 200)]
     public async Task<IActionResult> GetPickupQueue([FromBody] GetPickupQueueRequest request)
@@ -44,6 +34,7 @@ public class ConcessionController : ApiControllerBase
     }
 
     /// <summary>Moves an order one step (Preparing, Ready, HandedOver). An illegal move is 400.</summary>
+    [Authorize(Roles = RoleNames.Concession)]
     [HttpPost]
     [ProducesResponseType(typeof(PickupOrderDTO), 200)]
     public async Task<IActionResult> SetFoodStatus([FromBody] SetFoodStatusRequest request)
@@ -65,6 +56,7 @@ public class ConcessionController : ApiControllerBase
     }
 
     /// <summary>Tracked items at or under their low-stock threshold.</summary>
+    [Authorize(Roles = RoleNames.Concession)]
     [HttpPost]
     [ProducesResponseType(typeof(List<LowStockItemDTO>), 200)]
     public async Task<IActionResult> GetLowStock([FromBody] GetLowStockRequest request)
@@ -86,6 +78,7 @@ public class ConcessionController : ApiControllerBase
     }
 
     /// <summary>Finds an order by the invoice code the customer shows (404 when unknown or another theater's).</summary>
+    [Authorize(Roles = RoleNames.Concession)]
     [HttpPost]
     [ProducesResponseType(typeof(PickupOrderDTO), 200)]
     public async Task<IActionResult> LookupPickup([FromBody] LookupPickupRequest request)
@@ -105,4 +98,6 @@ public class ConcessionController : ApiControllerBase
             return HandleException(e, nameof(LookupPickup));
         }
     }
+
+    #endregion
 }

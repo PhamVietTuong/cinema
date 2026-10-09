@@ -16,9 +16,10 @@ namespace Cinema.Service.WebApiHost.Controllers;
 [ApiController]
 [Route("api/[controller]/[action]")]
 [ApiExplorerSettings(GroupName = "cinema")]
-public class CinemaController : ApiControllerBase
+public partial class CinemaController : ApiControllerBase
 {
     private const string _adminRole = "Admin";
+    private const string _theaterIdFilter = "theaterId";
 
     private readonly IMovieManager   _movieManager;
     private readonly ITheaterManager _theaterManager;
@@ -44,6 +45,9 @@ public class CinemaController : ApiControllerBase
     private readonly IComboManager               _combos;
     private readonly IWebHostEnvironment         _env;
 
+    // Staff
+    private readonly IConcessionManager _concessions;
+
     public CinemaController(
         IMovieManager movieManager,
         ITheaterManager theaterManager,
@@ -67,9 +71,12 @@ public class CinemaController : ApiControllerBase
         IPatronCategoryManager patronCategories,
         IRoomTypePatronCategoryPriceManager roomTypePatronCategoryPrices,
         IComboManager combos,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        // Staff
+        IConcessionManager concessions)
     {
         _combos              = combos;
+        _concessions         = concessions;
         _movieManager    = movieManager;
         _theaterManager  = theaterManager;
         _ageRestrictions = ageRestrictions;
