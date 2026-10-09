@@ -3,8 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { switchMap } from 'rxjs/operators';
-import { IdentityServiceAgent, CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, UserRoles, THEATER_SCOPED_ROLES } from 'CinemaLib';
+import { IdentityServiceAgent, CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, THEATER_SCOPED_ROLES } from 'CinemaLib';
 
 const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
 
@@ -51,7 +50,6 @@ export class UserDialog {
       userTypeId: [data.user?.userTypeId ?? '', Validators.required],
       status: [data.user?.status ?? IdentityServiceAgent.UserStatus.Active, Validators.required],
       theaterId: [data.user?.theaterId ?? ''],
-      theaterIds: [[] as string[]],
     });
 
     this.form.controls['userTypeId'].valueChanges.subscribe(() => this._syncTheaterValidator());
@@ -65,24 +63,15 @@ export class UserDialog {
       });
     this._cinema.getTheaters(paging)
       .subscribe(r => { this.theaters = r.results ?? []; this._cd.markForCheck(); });
-    if (this.editingId && data.user?.userTypeName === UserRoles.RegionalManager) {
-      this._identity.getUserTheaters(this.editingId)
-        .subscribe(r => { this.form.controls['theaterIds'].setValue(r.theaterIds ?? []); this._cd.markForCheck(); });
-    }
   }
 
   private get _roleName(): string | undefined {
     return this.userTypes.find(t => t.id === this.form.controls['userTypeId'].value)?.name;
   }
 
-  /** The single theater applies only to theater-pinned roles (every staff role except Admin and RegionalManager). */
+  /** The single theater applies only to theater-pinned roles (every staff role except Admin). */
   get needsTheater(): boolean {
     return THEATER_SCOPED_ROLES.includes(this._roleName ?? '');
-  }
-
-  /** A RegionalManager has no User.TheaterId; they are assigned a set of theaters instead. */
-  get needsTheaters(): boolean {
-    return this._roleName === UserRoles.RegionalManager;
   }
 
   private _syncTheaterValidator(): void {
@@ -111,14 +100,8 @@ export class UserDialog {
           name: v.name, email: v.email, phone: v.phone, password: v.password, userTypeId: v.userTypeId, status: v.status, theaterId,
         }));
 
-    const regionalTheaterIds: string[] | null = this.needsTheaters ? (v.theaterIds ?? []) : null;
-    // The theater assignment is saved after the user, because a new user has no id until then.
-    const obs = save$.pipe(switchMap(saved => regionalTheaterIds === null
-      ? [saved]
-      : this._identity.setUserTheaters(IdentityServiceAgent.UserTheatersDTO.fromJS({ userId: saved.id, theaterIds: regionalTheaterIds }))));
-
     this._store.dispatch(showLoading());
-    obs.subscribe({
+    save$.subscribe({
       next: () => {
         this._store.dispatch(showSuccess({}));
         this._dialogRef.close(true);

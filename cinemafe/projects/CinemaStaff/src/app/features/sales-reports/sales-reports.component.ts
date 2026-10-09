@@ -12,9 +12,7 @@ import {
   FilterBarOption,
   SalesGroupByValues,
   SharedModule,
-  UserRoles,
   hideLoading,
-  selectCurrentUser,
   showException,
   showLoading,
 } from 'CinemaLib';
@@ -32,7 +30,7 @@ const MAX_OCCUPANCY_ROWS = 100;
 
 /**
  * Management sales reports: KPI tiles, sales by day/movie/theater/payment/staff/channel and showtime occupancy.
- * An Admin or RegionalManager may narrow to some theaters (none picked = all they may see); a TheaterManager is pinned.
+ * An Admin may narrow to some theaters (none picked = all theaters).
  */
 @Component({
   selector: 'staff-sales-reports',
@@ -189,11 +187,6 @@ export class SalesReportsComponent {
   private readonly _store = inject(Store);
   private readonly _cinema = inject(CinemaServiceAgent.HttpService);
 
-  private readonly _user = this._store.selectSignal(selectCurrentUser);
-  /** A TheaterManager is pinned to their own theater and gets no theater picker. */
-  readonly pinnedTheaterId = computed(() =>
-    this._user()?.userTypeName === UserRoles.TheaterManager ? (this._user()?.theaterId ?? null) : null);
-
   readonly form = this._fb.group({
     from: [localDayString(new Date(), 6)],
     to: [localDayString(new Date())],
@@ -211,9 +204,7 @@ export class SalesReportsComponent {
         options: SalesGroupByValues.map(v => ({ value: '' + v.value, labelKey: v.name })),
       },
     ];
-    if (!this.pinnedTheaterId()) {
-      fields.push({ key: 'theaterIds', type: 'multiselect', labelKey: 'salesReports.theaters', options: this._theaterOptions() });
-    }
+    fields.push({ key: 'theaterIds', type: 'multiselect', labelKey: 'salesReports.theaters', options: this._theaterOptions() });
     return fields;
   });
 
@@ -227,9 +218,6 @@ export class SalesReportsComponent {
   readonly occupancyRows = computed(() => (this.occupancy()?.rows ?? []).slice(0, MAX_OCCUPANCY_ROWS));
 
   constructor() {
-    if (this.pinnedTheaterId()) {
-      return;
-    }
     this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: {} })).subscribe({
       next: result => this._theaterOptions.set((result.results ?? []).map(t => ({ value: t.id ?? '', label: t.name ?? '' }))),
       error: error => this._store.dispatch(showException({ error })),
@@ -251,12 +239,11 @@ export class SalesReportsComponent {
       return;
     }
     const value = this.form.value;
-    const pinned = this.pinnedTheaterId();
     const request = buildReportRequest(
       value.from ?? '',
       value.to ?? '',
       Number(value.groupBy) as CinemaServiceAgent.SalesGroupBy,
-      pinned ? [pinned] : (value.theaterIds ?? []),
+      value.theaterIds ?? [],
     );
     this._store.dispatch(showLoading());
     forkJoin({

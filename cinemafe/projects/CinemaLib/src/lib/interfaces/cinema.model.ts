@@ -5,11 +5,6 @@ export enum UserRole {
   Admin = 'Admin',
   Customer = 'Khách Hàng',
   TheaterStaff = 'Nhân viên rạp',
-  TheaterManager = 'Quản lý rạp',
-  BoxOfficeStaff = 'Nhân viên bán vé',
-  GateStaff = 'Nhân viên soát vé',
-  KitchenStaff = 'Nhân viên bếp',
-  RegionalManager = 'Quản lý vùng',
 }
 
 // NOTE: display-label lookups for NSwag-generated enums (like ProjectionForm below)
