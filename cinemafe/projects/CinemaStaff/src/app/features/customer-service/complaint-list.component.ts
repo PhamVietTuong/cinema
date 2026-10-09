@@ -60,7 +60,7 @@ import { complaintFilters } from './customer-service.logic';
               <td>{{ row.invoiceCode }}</td>
               <td><cl-status-pill kind="complaint" [value]="row.status" /></td>
               <td>{{ row.assignedToName }}</td>
-              <td>{{ row.creationTime | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
             </tr>
           }
         </tbody>

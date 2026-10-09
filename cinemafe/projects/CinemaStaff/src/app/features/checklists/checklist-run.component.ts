@@ -43,7 +43,7 @@ import { canComplete, checklistProgress, missingRequired } from './checklist-rul
       </div>
 
       @if (run.completedAt) {
-        <div class="completed"><mat-icon>check_circle</mat-icon> {{ 'checklists.run.completedAt' | translate: { time: (run.completedAt | date: 'dd/MM/yyyy HH:mm') } }}</div>
+        <div class="completed"><mat-icon>check_circle</mat-icon> {{ 'checklists.run.completedAt' | translate: { time: (run.completedAt | serverUtc | date: 'dd/MM/yyyy HH:mm') } }}</div>
       }
 
       <ul class="items">
@@ -61,7 +61,7 @@ import { canComplete, checklistProgress, missingRequired } from './checklist-rul
                 (input)="onNote(item.id!, $any($event.target).value)" (blur)="saveNote(item)">
             </mat-form-field>
             @if (item.isDone && item.doneByName) {
-              <span class="who">{{ item.doneByName }} · {{ item.doneAt | date: 'HH:mm' }}</span>
+              <span class="who">{{ item.doneByName }} · {{ item.doneAt | serverUtc | date: 'HH:mm' }}</span>
             }
           </li>
         }

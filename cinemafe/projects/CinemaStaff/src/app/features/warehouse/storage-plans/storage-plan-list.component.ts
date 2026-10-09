@@ -71,7 +71,7 @@ import { TheaterContextService } from '../../../core/theater-context.service';
                 <td class="num">{{ row.itemCount }}</td>
                 <td class="num">{{ row.totalPlannedQuantity }}</td>
                 <td>{{ row.createdByName }}</td>
-                <td>{{ row.creationTime | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
               </tr>
             }
           </tbody>

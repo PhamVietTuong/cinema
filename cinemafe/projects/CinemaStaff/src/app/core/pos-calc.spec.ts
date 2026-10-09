@@ -1,6 +1,6 @@
 import { StaffServiceAgent } from 'CinemaLib';
 import {
-  PosFoodLine, PosTicket, TenderEntry, foodItems, foodsTotal, hasOverride, remainingAfter, seatItems, selectionTotal, settle, ticketPrice, ticketsTotal,
+  PosFoodLine, PosTicket, TenderEntry, defaultPriceRow, foodItems, foodsTotal, hasOverride, remainingAfter, seatItems, selectionTotal, settle, ticketPrice, ticketsTotal,
 } from './pos-calc';
 
 const T = StaffServiceAgent.PaymentTender;
@@ -100,5 +100,21 @@ describe('tender settlement', () => {
     const lines = [tender(T.Cash, 120000), tender(T.Card, 0, '')];
     expect(remainingAfter(200000, lines, 1)).toBe(80000);
     expect(remainingAfter(200000, lines, 0)).toBe(200000);
+  });
+});
+
+describe('defaultPriceRow', () => {
+  it('picks the dearest category, not the first by name', () => {
+    const list = [
+      { patronCategoryId: 'student', patronCategoryName: 'Học Sinh', price: 65000 },
+      { patronCategoryId: 'adult', patronCategoryName: 'Người Lớn', price: 90000 },
+      { patronCategoryId: 'child', patronCategoryName: 'Trẻ Em', price: 50000 },
+    ];
+    expect(defaultPriceRow(list)?.patronCategoryId).toBe('adult');
+  });
+
+  it('breaks price ties by name and tolerates an empty list', () => {
+    expect(defaultPriceRow([{ patronCategoryName: 'B', price: 1 }, { patronCategoryName: 'A', price: 1 }])?.patronCategoryName).toBe('A');
+    expect(defaultPriceRow([])).toBeUndefined();
   });
 });

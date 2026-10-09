@@ -16,3 +16,4 @@ export * from './lib/store';
 export * from './lib/svg/cinema-svg-icons';
 export * from './lib/components';
 export * from './lib/utils';
+export * from './lib/pipes';

@@ -1,4 +1,4 @@
-import { StaffServiceAgent } from 'CinemaLib';
+import { StaffServiceAgent, fromServerUtc, serverUtcMs } from 'CinemaLib';
 
 type FoodOrderStatus = StaffServiceAgent.FoodOrderStatus;
 const Status = StaffServiceAgent.FoodOrderStatus;
@@ -31,7 +31,7 @@ export function isLegalTransition(from?: FoodOrderStatus, to?: FoodOrderStatus):
 export function ordersInColumn(queue: readonly StaffServiceAgent.PickupOrderDTO[], status: FoodOrderStatus): StaffServiceAgent.PickupOrderDTO[] {
   return queue
     .filter(order => order.foodStatus === status)
-    .sort((a, b) => time(a.showTimeStart) - time(b.showTimeStart) || time(a.paidAt) - time(b.paidAt));
+    .sort((a, b) => time(a.showTimeStart) - time(b.showTimeStart) || utcTime(a.paidAt) - utcTime(b.paidAt));
 }
 
 /** Reducer for `FoodOrderQueued`: adds the order, or replaces it when already on the board. Off-board statuses are ignored. */
@@ -62,12 +62,13 @@ export function needsRefetch(
   return isOnBoard(event.foodStatus) && !queue.some(order => order.invoiceId === event.invoiceId);
 }
 
-/** Whole minutes between `from` and `now`, never negative; 0 for a missing date. */
+/** Whole minutes between a server UTC timestamp (`from`, e.g. paidAt) and `now`, never negative; 0 for a missing date. */
 export function minutesSince(from: Date | undefined, now: Date): number {
-  if (!from) {
+  const start = fromServerUtc(from);
+  if (!start) {
     return 0;
   }
-  return Math.max(0, Math.floor((now.getTime() - new Date(from).getTime()) / 60000));
+  return Math.max(0, Math.floor((now.getTime() - start.getTime()) / 60000));
 }
 
 function cloneWithStatus(order: StaffServiceAgent.PickupOrderDTO, status: FoodOrderStatus): StaffServiceAgent.PickupOrderDTO {
@@ -78,4 +79,9 @@ function cloneWithStatus(order: StaffServiceAgent.PickupOrderDTO, status: FoodOr
 
 function time(value?: Date): number {
   return value ? new Date(value).getTime() : Number.MAX_SAFE_INTEGER;
+}
+
+function utcTime(value?: Date): number {
+  const ms = serverUtcMs(value);
+  return isNaN(ms) ? Number.MAX_SAFE_INTEGER : ms;
 }

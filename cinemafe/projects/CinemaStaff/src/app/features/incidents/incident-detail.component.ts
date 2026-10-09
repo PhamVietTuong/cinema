@@ -30,7 +30,7 @@ import { RoomSeatPickerComponent } from '../../core/room-seat-picker.component';
           <cl-status-pill kind="incident" [value]="inc.status" />
           <cl-status-pill kind="incidentSeverity" [value]="inc.severity" />
         </h1>
-        <p class="ad-sub">{{ categoryLabel(inc.category) | translate }} · {{ inc.reportedByName }} · {{ inc.creationTime | date: 'dd/MM/yyyy HH:mm' }}</p>
+        <p class="ad-sub">{{ categoryLabel(inc.category) | translate }} · {{ inc.reportedByName }} · {{ inc.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</p>
       </div>
     </div>
 
@@ -57,7 +57,7 @@ import { RoomSeatPickerComponent } from '../../core/room-seat-picker.component';
         }
         @if (inc.resolvedAt) {
           <dt>{{ 'incidents.detail.resolution' | translate }}</dt>
-          <dd>{{ inc.resolvedByName }} · {{ inc.resolvedAt | date: 'dd/MM/yyyy HH:mm' }}
+          <dd>{{ inc.resolvedByName }} · {{ inc.resolvedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}
             @if (inc.resolutionNote) { <br>{{ inc.resolutionNote }} }
           </dd>
         }

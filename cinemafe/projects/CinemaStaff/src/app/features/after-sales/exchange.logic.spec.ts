@@ -107,3 +107,10 @@ describe('exchangeSubmitErrors', () => {
     expect(exchangeSubmitErrors(state({ diff, settlement: exchangeSettlement(diff, []), drawerOpen: false, refundTender: Tender.Card }))).toEqual([]);
   });
 });
+
+describe('exchangeDifference with an empty cart', () => {
+  it('shows no refund until a replacement is picked', () => {
+    expect(exchangeDifference(198_000, 0, false)).toEqual({ difference: 0, collect: 0, payBack: 0 });
+    expect(exchangeDifference(198_000, 0, true).payBack).toBe(198_000);
+  });
+});

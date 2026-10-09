@@ -9,7 +9,7 @@ import {
   StaffServiceAgent, apiErrorMessage, foodOrderCap, isGroupBlocked, seatGroupOf, seatLabel,
 } from 'CinemaLib';
 import { ManagerApprovalService } from './manager-approval.service';
-import { PosFoodLine, PosTicket, foodItems, foodUnitPrice, seatItems, ticketPrice } from './pos-calc';
+import { PosFoodLine, PosTicket, defaultPriceRow, foodItems, foodUnitPrice, seatItems, ticketPrice } from './pos-calc';
 import { PriceOverrideDialog } from './price-override.dialog';
 import { TheaterContextService } from './theater-context.service';
 
@@ -279,7 +279,7 @@ export class CounterCartService implements OnDestroy {
       if (isGroupBlocked(group)) {
         return;
       }
-      const defaultRow = this.rowsFor(!!seat.isDouble)[0];
+      const defaultRow = defaultPriceRow(this.rowsFor(!!seat.isDouble));
       if (!defaultRow) {
         this.seatWarning.set(this._translate.instant('pos.seats.noCategory'));
         return;

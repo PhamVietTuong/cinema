@@ -32,7 +32,7 @@ import { ResolveComplaintChoice, ResolveComplaintDialogComponent, ResolveComplai
         <h1 class="ad-h1">{{ categoryLabel(c.category) | translate }}
           <cl-status-pill kind="complaint" [value]="c.status" />
         </h1>
-        <p class="ad-sub">{{ c.createdByName }} · {{ c.creationTime | date: 'dd/MM/yyyy HH:mm' }}</p>
+        <p class="ad-sub">{{ c.createdByName }} · {{ c.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</p>
       </div>
     </div>
 
@@ -60,7 +60,7 @@ import { ResolveComplaintChoice, ResolveComplaintDialogComponent, ResolveComplai
               @if (c.compensationAmount) { · {{ c.compensationAmount | number:'1.0-0' }} }
               @if (c.compensationRef) { · {{ c.compensationRef }} }
             }
-            {{ c.resolvedByName }} · {{ c.resolvedAt | date: 'dd/MM/yyyy HH:mm' }}
+            {{ c.resolvedByName }} · {{ c.resolvedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}
             @if (c.resolutionNote) { <br>{{ c.resolutionNote }} }
           </dd>
         }

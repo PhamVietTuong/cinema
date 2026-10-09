@@ -71,7 +71,7 @@ export interface ExchangeDialogData {
           <h2 class="ad-card-title">{{ 'afterSales.exchange.difference' | translate }}</h2>
           <dl class="xd-diff">
             <div><dt>{{ 'afterSales.exchange.oldAmount' | translate }}</dt><dd>{{ oldAmount() | number:'1.0-0' }}đ</dd></div>
-            <div><dt>{{ 'afterSales.exchange.newAmount' | translate }}</dt><dd>{{ cart.due() | number:'1.0-0' }}đ</dd></div>
+            <div><dt>{{ 'afterSales.exchange.newAmount' | translate }}</dt><dd>{{ cart.hasItems() ? (cart.due() | number:'1.0-0') + 'đ' : '-' }}</dd></div>
             @if (diff().collect > 0) {
               <div class="is-collect"><dt>{{ 'afterSales.exchange.collect' | translate }}</dt><dd>{{ diff().collect | number:'1.0-0' }}đ</dd></div>
             } @else if (diff().payBack > 0) {
@@ -140,7 +140,7 @@ export class ExchangeDialogComponent {
   readonly receipt = signal<SaleReceipt | null>(null);
 
   readonly oldAmount = computed(() => this.data.invoice.finalAmount ?? 0);
-  readonly diff = computed(() => exchangeDifference(this.oldAmount(), this.cart.due()));
+  readonly diff = computed(() => exchangeDifference(this.oldAmount(), this.cart.due(), this.cart.hasItems()));
   readonly settlement = computed(() => exchangeSettlement(this.diff(), this.tenders()));
   readonly needsDrawer = computed(() => exchangeNeedsDrawer(this.diff(), this.settlement(), this.refundTender()));
   readonly needsPin = computed(() => !this._override.isApprover());

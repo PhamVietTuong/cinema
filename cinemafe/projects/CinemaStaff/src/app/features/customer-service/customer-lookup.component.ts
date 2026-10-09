@@ -88,7 +88,7 @@ import { ResendETicketDialogComponent, ResendETicketDialogData } from './resend-
             <tbody>
               @for (invoice of r.invoices; track invoice.id) {
                 <tr>
-                  <td><strong>{{ invoice.code }}</strong><br><span class="muted">{{ invoice.creationTime | date: 'dd/MM/yyyy HH:mm' }}</span></td>
+                  <td><strong>{{ invoice.code }}</strong><br><span class="muted">{{ invoice.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</span></td>
                   <td>{{ invoice.theaterName }}</td>
                   <td>{{ invoice.movieTitle }}</td>
                   <td>{{ invoice.firstShowStart | date: 'HH:mm dd/MM/yyyy' }}</td>

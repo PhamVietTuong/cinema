@@ -93,15 +93,15 @@ interface ItemMeta {
 
     @if (plan) {
       <dl class="meta-grid">
-        <div><dt>{{ 'storagePlans.list.createdBy' | translate }}</dt><dd>{{ plan.createdByName || '-' }} · {{ plan.creationTime | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        <div><dt>{{ 'storagePlans.list.createdBy' | translate }}</dt><dd>{{ plan.createdByName || '-' }} · {{ plan.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
         @if (plan.submittedAt) {
-          <div><dt>{{ 'storagePlans.detail.submittedAt' | translate }}</dt><dd>{{ plan.submittedAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+          <div><dt>{{ 'storagePlans.detail.submittedAt' | translate }}</dt><dd>{{ plan.submittedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
         }
         @if (plan.decidedAt) {
-          <div><dt>{{ (plan.status === Status.Rejected ? 'storagePlans.detail.rejectedBy' : 'storagePlans.detail.approvedBy') | translate }}</dt><dd>{{ plan.decidedByName || '-' }} · {{ plan.decidedAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+          <div><dt>{{ (plan.status === Status.Rejected ? 'storagePlans.detail.rejectedBy' : 'storagePlans.detail.approvedBy') | translate }}</dt><dd>{{ plan.decidedByName || '-' }} · {{ plan.decidedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
         }
         @if (plan.receivedAt) {
-          <div><dt>{{ 'storagePlans.detail.receivedBy' | translate }}</dt><dd>{{ plan.receivedByName || '-' }} · {{ plan.receivedAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+          <div><dt>{{ 'storagePlans.detail.receivedBy' | translate }}</dt><dd>{{ plan.receivedByName || '-' }} · {{ plan.receivedAt | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
         }
       </dl>
     }

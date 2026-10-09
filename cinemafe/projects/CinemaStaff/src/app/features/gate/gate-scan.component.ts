@@ -103,7 +103,7 @@ const CAMERA_SCAN_INTERVAL_MS = 300;
         }
       }
       @if (usageDetails()) {
-        <div class="detail used">{{ 'gate.usedAt' | translate: { by: r.usedBy ?? '-', at: (r.usedAt | date: 'HH:mm dd/MM/yyyy') } }}</div>
+        <div class="detail used">{{ 'gate.usedAt' | translate: { by: r.usedBy ?? '-', at: (r.usedAt | serverUtc | date: 'HH:mm dd/MM/yyyy') } }}</div>
       }
       <div class="overlay-actions">
         @if (agePrompt()) {

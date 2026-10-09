@@ -32,7 +32,7 @@ export interface StockHistoryDialogData {
           </thead>
           <tbody>
             <tr *ngFor="let m of rows">
-              <td>{{ m.creationTime | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ m.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
               <td>{{ typeLabel(m.type) | translate }}</td>
               <td class="num"><strong [class.qty-pos]="(m.quantity ?? 0) > 0" [class.qty-neg]="(m.quantity ?? 0) < 0">{{ (m.quantity ?? 0) > 0 ? '+' : '' }}{{ m.quantity }}</strong></td>
               <td>

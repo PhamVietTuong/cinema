@@ -35,7 +35,7 @@ export function formatMinutes(minutes: number | undefined): string {
         <mat-icon>timer</mat-icon>
         <div>
           <strong>{{ 'timeClock.clockedIn' | translate }}</strong>
-          <div class="muted">{{ 'timeClock.since' | translate: { time: (status?.openEntry?.clockInAt | date: 'dd/MM HH:mm') } }}</div>
+          <div class="muted">{{ 'timeClock.since' | translate: { time: (status?.openEntry?.clockInAt | serverUtc | date: 'dd/MM HH:mm') } }}</div>
         </div>
       </div>
     } @else {
@@ -116,8 +116,8 @@ export function formatMinutes(minutes: number | undefined): string {
                 @for (entry of sheet; track entry.id) {
                   <tr>
                     <td>{{ entry.userName }}</td>
-                    <td>{{ entry.clockInAt | date: 'dd/MM HH:mm' }}</td>
-                    <td>{{ entry.clockOutAt ? (entry.clockOutAt | date: 'dd/MM HH:mm') : ('timeClock.open' | translate) }}</td>
+                    <td>{{ entry.clockInAt | serverUtc | date: 'dd/MM HH:mm' }}</td>
+                    <td>{{ entry.clockOutAt ? (entry.clockOutAt | serverUtc | date: 'dd/MM HH:mm') : ('timeClock.open' | translate) }}</td>
                     <td class="num">{{ format(entry.durationMinutes) }}</td>
                   </tr>
                 }

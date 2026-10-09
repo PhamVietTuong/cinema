@@ -61,7 +61,7 @@ import { ReportIncidentDialog } from './report-incident.dialog';
                 <td><cl-status-pill kind="incident" [value]="row.status" /></td>
                 <td>{{ row.roomName }} {{ row.seatLabel }}</td>
                 <td>{{ row.reportedByName }}</td>
-                <td>{{ row.creationTime | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
               </tr>
             }
           </tbody>

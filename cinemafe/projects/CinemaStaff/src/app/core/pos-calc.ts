@@ -35,6 +35,14 @@ export interface PriceRowLike {
   price?: number;
 }
 
+/**
+ * The category a newly picked seat starts with: the dearest one of its kind (the standard adult fare), so a cashier never
+ * sells a discounted category by accident; ties fall back to the name. Undefined when there are no rows.
+ */
+export function defaultPriceRow<T extends { price?: number; patronCategoryName?: string }>(rows: readonly T[]): T | undefined {
+  return [...rows].sort((a, b) => (b.price ?? 0) - (a.price ?? 0) || (a.patronCategoryName ?? '').localeCompare(b.patronCategoryName ?? ''))[0];
+}
+
 export interface Settlement {
   due: number;
   /** Everything handed over, cash included. */

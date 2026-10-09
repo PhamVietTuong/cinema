@@ -13,7 +13,11 @@ export interface ExchangeDifference {
 
 const round = (n: number): number => Math.round(n);
 
-export function exchangeDifference(oldFinalAmount: number, newFinalAmount: number): ExchangeDifference {
+/** With nothing picked yet (`hasNewItems` false) there is no difference to show, instead of a refund of the whole old amount. */
+export function exchangeDifference(oldFinalAmount: number, newFinalAmount: number, hasNewItems = true): ExchangeDifference {
+  if (!hasNewItems) {
+    return { difference: 0, collect: 0, payBack: 0 };
+  }
   const difference = round(newFinalAmount) - round(oldFinalAmount);
   return { difference, collect: Math.max(difference, 0), payBack: Math.max(-difference, 0) };
 }

@@ -51,7 +51,7 @@ import { drawerVariance, isValidCount, needsReconciliation, varianceTone } from 
     <mat-card class="panel">
       <h2 class="panel-title">{{ 'cashClose.drawer.title' | translate: { terminal: d.terminalName } }}</h2>
       <dl class="summary">
-        <dt>{{ 'cashClose.drawer.openedAt' | translate }}</dt><dd>{{ d.openedAt | date: 'HH:mm dd/MM/yyyy' }}</dd>
+        <dt>{{ 'cashClose.drawer.openedAt' | translate }}</dt><dd>{{ d.openedAt | serverUtc | date: 'HH:mm dd/MM/yyyy' }}</dd>
         <dt>{{ 'cashClose.drawer.openingFloat' | translate }}</dt><dd>{{ d.openingFloat | currency: 'VND':'symbol':'1.0-0' }}</dd>
         <dt>{{ 'cashClose.drawer.cashSales' | translate }}</dt><dd>{{ d.cashSales | currency: 'VND':'symbol':'1.0-0' }}</dd>
         <dt>{{ 'cashClose.drawer.payIns' | translate }}</dt><dd>{{ d.payIns | currency: 'VND':'symbol':'1.0-0' }}</dd>

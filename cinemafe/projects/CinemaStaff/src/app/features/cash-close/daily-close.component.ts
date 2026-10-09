@@ -129,7 +129,7 @@ import { buildDailyClosePrintHtml } from './daily-close-print';
           <tbody>
             @for (d of r.drawers ?? []; track d.sessionId) {
               <tr>
-                <td>{{ d.terminalName }}<br><span class="muted">{{ d.openedAt | date: 'HH:mm' }} &ndash; {{ d.closedAt | date: 'HH:mm' }}</span></td>
+                <td>{{ d.terminalName }}<br><span class="muted">{{ d.openedAt | serverUtc | date: 'HH:mm' }} &ndash; {{ d.closedAt | serverUtc | date: 'HH:mm' }}</span></td>
                 <td>{{ d.userName }}</td>
                 <td><cl-status-pill kind="drawerStatus" [value]="d.status" /></td>
                 <td class="num">{{ d.expectedCash | currency: 'VND':'symbol':'1.0-0' }}</td>

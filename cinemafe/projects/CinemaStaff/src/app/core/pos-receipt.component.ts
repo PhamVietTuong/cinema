@@ -52,7 +52,7 @@ export interface SaleReceipt {
       <section class="pos-print-sheet">
         <header class="pos-print-head">
           <strong>{{ receipt().theaterName }}</strong>
-          <span>{{ receipt().result.paidAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span>{{ receipt().result.paidAt | serverUtc | date:'dd/MM/yyyy HH:mm' }}</span>
           <span>{{ 'ticket.order' | translate }} {{ receipt().result.invoiceCode }}</span>
         </header>
         <cl-price-breakdown [lines]="lines()" [adjustments]="adjustments()" [total]="receipt().result.finalAmount ?? 0" />

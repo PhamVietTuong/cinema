@@ -57,7 +57,7 @@ const TERMINAL_STORAGE_KEY = 'cinema_staff_terminal';
         @let d = drawerSvc.drawer()!;
         <section class="ad-card drawer-card">
           <h2 class="ad-card-title">{{ 'drawer.status.title' | translate: { terminal: d.terminalName } }}</h2>
-          <p class="muted">{{ 'drawer.status.openedAt' | translate }} {{ d.openedAt | date:'dd/MM/yyyy HH:mm' }}</p>
+          <p class="muted">{{ 'drawer.status.openedAt' | translate }} {{ d.openedAt | serverUtc | date:'dd/MM/yyyy HH:mm' }}</p>
           <dl class="drawer-summary">
             <div><dt>{{ 'drawer.status.openingFloat' | translate }}</dt><dd>{{ d.openingFloat | number:'1.0-0' }}đ</dd></div>
             <div><dt>{{ 'drawer.status.cashSales' | translate }}</dt><dd>{{ d.cashSales | number:'1.0-0' }}đ</dd></div>
@@ -113,7 +113,7 @@ const TERMINAL_STORAGE_KEY = 'cinema_staff_terminal';
               <tbody>
                 @for (m of d.recentMovements; track m.id) {
                   <tr>
-                    <td>{{ m.creationTime | date:'HH:mm' }}</td>
+                    <td>{{ m.creationTime | serverUtc | date:'HH:mm' }}</td>
                     <td>{{ typeLabel(m.type) | translate }}</td>
                     <td class="num">{{ m.amount | number:'1.0-0' }}đ</td>
                     <td>{{ m.note }}</td>

@@ -80,7 +80,8 @@ describe('queue reducer', () => {
 
 describe('minutesSince', () => {
   it('floors to whole minutes and never goes negative', () => {
-    const now = new Date('2026-10-04T10:10:30');
+    // paidAt arrives zoneless (UTC) and is parsed as local by the generated client; `now` is a real instant.
+    const now = new Date('2026-10-04T10:10:30Z');
     expect(minutesSince(new Date('2026-10-04T10:00:00'), now)).toBe(10);
     expect(minutesSince(new Date('2026-10-04T10:20:00'), now)).toBe(0);
     expect(minutesSince(undefined, now)).toBe(0);

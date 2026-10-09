@@ -50,7 +50,7 @@ import { TheaterContextService } from '../../../core/theater-context.service';
         <tbody>
           @for (row of rows; track row.id) {
             <tr>
-              <td>{{ row.creationTime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+              <td>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
               <td><cl-status-pill kind="auditAction" [value]="row.action" /></td>
               <td>{{ row.actorName }}</td>
               <td>{{ row.approverName }}</td>
