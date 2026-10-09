@@ -22,7 +22,9 @@ internal static class CinemaControllerFactory
         IDailyCloseManager? dailyClose = null,
         IScheduleBoardManager? board = null,
         IIncidentManager? incidents = null,
-        IChecklistManager? checklists = null)
+        IChecklistManager? checklists = null,
+        IManagerOverrideService? overrides = null,
+        IWorkforceManager? workforce = null)
     {
         var controller = new CinemaController(
             movieManager: null!,
@@ -56,7 +58,9 @@ internal static class CinemaControllerFactory
             dailyClose: dailyClose!,
             board: board!,
             incidents: incidents!,
-            checklists: checklists!)
+            checklists: checklists!,
+            overrides: overrides!,
+            workforce: workforce!)
         {
             ControllerContext = new ControllerContext
             {

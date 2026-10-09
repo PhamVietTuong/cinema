@@ -45,10 +45,10 @@ public class StaffToolsetAuthorizationTests
 
     public static IEnumerable<object[]> ApproverOnlyActions()
     {
-        foreach (var action in new[] { nameof(WorkforceController.SaveShift), nameof(WorkforceController.DeleteShift), nameof(WorkforceController.GetRoster),
-            nameof(WorkforceController.GetTheaterStaff), nameof(WorkforceController.GetTimeSheet), nameof(WorkforceController.SaveTask), nameof(WorkforceController.GetTasks) })
+        foreach (var action in new[] { nameof(CinemaController.SaveShift), nameof(CinemaController.DeleteShift), nameof(CinemaController.GetRoster),
+            nameof(CinemaController.GetTheaterStaff), nameof(CinemaController.GetTimeSheet), nameof(CinemaController.SaveTask), nameof(CinemaController.GetTasks) })
         {
-            yield return new object[] { typeof(WorkforceController), action };
+            yield return new object[] { typeof(CinemaController), action };
         }
         foreach (var action in new[] { nameof(CinemaController.GetChecklistTemplates), nameof(CinemaController.SaveChecklistTemplate) })
         {
@@ -58,10 +58,10 @@ public class StaffToolsetAuthorizationTests
 
     public static IEnumerable<object[]> EveryStaffActions()
     {
-        foreach (var action in new[] { nameof(WorkforceController.ClockIn), nameof(WorkforceController.ClockOut), nameof(WorkforceController.GetMyClockStatus),
-            nameof(WorkforceController.GetMyShifts), nameof(WorkforceController.GetMyTasks), nameof(WorkforceController.SetMyTaskStatus) })
+        foreach (var action in new[] { nameof(CinemaController.ClockIn), nameof(CinemaController.ClockOut), nameof(CinemaController.GetMyClockStatus),
+            nameof(CinemaController.GetMyShifts), nameof(CinemaController.GetMyTasks), nameof(CinemaController.SetMyTaskStatus) })
         {
-            yield return new object[] { typeof(WorkforceController), action };
+            yield return new object[] { typeof(CinemaController), action };
         }
         foreach (var action in new[] { nameof(CinemaController.GetScheduleBoard), nameof(CinemaController.ReportIncident), nameof(CinemaController.GetIncidents),
             nameof(CinemaController.OpenChecklist), nameof(CinemaController.SetChecklistItem), nameof(CinemaController.CompleteChecklist) })
@@ -98,11 +98,5 @@ public class StaffToolsetAuthorizationTests
             (await IsAllowedAsync(controller, action, role)).Should().BeTrue($"{role} may call {action}");
         }
         (await IsAllowedAsync(controller, action, RoleNames.Customer)).Should().BeFalse();
-    }
-
-    [Fact]
-    public void Workforce_IsInTheStaffSwaggerGroup()
-    {
-        typeof(WorkforceController).GetCustomAttribute<Microsoft.AspNetCore.Mvc.ApiExplorerSettingsAttribute>()!.GroupName.Should().Be("staff");
     }
 }
