@@ -1,4 +1,3 @@
-using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Gate;
 using Cinema.Foundation.Logging;
@@ -8,18 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cinema.Service.WebApiHost.Controllers;
 
-/// <summary>Staff-app gate (theater entrance) ticket validation.</summary>
-[ApiController]
-[Route("api/[controller]/[action]")]
-[ApiExplorerSettings(GroupName = "staff")]
-public class GateController : ApiControllerBase
+public partial class CinemaController
 {
-    private readonly IGateManager _gate;
-
-    public GateController(IGateManager gate)
-    {
-        _gate = gate;
-    }
+    #region Gate
 
     /// <summary>
     /// Scans a ticket QR code. A refused scan is still HTTP 200 with the reason in <c>Outcome</c>, so the client's
@@ -67,4 +57,6 @@ public class GateController : ApiControllerBase
             return HandleException(e, nameof(Lookup));
         }
     }
+
+    #endregion
 }

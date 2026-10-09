@@ -30,7 +30,7 @@ public class GateControllerTests
         }
     }
 
-    private static GateController Controller(FakeGate gate, string role, params Guid[] theaterIds)
+    private static CinemaController Controller(FakeGate gate, string role, params Guid[] theaterIds)
     {
         var claims = new List<Claim>
         {
@@ -38,13 +38,7 @@ public class GateControllerTests
             new(ClaimTypes.Role, role)
         };
         claims.AddRange(theaterIds.Select(id => new Claim("theaterId", id.ToString())));
-        return new GateController(gate)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity(claims, "test")) }
-            }
-        };
+        return CinemaControllerFactory.Create(new ClaimsPrincipal(new ClaimsIdentity(claims, "test")), gate: gate);
     }
 
     [Fact]

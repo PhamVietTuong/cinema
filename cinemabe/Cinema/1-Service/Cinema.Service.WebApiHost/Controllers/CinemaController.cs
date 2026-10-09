@@ -47,6 +47,7 @@ public partial class CinemaController : ApiControllerBase
 
     // Staff
     private readonly IConcessionManager _concessions;
+    private readonly IGateManager _gate;
 
     public CinemaController(
         IMovieManager movieManager,
@@ -73,10 +74,12 @@ public partial class CinemaController : ApiControllerBase
         IComboManager combos,
         IWebHostEnvironment env,
         // Staff
-        IConcessionManager concessions)
+        IConcessionManager concessions,
+        IGateManager gate)
     {
         _combos              = combos;
         _concessions         = concessions;
+        _gate                = gate;
         _movieManager    = movieManager;
         _theaterManager  = theaterManager;
         _ageRestrictions = ageRestrictions;
