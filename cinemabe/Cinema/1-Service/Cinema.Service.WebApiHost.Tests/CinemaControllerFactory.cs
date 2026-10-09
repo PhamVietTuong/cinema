@@ -16,7 +16,8 @@ internal static class CinemaControllerFactory
     public static CinemaController Create(
         ClaimsPrincipal user,
         IGateManager? gate = null,
-        IBoxOfficeManager? boxOffice = null)
+        IBoxOfficeManager? boxOffice = null,
+        ICustomerServiceManager? customerService = null)
     {
         var controller = new CinemaController(
             movieManager: null!,
@@ -44,7 +45,8 @@ internal static class CinemaControllerFactory
             env: null!,
             concessions: null!,
             gate: gate!,
-            boxOffice: boxOffice!)
+            boxOffice: boxOffice!,
+            customerService: customerService!)
         {
             ControllerContext = new ControllerContext
             {

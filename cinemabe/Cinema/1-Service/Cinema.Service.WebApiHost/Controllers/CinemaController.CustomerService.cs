@@ -1,4 +1,3 @@
-using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.CustomerService;
 using Cinema.Business.DTO.Requests;
@@ -10,23 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cinema.Service.WebApiHost.Controllers;
 
-/// <summary>Staff customer service: member lookup, e-ticket resend, complaints and compensation.</summary>
-[ApiController]
-[Route("api/[controller]/[action]")]
-[ApiExplorerSettings(GroupName = "staff")]
-public class CustomerServiceController : ApiControllerBase
+public partial class CinemaController
 {
-    private const string _theaterIdFilter = "theaterId";
+    #region CustomerService
 
     /// <summary>Sellers plus the regional manager, who may follow up and approve compensation.</summary>
     private const string _complaintRoles = RoleNames.Sellers + "," + RoleNames.RegionalManager;
-
-    private readonly ICustomerServiceManager _customerService;
-
-    public CustomerServiceController(ICustomerServiceManager customerService)
-    {
-        _customerService = customerService;
-    }
 
     /// <summary>Finds a member by email, phone or invoice code: masked contact, tier, points and the last 20 invoices of the caller's theaters.</summary>
     [Authorize(Roles = RoleNames.Sellers)]
@@ -223,4 +211,6 @@ public class CustomerServiceController : ApiControllerBase
             return HandleException(e, nameof(ResolveComplaint));
         }
     }
+
+    #endregion
 }
