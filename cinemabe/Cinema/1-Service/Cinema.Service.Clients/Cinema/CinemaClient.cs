@@ -19656,6 +19656,8 @@ namespace Cinema.Service.Clients.Cinema
 
         UserTheatersChanged = 16,
 
+        GateScan = 17,
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]

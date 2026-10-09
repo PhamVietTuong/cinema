@@ -314,7 +314,8 @@
       "resendTicket": "Gửi lại vé",
       "blockSeat": "Khóa ghế",
       "blockRoom": "Khóa phòng",
-      "ticketAdmitOverride": "Cho vào ngoại lệ"
+      "ticketAdmitOverride": "Cho vào ngoại lệ",
+      "gateScan": "Quét vé cổng"
     }
   },
   "profile": {

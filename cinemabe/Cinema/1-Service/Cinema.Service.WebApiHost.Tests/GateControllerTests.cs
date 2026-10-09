@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Gate;
+using Cinema.Data.Enums;
 using Cinema.Service.WebApiHost.Controllers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;

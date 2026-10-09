@@ -21,5 +21,7 @@ public enum AuditAction
     BlockRoom = 14,
     TicketAdmitOverride = 15,
     /// <summary>An admin changed the theater assignments of a RegionalManager.</summary>
-    UserTheatersChanged = 16
+    UserTheatersChanged = 16,
+    /// <summary>A gate ticket scan attempt (every outcome, not just admits). Best-effort, not transactional.</summary>
+    GateScan = 17
 }

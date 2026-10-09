@@ -275,6 +275,7 @@ export const AuditActionValues: { value: CinemaServiceAgent.AuditAction; name: s
   { value: CinemaServiceAgent.AuditAction.BlockSeat, name: 'auditLog.action.blockSeat' },
   { value: CinemaServiceAgent.AuditAction.BlockRoom, name: 'auditLog.action.blockRoom' },
   { value: CinemaServiceAgent.AuditAction.TicketAdmitOverride, name: 'auditLog.action.ticketAdmitOverride' },
+  { value: CinemaServiceAgent.AuditAction.GateScan, name: 'auditLog.action.gateScan' },
 ];
 
 /** i18n label key for an AuditAction value. */
