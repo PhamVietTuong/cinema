@@ -314,7 +314,8 @@
       "resendTicket": "Resend ticket",
       "blockSeat": "Block seat",
       "blockRoom": "Block room",
-      "ticketAdmitOverride": "Ticket admit override"
+      "ticketAdmitOverride": "Ticket admit override",
+      "gateScan": "Gate scan"
     }
   },
   "profile": {

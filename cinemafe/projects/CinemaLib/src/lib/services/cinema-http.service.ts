@@ -20914,6 +20914,7 @@ export enum AuditAction {
     BlockRoom = 14,
     TicketAdmitOverride = 15,
     UserTheatersChanged = 16,
+    GateScan = 17,
 }
 
 export class SalesReportDTO implements ISalesReportDTO {
