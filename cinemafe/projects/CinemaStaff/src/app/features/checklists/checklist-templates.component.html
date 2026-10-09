@@ -1,0 +1,82 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <button class="ad-btn ad-btn--ghost" type="button" (click)="back()"><mat-icon>arrow_back</mat-icon> {{ 'opsCommon.back' | translate }}</button>
+      <h1 class="ad-h1">{{ 'checklists.templates.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'checklists.templates.subtitle' | translate }}</p>
+    </div>
+    @if (theaterId) {
+      <div class="ad-toolbar">
+        <button mat-raised-button color="primary" type="button" (click)="startNew()"><mat-icon>add</mat-icon> {{ 'checklists.templates.new' | translate }}</button>
+      </div>
+    }
+  </div>
+
+  @if (!theaterId) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="theaters" messageKey="opsCommon.pickTheater" hintKey="opsCommon.pickTheaterHint" />
+    </mat-card>
+  } @else {
+    <div class="layout">
+      <mat-card class="list-card">
+        @for (tpl of templates; track tpl.id) {
+          <button type="button" class="tpl" [class.tpl--active]="tpl.id === editingId" (click)="edit(tpl)">
+            <strong>{{ tpl.name }}</strong>
+            <span class="muted">{{ kindLabel(tpl.kind) | translate }} · {{ tpl.items?.length ?? 0 }} {{ 'checklists.templates.items' | translate }}</span>
+            @if (!tpl.isActive) {
+              <span class="muted">{{ 'checklists.templates.inactive' | translate }}</span>
+            }
+          </button>
+        }
+        @if (!templates.length) {
+          <cl-empty-state messageKey="checklists.templates.empty" />
+        }
+      </mat-card>
+
+      @if (form) {
+        <mat-card class="form-card">
+          <form [formGroup]="form" (ngSubmit)="save()">
+            <div class="row">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="grow">
+                <mat-label>{{ 'checklists.templates.name' | translate }}</mat-label>
+                <input matInput maxlength="150" formControlName="name">
+                <mat-error>{{ 'common.required' | translate }}</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'checklists.templates.kind' | translate }}</mat-label>
+                <mat-select formControlName="kind">
+                  @for (k of kinds; track k.value) {
+                    <mat-option [value]="k.value">{{ k.name | translate }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-slide-toggle formControlName="isActive">{{ 'checklists.templates.active' | translate }}</mat-slide-toggle>
+            </div>
+
+            <h3 class="ad-card-title">{{ 'checklists.templates.itemsTitle' | translate }}</h3>
+            <div formArrayName="items" class="items">
+              @for (item of items.controls; track item; let i = $index) {
+                <div class="item" [formGroupName]="i">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="grow">
+                    <mat-label>{{ 'checklists.templates.itemText' | translate }}</mat-label>
+                    <input matInput maxlength="300" formControlName="text">
+                    <mat-error>{{ 'common.required' | translate }}</mat-error>
+                  </mat-form-field>
+                  <mat-checkbox formControlName="isRequired">{{ 'checklists.run.required' | translate }}</mat-checkbox>
+                  <button mat-icon-button type="button" [disabled]="i === 0" [attr.aria-label]="'checklists.templates.moveUp' | translate" (click)="move(i, i - 1)"><mat-icon>arrow_upward</mat-icon></button>
+                  <button mat-icon-button type="button" [disabled]="i === items.length - 1" [attr.aria-label]="'checklists.templates.moveDown' | translate" (click)="move(i, i + 1)"><mat-icon>arrow_downward</mat-icon></button>
+                  <button mat-icon-button type="button" [attr.aria-label]="'common.remove' | translate" (click)="removeItem(i)"><mat-icon>delete</mat-icon></button>
+                </div>
+              }
+            </div>
+            <div class="footer">
+              <button mat-stroked-button type="button" (click)="addItem()"><mat-icon>add</mat-icon> {{ 'checklists.templates.addItem' | translate }}</button>
+              <span class="grow"></span>
+              <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+            </div>
+          </form>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

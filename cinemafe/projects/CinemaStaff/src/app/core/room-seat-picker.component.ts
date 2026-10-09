@@ -17,33 +17,8 @@ export function seatLabel(seat: { rowName?: string; colIndex?: number }): string
   selector: 'staff-room-seat-picker',
   standalone: true,
   imports: [SharedModule],
-  template: `
-    <div [formGroup]="group()" class="picker">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'incidents.fields.room' | translate }}</mat-label>
-        <mat-select formControlName="roomId">
-          <mat-option value="">{{ 'incidents.fields.noRoom' | translate }}</mat-option>
-          @for (room of rooms; track room.id) {
-            <mat-option [value]="room.id">{{ room.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      @if (showSeat()) {
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'incidents.fields.seat' | translate }}</mat-label>
-          <mat-select formControlName="seatId">
-            <mat-option value="">{{ 'incidents.fields.noSeat' | translate }}</mat-option>
-            @for (seat of seats; track seat.id) {
-              <mat-option [value]="seat.id">{{ label(seat) }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      }
-    </div>
-  `,
-  styles: [`
-    .picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  `],
+  templateUrl: './room-seat-picker.component.html',
+  styleUrl: './room-seat-picker.component.scss',
 })
 export class RoomSeatPickerComponent implements OnInit {
   readonly group = input.required<FormGroup>();

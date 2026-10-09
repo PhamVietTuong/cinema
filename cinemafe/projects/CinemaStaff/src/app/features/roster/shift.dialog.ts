@@ -21,52 +21,8 @@ export interface ShiftDialogData {
   selector: 'staff-shift-dialog',
   standalone: true,
   imports: [SharedModule],
-  template: `
-    <div mat-dialog-title class="dialog-title">{{ (data.shift ? 'roster.dialog.edit' : 'roster.dialog.new') | translate }}: {{ data.userName }}</div>
-    <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
-        <div class="fields">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'opsCommon.date' | translate }}</mat-label>
-            <input matInput type="date" formControlName="date">
-            <mat-error>{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
-          <div class="row">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ 'roster.dialog.start' | translate }}</mat-label>
-              <input matInput type="time" formControlName="start">
-              <mat-error>{{ 'common.required' | translate }}</mat-error>
-            </mat-form-field>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ 'roster.dialog.end' | translate }}</mat-label>
-              <input matInput type="time" formControlName="end">
-              <mat-error>{{ 'common.required' | translate }}</mat-error>
-            </mat-form-field>
-          </div>
-          <p class="hint">{{ 'roster.dialog.overnightHint' | translate }}</p>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'opsCommon.note' | translate }}</mat-label>
-            <input matInput maxlength="300" formControlName="note">
-          </mat-form-field>
-        </div>
-      </mat-dialog-content>
-      <div mat-dialog-actions class="dialog-actions">
-        @if (data.shift) {
-          <button mat-raised-button color="warn" type="button" (click)="remove()">{{ 'common.remove' | translate }}</button>
-        }
-        <span class="spacer"></span>
-        <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-        <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
-      </div>
-    </form>
-    <button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()"><mat-icon>close</mat-icon></button>
-  `,
-  styles: [`
-    .fields { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .hint { color: var(--ml-muted); font-size: 12px; margin: 0; }
-    .spacer { flex: 1; }
-  `],
+  templateUrl: './shift.dialog.html',
+  styleUrl: './shift.dialog.scss',
 })
 export class ShiftDialog {
   form: FormGroup;

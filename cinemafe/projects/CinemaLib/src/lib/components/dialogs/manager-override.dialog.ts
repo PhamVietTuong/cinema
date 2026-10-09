@@ -32,52 +32,8 @@ export interface ManagerOverrideDialogData {
     CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule,
     MatIconModule, MatInputModule, MatSelectModule, TranslatePipe,
   ],
-  template: `
-<div mat-dialog-title class="dialog-title">{{ (data.titleKey ?? 'override.title') | translate }}</div>
-
-<form [formGroup]="form" (ngSubmit)="submit()" autocomplete="off">
-  <mat-dialog-content>
-    <p class="cl-override-hint">{{ (data.hintKey ?? 'override.hint') | translate }}</p>
-    <div class="cl-override-fields">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'override.approver' | translate }}</mat-label>
-        <mat-select formControlName="approverUserId">
-          @for (a of approvers; track a.id) {
-            <mat-option [value]="a.id">{{ a.name }}</mat-option>
-          }
-        </mat-select>
-        @if (loaded && approvers.length === 0) {
-          <mat-hint>{{ 'override.noApprovers' | translate }}</mat-hint>
-        }
-        @if (form.controls['approverUserId'].hasError('required')) {
-          <mat-error>{{ 'common.required' | translate }}</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'override.pin' | translate }}</mat-label>
-        <input matInput type="password" inputmode="numeric" autocomplete="new-password" maxlength="8" formControlName="pin">
-        @if (form.controls['pin'].invalid && form.controls['pin'].touched) {
-          <mat-error>{{ 'override.pinInvalid' | translate }}</mat-error>
-        }
-      </mat-form-field>
-    </div>
-  </mat-dialog-content>
-
-  <div mat-dialog-actions class="dialog-actions">
-    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-    <button mat-raised-button color="primary" type="submit">{{ 'override.confirm' | translate }}</button>
-  </div>
-</form>
-
-<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
-  <mat-icon>close</mat-icon>
-</button>
-`,
-  styles: [`
-    .cl-override-hint { color: var(--ml-muted, #777); font-size: 13px; }
-    .cl-override-fields { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
-  `],
+  templateUrl: './manager-override.dialog.html',
+  styleUrl: './manager-override.dialog.scss',
 })
 export class ManagerOverrideDialogComponent implements OnInit {
   form: FormGroup;

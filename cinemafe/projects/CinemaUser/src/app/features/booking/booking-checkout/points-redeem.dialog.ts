@@ -18,56 +18,8 @@ export interface PointsRedeemDialogData {
   selector: 'app-points-redeem-dialog',
   standalone: true,
   imports: [DecimalPipe, MatDialogModule, MatIconModule, TranslatePipe],
-  template: `
-    <div class="tk-top">
-      <span class="tk-badge"><mat-icon>star</mat-icon></span>
-      <h2 mat-dialog-title class="tk-title">{{ 'booking.summary.redeemPoints' | translate }}</h2>
-    </div>
-    <div class="tk-body">
-      <p class="tk-note centered">{{ 'booking.summary.pointsBalance' | translate:{ points: data.balance } }}</p>
-
-      <div class="stepper">
-        <button type="button" class="round" [disabled]="points <= 0"
-                [attr.aria-label]="'booking.summary.pointsDecrease' | translate"
-                (pointerdown)="startHold(-1, $event)" (pointerup)="stopHold()" (pointerleave)="stopHold()" (pointercancel)="stopHold()"
-                (keydown.enter)="nudge(-1)" (keydown.space)="nudge(-1); $event.preventDefault()">−</button>
-        <span class="big" aria-live="polite">{{ points }}</span>
-        <button type="button" class="round" [disabled]="points >= data.max"
-                [attr.aria-label]="'booking.summary.pointsIncrease' | translate"
-                (pointerdown)="startHold(1, $event)" (pointerup)="stopHold()" (pointerleave)="stopHold()" (pointercancel)="stopHold()"
-                (keydown.enter)="nudge(1)" (keydown.space)="nudge(1); $event.preventDefault()">+</button>
-      </div>
-
-      <p class="saving">{{ 'booking.summary.pointsSaving' | translate:{ amount: (points * data.pointValue | number:'1.0-0') } }}</p>
-      <p class="tk-note centered">{{ 'booking.summary.pointsHint' | translate:{ max: data.max } }}</p>
-    </div>
-    <div class="tk-foot">
-      <button type="button" class="tk-btn full" (click)="apply()">{{ 'booking.summary.discountApply' | translate }}</button>
-      <button type="button" class="tk-btn ghost" (click)="set(data.max)" [disabled]="data.max === 0 || points === data.max">
-        {{ 'booking.summary.pointsUseMax' | translate }}
-      </button>
-      <button type="button" class="tk-btn text" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-    </div>
-  `,
-  styleUrl: './ticket-dialog.scss',
-  styles: [`
-    .centered { text-align: center; }
-    .stepper { display: flex; align-items: center; justify-content: center; gap: 18px; }
-    .round {
-      width: 48px; height: 48px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; line-height: 1;
-      border: 1px solid var(--ml-rule-strong); background: var(--ml-panel); color: var(--ml-ink);
-      user-select: none; touch-action: manipulation;
-      &:hover:not(:disabled) { border-color: var(--ml-action); }
-      &:disabled { opacity: 0.4; cursor: not-allowed; }
-      &:focus-visible { outline: var(--cx-focus-width) solid var(--ml-action); outline-offset: var(--cx-focus-offset); }
-    }
-    .big {
-      min-width: 3ch; text-align: center;
-      font-family: var(--ml-font-data); font-size: 2.4rem; font-weight: 500; line-height: 1;
-      font-variant-numeric: tabular-nums; color: var(--ml-ink);
-    }
-    .saving { margin: 0; text-align: center; font-weight: 600; color: var(--ml-success-ink); }
-  `],
+  templateUrl: './points-redeem.dialog.html',
+  styleUrls: ['./ticket-dialog.scss', './points-redeem.dialog.scss'],
 })
 export class PointsRedeemDialog implements OnDestroy {
   points: number;

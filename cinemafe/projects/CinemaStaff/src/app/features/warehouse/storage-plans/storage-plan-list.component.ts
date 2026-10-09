@@ -23,81 +23,8 @@ import { TheaterContextService } from '../../../core/theater-context.service';
   selector: 'staff-storage-plan-list',
   standalone: true,
   imports: [SharedModule, StatusPillComponent, EmptyStateComponent, FilterBarComponent],
-  template: `
-<div class="ad-page">
-  <div class="ad-page-header">
-    <div>
-      <h1 class="ad-h1">{{ 'storagePlans.list.title' | translate }}</h1>
-      <p class="ad-sub">{{ 'storagePlans.list.subtitle' | translate }}</p>
-    </div>
-    @if (theaterId) {
-      <div class="ad-toolbar">
-        <button mat-raised-button color="primary" (click)="openNew()">
-          <mat-icon>add</mat-icon> {{ 'storagePlans.list.newPlan' | translate }}
-        </button>
-      </div>
-    }
-  </div>
-
-  @if (!theaterId) {
-    <mat-card class="ad-card--pad-0">
-      <cl-empty-state icon="theaters" messageKey="warehouse.pickTheater" hintKey="warehouse.pickTheaterHint" />
-    </mat-card>
-  } @else {
-    <cl-filter-bar [form]="searchForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
-
-    <mat-card class="ad-card--pad-0">
-      <div class="ad-table-wrap">
-        <table class="ad-table">
-          <thead>
-            <tr>
-              <th>{{ 'storagePlans.list.code' | translate }}</th>
-              <th>{{ 'common.status' | translate }}</th>
-              <th>{{ 'storagePlans.list.targetDate' | translate }}</th>
-              <th>{{ 'storagePlans.list.supplier' | translate }}</th>
-              <th class="num">{{ 'storagePlans.list.itemCount' | translate }}</th>
-              <th class="num">{{ 'storagePlans.list.totalQuantity' | translate }}</th>
-              <th>{{ 'storagePlans.list.createdBy' | translate }}</th>
-              <th>{{ 'common.createdAt' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of rows; track row.id) {
-              <tr class="clickable" (click)="open(row)">
-                <td><strong>{{ row.code }}</strong></td>
-                <td><cl-status-pill kind="storagePlan" [value]="row.status" /></td>
-                <td>{{ row.targetDate | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ row.supplier }}</td>
-                <td class="num">{{ row.itemCount }}</td>
-                <td class="num">{{ row.totalPlannedQuantity }}</td>
-                <td>{{ row.createdByName }}</td>
-                <td>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      @if (!rows.length && !loading) {
-        <cl-empty-state messageKey="storagePlans.list.empty" />
-      }
-      @if (total > 0) {
-        <mat-paginator
-          [length]="total"
-          [pageSize]="pageSize"
-          [pageIndex]="pageIndex"
-          [hidePageSize]="true"
-          (page)="onPage($event.pageIndex)">
-        </mat-paginator>
-      }
-    </mat-card>
-  }
-</div>
-`,
-  styles: [`
-    .clickable { cursor: pointer; }
-    .clickable:hover { background: var(--ml-panel-3, rgba(0, 0, 0, 0.04)); }
-    .num { text-align: right; }
-  `],
+  templateUrl: './storage-plan-list.component.html',
+  styleUrl: './storage-plan-list.component.scss',
 })
 export class StoragePlanListComponent implements OnInit {
   readonly pageSize = 10;

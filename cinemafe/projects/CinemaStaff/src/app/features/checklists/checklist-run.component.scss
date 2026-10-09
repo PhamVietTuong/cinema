@@ -1,0 +1,13 @@
+.run-card { padding: 16px; }
+.progress { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.bar { flex: 1; height: 6px; background: var(--ml-panel-3, rgba(128, 128, 128, 0.2)); border-radius: 3px; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--ml-action-strong); }
+.completed { display: flex; align-items: center; gap: 8px; color: var(--ml-success-ink); margin-bottom: 8px; }
+.items { list-style: none; margin: 0; padding: 0; }
+.item { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(200px, 1fr) auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--ml-line, rgba(128, 128, 128, 0.2)); }
+.item--done { opacity: 0.85; }
+.req { margin-left: 6px; font-size: 11px; color: var(--ml-danger-ink); text-transform: uppercase; }
+.who { color: var(--ml-muted); font-size: 12px; }
+.footer { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 16px; }
+.hint { color: var(--ml-muted); }
+@media (max-width: 720px) { .item { grid-template-columns: 1fr; } }

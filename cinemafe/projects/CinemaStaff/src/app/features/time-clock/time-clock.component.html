@@ -1,0 +1,111 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'timeClock.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'timeClock.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <mat-card class="card clock">
+    @if (status?.isClockedIn) {
+      <div class="state state--in">
+        <mat-icon>timer</mat-icon>
+        <div>
+          <strong>{{ 'timeClock.clockedIn' | translate }}</strong>
+          <div class="muted">{{ 'timeClock.since' | translate: { time: (status?.openEntry?.clockInAt | serverUtc | date: 'dd/MM HH:mm') } }}</div>
+        </div>
+      </div>
+    } @else {
+      <div class="state">
+        <mat-icon>timer_off</mat-icon>
+        <strong>{{ 'timeClock.clockedOut' | translate }}</strong>
+      </div>
+    }
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="note">
+      <mat-label>{{ 'opsCommon.note' | translate }}</mat-label>
+      <input matInput maxlength="300" [value]="note" (input)="note = $any($event.target).value">
+    </mat-form-field>
+    @if (status?.isClockedIn) {
+      <button mat-raised-button color="warn" type="button" [disabled]="busy" (click)="clockOut()"><mat-icon>logout</mat-icon> {{ 'timeClock.clockOut' | translate }}</button>
+    } @else {
+      <button mat-raised-button color="primary" type="button" [disabled]="busy" (click)="clockIn()"><mat-icon>login</mat-icon> {{ 'timeClock.clockIn' | translate }}</button>
+    }
+  </mat-card>
+
+  <mat-card class="card ad-card--pad-0">
+    <div class="head"><h3 class="ad-card-title">{{ 'timeClock.myShifts' | translate }}</h3></div>
+    @if (myShifts.length) {
+      <div class="ad-table-wrap">
+        <table class="ad-table">
+          <thead><tr><th>{{ 'opsCommon.date' | translate }}</th><th>{{ 'timeClock.time' | translate }}</th><th>{{ 'opsCommon.note' | translate }}</th></tr></thead>
+          <tbody>
+            @for (shift of myShifts; track shift.id) {
+              <tr>
+                <td>{{ shift.startTime | date: 'EEE dd/MM/yyyy' }}</td>
+                <td>{{ shift.startTime | date: 'HH:mm' }} - {{ shift.endTime | date: 'HH:mm' }}</td>
+                <td>{{ shift.note }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <cl-empty-state icon="event_busy" messageKey="timeClock.noShifts" />
+    }
+  </mat-card>
+
+  @if (isApprover) {
+    <mat-card class="card">
+      <h3 class="ad-card-title">{{ 'timeClock.timeSheet' | translate }}</h3>
+      @if (!theaterId) {
+        <cl-empty-state icon="theaters" messageKey="opsCommon.pickTheater" hintKey="opsCommon.pickTheaterHint" />
+      } @else {
+        <form [formGroup]="sheetForm" class="filters">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'opsCommon.from' | translate }}</mat-label>
+            <input matInput type="date" formControlName="from">
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'opsCommon.to' | translate }}</mat-label>
+            <input matInput type="date" formControlName="to">
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'roster.staff' | translate }}</mat-label>
+            <mat-select formControlName="userId">
+              <mat-option value="">{{ 'common.all' | translate }}</mat-option>
+              @for (member of staff; track member.id) {
+                <mat-option [value]="member.id">{{ member.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button mat-stroked-button type="button" (click)="loadSheet()"><mat-icon>search</mat-icon> {{ 'timeClock.load' | translate }}</button>
+        </form>
+        @if (sheet.length) {
+          <div class="ad-table-wrap">
+            <table class="ad-table">
+              <thead>
+                <tr>
+                  <th>{{ 'roster.staff' | translate }}</th><th>{{ 'timeClock.in' | translate }}</th><th>{{ 'timeClock.out' | translate }}</th>
+                  <th class="num">{{ 'timeClock.duration' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of sheet; track entry.id) {
+                  <tr>
+                    <td>{{ entry.userName }}</td>
+                    <td>{{ entry.clockInAt | serverUtc | date: 'dd/MM HH:mm' }}</td>
+                    <td>{{ entry.clockOutAt ? (entry.clockOutAt | serverUtc | date: 'dd/MM HH:mm') : ('timeClock.open' | translate) }}</td>
+                    <td class="num">{{ format(entry.durationMinutes) }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot><tr><td colspan="3"><strong>{{ 'timeClock.total' | translate }}</strong></td><td class="num"><strong>{{ format(totalMinutes) }}</strong></td></tr></tfoot>
+            </table>
+          </div>
+        } @else if (sheetLoaded) {
+          <cl-empty-state icon="schedule" messageKey="timeClock.sheetEmpty" />
+        }
+      }
+    </mat-card>
+  }
+</div>

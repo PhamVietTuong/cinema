@@ -1,0 +1,21 @@
+<div mat-dialog-title class="dialog-title">{{ 'afterSales.reprint.ticketsTitle' | translate: { code: data.result.invoiceCode } }}</div>
+<mat-dialog-content>
+  <p class="meta">{{ data.result.movieTitle }} &middot; {{ data.result.roomName }} &middot; {{ data.result.showStart | date: 'HH:mm dd/MM/yyyy' }}</p>
+  <div class="tickets">
+    @for (ticket of data.result.tickets ?? []; track $index) {
+      <div class="ticket">
+        @if (qr[$index]; as src) {
+          <img [src]="src" width="120" height="120" [alt]="'afterSales.reprint.qrAlt' | translate">
+        }
+        <strong>{{ ticket.seatLabel }}</strong>
+        <span class="meta">{{ ticket.seatType }}</span>
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+<div mat-dialog-actions class="dialog-actions">
+  <button mat-raised-button type="button" (click)="close()">{{ 'common.close' | translate }}</button>
+  <button mat-raised-button color="primary" type="button" (click)="print()">
+    <mat-icon>print</mat-icon> {{ 'afterSales.reprint.print' | translate }}
+  </button>
+</div>

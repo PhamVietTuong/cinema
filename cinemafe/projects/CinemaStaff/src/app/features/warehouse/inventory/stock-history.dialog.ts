@@ -15,59 +15,8 @@ export interface StockHistoryDialogData {
   selector: 'app-stock-history-dialog',
   standalone: true,
   imports: [SharedModule, EmptyStateComponent],
-  template: `
-    <div mat-dialog-title class="dialog-title">{{ 'inventory.history.title' | translate }}: {{ _data.item.name }}</div>
-    <mat-dialog-content>
-      <div class="hist-wrap">
-        <table class="ad-table" *ngIf="rows.length">
-          <thead>
-            <tr>
-              <th>{{ 'inventory.history.date' | translate }}</th>
-              <th>{{ 'inventory.history.type' | translate }}</th>
-              <th class="num">{{ 'inventory.history.quantity' | translate }}</th>
-              <th>{{ 'inventory.history.reason' | translate }}</th>
-              <th>{{ 'inventory.history.reference' | translate }}</th>
-              <th>{{ 'inventory.history.user' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let m of rows">
-              <td>{{ m.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
-              <td>{{ typeLabel(m.type) | translate }}</td>
-              <td class="num"><strong [class.qty-pos]="(m.quantity ?? 0) > 0" [class.qty-neg]="(m.quantity ?? 0) < 0">{{ (m.quantity ?? 0) > 0 ? '+' : '' }}{{ m.quantity }}</strong></td>
-              <td>
-                <span *ngIf="m.reasonCode !== undefined && m.reasonCode !== null">{{ reasonLabel(m.reasonCode) | translate }}</span>
-                <div class="hist-note" *ngIf="m.reason">{{ m.reason }}</div>
-              </td>
-              <td>{{ m.invoiceCode || m.storagePlanCode }}</td>
-              <td>{{ m.userName }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <cl-empty-state *ngIf="!rows.length && !loading" icon="history" messageKey="inventory.history.empty" />
-        <div *ngIf="loading" class="ad-empty"><mat-spinner diameter="28"></mat-spinner></div>
-      </div>
-      <mat-paginator
-        *ngIf="total > pageSize"
-        [length]="total"
-        [pageSize]="pageSize"
-        [pageIndex]="pageIndex"
-        [hidePageSize]="true"
-        (page)="onPage($event.pageIndex)">
-      </mat-paginator>
-    </mat-dialog-content>
-    <div mat-dialog-actions class="dialog-actions">
-      <button mat-raised-button type="button" (click)="close()">{{ 'common.close' | translate }}</button>
-    </div>
-    <button mat-icon-button type="button" class="dialog-close-btn" (click)="close()"><mat-icon>close</mat-icon></button>
-  `,
-  styles: [`
-    .hist-wrap { overflow-x: auto; }
-    .num { text-align: right; }
-    .qty-pos { color: #2e7d32; }
-    .qty-neg { color: #c62828; }
-    .hist-note { font-size: 12px; opacity: 0.75; }
-  `],
+  templateUrl: './stock-history.dialog.html',
+  styleUrl: './stock-history.dialog.scss',
 })
 export class StockHistoryDialog implements OnInit {
   rows: CinemaServiceAgent.StockMovementDTO[] = [];

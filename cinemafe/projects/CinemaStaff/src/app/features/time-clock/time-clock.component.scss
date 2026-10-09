@@ -1,0 +1,11 @@
+.card { padding: 16px; margin-bottom: 16px; }
+.card.ad-card--pad-0 { padding: 0; }
+.head { padding: 16px 16px 0; }
+.clock { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.state { display: flex; align-items: center; gap: 12px; min-width: 200px; }
+.state mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--ml-muted); }
+.state--in mat-icon { color: var(--ml-success-ink); }
+.note { flex: 1 1 240px; }
+.muted { color: var(--ml-muted); font-size: 12px; }
+.filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.num { text-align: right; }

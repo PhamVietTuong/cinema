@@ -1,0 +1,12 @@
+.search { display: flex; gap: 12px; align-items: flex-start; padding: 16px; margin-bottom: 16px; }
+.query { flex: 1; }
+.customer { display: flex; align-items: center; gap: 16px; padding: 16px 24px; margin-bottom: 16px; }
+.avatar { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--ml-action-soft); }
+.info { flex: 1; }
+.name { margin: 0; font-size: 1.1rem; }
+.stats { display: flex; align-items: center; gap: 12px; }
+.points { font-weight: 600; }
+.muted { color: var(--ml-muted); font-size: 0.85rem; }
+.num { text-align: right; }
+.actions { white-space: nowrap; text-align: right; }
+.left { margin-left: 6px; color: var(--ml-muted); font-size: 0.75rem; }

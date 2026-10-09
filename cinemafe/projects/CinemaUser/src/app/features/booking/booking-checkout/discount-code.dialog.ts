@@ -36,39 +36,8 @@ export interface DiscountCodeDialogResult {
   selector: 'app-discount-code-dialog',
   standalone: true,
   imports: [FormsModule, MatDialogModule, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
-  template: `
-    <div class="tk-top">
-      <span class="tk-badge"><mat-icon>local_offer</mat-icon></span>
-      <h2 mat-dialog-title class="tk-title">{{ 'booking.summary.discountDialogTitle' | translate }}</h2>
-    </div>
-    <div class="tk-body">
-      <div class="input-wrap">
-        <input class="tk-input" cdkFocusInitial [(ngModel)]="code" (ngModelChange)="onCodeChange($event)" (keydown.enter)="checkNow()"
-               [attr.aria-label]="'booking.summary.discountCode' | translate"
-               [placeholder]="'booking.summary.discountPlaceholder' | translate">
-        @if (checking) {
-          <mat-spinner class="spin" diameter="18"></mat-spinner>
-        }
-      </div>
-      @if (message) {
-        <p class="tk-result" [class.ok]="valid" [class.bad]="valid === false" aria-live="polite">{{ message }}</p>
-      } @else {
-        <p class="tk-note">{{ 'booking.summary.discountNote' | translate }}</p>
-      }
-    </div>
-    <div class="tk-foot">
-      <button type="button" class="tk-btn full" (click)="apply()" [disabled]="!valid">{{ 'booking.summary.discountApply' | translate }}</button>
-      @if (data.code) {
-        <button type="button" class="tk-btn text" (click)="remove()">{{ 'booking.summary.giftCardRemove' | translate }}</button>
-      }
-      <button type="button" class="tk-btn text" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-    </div>
-  `,
-  styleUrl: './ticket-dialog.scss',
-  styles: [`
-    .input-wrap { position: relative; }
-    .spin { position: absolute; right: 12px; top: 14px; }
-  `],
+  templateUrl: './discount-code.dialog.html',
+  styleUrls: ['./ticket-dialog.scss', './discount-code.dialog.scss'],
 })
 export class DiscountCodeDialog implements OnInit {
   /** How long typing must pause before the code is sent to the server. */

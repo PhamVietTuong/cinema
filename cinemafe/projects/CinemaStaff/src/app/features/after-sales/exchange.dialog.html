@@ -1,0 +1,84 @@
+<div mat-dialog-title class="dialog-title">{{ 'afterSales.exchange.title' | translate: { code: data.invoice.code } }}</div>
+<mat-dialog-content class="xd-content">
+  @if (receipt(); as r) {
+    <staff-pos-receipt [receipt]="r" titleKey="afterSales.exchange.done" doneKey="common.close" doneIcon="check" (newSale)="close()">
+      <p class="xd-result">
+        @if ((done()?.amountCollected ?? 0) > 0) {
+          {{ 'afterSales.exchange.collected' | translate }}: <strong>{{ done()?.amountCollected | number:'1.0-0' }}đ</strong>
+        } @else if ((done()?.refundedBack ?? 0) > 0) {
+          {{ 'afterSales.exchange.paidBack' | translate }}: <strong>{{ done()?.refundedBack | number:'1.0-0' }}đ</strong>
+        } @else {
+          {{ 'afterSales.exchange.even' | translate }}
+        }
+      </p>
+    </staff-pos-receipt>
+  } @else {
+    <section class="ad-card xd-old">
+      <h2 class="ad-card-title">{{ 'afterSales.exchange.oldInvoice' | translate }}</h2>
+      <div class="xd-old-row">
+        <strong>{{ data.invoice.code }}</strong>
+        <span>{{ data.invoice.movieTitle }}</span>
+        <span>{{ data.invoice.firstShowStart | date: 'HH:mm dd/MM/yyyy' }}</span>
+        <span>{{ data.invoice.customerName }}</span>
+        <strong>{{ data.invoice.finalAmount | number:'1.0-0' }}đ</strong>
+      </div>
+      <p class="xd-hint">{{ 'afterSales.exchange.hint' | translate }}</p>
+    </section>
+
+    <div class="xd-layout">
+      <div class="xd-main">
+        <staff-counter-cart [busy]="submitting()" [allowFnbOnly]="false" />
+      </div>
+      <aside class="xd-side">
+        <staff-counter-summary />
+
+        <section class="ad-card">
+          <h2 class="ad-card-title">{{ 'afterSales.exchange.difference' | translate }}</h2>
+          <dl class="xd-diff">
+            <div><dt>{{ 'afterSales.exchange.oldAmount' | translate }}</dt><dd>{{ oldAmount() | number:'1.0-0' }}đ</dd></div>
+            <div><dt>{{ 'afterSales.exchange.newAmount' | translate }}</dt><dd>{{ cart.hasItems() ? (cart.due() | number:'1.0-0') + 'đ' : '-' }}</dd></div>
+            @if (diff().collect > 0) {
+              <div class="is-collect"><dt>{{ 'afterSales.exchange.collect' | translate }}</dt><dd>{{ diff().collect | number:'1.0-0' }}đ</dd></div>
+            } @else if (diff().payBack > 0) {
+              <div class="is-payback"><dt>{{ 'afterSales.exchange.payBack' | translate }}</dt><dd>{{ diff().payBack | number:'1.0-0' }}đ</dd></div>
+            } @else if (cart.quote()) {
+              <div><dt>{{ 'afterSales.exchange.even' | translate }}</dt><dd>0đ</dd></div>
+            }
+          </dl>
+          @if (diff().payBack > 0) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="xd-full">
+              <mat-label>{{ 'afterSales.exchange.refundTender' | translate }}</mat-label>
+              <mat-select [value]="refundTender()" (selectionChange)="refundTender.set($event.value)">
+                @for (option of refundTenders; track option.value) {
+                  <mat-option [value]="option.value">{{ option.name | translate }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+        </section>
+
+        @if (diff().collect > 0) {
+          <staff-counter-tender-panel titleKey="afterSales.exchange.collectTitle" dueLabelKey="afterSales.exchange.collect"
+                                      [due]="diff().collect" [disabled]="!cart.quote()" [(tenders)]="tenders" />
+        }
+        @if (needsDrawer() && !drawer.isOpen() && diff().collect === 0) {
+          <p class="pos-warn">{{ 'pos.pay.needDrawer' | translate }}</p>
+        }
+        @if (needsPin()) {
+          <p class="xd-hint"><mat-icon>admin_panel_settings</mat-icon> {{ 'afterSales.panel.pinRequired' | translate }}</p>
+        }
+        @if (blockers().length > 0 && cart.hasItems()) {
+          <p class="xd-hint">{{ blockers()[0] | translate }}</p>
+        }
+        <button mat-raised-button color="primary" type="button" class="xd-confirm" [disabled]="blockers().length > 0" (click)="confirm()">
+          <mat-icon>swap_horiz</mat-icon> {{ 'afterSales.exchange.confirm' | translate }}
+        </button>
+      </aside>
+    </div>
+  }
+</mat-dialog-content>
+@if (!receipt()) {
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-button type="button" (click)="close()">{{ 'common.cancel' | translate }}</button>
+  </div>
+}

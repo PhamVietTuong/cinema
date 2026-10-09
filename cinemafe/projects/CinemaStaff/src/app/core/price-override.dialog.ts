@@ -17,28 +17,8 @@ export interface PriceOverrideDialogData {
   selector: 'staff-price-override-dialog',
   standalone: true,
   imports: [SharedModule],
-  template: `
-    <div mat-dialog-title class="dialog-title">{{ 'pos.override.title' | translate }}</div>
-    <mat-dialog-content>
-      <p>{{ data.label }}</p>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width: 100%">
-        <mat-label>{{ 'pos.override.newPrice' | translate }}</mat-label>
-        <input matInput type="number" min="0" step="1000" [formControl]="price" (keydown.enter)="apply()">
-        @if (price.invalid) {
-          <mat-error>{{ 'pos.override.invalid' | translate }}</mat-error>
-        }
-      </mat-form-field>
-      <p class="hint">{{ 'pos.override.hint' | translate }}</p>
-    </mat-dialog-content>
-    <div mat-dialog-actions class="dialog-actions">
-      <button mat-raised-button type="button" (click)="ref.close(undefined)">{{ 'common.cancel' | translate }}</button>
-      @if (data.hasOverride) {
-        <button mat-raised-button type="button" (click)="ref.close(null)">{{ 'pos.override.reset' | translate }}</button>
-      }
-      <button mat-raised-button color="primary" type="button" (click)="apply()">{{ 'pos.override.apply' | translate }}</button>
-    </div>
-  `,
-  styles: [`.hint { color: var(--ml-muted); font-size: 13px; }`],
+  templateUrl: './price-override.dialog.html',
+  styleUrl: './price-override.dialog.scss',
 })
 export class PriceOverrideDialog {
   readonly price: FormControl<number | null>;

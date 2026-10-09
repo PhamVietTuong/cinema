@@ -1,0 +1,15 @@
+:host { display: block; }
+.cl-pb { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.cl-pb__row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.cl-pb__label { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+.cl-pb__qty { color: var(--ml-muted, #777); font-variant-numeric: tabular-nums; }
+.cl-pb__detail { color: var(--ml-muted, #777); }
+.cl-pb__amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cl-pb__list { color: var(--ml-muted, #777); margin-right: 6px; }
+.cl-pb__empty { color: var(--ml-muted, #777); font-style: italic; }
+.cl-pb__row--sub { border-top: 1px dashed var(--ml-rule, #d8d2c4); padding-top: 6px; color: var(--ml-muted, #777); }
+.cl-pb__row--adj { color: var(--ml-success, #2e7d32); }
+.cl-pb__row--total {
+  border-top: 1px solid var(--ml-rule-strong, #bbb); padding-top: 8px; margin-top: 2px;
+  font-size: 1.1rem; font-weight: 700;
+}

@@ -1,0 +1,6 @@
+.task { display: flex; justify-content: space-between; gap: 16px; padding: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+.main { flex: 1 1 300px; }
+.title { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.desc { margin: 6px 0; }
+.muted { color: var(--ml-muted); font-size: 12px; }
+.actions { display: flex; gap: 8px; align-items: center; }

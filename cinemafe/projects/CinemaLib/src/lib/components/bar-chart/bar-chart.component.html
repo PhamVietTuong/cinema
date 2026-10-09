@@ -1,0 +1,11 @@
+<div class="cl-bars">
+  @for (row of rows(); track $index) {
+    <div class="cl-bar-row" [class.cl-bar-row--compact]="compact()">
+      @if (!compact()) {
+        <span class="cl-bar-name" [title]="row.label">{{ row.label }}</span>
+      }
+      <span class="cl-bar-track"><span class="cl-bar-fill" [style.width.%]="percent(row.value)"></span></span>
+      <span class="cl-bar-val">{{ row.valueLabel ?? row.value }}</span>
+    </div>
+  }
+</div>

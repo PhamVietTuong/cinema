@@ -1,0 +1,56 @@
+    <div mat-dialog-title class="dialog-title">{{ 'inventory.movement.title' | translate }}: {{ _data.item.name }}</div>
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <mat-dialog-content>
+        <div class="dlg-grid">
+          <p class="dlg-hint">{{ 'inventory.movement.onHand' | translate }}: <strong>{{ _data.item.quantityOnHand }}</strong></p>
+
+          <div class="dlg-row dlg-row--2">
+            <div class="dlg-field">
+              <label class="dlg-label">{{ 'inventory.movement.type' | translate }}</label>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="type">
+                  <mat-option *ngFor="let t of types" [value]="t.value">{{ t.name | translate }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="dlg-field">
+              <label class="dlg-label" for="sm-qty">{{ 'inventory.movement.quantity' | translate }}</label>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <input matInput id="sm-qty" type="number" step="1" formControlName="quantity">
+                <mat-error *ngIf="form.controls['quantity'].hasError('required') || form.controls['quantity'].hasError('zero')">{{ 'inventory.errors.nonZero' | translate }}</mat-error>
+                <mat-error *ngIf="form.controls['quantity'].hasError('positive')">{{ 'inventory.errors.positive' | translate }}</mat-error>
+                <mat-error *ngIf="form.controls['quantity'].hasError('exceeds')">{{ 'inventory.errors.exceedsOnHand' | translate }}</mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+          <p class="dlg-hint">{{ (isWaste ? 'inventory.movement.wasteHint' : 'inventory.movement.adjustHint') | translate }}</p>
+
+          <div class="dlg-row">
+            <div class="dlg-field">
+              <label class="dlg-label">{{ 'inventory.movement.reason' | translate }}</label>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="reasonCode">
+                  <mat-option *ngFor="let r of reasons" [value]="r.value">{{ r.name | translate }}</mat-option>
+                </mat-select>
+                <mat-error>{{ 'common.required' | translate }}</mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="dlg-row">
+            <div class="dlg-field">
+              <label class="dlg-label" for="sm-note">{{ 'inventory.movement.note' | translate }}</label>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <textarea matInput id="sm-note" rows="2" maxlength="500" formControlName="note"></textarea>
+                <mat-error>{{ 'inventory.errors.noteRequired' | translate }}</mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      </mat-dialog-content>
+      <div mat-dialog-actions class="dialog-actions">
+        <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+        <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+      </div>
+    </form>
+    <button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()"><mat-icon>close</mat-icon></button>

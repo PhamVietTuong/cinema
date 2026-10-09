@@ -1,0 +1,42 @@
+<div class="cl-pb">
+  @for (line of lines(); track $index) {
+    <div class="cl-pb__row">
+      <span class="cl-pb__label">
+        @if (line.quantity && line.quantity > 1) {
+          <span class="cl-pb__qty">{{ line.quantity }} ×</span>
+        }
+        {{ line.label }}
+        @if (line.detail) {
+          <small class="cl-pb__detail">{{ line.detail }}</small>
+        }
+      </span>
+      <span class="cl-pb__amount">
+        @if (line.listAmount !== undefined && line.listAmount !== line.amount) {
+          <s class="cl-pb__list">{{ line.listAmount | number:'1.0-0' }}</s>
+        }
+        {{ line.amount | number:'1.0-0' }}{{ currency() }}
+      </span>
+    </div>
+  }
+  @if (lines().length === 0) {
+    <div class="cl-pb__empty">{{ (emptyKey()) | translate }}</div>
+  }
+  @if (subtotalVisible()) {
+    <div class="cl-pb__row cl-pb__row--sub">
+      <span>{{ 'priceBreakdown.subtotal' | translate }}</span>
+      <span class="cl-pb__amount">{{ subtotal() | number:'1.0-0' }}{{ currency() }}</span>
+    </div>
+  }
+  @for (adj of adjustments(); track adj.labelKey) {
+    @if (adj.amount > 0) {
+      <div class="cl-pb__row cl-pb__row--adj">
+        <span>{{ adj.labelKey | translate }}</span>
+        <span class="cl-pb__amount">−{{ adj.amount | number:'1.0-0' }}{{ currency() }}</span>
+      </div>
+    }
+  }
+  <div class="cl-pb__row cl-pb__row--total">
+    <span>{{ totalLabelKey() | translate }}</span>
+    <span class="cl-pb__amount">{{ total() | number:'1.0-0' }}{{ currency() }}</span>
+  </div>
+</div>

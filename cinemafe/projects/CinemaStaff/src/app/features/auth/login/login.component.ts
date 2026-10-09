@@ -9,21 +9,7 @@ import { LoginFormComponent, LoginStat, STAFF_APP_ROLES, ShellBrand, logout } fr
   selector: 'staff-login',
   standalone: true,
   imports: [LoginFormComponent],
-  template: `
-    <cl-login-form
-      [brand]="brand"
-      titleKey="login.title"
-      subtitleKey="login.subtitle"
-      heroTitleLine1Key="login.heroTitleLine1"
-      heroTitleLine2Key="login.heroTitleLine2"
-      heroSubtitleKey="login.heroSubtitle"
-      [stats]="stats"
-      footerKey="login.footer"
-      icon="badge"
-      [allowedRoles]="allowedRoles"
-      [noticeKey]="rejectedNotice()"
-      (rejected)="onRejected()" />
-  `,
+  templateUrl: './login.component.html',
 })
 export class LoginComponent {
   private readonly _store = inject(Store);

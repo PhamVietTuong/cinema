@@ -13,7 +13,7 @@ import { StatusPillKind, statusPillSpec } from '../../interfaces/cinema.model';
   standalone: true,
   imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<span class="ad-pill" [class]="spec().cssClass">{{ spec().labelKey | translate }}</span>`,
+  templateUrl: './status-pill.component.html',
 })
 export class StatusPillComponent {
   readonly kind = input.required<StatusPillKind>();

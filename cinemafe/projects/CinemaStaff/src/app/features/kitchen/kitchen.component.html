@@ -1,0 +1,106 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'kitchen.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'kitchen.subtitle' | translate }}</p>
+    </div>
+    <div class="ad-toolbar">
+      <span class="ad-pill" [class.ad-pill--success]="hub.connected$ | async" [class.ad-pill--danger]="!(hub.connected$ | async)">
+        {{ ((hub.connected$ | async) ? 'kitchen.live' : 'kitchen.offline') | translate }}
+      </span>
+      <button mat-stroked-button type="button" (click)="load()" [disabled]="!theaterId()">
+        <mat-icon>refresh</mat-icon> {{ 'kitchen.refresh' | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (!theaterId()) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="theaters" messageKey="kitchen.pickTheater" hintKey="kitchen.pickTheaterHint" />
+    </mat-card>
+  } @else {
+    <div class="top-row">
+      <form class="ad-card lookup" [formGroup]="lookupForm" (ngSubmit)="lookup()">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'kitchen.lookup.code' | translate }}</mat-label>
+          <input matInput formControlName="code" autocomplete="off">
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit" [disabled]="lookupForm.invalid">
+          <mat-icon>search</mat-icon> {{ 'kitchen.lookup.search' | translate }}
+        </button>
+      </form>
+
+      <section class="ad-card stock" [class.stock--alert]="live.lowStockCount() > 0">
+        <h3 class="ad-card-title">
+          <mat-icon>warning</mat-icon> {{ 'stockAlerts.title' | translate }}
+          @if (live.lowStockCount() > 0) {
+            <span class="ad-pill ad-pill--warn">{{ live.lowStockCount() }}</span>
+          }
+        </h3>
+        @for (item of live.lowStock(); track item.foodAndDrinkId) {
+          <div class="stock-row">
+            <strong>{{ item.name }}</strong>
+            <span>{{ 'stockAlerts.onHand' | translate: { qty: item.quantityOnHand, threshold: item.lowStockThreshold } }}</span>
+          </div>
+        } @empty {
+          <p class="muted">{{ 'stockAlerts.none' | translate }}</p>
+        }
+      </section>
+    </div>
+
+    @if (found(); as order) {
+      <div class="found">
+        <h3 class="ad-card-title">{{ 'kitchen.lookup.result' | translate }}</h3>
+        <ng-container *ngTemplateOutlet="card; context: { $implicit: order }" />
+      </div>
+    } @else if (lookupMissing()) {
+      <p class="muted">{{ 'kitchen.lookup.notFound' | translate }}</p>
+    }
+
+    <div class="board">
+      @for (column of columns; track column) {
+        <section class="column">
+          <h3 class="column-head">
+            {{ columnKey(column) | translate }}
+            <span class="count">{{ ordersOf(column).length }}</span>
+          </h3>
+          @for (order of ordersOf(column); track order.invoiceId) {
+            <ng-container *ngTemplateOutlet="card; context: { $implicit: order }" />
+          } @empty {
+            <cl-empty-state icon="restaurant" messageKey="kitchen.emptyColumn" />
+          }
+        </section>
+      }
+    </div>
+  }
+</div>
+
+<ng-template #card let-order>
+  <mat-card class="order">
+    <div class="order-head">
+      <strong>{{ order.invoiceCode }}</strong>
+      <cl-status-pill kind="foodOrder" [value]="order.foodStatus" />
+    </div>
+    <div class="muted">
+      {{ order.movieTitle }} &middot; {{ order.roomName }} &middot; {{ order.showTimeStart | date: 'HH:mm dd/MM' }}
+    </div>
+    <ul class="items">
+      @for (item of order.items ?? []; track $index) {
+        <li><strong>{{ item.quantity }}&times;</strong> {{ item.name }}</li>
+      }
+    </ul>
+    <div class="order-foot">
+      <span class="muted">
+        {{ order.customerName }}
+        @if (order.paidAt) {
+          &middot; {{ 'kitchen.paidAgo' | translate: { minutes: minutesAgo(order) } }}
+        }
+      </span>
+      @if (actionKey(order); as key) {
+        <button mat-flat-button color="primary" type="button" [disabled]="busy().has(order.invoiceId)" (click)="advance(order)">
+          {{ key | translate }}
+        </button>
+      }
+    </div>
+  </mat-card>
+</ng-template>

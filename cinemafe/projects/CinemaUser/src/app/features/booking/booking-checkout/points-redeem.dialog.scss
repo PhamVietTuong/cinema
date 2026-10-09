@@ -1,0 +1,16 @@
+.centered { text-align: center; }
+.stepper { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.round {
+  width: 48px; height: 48px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; line-height: 1;
+  border: 1px solid var(--ml-rule-strong); background: var(--ml-panel); color: var(--ml-ink);
+  user-select: none; touch-action: manipulation;
+  &:hover:not(:disabled) { border-color: var(--ml-action); }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &:focus-visible { outline: var(--cx-focus-width) solid var(--ml-action); outline-offset: var(--cx-focus-offset); }
+}
+.big {
+  min-width: 3ch; text-align: center;
+  font-family: var(--ml-font-data); font-size: 2.4rem; font-weight: 500; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--ml-ink);
+}
+.saving { margin: 0; text-align: center; font-weight: 600; color: var(--ml-success-ink); }

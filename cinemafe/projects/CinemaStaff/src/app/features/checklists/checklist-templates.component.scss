@@ -1,0 +1,13 @@
+.layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; }
+.list-card { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.tpl { text-align: left; border: 1px solid transparent; background: transparent; padding: 10px 12px; border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; color: inherit; }
+.tpl:hover { background: var(--ml-panel-3, rgba(128, 128, 128, 0.12)); }
+.tpl--active { border-color: var(--ml-action-strong); }
+.muted { color: var(--ml-muted); font-size: 12px; }
+.form-card { padding: 16px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.grow { flex: 1 1 220px; }
+.items { display: flex; flex-direction: column; gap: 8px; }
+.item { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.footer { display: flex; gap: 12px; margin-top: 16px; align-items: center; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }

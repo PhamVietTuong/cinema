@@ -15,12 +15,7 @@ export interface DiscountDialogData {
   selector: 'app-discount-dialog',
   standalone: false,
   templateUrl: './discount.dialog.html',
-  styles: [`
-    .ad-hint { display: block; margin-top: 4px; font-size: 12px; color: var(--ad-muted); font-weight: 400; }
-    .scope-checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px 14px;
-      margin-top: 8px; max-height: 180px; overflow-y: auto; padding: 8px; border: 1px solid var(--ad-border); border-radius: 6px; }
-    .scope-days { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; }
-  `],
+  styleUrl: './discount.dialog.scss',
 })
 export class DiscountDialog implements OnInit {
   readonly editingId: string | null;

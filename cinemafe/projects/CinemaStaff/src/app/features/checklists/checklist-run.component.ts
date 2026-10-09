@@ -15,87 +15,8 @@ import { canComplete, checklistProgress, missingRequired } from './checklist-rul
   selector: 'staff-checklist-run',
   standalone: true,
   imports: [SharedModule, EmptyStateComponent],
-  template: `
-<div class="ad-page">
-  <div class="ad-page-header">
-    <div>
-      <button class="ad-btn ad-btn--ghost" type="button" (click)="back()"><mat-icon>arrow_back</mat-icon> {{ 'opsCommon.back' | translate }}</button>
-      <h1 class="ad-h1">{{ (run ? run.templateName : ('checklists.run.title' | translate)) }}</h1>
-      <p class="ad-sub">{{ kindLabel | translate }}</p>
-    </div>
-    <div class="ad-toolbar">
-      <button mat-stroked-button type="button" [disabled]="kind === Kind.PreShow" (click)="switchKind(Kind.PreShow)">{{ 'staffEnums.checklistKind.preShow' | translate }}</button>
-      <button mat-stroked-button type="button" [disabled]="kind === Kind.PostShow" (click)="switchKind(Kind.PostShow)">{{ 'staffEnums.checklistKind.postShow' | translate }}</button>
-    </div>
-  </div>
-
-  @if (noTemplate) {
-    <mat-card class="ad-card--pad-0">
-      <cl-empty-state icon="fact_check" messageKey="checklists.run.noTemplate" hintKey="checklists.run.noTemplateHint" />
-    </mat-card>
-  }
-
-  @if (run) {
-    <mat-card class="run-card">
-      <div class="progress">
-        <span>{{ 'checklists.run.progress' | translate: { done: progress.done, total: progress.total } }}</span>
-        <div class="bar"><span [style.width.%]="progress.percent"></span></div>
-      </div>
-
-      @if (run.completedAt) {
-        <div class="completed"><mat-icon>check_circle</mat-icon> {{ 'checklists.run.completedAt' | translate: { time: (run.completedAt | serverUtc | date: 'dd/MM/yyyy HH:mm') } }}</div>
-      }
-
-      <ul class="items">
-        @for (item of run.items; track item.id) {
-          <li class="item" [class.item--done]="item.isDone">
-            <mat-checkbox [checked]="!!item.isDone" [disabled]="busy || !!run.completedAt" (change)="toggle(item, $event.checked)">
-              {{ item.text }}
-              @if (item.isRequired) {
-                <span class="req">{{ 'checklists.run.required' | translate }}</span>
-              }
-            </mat-checkbox>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="note">
-              <mat-label>{{ 'checklists.run.note' | translate }}</mat-label>
-              <input matInput maxlength="500" [value]="notes[item.id!]" [disabled]="!!run.completedAt"
-                (input)="onNote(item.id!, $any($event.target).value)" (blur)="saveNote(item)">
-            </mat-form-field>
-            @if (item.isDone && item.doneByName) {
-              <span class="who">{{ item.doneByName }} · {{ item.doneAt | serverUtc | date: 'HH:mm' }}</span>
-            }
-          </li>
-        }
-      </ul>
-
-      @if (!run.completedAt) {
-        <div class="footer">
-          @if (missing > 0) {
-            <span class="hint">{{ 'checklists.run.missing' | translate: { count: missing } }}</span>
-          }
-          <button mat-raised-button color="primary" type="button" [disabled]="busy || !completable" (click)="complete()">
-            <mat-icon>done_all</mat-icon> {{ 'checklists.run.complete' | translate }}
-          </button>
-        </div>
-      }
-    </mat-card>
-  }
-</div>
-`,
-  styles: [`
-    .run-card { padding: 16px; }
-    .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .bar { flex: 1; height: 6px; background: var(--ml-panel-3, rgba(128, 128, 128, 0.2)); border-radius: 3px; overflow: hidden; }
-    .bar span { display: block; height: 100%; background: var(--ml-action-strong); }
-    .completed { display: flex; align-items: center; gap: 8px; color: var(--ml-success-ink); margin-bottom: 8px; }
-    .items { list-style: none; margin: 0; padding: 0; }
-    .item { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(200px, 1fr) auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--ml-line, rgba(128, 128, 128, 0.2)); }
-    .item--done { opacity: 0.85; }
-    .req { margin-left: 6px; font-size: 11px; color: var(--ml-danger-ink); text-transform: uppercase; }
-    .who { color: var(--ml-muted); font-size: 12px; }
-    .footer { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 16px; }
-    .hint { color: var(--ml-muted); }
-    @media (max-width: 720px) { .item { grid-template-columns: 1fr; } }
-  `],
+  templateUrl: './checklist-run.component.html',
+  styleUrl: './checklist-run.component.scss',
 })
 export class ChecklistRunComponent implements OnInit {
   readonly Kind = CinemaServiceAgent.ChecklistKind;

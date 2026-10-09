@@ -28,70 +28,8 @@ export interface ResolveComplaintChoice {
   standalone: true,
   imports: [SharedModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-<div mat-dialog-title class="dialog-title">{{ 'customerService.resolve.title' | translate }}</div>
-<mat-dialog-content>
-  @if (needsApproval()) {
-    <p class="notice"><mat-icon>admin_panel_settings</mat-icon>
-      {{ (data.isApprover ? 'customerService.resolve.approverHint' : 'customerService.resolve.pinHint') | translate }}</p>
-  }
-  <form [formGroup]="form" class="fields">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ 'customerService.resolve.resolution' | translate }}</mat-label>
-      <mat-select formControlName="resolution">
-        @for (option of options; track option.value) {
-          <mat-option [value]="option.value">{{ option.name | translate }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    @if (isMoney()) {
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ (isPoints() ? 'customerService.resolve.points' : 'customerService.resolve.amount') | translate }}</mat-label>
-        <input matInput type="number" min="0" [step]="isPoints() ? 1 : 1000" formControlName="amount">
-      </mat-form-field>
-    }
-
-    @if (isRefund()) {
-      <p class="hint">{{ 'customerService.resolve.refundHint' | translate: { code: data.complaint.invoiceCode } }}</p>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'customerService.resolve.refundTender' | translate }}</mat-label>
-        <mat-select formControlName="refundTender">
-          @for (option of tenders; track option.value) {
-            <mat-option [value]="option.value">{{ option.name | translate }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      @if (form.value.refundTender !== cashTender) {
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'customerService.resolve.refundReference' | translate }}</mat-label>
-          <input matInput maxlength="100" formControlName="refundReference" autocomplete="off">
-        </mat-form-field>
-      }
-    }
-
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ 'customerService.resolve.note' | translate }}</mat-label>
-      <textarea matInput rows="3" maxlength="500" formControlName="note"></textarea>
-    </mat-form-field>
-  </form>
-  @if (errors().length) {
-    <p class="error">{{ errors()[0] | translate }}</p>
-  }
-</mat-dialog-content>
-<div mat-dialog-actions class="dialog-actions">
-  <button mat-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-  <button mat-raised-button color="primary" type="button" [disabled]="errors().length > 0" (click)="confirm()">
-    <mat-icon>task_alt</mat-icon> {{ 'customerService.resolve.confirm' | translate }}
-  </button>
-</div>
-`,
-  styles: [`
-    .fields { display: flex; flex-direction: column; gap: 12px; min-width: 360px; }
-    .notice { display: flex; align-items: center; gap: 8px; color: var(--ml-muted); margin: 0 0 12px; }
-    .hint { color: var(--ml-muted); margin: 0; }
-    .error { color: var(--ml-warn-ink); margin: 8px 0 0; }
-  `],
+  templateUrl: './resolve-complaint.dialog.html',
+  styleUrl: './resolve-complaint.dialog.scss',
 })
 export class ResolveComplaintDialogComponent {
   readonly data = inject<ResolveComplaintDialogData>(MAT_DIALOG_DATA);

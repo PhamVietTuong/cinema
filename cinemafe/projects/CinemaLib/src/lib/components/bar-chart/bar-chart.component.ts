@@ -26,29 +26,8 @@ export function barPercent(value: number, max: number): number {
   selector: 'cl-bar-chart',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="cl-bars">
-      @for (row of rows(); track $index) {
-        <div class="cl-bar-row" [class.cl-bar-row--compact]="compact()">
-          @if (!compact()) {
-            <span class="cl-bar-name" [title]="row.label">{{ row.label }}</span>
-          }
-          <span class="cl-bar-track"><span class="cl-bar-fill" [style.width.%]="percent(row.value)"></span></span>
-          <span class="cl-bar-val">{{ row.valueLabel ?? row.value }}</span>
-        </div>
-      }
-    </div>
-  `,
-  styles: [`
-    :host { display: block; }
-    .cl-bars { display: flex; flex-direction: column; gap: 8px; }
-    .cl-bar-row { display: grid; grid-template-columns: minmax(80px, 200px) 1fr minmax(70px, auto); gap: 12px; align-items: center; }
-    .cl-bar-row--compact { grid-template-columns: 1fr minmax(48px, auto); }
-    .cl-bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .cl-bar-track { height: 10px; border-radius: 5px; background: var(--ml-panel-3, rgba(0, 0, 0, 0.08)); overflow: hidden; }
-    .cl-bar-fill { display: block; height: 100%; border-radius: 5px; background: var(--ml-action, #6750a4); }
-    .cl-bar-val { text-align: right; font-variant-numeric: tabular-nums; }
-  `],
+  templateUrl: './bar-chart.component.html',
+  styleUrl: './bar-chart.component.scss',
 })
 export class BarChartComponent {
   readonly rows = input.required<readonly BarChartRow[]>();

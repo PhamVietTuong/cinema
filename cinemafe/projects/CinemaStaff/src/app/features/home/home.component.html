@@ -1,0 +1,14 @@
+<div class="home">
+  <div class="ad-card home-card">
+    <mat-icon class="home-icon">waving_hand</mat-icon>
+    <h1>{{ 'home.welcome' | translate: { name: user()?.name ?? '' } }}</h1>
+    @if (theater.currentTheaterId()) {
+      <p>{{ 'home.theater' | translate: { name: theater.currentTheaterName() ?? '' } }}</p>
+    } @else if (theater.isAdmin()) {
+      <p>{{ 'home.pickTheater' | translate }}</p>
+    } @else {
+      <p>{{ 'home.noTheater' | translate }}</p>
+    }
+    <p class="hint">{{ 'home.comingSoon' | translate }}</p>
+  </div>
+</div>

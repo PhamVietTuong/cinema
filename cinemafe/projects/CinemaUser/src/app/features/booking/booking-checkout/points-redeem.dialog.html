@@ -1,0 +1,29 @@
+<div class="tk-top">
+  <span class="tk-badge"><mat-icon>star</mat-icon></span>
+  <h2 mat-dialog-title class="tk-title">{{ 'booking.summary.redeemPoints' | translate }}</h2>
+</div>
+<div class="tk-body">
+  <p class="tk-note centered">{{ 'booking.summary.pointsBalance' | translate:{ points: data.balance } }}</p>
+
+  <div class="stepper">
+    <button type="button" class="round" [disabled]="points <= 0"
+            [attr.aria-label]="'booking.summary.pointsDecrease' | translate"
+            (pointerdown)="startHold(-1, $event)" (pointerup)="stopHold()" (pointerleave)="stopHold()" (pointercancel)="stopHold()"
+            (keydown.enter)="nudge(-1)" (keydown.space)="nudge(-1); $event.preventDefault()">−</button>
+    <span class="big" aria-live="polite">{{ points }}</span>
+    <button type="button" class="round" [disabled]="points >= data.max"
+            [attr.aria-label]="'booking.summary.pointsIncrease' | translate"
+            (pointerdown)="startHold(1, $event)" (pointerup)="stopHold()" (pointerleave)="stopHold()" (pointercancel)="stopHold()"
+            (keydown.enter)="nudge(1)" (keydown.space)="nudge(1); $event.preventDefault()">+</button>
+  </div>
+
+  <p class="saving">{{ 'booking.summary.pointsSaving' | translate:{ amount: (points * data.pointValue | number:'1.0-0') } }}</p>
+  <p class="tk-note centered">{{ 'booking.summary.pointsHint' | translate:{ max: data.max } }}</p>
+</div>
+<div class="tk-foot">
+  <button type="button" class="tk-btn full" (click)="apply()">{{ 'booking.summary.discountApply' | translate }}</button>
+  <button type="button" class="tk-btn ghost" (click)="set(data.max)" [disabled]="data.max === 0 || points === data.max">
+    {{ 'booking.summary.pointsUseMax' | translate }}
+  </button>
+  <button type="button" class="tk-btn text" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+</div>

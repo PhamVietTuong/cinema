@@ -1,0 +1,9 @@
+.nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.scroll { overflow-x: auto; }
+.grid { min-width: 900px; }
+.cell { cursor: pointer; vertical-align: top; min-width: 100px; }
+.cell:hover { background: var(--ml-panel-3, rgba(0, 0, 0, 0.04)); }
+.chip { display: block; width: 100%; margin-bottom: 4px; border: 0; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 12px;
+  background: var(--ml-action-soft); color: var(--ml-action-strong); }
+.muted { color: var(--ml-muted); font-size: 12px; }
+.num { text-align: right; }

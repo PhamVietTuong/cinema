@@ -1,0 +1,4 @@
+.fields { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hint { color: var(--ml-muted); font-size: 12px; margin: 0; }
+.spacer { flex: 1; }

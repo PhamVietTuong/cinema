@@ -1,0 +1,6 @@
+.cl-reason-hint { color: var(--ml-muted, #777); font-size: 13px; }
+.cl-reason-fields { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+.cl-reason-lines { display: flex; flex-direction: column; gap: 12px; }
+.cl-reason-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cl-reason-line-name { display: flex; flex-direction: column; min-width: 140px; flex: 1 1 160px; }
+.cl-reason-qty { width: 140px; }

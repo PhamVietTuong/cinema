@@ -1,0 +1,3 @@
+.meta { color: var(--ml-muted, #777); font-size: 13px; }
+.tickets { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.ticket { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border: 1px solid var(--ml-panel-3, rgba(0, 0, 0, 0.12)); border-radius: 8px; }

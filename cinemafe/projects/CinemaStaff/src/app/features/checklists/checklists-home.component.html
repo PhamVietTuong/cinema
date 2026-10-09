@@ -1,0 +1,61 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'checklists.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'checklists.subtitle' | translate }}</p>
+    </div>
+    <div class="ad-toolbar day-nav">
+      <button mat-icon-button type="button" [attr.aria-label]="'schedule.prevDay' | translate" (click)="shiftDay(-1)"><mat-icon>chevron_left</mat-icon></button>
+      <input class="ad-input" type="date" [formControl]="dateControl" (change)="load()" [attr.aria-label]="'opsCommon.date' | translate">
+      <button mat-icon-button type="button" [attr.aria-label]="'schedule.nextDay' | translate" (click)="shiftDay(1)"><mat-icon>chevron_right</mat-icon></button>
+      @if (isApprover) {
+        <button mat-stroked-button type="button" (click)="openTemplates()"><mat-icon>edit_note</mat-icon> {{ 'checklists.templates.open' | translate }}</button>
+      }
+    </div>
+  </div>
+
+  @if (!theaterId) {
+    <mat-card class="ad-card--pad-0">
+      <cl-empty-state icon="theaters" messageKey="opsCommon.pickTheater" hintKey="opsCommon.pickTheaterHint" />
+    </mat-card>
+  } @else {
+    @for (room of rooms; track room.roomId) {
+      @if (room.showTimes?.length) {
+        <mat-card class="ad-card--pad-0 room-card">
+          <div class="room-head">
+            <strong>{{ room.roomName }}</strong>
+            <cl-status-pill kind="roomStatus" [value]="room.roomStatus" />
+          </div>
+          <div class="ad-table-wrap">
+            <table class="ad-table">
+              <thead>
+                <tr>
+                  <th>{{ 'checklists.home.time' | translate }}</th>
+                  <th>{{ 'checklists.home.movie' | translate }}</th>
+                  <th class="actions">{{ 'common.actions' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (st of room.showTimes; track st.showTimeId) {
+                  <tr>
+                    <td>{{ st.start | date: 'HH:mm' }} - {{ st.end | date: 'HH:mm' }}</td>
+                    <td>{{ st.movieTitle }}</td>
+                    <td class="actions">
+                      <button mat-stroked-button type="button" (click)="run(st, room, Kind.PreShow)">{{ 'staffEnums.checklistKind.preShow' | translate }}</button>
+                      <button mat-stroked-button type="button" (click)="run(st, room, Kind.PostShow)">{{ 'staffEnums.checklistKind.postShow' | translate }}</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </mat-card>
+      }
+    }
+    @if (!hasShowTimes && !loading) {
+      <mat-card class="ad-card--pad-0">
+        <cl-empty-state icon="fact_check" messageKey="checklists.home.empty" />
+      </mat-card>
+    }
+  }
+</div>

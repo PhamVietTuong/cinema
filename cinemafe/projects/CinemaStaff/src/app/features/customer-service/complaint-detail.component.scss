@@ -1,0 +1,6 @@
+.card { padding: 16px 24px; margin-bottom: 16px; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 24px; margin: 0; }
+.facts dt { color: var(--ml-muted); }
+.facts dd { margin: 0; }
+.text { white-space: pre-wrap; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }

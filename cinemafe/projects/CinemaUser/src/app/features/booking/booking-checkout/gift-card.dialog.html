@@ -1,0 +1,24 @@
+<div class="tk-top">
+  <span class="tk-badge"><mat-icon>card_giftcard</mat-icon></span>
+  <h2 mat-dialog-title class="tk-title">{{ 'booking.summary.giftCardDialogTitle' | translate }}</h2>
+</div>
+<div class="tk-body">
+  <input class="tk-input" cdkFocusInitial [(ngModel)]="code" (ngModelChange)="onCodeChange()" (keydown.enter)="check()"
+         [attr.aria-label]="'booking.summary.giftCardCode' | translate"
+         [placeholder]="'booking.summary.giftCardPlaceholder' | translate">
+  <button type="button" class="tk-btn ghost" (click)="check()" [disabled]="checking || !code.trim()">
+    @if (checking) { <mat-spinner diameter="18"></mat-spinner> } @else { {{ 'booking.summary.giftCardApply' | translate }} }
+  </button>
+  @if (message) {
+    <p class="tk-result" [class.ok]="valid" [class.bad]="valid === false">{{ message }}</p>
+  } @else {
+    <p class="tk-note">{{ 'booking.summary.giftCardNote' | translate }}</p>
+  }
+</div>
+<div class="tk-foot">
+  <button type="button" class="tk-btn full" (click)="apply()" [disabled]="!valid">{{ 'booking.summary.discountApply' | translate }}</button>
+  @if (data.code) {
+    <button type="button" class="tk-btn text" (click)="remove()">{{ 'booking.summary.giftCardRemove' | translate }}</button>
+  }
+  <button type="button" class="tk-btn text" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+</div>

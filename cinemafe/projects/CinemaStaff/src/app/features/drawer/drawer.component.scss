@@ -1,0 +1,11 @@
+.drawer-card { max-width: 640px; margin-bottom: 16px; }
+.muted { color: var(--ml-muted); font-size: 0.85rem; }
+.drawer-form { display: flex; flex-direction: column; gap: 12px; }
+.drawer-summary { margin: 0; display: grid; gap: 6px; }
+.drawer-summary div { display: flex; justify-content: space-between; }
+.drawer-summary dt { color: var(--ml-muted); }
+.drawer-summary dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+.drawer-summary .is-total { border-top: 1px solid var(--ml-rule-strong); padding-top: 8px; font-size: 1.1rem; }
+.drawer-movements { width: 100%; border-collapse: collapse; }
+.drawer-movements th, .drawer-movements td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--ml-rule); }
+.drawer-movements .num { text-align: right; font-variant-numeric: tabular-nums; }

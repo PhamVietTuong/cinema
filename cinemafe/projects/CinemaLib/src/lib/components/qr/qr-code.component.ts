@@ -9,15 +9,8 @@ import * as QRCode from 'qrcode';
   selector: 'cl-qr-code',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    @if (dataUrl(); as url) {
-      <img class="cl-qr" [src]="url" [alt]="alt()" [width]="size()" [height]="size()">
-    }
-  `,
-  styles: [`
-    :host { display: inline-block; line-height: 0; }
-    .cl-qr { image-rendering: pixelated; background: #fff; }
-  `],
+  templateUrl: './qr-code.component.html',
+  styleUrl: './qr-code.component.scss',
 })
 export class QrCodeComponent {
   /** Text encoded in the code. Empty renders nothing. */

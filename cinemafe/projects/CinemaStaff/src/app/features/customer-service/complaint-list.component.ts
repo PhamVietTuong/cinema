@@ -18,68 +18,8 @@ import { complaintFilters } from './customer-service.logic';
   selector: 'staff-complaint-list',
   standalone: true,
   imports: [SharedModule, RouterLink, StatusPillComponent, EmptyStateComponent, FilterBarComponent],
-  template: `
-<div class="ad-page">
-  <div class="ad-page-header">
-    <div>
-      <h1 class="ad-h1">{{ 'customerService.list.title' | translate }}</h1>
-      <p class="ad-sub">{{ 'customerService.list.subtitle' | translate }}</p>
-    </div>
-    <div class="ad-toolbar">
-      @if (canLookup) {
-        <a mat-stroked-button routerLink="/customer-service/lookup"><mat-icon>person_search</mat-icon> {{ 'customerService.nav.lookup' | translate }}</a>
-      }
-      <button mat-raised-button color="primary" type="button" (click)="create()">
-        <mat-icon>add</mat-icon> {{ 'customerService.complaint.new' | translate }}
-      </button>
-    </div>
-  </div>
-
-  <cl-filter-bar [form]="searchForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
-
-  <mat-card class="ad-card--pad-0">
-    <div class="ad-table-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr>
-            <th>{{ 'customerService.complaint.category' | translate }}</th>
-            <th>{{ 'customerService.complaint.description' | translate }}</th>
-            <th>{{ 'customerService.complaint.customer' | translate }}</th>
-            <th>{{ 'customerService.complaint.invoice' | translate }}</th>
-            <th>{{ 'common.status' | translate }}</th>
-            <th>{{ 'customerService.complaint.assignedTo' | translate }}</th>
-            <th>{{ 'common.createdAt' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows; track row.id) {
-            <tr class="clickable" (click)="open(row)">
-              <td>{{ categoryLabel(row.category) | translate }}</td>
-              <td class="desc">{{ row.description }}</td>
-              <td>{{ row.customerName }}</td>
-              <td>{{ row.invoiceCode }}</td>
-              <td><cl-status-pill kind="complaint" [value]="row.status" /></td>
-              <td>{{ row.assignedToName }}</td>
-              <td>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    @if (!rows.length && !loading) {
-      <cl-empty-state icon="report_problem" messageKey="customerService.list.empty" />
-    }
-    @if (total > 0) {
-      <mat-paginator [length]="total" [pageSize]="pageSize" [pageIndex]="pageIndex" [hidePageSize]="true" (page)="onPage($event.pageIndex)"></mat-paginator>
-    }
-  </mat-card>
-</div>
-`,
-  styles: [`
-    .clickable { cursor: pointer; }
-    .clickable:hover { background: var(--ml-panel-3, rgba(0, 0, 0, 0.04)); }
-    .desc { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  `],
+  templateUrl: './complaint-list.component.html',
+  styleUrl: './complaint-list.component.scss',
 })
 export class ComplaintListComponent implements OnInit {
   readonly pageSize = 10;
