@@ -1,7 +1,7 @@
 namespace Cinema.Data.Enums;
 
 /// <summary>The decision of a gate scan. Every value other than <see cref="Admitted"/> means "do not let in".
-/// Serialized by name into AuditLog.DataJson; never rename a member.</summary>
+/// Serialized by name into AuditLog.DataJson and by number in ScanTicketResultDTO; never rename or renumber a member.</summary>
 public enum ScanOutcome
 {
     Admitted = 0,
