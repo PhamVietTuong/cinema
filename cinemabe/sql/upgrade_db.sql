@@ -588,9 +588,9 @@ BEGIN
         ALTER TABLE [TicketPrice] ADD [DayOfWeek] int NULL;
     END
 
-    DELETE FROM [TicketPrice] WHERE [IsHoliday] = 1;
+    EXEC('DELETE FROM [TicketPrice] WHERE [IsHoliday] = 1');
 
-    ALTER TABLE [TicketPrice] DROP COLUMN [IsHoliday];
+    EXEC('ALTER TABLE [TicketPrice] DROP COLUMN [IsHoliday]');
 
     EXEC('UPDATE [TicketPrice] SET [DayOfWeek] = 0');
 
