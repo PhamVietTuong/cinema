@@ -4041,6 +4041,48 @@
         ]
       }
     },
+    "/api/Cinema/RemoveRoomSeat": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_RemoveRoomSeat",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveSeatRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoomSeatDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetInvoices": {
       "post": {
         "tags": [
@@ -10275,6 +10317,20 @@
           "totalColumns": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "RemoveSeatRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "seatId": {
+            "type": "string",
+            "format": "guid"
           }
         }
       },

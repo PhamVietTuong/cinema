@@ -1475,6 +1475,14 @@ public class CinemaController : ApiControllerBase
     {
         return Run(nameof(ResizeRoomSeatGrid), () => _rooms.ResizeSeatGridAsync(request));
     }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<RoomSeatDTO>), 200)]
+    public Task<IActionResult> RemoveRoomSeat([FromBody] RemoveSeatRequest request)
+    {
+        return Run(nameof(RemoveRoomSeat), () => _rooms.RemoveSeatAsync(request));
+    }
     #endregion
 
     #region Invoice (admin: list / status / delete)

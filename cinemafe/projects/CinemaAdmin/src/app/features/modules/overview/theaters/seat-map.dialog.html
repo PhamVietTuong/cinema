@@ -1,6 +1,6 @@
 <div mat-dialog-title class="dialog-title">
   {{ 'theaters.rooms.seatMapHeading' | translate }} · {{ room.name }}
-  <p class="ad-sub">{{ room.totalRows }} × {{ room.totalColumns }} = {{ (room.totalRows ?? 0) * (room.totalColumns ?? 0) }} ghế</p>
+  <p class="ad-sub">{{ room.totalRows }} × {{ room.totalColumns }} · {{ seats.length }} ghế</p>
 </div>
 
 <mat-dialog-content>
@@ -22,14 +22,18 @@
     <div class="seatmap-toolbar">
       <p class="ad-sub">{{ 'theaters.rooms.pairHint' | translate }}</p>
       <div class="palette">
-        <span class="palette-chip" [class.is-active]="!activeIsDouble" [style.--sc]="colorForKind(false)" (click)="activeIsDouble = false">
+        <span class="palette-chip" [class.is-active]="activeTool === 'standard'" [style.--sc]="colorForKind(false)" (click)="activeTool = 'standard'">
           <span class="palette-dot"></span> {{ seatTypeName(false) }}
         </span>
-        <span class="palette-chip" [class.is-active]="activeIsDouble" [style.--sc]="colorForKind(true)" (click)="activeIsDouble = true">
+        <span class="palette-chip" [class.is-active]="activeTool === 'double'" [style.--sc]="colorForKind(true)" (click)="activeTool = 'double'">
           <span class="palette-dot"></span> {{ seatTypeName(true) }}
+        </span>
+        <span class="palette-chip is-remove" [class.is-active]="activeTool === 'remove'" (click)="activeTool = 'remove'">
+          <mat-icon>delete</mat-icon> {{ 'theaters.rooms.removeSeat' | translate }}
         </span>
       </div>
       <p class="ad-sub seatmap-error" *ngIf="pairError">{{ 'theaters.rooms.noAdjacentSeat' | translate }}</p>
+      <p class="ad-sub" *ngIf="activeTool === 'remove'">{{ 'theaters.rooms.removeHint' | translate }}</p>
     </div>
 
     <div class="screen-wrap">
@@ -37,15 +41,17 @@
       <span class="screen-label">{{ 'theaters.rooms.screen' | translate }}</span>
     </div>
 
-    <div class="seat-grid" *ngIf="seats.length; else noSeats">
+    <div class="seat-grid" [class.is-removing]="activeTool === 'remove'" *ngIf="seats.length; else noSeats">
       <div class="seat-row" *ngFor="let row of seatRows">
         <div class="row-label">{{ row }}</div>
-        <div *ngFor="let s of seatsInRow(row)"
+        <div *ngFor="let cell of cellsInRow(row)"
              class="seat editable"
-             [style.--sc]="colorFor(s)"
-             [class.paired]="s.seatGroupId"
-             (click)="onSeatClick(s)"
-             [title]="row + s.colIndex + ' · ' + nameFor(s) + (s.seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : '')">{{ s.colIndex }}<mat-icon *ngIf="s.seatGroupId" class="pair-badge">link</mat-icon></div>
+             [class.double-wide]="cell.isDouble"
+             [class.busy]="removing || resizing"
+             [style.--sc]="colorFor(cell.seats[0])"
+             [class.paired]="cell.seats[0].seatGroupId"
+             (click)="!(removing || resizing) && onSeatClick(cell.seats[0])"
+             [title]="cellLabel(cell) + ' · ' + nameFor(cell.seats[0]) + (cell.seats[0].seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : '')">{{ cellLabel(cell) }}<mat-icon *ngIf="cell.seats[0].seatGroupId" class="pair-badge">link</mat-icon></div>
       </div>
     </div>
     <ng-template #noSeats>

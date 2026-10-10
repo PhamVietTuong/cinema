@@ -19,4 +19,8 @@ public interface IRoomManager
     Task SaveSeatMapAsync(SaveSeatMapRequest request);
     /// <summary>Adds/removes rows or columns of seats, preserving the seats that stay in the grid. Returns the updated seat map.</summary>
     Task<List<RoomSeatDTO>> ResizeSeatGridAsync(ResizeSeatGridRequest request);
+    /// <summary>Removes one physical seat and shifts the rest of its row down by one ColIndex so the
+    /// row stays numbered without a gap. Rejects a seat with ticket history, the last seat of its row,
+    /// or a room with any upcoming active showtime. Returns the updated seat map.</summary>
+    Task<List<RoomSeatDTO>> RemoveSeatAsync(RemoveSeatRequest request);
 }

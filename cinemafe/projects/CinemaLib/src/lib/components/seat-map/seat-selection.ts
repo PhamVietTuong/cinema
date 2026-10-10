@@ -21,8 +21,11 @@ export function seatRows(seats: readonly SelectableSeat[]): string[] {
   return [...new Set(seats.map(s => s.rowName!))];
 }
 
+/** Minimal shape a seat needs to be grouped into rows and double-seat cells. */
+export type RowedSeat = { id?: string; rowName?: string; colIndex?: number; seatGroupId?: string };
+
 /** The seats of one row ordered by column index. */
-export function seatsByRow(seats: readonly SelectableSeat[], row: string): SelectableSeat[] {
+export function seatsByRow<T extends RowedSeat>(seats: readonly T[], row: string): T[] {
   return seats.filter(s => s.rowName === row).sort((a, b) => (a.colIndex ?? 0) - (b.colIndex ?? 0));
 }
 
@@ -75,4 +78,56 @@ export function seatVisualState(seat: SelectableSeat): SeatVisualState {
     return 'unavailable-category';
   }
   return 'available';
+}
+
+/** One box the seat map draws: a single seat, or a merged pair for a double seat. */
+export interface SeatCell<T extends RowedSeat = SelectableSeat> {
+  key: string;
+  seats: T[];
+  isDouble: boolean;
+}
+
+/**
+ * The boxes to draw for one row: adjacent seats sharing a seatGroupId are merged into one wide cell.
+ * A group that isn't exactly two adjacent seats in this row falls back to separate single-seat cells.
+ * Generic so both the booking seat map (SelectableSeat) and the admin seat-map editor (RoomSeatDTO) share it.
+ */
+export function seatCellsByRow<T extends RowedSeat>(seats: readonly T[], row: string): SeatCell<T>[] {
+  const ordered = seatsByRow(seats, row);
+  const groupCounts = new Map<string, number>();
+  for (const s of ordered) {
+    if (s.seatGroupId) {
+      groupCounts.set(s.seatGroupId, (groupCounts.get(s.seatGroupId) ?? 0) + 1);
+    }
+  }
+
+  const cells: SeatCell<T>[] = [];
+  for (let i = 0; i < ordered.length; i++) {
+    const seat = ordered[i];
+    const next = ordered[i + 1];
+    const canMerge = !!seat.seatGroupId
+      && !!next
+      && next.seatGroupId === seat.seatGroupId
+      && groupCounts.get(seat.seatGroupId) === 2;
+
+    if (canMerge) {
+      cells.push({ key: `${seat.id}-${next.id}`, seats: [seat, next], isDouble: true });
+      i++;
+    } else {
+      cells.push({ key: `${seat.id}`, seats: [seat], isDouble: false });
+    }
+  }
+  return cells;
+}
+
+/** Label for a cell: a single seat's label, or both halves of a merged double seat joined by an arrow. */
+export function seatCellLabel(cell: SeatCell): string {
+  return cell.seats.map(seatLabel).join(' → ');
+}
+
+/** Visual state of a cell: the first state that applies across its seat(s), most urgent first. */
+export function seatCellVisualState(cell: SeatCell): SeatVisualState {
+  const states = cell.seats.map(seatVisualState);
+  const priority: SeatVisualState[] = ['selected', 'occupied', 'locked', 'unavailable-category', 'available'];
+  return priority.find(p => states.includes(p)) ?? 'available';
 }

@@ -129,6 +129,7 @@ export interface IHttpService {
     getRoomSeatMap(roomId?: string | undefined): Observable<RoomSeatDTO[]>;
     saveRoomSeatMap(request: SaveSeatMapRequest): Observable<void>;
     resizeRoomSeatGrid(request: ResizeSeatGridRequest): Observable<RoomSeatDTO[]>;
+    removeRoomSeat(request: RemoveSeatRequest): Observable<RoomSeatDTO[]>;
     getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceAdminDTO>;
     updateInvoiceStatus(request: UpdateInvoiceStatusRequest): Observable<InvoiceAdminDTO>;
     deleteInvoice(id?: string | undefined): Observable<void>;
@@ -5839,6 +5840,65 @@ export class HttpService implements IHttpService {
     }
 
     protected processResizeRoomSeatGrid(response: HttpResponseBase): Observable<RoomSeatDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(RoomSeatDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    removeRoomSeat(request: RemoveSeatRequest): Observable<RoomSeatDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/RemoveRoomSeat";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRemoveRoomSeat(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRemoveRoomSeat(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomSeatDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomSeatDTO[]>;
+        }));
+    }
+
+    protected processRemoveRoomSeat(response: HttpResponseBase): Observable<RoomSeatDTO[]> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -16235,6 +16295,46 @@ export interface IResizeSeatGridRequest {
     roomId?: string;
     totalRows?: number;
     totalColumns?: number;
+}
+
+export class RemoveSeatRequest implements IRemoveSeatRequest {
+    roomId?: string;
+    seatId?: string;
+
+    constructor(data?: IRemoveSeatRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.roomId = _data["roomId"];
+            this.seatId = _data["seatId"];
+        }
+    }
+
+    static fromJS(data: any): RemoveSeatRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RemoveSeatRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["roomId"] = this.roomId;
+        data["seatId"] = this.seatId;
+        return data;
+    }
+}
+
+export interface IRemoveSeatRequest {
+    roomId?: string;
+    seatId?: string;
 }
 
 export abstract class BaseSearchResultsOfInvoiceAdminDTO implements IBaseSearchResultsOfInvoiceAdminDTO {

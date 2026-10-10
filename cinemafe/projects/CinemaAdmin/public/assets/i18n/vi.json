@@ -312,7 +312,11 @@
       "statusActive": "Hoạt Động",
       "statusMaintenance": "Bảo Trì",
       "statusInactive": "Ngừng Hoạt Động",
-      "coupleSeat": "ghế đôi"
+      "coupleSeat": "ghế đôi",
+      "removeSeat": "Xoá ghế",
+      "removeHint": "Bấm vào một ghế để xoá. Các ghế còn lại trong hàng sẽ dịch lại để không bị hụt số.",
+      "confirmRemoveSeat": "Xoá ghế này? Các ghế phía sau trong cùng hàng sẽ dịch lại một số.",
+      "confirmRemoveDoubleSeat": "Ghế này đang ghép đôi. Xoá ghế sẽ biến ghế còn lại thành ghế đơn, và các ghế phía sau trong hàng sẽ dịch lại một số. Tiếp tục?"
     },
     "roomTypes": {
       "subtitle": "Định dạng phòng chiếu (2D, 3D, IMAX, 4DX…) — ảnh hưởng thiết bị và giá vé.",

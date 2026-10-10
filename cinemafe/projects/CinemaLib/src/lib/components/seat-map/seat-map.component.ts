@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
-import { SelectableSeat, seatLabel, seatRows, seatsByRow, seatVisualState } from './seat-selection';
+import { SeatCell, SelectableSeat, seatCellLabel, seatCellsByRow, seatCellVisualState, seatRows } from './seat-selection';
 
 /**
  * Presentational seat grid: rows of seats with the screen arc and a legend. It owns no selection
  * logic; the screen mutates the seat flags (`isSelected`, `isSelectable`, `isAllowedForPatronCategory`,
  * `isLocked`, `status`) and re-renders the map by marking itself for check, then handles `seatToggle`.
- * Used by the customer booking page and the counter POS.
+ * Used by the customer booking page and the counter POS. A double (couple) seat is drawn as one wide
+ * merged box covering its two underlying seats.
  *
  * Deliberately Default change detection: the seat objects are mutated in place, so an OnPush map
  * would never repaint.
@@ -36,26 +37,38 @@ export class SeatMapComponent {
     return seatRows(this.seats);
   }
 
-  seatsOf(row: string): SelectableSeat[] {
-    return seatsByRow(this.seats, row);
+  cellsOf(row: string): SeatCell[] {
+    return seatCellsByRow(this.seats, row);
   }
 
-  label(seat: SelectableSeat): string {
-    return seatLabel(seat);
+  label(cell: SeatCell): string {
+    return seatCellLabel(cell);
   }
 
-  state(seat: SelectableSeat): string {
-    return seatVisualState(seat);
+  state(cell: SeatCell): string {
+    return seatCellVisualState(cell);
+  }
+
+  isCategoryBlocked(cell: SeatCell): boolean {
+    return cell.seats.some(s => s.isAllowedForPatronCategory === false);
+  }
+
+  isNotSelectable(cell: SeatCell): boolean {
+    return !this.isCategoryBlocked(cell) && cell.seats.some(s => s.isSelectable === false);
   }
 
   /** Tooltip i18n key (empty string = no tooltip). */
-  titleOf(seat: SelectableSeat): string {
-    if (seat.isAllowedForPatronCategory === false) {
+  titleOf(cell: SeatCell): string {
+    if (this.isCategoryBlocked(cell)) {
       return 'seatMap.notAvailableForCategory';
     }
-    if (seat.isSelectable === false) {
+    if (cell.seats.some(s => s.isSelectable === false)) {
       return 'seatMap.capReached';
     }
     return '';
+  }
+
+  onCellClick(cell: SeatCell): void {
+    this.seatToggle.emit(cell.seats[0]);
   }
 }
