@@ -1,0 +1,161 @@
+.tp-toolbar-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+
+  .ad-sub { margin: 0; }
+}
+
+.tp-roomtype-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tp-roomtype-pill {
+  padding: 6px 14px;
+  border-radius: var(--ml-r-full);
+  border: 1px solid var(--ml-rule);
+  background: var(--ml-panel-2);
+  color: var(--ml-ink-2);
+  font: inherit;
+  cursor: pointer;
+
+  &--selected {
+    background: var(--ml-action);
+    border-color: var(--ml-action);
+    color: var(--ml-on-action);
+    font-weight: 600;
+  }
+}
+
+.tp-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.tp-timeline-panel {
+  flex: 999 1 560px;
+  min-width: 0;
+  background: var(--ml-panel);
+  border: 1px solid var(--ml-rule);
+  border-radius: var(--ml-r-lg);
+  padding: 16px 20px 20px;
+}
+
+.tp-ruler {
+  display: flex;
+  padding-bottom: 8px;
+  margin-left: 132px;
+  border-bottom: 1px solid var(--ml-rule);
+  font-family: var(--ml-font-data);
+  font-size: 0.7rem;
+  color: var(--ml-muted);
+
+  .tp-ruler-tick { flex: 1; }
+  .tp-ruler-tick:last-child { flex: 0; }
+}
+
+.tp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  border-bottom: 1px solid var(--ml-rule);
+  padding: 6px 0;
+
+  &:last-of-type { border-bottom: none; }
+}
+
+.tp-row-label {
+  width: 120px;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.tp-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 40px;
+  border-radius: var(--ml-r-md);
+  background: var(--ml-panel-3);
+}
+
+.tp-segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 6px;
+  border: none;
+  border-radius: var(--ml-r-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+
+  &--default { opacity: 0.55; }
+}
+
+.tp-show-holiday,
+.tp-show-regular {
+  border: none;
+  background: transparent;
+  color: var(--ml-action-strong);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+
+.tp-holiday-banner {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--ml-r-md);
+}
+
+.tp-holiday-name { font-weight: 700; }
+.tp-holiday-date { font-family: var(--ml-font-data); font-size: 0.8rem; }
+.tp-holiday-multiplier { font-family: var(--ml-font-data); font-weight: 700; margin-left: auto; }
+
+.tp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: 0.8rem;
+  color: var(--ml-muted);
+}
+
+.tp-legend-item { display: flex; align-items: center; gap: 6px; }
+.tp-legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+.tp-invalid-warning {
+  margin-top: 12px;
+  color: var(--ml-warn-ink);
+  font-size: 0.8rem;
+}
+
+// ── Multiplier bands — low/standard = cool (cheaper or neutral), peak = warm premium, holiday = red
+//    override. Used on both timeline segments/banner and the legend dots.
+.tp-band--low { background: var(--ml-success-soft); color: var(--ml-success-ink); }
+.tp-band--standard { background: var(--ml-panel-4); color: var(--ml-ink-2); }
+.tp-band--peak { background: var(--ml-warn-soft); color: var(--ml-warn-ink); }
+.tp-band--holiday { background: var(--ml-danger-soft); color: var(--ml-danger-ink); }
+
+@media (max-width: 900px) {
+  .tp-layout { flex-direction: column; }
+}

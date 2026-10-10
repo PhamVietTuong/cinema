@@ -15,7 +15,6 @@ import { MembershipDialog } from './memberships/membership.dialog';
 import { UserTypesManagementComponent } from './user-types/user-types.component';
 import { UserTypeDialog } from './user-types/user-type.dialog';
 import { HolidaysManagementComponent } from './holidays/holidays.component';
-import { HolidayDialog } from './holidays/holiday.dialog';
 import { NewsManagementComponent } from './news/news.component';
 import { NewsDialog } from './news/news.dialog';
 
@@ -42,7 +41,6 @@ const routes: Routes = [
     UserTypesManagementComponent,
     UserTypeDialog,
     HolidaysManagementComponent,
-    HolidayDialog,
     NewsManagementComponent,
     NewsDialog,
   ],

@@ -27,6 +27,7 @@ import { TheaterTimeSlotsComponent } from './theaters/theater-time-slots.compone
 import { TimeSlotDialog } from './theaters/time-slot.dialog';
 import { TheaterTicketPricesComponent } from './theaters/theater-ticket-prices.component';
 import { TicketPriceDialog } from './theaters/ticket-price.dialog';
+import { HolidaySidebarComponent } from './theaters/holiday-sidebar.component';
 import { ShowTimesManagementComponent } from './show-times/show-times.component';
 import { ShowTimeDialog } from './show-times/show-time.dialog';
 import { UsersManagementComponent } from './users/users-management.component';
@@ -79,6 +80,7 @@ const routes: Routes = [
     TimeSlotDialog,
     TheaterTicketPricesComponent,
     TicketPriceDialog,
+    HolidaySidebarComponent,
     ShowTimesManagementComponent,
     ShowTimeDialog,
     UsersManagementComponent,

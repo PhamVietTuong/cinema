@@ -1,48 +1,51 @@
-<div mat-dialog-title class="dialog-title">{{ (editingId ? 'theaters.ticketPrices.editTitle' : 'theaters.ticketPrices.newTitle') | translate }}</div>
+<div mat-dialog-title class="dialog-title">{{ 'theaters.ticketPrices.editCellTitle' | translate }}</div>
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
     <div class="dlg-grid">
-      <div class="dlg-row dlg-row--2">
+      <p class="ad-sub tp-dialog-sub">
+        {{ data.roomTypeName }} · {{ data.timeSlot.name }} ({{ data.timeSlot.startTime }}–{{ data.timeSlot.endTime }})
+      </p>
+
+      <div class="dlg-row">
         <div class="dlg-field">
-          <label class="dlg-label" id="tp-roomTypeId-lbl">{{ 'theaters.ticketPrices.roomTypeLabel' | translate }}</label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="roomTypeId" panelClass="dlg-select-panel" aria-labelledby="tp-roomTypeId-lbl">
-              <mat-option *ngFor="let rt of roomTypes" [value]="rt.id">{{ rt.name }}</mat-option>
-            </mat-select>
-            <mat-error *ngIf="form.controls['roomTypeId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
-        </div>
-        <div class="dlg-field">
-          <label class="dlg-label" id="tp-timeSlotId-lbl">{{ 'theaters.ticketPrices.timeSlotLabel' | translate }}</label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="timeSlotId" panelClass="dlg-select-panel" aria-labelledby="tp-timeSlotId-lbl">
-              <mat-option *ngFor="let t of timeSlots" [value]="t.id">{{ t.name }} ({{ t.startTime }}–{{ t.endTime }})</mat-option>
-            </mat-select>
-            <mat-error *ngIf="form.controls['timeSlotId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
+          <label class="dlg-label">{{ 'theaters.ticketPrices.daysLabel' | translate }}</label>
+          <div class="tp-day-chips">
+            <button
+              type="button" class="tp-day-chip"
+              *ngFor="let d of dayOptions"
+              [class.tp-day-chip--selected]="isDaySelected(d.value)"
+              (click)="toggleDay(d.value)">
+              {{ d.shortName | translate }}
+            </button>
+          </div>
+          <mat-error *ngIf="form.controls['daysOfWeek'].touched && !form.value.daysOfWeek?.length">
+            {{ 'common.required' | translate }}
+          </mat-error>
         </div>
       </div>
 
       <div class="dlg-row">
         <div class="dlg-field">
-          <label class="dlg-label" for="tp-priceMultiplier">{{ 'theaters.ticketPrices.multiplierLabel' | translate }}</label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput id="tp-priceMultiplier" type="number" step="0.05" min="0.01" formControlName="priceMultiplier" placeholder="1.2">
-            <mat-error *ngIf="form.controls['priceMultiplier'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
-            <mat-hint>{{ 'theaters.ticketPrices.multiplierHint' | translate }}</mat-hint>
-          </mat-form-field>
+          <label class="dlg-label">{{ 'theaters.ticketPrices.multiplierLabel' | translate }}</label>
+          <div class="tp-stepper">
+            <button type="button" mat-icon-button (click)="adjustMultiplier(-0.05)"><mat-icon>remove</mat-icon></button>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tp-stepper-field">
+              <input matInput type="number" step="0.05" min="0.01" formControlName="priceMultiplier">
+            </mat-form-field>
+            <button type="button" mat-icon-button (click)="adjustMultiplier(0.05)"><mat-icon>add</mat-icon></button>
+          </div>
+          <mat-hint class="tp-hint">{{ 'theaters.ticketPrices.multiplierHint' | translate }}</mat-hint>
         </div>
-      </div>
-
-      <div class="dlg-switch">
-        <span class="dlg-switch-label" id="tp-isHoliday-lbl">{{ 'theaters.ticketPrices.applyHoliday' | translate }}</span>
-        <mat-slide-toggle formControlName="isHoliday" aria-labelledby="tp-isHoliday-lbl"></mat-slide-toggle>
       </div>
     </div>
   </mat-dialog-content>
 
   <div mat-dialog-actions class="dialog-actions">
+    <button
+      mat-button type="button" color="warn" *ngIf="data.existing"
+      (click)="resetDefault()">{{ 'theaters.ticketPrices.resetDefault' | translate }}</button>
+    <span class="tp-actions-spacer"></span>
     <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
     <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
   </div>

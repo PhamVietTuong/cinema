@@ -259,6 +259,11 @@ export const API_ERRORS_VI: Record<string, string> = {
   recordOutOfScope: 'Bản ghi nằm ngoài phạm vi của bạn.',
   staffNotFound: 'Không tìm thấy nhân viên.',
   notActiveStaff: 'Người đó không phải nhân viên đang hoạt động của rạp này.',
+  roomTypeWrongTheater: 'Loại phòng không thuộc rạp này.',
+  timeSlotWrongTheater: 'Khung giờ không thuộc rạp này.',
+  ticketPriceDuplicate: 'Đã có mức giá cho loại phòng, khung giờ và ngày này.',
+  ticketPriceDayRequired: 'Cần chọn ít nhất một ngày trong tuần.',
+  ticketPriceInvalidDay: 'Ngày trong tuần không hợp lệ.',
 };
 
 export const API_ERRORS_EN: Record<string, string> = {
@@ -521,4 +526,9 @@ export const API_ERRORS_EN: Record<string, string> = {
   recordOutOfScope: 'The record is outside your scope.',
   staffNotFound: 'Staff member not found.',
   notActiveStaff: 'That person is not an active staff member of this theater.',
+  roomTypeWrongTheater: 'RoomType does not belong to this theater.',
+  timeSlotWrongTheater: 'TimeSlot does not belong to this theater.',
+  ticketPriceDuplicate: 'A ticket price already exists for this room type, time slot and day.',
+  ticketPriceDayRequired: 'At least one day of week is required.',
+  ticketPriceInvalidDay: 'Invalid day of week.',
 };

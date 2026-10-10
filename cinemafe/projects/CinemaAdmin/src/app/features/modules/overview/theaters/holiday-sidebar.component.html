@@ -1,0 +1,25 @@
+<div class="hs-header">
+  <div class="hs-titles">
+    <div class="hs-title">{{ 'theaters.ticketPrices.sidebar.title' | translate }}</div>
+    <div class="hs-subtitle">{{ 'theaters.ticketPrices.sidebar.subtitle' | translate }}</div>
+  </div>
+  <button mat-stroked-button color="primary" (click)="add()">
+    <mat-icon>add</mat-icon> {{ 'theaters.ticketPrices.sidebar.add' | translate }}
+  </button>
+</div>
+
+<div class="hs-list">
+  <div class="hs-row" *ngFor="let h of holidays">
+    <div class="hs-row-main">
+      <div class="hs-row-name">{{ h.name }}</div>
+      <div class="hs-row-date">{{ h.date | date:'mediumDate' }}</div>
+    </div>
+    <span class="ad-pill ad-pill--warn">{{ h.priceMultiplier | number:'1.1-2' }}×</span>
+    <div class="hs-row-actions">
+      <button mat-icon-button (click)="edit(h)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+      <button mat-icon-button (click)="remove(h.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+    </div>
+  </div>
+
+  <div *ngIf="!holidays.length" class="ad-empty"><mat-icon>celebration</mat-icon><p>{{ 'theaters.ticketPrices.sidebar.empty' | translate }}</p></div>
+</div>

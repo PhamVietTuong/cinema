@@ -272,6 +272,11 @@ export const API_ERROR_RULES: readonly ApiErrorRule[] = [
   { key: 'recordOutOfScope', exact: 'The record is outside your scope.' },
   { key: 'staffNotFound', exact: 'Staff member not found.' },
   { key: 'notActiveStaff', exact: 'That person is not an active staff member of this theater.' },
+  { key: 'roomTypeWrongTheater', exact: 'RoomType does not belong to this theater.' },
+  { key: 'timeSlotWrongTheater', exact: 'TimeSlot does not belong to this theater.' },
+  { key: 'ticketPriceDuplicate', exact: 'A ticket price already exists for this room type, time slot and day.' },
+  { key: 'ticketPriceDayRequired', exact: 'At least one day of week is required.' },
+  { key: 'ticketPriceInvalidDay', exact: 'Invalid day of week.' },
 ];
 
 const EXACT = new Map<string, string>();
