@@ -21,6 +21,12 @@ public class InvoiceTicket
     /// on cancel/expire/refund. A filtered unique index over active (ShowTimeId, RoomId, SeatId) rows gives a
     /// DB-level guarantee that two instances can't double-book the same seat.</summary>
     public bool IsActive { get; set; } = true;
+    /// <summary>Seat label frozen at sale time (row-position numbering: a double seat counts as one slot).
+    /// Written once by BookingManager.ComposeInvoiceAsync; source of truth for every customer-facing display
+    /// of a sold ticket. Never recomputed, even if the room's seats are later paired/resized/removed. Null
+    /// for rows written before this column existed. Ops views (gate/incident) deliberately ignore this and
+    /// keep showing the seat's live physical RowName+ColIndex.</summary>
+    public string? SeatLabel { get; set; }
     public Invoice Invoice { get; set; } = null!;
     public ShowTimeRoom ShowTimeRoom { get; set; } = null!;
     public Seat Seat { get; set; } = null!;

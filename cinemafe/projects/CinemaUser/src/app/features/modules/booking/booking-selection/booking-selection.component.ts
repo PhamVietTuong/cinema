@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { Subscription, take } from 'rxjs';
 import {
   SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, selectIsAuthenticated,
-  SeatMapComponent, SeatLockSessionService, SelectableSeat, seatRows, seatsByRow, seatLabel, seatGroupOf, isGroupBlocked, physicalSeatPrice, foodOrderCap,
+  SeatMapComponent, SeatLockSessionService, SelectableSeat, seatRows, seatsByRow, seatLabel, joinSeatLabels, seatGroupOf, isGroupBlocked, physicalSeatPrice, foodOrderCap,
 } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import { BookingCheckoutState, stashPendingCheckout } from '../booking-checkout/booking-checkout.state';
@@ -188,7 +188,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         const seats = sl.seatIds
           .map(id => this.seats.find(s => s.id === id))
           .filter((s): s is SelectableSeat => !!s);
-        const label = seats.map(s => seatLabel(s)).join('-');
+        const label = joinSeatLabels(seats.map(s => seatLabel(s)), '-');
         const row = this._rowFor(sl.patronCategoryId);
         return { label, isDouble: sl.isDouble, categoryName: row?.patronCategoryName ?? '', price: row?.price ?? 0 };
       });
@@ -435,7 +435,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       }
 
       this.categoryWarning = removedLabels.length
-        ? this._translate.instant('booking.tickets.removedByQuantityChange', { seats: removedLabels.join(', ') })
+        ? this._translate.instant('booking.tickets.removedByQuantityChange', { seats: joinSeatLabels(removedLabels) })
         : '';
     }
 

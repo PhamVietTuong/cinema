@@ -2,7 +2,7 @@ import { Component, Inject } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { CinemaServiceAgent, DialogService, SeatCell, seatCellsByRow, seatLabel, showException } from 'CinemaLib';
+import { CinemaServiceAgent, DialogService, SeatCell, seatCellsByRow, showException } from 'CinemaLib';
 
 export interface SeatMapDialogData {
   theaterId: string;
@@ -82,8 +82,10 @@ export class SeatMapDialog {
     return seatCellsByRow(this.seats, row);
   }
 
+  /** A double seat's two halves share one number (row-position numbering), computed live from the full
+   * in-memory seat list so unsaved pairing edits renumber immediately, before Save. */
   cellLabel(cell: SeatCell<CinemaServiceAgent.RoomSeatDTO>): string {
-    return cell.seats.map(seatLabel).join(' → ');
+    return `${cell.seats[0].rowName}${cell.position}`;
   }
 
   /** The theater's actual SeatType name for a kind (e.g. renamed to "Ghế VIP"), not a hardcoded

@@ -22,16 +22,27 @@ export function seatRows(seats: readonly SelectableSeat[]): string[] {
 }
 
 /** Minimal shape a seat needs to be grouped into rows and double-seat cells. */
-export type RowedSeat = { id?: string; rowName?: string; colIndex?: number; seatGroupId?: string };
+export type RowedSeat = { id?: string; rowName?: string; colIndex?: number; seatGroupId?: string; displayNumber?: number };
 
 /** The seats of one row ordered by column index. */
 export function seatsByRow<T extends RowedSeat>(seats: readonly T[], row: string): T[] {
   return seats.filter(s => s.rowName === row).sort((a, b) => (a.colIndex ?? 0) - (b.colIndex ?? 0));
 }
 
-/** Short seat label such as "A12". */
-export function seatLabel(seat: Pick<SelectableSeat, 'rowName' | 'colIndex'>): string {
-  return `${seat.rowName}${seat.colIndex}`;
+/** Short seat label such as "A12" — uses the server's row-position DisplayNumber (a double seat's two
+ * halves share one number) when present, else falls back to the physical ColIndex. */
+export function seatLabel(seat: Pick<RowedSeat, 'rowName' | 'colIndex' | 'displayNumber'>): string {
+  return `${seat.rowName}${seat.displayNumber ?? seat.colIndex}`;
+}
+
+/** Removes duplicate labels (first-seen order), e.g. a double seat's two tickets both reading "C2". */
+export function uniqueSeatLabels(labels: readonly string[]): string[] {
+  return [...new Set(labels.filter(l => !!l))];
+}
+
+/** Dedupes and joins seat labels for a summary string, e.g. "C2, C3" rather than "C2, C2, C3". */
+export function joinSeatLabels(labels: readonly string[], separator = ', '): string {
+  return uniqueSeatLabels(labels).join(separator);
 }
 
 /**
@@ -85,6 +96,10 @@ export interface SeatCell<T extends RowedSeat = SelectableSeat> {
   key: string;
   seats: T[];
   isDouble: boolean;
+  /** 1-based position of this box within its row — a double seat counts as one position, so later
+   * cells don't jump by two. Only meaningful when seatCellsByRow saw every seat of the row (as the
+   * admin seat-map editor does); the live booking/POS grid uses the server's DisplayNumber instead. */
+  position: number;
 }
 
 /**
@@ -102,6 +117,7 @@ export function seatCellsByRow<T extends RowedSeat>(seats: readonly T[], row: st
   }
 
   const cells: SeatCell<T>[] = [];
+  let position = 0;
   for (let i = 0; i < ordered.length; i++) {
     const seat = ordered[i];
     const next = ordered[i + 1];
@@ -110,19 +126,21 @@ export function seatCellsByRow<T extends RowedSeat>(seats: readonly T[], row: st
       && next.seatGroupId === seat.seatGroupId
       && groupCounts.get(seat.seatGroupId) === 2;
 
+    position++;
     if (canMerge) {
-      cells.push({ key: `${seat.id}-${next.id}`, seats: [seat, next], isDouble: true });
+      cells.push({ key: `${seat.id}-${next.id}`, seats: [seat, next], isDouble: true, position });
       i++;
     } else {
-      cells.push({ key: `${seat.id}`, seats: [seat], isDouble: false });
+      cells.push({ key: `${seat.id}`, seats: [seat], isDouble: false, position });
     }
   }
   return cells;
 }
 
-/** Label for a cell: a single seat's label, or both halves of a merged double seat joined by an arrow. */
+/** Label for a cell: a single seat's label, or a merged double seat's shared number (both halves read
+ * the same, e.g. "C2") — relies on the seat carrying DisplayNumber (the live booking/POS grid). */
 export function seatCellLabel(cell: SeatCell): string {
-  return cell.seats.map(seatLabel).join(' → ');
+  return seatLabel(cell.seats[0]);
 }
 
 /** Visual state of a cell: the first state that applies across its seat(s), most urgent first. */

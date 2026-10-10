@@ -10,6 +10,7 @@ using Cinema.Business.DTO.Concession;
 using Cinema.Business.DTO.Invoices;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
+using Cinema.Business.Helpers;
 using Cinema.Business.Notifications;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
@@ -53,7 +54,10 @@ public class BookingManager : IBookingManager
         var showTimeId = search.Filters.GetGuid("showTimeId") ?? Guid.Empty;
         var roomId     = search.Filters.GetGuid("roomId")     ?? Guid.Empty;
 
-        var seats        = await _uow.SeatStore.GetByRoomAsync(roomId);
+        // All seats (active or not) — a blocked seat must still occupy a slot in the row-position
+        // numbering below, or its neighbours would wrongly shift to fill the gap.
+        var roomSeats    = await _uow.SeatStore.GetSeatMapByRoomNoTrackingAsync(roomId);
+        var displayNumbers = SeatNumbering.Compute(roomSeats);
         var bookedIds    = (await _uow.SeatStore.GetBookedSeatIdsAsync(showTimeId, roomId)).ToHashSet();
         var showTimeRoom = await _uow.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId);
         var pricing      = await BuildSeatPricingContextAsync(showTimeRoom);
@@ -62,7 +66,7 @@ public class BookingManager : IBookingManager
         // and computes IsAllowedForPatronCategory itself from each category's allowedSeatTypeIds
         // (avoids a seat re-fetch on every quantity change) — this response always reports the
         // unfiltered/unrestricted default of true.
-        var dtos = seats.Select(s =>
+        var dtos = roomSeats.Where(s => s.IsActive).Select(s =>
         {
             var key      = SeatKey(showTimeId, roomId, s.Id);
             var isBooked = bookedIds.Contains(s.Id);
@@ -70,14 +74,15 @@ public class BookingManager : IBookingManager
             var kind     = s.SeatGroupId.HasValue ? SeatKind.Double : SeatKind.Standard;
             return new SeatDTO
             {
-                Id          = s.Id,
-                RowName     = s.RowName,
-                ColIndex    = s.ColIndex,
-                IsDouble    = kind == SeatKind.Double,
-                Status      = isBooked ? SeatStatus.Occupied : isLocked ? SeatStatus.Reserved : SeatStatus.Available,
-                Price       = pricing.MinPriceByKind.TryGetValue(kind, out var fromPrice) ? fromPrice : 0,
-                IsLocked    = isLocked && !isBooked,
-                SeatGroupId = s.SeatGroupId,
+                Id            = s.Id,
+                RowName       = s.RowName,
+                ColIndex      = s.ColIndex,
+                DisplayNumber = displayNumbers[s.Id],
+                IsDouble      = kind == SeatKind.Double,
+                Status        = isBooked ? SeatStatus.Occupied : isLocked ? SeatStatus.Reserved : SeatStatus.Available,
+                Price         = pricing.MinPriceByKind.TryGetValue(kind, out var fromPrice) ? fromPrice : 0,
+                IsLocked      = isLocked && !isBooked,
+                SeatGroupId   = s.SeatGroupId,
             };
         }).ToList();
 
@@ -556,6 +561,13 @@ public class BookingManager : IBookingManager
             var seatIds  = input.Seats.Select(s => s.SeatId).Distinct().ToList();
             var seatsById = await _uow.SeatStore.GetByIdsAsync(seatIds);
 
+            // Freezes each ticket's display label at the exact row-position numbering the customer saw
+            // on the booking grid just now — the same computation GetSeatsAsync used. Needs every seat
+            // of the room (not just the requested ones), since a blocked seat elsewhere in the row still
+            // occupies a slot.
+            var roomSeats = await _uow.SeatStore.GetSeatMapByRoomNoTrackingAsync(roomId);
+            var displayNumbers = SeatNumbering.Compute(roomSeats);
+
             // A double seat must be booked whole: if any requested seat is part of a group, every seat
             // sharing that group must also be in this request, or the partner would be left half-sold.
             var groupIds = seatsById.Values.Where(s => s.SeatGroupId.HasValue).Select(s => s.SeatGroupId!.Value).Distinct().ToList();
@@ -627,7 +639,7 @@ public class BookingManager : IBookingManager
                 // the two halves sum to the single price the customer was quoted for one seat.
                 var listPrice = Money(seatKind == SeatKind.Double ? category.Price / 2 : category.Price, wholeVnd);
                 var price = listPrice;
-                var seatLabel = $"{seat.RowName}{seat.ColIndex}";
+                var seatLabel = SeatNumbering.Label(seat.RowName, displayNumbers[seat.Id]);
                 if (input.SeatPriceOverrides.TryGetValue(seatItem.SeatId, out var seatOverride))
                 {
                     price = ValidateOverride(seatOverride, listPrice, seatLabel);
@@ -647,6 +659,7 @@ public class BookingManager : IBookingManager
                     PatronCategoryName    = category.Name,
                     PatronDiscountPercent = 0,
                     QrCode                = qr,
+                    SeatLabel             = seatLabel,
                 });
 
                 ticketItems.Add(new TicketItemDTO

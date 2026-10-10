@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel, joinSeatLabels } from 'CinemaLib';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, map, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -118,7 +118,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       }
     }
     return [...groups.values()].map(group => ({
-      label: group.map(s => s.label).join('-'),
+      label: joinSeatLabels(group.map(s => s.label), '-'),
       seatKind: group[0].seatKind,
       categoryName: group[0].patronCategoryName,
       price: group.reduce((sum, s) => sum + s.price, 0),

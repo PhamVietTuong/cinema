@@ -965,6 +965,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "displayNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
           "isDouble": {
             "type": "boolean"
           },

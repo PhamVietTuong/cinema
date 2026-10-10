@@ -590,6 +590,11 @@ CREATE TABLE [InvoiceTicket] (
     -- P3 gate: stamped atomically with IsUsed when a ticket is admitted at the gate.
     [UsedAt] datetime NULL,
     [UsedByUserId] uniqueidentifier NULL,
+    -- Seat label frozen at sale time (row-position numbering: a double seat counts as one slot).
+    -- Source of truth for every customer-facing display of a sold ticket. NULL only for rows
+    -- written before this column existed. Ops views (gate/incident) deliberately ignore it and
+    -- keep showing the seat's live physical RowName+ColIndex.
+    [SeatLabel] nvarchar(16) NULL,
     CONSTRAINT [PK_InvoiceTicket] PRIMARY KEY ([InvoiceId], [ShowTimeId], [RoomId], [SeatId]),
     CONSTRAINT [FK_InvoiceTicket_Invoice_InvoiceId] FOREIGN KEY ([InvoiceId]) REFERENCES [Invoice] ([Id]) ON DELETE CASCADE,
     CONSTRAINT [FK_InvoiceTicket_Seat_SeatId] FOREIGN KEY ([SeatId]) REFERENCES [Seat] ([Id]) ON DELETE NO ACTION,

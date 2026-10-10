@@ -3,6 +3,7 @@ using Cinema.Business.DTO;
 using Cinema.Business.DTO.Invoices;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
+using Cinema.Business.Helpers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
@@ -111,7 +112,7 @@ public class InvoiceManager : IInvoiceManager
         dto.TheaterName = ticket.ShowTimeRoom?.Room?.Theater?.Name    ?? string.Empty;
         dto.RoomName    = ticket.ShowTimeRoom?.Room?.Name             ?? string.Empty;
         dto.ShowTime    = ticket.ShowTimeRoom?.ShowTime?.StartTime    ?? default;
-        dto.SeatLabel   = ticket.Seat != null ? $"{ticket.Seat.RowName}{ticket.Seat.ColIndex}" : string.Empty;
+        dto.SeatLabel   = SeatNumbering.TicketLabel(ticket);
         dto.SeatType    = ticket.Seat?.SeatGroupId != null ? "Double" : "Single";
         return dto;
     }

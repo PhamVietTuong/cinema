@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
-import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase } from 'CinemaLib';
+import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase, joinSeatLabels } from 'CinemaLib';
 import * as QRCode from 'qrcode';
 
 /** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
@@ -137,7 +137,7 @@ export class ProfileComponent extends ProfileFormBase {
     return this.invoices.slice(0, 5).map(inv => ({
       movie: inv.tickets?.[0]?.movieTitle ?? '—',
       date: inv.tickets?.[0]?.showTime,
-      seats: (inv.tickets ?? []).map(t => t.seatLabel).filter(Boolean).join(', ') || '—',
+      seats: joinSeatLabels((inv.tickets ?? []).map(t => t.seatLabel ?? '')) || '—',
       status: inv.status,
     }));
   }
@@ -155,7 +155,7 @@ export class ProfileComponent extends ProfileFormBase {
       id: inv.id,
       movie: inv.tickets?.[0]?.movieTitle ?? '—',
       date: inv.tickets?.[0]?.showTime,
-      seats: (inv.tickets ?? []).map(t => t.seatLabel).filter(Boolean).join(', ') || '—',
+      seats: joinSeatLabels((inv.tickets ?? []).map(t => t.seatLabel ?? '')) || '—',
       foods: (inv.foods ?? []).map(f => `${f.quantity} × ${f.foodName}`).join(', ') || '—',
       total: inv.finalAmount,
       status: inv.status,

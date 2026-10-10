@@ -1,4 +1,5 @@
 using Cinema.Business.Contracts;
+using Cinema.Business.Helpers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Foundation.Logging;
@@ -56,8 +57,9 @@ public class ShowtimeReminderService : BackgroundService
                     var movie = first.ShowTimeRoom?.ShowTime?.Movie?.Title ?? "phim";
                     var start = first.ShowTimeRoom?.ShowTime?.StartTime ?? default;
                     var seats = string.Join(", ", group
-                        .Where(t => t.Seat != null)
-                        .Select(t => $"{t.Seat!.RowName}{t.Seat.ColIndex}"));
+                        .Select(SeatNumbering.TicketLabel)
+                        .Where(l => !string.IsNullOrEmpty(l))
+                        .Distinct());
 
                     await notify.SendAsync(email!,
                         $"Nhắc lịch: {movie} lúc {start:HH:mm dd/MM}",

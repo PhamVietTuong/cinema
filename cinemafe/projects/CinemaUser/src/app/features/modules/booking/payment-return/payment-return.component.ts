@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, uniqueSeatLabels } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 
@@ -102,7 +102,7 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
   }
 
   get seatLabels(): string[] {
-    return (this.invoice?.tickets ?? []).map(t => t.seatLabel).filter((s): s is string => !!s);
+    return uniqueSeatLabels((this.invoice?.tickets ?? []).map(t => t.seatLabel ?? ''));
   }
 
   /** Movie / theater / room / showtime are the same on every ticket of one invoice, so read the first. */

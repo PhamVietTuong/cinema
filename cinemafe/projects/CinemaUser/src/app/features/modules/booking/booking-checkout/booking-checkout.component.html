@@ -240,7 +240,7 @@
         <div class="ticket-seats">
           <div class="ticket-detail-label">{{ 'booking.success.seatsLabel' | translate }}</div>
           <div class="ticket-seats-row">
-            <span class="ticket-seat-chip" *ngFor="let s of seats">{{ s.label }}</span>
+            <span class="ticket-seat-chip" *ngFor="let t of ticketLines">{{ t.label }}</span>
           </div>
         </div>
         <div class="ticket-total-wrap">

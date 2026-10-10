@@ -302,7 +302,7 @@ public partial class BoxOfficeManager
             ShowStart = firstShow?.StartTime,
             Tickets = activeTickets.Select(t => new TicketItemDTO
             {
-                SeatLabel = $"{t.Seat.RowName}{t.Seat.ColIndex}",
+                SeatLabel = SeatNumbering.TicketLabel(t),
                 SeatType = t.Seat.SeatGroupId.HasValue ? "Double" : "Single",
                 Price = t.Price,
                 PatronCategory = t.PatronCategoryName ?? string.Empty,

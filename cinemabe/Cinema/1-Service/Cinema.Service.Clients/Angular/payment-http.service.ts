@@ -1362,6 +1362,7 @@ export class SeatDTO implements ISeatDTO {
     id?: string;
     rowName?: string;
     colIndex?: number;
+    displayNumber?: number;
     isDouble?: boolean;
     status?: SeatStatus;
     price?: number;
@@ -1382,6 +1383,7 @@ export class SeatDTO implements ISeatDTO {
             this.id = _data["id"];
             this.rowName = _data["rowName"];
             this.colIndex = _data["colIndex"];
+            this.displayNumber = _data["displayNumber"];
             this.isDouble = _data["isDouble"];
             this.status = _data["status"];
             this.price = _data["price"];
@@ -1402,6 +1404,7 @@ export class SeatDTO implements ISeatDTO {
         data["id"] = this.id;
         data["rowName"] = this.rowName;
         data["colIndex"] = this.colIndex;
+        data["displayNumber"] = this.displayNumber;
         data["isDouble"] = this.isDouble;
         data["status"] = this.status;
         data["price"] = this.price;
@@ -1415,6 +1418,7 @@ export interface ISeatDTO {
     id?: string;
     rowName?: string;
     colIndex?: number;
+    displayNumber?: number;
     isDouble?: boolean;
     status?: SeatStatus;
     price?: number;
