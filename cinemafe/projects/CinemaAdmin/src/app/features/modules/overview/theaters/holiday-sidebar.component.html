@@ -12,7 +12,7 @@
   <div class="hs-row" *ngFor="let h of holidays">
     <div class="hs-row-main">
       <div class="hs-row-name">{{ h.name }}</div>
-      <div class="hs-row-date">{{ h.date | date:'mediumDate' }}</div>
+      <div class="hs-row-date">{{ h.date | date:'mediumDate':'UTC' }}</div>
     </div>
     <span class="ad-pill ad-pill--warn">{{ h.priceMultiplier | number:'1.1-2' }}×</span>
     <div class="hs-row-actions">

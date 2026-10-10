@@ -4,6 +4,7 @@ using Cinema.Business.Managers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace Cinema.Business.Tests;
@@ -98,6 +99,29 @@ public class TicketPriceManagerTests
         });
 
         await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task Upsert_ConcurrentDuplicateAtCommit_ThrowsTranslatedMessage()
+    {
+        // A second request inserted one of these days between our existence check and this commit —
+        // the unique index catches it as a DbUpdateException, not our own pre-check.
+        _uowMock.Setup(u => u.TicketPriceStore.FindAllAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()))
+            .ReturnsAsync(new List<TicketPrice>());
+        _uowMock.Setup(u => u.TicketPriceStore.CreateRangeAsync(It.IsAny<List<TicketPrice>>()))
+            .ThrowsAsync(new DbUpdateException("Violation of UNIQUE KEY constraint"));
+
+        var act = () => _sut.UpsertAsync(new UpsertTicketPricesRequest
+        {
+            TheaterId = TheaterId, RoomTypeId = RoomTypeId, TimeSlotId = TimeSlotId,
+            DaysOfWeek = new List<DayOfWeek> { DayOfWeek.Monday },
+            PriceMultiplier = 1.2,
+        });
+
+        (await act.Should().ThrowAsync<InvalidOperationException>())
+            .WithMessage("A ticket price already exists for this room type, time slot and day.");
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Never);
     }
 
     [Fact]

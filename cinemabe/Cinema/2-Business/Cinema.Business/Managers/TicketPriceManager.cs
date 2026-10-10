@@ -5,6 +5,7 @@ using Cinema.Business.Extensions;
 using Cinema.Business.Helpers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Business.Managers;
 
@@ -231,6 +232,14 @@ public class TicketPriceManager : ITicketPriceManager
 
             await _uow.CommitTransactionAsync();
             return existing.Concat(created).Select(e => e.ToDTO<TicketPrice, TicketPriceDTO>()).ToList();
+        }
+        catch (DbUpdateException)
+        {
+            // Another request inserted one of these days between our existence check and this commit
+            // (the unique index is the source of truth, not the pre-check) — surface the same
+            // translated message a single Create/Update duplicate would give, not a raw 500.
+            await _uow.RollbackTransactionAsync();
+            throw new InvalidOperationException("A ticket price already exists for this room type, time slot and day.");
         }
         catch
         {

@@ -578,9 +578,19 @@ BEGIN
     SET XACT_ABORT ON;
     BEGIN TRAN;
 
-    IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_IsHoliday' AND object_id = OBJECT_ID('dbo.TicketPrice'))
+    -- Drop every index that references IsHoliday, not just the one name this baseline expects —
+    -- a database that picked up a differently-named index on that column (e.g. from an older,
+    -- unmigrated baseline) would otherwise fail at DROP COLUMN below instead of here.
+    DECLARE @dropIndexSql nvarchar(max) = (
+        SELECT STRING_AGG(CAST('DROP INDEX [' + i.name + '] ON [TicketPrice];' AS nvarchar(max)), ' ')
+        FROM sys.indexes i
+        JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+        JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+        WHERE i.object_id = OBJECT_ID('dbo.TicketPrice') AND c.name = 'IsHoliday'
+    );
+    IF @dropIndexSql IS NOT NULL
     BEGIN
-        DROP INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_IsHoliday] ON [TicketPrice];
+        EXEC(@dropIndexSql);
     END
 
     IF COL_LENGTH('dbo.TicketPrice', 'DayOfWeek') IS NULL

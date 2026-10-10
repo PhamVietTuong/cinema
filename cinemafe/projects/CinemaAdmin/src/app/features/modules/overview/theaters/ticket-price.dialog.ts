@@ -45,7 +45,7 @@ export class TicketPriceDialog {
   ) {
     this.form = this._fb.group({
       daysOfWeek: [[data.day], Validators.required],
-      priceMultiplier: [data.existing?.priceMultiplier ?? 1, [Validators.required, Validators.min(0.01)]],
+      priceMultiplier: [data.existing?.priceMultiplier ?? 1, [Validators.required, Validators.min(0.05)]],
     });
   }
 

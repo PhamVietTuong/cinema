@@ -573,10 +573,6 @@ export const DayOfWeekValues: { value: CinemaServiceAgent.DayOfWeek; name: strin
   { value: CinemaServiceAgent.DayOfWeek.Sunday, name: 'common.days.sun', shortName: 'common.days.sunShort' },
 ];
 
-export function dayOfWeekLabelKey(d?: CinemaServiceAgent.DayOfWeek): string {
-  return DayOfWeekValues.find(v => v.value === d)?.name ?? DayOfWeekValues[0].name;
-}
-
 /**
  * Visual band for a TicketPrice/Holiday multiplier, driving the weekly pricing timeline's segment
  * colors. Purely a display derivation from the numeric value — nothing is stored. The 'holiday' band
