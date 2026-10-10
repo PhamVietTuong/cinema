@@ -22,7 +22,7 @@ public class TicketPriceManager : ITicketPriceManager
         return await _uow.TicketPriceStore.ExistsAsync(e => e.Id == id);
     }
 
-    // No free-text field on this entity — filters are all Guid foreign keys + the holiday flag.
+    // No free-text field on this entity — filters are all Guid foreign keys + the day of week.
     private IQueryable<TicketPrice> GetFilteredTicketPriceQuery(Dictionary<string, string>? filters)
     {
         var query = _uow.TicketPriceStore.GetQuery();
@@ -61,10 +61,10 @@ public class TicketPriceManager : ITicketPriceManager
                     }
                     break;
 
-                case "isHoliday":
-                    if (bool.TryParse(filters[key], out var isHoliday))
+                case "dayOfWeek":
+                    if (Enum.TryParse<DayOfWeek>(filters[key], out var dayOfWeek))
                     {
-                        query = _uow.TicketPriceStore.FilterQuery(query, e => e.IsHoliday == isHoliday);
+                        query = _uow.TicketPriceStore.FilterQuery(query, e => e.DayOfWeek == dayOfWeek);
                     }
                     break;
             }
@@ -81,7 +81,7 @@ public class TicketPriceManager : ITicketPriceManager
 
         return sort.Field switch
         {
-            "isHoliday" => _uow.TicketPriceStore.OrderQuery(query, e => e.IsHoliday, sort.Ascending),
+            "dayOfWeek" => _uow.TicketPriceStore.OrderQuery(query, e => e.DayOfWeek, sort.Ascending),
             "priceMultiplier" => _uow.TicketPriceStore.OrderQuery(query, e => e.PriceMultiplier, sort.Ascending),
             _ => query,
         };
@@ -93,6 +93,26 @@ public class TicketPriceManager : ITicketPriceManager
         {
             throw new InvalidOperationException($"{nameof(TicketPrice.PriceMultiplier)} must be greater than 0.");
         }
+    }
+
+    private async Task ValidateScopeAsync(Guid theaterId, Guid roomTypeId, Guid timeSlotId)
+    {
+        if (!await _uow.RoomTypeStore.ExistsAsync(r => r.Id == roomTypeId && r.TheaterId == theaterId))
+        {
+            throw new InvalidOperationException("RoomType does not belong to this theater.");
+        }
+
+        if (!await _uow.TimeSlotStore.ExistsAsync(t => t.Id == timeSlotId && t.TheaterId == theaterId))
+        {
+            throw new InvalidOperationException("TimeSlot does not belong to this theater.");
+        }
+    }
+
+    private Task<bool> DuplicateExistsAsync(Guid theaterId, Guid roomTypeId, Guid timeSlotId, DayOfWeek dayOfWeek, Guid? excludeId)
+    {
+        return _uow.TicketPriceStore.ExistsAsync(e =>
+            e.TheaterId == theaterId && e.RoomTypeId == roomTypeId && e.TimeSlotId == timeSlotId &&
+            e.DayOfWeek == dayOfWeek && (excludeId == null || e.Id != excludeId));
     }
 
     public async Task<DefaultSearchResults<TicketPriceDTO>> GetAsync(PagingSearchDTO search)
@@ -120,6 +140,16 @@ public class TicketPriceManager : ITicketPriceManager
     public async Task<TicketPriceDTO> CreateAsync(CreateTicketPriceRequest request)
     {
         ValidateMultiplier(request.PriceMultiplier);
+        if (!Enum.IsDefined(request.DayOfWeek))
+        {
+            throw new InvalidOperationException("Invalid day of week.");
+        }
+        await ValidateScopeAsync(request.TheaterId, request.RoomTypeId, request.TimeSlotId);
+        if (await DuplicateExistsAsync(request.TheaterId, request.RoomTypeId, request.TimeSlotId, request.DayOfWeek, null))
+        {
+            throw new InvalidOperationException("A ticket price already exists for this room type, time slot and day.");
+        }
+
         var entity = request.ToNewEntity<CreateTicketPriceRequest, TicketPrice>();
         await _uow.TicketPriceStore.CreateAsync(entity);
         return entity.ToDTO<TicketPrice, TicketPriceDTO>();
@@ -128,11 +158,21 @@ public class TicketPriceManager : ITicketPriceManager
     public async Task<TicketPriceDTO> UpdateAsync(UpdateTicketPriceRequest request)
     {
         ValidateMultiplier(request.PriceMultiplier);
+        if (!Enum.IsDefined(request.DayOfWeek))
+        {
+            throw new InvalidOperationException("Invalid day of week.");
+        }
         var entity = await _uow.TicketPriceStore.GetByIdAsync(request.Id);
         if (entity == null)
         {
             throw new KeyNotFoundException($"TicketPrice {request.Id} not found.");
         }
+        await ValidateScopeAsync(request.TheaterId, request.RoomTypeId, request.TimeSlotId);
+        if (await DuplicateExistsAsync(request.TheaterId, request.RoomTypeId, request.TimeSlotId, request.DayOfWeek, request.Id))
+        {
+            throw new InvalidOperationException("A ticket price already exists for this room type, time slot and day.");
+        }
+
         entity.PatchEntity<TicketPrice, UpdateTicketPriceRequest>(request);
         await _uow.TicketPriceStore.UpdateAsync(entity);
         return entity.ToDTO<TicketPrice, TicketPriceDTO>();
@@ -141,5 +181,61 @@ public class TicketPriceManager : ITicketPriceManager
     public async Task DeleteAsync(Guid id)
     {
         await _uow.TicketPriceStore.DeleteAsync(id);
+    }
+
+    public async Task<List<TicketPriceDTO>> UpsertAsync(UpsertTicketPricesRequest request)
+    {
+        ValidateMultiplier(request.PriceMultiplier);
+
+        var days = (request.DaysOfWeek ?? new List<DayOfWeek>()).Distinct().ToList();
+        if (days.Count == 0)
+        {
+            throw new InvalidOperationException("At least one day of week is required.");
+        }
+        if (days.Any(d => !Enum.IsDefined(d)))
+        {
+            throw new InvalidOperationException("Invalid day of week.");
+        }
+
+        await ValidateScopeAsync(request.TheaterId, request.RoomTypeId, request.TimeSlotId);
+
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            var existing = (await _uow.TicketPriceStore.FindAllAsync(e =>
+                e.TheaterId == request.TheaterId && e.RoomTypeId == request.RoomTypeId &&
+                e.TimeSlotId == request.TimeSlotId && days.Contains(e.DayOfWeek))).ToList();
+
+            foreach (var entity in existing)
+            {
+                entity.PriceMultiplier = request.PriceMultiplier;
+            }
+            if (existing.Count > 0)
+            {
+                await _uow.TicketPriceStore.UpdateRangeAsync(existing);
+            }
+
+            var missingDays = days.Except(existing.Select(e => e.DayOfWeek)).ToList();
+            var created = missingDays.Select(d => new TicketPrice
+            {
+                TheaterId = request.TheaterId,
+                RoomTypeId = request.RoomTypeId,
+                TimeSlotId = request.TimeSlotId,
+                DayOfWeek = d,
+                PriceMultiplier = request.PriceMultiplier,
+            }).ToList();
+            if (created.Count > 0)
+            {
+                await _uow.TicketPriceStore.CreateRangeAsync(created);
+            }
+
+            await _uow.CommitTransactionAsync();
+            return existing.Concat(created).Select(e => e.ToDTO<TicketPrice, TicketPriceDTO>()).ToList();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
     }
 }

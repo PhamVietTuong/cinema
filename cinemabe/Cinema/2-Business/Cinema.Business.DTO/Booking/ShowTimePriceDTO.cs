@@ -3,9 +3,9 @@ using Cinema.Data.Entities;
 namespace Cinema.Business.DTO.Booking;
 
 /// <summary>The price list for a specific showtime+room: one entry per active PatronCategory of the
-/// theater, with all pricing factors (RoomType override, TimeSlot/Holiday multiplier, 3D surcharge,
-/// per-showtime BasePrice surcharge) already resolved. Drives the CinemaUser quantity picker and per-
-/// seat totals directly — the client does no pricing math of its own.</summary>
+/// theater, with all pricing factors (RoomType override, Holiday-or-weekday/TimeSlot multiplier, 3D
+/// surcharge, per-showtime BasePrice surcharge) already resolved. Drives the CinemaUser quantity picker
+/// and per-seat totals directly — the client does no pricing math of its own.</summary>
 public class ShowTimePriceDTO
 {
     public Guid PatronCategoryId { get; set; }

@@ -1285,13 +1285,14 @@ public class BookingManager : IBookingManager
     // A seat's price is anchored on the resolved PatronCategory row (theater-wide Price, or a
     // RoomType-specific override if one exists for this room's RoomType) — PatronCategory.Price is an
     // absolute, independently-configured amount per seat kind (Standard/Double), never derived from
-    // another row. On top of that: the TicketPrice matrix's (theater/roomType/timeSlot/holiday) factor
-    // multiplies it when a row matches (that row is already holiday-scoped, so the plain Holiday
-    // factor is skipped in that case — only applied as a fallback when no matrix row matches); a 3D
-    // screening adds RoomType.ThreeDSurcharge; and the showtime's own BasePrice is added last as a
-    // manual per-showtime surcharge (e.g. a premium for a new release, 0 for a long-running title —
-    // NOT a multiplier, so it never interacts with the factors above). The whole context is resolved
-    // once per showtime+room and reused for every seat/category.
+    // another row. On top of that: a single multiplier factor applies — if the showtime's date matches
+    // a Holiday, that holiday's PriceMultiplier wins outright (the weekday/TimeSlot row is not even
+    // queried); otherwise the TicketPrice matrix's (theater/roomType/timeSlot/dayOfWeek) row for that
+    // showtime's weekday applies, or 1.0 if no row matches. A 3D screening adds RoomType.ThreeDSurcharge;
+    // and the showtime's own BasePrice is added last as a manual per-showtime surcharge (e.g. a premium
+    // for a new release, 0 for a long-running title — NOT a multiplier, so it never interacts with the
+    // factor above). The whole context is resolved once per showtime+room and reused for every
+    // seat/category.
     private sealed record ResolvedCategory(Guid Id, string Name, Guid SeatTypeId, SeatKind Kind, double Price);
 
     private sealed record SeatPricingContext(
@@ -1326,29 +1327,35 @@ public class BookingManager : IBookingManager
         var date      = DateOnly.FromDateTime(showTime.StartTime);
         var timeOfDay = TimeOnly.FromDateTime(showTime.StartTime);
 
-        // Holiday: any Holiday whose date matches the showtime's date scales the price when no
-        // TicketPrice matrix row matches (a matrix row is already holiday-scoped).
-        var holidays  = await _uow.HolidayStore.FindAsync(h => h.Date == date) ?? Enumerable.Empty<Holiday>();
-        var holiday   = holidays.FirstOrDefault();
-        var isHoliday = holiday is not null;
-        var fallbackHolidayFactor = isHoliday ? holiday!.PriceMultiplier : 1.0;
+        // Holiday: any Holiday whose date matches the showtime's date wins outright over the weekday
+        // matrix below — the TimeSlot/TicketPrice lookup is skipped entirely in that case.
+        var holidays = await _uow.HolidayStore.FindAsync(h => h.Date == date) ?? Enumerable.Empty<Holiday>();
+        var holiday  = holidays.FirstOrDefault();
 
-        // The theater time slot whose [start, end) window contains the showtime's time-of-day.
-        var slots = await _uow.TimeSlotStore.FindAsync(t => t.TheaterId == room.TheaterId) ?? Enumerable.Empty<TimeSlot>();
-        var slot  = slots.FirstOrDefault(s => TimeInSlot(timeOfDay, s));
-
-        double? timeFactor = null;
-        if (slot is not null)
+        double priceFactor;
+        if (holiday is not null)
         {
-            var matrixRows = await _uow.TicketPriceStore.FindAsync(tp =>
-                                  tp.TheaterId == room.TheaterId
-                                  && tp.RoomTypeId == room.RoomTypeId
-                                  && tp.TimeSlotId == slot.Id
-                                  && tp.IsHoliday == isHoliday)
-                              ?? Enumerable.Empty<TicketPrice>();
-            timeFactor = matrixRows.Select(r => (double?)r.PriceMultiplier).FirstOrDefault();
+            priceFactor = holiday.PriceMultiplier;
         }
-        var holidayFactor = timeFactor.HasValue ? 1.0 : fallbackHolidayFactor;
+        else
+        {
+            // The theater time slot whose [start, end) window contains the showtime's time-of-day.
+            var slots = await _uow.TimeSlotStore.FindAsync(t => t.TheaterId == room.TheaterId) ?? Enumerable.Empty<TimeSlot>();
+            var slot  = slots.FirstOrDefault(s => TimeInSlot(timeOfDay, s));
+
+            double? weekdayFactor = null;
+            if (slot is not null)
+            {
+                var matrixRows = await _uow.TicketPriceStore.FindAsync(tp =>
+                                      tp.TheaterId == room.TheaterId
+                                      && tp.RoomTypeId == room.RoomTypeId
+                                      && tp.TimeSlotId == slot.Id
+                                      && tp.DayOfWeek == date.DayOfWeek)
+                                  ?? Enumerable.Empty<TicketPrice>();
+                weekdayFactor = matrixRows.Select(r => (double?)r.PriceMultiplier).FirstOrDefault();
+            }
+            priceFactor = weekdayFactor ?? 1.0;
+        }
 
         var kindBySeatTypeId = (await _uow.SeatTypeStore.GetKindMapAsync(room.TheaterId))
             .ToDictionary(kv => kv.Value, kv => kv.Key);
@@ -1374,7 +1381,7 @@ public class BookingManager : IBookingManager
             {
                 continue;
             }
-            var price = Math.Round(roomTypePrice * (timeFactor ?? 1.0) * holidayFactor + threeDSurcharge + showTimeRoom.BasePrice, 2);
+            var price = Math.Round(roomTypePrice * priceFactor + threeDSurcharge + showTimeRoom.BasePrice, 2);
             var kind  = kindBySeatTypeId.TryGetValue(c.SeatTypeId, out var k) ? k : SeatKind.Standard;
             byCategoryId[c.Id] = new ResolvedCategory(c.Id, c.Name, c.SeatTypeId, kind, price);
         }

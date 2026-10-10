@@ -903,6 +903,14 @@ public class CinemaController : ApiControllerBase
         }
         return await RunNoContent(nameof(DeleteTicketPrice), () => _ticketPrices.DeleteAsync(id));
     }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<TicketPriceDTO>), 200)]
+    public Task<IActionResult> UpsertTicketPrices([FromBody] UpsertTicketPricesRequest request)
+    {
+        return Run(nameof(UpsertTicketPrices), () => _ticketPrices.UpsertAsync(request));
+    }
     #endregion
 
 

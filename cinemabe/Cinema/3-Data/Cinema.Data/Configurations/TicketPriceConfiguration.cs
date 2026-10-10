@@ -26,6 +26,6 @@ public class TicketPriceConfiguration : IEntityTypeConfiguration<TicketPrice>
         // Restrict on the lookups so a referenced room type / seat type / time slot can't be silently orphaned.
         b.HasOne(p => p.RoomType).WithMany().HasForeignKey(p => p.RoomTypeId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(p => p.TimeSlot).WithMany(t => t.TicketPrices).HasForeignKey(p => p.TimeSlotId).OnDelete(DeleteBehavior.Restrict);
-        b.HasIndex(p => new { p.TheaterId, p.RoomTypeId, p.TimeSlotId, p.IsHoliday }).IsUnique();
+        b.HasIndex(p => new { p.TheaterId, p.RoomTypeId, p.TimeSlotId, p.DayOfWeek }).IsUnique();
     }
 }

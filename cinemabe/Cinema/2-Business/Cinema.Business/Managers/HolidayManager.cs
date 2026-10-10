@@ -62,6 +62,13 @@ public class HolidayManager : IHolidayManager
                         query = _uow.HolidayStore.FilterQuery(query, e => e.PriceMultiplier == priceMultiplier);
                     }
                     break;
+
+                case "dateFrom":
+                    if (DateOnly.TryParse(filters[key], out var dateFrom))
+                    {
+                        query = _uow.HolidayStore.FilterQuery(query, e => e.Date >= dateFrom);
+                    }
+                    break;
             }
         }
         return query;

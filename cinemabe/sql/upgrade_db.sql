@@ -567,6 +567,50 @@ END
 DELETE FROM [UserType] WHERE [Name] IN (N'TheaterManager', N'BoxOfficeStaff', N'GateStaff', N'KitchenStaff', N'RegionalManager');
 
 -- ============================================================
+-- Weekly ticket pricing (TicketPrice.DayOfWeek)
+-- ============================================================
+-- Replaces the old IsHoliday bit with a System.DayOfWeek column (0=Sunday..6=Saturday), so a row can
+-- price Mon-Sun independently. Holiday pricing moves to the Holiday table, matched by calendar date,
+-- so former IsHoliday=1 rows are dropped and each remaining row fans out to all 7 days with the same
+-- multiplier it already had. Re-running this block is a no-op.
+IF COL_LENGTH('dbo.TicketPrice', 'IsHoliday') IS NOT NULL
+BEGIN
+    SET XACT_ABORT ON;
+    BEGIN TRAN;
+
+    IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_IsHoliday' AND object_id = OBJECT_ID('dbo.TicketPrice'))
+    BEGIN
+        DROP INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_IsHoliday] ON [TicketPrice];
+    END
+
+    IF COL_LENGTH('dbo.TicketPrice', 'DayOfWeek') IS NULL
+    BEGIN
+        ALTER TABLE [TicketPrice] ADD [DayOfWeek] int NULL;
+    END
+
+    DELETE FROM [TicketPrice] WHERE [IsHoliday] = 1;
+
+    ALTER TABLE [TicketPrice] DROP COLUMN [IsHoliday];
+
+    EXEC('UPDATE [TicketPrice] SET [DayOfWeek] = 0');
+
+    EXEC('INSERT INTO [TicketPrice] ([Id], [TheaterId], [RoomTypeId], [TimeSlotId], [DayOfWeek], [PriceMultiplier], [CreationTime])
+          SELECT NEWID(), tp.[TheaterId], tp.[RoomTypeId], tp.[TimeSlotId], d.[D], tp.[PriceMultiplier], GETUTCDATE()
+          FROM [TicketPrice] tp
+          CROSS JOIN (VALUES (1), (2), (3), (4), (5), (6)) AS d(D)
+          WHERE tp.[DayOfWeek] = 0');
+
+    EXEC('ALTER TABLE [TicketPrice] ALTER COLUMN [DayOfWeek] int NOT NULL');
+
+    IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_DayOfWeek' AND object_id = OBJECT_ID('dbo.TicketPrice'))
+    BEGIN
+        EXEC('CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_DayOfWeek] ON [TicketPrice] ([TheaterId], [RoomTypeId], [TimeSlotId], [DayOfWeek])');
+    END
+
+    COMMIT TRAN;
+END
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

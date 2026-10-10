@@ -176,7 +176,7 @@ public class BookingServiceTests
             startTime: new DateTime(2026, 3, 2, 19, 0, 0), projectionForm: ProjectionForm.ThreeD,
             roomType: new RoomType { Id = roomTypeId, ThreeDSurcharge = 40000 },
             timeSlots: new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "17:00", EndTime = "23:00" } },
-            ticketPrices: new List<TicketPrice> { new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, IsHoliday = false, PriceMultiplier = 1.2 } },
+            ticketPrices: new List<TicketPrice> { new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Monday, PriceMultiplier = 1.2 } },
             categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 90000, IsActive = true } },
             kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
         _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
@@ -189,7 +189,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task GetShowTimePricesAsync_HolidayFactor_SkippedWhenMatrixRowMatches()
+    public async Task GetShowTimePricesAsync_Holiday_OverridesWeekdayMatrixRow()
     {
         var theaterId  = Guid.NewGuid();
         var roomTypeId = Guid.NewGuid();
@@ -199,17 +199,19 @@ public class BookingServiceTests
 
         SetupPricingContext(
             theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            // 2026-01-01 is a Thursday.
             startTime: new DateTime(2026, 1, 1, 19, 0, 0), projectionForm: ProjectionForm.TwoD,
             holidays: new List<Holiday> { new() { Date = new DateOnly(2026, 1, 1), PriceMultiplier = 1.5 } },
             timeSlots: new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" } },
-            ticketPrices: new List<TicketPrice> { new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, IsHoliday = true, PriceMultiplier = 2 } },
+            ticketPrices: new List<TicketPrice> { new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Thursday, PriceMultiplier = 2 } },
             categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 100, IsActive = true } },
             kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
 
         var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
 
-        // A matching matrix row is already holiday-scoped: 100 x 2 = 200, NOT 100 x 2 x 1.5.
-        result.Single().Price.Should().Be(200);
+        // Holiday wins outright over the weekday matrix row: 100 x 1.5 = 150, NOT 100 x 2.
+        result.Single().Price.Should().Be(150);
+        _uowMock.Verify(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()), Times.Never);
     }
 
     [Fact]
@@ -230,6 +232,65 @@ public class BookingServiceTests
         var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
 
         result.Single().Price.Should().Be(150);
+    }
+
+    [Fact]
+    public async Task GetShowTimePricesAsync_WeekdayRow_OnlyMatchingDayApplies()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var timeSlotId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+
+        var rows = new List<TicketPrice>
+        {
+            new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Monday, PriceMultiplier = 1.2 },
+            new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Friday, PriceMultiplier = 1.5 },
+        };
+
+        SetupPricingContext(
+            theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            // 2026-03-02 is a Monday.
+            startTime: new DateTime(2026, 3, 2, 19, 0, 0), projectionForm: ProjectionForm.TwoD,
+            timeSlots: new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" } },
+            categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 100, IsActive = true } },
+            kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        _uowMock.Setup(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()))
+            .ReturnsAsync((Expression<Func<TicketPrice, bool>> predicate) => rows.Where(predicate.Compile()).ToList());
+
+        var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
+
+        result.Single().Price.Should().Be(120);
+    }
+
+    [Fact]
+    public async Task GetShowTimePricesAsync_NoRowForDay_FactorIsOne()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var timeSlotId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+
+        var rows = new List<TicketPrice>
+        {
+            new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Friday, PriceMultiplier = 1.5 },
+        };
+
+        SetupPricingContext(
+            theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            // 2026-03-02 is a Monday; only a Friday row exists.
+            startTime: new DateTime(2026, 3, 2, 19, 0, 0), projectionForm: ProjectionForm.TwoD,
+            timeSlots: new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" } },
+            categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 100, IsActive = true } },
+            kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        _uowMock.Setup(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()))
+            .ReturnsAsync((Expression<Func<TicketPrice, bool>> predicate) => rows.Where(predicate.Compile()).ToList());
+
+        var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
+
+        result.Single().Price.Should().Be(100);
     }
 
     [Fact]
