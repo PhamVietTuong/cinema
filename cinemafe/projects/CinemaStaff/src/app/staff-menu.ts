@@ -1,9 +1,11 @@
-import { APPROVER_ROLES, BACK_OFFICE_ROLES, COMPLAINT_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES, SELLER_ROLES, CONCESSION_ROLES } from 'CinemaLib';
-import { LOW_STOCK_BADGE } from './core/staff-live.service';
+import { APPROVER_ROLES, BACK_OFFICE_ROLES, COMPLAINT_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES, SELLER_ROLES } from 'CinemaLib';
 
 /**
  * CinemaStaff sidebar. Each item may carry `roles` (omitted = every staff role); the shared
  * shell hides what the signed-in role may not open. Later phases append their sections here.
+ *
+ * Kitchen (food pickup queue, /kitchen) is intentionally not listed here for now — the feature
+ * and its route stay in place, just hidden from the sidebar.
  */
 export const STAFF_MENU: NavSection[] = [
   {
@@ -15,12 +17,6 @@ export const STAFF_MENU: NavSection[] = [
     titleKey: 'gate.section',
     items: [
       { icon: 'qr_code_scanner', labelKey: 'gate.nav.gate', route: '/gate', titleKey: 'gate.pageTitle', roles: GATE_KEEPER_ROLES },
-    ],
-  },
-  {
-    titleKey: 'kitchen.section',
-    items: [
-      { icon: 'restaurant', labelKey: 'kitchen.nav.kitchen', route: '/kitchen', titleKey: 'kitchen.pageTitle', roles: CONCESSION_ROLES, badge: LOW_STOCK_BADGE },
     ],
   },
   {

@@ -12,4 +12,5 @@ public interface ITicketPriceManager
     Task<TicketPriceDTO>                       CreateAsync(CreateTicketPriceRequest request);
     Task<TicketPriceDTO>                       UpdateAsync(UpdateTicketPriceRequest request);
     Task                                       DeleteAsync(Guid id);
+    Task<List<TicketPriceDTO>>                 UpsertAsync(UpsertTicketPricesRequest request);
 }

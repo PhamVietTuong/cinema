@@ -903,6 +903,14 @@ public class CinemaController : ApiControllerBase
         }
         return await RunNoContent(nameof(DeleteTicketPrice), () => _ticketPrices.DeleteAsync(id));
     }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<TicketPriceDTO>), 200)]
+    public Task<IActionResult> UpsertTicketPrices([FromBody] UpsertTicketPricesRequest request)
+    {
+        return Run(nameof(UpsertTicketPrices), () => _ticketPrices.UpsertAsync(request));
+    }
     #endregion
 
 
@@ -1466,6 +1474,14 @@ public class CinemaController : ApiControllerBase
     public Task<IActionResult> ResizeRoomSeatGrid([FromBody] ResizeSeatGridRequest request)
     {
         return Run(nameof(ResizeRoomSeatGrid), () => _rooms.ResizeSeatGridAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<RoomSeatDTO>), 200)]
+    public Task<IActionResult> RemoveRoomSeat([FromBody] RemoveSeatRequest request)
+    {
+        return Run(nameof(RemoveRoomSeat), () => _rooms.RemoveSeatAsync(request));
     }
     #endregion
 

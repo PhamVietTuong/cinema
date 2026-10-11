@@ -1,5 +1,8 @@
 :host { display: block; }
 
+$seat-size: 34px;
+$seat-gap: 7px;
+
 .screen-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: var(--cx-space-6, 24px); }
 .screen-arc {
   width: 70%; max-width: 480px; height: 30px;
@@ -15,15 +18,18 @@
 }
 
 .seat-grid {
-  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  // align-items: flex-start, not center — rows can have different widths (a merged double-wide seat, or a
+  // row shortened by removing a seat), and centering each row individually would misalign the row letters.
+  display: flex; flex-direction: column; align-items: flex-start; gap: $seat-gap;
   padding: var(--cx-space-5, 20px) var(--cx-space-4, 16px) var(--cx-space-6, 24px);
-  margin-bottom: var(--cx-space-5, 20px);
+  margin: 0 auto var(--cx-space-5, 20px);
+  width: fit-content; max-width: 100%;
   overflow-x: auto;
   transition: opacity var(--cx-dur) var(--cx-ease);
   /* Not selectable yet (e.g. no ticket type chosen): still visible so the layout doesn't jump. */
   &.not-ready { opacity: 0.45; pointer-events: none; }
 }
-.seat-row { display: flex; align-items: center; gap: 7px; }
+.seat-row { display: flex; align-items: center; gap: $seat-gap; }
 .row-label {
   width: 34px; flex: none; display: flex; align-items: center; justify-content: center;
   font-family: var(--ml-font-data); font-size: 0.72rem;
@@ -31,7 +37,7 @@
 }
 
 .seat {
-  width: 34px; height: 34px; flex: none;
+  width: $seat-size; height: $seat-size; flex: none;
   border-radius: var(--ml-r-sm) var(--ml-r-sm) 3px 3px;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--ml-font-data); font-size: 0.55rem; font-weight: var(--cx-weight-medium);
@@ -71,6 +77,12 @@
     background: var(--ml-second); border-color: var(--ml-action); color: var(--ml-paper);
     box-shadow: 0 0 0 3px var(--ml-action-soft);
   }
+
+  /* A couple seat drawn as one box spanning two seat slots plus the gap between them. */
+  &.double-wide {
+    width: calc(#{$seat-size} * 2 + #{$seat-gap});
+    &:hover:not(.occupied):not(.locked):not(.unavailable-category) { transform: scale(1.06); }
+  }
 }
 
 .legend {
@@ -86,4 +98,5 @@
   &.locked { background: var(--ml-warn-soft); border: 1px solid var(--ml-warn); }
   &.double.available { background: var(--ml-success-soft); border: 1px solid var(--ml-second); }
   &.unavailable-category { background: var(--ml-seat-empty); opacity: 0.35; }
+  &.double-wide { width: 28px; }
 }

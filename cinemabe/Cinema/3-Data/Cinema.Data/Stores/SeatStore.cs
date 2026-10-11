@@ -16,6 +16,13 @@ public class SeatStore : GenericStore<Seat>, ISeatStore
             .OrderBy(s => s.RowName).ThenBy(s => s.ColIndex)
             .ToListAsync();
 
+    public async Task<List<Seat>> GetSeatMapByRoomNoTrackingAsync(Guid roomId)
+        => await DbSet
+            .AsNoTracking()
+            .Where(s => s.RoomId == roomId)
+            .OrderBy(s => s.RowName).ThenBy(s => s.ColIndex)
+            .ToListAsync();
+
     public async Task<IReadOnlyDictionary<Guid, Seat>> GetByIdsAsync(IReadOnlyCollection<Guid> ids)
         => await DbSet
             .AsNoTracking()
@@ -44,4 +51,12 @@ public class SeatStore : GenericStore<Seat>, ISeatStore
 
         return rows.ToDictionary(r => (r.ShowTimeId, r.RoomId), r => r.Count);
     }
+
+    public async Task<bool> HasAnyTicketAsync(Guid seatId)
+        => await Context.InvoiceTicket.AnyAsync(it => it.SeatId == seatId);
+
+    public async Task<int> ShiftRowLeftAsync(Guid roomId, string rowName, int afterColIndex)
+        => await DbSet
+            .Where(s => s.RoomId == roomId && s.RowName == rowName && s.ColIndex > afterColIndex)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(s => s.ColIndex, s => s.ColIndex - 1));
 }

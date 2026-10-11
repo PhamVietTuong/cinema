@@ -6,7 +6,7 @@ import { EMPTY } from 'rxjs';
 import { catchError, debounceTime, switchMap, tap } from 'rxjs/operators';
 import {
   CinemaServiceAgent, PaymentServiceAgent, PriceBreakdownAdjustment, PriceBreakdownLine, SeatLockSessionService, SelectableSeat,
-  apiErrorMessage, foodOrderCap, isGroupBlocked, seatGroupOf, seatLabel,
+  apiErrorMessage, foodOrderCap, isGroupBlocked, seatGroupOf, seatLabel, joinSeatLabels,
 } from 'CinemaLib';
 import { ManagerApprovalService } from './manager-approval.service';
 import { PosFoodLine, PosTicket, defaultPriceRow, foodItems, foodUnitPrice, seatItems, ticketPrice } from './pos-calc';
@@ -290,7 +290,7 @@ export class CounterCartService implements OnDestroy {
       }
       this.tickets.update(list => [...list, {
         seatIds: group.map(s => s.id!),
-        label: group.map(s => seatLabel(s)).join('-'),
+        label: joinSeatLabels(group.map(s => seatLabel(s)), '-'),
         isDouble: !!seat.isDouble,
         patronCategoryId: defaultRow.patronCategoryId!,
       }]);

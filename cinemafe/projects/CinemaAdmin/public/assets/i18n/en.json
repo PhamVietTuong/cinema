@@ -105,7 +105,13 @@
     "filters": "Filters",
     "totalEntries": "in total",
     "required": "This field is required.",
-    "remove": "Remove"
+    "remove": "Remove",
+    "days": {
+      "mon": "Monday", "tue": "Tuesday", "wed": "Wednesday", "thu": "Thursday",
+      "fri": "Friday", "sat": "Saturday", "sun": "Sunday",
+      "monShort": "Mon", "tueShort": "Tue", "wedShort": "Wed", "thuShort": "Thu",
+      "friShort": "Fri", "satShort": "Sat", "sunShort": "Sun"
+    }
   },
   "login": {
     "heroTitleLine1": "Admin",
@@ -306,7 +312,11 @@
       "statusActive": "Active",
       "statusMaintenance": "Maintenance",
       "statusInactive": "Inactive",
-      "coupleSeat": "couple seat"
+      "coupleSeat": "couple seat",
+      "removeSeat": "Remove seat",
+      "removeHint": "Click a seat to remove it. The remaining seats in its row shift down so there's no gap in the numbering.",
+      "confirmRemoveSeat": "Remove this seat? Seats after it in the same row will shift down by one.",
+      "confirmRemoveDoubleSeat": "This seat is paired into a double seat. Removing it turns its partner into a single seat, and seats after it in the row will shift down by one. Continue?"
     },
     "roomTypes": {
       "subtitle": "Screening formats (2D, 3D, IMAX, 4DX…) — affect equipment and ticket price.",
@@ -367,21 +377,29 @@
       "empty": "This theater has no items yet."
     },
     "ticketPrices": {
-      "subtitle": "Pricing multiplier by room type × time slot × holiday, applied to the resolved patron-category price.",
-      "add": "Add Ticket Price",
-      "prereq": "You need at least one room type and one time slot before adding ticket prices.",
-      "editTitle": "Edit Ticket Price",
-      "newTitle": "New Ticket Price",
-      "roomTypeLabel": "Room Type",
-      "selectRoomType": "— Select room type —",
-      "timeSlotLabel": "Time Slot",
-      "selectTimeSlot": "— Select time slot —",
+      "subtitle": "Weekly pricing multiplier by room type × time slot × day of week, applied to the resolved patron-category price. A holiday overrides the whole day.",
+      "prereq": "You need at least one room type and one time slot before setting ticket prices.",
       "multiplierLabel": "Multiplier (×)",
       "multiplierHint": "Applied to the showtime's base price, e.g. 1.2 = +20%.",
-      "applyHoliday": "Apply holiday",
-      "holiday": "Holiday",
-      "regularDay": "Regular Day",
-      "empty": "This theater has no ticket price table yet."
+      "editCellTitle": "Edit Ticket Price",
+      "daysLabel": "Days of week",
+      "resetDefault": "Reset to default (×1.0)",
+      "confirmReset": "Reset this day back to the default price (×1.0)?",
+      "showRegular": "Show regular rates",
+      "showHoliday": "Show holiday rate",
+      "invalidSlots": "Not shown (wraps past midnight)",
+      "bands": {
+        "low": "Low",
+        "standard": "Standard",
+        "peak": "Peak",
+        "holiday": "Holiday"
+      },
+      "sidebar": {
+        "title": "Holidays",
+        "subtitle": "Applies to all theaters",
+        "add": "Add",
+        "empty": "No holidays configured yet."
+      }
     },
     "timeSlots": {
       "subtitle": "Screening time slots used for ticket pricing (by show start time).",

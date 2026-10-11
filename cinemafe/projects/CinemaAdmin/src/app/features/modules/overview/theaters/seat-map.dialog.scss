@@ -13,8 +13,17 @@
 .screen-label { margin-top: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.2em; color: var(--ad-muted); text-transform: uppercase; }
 
 // ── Seat grid — one flex line per row, wraps if wider than the container ────────
-.seat-grid { display: flex; flex-direction: column; gap: 6px; align-items: center; margin-bottom: 24px; }
-.seat-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; }
+$ad-seat-size: 28px;
+$ad-seat-gap: 6px;
+.seat-grid {
+  // align-items: flex-start, not center — rows can have different widths (a merged double-wide seat, or
+  // a row shortened by removing a seat), and centering each row individually would misalign the row letters.
+  display: flex; flex-direction: column; gap: $ad-seat-gap; align-items: flex-start;
+  margin: 0 auto 24px; width: fit-content; max-width: 100%;
+  /* Remove-seat tool active: hovering an editable seat previews the delete with a danger outline. */
+  &.is-removing .seat.editable:not(.busy):hover { border-color: var(--ml-warn); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ml-warn) 35%, transparent); }
+}
+.seat-row { display: flex; flex-wrap: wrap; gap: $ad-seat-gap; align-items: center; justify-content: center; }
 .row-label {
   flex: 0 0 28px;
   width: 28px;
@@ -27,8 +36,8 @@
 }
 .seat {
   position: relative;
-  width: 28px;
-  height: 28px;
+  width: $ad-seat-size;
+  height: $ad-seat-size;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -37,12 +46,19 @@
   color: var(--ad-muted);
   border: 1.5px solid color-mix(in srgb, var(--sc) 55%, transparent);
   background: color-mix(in srgb, var(--sc) 16%, transparent);
-  transition: transform 0.12s ease;
+  transition: transform 0.12s ease, width 0.12s ease;
 
   &:hover { transform: scale(1.12); }
   &.occupied { opacity: 0.35; }
   &.editable { cursor: pointer; }
   &.paired { border-style: dashed; border-color: var(--ad-primary); }
+  /* A couple seat drawn as one box spanning its two physical seats plus the gap between them. */
+  &.double-wide {
+    width: calc(#{$ad-seat-size} * 2 + #{$ad-seat-gap});
+    font-size: 8px;
+    &:hover { transform: scale(1.05); }
+  }
+  &.busy { cursor: default; &:hover { transform: none; } }
 
   .pair-badge {
     position: absolute;
@@ -71,6 +87,12 @@
   small { color: var(--ad-muted); }
   .palette-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--sc); }
   &.is-active { border-color: var(--sc); box-shadow: 0 0 0 2px color-mix(in srgb, var(--sc) 40%, transparent); }
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  &.is-remove {
+    color: var(--ml-warn-ink);
+    &.is-active { border-color: var(--ml-warn); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ml-warn) 40%, transparent); }
+  }
 }
 
 // ── Legend ────────────────────────────────────────────────────────────────────

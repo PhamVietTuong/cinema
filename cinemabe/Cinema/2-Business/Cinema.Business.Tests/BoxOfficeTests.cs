@@ -122,6 +122,9 @@ public class BoxOfficeTests
     {
         _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(seats.ToDictionary(s => s.Id));
+        // ComposeInvoiceAsync freezes each ticket's SeatLabel from the whole room's seats.
+        _uowMock.Setup(u => u.SeatStore.GetSeatMapByRoomNoTrackingAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(seats.ToList());
     }
 
     private CounterSaleRequest SeatSale(params Guid[] seatIds)
@@ -925,6 +928,20 @@ public class BoxOfficeTests
         invoice.InvoiceTickets.Single().IsUsed = true;
         await FluentActions.Awaiting(() => _sut.ReprintAsync(_theaterId, _staff.Id, new ReprintRequest { InvoiceId = invoice.Id, Reason = "Again" }))
             .Should().ThrowAsync<AccessDeniedException>();
+    }
+
+    [Fact]
+    public async Task Reprint_UsesTheFrozenSeatLabel_NotTheSeatsLivePhysicalColumn()
+    {
+        // The room's seat was re-paired/resized after the sale, so its live ColIndex no longer matches
+        // what the customer's ticket shows — the reprint must still show the frozen sale-time label.
+        var invoice = PaidCounterInvoice(_seatA, LocalNow().AddHours(2));
+        invoice.InvoiceTickets.Single().SeatLabel = "A9";
+        invoice.InvoiceTickets.Single().Seat = new Seat { Id = _seatA, RowName = "A", ColIndex = 1 };
+
+        var ok = await _sut.ReprintAsync(_theaterId, _staff.Id, new ReprintRequest { InvoiceId = invoice.Id, Reason = "Printer jam" });
+
+        ok.Tickets.Should().ContainSingle(t => t.SeatLabel == "A9");
     }
 
     [Fact]

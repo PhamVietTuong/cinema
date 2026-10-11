@@ -66,11 +66,19 @@ public class BookingServiceTests
         };
     }
 
+    /// <summary>Sets up both the by-id lookup ComposeInvoiceAsync uses to validate requested seats and the
+    /// whole-room lookup it uses to freeze each ticket's SeatLabel — the same seats, so both agree.</summary>
+    private void SetupSeatsById(Dictionary<Guid, Seat> seats)
+    {
+        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>())).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetSeatMapByRoomNoTrackingAsync(It.IsAny<Guid>())).ReturnsAsync(seats.Values.ToList());
+    }
+
     [Fact]
     public async Task GetSeatsAsync_ReturnsAvailableStatus_WhenNotBookedOrLocked()
     {
         var seats = new List<Seat> { new() { Id = SeatId1, RowName = "A", ColIndex = 1 } };
-        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetSeatMapByRoomNoTrackingAsync(RoomId1)).ReturnsAsync(seats);
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1)).ReturnsAsync((ShowTimeRoom?)null);
 
@@ -85,7 +93,7 @@ public class BookingServiceTests
     public async Task GetSeatsAsync_ReturnsOccupied_WhenSeatIsBooked()
     {
         var seats = new List<Seat> { new() { Id = SeatId5, RowName = "B", ColIndex = 2 } };
-        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId2)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetSeatMapByRoomNoTrackingAsync(RoomId2)).ReturnsAsync(seats);
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId2)).ReturnsAsync(new List<Guid> { SeatId5 });
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId2)).ReturnsAsync((ShowTimeRoom?)null);
 
@@ -99,13 +107,38 @@ public class BookingServiceTests
     {
         var groupId = Guid.NewGuid();
         var seats = new List<Seat> { new() { Id = SeatId1, RowName = "A", ColIndex = 1, SeatGroupId = groupId } };
-        _uowMock.Setup(u => u.SeatStore.GetByRoomAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetSeatMapByRoomNoTrackingAsync(RoomId1)).ReturnsAsync(seats);
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1)).ReturnsAsync((ShowTimeRoom?)null);
 
         var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
 
         result.Results.First().IsDouble.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetSeatsAsync_BlockedSeatIsLeftOut_ButStillCountsTowardDisplayNumbers()
+    {
+        var blockedId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        var seats = new List<Seat>
+        {
+            new() { Id = blockedId, RowName = "C", ColIndex = 1, IsActive = false },
+            new() { Id = SeatId1, RowName = "C", ColIndex = 2, SeatGroupId = groupId, IsActive = true },
+            new() { Id = SeatId5, RowName = "C", ColIndex = 3, SeatGroupId = groupId, IsActive = true },
+            new() { Id = SeatId10, RowName = "C", ColIndex = 4, IsActive = true },
+        };
+        _uowMock.Setup(u => u.SeatStore.GetSeatMapByRoomNoTrackingAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1)).ReturnsAsync((ShowTimeRoom?)null);
+
+        var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
+
+        result.Results.Should().HaveCount(3);
+        result.Results.Should().NotContain(s => s.Id == blockedId);
+        result.Results.Single(s => s.Id == SeatId1).DisplayNumber.Should().Be(2);
+        result.Results.Single(s => s.Id == SeatId5).DisplayNumber.Should().Be(2);
+        result.Results.Single(s => s.Id == SeatId10).DisplayNumber.Should().Be(3);
     }
 
     // ── Full pricing formula (via GetShowTimePricesAsync) ───────────────────────
@@ -176,7 +209,7 @@ public class BookingServiceTests
             startTime: new DateTime(2026, 3, 2, 19, 0, 0), projectionForm: ProjectionForm.ThreeD,
             roomType: new RoomType { Id = roomTypeId, ThreeDSurcharge = 40000 },
             timeSlots: new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "17:00", EndTime = "23:00" } },
-            ticketPrices: new List<TicketPrice> { new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, IsHoliday = false, PriceMultiplier = 1.2 } },
+            ticketPrices: new List<TicketPrice> { new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Monday, PriceMultiplier = 1.2 } },
             categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 90000, IsActive = true } },
             kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
         _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
@@ -189,7 +222,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task GetShowTimePricesAsync_HolidayFactor_SkippedWhenMatrixRowMatches()
+    public async Task GetShowTimePricesAsync_Holiday_OverridesWeekdayMatrixRow()
     {
         var theaterId  = Guid.NewGuid();
         var roomTypeId = Guid.NewGuid();
@@ -199,17 +232,19 @@ public class BookingServiceTests
 
         SetupPricingContext(
             theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            // 2026-01-01 is a Thursday.
             startTime: new DateTime(2026, 1, 1, 19, 0, 0), projectionForm: ProjectionForm.TwoD,
             holidays: new List<Holiday> { new() { Date = new DateOnly(2026, 1, 1), PriceMultiplier = 1.5 } },
             timeSlots: new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" } },
-            ticketPrices: new List<TicketPrice> { new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, IsHoliday = true, PriceMultiplier = 2 } },
+            ticketPrices: new List<TicketPrice> { new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Thursday, PriceMultiplier = 2 } },
             categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 100, IsActive = true } },
             kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
 
         var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
 
-        // A matching matrix row is already holiday-scoped: 100 x 2 = 200, NOT 100 x 2 x 1.5.
-        result.Single().Price.Should().Be(200);
+        // Holiday wins outright over the weekday matrix row: 100 x 1.5 = 150, NOT 100 x 2.
+        result.Single().Price.Should().Be(150);
+        _uowMock.Verify(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()), Times.Never);
     }
 
     [Fact]
@@ -230,6 +265,65 @@ public class BookingServiceTests
         var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
 
         result.Single().Price.Should().Be(150);
+    }
+
+    [Fact]
+    public async Task GetShowTimePricesAsync_WeekdayRow_OnlyMatchingDayApplies()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var timeSlotId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+
+        var rows = new List<TicketPrice>
+        {
+            new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Monday, PriceMultiplier = 1.2 },
+            new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Friday, PriceMultiplier = 1.5 },
+        };
+
+        SetupPricingContext(
+            theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            // 2026-03-02 is a Monday.
+            startTime: new DateTime(2026, 3, 2, 19, 0, 0), projectionForm: ProjectionForm.TwoD,
+            timeSlots: new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" } },
+            categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 100, IsActive = true } },
+            kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        _uowMock.Setup(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()))
+            .ReturnsAsync((Expression<Func<TicketPrice, bool>> predicate) => rows.Where(predicate.Compile()).ToList());
+
+        var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
+
+        result.Single().Price.Should().Be(120);
+    }
+
+    [Fact]
+    public async Task GetShowTimePricesAsync_NoRowForDay_FactorIsOne()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var timeSlotId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+
+        var rows = new List<TicketPrice>
+        {
+            new() { TheaterId = theaterId, RoomTypeId = roomTypeId, TimeSlotId = timeSlotId, DayOfWeek = DayOfWeek.Friday, PriceMultiplier = 1.5 },
+        };
+
+        SetupPricingContext(
+            theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            // 2026-03-02 is a Monday; only a Friday row exists.
+            startTime: new DateTime(2026, 3, 2, 19, 0, 0), projectionForm: ProjectionForm.TwoD,
+            timeSlots: new List<TimeSlot> { new() { Id = timeSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" } },
+            categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 100, IsActive = true } },
+            kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        _uowMock.Setup(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()))
+            .ReturnsAsync((Expression<Func<TicketPrice, bool>> predicate) => rows.Where(predicate.Compile()).ToList());
+
+        var result = await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
+
+        result.Single().Price.Should().Be(100);
     }
 
     [Fact]
@@ -331,8 +425,7 @@ public class BookingServiceTests
         // Only Adult is in this room type's allow-list, so Child is not offered here at all.
         _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new List<RoomTypePatronCategoryPrice> { new() { RoomTypeId = roomTypeId, PatronCategoryId = adultId, Price = 90000 } });
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "H", ColIndex = 1 } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "H", ColIndex = 1 } });
 
         var request = new CreateBookingRequest
         {
@@ -363,8 +456,7 @@ public class BookingServiceTests
         // No rows at all for this room type — it offers nothing, so even Adult is rejected.
         _uowMock.Setup(u => u.RoomTypePatronCategoryPriceStore.FindByPatronCategoriesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new List<RoomTypePatronCategoryPrice>());
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "I", ColIndex = 1 } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "I", ColIndex = 1 } });
 
         var request = new CreateBookingRequest
         {
@@ -417,8 +509,7 @@ public class BookingServiceTests
             .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, Room = new Room { Id = RoomId1, Status = RoomStatus.Active } });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [heldSeat] = new() { Id = heldSeat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [heldSeat] = new() { Id = heldSeat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
 
         var request = new CreateBookingRequest
         {
@@ -442,8 +533,7 @@ public class BookingServiceTests
     {
         var seat = Guid.NewGuid();
         SetupBaselineBookingMocks(Guid.NewGuid(), Guid.NewGuid(), ShowTimeId1, RoomId1, 100);
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "Z", ColIndex = 1, IsActive = false } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "Z", ColIndex = 1, IsActive = false } });
 
         var request = new CreateBookingRequest
         {
@@ -463,8 +553,7 @@ public class BookingServiceTests
     {
         var seat = Guid.NewGuid();
         SetupBaselineBookingMocks(Guid.NewGuid(), Guid.NewGuid(), ShowTimeId1, RoomId1, 100);
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId2, RowName = "Y", ColIndex = 1 } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId2, RowName = "Y", ColIndex = 1 } });
 
         var request = new CreateBookingRequest
         {
@@ -543,12 +632,11 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
             .ReturnsAsync(categories);
         AllowAllCategories(roomTypeId, categories);
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat>
-            {
-                [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "A", ColIndex = 1 },
-                [seatB] = new() { Id = seatB, RoomId = RoomId1, RowName = "A", ColIndex = 2 },
-            });
+        SetupSeatsById(new Dictionary<Guid, Seat>
+        {
+            [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "A", ColIndex = 1 },
+            [seatB] = new() { Id = seatB, RoomId = RoomId1, RowName = "A", ColIndex = 2 },
+        });
 
         var request = new CreateBookingRequest
         {
@@ -581,8 +669,7 @@ public class BookingServiceTests
         var seat       = Guid.NewGuid();
 
         SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 100);
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "B", ColIndex = 1 } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "B", ColIndex = 1 } });
 
         var request = new CreateBookingRequest
         {
@@ -604,8 +691,7 @@ public class BookingServiceTests
         var seat       = Guid.NewGuid();
 
         SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 100);
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "C", ColIndex = 1 } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "C", ColIndex = 1 } });
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
             .ReturnsAsync(new List<PatronCategory>());
 
@@ -630,8 +716,7 @@ public class BookingServiceTests
         var categoryId  = Guid.NewGuid();
 
         SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 100);
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "D", ColIndex = 1 } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "D", ColIndex = 1 } });
         // Inactive categories are filtered out of the pricing context entirely (IsActive == true in
         // the query), so an inactive category id simply never resolves.
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
@@ -669,8 +754,7 @@ public class BookingServiceTests
             .ReturnsAsync(categories);
         AllowAllCategories(roomTypeId, categories);
         var groupId = Guid.NewGuid();
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "E", ColIndex = 1, SeatGroupId = groupId } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "E", ColIndex = 1, SeatGroupId = groupId } });
         _uowMock.Setup(u => u.SeatStore.FindAsync(It.IsAny<Expression<Func<Seat, bool>>>()))
             .ReturnsAsync(new List<Seat> { new() { Id = seat, RoomId = RoomId1, RowName = "E", ColIndex = 1, SeatGroupId = groupId } });
 
@@ -704,12 +788,11 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
             .ReturnsAsync(categories);
         AllowAllCategories(roomTypeId, categories);
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat>
-            {
-                [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "F", ColIndex = 1, SeatGroupId = groupId },
-                [seatB] = new() { Id = seatB, RoomId = RoomId1, RowName = "F", ColIndex = 2, SeatGroupId = groupId },
-            });
+        SetupSeatsById(new Dictionary<Guid, Seat>
+        {
+            [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "F", ColIndex = 1, SeatGroupId = groupId },
+            [seatB] = new() { Id = seatB, RoomId = RoomId1, RowName = "F", ColIndex = 2, SeatGroupId = groupId },
+        });
         _uowMock.Setup(u => u.SeatStore.FindAsync(It.IsAny<Expression<Func<Seat, bool>>>()))
             .ReturnsAsync(new List<Seat>
             {
@@ -736,6 +819,68 @@ public class BookingServiceTests
         result.Tickets.Should().AllSatisfy(t => t.SeatType.Should().Be("Double"));
         result.Tickets.Sum(t => t.Price).Should().Be(170);
         result.TotalAmount.Should().Be(170);
+        // Both halves of the double seat share one row-position number — not "F1"/"F2".
+        result.Tickets.Should().AllSatisfy(t => t.SeatLabel.Should().Be("F1"));
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_FreezesSeatLabel_DoubleSeatSharesOneNumberWithFollowingSingle()
+    {
+        // Row C: single (col 1), double (cols 2-3), single (col 4) — buying the double plus the
+        // trailing single must freeze "C2" (both double halves) and "C3" (not "C4").
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var doubleType = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var otherSeat  = Guid.NewGuid();
+        var seatA      = Guid.NewGuid();
+        var seatB      = Guid.NewGuid();
+        var seatD      = Guid.NewGuid();
+        var adultDoubleId = Guid.NewGuid();
+        var adultStandardId = Guid.NewGuid();
+        var groupId    = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Double] = doubleType, [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultDoubleId, TheaterId = theaterId, SeatTypeId = doubleType, Name = "Adult", Price = 170, IsActive = true },
+            new() { Id = adultStandardId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult", Price = 90, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        // The whole room's layout (including the untouched col-1 single) is needed to number the row.
+        var roomSeats = new Dictionary<Guid, Seat>
+        {
+            [otherSeat] = new() { Id = otherSeat, RoomId = RoomId1, RowName = "C", ColIndex = 1 },
+            [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "C", ColIndex = 2, SeatGroupId = groupId },
+            [seatB] = new() { Id = seatB, RoomId = RoomId1, RowName = "C", ColIndex = 3, SeatGroupId = groupId },
+            [seatD] = new() { Id = seatD, RoomId = RoomId1, RowName = "C", ColIndex = 4 },
+        };
+        SetupSeatsById(roomSeats);
+        _uowMock.Setup(u => u.SeatStore.FindAsync(It.IsAny<Expression<Func<Seat, bool>>>()))
+            .ReturnsAsync(new List<Seat> { roomSeats[seatA], roomSeats[seatB] });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId = ShowTimeId1,
+            RoomId     = RoomId1,
+            Seats = new List<BookingSeatItem>
+            {
+                new() { SeatId = seatA, PatronCategoryId = adultDoubleId },
+                new() { SeatId = seatB, PatronCategoryId = adultDoubleId },
+                new() { SeatId = seatD, PatronCategoryId = adultStandardId },
+            },
+            PaymentMethod = "Sandbox",
+        };
+
+        var result = await _sut.CreateBookingAsync(Guid.NewGuid(), request);
+
+        result.Tickets.Should().HaveCount(3);
+        result.Tickets.Where(t => t.SeatType == "Double").Should().HaveCount(2).And.AllSatisfy(t => t.SeatLabel.Should().Be("C2"));
+        result.Tickets.Should().ContainSingle(t => t.SeatType == "Single" && t.SeatLabel == "C3");
     }
 
     [Fact]
@@ -755,8 +900,7 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
             .ReturnsAsync(new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = doubleType, Name = "Adult", Price = 170, IsActive = true } });
         // Only seatA is requested, but the DB shows seatA+seatB share a group — seatB is missing.
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "G", ColIndex = 1, SeatGroupId = groupId } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "G", ColIndex = 1, SeatGroupId = groupId } });
         _uowMock.Setup(u => u.SeatStore.FindAsync(It.IsAny<Expression<Func<Seat, bool>>>()))
             .ReturnsAsync(new List<Seat>
             {
@@ -1079,8 +1223,7 @@ public class BookingServiceTests
         };
         _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>())).ReturnsAsync(categories);
         AllowAllCategories(roomTypeId, categories);
-        _uowMock.Setup(u => u.SeatStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
 
         _uowMock.Setup(u => u.FoodAndDrinkStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync((IReadOnlyCollection<Guid> ids) => foods.Where(f => ids.Contains(f.Id)).ToDictionary(f => f.Id));

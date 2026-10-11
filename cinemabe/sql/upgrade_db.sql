@@ -567,6 +567,96 @@ END
 DELETE FROM [UserType] WHERE [Name] IN (N'TheaterManager', N'BoxOfficeStaff', N'GateStaff', N'KitchenStaff', N'RegionalManager');
 
 -- ============================================================
+-- Weekly ticket pricing (TicketPrice.DayOfWeek)
+-- ============================================================
+-- Replaces the old IsHoliday bit with a System.DayOfWeek column (0=Sunday..6=Saturday), so a row can
+-- price Mon-Sun independently. Holiday pricing moves to the Holiday table, matched by calendar date,
+-- so former IsHoliday=1 rows are dropped and each remaining row fans out to all 7 days with the same
+-- multiplier it already had. Re-running this block is a no-op.
+IF COL_LENGTH('dbo.TicketPrice', 'IsHoliday') IS NOT NULL
+BEGIN
+    SET XACT_ABORT ON;
+    BEGIN TRAN;
+
+    -- Drop every index that references IsHoliday, not just the one name this baseline expects —
+    -- a database that picked up a differently-named index on that column (e.g. from an older,
+    -- unmigrated baseline) would otherwise fail at DROP COLUMN below instead of here.
+    DECLARE @dropIndexSql nvarchar(max) = (
+        SELECT STRING_AGG(CAST('DROP INDEX [' + i.name + '] ON [TicketPrice];' AS nvarchar(max)), ' ')
+        FROM sys.indexes i
+        JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+        JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+        WHERE i.object_id = OBJECT_ID('dbo.TicketPrice') AND c.name = 'IsHoliday'
+    );
+    IF @dropIndexSql IS NOT NULL
+    BEGIN
+        EXEC(@dropIndexSql);
+    END
+
+    IF COL_LENGTH('dbo.TicketPrice', 'DayOfWeek') IS NULL
+    BEGIN
+        ALTER TABLE [TicketPrice] ADD [DayOfWeek] int NULL;
+    END
+
+    EXEC('DELETE FROM [TicketPrice] WHERE [IsHoliday] = 1');
+
+    EXEC('ALTER TABLE [TicketPrice] DROP COLUMN [IsHoliday]');
+
+    EXEC('UPDATE [TicketPrice] SET [DayOfWeek] = 0');
+
+    EXEC('INSERT INTO [TicketPrice] ([Id], [TheaterId], [RoomTypeId], [TimeSlotId], [DayOfWeek], [PriceMultiplier], [CreationTime])
+          SELECT NEWID(), tp.[TheaterId], tp.[RoomTypeId], tp.[TimeSlotId], d.[D], tp.[PriceMultiplier], GETUTCDATE()
+          FROM [TicketPrice] tp
+          CROSS JOIN (VALUES (1), (2), (3), (4), (5), (6)) AS d(D)
+          WHERE tp.[DayOfWeek] = 0');
+
+    EXEC('ALTER TABLE [TicketPrice] ALTER COLUMN [DayOfWeek] int NOT NULL');
+
+    IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_DayOfWeek' AND object_id = OBJECT_ID('dbo.TicketPrice'))
+    BEGIN
+        EXEC('CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_DayOfWeek] ON [TicketPrice] ([TheaterId], [RoomTypeId], [TimeSlotId], [DayOfWeek])');
+    END
+
+    COMMIT TRAN;
+END
+
+-- ============================================================
+-- InvoiceTicket.SeatLabel: seat label frozen at sale time
+-- ============================================================
+-- InvoiceTicket has a filtered index (IX_InvoiceTicket_ActiveSeat), so any UPDATE against it requires
+-- these session settings, matching the defaults EF Core's own migrations always emit.
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+
+IF COL_LENGTH('dbo.InvoiceTicket', 'SeatLabel') IS NULL
+BEGIN
+    ALTER TABLE [InvoiceTicket] ADD [SeatLabel] nvarchar(16) NULL;
+END
+
+-- One-time BEST-EFFORT backfill: numbers each existing ticket's seat with TODAY's room layout
+-- (row-position numbering; a double seat = one slot; blocked seats still count). If the room was
+-- re-paired/resized since the sale this is NOT a true historical reconstruction — it only keeps old
+-- rows from being blank. Must stay equivalent to Cinema.Business/Helpers/SeatNumbering.cs. Safe to
+-- re-run: only rows where SeatLabel IS NULL are touched.
+EXEC('
+;WITH s1 AS (
+    SELECT s.[Id], s.[RoomId], s.[RowName], s.[ColIndex], s.[SeatGroupId],
+           LAG(s.[SeatGroupId]) OVER (PARTITION BY s.[RoomId], s.[RowName] ORDER BY s.[ColIndex]) AS [PrevGroupId],
+           COUNT(*) OVER (PARTITION BY s.[RoomId], s.[RowName], s.[SeatGroupId]) AS [GroupSizeInRow]
+    FROM [Seat] s
+), s2 AS (
+    SELECT [Id], [RowName],
+           SUM(CASE WHEN [SeatGroupId] IS NOT NULL AND [PrevGroupId] = [SeatGroupId] AND [GroupSizeInRow] = 2
+                    THEN 0 ELSE 1 END)
+               OVER (PARTITION BY [RoomId], [RowName] ORDER BY [ColIndex] ROWS UNBOUNDED PRECEDING) AS [DisplayNumber]
+    FROM s1
+)
+UPDATE t SET t.[SeatLabel] = s2.[RowName] + CAST(s2.[DisplayNumber] AS nvarchar(10))
+FROM [InvoiceTicket] t
+JOIN s2 ON s2.[Id] = t.[SeatId]
+WHERE t.[SeatLabel] IS NULL');
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

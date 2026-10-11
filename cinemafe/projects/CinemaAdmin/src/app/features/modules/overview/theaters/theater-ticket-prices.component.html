@@ -1,99 +1,73 @@
-<div class="tab-toolbar">
+<div class="tp-toolbar-stack">
   <p class="ad-sub">{{ 'theaters.ticketPrices.subtitle' | translate }}</p>
-  <button mat-raised-button color="primary" (click)="openCreate()" [disabled]="!roomTypes.length || !timeSlots.length">
-    <mat-icon>add</mat-icon> {{ 'theaters.ticketPrices.add' | translate }}
-  </button>
+  <div class="tp-roomtype-pills" *ngIf="roomTypes.length">
+    <button
+      type="button" class="tp-roomtype-pill"
+      *ngFor="let rt of roomTypes"
+      [class.tp-roomtype-pill--selected]="rt.id === selectedRoomTypeId"
+      (click)="selectRoomType(rt.id!)">
+      {{ rt.name }}
+    </button>
+  </div>
 </div>
 
 <p class="ad-sub" *ngIf="!roomTypes.length || !timeSlots.length">
   {{ 'theaters.ticketPrices.prereq' | translate }}
 </p>
 
-<mat-card class="ad-card--pad-0">
-  <!-- Desktop / tablet: ngx-datatable grid. -->
-  <div class="ad-table-wrap ad-desktop-only">
-    <ngx-datatable
-      class="material ad-datatable"
-      [rows]="pageRows"
-      [columnMode]="'force'"
-      [headerHeight]="44"
-      [footerHeight]="50"
-      [rowHeight]="'auto'"
-      [externalPaging]="true"
-      [externalSorting]="true"
-      [count]="total"
-      [offset]="pageOffset"
-      [limit]="pageSize"
-      [loadingIndicator]="loadingIndicator"
-      [messages]="{ emptyMessage: 'theaters.ticketPrices.empty' | translate, selectedMessage: '' }"
-      (page)="onChangePage($event)">
+<div class="tp-layout" *ngIf="roomTypes.length && timeSlots.length">
+  <div class="tp-timeline-panel">
+    <div class="tp-ruler">
+      <span class="tp-ruler-tick" *ngFor="let h of rulerHours">{{ h }}</span>
+    </div>
 
-      <ngx-datatable-column [name]="'theaters.ticketPrices.roomTypeLabel' | translate" prop="roomTypeId" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ roomTypeName(row.roomTypeId) }}</strong></ng-template>
-      </ngx-datatable-column>
+    <div class="tp-row" *ngFor="let row of weekRows">
+      <div class="tp-row-label">{{ row.labelKey | translate }}</div>
 
-      <ngx-datatable-column [name]="'theaters.ticketPrices.timeSlotLabel' | translate" prop="timeSlotId" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>{{ timeSlotName(row.timeSlotId) }}</ng-template>
-      </ngx-datatable-column>
+      <ng-container *ngIf="row.holiday && !showRegularFor.has(row.day); else regularTrack">
+        <div class="tp-holiday-banner" [ngClass]="legend.holiday.cssClass">
+          <span class="tp-holiday-name">★ {{ row.holiday.name }}</span>
+          <span class="tp-holiday-date">{{ row.holidayDate }}</span>
+          <span class="tp-holiday-multiplier">{{ row.holiday.priceMultiplier | number:'1.1-2' }}×</span>
+          <button type="button" class="tp-show-regular" (click)="toggleRegular(row.day)">
+            {{ 'theaters.ticketPrices.showRegular' | translate }}
+          </button>
+        </div>
+      </ng-container>
 
-      <ngx-datatable-column [name]="'common.date' | translate" prop="isHoliday" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <span class="ad-pill" [class.ad-pill--warn]="row.isHoliday" [class.ad-pill--neutral]="!row.isHoliday">
-            {{ row.isHoliday ? ('theaters.ticketPrices.holiday' | translate) : ('theaters.ticketPrices.regularDay' | translate) }}
-          </span>
-        </ng-template>
-      </ngx-datatable-column>
+      <ng-template #regularTrack>
+        <div class="tp-track">
+          <button
+            type="button" class="tp-segment"
+            *ngFor="let seg of row.segments"
+            [ngClass]="legend[seg.band].cssClass"
+            [class.tp-segment--default]="seg.isDefault"
+            [style.left.%]="seg.leftPct"
+            [style.width.%]="seg.widthPct"
+            [matTooltip]="seg.timeSlot.name + ' ' + seg.timeSlot.startTime + '–' + seg.timeSlot.endTime"
+            (click)="openCell(row, seg)">
+            {{ seg.timeSlot.name }} {{ seg.multiplier | number:'1.1-2' }}×
+          </button>
+          <button
+            type="button" class="tp-show-holiday" *ngIf="row.holiday"
+            (click)="toggleRegular(row.day)">
+            {{ 'theaters.ticketPrices.showHoliday' | translate }}
+          </button>
+        </div>
+      </ng-template>
+    </div>
 
-      <ngx-datatable-column [name]="'theaters.ticketPrices.multiplierLabel' | translate" prop="priceMultiplier" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.priceMultiplier | number:'1.1-2' }}×</ng-template>
-      </ngx-datatable-column>
+    <div class="tp-legend">
+      <span class="tp-legend-item" *ngFor="let band of legendBands">
+        <span class="tp-legend-dot" [ngClass]="legend[band].cssClass"></span>
+        {{ legend[band].labelKey | translate }}
+      </span>
+    </div>
 
-      <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="ad-td-actions ad-td-actions--mat">
-            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-
-      <ngx-datatable-footer>
-        <ng-template ngx-datatable-footer-template>
-          <div class="page-count">{{ 'common.totalEntries' | translate }} {{ total }}</div>
-          <ngx-datatable-pager *ngIf="total > pageSize"></ngx-datatable-pager>
-        </ng-template>
-      </ngx-datatable-footer>
-    </ngx-datatable>
+    <p class="tp-invalid-warning" *ngIf="invalidSlots.length">
+      {{ 'theaters.ticketPrices.invalidSlots' | translate }}: {{ invalidSlotNames }}
+    </p>
   </div>
 
-  <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
-  <div class="ad-mobile-only">
-    <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
-      <mat-card-content>
-        <div class="ad-mobile-card-title"><strong>{{ roomTypeName(row.roomTypeId) }}</strong></div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.ticketPrices.timeSlotLabel' | translate }}</span><span>{{ timeSlotName(row.timeSlotId) }}</span></div>
-        <div class="ad-mobile-card-row">
-          <span>{{ 'common.date' | translate }}</span>
-          <span class="ad-pill" [class.ad-pill--warn]="row.isHoliday" [class.ad-pill--neutral]="!row.isHoliday">
-            {{ row.isHoliday ? ('theaters.ticketPrices.holiday' | translate) : ('theaters.ticketPrices.regularDay' | translate) }}
-          </span>
-        </div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.ticketPrices.multiplierLabel' | translate }}</span><span>{{ row.priceMultiplier | number:'1.1-2' }}×</span></div>
-        <div class="ad-mobile-card-actions">
-          <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
-        </div>
-      </mat-card-content>
-    </mat-card>
-    <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>sell</mat-icon><p>{{ 'theaters.ticketPrices.empty' | translate }}</p></div>
-
-    <mat-paginator
-      *ngIf="total > 0"
-      [length]="total"
-      [pageSize]="pageSize"
-      [pageIndex]="pageOffset"
-      [hidePageSize]="true"
-      (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
-    </mat-paginator>
-  </div>
-</mat-card>
+  <app-holiday-sidebar [holidays]="holidays" (changed)="onHolidaysChanged()"></app-holiday-sidebar>
+</div>

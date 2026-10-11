@@ -105,7 +105,13 @@
     "filters": "Bộ Lọc",
     "totalEntries": "Tổng cộng",
     "required": "Trường này là bắt buộc.",
-    "remove": "Xóa"
+    "remove": "Xóa",
+    "days": {
+      "mon": "Thứ Hai", "tue": "Thứ Ba", "wed": "Thứ Tư", "thu": "Thứ Năm",
+      "fri": "Thứ Sáu", "sat": "Thứ Bảy", "sun": "Chủ Nhật",
+      "monShort": "T2", "tueShort": "T3", "wedShort": "T4", "thuShort": "T5",
+      "friShort": "T6", "satShort": "T7", "sunShort": "CN"
+    }
   },
   "login": {
     "heroTitleLine1": "Bảng Điều Khiển",
@@ -306,7 +312,11 @@
       "statusActive": "Hoạt Động",
       "statusMaintenance": "Bảo Trì",
       "statusInactive": "Ngừng Hoạt Động",
-      "coupleSeat": "ghế đôi"
+      "coupleSeat": "ghế đôi",
+      "removeSeat": "Xoá ghế",
+      "removeHint": "Bấm vào một ghế để xoá. Các ghế còn lại trong hàng sẽ dịch lại để không bị hụt số.",
+      "confirmRemoveSeat": "Xoá ghế này? Các ghế phía sau trong cùng hàng sẽ dịch lại một số.",
+      "confirmRemoveDoubleSeat": "Ghế này đang ghép đôi. Xoá ghế sẽ biến ghế còn lại thành ghế đơn, và các ghế phía sau trong hàng sẽ dịch lại một số. Tiếp tục?"
     },
     "roomTypes": {
       "subtitle": "Định dạng phòng chiếu (2D, 3D, IMAX, 4DX…) — ảnh hưởng thiết bị và giá vé.",
@@ -367,21 +377,29 @@
       "empty": "Rạp này chưa có món nào."
     },
     "ticketPrices": {
-      "subtitle": "Hệ số giá theo loại phòng × khung giờ × ngày lễ, áp dụng lên giá đối tượng vé đã tính.",
-      "add": "Thêm Giá Vé",
-      "prereq": "Cần có ít nhất một loại phòng và một khung giờ trước khi thêm giá vé.",
-      "editTitle": "Chỉnh Sửa Giá Vé",
-      "newTitle": "Giá Vé Mới",
-      "roomTypeLabel": "Loại Phòng",
-      "selectRoomType": "— Chọn loại phòng —",
-      "timeSlotLabel": "Khung Giờ",
-      "selectTimeSlot": "— Chọn khung giờ —",
+      "subtitle": "Hệ số giá theo loại phòng × khung giờ × ngày trong tuần, áp dụng lên giá đối tượng vé đã tính. Ngày lễ sẽ ghi đè cả ngày.",
+      "prereq": "Cần có ít nhất một loại phòng và một khung giờ trước khi thiết lập giá vé.",
       "multiplierLabel": "Hệ số (×)",
       "multiplierHint": "Áp dụng lên giá vé gốc của suất chiếu, ví dụ 1.2 = +20%.",
-      "applyHoliday": "Áp dụng ngày lễ",
-      "holiday": "Ngày Lễ",
-      "regularDay": "Ngày Thường",
-      "empty": "Rạp này chưa có bảng giá vé."
+      "editCellTitle": "Chỉnh Sửa Giá Vé",
+      "daysLabel": "Ngày trong tuần",
+      "resetDefault": "Đặt lại mặc định (×1.0)",
+      "confirmReset": "Đặt lại ngày này về giá mặc định (×1.0)?",
+      "showRegular": "Xem giá ngày thường",
+      "showHoliday": "Xem giá ngày lễ",
+      "invalidSlots": "Không hiển thị (vắt qua nửa đêm)",
+      "bands": {
+        "low": "Thấp",
+        "standard": "Chuẩn",
+        "peak": "Cao điểm",
+        "holiday": "Ngày lễ"
+      },
+      "sidebar": {
+        "title": "Ngày Lễ",
+        "subtitle": "Áp dụng cho tất cả các rạp",
+        "add": "Thêm",
+        "empty": "Chưa có ngày lễ nào."
+      }
     },
     "timeSlots": {
       "subtitle": "Khung giờ chiếu dùng để tính giá vé (theo giờ bắt đầu suất chiếu).",

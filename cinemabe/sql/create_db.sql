@@ -590,6 +590,11 @@ CREATE TABLE [InvoiceTicket] (
     -- P3 gate: stamped atomically with IsUsed when a ticket is admitted at the gate.
     [UsedAt] datetime NULL,
     [UsedByUserId] uniqueidentifier NULL,
+    -- Seat label frozen at sale time (row-position numbering: a double seat counts as one slot).
+    -- Source of truth for every customer-facing display of a sold ticket. NULL only for rows
+    -- written before this column existed. Ops views (gate/incident) deliberately ignore it and
+    -- keep showing the seat's live physical RowName+ColIndex.
+    [SeatLabel] nvarchar(16) NULL,
     CONSTRAINT [PK_InvoiceTicket] PRIMARY KEY ([InvoiceId], [ShowTimeId], [RoomId], [SeatId]),
     CONSTRAINT [FK_InvoiceTicket_Invoice_InvoiceId] FOREIGN KEY ([InvoiceId]) REFERENCES [Invoice] ([Id]) ON DELETE CASCADE,
     CONSTRAINT [FK_InvoiceTicket_Seat_SeatId] FOREIGN KEY ([SeatId]) REFERENCES [Seat] ([Id]) ON DELETE NO ACTION,
@@ -608,15 +613,16 @@ CREATE TABLE [TimeSlot] (
     CONSTRAINT [FK_TimeSlot_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
 );
 
--- A time-of-day/holiday pricing factor for (theater, room type, time slot, holiday?). Multiplies the
--- resolved PatronCategory price — no seat-kind dimension here anymore, since PatronCategory now owns
--- the per-seat-kind price absolutely.
+-- A time-of-day/day-of-week pricing factor for (theater, room type, time slot, day of week). Multiplies
+-- the resolved PatronCategory price — no seat-kind dimension here anymore, since PatronCategory now owns
+-- the per-seat-kind price absolutely. Holiday pricing is NOT stored here: it comes from the Holiday table,
+-- matched against the showtime's calendar date, and overrides whatever this table says for that date.
 CREATE TABLE [TicketPrice] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [TheaterId] uniqueidentifier NOT NULL,
     [RoomTypeId] uniqueidentifier NOT NULL,
     [TimeSlotId] uniqueidentifier NOT NULL,
-    [IsHoliday] bit NOT NULL,
+    [DayOfWeek] int NOT NULL, -- System.DayOfWeek: 0=Sunday, 1=Monday, ... 6=Saturday
     [PriceMultiplier] float NOT NULL DEFAULT 1,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
@@ -706,7 +712,7 @@ CREATE UNIQUE INDEX [IX_RoomTypePatronCategoryPrice_RoomTypeId_PatronCategoryId]
 CREATE INDEX [IX_TimeSlot_TheaterId] ON [TimeSlot] ([TheaterId]);
 CREATE INDEX [IX_TicketPrice_RoomTypeId] ON [TicketPrice] ([RoomTypeId]);
 CREATE INDEX [IX_TicketPrice_TimeSlotId] ON [TicketPrice] ([TimeSlotId]);
-CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_IsHoliday] ON [TicketPrice] ([TheaterId], [RoomTypeId], [TimeSlotId], [IsHoliday]);
+CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_DayOfWeek] ON [TicketPrice] ([TheaterId], [RoomTypeId], [TimeSlotId], [DayOfWeek]);
 CREATE INDEX [IX_RoomType_TheaterId] ON [RoomType] ([TheaterId]);
 CREATE INDEX [IX_Room_RoomTypeId] ON [Room] ([RoomTypeId]);
 CREATE INDEX [IX_ShowTimeRoom_RoomId] ON [ShowTimeRoom] ([RoomId]);

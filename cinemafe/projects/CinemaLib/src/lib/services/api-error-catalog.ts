@@ -183,6 +183,9 @@ export const API_ERROR_RULES: readonly ApiErrorRule[] = [
   { key: 'cannotChangeTheaterStock', exact: 'Cannot change theater: the item has inventory or stock history.' },
   { key: 'giftCardAmountPositive', exact: 'Gift card amount must be positive.' },
   { key: 'seatNotInGivenRoom', exact: 'The seat does not belong to the given room.' },
+  { key: 'seatRemoveUpcomingShowtimes', exact: 'Cannot remove a seat while the room has upcoming showtimes.' },
+  { key: 'seatRemoveHasTickets', exact: 'This seat has ticket history and cannot be removed.' },
+  { key: 'seatRemoveLastInRow', exact: 'Cannot remove the last seat of a row.' },
   { key: 'incidentNotFound', exact: 'Incident not found.' },
   { key: 'incidentResolved', exact: 'The incident is already resolved.' },
   { key: 'seatAlreadyBlocked', exact: 'The seat is already blocked.' },
@@ -260,6 +263,9 @@ export const API_ERROR_RULES: readonly ApiErrorRule[] = [
   { key: 'shiftNotFound', exact: 'Shift not found.' },
   { key: 'shiftOtherTheater', exact: 'The shift belongs to another theater.' },
   { key: 'shiftOverlap', exact: 'This person already has a shift that overlaps these hours.' },
+  { key: 'timeSlotFormat', exact: 'Time slot times must use the HH:mm format.' },
+  { key: 'timeSlotEndAfterStart', exact: 'A time slot must end after it starts.' },
+  { key: 'timeSlotOverlap', exact: 'This theater already has a time slot overlapping those hours.' },
   { key: 'alreadyClockedIn', exact: 'You are already clocked in.' },
   { key: 'notClockedIn', exact: 'You are not clocked in.' },
   { key: 'taskNotFound', exact: 'Task not found.' },
@@ -272,6 +278,11 @@ export const API_ERROR_RULES: readonly ApiErrorRule[] = [
   { key: 'recordOutOfScope', exact: 'The record is outside your scope.' },
   { key: 'staffNotFound', exact: 'Staff member not found.' },
   { key: 'notActiveStaff', exact: 'That person is not an active staff member of this theater.' },
+  { key: 'roomTypeWrongTheater', exact: 'RoomType does not belong to this theater.' },
+  { key: 'timeSlotWrongTheater', exact: 'TimeSlot does not belong to this theater.' },
+  { key: 'ticketPriceDuplicate', exact: 'A ticket price already exists for this room type, time slot and day.' },
+  { key: 'ticketPriceDayRequired', exact: 'At least one day of week is required.' },
+  { key: 'ticketPriceInvalidDay', exact: 'Invalid day of week.' },
 ];
 
 const EXACT = new Map<string, string>();

@@ -1,0 +1,39 @@
+.tp-dialog-sub { margin: 0 0 4px; }
+
+.tp-day-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tp-day-chip {
+  padding: 6px 12px;
+  border-radius: var(--ml-r-full);
+  border: 1px solid var(--ml-rule);
+  background: var(--ml-panel-2);
+  color: var(--ml-ink-2);
+  font: inherit;
+  cursor: pointer;
+
+  &--selected {
+    background: var(--ml-action);
+    border-color: var(--ml-action);
+    color: var(--ml-on-action);
+    font-weight: 600;
+  }
+}
+
+.tp-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tp-stepper-field {
+  width: 100px;
+  ::ng-deep input { text-align: center; }
+}
+
+.tp-hint { color: var(--ml-muted); }
+
+.tp-actions-spacer { flex: 1 1 auto; }

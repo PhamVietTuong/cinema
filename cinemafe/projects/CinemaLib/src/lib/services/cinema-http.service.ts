@@ -75,6 +75,7 @@ export interface IHttpService {
     createTicketPrice(request: CreateTicketPriceRequest): Observable<TicketPriceDTO>;
     updateTicketPrice(request: UpdateTicketPriceRequest): Observable<TicketPriceDTO>;
     deleteTicketPrice(id?: string | undefined): Observable<void>;
+    upsertTicketPrices(request: UpsertTicketPricesRequest): Observable<TicketPriceDTO[]>;
     getUserTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfUserTypeDTO>;
     getUserType(id?: string | undefined): Observable<UserTypeDTO>;
     createUserType(request: CreateUserTypeRequest): Observable<UserTypeDTO>;
@@ -128,6 +129,7 @@ export interface IHttpService {
     getRoomSeatMap(roomId?: string | undefined): Observable<RoomSeatDTO[]>;
     saveRoomSeatMap(request: SaveSeatMapRequest): Observable<void>;
     resizeRoomSeatGrid(request: ResizeSeatGridRequest): Observable<RoomSeatDTO[]>;
+    removeRoomSeat(request: RemoveSeatRequest): Observable<RoomSeatDTO[]>;
     getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceAdminDTO>;
     updateInvoiceStatus(request: UpdateInvoiceStatusRequest): Observable<InvoiceAdminDTO>;
     deleteInvoice(id?: string | undefined): Observable<void>;
@@ -3074,6 +3076,65 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
+    upsertTicketPrices(request: UpsertTicketPricesRequest): Observable<TicketPriceDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/UpsertTicketPrices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpsertTicketPrices(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpsertTicketPrices(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TicketPriceDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TicketPriceDTO[]>;
+        }));
+    }
+
+    protected processUpsertTicketPrices(response: HttpResponseBase): Observable<TicketPriceDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(TicketPriceDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     getUserTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfUserTypeDTO> {
         let url_ = this.baseUrl + "/api/Cinema/GetUserTypes";
         url_ = url_.replace(/[?&]$/, "");
@@ -5779,6 +5840,65 @@ export class HttpService implements IHttpService {
     }
 
     protected processResizeRoomSeatGrid(response: HttpResponseBase): Observable<RoomSeatDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(RoomSeatDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    removeRoomSeat(request: RemoveSeatRequest): Observable<RoomSeatDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/RemoveRoomSeat";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRemoveRoomSeat(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRemoveRoomSeat(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomSeatDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomSeatDTO[]>;
+        }));
+    }
+
+    protected processRemoveRoomSeat(response: HttpResponseBase): Observable<RoomSeatDTO[]> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -13028,7 +13148,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
     theaterId?: string;
     roomTypeId?: string;
     timeSlotId?: string;
-    isHoliday?: boolean;
+    dayOfWeek?: DayOfWeek;
     priceMultiplier?: number;
 
     constructor(data?: ITicketPriceDTO) {
@@ -13046,7 +13166,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
             this.theaterId = _data["theaterId"];
             this.roomTypeId = _data["roomTypeId"];
             this.timeSlotId = _data["timeSlotId"];
-            this.isHoliday = _data["isHoliday"];
+            this.dayOfWeek = _data["dayOfWeek"];
             this.priceMultiplier = _data["priceMultiplier"];
         }
     }
@@ -13064,7 +13184,7 @@ export class TicketPriceDTO implements ITicketPriceDTO {
         data["theaterId"] = this.theaterId;
         data["roomTypeId"] = this.roomTypeId;
         data["timeSlotId"] = this.timeSlotId;
-        data["isHoliday"] = this.isHoliday;
+        data["dayOfWeek"] = this.dayOfWeek;
         data["priceMultiplier"] = this.priceMultiplier;
         return data;
     }
@@ -13075,15 +13195,25 @@ export interface ITicketPriceDTO {
     theaterId?: string;
     roomTypeId?: string;
     timeSlotId?: string;
-    isHoliday?: boolean;
+    dayOfWeek?: DayOfWeek;
     priceMultiplier?: number;
+}
+
+export enum DayOfWeek {
+    Sunday = 0,
+    Monday = 1,
+    Tuesday = 2,
+    Wednesday = 3,
+    Thursday = 4,
+    Friday = 5,
+    Saturday = 6,
 }
 
 export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
     theaterId?: string;
     roomTypeId?: string;
     timeSlotId?: string;
-    isHoliday?: boolean;
+    dayOfWeek?: DayOfWeek;
     priceMultiplier?: number;
 
     constructor(data?: ICreateTicketPriceRequest) {
@@ -13100,7 +13230,7 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
             this.theaterId = _data["theaterId"];
             this.roomTypeId = _data["roomTypeId"];
             this.timeSlotId = _data["timeSlotId"];
-            this.isHoliday = _data["isHoliday"];
+            this.dayOfWeek = _data["dayOfWeek"];
             this.priceMultiplier = _data["priceMultiplier"];
         }
     }
@@ -13117,7 +13247,7 @@ export class CreateTicketPriceRequest implements ICreateTicketPriceRequest {
         data["theaterId"] = this.theaterId;
         data["roomTypeId"] = this.roomTypeId;
         data["timeSlotId"] = this.timeSlotId;
-        data["isHoliday"] = this.isHoliday;
+        data["dayOfWeek"] = this.dayOfWeek;
         data["priceMultiplier"] = this.priceMultiplier;
         return data;
     }
@@ -13127,7 +13257,7 @@ export interface ICreateTicketPriceRequest {
     theaterId?: string;
     roomTypeId?: string;
     timeSlotId?: string;
-    isHoliday?: boolean;
+    dayOfWeek?: DayOfWeek;
     priceMultiplier?: number;
 }
 
@@ -13136,7 +13266,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
     theaterId?: string;
     roomTypeId?: string;
     timeSlotId?: string;
-    isHoliday?: boolean;
+    dayOfWeek?: DayOfWeek;
     priceMultiplier?: number;
 
     constructor(data?: IUpdateTicketPriceRequest) {
@@ -13154,7 +13284,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
             this.theaterId = _data["theaterId"];
             this.roomTypeId = _data["roomTypeId"];
             this.timeSlotId = _data["timeSlotId"];
-            this.isHoliday = _data["isHoliday"];
+            this.dayOfWeek = _data["dayOfWeek"];
             this.priceMultiplier = _data["priceMultiplier"];
         }
     }
@@ -13172,7 +13302,7 @@ export class UpdateTicketPriceRequest implements IUpdateTicketPriceRequest {
         data["theaterId"] = this.theaterId;
         data["roomTypeId"] = this.roomTypeId;
         data["timeSlotId"] = this.timeSlotId;
-        data["isHoliday"] = this.isHoliday;
+        data["dayOfWeek"] = this.dayOfWeek;
         data["priceMultiplier"] = this.priceMultiplier;
         return data;
     }
@@ -13183,7 +13313,67 @@ export interface IUpdateTicketPriceRequest {
     theaterId?: string;
     roomTypeId?: string;
     timeSlotId?: string;
-    isHoliday?: boolean;
+    dayOfWeek?: DayOfWeek;
+    priceMultiplier?: number;
+}
+
+export class UpsertTicketPricesRequest implements IUpsertTicketPricesRequest {
+    theaterId?: string;
+    roomTypeId?: string;
+    timeSlotId?: string;
+    daysOfWeek?: DayOfWeek[];
+    priceMultiplier?: number;
+
+    constructor(data?: IUpsertTicketPricesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+            this.roomTypeId = _data["roomTypeId"];
+            this.timeSlotId = _data["timeSlotId"];
+            if (Array.isArray(_data["daysOfWeek"])) {
+                this.daysOfWeek = [] as any;
+                for (let item of _data["daysOfWeek"])
+                    this.daysOfWeek!.push(item);
+            }
+            this.priceMultiplier = _data["priceMultiplier"];
+        }
+    }
+
+    static fromJS(data: any): UpsertTicketPricesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpsertTicketPricesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        data["roomTypeId"] = this.roomTypeId;
+        data["timeSlotId"] = this.timeSlotId;
+        if (Array.isArray(this.daysOfWeek)) {
+            data["daysOfWeek"] = [];
+            for (let item of this.daysOfWeek)
+                data["daysOfWeek"].push(item);
+        }
+        data["priceMultiplier"] = this.priceMultiplier;
+        return data;
+    }
+}
+
+export interface IUpsertTicketPricesRequest {
+    theaterId?: string;
+    roomTypeId?: string;
+    timeSlotId?: string;
+    daysOfWeek?: DayOfWeek[];
     priceMultiplier?: number;
 }
 
@@ -16105,6 +16295,46 @@ export interface IResizeSeatGridRequest {
     roomId?: string;
     totalRows?: number;
     totalColumns?: number;
+}
+
+export class RemoveSeatRequest implements IRemoveSeatRequest {
+    roomId?: string;
+    seatId?: string;
+
+    constructor(data?: IRemoveSeatRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.roomId = _data["roomId"];
+            this.seatId = _data["seatId"];
+        }
+    }
+
+    static fromJS(data: any): RemoveSeatRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RemoveSeatRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["roomId"] = this.roomId;
+        data["seatId"] = this.seatId;
+        return data;
+    }
+}
+
+export interface IRemoveSeatRequest {
+    roomId?: string;
+    seatId?: string;
 }
 
 export abstract class BaseSearchResultsOfInvoiceAdminDTO implements IBaseSearchResultsOfInvoiceAdminDTO {

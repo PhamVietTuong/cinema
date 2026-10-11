@@ -5,6 +5,10 @@ public class SeatDTO
     public Guid Id { get; set; }
     public string RowName { get; set; } = string.Empty;
     public int ColIndex { get; set; }
+    /// <summary>1-based position within the row; a double seat's two halves share one number (so the
+    /// row doesn't jump by two), and a blocked/inactive seat still occupies a slot. Display label is
+    /// RowName + DisplayNumber. ColIndex remains the physical column used for ordering/layout.</summary>
+    public int DisplayNumber { get; set; }
     /// <summary>Derived from SeatGroupId being set.</summary>
     public bool IsDouble { get; set; }
     public SeatStatus Status { get; set; }

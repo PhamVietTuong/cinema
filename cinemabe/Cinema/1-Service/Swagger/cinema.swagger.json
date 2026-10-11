@@ -2056,6 +2056,48 @@
         ]
       }
     },
+    "/api/Cinema/UpsertTicketPrices": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpsertTicketPrices",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertTicketPricesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketPriceDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetUserTypes": {
       "post": {
         "tags": [
@@ -3969,6 +4011,48 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ResizeSeatGridRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoomSeatDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/RemoveRoomSeat": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_RemoveRoomSeat",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveSeatRequest"
               }
             }
           },
@@ -8652,14 +8736,36 @@
             "type": "string",
             "format": "guid"
           },
-          "isHoliday": {
-            "type": "boolean"
+          "dayOfWeek": {
+            "$ref": "#/components/schemas/DayOfWeek"
           },
           "priceMultiplier": {
             "type": "number",
             "format": "double"
           }
         }
+      },
+      "DayOfWeek": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
       },
       "CreateTicketPriceRequest": {
         "type": "object",
@@ -8677,8 +8783,8 @@
             "type": "string",
             "format": "guid"
           },
-          "isHoliday": {
-            "type": "boolean"
+          "dayOfWeek": {
+            "$ref": "#/components/schemas/DayOfWeek"
           },
           "priceMultiplier": {
             "type": "number",
@@ -8706,8 +8812,36 @@
             "type": "string",
             "format": "guid"
           },
-          "isHoliday": {
-            "type": "boolean"
+          "dayOfWeek": {
+            "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "priceMultiplier": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "UpsertTicketPricesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "timeSlotId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "daysOfWeek": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayOfWeek"
+            }
           },
           "priceMultiplier": {
             "type": "number",
@@ -10183,6 +10317,20 @@
           "totalColumns": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "RemoveSeatRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "seatId": {
+            "type": "string",
+            "format": "guid"
           }
         }
       },

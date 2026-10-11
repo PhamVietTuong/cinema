@@ -1,3 +1,4 @@
+using System.Globalization;
 using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Requests;
@@ -94,6 +95,7 @@ public class TimeSlotManager : ITimeSlotManager
     public async Task<TimeSlotDTO> CreateAsync(CreateTimeSlotRequest request)
     {
         var entity = request.ToNewEntity<CreateTimeSlotRequest, TimeSlot>();
+        await ValidateAsync(entity.TheaterId, entity.StartTime, entity.EndTime, null);
         await _uow.TimeSlotStore.CreateAsync(entity);
         return entity.ToDTO<TimeSlot, TimeSlotDTO>();
     }
@@ -106,6 +108,7 @@ public class TimeSlotManager : ITimeSlotManager
             throw new KeyNotFoundException($"TimeSlot {request.Id} not found.");
         }
         entity.PatchEntity<TimeSlot, UpdateTimeSlotRequest>(request);
+        await ValidateAsync(entity.TheaterId, entity.StartTime, entity.EndTime, entity.Id);
         await _uow.TimeSlotStore.UpdateAsync(entity);
         return entity.ToDTO<TimeSlot, TimeSlotDTO>();
     }
@@ -113,5 +116,27 @@ public class TimeSlotManager : ITimeSlotManager
     public async Task DeleteAsync(Guid id)
     {
         await _uow.TimeSlotStore.DeleteAsync(id);
+    }
+
+    /// <summary>
+    /// Rejects malformed or inverted time windows before they reach the overlap check — which, on
+    /// a string comparison, only means what it says when both values are zero-padded "HH:mm" with
+    /// start preceding end — and rejects a window that overlaps another slot in the same theater.
+    /// </summary>
+    private async Task ValidateAsync(Guid theaterId, string startTime, string endTime, Guid? excludeId)
+    {
+        if (!TimeOnly.TryParseExact(startTime, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var start) ||
+            !TimeOnly.TryParseExact(endTime, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var end))
+        {
+            throw new InvalidOperationException("Time slot times must use the HH:mm format.");
+        }
+        if (end <= start)
+        {
+            throw new InvalidOperationException("A time slot must end after it starts.");
+        }
+        if (await _uow.TimeSlotStore.HasTimeSlotOverlapAsync(theaterId, startTime, endTime, excludeId))
+        {
+            throw new InvalidOperationException("This theater already has a time slot overlapping those hours.");
+        }
     }
 }

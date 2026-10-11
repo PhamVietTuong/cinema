@@ -561,3 +561,39 @@ export function foodOrderCap(f: { isOutOfStock?: boolean; availableQuantity?: nu
   }
   return Math.max(0, f.availableQuantity);
 }
+
+/** i18n-key label (full + short) for each TicketPrice.DayOfWeek value, ordered Mon→Sun for display. */
+export const DayOfWeekValues: { value: CinemaServiceAgent.DayOfWeek; name: string; shortName: string }[] = [
+  { value: CinemaServiceAgent.DayOfWeek.Monday, name: 'common.days.mon', shortName: 'common.days.monShort' },
+  { value: CinemaServiceAgent.DayOfWeek.Tuesday, name: 'common.days.tue', shortName: 'common.days.tueShort' },
+  { value: CinemaServiceAgent.DayOfWeek.Wednesday, name: 'common.days.wed', shortName: 'common.days.wedShort' },
+  { value: CinemaServiceAgent.DayOfWeek.Thursday, name: 'common.days.thu', shortName: 'common.days.thuShort' },
+  { value: CinemaServiceAgent.DayOfWeek.Friday, name: 'common.days.fri', shortName: 'common.days.friShort' },
+  { value: CinemaServiceAgent.DayOfWeek.Saturday, name: 'common.days.sat', shortName: 'common.days.satShort' },
+  { value: CinemaServiceAgent.DayOfWeek.Sunday, name: 'common.days.sun', shortName: 'common.days.sunShort' },
+];
+
+/**
+ * Visual band for a TicketPrice/Holiday multiplier, driving the weekly pricing timeline's segment
+ * colors. Purely a display derivation from the numeric value — nothing is stored. The 'holiday' band
+ * is never derived from the number; the caller picks it explicitly when the price comes from a Holiday
+ * override rather than the weekday matrix.
+ */
+export type MultiplierBand = 'low' | 'standard' | 'peak' | 'holiday';
+
+export function multiplierBand(multiplier: number): Exclude<MultiplierBand, 'holiday'> {
+  if (multiplier < 1) {
+    return 'low';
+  }
+  if (multiplier < 1.2) {
+    return 'standard';
+  }
+  return 'peak';
+}
+
+export const MultiplierBandSpecs: Record<MultiplierBand, { labelKey: string; cssClass: string }> = {
+  low: { labelKey: 'theaters.ticketPrices.bands.low', cssClass: 'tp-band--low' },
+  standard: { labelKey: 'theaters.ticketPrices.bands.standard', cssClass: 'tp-band--standard' },
+  peak: { labelKey: 'theaters.ticketPrices.bands.peak', cssClass: 'tp-band--peak' },
+  holiday: { labelKey: 'theaters.ticketPrices.bands.holiday', cssClass: 'tp-band--holiday' },
+};

@@ -221,16 +221,16 @@ CROSS JOIN (VALUES
     (N'Khuya', N'22:00', N'23:59')
 ) AS ts(Name, StartTime, EndTime);
 
--- ── Ticket prices (time-of-day/holiday multiplier per theater/room type/time slot) ──
-INSERT INTO [TicketPrice] ([Id], [TheaterId], [RoomTypeId], [TimeSlotId], [IsHoliday], [PriceMultiplier], [CreationTime])
-SELECT NEWID(), rt.TheaterId, rt.Id, ts.Id, h.IsHoliday,
+-- ── Ticket prices (time-of-day/day-of-week multiplier per theater/room type/time slot) ──
+-- Holiday pricing is not seeded here: it comes from the Holiday table by calendar date.
+INSERT INTO [TicketPrice] ([Id], [TheaterId], [RoomTypeId], [TimeSlotId], [DayOfWeek], [PriceMultiplier], [CreationTime])
+SELECT NEWID(), rt.TheaterId, rt.Id, ts.Id, d.DayOfWeek,
     (CASE ts.Name WHEN N'Tối' THEN 1.2 WHEN N'Khuya' THEN 1.3 WHEN N'Sáng' THEN 0.9 ELSE 1.0 END)
-    * (CASE rt.Name WHEN N'IMAX' THEN 1.5 WHEN N'4DX' THEN 1.8 WHEN N'Deluxe' THEN 1.4 WHEN N'3D' THEN 1.2 ELSE 1.0 END)
-    * (CASE WHEN h.IsHoliday = 1 THEN 1.2 ELSE 1.0 END),
+    * (CASE rt.Name WHEN N'IMAX' THEN 1.5 WHEN N'4DX' THEN 1.8 WHEN N'Deluxe' THEN 1.4 WHEN N'3D' THEN 1.2 ELSE 1.0 END),
     GETUTCDATE()
 FROM [RoomType] rt
 JOIN [TimeSlot] ts ON ts.TheaterId = rt.TheaterId
-CROSS JOIN (VALUES (0), (1)) AS h(IsHoliday);
+CROSS JOIN (VALUES (0), (1), (2), (3), (4), (5), (6)) AS d(DayOfWeek);
 
 -- ── Room type × patron category prices (default = category's base price) ─────
 INSERT INTO [RoomTypePatronCategoryPrice] ([Id], [RoomTypeId], [PatronCategoryId], [Price], [CreationTime])

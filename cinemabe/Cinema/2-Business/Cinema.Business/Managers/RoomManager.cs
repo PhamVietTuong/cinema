@@ -185,17 +185,30 @@ public class RoomManager : IRoomManager
 
     public async Task<List<RoomSeatDTO>> GetSeatMapAsync(Guid roomId)
     {
-        var seats = await _uow.SeatStore.FindAsync(s => s.RoomId == roomId);
+        var seats = await _uow.SeatStore.GetSeatMapByRoomNoTrackingAsync(roomId);
+
+        // A SeatGroupId only makes a valid double seat when exactly 2 seats share it (mirrors the
+        // validation SaveSeatMapAsync already applies on write). Stale/malformed data — a seat whose
+        // group has 1 or 3+ members, left over from before that validation existed, or from a removal
+        // that couldn't find its partner — must read back as a plain Standard seat, not a broken double.
+        var groupSizes = seats
+            .Where(s => s.SeatGroupId.HasValue)
+            .GroupBy(s => s.SeatGroupId!.Value)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         return seats
-            .OrderBy(s => s.RowName).ThenBy(s => s.ColIndex)
-            .Select(s => new RoomSeatDTO
+            .Select(s =>
             {
-                Id          = s.Id,
-                RowName     = s.RowName,
-                ColIndex    = s.ColIndex,
-                IsDouble    = s.SeatGroupId.HasValue,
-                SeatGroupId = s.SeatGroupId,
-                IsActive    = s.IsActive,
+                var isValidPair = s.SeatGroupId.HasValue && groupSizes[s.SeatGroupId.Value] == 2;
+                return new RoomSeatDTO
+                {
+                    Id          = s.Id,
+                    RowName     = s.RowName,
+                    ColIndex    = s.ColIndex,
+                    IsDouble    = isValidPair,
+                    SeatGroupId = isValidPair ? s.SeatGroupId : null,
+                    IsActive    = s.IsActive,
+                };
             })
             .ToList();
     }
@@ -238,43 +251,51 @@ public class RoomManager : IRoomManager
 
         var rows = Math.Max(0, request.TotalRows);
         var columns = Math.Max(0, request.TotalColumns);
+        var keptRowNames = Enumerable.Range(0, rows).Select(ToRowName).ToHashSet();
 
-        // Cells the grid should contain after the resize.
-        var desired = new HashSet<(string Row, int Col)>();
-        for (var r = 0; r < rows; r++)
+        var existing = (await _uow.SeatStore.FindAsync(s => s.RoomId == room.Id)).ToList();
+        var existingByRow = existing.GroupBy(s => s.RowName).ToDictionary(g => g.Key, g => g.ToList());
+
+        // Drop whole rows trimmed off the grid — a single bulk delete by id instead of one round trip
+        // per seat (avoids an N+1 query pattern).
+        var idsToDelete = existing
+            .Where(s => !keptRowNames.Contains(s.RowName))
+            .Select(s => s.Id)
+            .ToList();
+
+        var toAdd = new List<Seat>();
+        // Per row, not per rectangle: a row may already have fewer seats than `columns` (a prior
+        // single-seat removal shortened it), and the grid must not resurrect that removed seat.
+        foreach (var rowName in keptRowNames)
         {
-            var rowName = ToRowName(r);
-            for (var c = 1; c <= columns; c++)
+            if (!existingByRow.TryGetValue(rowName, out var rowSeats) || rowSeats.Count == 0)
             {
-                desired.Add((rowName, c));
+                // A newly-appended row: fill it in full.
+                for (var c = 1; c <= columns; c++)
+                {
+                    toAdd.Add(new Seat { RoomId = room.Id, RowName = rowName, ColIndex = c, IsActive = true });
+                }
+                continue;
+            }
+
+            var len = rowSeats.Count;
+            if (columns > len)
+            {
+                for (var c = len + 1; c <= columns; c++)
+                {
+                    toAdd.Add(new Seat { RoomId = room.Id, RowName = rowName, ColIndex = c, IsActive = true });
+                }
+            }
+            else if (columns < len)
+            {
+                idsToDelete.AddRange(rowSeats.Where(s => s.ColIndex > columns).Select(s => s.Id));
             }
         }
 
-        var existing = (await _uow.SeatStore.FindAsync(s => s.RoomId == room.Id)).ToList();
-
-        // Drop seats that fall outside the new grid (trimmed rows/columns) — a single bulk
-        // delete by id instead of one round trip per seat (avoids an N+1 query pattern).
-        var idsToDelete = existing
-            .Where(s => !desired.Contains((s.RowName, s.ColIndex)))
-            .Select(s => s.Id)
-            .ToList();
         if (idsToDelete.Count > 0)
         {
             await _uow.SeatStore.DeleteAsync(s => idsToDelete.Contains(s.Id));
         }
-
-        // Create seats for the appended cells; seats that stay keep their grouping.
-        var present = existing.Select(s => (s.RowName, s.ColIndex)).ToHashSet();
-        var toAdd = desired
-            .Where(cell => !present.Contains(cell))
-            .Select(cell => new Seat
-            {
-                RoomId   = room.Id,
-                RowName  = cell.Row,
-                ColIndex = cell.Col,
-                IsActive = true,
-            })
-            .ToList();
         if (toAdd.Count > 0)
         {
             await _uow.SeatStore.CreateRangeAsync(toAdd);
@@ -286,5 +307,65 @@ public class RoomManager : IRoomManager
         await _uow.RoomStore.UpdateAsync(room);
 
         return await GetSeatMapAsync(room.Id);
+    }
+
+    public async Task<List<RoomSeatDTO>> RemoveSeatAsync(RemoveSeatRequest request)
+    {
+        var room = await _uow.RoomStore.GetByIdAsync(request.RoomId);
+        if (room == null)
+        {
+            throw new KeyNotFoundException($"Room {request.RoomId} not found.");
+        }
+
+        var seat = (await _uow.SeatStore.FindAsync(s => s.Id == request.SeatId && s.RoomId == request.RoomId)).SingleOrDefault();
+        if (seat == null)
+        {
+            throw new KeyNotFoundException($"Seat {request.SeatId} not found.");
+        }
+
+        var hasUpcomingShowTime = await _uow.ShowTimeStore.ExistsAsync(
+            s => s.IsActive && s.EndTime > DateTime.Now && s.ShowTimeRooms.Any(r => r.RoomId == request.RoomId));
+        if (hasUpcomingShowTime)
+        {
+            throw new InvalidOperationException("Cannot remove a seat while the room has upcoming showtimes.");
+        }
+
+        if (await _uow.SeatStore.HasAnyTicketAsync(seat.Id))
+        {
+            throw new InvalidOperationException("This seat has ticket history and cannot be removed.");
+        }
+
+        var seatCountInRow = await _uow.SeatStore.CountAsync(s => s.RoomId == request.RoomId && s.RowName == seat.RowName);
+        if (seatCountInRow <= 1)
+        {
+            throw new InvalidOperationException("Cannot remove the last seat of a row.");
+        }
+
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            if (seat.SeatGroupId.HasValue)
+            {
+                var partners = await _uow.SeatStore.FindAsync(
+                    s => s.RoomId == request.RoomId && s.SeatGroupId == seat.SeatGroupId && s.Id != seat.Id);
+                foreach (var partner in partners)
+                {
+                    partner.SeatGroupId = null;
+                }
+            }
+
+            // Saves the partner's change too, since both are tracked on the same context.
+            await _uow.SeatStore.DeleteAsync(seat);
+            await _uow.SeatStore.ShiftRowLeftAsync(request.RoomId, seat.RowName, seat.ColIndex);
+
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
+
+        return await GetSeatMapAsync(request.RoomId);
     }
 }
