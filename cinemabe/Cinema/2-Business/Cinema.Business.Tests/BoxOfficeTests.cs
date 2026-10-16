@@ -516,18 +516,6 @@ public class BoxOfficeTests
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }
 
-    [Fact]
-    public async Task OnlineRefund_RefusesACounterInvoice()
-    {
-        var invoice = new Invoice { Id = Guid.NewGuid(), Status = InvoiceStatus.Paid, Channel = SalesChannel.Counter, UserId = null };
-        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
-
-        var refunded = await _booking.RefundBookingAsync(Guid.NewGuid(), invoice.Id, isAdmin: true);
-
-        refunded.Should().BeFalse();
-        invoice.Status.Should().Be(InvoiceStatus.Paid);
-    }
-
     // ── Tender rules ─────────────────────────────────────────────────────────────
 
     [Fact]

@@ -5,7 +5,7 @@ using Cinema.Data.Enums;
 namespace Cinema.Business.Managers;
 
 /// <summary>
-/// Puts food stock back for invoices that did not complete (cancelled, expired, refunded, deleted while
+/// Puts food stock back for invoices that did not complete (cancelled, expired, deleted while
 /// Pending). Driven purely by the stock ledger — never by the current combo recipe — so history stays
 /// correct after recipe edits, and idempotent: once a SaleReversal is recorded the net is 0 and a repeat
 /// call does nothing. The caller owns the surrounding transaction.

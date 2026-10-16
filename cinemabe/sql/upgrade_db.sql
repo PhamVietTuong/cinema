@@ -366,7 +366,7 @@ END
 -- ===== end P6 food pickup =====
 
 -- ============================================================
--- P5 after-sales: exchange link and refund reason on Invoice
+-- P5 after-sales: exchange link on Invoice
 -- ============================================================
 -- Identical in create_db.sql and upgrade_db.sql (idempotent). The index runs through EXEC so the batch
 -- compiles before the column exists.
@@ -374,12 +374,6 @@ IF COL_LENGTH('dbo.Invoice', 'ExchangedFromInvoiceId') IS NULL
 BEGIN
     -- The invoice this one replaced in an exchange (no FK, like the other audit snapshots).
     ALTER TABLE [Invoice] ADD [ExchangedFromInvoiceId] uniqueidentifier NULL;
-END
-
-IF COL_LENGTH('dbo.Invoice', 'RefundReasonCode') IS NULL
-BEGIN
-    -- StaffReasonCode of a staff refund.
-    ALTER TABLE [Invoice] ADD [RefundReasonCode] int NULL;
 END
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_ExchangedFromInvoiceId' AND object_id = OBJECT_ID('dbo.Invoice'))
@@ -498,7 +492,7 @@ JOIN s2 ON s2.[Id] = t.[SeatId]
 WHERE t.[SeatLabel] IS NULL');
 
 -- ============================================================
--- Removed staff features cleanup (after-sales, cash close, drawer, complaints, time clock, tasks, storage plans)
+-- Removed staff features cleanup (after-sales, cash close, drawer, complaints, time clock, tasks, storage plans, refund)
 -- ============================================================
 -- No role check like the "removed staff roles" block above: these tables just stop being used by the
 -- app (EF no longer maps them), so dropping them is safe even before this script runs. FK-safe order:
@@ -536,6 +530,23 @@ END
 IF OBJECT_ID('dbo.Complaint', 'U') IS NOT NULL
 BEGIN
     DROP TABLE dbo.Complaint;
+END
+
+-- Refund feature removed: old Refunded (4) invoices already had their seats/points/stock reversed, so
+-- they are reclassified as Cancelled before the now-unused columns are dropped.
+IF COL_LENGTH('dbo.Invoice', 'Status') IS NOT NULL
+BEGIN
+    UPDATE [Invoice] SET [Status] = 2 WHERE [Status] = 4;
+END
+
+IF COL_LENGTH('dbo.Invoice', 'RefundedAt') IS NOT NULL
+BEGIN
+    ALTER TABLE [Invoice] DROP COLUMN [RefundedAt];
+END
+
+IF COL_LENGTH('dbo.Invoice', 'RefundReasonCode') IS NOT NULL
+BEGIN
+    ALTER TABLE [Invoice] DROP COLUMN [RefundReasonCode];
 END
 
 -- ============================================================

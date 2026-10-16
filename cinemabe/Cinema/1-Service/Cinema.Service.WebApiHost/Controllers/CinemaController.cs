@@ -1820,8 +1820,8 @@ public class CinemaController : ApiControllerBase
     // ── P9 reporting (append new actions below) ──────────────────────────────
 
     /// <summary>
-    /// Sales grouped by Day, Movie, Theater, PaymentMethod, Staff or Channel: ticket and F&amp;B revenue separate, net of
-    /// refunds. Range of business dates, at most 92 days. A theater outside the caller's scope is refused with 403.
+    /// Sales grouped by Day, Movie, Theater, PaymentMethod, Staff or Channel: ticket and F&amp;B revenue separate.
+    /// Range of business dates, at most 92 days. A theater outside the caller's scope is refused with 403.
     /// </summary>
     [Authorize(Roles = RoleNames.Reporting)]
     [HttpPost]
@@ -1864,7 +1864,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    /// <summary>Attach rate, refund rate (count and amount) and average spend per head. Scope and range rules as for sales.</summary>
+    /// <summary>Attach rate and average spend per head. Scope and range rules as for sales.</summary>
     [Authorize(Roles = RoleNames.Reporting)]
     [HttpPost]
     [ProducesResponseType(typeof(StaffKpisDTO), 200)]

@@ -8760,15 +8760,13 @@
           "Pending",
           "Paid",
           "Cancelled",
-          "Failed",
-          "Refunded"
+          "Failed"
         ],
         "enum": [
           0,
           1,
           2,
-          3,
-          4
+          3
         ]
       },
       "UpdateInvoiceStatusRequest": {
@@ -9735,7 +9733,6 @@
           "OverrideFailed",
           "OverridePinChanged",
           "PriceOverride",
-          "Refund",
           "Exchange",
           "Reprint",
           "VoidSale",
@@ -9754,7 +9751,6 @@
           1,
           2,
           3,
-          4,
           5,
           6,
           7,
@@ -9869,14 +9865,6 @@
             "nullable": true
           },
           "netRevenue": {
-            "type": "number",
-            "format": "double"
-          },
-          "refundCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "refundAmount": {
             "type": "number",
             "format": "double"
           }
@@ -10015,22 +10003,6 @@
             "format": "int32"
           },
           "averageSpendPerHead": {
-            "type": "number",
-            "format": "double"
-          },
-          "refundCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "refundAmount": {
-            "type": "number",
-            "format": "double"
-          },
-          "refundRateByCount": {
-            "type": "number",
-            "format": "double"
-          },
-          "refundRateByAmount": {
             "type": "number",
             "format": "double"
           }

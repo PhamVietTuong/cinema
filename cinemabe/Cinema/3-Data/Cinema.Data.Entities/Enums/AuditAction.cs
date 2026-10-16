@@ -8,7 +8,7 @@ public enum AuditAction
     OverrideFailed = 1,
     OverridePinChanged = 2,
     PriceOverride = 3,
-    Refund = 4,
+    // 4 reserved (was Refund) — do not reuse.
     Exchange = 5,
     Reprint = 6,
     VoidSale = 7,

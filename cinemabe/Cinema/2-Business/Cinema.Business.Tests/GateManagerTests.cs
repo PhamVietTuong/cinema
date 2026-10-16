@@ -112,7 +112,7 @@ public class GateManagerTests
     [Theory]
     [InlineData(InvoiceStatus.Pending)]
     [InlineData(InvoiceStatus.Cancelled)]
-    [InlineData(InvoiceStatus.Refunded)]
+    [InlineData(InvoiceStatus.Failed)]
     public async Task Scan_InvoiceNotPaid_IsNotPaid(InvoiceStatus status)
     {
         _ticket.InvoiceStatus = status;

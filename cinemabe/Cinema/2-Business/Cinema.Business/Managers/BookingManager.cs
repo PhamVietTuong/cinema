@@ -546,7 +546,7 @@ public class BookingManager : IBookingManager
 
                 // A Double seat is one bookable unit priced once as a whole (category.Price is that
                 // whole-seat price) but is still two physical Seat rows, each needing its own
-                // InvoiceTicket for occupancy/refund tracking — split the price across the pair so
+                // InvoiceTicket for occupancy tracking — split the price across the pair so
                 // the two halves sum to the single price the customer was quoted for one seat.
                 var listPrice = Money(seatKind == SeatKind.Double ? category.Price / 2 : category.Price, wholeVnd);
                 var price = listPrice;
@@ -624,7 +624,7 @@ public class BookingManager : IBookingManager
         }
 
         // Loyalty redemption: spend points for a discount. The points are reserved (deducted) now and
-        // restored if the booking is cancelled, expires, or is refunded. 1 point = _pointValueVnd VND,
+        // restored if the booking is cancelled or expires. 1 point = _pointValueVnd VND,
         // capped at the customer's balance and the order total so the amount can't go negative.
         var pointsRedeemed = 0;
         double pointsValue = 0;
@@ -651,7 +651,7 @@ public class BookingManager : IBookingManager
         }
 
         // Gift card: draw down its balance to cover part (or all) of the remaining amount. Reserved
-        // now and restored if the booking is cancelled, expires, or is refunded. An invalid/expired
+        // now and restored if the booking is cancelled or expires. An invalid/expired
         // code provided by the customer is rejected (so they're never silently charged full price).
         Guid? giftCardId = null;
         double giftCardAmount = 0;
@@ -922,9 +922,9 @@ public class BookingManager : IBookingManager
     }
 
     // ── Staff push (kitchen queue, low stock) ───────────────────────────────────
-    // Every push runs after the commit and swallows its own failures: the sale/refund is already durable.
+    // Every push runs after the commit and swallows its own failures: the sale is already durable.
 
-    // A cancelled, expired or refunded invoice no longer has food to hand over.
+    // A cancelled or expired invoice no longer has food to hand over.
     private static void CancelFoodOrder(Invoice invoice)
     {
         if (invoice.FoodStatus != FoodOrderStatus.None)
@@ -950,29 +950,6 @@ public class BookingManager : IBookingManager
         catch (Exception e)
         {
             LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(PushFoodOrderQueuedAsync)} failed for {invoice.Code}: {e.Message}");
-        }
-    }
-
-    private async Task PushFoodOrderCancelledAsync(Invoice invoice)
-    {
-        if (invoice.FoodStatus != FoodOrderStatus.Cancelled || invoice.TheaterId is not Guid theaterId)
-        {
-            return;
-        }
-        try
-        {
-            await _staffNotifications.NotifyFoodOrderUpdatedAsync(theaterId, new FoodOrderUpdateDTO
-            {
-                InvoiceId = invoice.Id,
-                TheaterId = theaterId,
-                InvoiceCode = invoice.Code,
-                FoodStatus = FoodOrderStatus.Cancelled,
-                FoodHandedOverAt = invoice.FoodHandedOverAt
-            });
-        }
-        catch (Exception e)
-        {
-            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(PushFoodOrderCancelledAsync)} failed for {invoice.Code}: {e.Message}");
         }
     }
 
@@ -1554,7 +1531,7 @@ public class BookingManager : IBookingManager
         return true;
     }
 
-    // Returns the loyalty points reserved for a booking that did not complete (cancelled/expired/refunded).
+    // Returns the loyalty points reserved for a booking that did not complete (cancelled/expired).
     private async Task RestoreRedeemedPointsAsync(Invoice invoice)
     {
         if (invoice.PointsRedeemed <= 0)
@@ -1573,7 +1550,7 @@ public class BookingManager : IBookingManager
         }
     }
 
-    // Returns the gift-card balance drawn for a booking that did not complete (cancelled/expired/refunded).
+    // Returns the gift-card balance drawn for a booking that did not complete (cancelled/expired).
     private async Task RestoreGiftCardAsync(Invoice invoice)
     {
         if (invoice.GiftCardId is not Guid giftCardId || invoice.GiftCardAmount <= 0)
@@ -1586,135 +1563,6 @@ public class BookingManager : IBookingManager
             card.Balance += invoice.GiftCardAmount;
             await _uow.GiftCardStore.UpdateAsync(card);
         }
-    }
-
-    // Everything a refund undoes for one invoice, shared by the owner/admin refund and the staff refund/exchange:
-    // marks it Refunded, frees the seats, reverses the loyalty points accrued and gives back points spent, returns the
-    // promo-code usage and the gift-card balance, and restores the sold food stock from the ledger. The caller owns the
-    // transaction and the SaveChanges. Returns the customer account that was adjusted (null for a walk-in sale).
-    public async Task<User?> ReverseInvoiceEffectsAsync(Invoice invoice, Guid actorUserId, string reason)
-    {
-        // Mark refunded. Because seat occupancy counts only Pending/Paid invoices, this frees the seats.
-        invoice.Status     = InvoiceStatus.Refunded;
-        invoice.RefundedAt = DateTime.UtcNow;
-        CancelFoodOrder(invoice);
-        await _uow.InvoiceStore.UpdateAsync(invoice);
-        await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-
-        // Reverse the loyalty points accrued at payment, give back any points spent on this booking,
-        // and re-evaluate the membership tier.
-        // A walk-in counter invoice has no customer account to adjust.
-        var user = invoice.UserId is Guid refundOwnerId
-            ? invoice.User ?? await _uow.UserStore.GetByIdAsync(refundOwnerId)
-            : null;
-        if (user is not null)
-        {
-            user.Points -= (int)(invoice.FinalAmount / _pointsPerUnit);
-            user.Points += invoice.PointsRedeemed;
-            if (user.Points < 0)
-            {
-                user.Points = 0;
-            }
-            var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
-            var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
-            user.MemberShipId = tier?.Id;
-            await _uow.UserStore.UpdateAsync(user);
-        }
-
-        // Give the promo code's usage back.
-        if (invoice.DiscountId is Guid usedDiscountId)
-        {
-            var discount = invoice.Discount ?? await _uow.DiscountStore.GetByIdAsync(usedDiscountId);
-            if (discount is not null && discount.UsedCount > 0)
-            {
-                discount.UsedCount -= 1;
-                await _uow.DiscountStore.UpdateAsync(discount);
-            }
-        }
-
-        // Give the gift-card balance back.
-        await RestoreGiftCardAsync(invoice);
-
-        // Put the sold food/drink stock back.
-        await RestoreFoodStockAsync(new[] { invoice }, reason, actorUserId);
-
-        return user;
-    }
-
-    public async Task<bool> RefundBookingAsync(Guid userId, Guid invoiceId, bool isAdmin)
-    {
-        var invoice = await _uow.InvoiceStore.GetWithDetailsAsync(invoiceId);
-        if (invoice == null)
-        {
-            return false;
-        }
-        // Object-level authorization: the owner, or an admin, may refund.
-        if (!isAdmin && invoice.UserId != userId)
-        {
-            return false;
-        }
-        // Only a Paid invoice can be refunded (Pending is cancelled, not refunded).
-        if (invoice.Status != InvoiceStatus.Paid)
-        {
-            return false;
-        }
-        // A counter sale was paid at the box office (cash/card terminal), not through a gateway: it is refunded by
-        // staff at the counter, never through this online path.
-        if (invoice.Channel == SalesChannel.Counter)
-        {
-            return false;
-        }
-        // Don't refund a ticket that was already checked in at the gate.
-        if (invoice.InvoiceTickets.Any(t => t.IsUsed))
-        {
-            return false;
-        }
-        // Don't refund once the (earliest) showtime has started.
-        var earliestStart = invoice.InvoiceTickets
-            .Select(t => t.ShowTimeRoom?.ShowTime?.StartTime)
-            .Where(s => s.HasValue)
-            .DefaultIfEmpty(null)
-            .Min();
-        if (earliestStart.HasValue && earliestStart.Value <= DateTime.Now)
-        {
-            return false;
-        }
-
-        // Return the money. Stripe/Sandbox process via API; VNPay/MoMo are refunded out-of-band via the
-        // merchant portal, so an admin is allowed to record the refund even when the API declines it.
-        var refund = await _gateways.Resolve(invoice.PaymentMethod).RefundAsync(invoice.PaymentReference ?? "", invoice.FinalAmount);
-        if (!refund.Success && !isAdmin)
-        {
-            return false;
-        }
-
-        // The gateway call above can't be rolled back, so the DB writes start their transaction after it.
-        User? user;
-        await _uow.BeginTransactionAsync();
-        try
-        {
-            user = await ReverseInvoiceEffectsAsync(invoice, userId, "Refunded");
-
-            await _uow.SaveChangesAsync();
-            await _uow.CommitTransactionAsync();
-        }
-        catch
-        {
-            await _uow.RollbackTransactionAsync();
-            throw;
-        }
-
-        await PushFoodOrderCancelledAsync(invoice);
-
-        if (user is not null && !string.IsNullOrWhiteSpace(user.Email))
-        {
-            await _notifications.SendAsync(
-                user.Email,
-                $"Refund processed — {invoice.Code}",
-                $"Your booking {invoice.Code} has been refunded. Amount: {invoice.FinalAmount:0} VND.");
-        }
-
-        return true;
     }
 
     public async Task<int> ExpireStalePendingBookingsAsync(TimeSpan age)

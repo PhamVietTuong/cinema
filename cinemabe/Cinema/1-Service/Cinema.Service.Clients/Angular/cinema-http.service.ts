@@ -14260,7 +14260,6 @@ export enum InvoiceStatus {
     Paid = 1,
     Cancelled = 2,
     Failed = 3,
-    Refunded = 4,
 }
 
 export class UpdateInvoiceStatusRequest implements IUpdateInvoiceStatusRequest {
@@ -16028,7 +16027,6 @@ export enum AuditAction {
     OverrideFailed = 1,
     OverridePinChanged = 2,
     PriceOverride = 3,
-    Refund = 4,
     Exchange = 5,
     Reprint = 6,
     VoidSale = 7,
@@ -16131,8 +16129,6 @@ export class SalesReportRowDTO implements ISalesReportRowDTO {
     foodRevenue?: number | undefined;
     discountAmount?: number | undefined;
     netRevenue?: number;
-    refundCount?: number;
-    refundAmount?: number;
 
     constructor(data?: ISalesReportRowDTO) {
         if (data) {
@@ -16152,8 +16148,6 @@ export class SalesReportRowDTO implements ISalesReportRowDTO {
             this.foodRevenue = _data["foodRevenue"];
             this.discountAmount = _data["discountAmount"];
             this.netRevenue = _data["netRevenue"];
-            this.refundCount = _data["refundCount"];
-            this.refundAmount = _data["refundAmount"];
         }
     }
 
@@ -16173,8 +16167,6 @@ export class SalesReportRowDTO implements ISalesReportRowDTO {
         data["foodRevenue"] = this.foodRevenue;
         data["discountAmount"] = this.discountAmount;
         data["netRevenue"] = this.netRevenue;
-        data["refundCount"] = this.refundCount;
-        data["refundAmount"] = this.refundAmount;
         return data;
     }
 }
@@ -16187,8 +16179,6 @@ export interface ISalesReportRowDTO {
     foodRevenue?: number | undefined;
     discountAmount?: number | undefined;
     netRevenue?: number;
-    refundCount?: number;
-    refundAmount?: number;
 }
 
 export class StaffReportRequest implements IStaffReportRequest {
@@ -16392,10 +16382,6 @@ export class StaffKpisDTO implements IStaffKpisDTO {
     attachRate?: number;
     ticketsSold?: number;
     averageSpendPerHead?: number;
-    refundCount?: number;
-    refundAmount?: number;
-    refundRateByCount?: number;
-    refundRateByAmount?: number;
 
     constructor(data?: IStaffKpisDTO) {
         if (data) {
@@ -16416,10 +16402,6 @@ export class StaffKpisDTO implements IStaffKpisDTO {
             this.attachRate = _data["attachRate"];
             this.ticketsSold = _data["ticketsSold"];
             this.averageSpendPerHead = _data["averageSpendPerHead"];
-            this.refundCount = _data["refundCount"];
-            this.refundAmount = _data["refundAmount"];
-            this.refundRateByCount = _data["refundRateByCount"];
-            this.refundRateByAmount = _data["refundRateByAmount"];
         }
     }
 
@@ -16440,10 +16422,6 @@ export class StaffKpisDTO implements IStaffKpisDTO {
         data["attachRate"] = this.attachRate;
         data["ticketsSold"] = this.ticketsSold;
         data["averageSpendPerHead"] = this.averageSpendPerHead;
-        data["refundCount"] = this.refundCount;
-        data["refundAmount"] = this.refundAmount;
-        data["refundRateByCount"] = this.refundRateByCount;
-        data["refundRateByAmount"] = this.refundRateByAmount;
         return data;
     }
 }
@@ -16457,10 +16435,6 @@ export interface IStaffKpisDTO {
     attachRate?: number;
     ticketsSold?: number;
     averageSpendPerHead?: number;
-    refundCount?: number;
-    refundAmount?: number;
-    refundRateByCount?: number;
-    refundRateByAmount?: number;
 }
 
 export class ScheduleBoardDTO implements IScheduleBoardDTO {

@@ -18,7 +18,7 @@ public class InvoiceTicket
     /// <summary>The staff user who admitted the ticket (no FK, like other audit snapshots).</summary>
     public Guid? UsedByUserId { get; set; }
     /// <summary>Whether this ticket still holds its seat. True while the booking is Pending/Paid; set false
-    /// on cancel/expire/refund. A filtered unique index over active (ShowTimeId, RoomId, SeatId) rows gives a
+    /// on cancel/expire. A filtered unique index over active (ShowTimeId, RoomId, SeatId) rows gives a
     /// DB-level guarantee that two instances can't double-book the same seat.</summary>
     public bool IsActive { get; set; } = true;
     /// <summary>Seat label frozen at sale time (row-position numbering: a double seat counts as one slot).

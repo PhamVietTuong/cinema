@@ -20,7 +20,7 @@ public class StaffReportStore : IStaffReportStore
         _db = db;
     }
 
-    private IQueryable<Invoice> InvoicesFor(SalesQuery query, bool refunds)
+    private IQueryable<Invoice> InvoicesFor(SalesQuery query)
     {
         var from = query.FromUtc;
         var to = query.ToUtc;
@@ -31,33 +31,26 @@ public class StaffReportStore : IStaffReportStore
             invoices = invoices.Where(i => i.TheaterId != null && theaterIds.Contains(i.TheaterId.Value));
         }
 
-        if (refunds)
-        {
-            return invoices.Where(i => i.Status == InvoiceStatus.Refunded && i.RefundedAt >= from && i.RefundedAt < to);
-        }
-        return invoices.Where(i => (i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Refunded)
-            && i.PaidAt >= from && i.PaidAt < to);
+        return invoices.Where(i => i.Status == InvoiceStatus.Paid && i.PaidAt >= from && i.PaidAt < to);
     }
 
     public async Task<SalesAggregates> GetSalesAsync(SalesQuery query)
     {
         var aggregates = new SalesAggregates
         {
-            Sold = await AggregateAsync(query, refunds: false),
-            Refunded = await AggregateAsync(query, refunds: true)
+            Sold = await AggregateAsync(query)
         };
         if (query.GroupBy is SalesGroupBy.Movie or SalesGroupBy.PaymentMethod)
         {
-            // An invoice can sit in several groups (two movies, two tenders), so the real totals are counted apart.
-            aggregates.SoldInvoices = await InvoicesFor(query, refunds: false).CountAsync();
-            aggregates.RefundedInvoices = await InvoicesFor(query, refunds: true).CountAsync();
+            // An invoice can sit in several groups (two movies, two tenders), so the real total is counted apart.
+            aggregates.SoldInvoices = await InvoicesFor(query).CountAsync();
         }
         return aggregates;
     }
 
-    private async Task<List<SalesAggregateRow>> AggregateAsync(SalesQuery query, bool refunds)
+    private async Task<List<SalesAggregateRow>> AggregateAsync(SalesQuery query)
     {
-        var invoices = InvoicesFor(query, refunds);
+        var invoices = InvoicesFor(query);
         var shift = query.DayShiftMinutes;
         switch (query.GroupBy)
         {
@@ -65,9 +58,6 @@ public class StaffReportStore : IStaffReportStore
                 return await AggregateByMovieAsync(invoices);
             case SalesGroupBy.PaymentMethod:
                 return await AggregateByTenderAsync(invoices);
-            case SalesGroupBy.Day when refunds:
-                return await AggregateByInvoiceAsync<DateTime?>(invoices, i => i.RefundedAt!.Value.AddMinutes(shift).Date,
-                    (row, key) => row.DayKey = key);
             case SalesGroupBy.Day:
                 return await AggregateByInvoiceAsync<DateTime?>(invoices, i => i.PaidAt!.Value.AddMinutes(shift).Date,
                     (row, key) => row.DayKey = key);
@@ -316,18 +306,9 @@ public class StaffReportStore : IStaffReportStore
 
     public async Task<KpiRaw> GetKpiRawAsync(SalesQuery query)
     {
-        var sold = await InvoicesFor(query, refunds: false)
-            .GroupBy(i => 1)
-            .Select(g => new { Count = g.Count(), Amount = g.Sum(i => i.FinalAmount) })
-            .FirstOrDefaultAsync();
-        var refunded = await InvoicesFor(query, refunds: true)
-            .GroupBy(i => 1)
-            .Select(g => new { Count = g.Count(), Amount = g.Sum(i => i.FinalAmount) })
-            .FirstOrDefaultAsync();
+        var sold = await InvoicesFor(query).CountAsync();
 
-        // Currently-Paid invoices of the window (refunded ones are excluded from the basket metrics).
-        var paid = InvoicesFor(query, refunds: false).Where(i => i.Status == InvoiceStatus.Paid);
-        var withTickets = paid.Where(i => i.InvoiceTickets.Any());
+        var withTickets = InvoicesFor(query).Where(i => i.InvoiceTickets.Any());
         var ticketInvoices = await withTickets
             .GroupBy(i => 1)
             .Select(g => new { Count = g.Count(), Amount = g.Sum(i => i.FinalAmount) })
@@ -339,10 +320,7 @@ public class StaffReportStore : IStaffReportStore
 
         return new KpiRaw
         {
-            SoldInvoices = sold?.Count ?? 0,
-            SoldAmount = sold?.Amount ?? 0,
-            RefundedInvoices = refunded?.Count ?? 0,
-            RefundedAmount = refunded?.Amount ?? 0,
+            SoldInvoices = sold,
             TicketInvoices = ticketInvoices?.Count ?? 0,
             TicketInvoicesAmount = ticketInvoices?.Amount ?? 0,
             TicketInvoicesWithFood = withFood,

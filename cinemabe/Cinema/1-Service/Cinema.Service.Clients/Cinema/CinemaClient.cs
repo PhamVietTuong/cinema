@@ -14421,8 +14421,6 @@ namespace Cinema.Service.Clients.Cinema
 
         Failed = 3,
 
-        Refunded = 4,
-
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -15159,8 +15157,6 @@ namespace Cinema.Service.Clients.Cinema
 
         PriceOverride = 3,
 
-        Refund = 4,
-
         Exchange = 5,
 
         Reprint = 6,
@@ -15271,12 +15267,6 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("netRevenue", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double NetRevenue { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("refundCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int RefundCount { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("refundAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double RefundAmount { get; set; }
-
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -15380,18 +15370,6 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("averageSpendPerHead", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double AverageSpendPerHead { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("refundCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int RefundCount { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("refundAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double RefundAmount { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("refundRateByCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double RefundRateByCount { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("refundRateByAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double RefundRateByAmount { get; set; }
 
     }
 

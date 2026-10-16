@@ -1008,60 +1008,6 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task RefundBookingAsync_NotPaid_ReturnsFalse()
-    {
-        var userId  = Guid.NewGuid();
-        var invoice = new Invoice { Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Pending };
-        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
-
-        var result = await _sut.RefundBookingAsync(userId, invoice.Id, isAdmin: false);
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task RefundBookingAsync_WrongUserNonAdmin_ReturnsFalse()
-    {
-        var invoice = new Invoice { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), Status = InvoiceStatus.Paid };
-        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
-
-        var result = await _sut.RefundBookingAsync(Guid.NewGuid(), invoice.Id, isAdmin: false);
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task RefundBookingAsync_ValidPaid_RefundsReversesPointsAndSetsRefunded()
-    {
-        var userId  = Guid.NewGuid();
-        var user    = new User { Id = userId, Email = "u@cinema.vn", Points = 50 };
-        var invoice = new Invoice
-        {
-            Id               = Guid.NewGuid(),
-            UserId           = userId,
-            Status           = InvoiceStatus.Paid,
-            FinalAmount      = 100000,          // originally accrued 10 points (1 / 10,000 VND)
-            PaymentMethod    = "Sandbox",
-            PaymentReference = "SANDBOX-abc",
-            User             = user,
-        };
-        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
-        _uowMock.Setup(u => u.MemberShipStore.FindAsync(
-                It.IsAny<Expression<Func<MemberShip, bool>>>()))
-            .ReturnsAsync(new List<MemberShip>());
-        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-
-        var result = await _sut.RefundBookingAsync(userId, invoice.Id, isAdmin: false);
-
-        result.Should().BeTrue();
-        invoice.Status.Should().Be(InvoiceStatus.Refunded);
-        invoice.RefundedAt.Should().NotBeNull();
-        user.Points.Should().Be(40);
-    }
-
-    [Fact]
     public async Task CancelBookingAsync_RestoresReservedLoyaltyPoints()
     {
         var userId  = Guid.NewGuid();
@@ -1187,7 +1133,7 @@ public class BookingServiceTests
         (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000)).Valid.Should().BeFalse();
     }
 
-    // ── Food stock: deduct at booking, restore on cancel / expire / refund ──────
+    // ── Food stock: deduct at booking, restore on cancel / expire ──────
 
     private static readonly Guid FoodTheaterId = Guid.NewGuid();
 
@@ -1495,32 +1441,4 @@ public class BookingServiceTests
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }
 
-    [Fact]
-    public async Task RefundBookingAsync_RestocksNetSoldQuantity()
-    {
-        var userId  = Guid.NewGuid();
-        var invoice = new Invoice
-        {
-            Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Paid, FinalAmount = 100000,
-            PaymentMethod = "Sandbox", PaymentReference = "SANDBOX-abc", User = new User { Id = userId, Email = "u@cinema.vn", Points = 50 },
-        };
-        var cola = Food("Cola", 10, tracked: true);
-        _uowMock.Setup(u => u.InvoiceStore.GetWithDetailsAsync(invoice.Id)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.UserStore.UpdateAsync(It.IsAny<User>())).ReturnsAsync((User x) => x);
-        _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<Expression<Func<MemberShip, bool>>>())).ReturnsAsync(new List<MemberShip>());
-        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new List<StockNetQuantity> { new(invoice.Id, cola.Id, -4) });
-        _uowMock.Setup(u => u.FoodAndDrinkStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, FoodAndDrink> { [cola.Id] = cola });
-        _uowMock.Setup(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
-        var movements = CaptureMovements();
-
-        (await _sut.RefundBookingAsync(userId, invoice.Id, isAdmin: false)).Should().BeTrue();
-
-        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, 4), Times.Once);
-        movements.Should().ContainSingle().Which.Reason.Should().Be("Refunded");
-        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
-    }
 }

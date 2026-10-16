@@ -462,7 +462,6 @@ CREATE TABLE [Invoice] (
     [PaymentMethod] nvarchar(max) NULL,
     [PaymentReference] nvarchar(max) NULL,
     [PaidAt] datetime NULL,
-    [RefundedAt] datetime NULL,
     [PointsRedeemed] int NOT NULL DEFAULT 0,
     [GiftCardId] uniqueidentifier NULL,
     [GiftCardAmount] float NOT NULL DEFAULT 0,
@@ -913,7 +912,7 @@ END
 -- ===== end P6 food pickup =====
 
 -- ============================================================
--- P5 after-sales: exchange link and refund reason on Invoice
+-- P5 after-sales: exchange link on Invoice
 -- ============================================================
 -- Identical in create_db.sql and upgrade_db.sql (idempotent). The index runs through EXEC so the batch
 -- compiles before the column exists.
@@ -921,12 +920,6 @@ IF COL_LENGTH('dbo.Invoice', 'ExchangedFromInvoiceId') IS NULL
 BEGIN
     -- The invoice this one replaced in an exchange (no FK, like the other audit snapshots).
     ALTER TABLE [Invoice] ADD [ExchangedFromInvoiceId] uniqueidentifier NULL;
-END
-
-IF COL_LENGTH('dbo.Invoice', 'RefundReasonCode') IS NULL
-BEGIN
-    -- StaffReasonCode of a staff refund.
-    ALTER TABLE [Invoice] ADD [RefundReasonCode] int NULL;
 END
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_ExchangedFromInvoiceId' AND object_id = OBJECT_ID('dbo.Invoice'))

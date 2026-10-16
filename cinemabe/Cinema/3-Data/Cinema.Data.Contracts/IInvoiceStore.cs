@@ -34,7 +34,7 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     /// <summary>Paid tickets whose showtime starts in [from, to) — with user + movie + seat — for reminders.</summary>
     Task<IReadOnlyList<InvoiceTicket>> GetPaidTicketsForShowtimesAsync(DateTime from, DateTime to);
     /// <summary>Marks an invoice's tickets inactive (frees their seats at the DB unique-index level).
-    /// Called when a booking is cancelled, expires, or is refunded.</summary>
+    /// Called when a booking is cancelled or expires.</summary>
     Task DeactivateTicketsAsync(Guid invoiceId);
 
     /// <summary>The pickup queue of a theater: Paid invoices whose food is Pending, Preparing or Ready, projected in one

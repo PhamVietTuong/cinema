@@ -3,7 +3,7 @@ using Cinema.Data.Enums;
 namespace Cinema.Data.Contracts;
 
 /// <summary>
-/// A sales-report window. <see cref="FromUtc"/>/<see cref="ToUtc"/> bound invoice events (PaidAt / RefundedAt, stored
+/// A sales-report window. <see cref="FromUtc"/>/<see cref="ToUtc"/> bound invoice events (PaidAt, stored
 /// UTC), inclusive/exclusive. <see cref="DayShiftMinutes"/> moves a UTC instant onto the business-day clock
 /// (local offset minus the day cut-off) so that <c>AddMinutes(shift).Date</c> is the business day.
 /// <see cref="TheaterIds"/> null = every theater.
@@ -33,17 +33,15 @@ public class SalesAggregateRow
     public double DiscountAmount { get; set; }
 }
 
-/// <summary>Sold = invoices paid in the window (Paid or later Refunded); Refunded = invoices refunded in the window.</summary>
+/// <summary>Sold = invoices paid in the window.</summary>
 public class SalesAggregates
 {
     public List<SalesAggregateRow> Sold { get; set; } = new();
-    public List<SalesAggregateRow> Refunded { get; set; } = new();
     /// <summary>
-    /// Distinct invoice counts, set only for dimensions where one invoice can fall in several groups (Movie,
+    /// Distinct invoice count, set only for dimensions where one invoice can fall in several groups (Movie,
     /// PaymentMethod), where summing the group counts would double-count. Null = the group counts add up.
     /// </summary>
     public int? SoldInvoices { get; set; }
-    public int? RefundedInvoices { get; set; }
 }
 
 /// <summary>Showtime-room screenings whose local start lies in [From, To), optionally limited to theaters.</summary>
@@ -64,12 +62,8 @@ public class OccupancyRow
 
 public class KpiRaw
 {
-    /// <summary>Invoices paid in the window (including those refunded later) and their final amounts.</summary>
+    /// <summary>Invoices paid in the window.</summary>
     public int SoldInvoices { get; set; }
-    public double SoldAmount { get; set; }
-    /// <summary>Invoices refunded in the window and their final amounts.</summary>
-    public int RefundedInvoices { get; set; }
-    public double RefundedAmount { get; set; }
     /// <summary>Currently Paid invoices (paid in the window) that contain at least one ticket, and their final amounts.</summary>
     public int TicketInvoices { get; set; }
     public double TicketInvoicesAmount { get; set; }
@@ -82,7 +76,7 @@ public class KpiRaw
 /// <summary>Read-only management reports. Every method issues a fixed number of queries regardless of row count.</summary>
 public interface IStaffReportStore
 {
-    /// <summary>Sales grouped by <see cref="SalesQuery.GroupBy"/>: at most 12 grouped queries.</summary>
+    /// <summary>Sales grouped by <see cref="SalesQuery.GroupBy"/>: at most 6 grouped queries.</summary>
     Task<SalesAggregates> GetSalesAsync(SalesQuery query);
 
     /// <summary>Movie titles by id (one query). Unknown ids are absent.</summary>
@@ -94,6 +88,6 @@ public interface IStaffReportStore
     /// <summary>Per showtime-room sold/active seats: 3 queries (screenings, sold tickets, active seats).</summary>
     Task<List<OccupancyRow>> GetOccupancyAsync(OccupancyQuery query);
 
-    /// <summary>The KPI building blocks: 5 queries.</summary>
+    /// <summary>The KPI building blocks: 4 queries.</summary>
     Task<KpiRaw> GetKpiRawAsync(SalesQuery query);
 }

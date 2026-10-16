@@ -48,7 +48,7 @@ public class StaffReportTests
     }
 
     [Fact]
-    public async Task Sales_ByDay_IsNetOfRefunds_SplitsTicketAndFood_AndFillsEmptyDays()
+    public async Task Sales_ByDay_SplitsTicketAndFood_AndFillsEmptyDays()
     {
         SetupSales(new SalesAggregates
         {
@@ -56,10 +56,6 @@ public class StaffReportTests
             {
                 new() { DayKey = new DateTime(2026, 10, 1), InvoiceCount = 2, TicketAmount = 300, FoodAmount = 100, FinalAmount = 380, DiscountAmount = 20 },
                 new() { DayKey = new DateTime(2026, 10, 3), InvoiceCount = 1, TicketAmount = 100, FoodAmount = 0, FinalAmount = 100 }
-            },
-            Refunded = new List<SalesAggregateRow>
-            {
-                new() { DayKey = new DateTime(2026, 10, 1), InvoiceCount = 1, TicketAmount = 100, FoodAmount = 20, FinalAmount = 110, DiscountAmount = 10 }
             }
         });
 
@@ -67,15 +63,13 @@ public class StaffReportTests
 
         report.Rows.Select(r => r.Key).Should().Equal("2026-10-01", "2026-10-02", "2026-10-03");
         var first = report.Rows[0];
-        first.TicketRevenue.Should().Be(200);
-        first.FoodRevenue.Should().Be(80);
-        first.DiscountAmount.Should().Be(10);
-        first.NetRevenue.Should().Be(270);
-        first.RefundCount.Should().Be(1);
-        first.RefundAmount.Should().Be(110);
+        first.TicketRevenue.Should().Be(300);
+        first.FoodRevenue.Should().Be(100);
+        first.DiscountAmount.Should().Be(20);
+        first.NetRevenue.Should().Be(380);
         report.Rows[1].NetRevenue.Should().Be(0);
-        report.Totals.NetRevenue.Should().Be(370);
-        report.Totals.TicketRevenue.Should().Be(300);
+        report.Totals.NetRevenue.Should().Be(480);
+        report.Totals.TicketRevenue.Should().Be(400);
         report.Totals.InvoiceCount.Should().Be(3);
         // Business day window: 06:00 on the 1st through 06:00 on the 4th (UTC zone in this test).
         _lastQuery!.FromUtc.Should().Be(new DateTime(2026, 10, 1, 6, 0, 0));
@@ -133,13 +127,7 @@ public class StaffReportTests
                 new() { GuidKey = movieId, InvoiceCount = 4, TicketAmount = 400, FinalAmount = 400 },
                 new() { InvoiceCount = 1, FoodAmount = 150, DiscountAmount = 20, FinalAmount = 130 }
             },
-            Refunded = new List<SalesAggregateRow>
-            {
-                new() { GuidKey = movieId, InvoiceCount = 1, TicketAmount = 100, FinalAmount = 100 },
-                new() { InvoiceCount = 1, FoodAmount = 30, FinalAmount = 30 }
-            },
-            SoldInvoices = 5,
-            RefundedInvoices = 2
+            SoldInvoices = 5
         });
         _uowMock.Setup(u => u.StaffReportStore.GetMovieTitlesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new Dictionary<Guid, string> { [movieId] = "Dune" });
@@ -147,14 +135,12 @@ public class StaffReportTests
         var report = await Sut().GetSalesAsync(Request(SalesGroupBy.Movie), null);
 
         var noMovie = report.Rows.Single(r => r.Key.Length == 0);
-        noMovie.FoodRevenue.Should().Be(120);
+        noMovie.FoodRevenue.Should().Be(150);
         noMovie.DiscountAmount.Should().Be(20);
-        noMovie.NetRevenue.Should().Be(100);
+        noMovie.NetRevenue.Should().Be(130);
         report.Rows.Single(r => r.Key.Length > 0).FoodRevenue.Should().BeNull();
-        report.Totals.NetRevenue.Should().Be(400);
-        report.Totals.RefundAmount.Should().Be(130);
+        report.Totals.NetRevenue.Should().Be(530);
         report.Totals.InvoiceCount.Should().Be(5);
-        report.Totals.RefundCount.Should().Be(2);
     }
 
     [Fact]
@@ -248,14 +234,11 @@ public class StaffReportTests
     }
 
     [Fact]
-    public async Task Kpis_ComputeAttachRefundRatesAndSpendPerHead()
+    public async Task Kpis_ComputeAttachRateAndSpendPerHead()
     {
         _uowMock.Setup(u => u.StaffReportStore.GetKpiRawAsync(It.IsAny<SalesQuery>())).ReturnsAsync(new KpiRaw
         {
             SoldInvoices = 10,
-            SoldAmount = 1000,
-            RefundedInvoices = 1,
-            RefundedAmount = 80,
             TicketInvoices = 8,
             TicketInvoicesAmount = 900,
             TicketInvoicesWithFood = 4,
@@ -264,9 +247,8 @@ public class StaffReportTests
 
         var kpis = await Sut().GetKpisAsync(Request(SalesGroupBy.Day), null);
 
+        kpis.PaidInvoices.Should().Be(10);
         kpis.AttachRate.Should().Be(0.5);
-        kpis.RefundRateByCount.Should().BeApproximately(0.1, 1e-9);
-        kpis.RefundRateByAmount.Should().BeApproximately(0.08, 1e-9);
         kpis.AverageSpendPerHead.Should().Be(50);
     }
 
@@ -279,7 +261,6 @@ public class StaffReportTests
 
         kpis.AttachRate.Should().Be(0);
         kpis.AverageSpendPerHead.Should().Be(0);
-        kpis.RefundRateByAmount.Should().Be(0);
     }
 
     [Fact]
