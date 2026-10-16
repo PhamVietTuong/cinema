@@ -4,15 +4,6 @@
       <h1 class="ad-h1">{{ 'pos.title' | translate }}</h1>
       <p class="ad-sub">{{ 'pos.subtitle' | translate }}</p>
     </div>
-    <div class="pos-drawer-chip" [class.is-open]="drawer.isOpen()">
-      <mat-icon>point_of_sale</mat-icon>
-      @if (drawer.isOpen()) {
-        {{ 'pos.drawer.open' | translate: { terminal: drawer.drawer()?.terminalName ?? '' } }}
-      } @else {
-        {{ 'pos.drawer.closed' | translate }}
-        <a routerLink="/drawer">{{ 'pos.drawer.openLink' | translate }}</a>
-      }
-    </div>
   </div>
 
   @if (!theaterId()) {

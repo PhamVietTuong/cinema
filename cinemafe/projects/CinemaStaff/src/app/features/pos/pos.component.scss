@@ -10,10 +10,4 @@
   .pos-side { position: static; }
 }
 
-.pos-drawer-chip {
-  display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
-  border: 1px solid var(--ml-rule); color: var(--ml-muted); font-size: 0.85rem;
-  &.is-open { border-color: var(--ml-second); color: var(--ml-second); }
-}
-
 .pos-sell { width: 100%; margin-top: 16px; height: 48px; font-size: 1rem; }

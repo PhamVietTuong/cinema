@@ -6,7 +6,7 @@ import { StatusPillKind, statusPillSpec } from '../../interfaces/cinema.model';
  * Coloured status pill. The label key and colour for each kind/value live in `interfaces/cinema.model.ts`
  * (`statusPillSpec`), so pages never carry their own status maps.
  *
- * Usage: `<cl-status-pill kind="storagePlan" [value]="plan.status" />`
+ * Usage: `<cl-status-pill kind="invoice" [value]="invoice.status" />`
  */
 @Component({
   selector: 'cl-status-pill',

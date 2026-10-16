@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { EmptyStateComponent, SeatLockSessionService, SharedModule, CinemaServiceAgent, ToastService, apiErrorMessage } from 'CinemaLib';
-import { CashDrawerService } from '../../core/cash-drawer.service';
 import { CounterCartComponent } from '../../core/counter-cart.component';
 import { CounterCartService } from '../../core/counter-cart.service';
 import { CounterSummaryComponent } from '../../core/counter-summary.component';
@@ -30,7 +29,6 @@ export class PosComponent {
   private readonly _toast = inject(ToastService);
   readonly cart = inject(CounterCartService);
   readonly theaterCtx = inject(TheaterContextService);
-  readonly drawer = inject(CashDrawerService);
 
   readonly theaterId = this.cart.theaterId;
 
@@ -39,20 +37,16 @@ export class PosComponent {
   readonly receipt = signal<SaleReceipt | null>(null);
 
   readonly settlement = computed(() => settle(this.cart.due(), this.tenders()));
-  readonly needsDrawer = computed(() => this.settlement().usesCash && !this.drawer.isOpen());
   readonly canSell = computed(() =>
-    !!this.cart.quote() && !this.cart.quoting() && !this.selling() && this.cart.hasItems() && this.settlement().complete && !this.needsDrawer());
+    !!this.cart.quote() && !this.cart.quoting() && !this.selling() && this.cart.hasItems() && this.settlement().complete);
 
   constructor() {
     // The cart reloads itself for the theater; the counter-only parts follow.
     effect(() => {
-      const id = this.theaterId();
+      this.theaterId();
       untracked(() => {
         this.tenders.set([]);
         this.receipt.set(null);
-        if (id) {
-          this.drawer.refresh().subscribe({ error: () => {} });
-        }
       });
     });
   }
@@ -87,7 +81,6 @@ export class PosComponent {
         this._toast.success(this._translate.instant('pos.sell.success', { code: result.invoiceCode }));
         this.tenders.set([]);
         this.cart.afterSale(tickets);
-        this.drawer.refresh().subscribe({ error: () => {} });
       },
       error: err => {
         this.selling.set(false);

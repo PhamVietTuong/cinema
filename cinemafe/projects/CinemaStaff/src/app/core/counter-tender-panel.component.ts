@@ -1,6 +1,5 @@
-import { Component, computed, inject, input, model } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { CounterTenderValues, SharedModule, CinemaServiceAgent } from 'CinemaLib';
-import { CashDrawerService } from './cash-drawer.service';
 import { TenderEntry, isCash, remainingAfter, settle } from './pos-calc';
 
 /**
@@ -16,8 +15,6 @@ import { TenderEntry, isCash, remainingAfter, settle } from './pos-calc';
   styleUrl: './counter-tender-panel.component.scss',
 })
 export class CounterTenderPanelComponent {
-  private readonly _drawer = inject(CashDrawerService);
-
   readonly tenderOptions = CounterTenderValues;
   readonly isCash = isCash;
 
@@ -30,7 +27,6 @@ export class CounterTenderPanelComponent {
   readonly tenders = model<TenderEntry[]>([]);
 
   readonly settlement = computed(() => settle(this.due(), this.tenders()));
-  readonly needsDrawer = computed(() => this.settlement().usesCash && !this._drawer.isOpen());
 
   add(method: CinemaServiceAgent.PaymentTender): void {
     const entries = this.tenders();
