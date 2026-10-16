@@ -253,7 +253,7 @@
     "section": "Vận hành",
     "nav": "Lịch chiếu",
     "title": "Bảng lịch chiếu",
-    "subtitle": "Suất chiếu theo từng phòng trong ngày. Bấm vào suất chiếu để mở checklist.",
+    "subtitle": "Suất chiếu theo từng phòng trong ngày.",
     "prevDay": "Ngày trước",
     "nextDay": "Ngày sau",
     "today": "Hôm nay",
@@ -263,7 +263,6 @@
       "buffer": "Thời gian dọn phòng"
     },
     "bufferTitle": "Thời gian dọn phòng: {{minutes}} phút",
-    "openChecklist": "Mở checklist",
     "empty": "Rạp chưa có phòng chiếu."
   },
   "incidents": {
@@ -324,48 +323,6 @@
       "reported": "Đã báo cáo sự cố.",
       "resolved": "Đã xử lý sự cố.",
       "blocked": "Đã chặn bán."
-    }
-  },
-  "checklists": {
-    "nav": "Checklist",
-    "title": "Checklist",
-    "subtitle": "Kiểm tra trước và sau mỗi suất chiếu.",
-    "templates": {
-      "open": "Sửa mẫu",
-      "title": "Mẫu checklist",
-      "subtitle": "Các mục nhân viên cần tick trước và sau mỗi suất chiếu.",
-      "new": "Mẫu mới",
-      "items": "mục",
-      "inactive": "Không dùng",
-      "name": "Tên",
-      "kind": "Loại",
-      "active": "Đang dùng",
-      "itemsTitle": "Các mục",
-      "itemText": "Nội dung",
-      "moveUp": "Lên",
-      "moveDown": "Xuống",
-      "addItem": "Thêm mục",
-      "empty": "Chưa có mẫu nào."
-    },
-    "home": {
-      "time": "Giờ",
-      "movie": "Phim",
-      "empty": "Ngày này không có suất chiếu."
-    },
-    "run": {
-      "title": "Checklist",
-      "noTemplate": "Chưa có checklist",
-      "noTemplateHint": "Rạp chưa có mẫu đang dùng cho loại này.",
-      "progress": "Đã xong {{done}}/{{total}}",
-      "completedAt": "Hoàn thành lúc {{time}}",
-      "required": "Bắt buộc",
-      "note": "Ghi chú",
-      "missing": "Còn {{count}} mục bắt buộc chưa xong",
-      "complete": "Hoàn thành checklist"
-    },
-    "toast": {
-      "completed": "Đã hoàn thành checklist.",
-      "templateSaved": "Đã lưu mẫu."
     }
   },
   "roster": {

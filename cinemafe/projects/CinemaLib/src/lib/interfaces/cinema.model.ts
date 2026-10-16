@@ -227,17 +227,6 @@ export function incidentStatusPillClass(s?: CinemaServiceAgent.IncidentStatus): 
   return s === CinemaServiceAgent.IncidentStatus.Resolved ? 'ad-pill--success' : 'ad-pill--warn';
 }
 
-/** i18n-key label for each ChecklistKind value. */
-export const ChecklistKindValues: { value: CinemaServiceAgent.ChecklistKind; name: string }[] = [
-  { value: CinemaServiceAgent.ChecklistKind.PreShow, name: 'staffEnums.checklistKind.preShow' },
-  { value: CinemaServiceAgent.ChecklistKind.PostShow, name: 'staffEnums.checklistKind.postShow' },
-];
-
-/** i18n key for a checklist kind (falls back to PreShow). */
-export function checklistKindLabel(k?: CinemaServiceAgent.ChecklistKind): string {
-  return ChecklistKindValues.find(v => v.value === k)?.name ?? ChecklistKindValues[0].name;
-}
-
 /** i18n key for a room status shown on the staff schedule board (the enum values match the Cinema API's RoomStatus). */
 export function roomStatusLabel(s?: number): string {
   switch (s) {

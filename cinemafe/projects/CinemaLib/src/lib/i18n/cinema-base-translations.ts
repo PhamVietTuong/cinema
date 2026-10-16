@@ -48,7 +48,6 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       },
       incidentSeverity: { low: 'Thấp', medium: 'Trung bình', high: 'Cao', critical: 'Nghiêm trọng' },
       incidentStatus: { open: 'Đang mở', resolved: 'Đã xử lý' },
-      checklistKind: { preShow: 'Trước suất chiếu', postShow: 'Sau suất chiếu' },
       roomStatus: { active: 'Hoạt động', maintenance: 'Bảo trì', inactive: 'Ngừng hoạt động' },
     },
     invoices: {
@@ -139,7 +138,6 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       },
       incidentSeverity: { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' },
       incidentStatus: { open: 'Open', resolved: 'Resolved' },
-      checklistKind: { preShow: 'Pre-show', postShow: 'Post-show' },
       roomStatus: { active: 'Active', maintenance: 'Maintenance', inactive: 'Inactive' },
     },
     invoices: {

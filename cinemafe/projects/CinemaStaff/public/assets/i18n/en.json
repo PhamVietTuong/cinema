@@ -253,7 +253,7 @@
     "section": "Operations",
     "nav": "Schedule",
     "title": "Schedule board",
-    "subtitle": "Showtimes per room for the day. Click a showtime to open its checklist.",
+    "subtitle": "Showtimes per room for the day.",
     "prevDay": "Previous day",
     "nextDay": "Next day",
     "today": "Today",
@@ -263,7 +263,6 @@
       "buffer": "Turnover buffer"
     },
     "bufferTitle": "Turnover buffer: {{minutes}} min",
-    "openChecklist": "Open the checklist",
     "empty": "No rooms in this theater."
   },
   "incidents": {
@@ -324,48 +323,6 @@
       "reported": "Incident reported.",
       "resolved": "Incident resolved.",
       "blocked": "Blocked."
-    }
-  },
-  "checklists": {
-    "nav": "Checklists",
-    "title": "Checklists",
-    "subtitle": "Pre-show and post-show checks for each showtime.",
-    "templates": {
-      "open": "Edit templates",
-      "title": "Checklist templates",
-      "subtitle": "The items staff tick off before and after each showtime.",
-      "new": "New template",
-      "items": "items",
-      "inactive": "Inactive",
-      "name": "Name",
-      "kind": "Type",
-      "active": "Active",
-      "itemsTitle": "Items",
-      "itemText": "Item",
-      "moveUp": "Move up",
-      "moveDown": "Move down",
-      "addItem": "Add item",
-      "empty": "No templates yet."
-    },
-    "home": {
-      "time": "Time",
-      "movie": "Movie",
-      "empty": "No showtimes on this day."
-    },
-    "run": {
-      "title": "Checklist",
-      "noTemplate": "No checklist available",
-      "noTemplateHint": "There is no active template of this type for the theater.",
-      "progress": "{{done}} of {{total}} done",
-      "completedAt": "Completed {{time}}",
-      "required": "Required",
-      "note": "Note",
-      "missing": "{{count}} required item(s) still open",
-      "complete": "Complete checklist"
-    },
-    "toast": {
-      "completed": "Checklist completed.",
-      "templateSaved": "Template saved."
     }
   },
   "roster": {

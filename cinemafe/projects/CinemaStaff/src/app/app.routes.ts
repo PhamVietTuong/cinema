@@ -68,7 +68,6 @@ export const routes: Routes = [
       // Operations and workforce: one lazy route file per feature; approver-only screens guard themselves.
       { path: 'schedule', loadChildren: () => import('./features/schedule/schedule.routes').then(m => m.SCHEDULE_ROUTES) },
       { path: 'incidents', loadChildren: () => import('./features/incidents/incidents.routes').then(m => m.INCIDENTS_ROUTES) },
-      { path: 'checklists', loadChildren: () => import('./features/checklists/checklists.routes').then(m => m.CHECKLISTS_ROUTES) },
       { path: 'roster', loadChildren: () => import('./features/roster/roster.routes').then(m => m.ROSTER_ROUTES) },
       // Counter POS (sellers).
       {

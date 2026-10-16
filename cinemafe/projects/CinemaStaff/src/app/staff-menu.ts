@@ -36,7 +36,6 @@ export const STAFF_MENU: NavSection[] = [
     items: [
       { icon: 'calendar_view_day', labelKey: 'schedule.nav', route: '/schedule', titleKey: 'schedule.title' },
       { icon: 'report', labelKey: 'incidents.nav', route: '/incidents', titleKey: 'incidents.list.title' },
-      { icon: 'fact_check', labelKey: 'checklists.nav', route: '/checklists', titleKey: 'checklists.title' },
     ],
   },
   {
