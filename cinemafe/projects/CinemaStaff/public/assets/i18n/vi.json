@@ -117,7 +117,6 @@
       "overrideFailed": "Xác nhận quản lý thất bại",
       "overridePinChanged": "Đổi mã PIN quản lý",
       "priceOverride": "Sửa giá",
-      "refund": "Hoàn tiền",
       "exchange": "Đổi vé",
       "reprint": "In lại",
       "voidSale": "Hủy giao dịch",
@@ -468,9 +467,7 @@
       "paidInvoices": "Hóa đơn đã thanh toán",
       "ticketsSold": "Vé đã bán",
       "attachRate": "Tỷ lệ bán kèm đồ ăn",
-      "averageSpend": "Chi tiêu trung bình mỗi khách",
-      "refunds": "Hoàn tiền (số lượng, số tiền)",
-      "refundRate": "Tỷ lệ hoàn tiền (số lượng / số tiền)"
+      "averageSpend": "Chi tiêu trung bình mỗi khách"
     },
     "salesTitle": "Doanh thu",
     "occupancyTitle": "Tỷ lệ lấp đầy",
@@ -483,7 +480,6 @@
       "food": "Đồ ăn",
       "discount": "Giảm giá",
       "net": "Doanh thu thuần",
-      "refunds": "Hoàn tiền",
       "total": "Tổng",
       "theater": "Rạp",
       "room": "Phòng",

@@ -450,12 +450,7 @@
     "statusPaid": "Đã Thanh Toán",
     "statusPending": "Chờ Thanh Toán",
     "statusCancelled": "Đã Hủy",
-    "statusFailed": "Thất Bại",
-    "statusRefunded": "Đã Hoàn Tiền",
-    "requestRefundTooltip": "Yêu cầu hoàn tiền",
-    "confirmRefundBooking": "Bạn có chắc muốn hoàn tiền đặt vé này?",
-    "refundSuccess": "Yêu cầu hoàn tiền thành công.",
-    "refundFailed": "Hoàn tiền thất bại."
+    "statusFailed": "Thất Bại"
   },
   "chatbot": {
     "openAssistant": "Mở trợ lý hỗ trợ",
@@ -465,7 +460,7 @@
     "send": "Gửi",
     "quickBooking": "Đặt vé thế nào?",
     "quickShowtimes": "Giờ chiếu",
-    "quickCancel": "Hủy / hoàn vé",
+    "quickCancel": "Hủy vé",
     "quickMembership": "Ưu đãi thành viên",
     "quickNearby": "Rạp gần tôi",
     "greeting": "Xin chào! Mình là trợ lý CINEMA. Mình có thể giúp gì cho bạn?",
@@ -476,7 +471,7 @@
     "answerNearby": "Vào trang \"Rạp Chiếu\" và bấm \"Tìm rạp gần nhất\" để sắp xếp theo khoảng cách tới bạn.",
     "answerPayment": "Hỗ trợ thẻ nội địa và ví điện tử (MoMo / Apple Pay / Google Pay) ở bước thanh toán.",
     "answerCombo": "Bạn có thể thêm bắp nước & combo ngay ở bước thanh toán, tính gộp vào đơn.",
-    "fallback": "Mình chưa hiểu ý bạn. Thử hỏi về: đặt vé, giờ chiếu, hủy/hoàn vé, thành viên, thanh toán, hoặc rạp gần bạn nhé."
+    "fallback": "Mình chưa hiểu ý bạn. Thử hỏi về: đặt vé, giờ chiếu, hủy vé, thành viên, thanh toán, hoặc rạp gần bạn nhé."
   },
   "promotions": {
     "pageTitle": "Khuyến Mãi",

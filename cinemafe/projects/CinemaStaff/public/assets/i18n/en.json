@@ -117,7 +117,6 @@
       "overrideFailed": "Override failed",
       "overridePinChanged": "Override PIN changed",
       "priceOverride": "Price override",
-      "refund": "Refund",
       "exchange": "Exchange",
       "reprint": "Reprint",
       "voidSale": "Void sale",
@@ -468,9 +467,7 @@
       "paidInvoices": "Paid invoices",
       "ticketsSold": "Tickets sold",
       "attachRate": "Food attach rate",
-      "averageSpend": "Average spend per head",
-      "refunds": "Refunds (count, amount)",
-      "refundRate": "Refund rate (count / amount)"
+      "averageSpend": "Average spend per head"
     },
     "salesTitle": "Sales",
     "occupancyTitle": "Occupancy",
@@ -483,7 +480,6 @@
       "food": "Food",
       "discount": "Discount",
       "net": "Net revenue",
-      "refunds": "Refunds",
       "total": "Total",
       "theater": "Theater",
       "room": "Room",

@@ -572,12 +572,7 @@
     "statusPending": "Chờ Xử Lý",
     "statusPaid": "Đã Thanh Toán",
     "statusCancelled": "Đã Hủy",
-    "statusFailed": "Thất Bại",
-    "statusRefunded": "Đã Hoàn Tiền",
-    "refund": "Hoàn tiền",
-    "confirmRefund": "Bạn có chắc muốn hoàn tiền hóa đơn này?",
-    "refundSuccess": "Hoàn tiền thành công.",
-    "refundFailed": "Hoàn tiền thất bại."
+    "statusFailed": "Thất Bại"
   },
   "memberships": {
     "title": "Quản Lý Hạng Thành Viên",
@@ -676,7 +671,6 @@
       "overrideFailed": "Xác nhận quản lý thất bại",
       "overridePinChanged": "Đổi mã PIN quản lý",
       "priceOverride": "Sửa giá",
-      "refund": "Hoàn tiền",
       "exchange": "Đổi vé",
       "reprint": "In lại",
       "voidSale": "Hủy giao dịch",

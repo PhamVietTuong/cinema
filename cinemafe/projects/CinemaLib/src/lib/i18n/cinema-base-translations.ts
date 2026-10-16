@@ -56,7 +56,6 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       statusPaid: 'Đã thanh toán',
       statusCancelled: 'Đã hủy',
       statusFailed: 'Thất bại',
-      statusRefunded: 'Đã hoàn tiền',
     },
     override: {
       title: 'Cần quản lý xác nhận',
@@ -148,7 +147,6 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       statusPaid: 'Paid',
       statusCancelled: 'Cancelled',
       statusFailed: 'Failed',
-      statusRefunded: 'Refunded',
     },
     override: {
       title: 'Manager approval needed',

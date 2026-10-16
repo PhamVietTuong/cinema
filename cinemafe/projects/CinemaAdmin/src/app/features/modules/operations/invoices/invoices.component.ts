@@ -6,7 +6,6 @@ import { Observable } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import {
   CinemaServiceAgent,
-  PaymentServiceAgent,
   BaseTableComponent, TablePage, TableSearchCriteria,
   DialogService,
   InvoiceStatusValues,
@@ -32,7 +31,6 @@ export class InvoicesManagementComponent extends BaseTableComponent {
     router: Router,
     store: Store<any>,
     private _svc: CinemaServiceAgent.HttpService,
-    private _payment: PaymentServiceAgent.HttpService,
     private _dialog: MatDialog,
     private _dialogService: DialogService,
   ) {
@@ -69,33 +67,6 @@ export class InvoicesManagementComponent extends BaseTableComponent {
   private _deleteConfirmed(id: string): void {
     this._store.dispatch(showLoading());
     this._svc.deleteInvoice(id).subscribe({
-      next: () => {
-        this._store.dispatch(showSuccess({}));
-        this.triggerSearch();
-      },
-      error: error => this._store.dispatch(showException({ error })),
-    }).add(() => this._store.dispatch(hideLoading()));
-  }
-
-  // Refund is only valid for a Paid invoice; the server re-checks (check-in / showtime).
-  refund(id?: string): void {
-    if (!id) {
-      return;
-    }
-    this._dialogService.openConfirmDialog({
-      title: 'invoices.refund',
-      message: 'invoices.confirmRefund',
-      confirmText: 'invoices.refund',
-    }).afterClosed().subscribe(confirmed => {
-      if (confirmed) {
-        this._refundConfirmed(id);
-      }
-    });
-  }
-
-  private _refundConfirmed(id: string): void {
-    this._store.dispatch(showLoading());
-    this._payment.refundBooking(PaymentServiceAgent.RefundBookingRequest.fromJS({ invoiceId: id })).subscribe({
       next: () => {
         this._store.dispatch(showSuccess({}));
         this.triggerSearch();

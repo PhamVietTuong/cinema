@@ -60,7 +60,6 @@ export const InvoiceStatusValues = [
   { value: CinemaServiceAgent.InvoiceStatus.Paid, name: 'invoices.statusPaid' },
   { value: CinemaServiceAgent.InvoiceStatus.Cancelled, name: 'invoices.statusCancelled' },
   { value: CinemaServiceAgent.InvoiceStatus.Failed, name: 'invoices.statusFailed' },
-  { value: CinemaServiceAgent.InvoiceStatus.Refunded, name: 'invoices.statusRefunded' },
 ];
 
 /** CSS pill class for each Invoice.InvoiceStatus value (used by the admin invoices grid). */
@@ -68,7 +67,6 @@ export function invoiceStatusPillClass(s?: CinemaServiceAgent.InvoiceStatus): st
   switch (s) {
     case CinemaServiceAgent.InvoiceStatus.Paid: return 'ad-pill--success';
     case CinemaServiceAgent.InvoiceStatus.Pending: return 'ad-pill--warn';
-    case CinemaServiceAgent.InvoiceStatus.Refunded: return 'ad-pill--neutral';
     default: return 'ad-pill--danger';
   }
 }
@@ -138,7 +136,6 @@ export const AuditActionValues: { value: CinemaServiceAgent.AuditAction; name: s
   { value: CinemaServiceAgent.AuditAction.OverrideFailed, name: 'auditLog.action.overrideFailed' },
   { value: CinemaServiceAgent.AuditAction.OverridePinChanged, name: 'auditLog.action.overridePinChanged' },
   { value: CinemaServiceAgent.AuditAction.PriceOverride, name: 'auditLog.action.priceOverride' },
-  { value: CinemaServiceAgent.AuditAction.Refund, name: 'auditLog.action.refund' },
   { value: CinemaServiceAgent.AuditAction.Exchange, name: 'auditLog.action.exchange' },
   { value: CinemaServiceAgent.AuditAction.Reprint, name: 'auditLog.action.reprint' },
   { value: CinemaServiceAgent.AuditAction.VoidSale, name: 'auditLog.action.voidSale' },
@@ -163,7 +160,6 @@ export function auditActionPillClass(action?: CinemaServiceAgent.AuditAction): s
   switch (action) {
     case CinemaServiceAgent.AuditAction.OverrideFailed: return 'ad-pill--danger';
     case CinemaServiceAgent.AuditAction.PriceOverride:
-    case CinemaServiceAgent.AuditAction.Refund:
     case CinemaServiceAgent.AuditAction.VoidSale:
     case CinemaServiceAgent.AuditAction.CashPayOut:
     case CinemaServiceAgent.AuditAction.Compensation:

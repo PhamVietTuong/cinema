@@ -572,12 +572,7 @@
     "statusPending": "Pending",
     "statusPaid": "Paid",
     "statusCancelled": "Cancelled",
-    "statusFailed": "Failed",
-    "statusRefunded": "Refunded",
-    "refund": "Refund",
-    "confirmRefund": "Are you sure you want to refund this invoice?",
-    "refundSuccess": "Refund successful.",
-    "refundFailed": "Refund failed."
+    "statusFailed": "Failed"
   },
   "memberships": {
     "title": "Membership Tier Management",
@@ -676,7 +671,6 @@
       "overrideFailed": "Override failed",
       "overridePinChanged": "Override PIN changed",
       "priceOverride": "Price override",
-      "refund": "Refund",
       "exchange": "Exchange",
       "reprint": "Reprint",
       "voidSale": "Void sale",
