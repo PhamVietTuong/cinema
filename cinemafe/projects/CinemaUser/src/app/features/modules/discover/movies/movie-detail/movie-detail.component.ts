@@ -1,11 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Location } from '@angular/common';
 import { Observable } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { filter, take } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, ToastService } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, slugify, ToastService } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
+import { movieDetailUrl } from '../../../../../shared/movie-route';
 
 @Component({
   selector: 'app-movie-detail',
@@ -20,6 +23,12 @@ export class MovieDetailComponent implements OnInit {
   isAuthenticated$: Observable<boolean>;
 
   movieId = '';
+  /** Canonical `/movies/:id/:slug` URL for the loaded movie; falls back to the slugless URL until it
+   * loads. Used for the login `returnUrl` so it always points at the friendly URL, not the raw path. */
+  detailUrl = '';
+  /** Slug currently written into the address bar (kept separately because `Location.replaceState`
+   * does not update the router's snapshot/url). */
+  private _urlSlug = '';
   /** The current user's rating, once submitted (1–10; 0 = none submitted yet this session). */
   myScore = 0;
   /** Hovered star while picking a rating in the hero widget; 0 when not hovering. */
@@ -42,6 +51,8 @@ export class MovieDetailComponent implements OnInit {
     private _store: Store,
     private _route: ActivatedRoute,
     private _router: Router,
+    private _location: Location,
+    private _destroyRef: DestroyRef,
     private _cdr: ChangeDetectorRef,
     private _translate: TranslateService,
     private _toast: ToastService,
@@ -53,10 +64,27 @@ export class MovieDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.movieId = this._route.snapshot.paramMap.get('id') ?? '';
+    this._urlSlug = this._route.snapshot.paramMap.get('slug') ?? '';
+    this.detailUrl = movieDetailUrl(this.movieId);
     this._store.dispatch(loadMovieDetail({ id: this.movieId }));
+
+    this.movie$
+      .pipe(filter(movie => !!movie && movie.id === this.movieId), takeUntilDestroyed(this._destroyRef))
+      .subscribe(movie => this._syncCanonicalUrl(movie));
 
     this.dateTabs.push(...this.buildDateTabs());
     this.selectedDateKey = this.dateTabs[0].key;
+  }
+
+  /** Keeps the address bar on `/movies/:id/:slug` without re-navigating (which would recreate this
+   * component and re-dispatch loadMovieDetail): corrects a missing, wrong or now-outdated slug in place. */
+  private _syncCanonicalUrl(movie: any): void {
+    this.detailUrl = movieDetailUrl(this.movieId, movie.title);
+    const expectedSlug = slugify(movie.title);
+    if (this._urlSlug !== expectedSlug) {
+      this._urlSlug = expectedSlug;
+      this._location.replaceState(this.detailUrl);
+    }
   }
 
   private buildDateTabs(): { key: string; date: Date }[] {
@@ -165,7 +193,7 @@ export class MovieDetailComponent implements OnInit {
   rateFromHero(score: number): void {
     this.isAuthenticated$.pipe(take(1)).subscribe(isAuthenticated => {
       if (!isAuthenticated) {
-        this._router.navigate(['/auth/login'], { queryParams: { returnUrl: '/movies/' + this.movieId } });
+        this._router.navigate(['/auth/login'], { queryParams: { returnUrl: this.detailUrl } });
         return;
       }
       this._store.dispatch(rateMovie({ movieId: this.movieId, score, review: undefined }));
@@ -184,7 +212,7 @@ export class MovieDetailComponent implements OnInit {
     if (!content) { return; }
     this.isAuthenticated$.pipe(take(1)).subscribe(isAuthenticated => {
       if (!isAuthenticated) {
-        this._router.navigate(['/auth/login'], { queryParams: { returnUrl: '/movies/' + this.movieId } });
+        this._router.navigate(['/auth/login'], { queryParams: { returnUrl: this.detailUrl } });
         return;
       }
       this._store.dispatch(addComment({ movieId: this.movieId, content }));

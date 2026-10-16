@@ -1,4 +1,4 @@
-<div class="mc-card" [class.mc-card--fixed]="fixedWidth" [routerLink]="variant === 'showing' ? ['/movies', movie.id] : null">
+<div class="mc-card" [class.mc-card--fixed]="fixedWidth" [routerLink]="variant === 'showing' ? detailCommands : null">
   <div class="mc-poster">
     <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
     <ng-container *ngIf="variant === 'showing'">

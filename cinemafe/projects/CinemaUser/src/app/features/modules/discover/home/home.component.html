@@ -23,7 +23,7 @@
         </div>
         <p class="hero-desc">{{ f.description }}</p>
         <div class="hero-actions">
-          <a mat-raised-button [routerLink]="['/movies', f.id]">
+          <a mat-raised-button [routerLink]="movieDetailCommands(f.id, f.title)">
             <mat-icon>confirmation_number</mat-icon> {{ 'home.hero.bookNow' | translate }}
           </a>
           <button mat-stroked-button type="button">

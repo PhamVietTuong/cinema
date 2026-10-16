@@ -9,6 +9,7 @@ import {
 } from 'CinemaLib';
 import { MovieCardComponent } from '../../../../shared/movie-card/movie-card.component';
 import { SiteFooterComponent } from '../../../../shared/site-footer/site-footer.component';
+import { movieDetailCommands } from '../../../../shared/movie-route';
 
 @Component({
   selector: 'app-home',
@@ -20,6 +21,8 @@ import { SiteFooterComponent } from '../../../../shared/site-footer/site-footer.
 export class HomeComponent implements OnInit {
   private _cinema = inject(CinemaServiceAgent.HttpService);
   private _cdr = inject(ChangeDetectorRef);
+
+  readonly movieDetailCommands = movieDetailCommands;
 
   nowShowing$: Observable<any[]>;
   comingSoon$: Observable<any[]>;
