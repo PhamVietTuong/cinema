@@ -45,6 +45,7 @@ public class SmtpNotificationService : INotificationService
             }
             using var message = new MailMessage(from, to, subject, body);
             await client.SendMailAsync(message);
+            LogProvider.Current.Information($"[Notification:sent] To={to} | Subject={subject}");
         }
         catch (Exception e)
         {
