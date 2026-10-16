@@ -20,6 +20,7 @@ import { TheaterSeatTypesComponent } from './theaters/theater-seat-types.compone
 import { SeatTypeDialog } from './theaters/seat-type.dialog';
 import { TheaterPatronCategoriesComponent } from './theaters/theater-patron-categories.component';
 import { PatronCategoryDialog } from './theaters/patron-category.dialog';
+import { TheaterLoyaltyComponent } from './theaters/theater-loyalty.component';
 import { TheaterFoodComponent } from './theaters/theater-food.component';
 import { TheaterCombosComponent } from './theaters/theater-combos.component';
 import { FoodAndDrinkDialog } from './theaters/food-and-drink.dialog';
@@ -73,6 +74,7 @@ const routes: Routes = [
     SeatTypeDialog,
     TheaterPatronCategoriesComponent,
     PatronCategoryDialog,
+    TheaterLoyaltyComponent,
     TheaterFoodComponent,
     TheaterCombosComponent,
     FoodAndDrinkDialog,

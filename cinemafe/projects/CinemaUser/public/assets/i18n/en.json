@@ -216,8 +216,9 @@
       "redeemPoints": "Redeem Points",
       "pointsBalance": "You have {{points}} points available",
       "pointsPlaceholder": "Points to redeem",
-      "pointsHint": "Max {{max}} points (1 point = 1,000đ)",
-      "pointsDiscount": "Points discount ({{points}} pts)"
+      "pointsHint": "Max {{max}} points (1 point = {{value}}đ)",
+      "pointsDiscount": "Points discount ({{points}} pts)",
+      "pointsToEarn": "You could earn up to {{points}} points from this payment"
     },
     "confirm": {
       "title": "Payment",
@@ -467,7 +468,7 @@
     "answerBooking": "Choose a movie → showtime → seats → payment. Your e-ticket (QR code) will be in \"Account → Booking History\".",
     "answerShowtimes": "Showtimes appear on each movie's detail page, grouped by format 2D/3D/IMAX/4DX.",
     "answerCancel": "You can cancel a ticket while the order is still in \"Pending Payment\" status under Booking History.",
-    "answerMembership": "You earn 1 point per 10,000đ spent; your membership tier upgrades automatically with points. Enter a discount code at the payment step.",
+    "answerMembership": "You earn points on every payment (the rate is shown at checkout and can vary by theater); your membership tier upgrades automatically with points. Enter a discount code at the payment step.",
     "answerNearby": "Go to the \"Theaters\" page and tap \"Find nearest theater\" to sort by distance to you.",
     "answerPayment": "We support domestic cards and e-wallets (MoMo / Apple Pay / Google Pay) at the payment step.",
     "answerCombo": "You can add popcorn, drinks & combos right at the payment step, bundled into your order.",

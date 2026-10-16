@@ -4192,6 +4192,188 @@
         ]
       }
     },
+    "/api/Cinema/GetEffectiveLoyaltyRate": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetEffectiveLoyaltyRate",
+        "parameters": [
+          {
+            "name": "theaterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveLoyaltyRateDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetGlobalLoyaltySetting": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetGlobalLoyaltySetting",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoyaltySettingDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetTheaterLoyaltySetting": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetTheaterLoyaltySetting",
+        "parameters": [
+          {
+            "name": "theaterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoyaltySettingDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/SaveLoyaltySetting": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_SaveLoyaltySetting",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLoyaltySettingRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoyaltySettingDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/ClearTheaterLoyaltyOverride": {
+      "delete": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_ClearTheaterLoyaltyOverride",
+        "parameters": [
+          {
+            "name": "theaterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetComboComponents": {
       "get": {
         "tags": [
@@ -8578,6 +8760,70 @@
           },
           "status": {
             "$ref": "#/components/schemas/InvoiceStatus"
+          }
+        }
+      },
+      "EffectiveLoyaltyRateDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "pointsPerUnit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pointValueVnd": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isOverride": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LoyaltySettingDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "pointsPerUnit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pointValueVnd": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastUpdatedTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SaveLoyaltySettingRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "pointsPerUnit": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 1.0
+          },
+          "pointValueVnd": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647.0,
+            "minimum": 1.0
           }
         }
       },

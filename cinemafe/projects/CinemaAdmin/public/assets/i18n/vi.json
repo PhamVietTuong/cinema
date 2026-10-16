@@ -17,6 +17,7 @@
     "invoices": "Hóa Đơn",
     "comments": "Kiểm Duyệt",
     "giftCards": "Thẻ Quà Tặng",
+    "loyaltySettings": "Cài Đặt Điểm Thưởng",
     "auditLog": "Nhật Ký Thao Tác"
   },
   "section": {
@@ -40,6 +41,7 @@
     "discounts": "Quản Lý Mã Giảm Giá",
     "invoices": "Quản Lý Hóa Đơn",
     "auditLog": "Nhật Ký Thao Tác",
+    "loyaltySettings": "Cài Đặt Điểm Thưởng",
     "default": "Bảng Điều Khiển"
   },
   "profile": {
@@ -278,7 +280,23 @@
       "tabFood": "Đồ Ăn & Thức Uống",
       "tabTimeSlots": "Khung Giờ",
       "tabTicketPrices": "Giá Vé",
-      "tabPatronCategories": "Đối Tượng Vé"
+      "tabPatronCategories": "Đối Tượng Vé",
+      "tabLoyalty": "Điểm Thưởng"
+    },
+    "loyalty": {
+      "title": "Điểm Thưởng",
+      "subtitle": "Số VNĐ cần chi để tích 1 điểm, và giá trị quy đổi của 1 điểm khi thanh toán.",
+      "usingDefault": "Rạp này chưa có mức riêng — đang áp dụng mức mặc định chung.",
+      "earnLabel": "VNĐ chi tiêu để tích 1 điểm",
+      "redeemLabel": "VNĐ quy đổi khi dùng 1 điểm",
+      "required": "Trường này là bắt buộc.",
+      "min": "Phải lớn hơn hoặc bằng 1.",
+      "saving": "Đang lưu…",
+      "clearOverride": "Dùng Lại Mức Mặc Định",
+      "saved": "Đã lưu mức điểm thưởng",
+      "saveFailed": "Không thể lưu mức điểm thưởng",
+      "cleared": "Đã chuyển về mức mặc định chung",
+      "clearFailed": "Không thể chuyển về mức mặc định chung"
     },
     "rooms": {
       "subtitle": "Phòng chiếu và sơ đồ ghế (số hàng × số cột).",
@@ -650,6 +668,18 @@
     "pageInfo": "Trang {{current}} / {{total}}",
     "prev": "Trước",
     "next": "Sau"
+  },
+  "loyaltySettings": {
+    "title": "Cài Đặt Điểm Thưởng",
+    "subtitle": "Mức quy đổi mặc định chung, áp dụng cho mọi rạp chưa có mức riêng.",
+    "earnLabel": "VNĐ chi tiêu để tích 1 điểm",
+    "redeemLabel": "VNĐ quy đổi khi dùng 1 điểm",
+    "required": "Trường này là bắt buộc.",
+    "min": "Phải lớn hơn hoặc bằng 1.",
+    "lastUpdated": "Cập nhật lần cuối",
+    "saving": "Đang lưu…",
+    "saved": "Đã lưu cài đặt điểm thưởng",
+    "saveFailed": "Không thể lưu cài đặt điểm thưởng"
   },
   "auditLog": {
     "title": "Nhật ký thao tác",

@@ -19,7 +19,7 @@ describe('BookingCheckoutComponent', () => {
     foods: [{ foodAndDrinkId: 'f1', name: 'Popcorn', unitPrice: 50000, quantity: 2 }],
   };
 
-  const build = (historyState: unknown, queryParams: Record<string, string> = {}) => {
+  const build = (historyState: unknown, queryParams: Record<string, string> = {}, loyaltyRate: { pointsPerUnit: number; pointValueVnd: number; isOverride: boolean } | null = { pointsPerUnit: 1000, pointValueVnd: 1000, isOverride: false }) => {
     Object.defineProperty(window, 'history', { value: { state: historyState }, writable: true });
 
     router = { navigate: vi.fn() };
@@ -37,6 +37,9 @@ describe('BookingCheckoutComponent', () => {
       getMovie: vi.fn().mockReturnValue(of({ title: 'Test Movie', ageRestrictionCode: 'T13' })),
       getRoom: vi.fn().mockReturnValue(of({ name: '03', theaterId: 't1' })),
       getTheater: vi.fn().mockReturnValue(of({ name: 'Cinema 1', address: 'Addr' })),
+      getEffectiveLoyaltyRate: vi.fn().mockReturnValue(
+        loyaltyRate ? of(loyaltyRate) : throwError(() => ({ error: 'unavailable' }))
+      ),
     };
     const route = { snapshot: { queryParams } };
     const translate = { instant: (key: string, params?: any) => `${key}${params ? ':' + JSON.stringify(params) : ''}` };
@@ -136,5 +139,35 @@ describe('BookingCheckoutComponent', () => {
 
     expect(hub.stopConnection).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/booking/seats'], { queryParams: { showTimeId: 'st-1', roomId: 'room-1' } });
+  });
+
+  it('loads the theater-specific loyalty rate and applies it to redemption math', () => {
+    const c = build(state, {}, { pointsPerUnit: 1000, pointValueVnd: 2000, isOverride: true });
+
+    expect(c.pointValue).toBe(2000);
+    // grandTotal is 275000 (175000 tickets + 100000 food); balance is 10.
+    expect(c.maxRedeemablePoints).toBe(10);
+    c.pointsToRedeem = 5;
+    expect(c.pointsDiscount).toBe(10000);
+  });
+
+  it('disables redemption (max 0) when the loyalty rate fails to load', () => {
+    const c = build(state, {}, null);
+
+    expect(c.pointValue).toBe(0);
+    expect(c.maxRedeemablePoints).toBe(0);
+  });
+
+  it('projects points earned on payment from the effective earn rate', () => {
+    const c = build(state, {}, { pointsPerUnit: 2000, pointValueVnd: 1000, isOverride: false });
+
+    // finalTotal is 275000 with no redemption; 275000 / 2000 = 137.5 -> floor 137.
+    expect(c.pointsToEarn).toBe(137);
+  });
+
+  it('shows zero points to earn when the earn rate fails to load', () => {
+    const c = build(state, {}, null);
+
+    expect(c.pointsToEarn).toBe(0);
   });
 });

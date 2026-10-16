@@ -17,6 +17,7 @@
     "invoices": "Invoices",
     "comments": "Moderation",
     "giftCards": "Gift Cards",
+    "loyaltySettings": "Loyalty Settings",
     "auditLog": "Audit Log"
   },
   "section": {
@@ -40,6 +41,7 @@
     "discounts": "Discount Code Management",
     "invoices": "Invoice Management",
     "auditLog": "Audit Log",
+    "loyaltySettings": "Loyalty Settings",
     "default": "Control Panel"
   },
   "profile": {
@@ -278,7 +280,23 @@
       "tabFood": "Food & Drinks",
       "tabTimeSlots": "Time Slots",
       "tabTicketPrices": "Ticket Prices",
-      "tabPatronCategories": "Patron Categories"
+      "tabPatronCategories": "Patron Categories",
+      "tabLoyalty": "Loyalty Points"
+    },
+    "loyalty": {
+      "title": "Loyalty Points",
+      "subtitle": "How many VND it takes to earn 1 point, and how many VND 1 point is worth when redeemed at checkout.",
+      "usingDefault": "This theater has no override — it's using the global default rate.",
+      "earnLabel": "VND spent per point earned",
+      "redeemLabel": "VND value per point redeemed",
+      "required": "This field is required.",
+      "min": "Must be at least 1.",
+      "saving": "Saving…",
+      "clearOverride": "Revert to Default",
+      "saved": "Loyalty rate saved",
+      "saveFailed": "Could not save the loyalty rate",
+      "cleared": "Reverted to the global default rate",
+      "clearFailed": "Could not revert to the global default rate"
     },
     "rooms": {
       "subtitle": "Screening rooms and seat maps (rows × columns).",
@@ -650,6 +668,18 @@
     "pageInfo": "Page {{current}} / {{total}}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "loyaltySettings": {
+    "title": "Loyalty Settings",
+    "subtitle": "Global default conversion rate, used by any theater without its own override.",
+    "earnLabel": "VND spent per point earned",
+    "redeemLabel": "VND value per point redeemed",
+    "required": "This field is required.",
+    "min": "Must be at least 1.",
+    "lastUpdated": "Last updated",
+    "saving": "Saving…",
+    "saved": "Loyalty settings saved",
+    "saveFailed": "Could not save loyalty settings"
   },
   "auditLog": {
     "title": "Audit log",

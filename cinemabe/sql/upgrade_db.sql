@@ -497,6 +497,29 @@ BEGIN
 END
 
 -- ============================================================
+-- Loyalty points: admin-configurable conversion rate (global default + per-theater override)
+-- ============================================================
+IF OBJECT_ID('dbo.LoyaltySetting', 'U') IS NULL
+BEGIN
+    CREATE TABLE [LoyaltySetting] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [TheaterId] uniqueidentifier NULL,
+        [PointsPerUnit] int NOT NULL,
+        [PointValueVnd] int NOT NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_LoyaltySetting] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting] ([TheaterId]) WHERE [TheaterId] IS NOT NULL;
+END
+
+IF NOT EXISTS (SELECT 1 FROM [LoyaltySetting] WHERE [TheaterId] IS NULL)
+BEGIN
+    INSERT INTO [LoyaltySetting] ([Id], [TheaterId], [PointsPerUnit], [PointValueVnd], [CreationTime]) VALUES
+    (NEWID(), NULL, 1000, 1000, GETUTCDATE());
+END
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

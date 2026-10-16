@@ -133,6 +133,11 @@ export interface IHttpService {
     getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceAdminDTO>;
     updateInvoiceStatus(request: UpdateInvoiceStatusRequest): Observable<InvoiceAdminDTO>;
     deleteInvoice(id?: string | undefined): Observable<void>;
+    getEffectiveLoyaltyRate(theaterId?: string | null | undefined): Observable<EffectiveLoyaltyRateDTO>;
+    getGlobalLoyaltySetting(): Observable<LoyaltySettingDTO>;
+    getTheaterLoyaltySetting(theaterId?: string | undefined): Observable<LoyaltySettingDTO>;
+    saveLoyaltySetting(request: SaveLoyaltySettingRequest): Observable<LoyaltySettingDTO>;
+    clearTheaterLoyaltyOverride(theaterId?: string | undefined): Observable<void>;
     getComboComponents(comboId?: string | undefined): Observable<ComboComponentDTO[]>;
     saveComboComposition(request: SaveComboRequest): Observable<void>;
     getPickupQueue(request: GetPickupQueueRequest): Observable<PickupOrderDTO[]>;
@@ -6023,6 +6028,263 @@ export class HttpService implements IHttpService {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getEffectiveLoyaltyRate(theaterId?: string | null | undefined): Observable<EffectiveLoyaltyRateDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetEffectiveLoyaltyRate?";
+        if (theaterId !== undefined && theaterId !== null)
+            url_ += "theaterId=" + encodeURIComponent("" + theaterId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetEffectiveLoyaltyRate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetEffectiveLoyaltyRate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<EffectiveLoyaltyRateDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<EffectiveLoyaltyRateDTO>;
+        }));
+    }
+
+    protected processGetEffectiveLoyaltyRate(response: HttpResponseBase): Observable<EffectiveLoyaltyRateDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = EffectiveLoyaltyRateDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getGlobalLoyaltySetting(): Observable<LoyaltySettingDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetGlobalLoyaltySetting";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetGlobalLoyaltySetting(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetGlobalLoyaltySetting(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<LoyaltySettingDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<LoyaltySettingDTO>;
+        }));
+    }
+
+    protected processGetGlobalLoyaltySetting(response: HttpResponseBase): Observable<LoyaltySettingDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LoyaltySettingDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getTheaterLoyaltySetting(theaterId?: string | undefined): Observable<LoyaltySettingDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetTheaterLoyaltySetting?";
+        if (theaterId === null)
+            throw new Error("The parameter 'theaterId' cannot be null.");
+        else if (theaterId !== undefined)
+            url_ += "theaterId=" + encodeURIComponent("" + theaterId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetTheaterLoyaltySetting(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetTheaterLoyaltySetting(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<LoyaltySettingDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<LoyaltySettingDTO>;
+        }));
+    }
+
+    protected processGetTheaterLoyaltySetting(response: HttpResponseBase): Observable<LoyaltySettingDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LoyaltySettingDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    saveLoyaltySetting(request: SaveLoyaltySettingRequest): Observable<LoyaltySettingDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/SaveLoyaltySetting";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSaveLoyaltySetting(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSaveLoyaltySetting(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<LoyaltySettingDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<LoyaltySettingDTO>;
+        }));
+    }
+
+    protected processSaveLoyaltySetting(response: HttpResponseBase): Observable<LoyaltySettingDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LoyaltySettingDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    clearTheaterLoyaltyOverride(theaterId?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/ClearTheaterLoyaltyOverride?";
+        if (theaterId === null)
+            throw new Error("The parameter 'theaterId' cannot be null.");
+        else if (theaterId !== undefined)
+            url_ += "theaterId=" + encodeURIComponent("" + theaterId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processClearTheaterLoyaltyOverride(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processClearTheaterLoyaltyOverride(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processClearTheaterLoyaltyOverride(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            let resultData404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -14028,6 +14290,142 @@ export class UpdateInvoiceStatusRequest implements IUpdateInvoiceStatusRequest {
 export interface IUpdateInvoiceStatusRequest {
     id?: string;
     status?: InvoiceStatus;
+}
+
+export class EffectiveLoyaltyRateDTO implements IEffectiveLoyaltyRateDTO {
+    pointsPerUnit?: number;
+    pointValueVnd?: number;
+    isOverride?: boolean;
+
+    constructor(data?: IEffectiveLoyaltyRateDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.pointsPerUnit = _data["pointsPerUnit"];
+            this.pointValueVnd = _data["pointValueVnd"];
+            this.isOverride = _data["isOverride"];
+        }
+    }
+
+    static fromJS(data: any): EffectiveLoyaltyRateDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new EffectiveLoyaltyRateDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["pointsPerUnit"] = this.pointsPerUnit;
+        data["pointValueVnd"] = this.pointValueVnd;
+        data["isOverride"] = this.isOverride;
+        return data;
+    }
+}
+
+export interface IEffectiveLoyaltyRateDTO {
+    pointsPerUnit?: number;
+    pointValueVnd?: number;
+    isOverride?: boolean;
+}
+
+export class LoyaltySettingDTO implements ILoyaltySettingDTO {
+    theaterId?: string | undefined;
+    pointsPerUnit?: number;
+    pointValueVnd?: number;
+    lastUpdatedTime?: Date | undefined;
+
+    constructor(data?: ILoyaltySettingDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+            this.pointsPerUnit = _data["pointsPerUnit"];
+            this.pointValueVnd = _data["pointValueVnd"];
+            this.lastUpdatedTime = _data["lastUpdatedTime"] ? new Date(_data["lastUpdatedTime"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): LoyaltySettingDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new LoyaltySettingDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        data["pointsPerUnit"] = this.pointsPerUnit;
+        data["pointValueVnd"] = this.pointValueVnd;
+        data["lastUpdatedTime"] = this.lastUpdatedTime ? this.lastUpdatedTime.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ILoyaltySettingDTO {
+    theaterId?: string | undefined;
+    pointsPerUnit?: number;
+    pointValueVnd?: number;
+    lastUpdatedTime?: Date | undefined;
+}
+
+export class SaveLoyaltySettingRequest implements ISaveLoyaltySettingRequest {
+    theaterId?: string | undefined;
+    pointsPerUnit?: number;
+    pointValueVnd?: number;
+
+    constructor(data?: ISaveLoyaltySettingRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+            this.pointsPerUnit = _data["pointsPerUnit"];
+            this.pointValueVnd = _data["pointValueVnd"];
+        }
+    }
+
+    static fromJS(data: any): SaveLoyaltySettingRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveLoyaltySettingRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        data["pointsPerUnit"] = this.pointsPerUnit;
+        data["pointValueVnd"] = this.pointValueVnd;
+        return data;
+    }
+}
+
+export interface ISaveLoyaltySettingRequest {
+    theaterId?: string | undefined;
+    pointsPerUnit?: number;
+    pointValueVnd?: number;
 }
 
 export class ComboComponentDTO implements IComboComponentDTO {

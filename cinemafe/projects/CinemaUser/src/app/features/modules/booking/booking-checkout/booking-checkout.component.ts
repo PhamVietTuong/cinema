@@ -83,7 +83,11 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   giftCardValid: boolean | null = null;
   giftCardMessage = '';
 
-  static readonly POINT_VALUE = 1000;
+  theaterId = '';
+  /** VND value of 1 loyalty point — fetched from the server for this booking's theater; 0 until loaded. */
+  pointValue = 0;
+  /** VND that must be spent to earn 1 point — fetched alongside pointValue; 0 until loaded. */
+  pointsPerUnit = 0;
   pointsBalance = 0;
   pointsToRedeem = 0;
   pointsRedeemed = 0;
@@ -134,15 +138,30 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   }
 
   get maxRedeemablePoints(): number {
-    return Math.min(this.pointsBalance, Math.floor(this.grandTotal / BookingCheckoutComponent.POINT_VALUE));
+    if (this.pointValue <= 0) {
+      return 0;
+    }
+    return Math.min(this.pointsBalance, Math.floor(this.grandTotal / this.pointValue));
   }
 
   get pointsDiscount(): number {
-    return (this.pointsToRedeem || 0) * BookingCheckoutComponent.POINT_VALUE;
+    return (this.pointsToRedeem || 0) * this.pointValue;
   }
 
   get finalTotal(): number {
     return Math.max(0, this.grandTotal - this.pointsDiscount);
+  }
+
+  /** Estimated points earned on payment: floor(estimated final amount / PointsPerUnit). Only an
+   * estimate — it nets out the promo discount shown here but not the member-tier discount or a
+   * gift card (neither amount is known client-side), so the server's actual credited amount can
+   * be lower. Displayed with "up to" wording for that reason. */
+  get pointsToEarn(): number {
+    if (this.pointsPerUnit <= 0) {
+      return 0;
+    }
+    const estimatedFinal = Math.max(0, this.finalTotal - this.discountAmount);
+    return Math.floor(estimatedFinal / this.pointsPerUnit);
   }
 
   ngOnInit(): void {
@@ -225,7 +244,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         balance: this.pointsBalance,
         max: this.maxRedeemablePoints,
         value: this.pointsToRedeem,
-        pointValue: BookingCheckoutComponent.POINT_VALUE,
+        pointValue: this.pointValue,
       },
       width: '420px',
       maxWidth: '92vw',
@@ -235,6 +254,18 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         this.clampPoints();
         this._cdr.markForCheck();
       }
+    });
+  }
+
+  /** The redeem value is disabled (max 0) until this resolves; a failed lookup never blocks payment. */
+  private _loadLoyaltyRate(): void {
+    this._cinemaService.getEffectiveLoyaltyRate(this.theaterId).subscribe({
+      next: rate => {
+        this.pointValue = rate?.pointValueVnd ?? 0;
+        this.pointsPerUnit = rate?.pointsPerUnit ?? 0;
+        this._cdr.markForCheck();
+      },
+      error: () => { this._cdr.markForCheck(); },
     });
   }
 
@@ -268,6 +299,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         this.roomName = this.roomName || (room.name ?? '');
         this._cdr.markForCheck();
         if (room.theaterId) {
+          this.theaterId = room.theaterId;
+          this._loadLoyaltyRate();
           this._cinemaService.getTheater(room.theaterId).subscribe({
             next: t => {
               this.theaterName = t.name ?? '';

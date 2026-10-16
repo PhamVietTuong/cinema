@@ -55,6 +55,8 @@ IF OBJECT_ID('dbo.ComboItem', 'U') IS NOT NULL
 DROP TABLE dbo.ComboItem;
 IF OBJECT_ID('dbo.GiftCard', 'U') IS NOT NULL
 DROP TABLE dbo.GiftCard;
+IF OBJECT_ID('dbo.LoyaltySetting', 'U') IS NOT NULL
+DROP TABLE dbo.LoyaltySetting;
 IF OBJECT_ID('dbo.ReminderLog', 'U') IS NOT NULL
 DROP TABLE dbo.ReminderLog;
 IF OBJECT_ID('dbo.RoomTypePatronCategoryPrice', 'U') IS NOT NULL
@@ -639,6 +641,18 @@ CREATE TABLE [GiftCard] (
     CONSTRAINT [PK_GiftCard] PRIMARY KEY ([Id])
 );
 
+-- Loyalty point conversion rate: TheaterId NULL is the global default row; a row with TheaterId set
+-- overrides the rate for that one theater.
+CREATE TABLE [LoyaltySetting] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [TheaterId] uniqueidentifier NULL,
+    [PointsPerUnit] int NOT NULL,
+    [PointValueVnd] int NOT NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_LoyaltySetting] PRIMARY KEY ([Id])
+);
+
 -- Indexes
 CREATE INDEX [IX_Comment_MovieId] ON [Comment] ([MovieId]);
 CREATE INDEX [IX_Comment_ParentId] ON [Comment] ([ParentId]);
@@ -685,6 +699,7 @@ CREATE INDEX [IX_User_UserTypeId] ON [User] ([UserTypeId]);
 CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_ReminderLog_UserId_ShowTimeId] ON [ReminderLog] ([UserId], [ShowTimeId]);
 CREATE UNIQUE INDEX [IX_GiftCard_Code] ON [GiftCard] ([Code]);
+CREATE UNIQUE INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting] ([TheaterId]) WHERE [TheaterId] IS NOT NULL;
 
 -- Insert-only audit trail of sensitive staff actions (no FKs, so it survives deletions).
 CREATE TABLE [AuditLog] (

@@ -1,0 +1,30 @@
+<div class="ad-card">
+  <h3 class="ad-card-title">{{ 'theaters.loyalty.title' | translate }}</h3>
+  <p class="ad-sub">{{ 'theaters.loyalty.subtitle' | translate }}</p>
+
+  <div class="ad-warning-banner" *ngIf="!loading && !hasOverride">
+    <mat-icon>info</mat-icon>
+    <span>{{ 'theaters.loyalty.usingDefault' | translate }}</span>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="theater-form">
+    <div class="ad-field">
+      <label class="ad-label">{{ 'theaters.loyalty.earnLabel' | translate }}</label>
+      <input class="ad-input" type="number" min="1" step="1" formControlName="pointsPerUnit">
+      <span class="ad-field-err" *ngIf="form.get('pointsPerUnit')?.touched && form.get('pointsPerUnit')?.hasError('required')">{{ 'theaters.loyalty.required' | translate }}</span>
+      <span class="ad-field-err" *ngIf="form.get('pointsPerUnit')?.touched && form.get('pointsPerUnit')?.hasError('min')">{{ 'theaters.loyalty.min' | translate }}</span>
+    </div>
+    <div class="ad-field">
+      <label class="ad-label">{{ 'theaters.loyalty.redeemLabel' | translate }}</label>
+      <input class="ad-input" type="number" min="1" step="1" formControlName="pointValueVnd">
+      <span class="ad-field-err" *ngIf="form.get('pointValueVnd')?.touched && form.get('pointValueVnd')?.hasError('required')">{{ 'theaters.loyalty.required' | translate }}</span>
+      <span class="ad-field-err" *ngIf="form.get('pointValueVnd')?.touched && form.get('pointValueVnd')?.hasError('min')">{{ 'theaters.loyalty.min' | translate }}</span>
+    </div>
+    <div class="form-actions full-span">
+      <button class="ad-btn ad-btn--primary" type="submit" [disabled]="saving || loading">{{ (saving ? 'theaters.loyalty.saving' : 'common.save') | translate }}</button>
+      <button class="ad-btn ad-btn--ghost" type="button" [disabled]="!hasOverride || clearing || loading" (click)="clearOverride()">
+        {{ 'theaters.loyalty.clearOverride' | translate }}
+      </button>
+    </div>
+  </form>
+</div>
