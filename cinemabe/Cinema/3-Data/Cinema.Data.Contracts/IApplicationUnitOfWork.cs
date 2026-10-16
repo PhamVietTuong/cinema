@@ -31,7 +31,6 @@ public interface IApplicationUnitOfWork : IDisposable
     IRoomTypePatronCategoryPriceStore RoomTypePatronCategoryPriceStore { get; }
     IComboItemStore ComboItemStore { get; }
     IStockMovementStore StockMovementStore { get; }
-    IStoragePlanStore StoragePlanStore { get; }
     IAuditLogStore AuditLogStore { get; }
     IIncidentStore IncidentStore { get; }
     IScheduleBoardStore ScheduleBoardStore { get; }

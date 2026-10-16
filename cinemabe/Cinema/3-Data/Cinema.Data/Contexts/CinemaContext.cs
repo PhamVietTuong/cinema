@@ -40,8 +40,6 @@ public class CinemaContext : DbContext
     public DbSet<GiftCard> GiftCard => Set<GiftCard>();
     public DbSet<ComboItem> ComboItem => Set<ComboItem>();
     public DbSet<StockMovement> StockMovement => Set<StockMovement>();
-    public DbSet<StoragePlan> StoragePlan => Set<StoragePlan>();
-    public DbSet<StoragePlanItem> StoragePlanItem => Set<StoragePlanItem>();
     public DbSet<AuditLog> AuditLog => Set<AuditLog>();
     public DbSet<Incident> Incident => Set<Incident>();
     public DbSet<ChecklistTemplate> ChecklistTemplate => Set<ChecklistTemplate>();
