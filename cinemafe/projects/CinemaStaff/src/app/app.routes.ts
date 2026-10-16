@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { ForbiddenPageComponent, authGuard, roleGuard, COMPLAINT_ROLES, homeRedirectByRole, BACK_OFFICE_ROLES, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles, CONCESSION_ROLES } from 'CinemaLib';
+import { ForbiddenPageComponent, authGuard, roleGuard, homeRedirectByRole, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles, CONCESSION_ROLES } from 'CinemaLib';
 
 /**
  * Where each role lands from '/'. Everyone goes to /home until the role-specific pages
@@ -59,23 +59,6 @@ export const routes: Routes = [
         canActivate: [roleGuard(REPORTING_ROLES)],
         loadChildren: () => import('./features/sales-reports/sales-reports.routes').then(m => m.SALES_REPORTS_ROUTES)
       },
-      // After-sales desk (refund, exchange, reprint) and cash close (drawer close, daily close): sellers.
-      {
-        path: 'after-sales',
-        canActivate: [roleGuard(SELLER_ROLES)],
-        loadChildren: () => import('./features/after-sales/after-sales.routes').then(m => m.AFTER_SALES_ROUTES)
-      },
-      {
-        path: 'cash-close',
-        canActivate: [roleGuard(SELLER_ROLES)],
-        loadChildren: () => import('./features/cash-close/cash-close.routes').then(m => m.CASH_CLOSE_ROUTES)
-      },
-      // Customer service: lookup + e-ticket resend (sellers), complaints (sellers and regional managers); the routes guard themselves.
-      {
-        path: 'customer-service',
-        canActivate: [roleGuard(COMPLAINT_ROLES)],
-        loadChildren: () => import('./features/customer-service/customer-service.routes').then(m => m.CUSTOMER_SERVICE_ROUTES)
-      },
       // Reports (audit log): management roles.
       {
         path: '',
@@ -85,28 +68,12 @@ export const routes: Routes = [
       // Operations and workforce: one lazy route file per feature; approver-only screens guard themselves.
       { path: 'schedule', loadChildren: () => import('./features/schedule/schedule.routes').then(m => m.SCHEDULE_ROUTES) },
       { path: 'incidents', loadChildren: () => import('./features/incidents/incidents.routes').then(m => m.INCIDENTS_ROUTES) },
-      { path: 'checklists', loadChildren: () => import('./features/checklists/checklists.routes').then(m => m.CHECKLISTS_ROUTES) },
       { path: 'roster', loadChildren: () => import('./features/roster/roster.routes').then(m => m.ROSTER_ROUTES) },
-      { path: 'time-clock', loadChildren: () => import('./features/time-clock/time-clock.routes').then(m => m.TIME_CLOCK_ROUTES) },
-      { path: 'tasks', loadChildren: () => import('./features/tasks/tasks.routes').then(m => m.TASKS_ROUTES) },
-      // Warehouse (inventory + storage plans): back-office roles. One pass-through entry loads its routes,
-      // which match /inventory, /storage-plans and /storage-plans/:id.
-      {
-        path: '',
-        canActivate: [roleGuard(BACK_OFFICE_ROLES)],
-        loadChildren: () => import('./features/warehouse/warehouse.routes').then(m => m.WAREHOUSE_ROUTES)
-      },
       // Counter POS (sellers).
       {
         path: '',
         canActivate: [roleGuard(SELLER_ROLES)],
         loadChildren: () => import('./features/pos/pos.routes').then(m => m.POS_ROUTES)
-      },
-      // Cash drawer (sellers).
-      {
-        path: '',
-        canActivate: [roleGuard(SELLER_ROLES)],
-        loadChildren: () => import('./features/drawer/drawer.routes').then(m => m.DRAWER_ROUTES)
       }
     ]
   },

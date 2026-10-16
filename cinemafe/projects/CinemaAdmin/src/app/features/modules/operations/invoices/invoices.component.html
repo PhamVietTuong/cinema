@@ -71,7 +71,6 @@
           <ng-template let-row="row" ngx-datatable-cell-template>
             <div class="ad-td-actions ad-td-actions--mat">
               <button mat-icon-button (click)="edit(row)" [matTooltip]="'invoices.changeStatus' | translate"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button *ngIf="row.status === InvoiceStatus.Paid" (click)="refund(row.id)" [matTooltip]="'invoices.refund' | translate"><mat-icon>undo</mat-icon></button>
               <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
             </div>
           </ng-template>
@@ -101,7 +100,6 @@
           <div class="ad-mobile-card-row"><span>{{ 'common.createdAt' | translate }}</span><span>{{ row.creationTime | date:'dd/MM/yy HH:mm' }}</span></div>
           <div class="ad-mobile-card-actions">
             <button mat-icon-button (click)="edit(row)" [matTooltip]="'invoices.changeStatus' | translate"><mat-icon>edit</mat-icon></button>
-            <button mat-icon-button *ngIf="row.status === InvoiceStatus.Paid" (click)="refund(row.id)" [matTooltip]="'invoices.refund' | translate"><mat-icon>undo</mat-icon></button>
             <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
           </div>
         </mat-card-content>

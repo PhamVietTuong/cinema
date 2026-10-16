@@ -50,17 +50,6 @@ public partial class StaffReportManager
             row.DiscountAmount = (row.DiscountAmount ?? 0) + sold.DiscountAmount;
             row.NetRevenue += sold.FinalAmount;
         }
-        foreach (var refunded in aggregates.Refunded)
-        {
-            var row = GetOrAdd(rows, KeyOf(refunded, request.GroupBy));
-            row.RefundCount += refunded.InvoiceCount;
-            row.RefundAmount += refunded.FinalAmount;
-            row.TicketRevenue = (row.TicketRevenue ?? 0) - refunded.TicketAmount;
-            row.FoodRevenue = (row.FoodRevenue ?? 0) - refunded.FoodAmount;
-            row.DiscountAmount = (row.DiscountAmount ?? 0) - refunded.DiscountAmount;
-            row.NetRevenue -= refunded.FinalAmount;
-        }
-
         if (request.GroupBy == SalesGroupBy.Day)
         {
             for (var day = window.From.Date; day <= window.To.Date; day = day.AddDays(1))
@@ -84,10 +73,6 @@ public partial class StaffReportManager
         {
             // One invoice can sit in several groups (two movies, two tenders): the header counts it once.
             report.Totals.InvoiceCount = aggregates.SoldInvoices.Value;
-        }
-        if (aggregates.RefundedInvoices.HasValue)
-        {
-            report.Totals.RefundCount = aggregates.RefundedInvoices.Value;
         }
         return report;
     }
@@ -139,10 +124,6 @@ public partial class StaffReportManager
         kpis.AttachRate = Ratio(raw.TicketInvoicesWithFood, raw.TicketInvoices);
         kpis.TicketsSold = raw.Tickets;
         kpis.AverageSpendPerHead = raw.Tickets == 0 ? 0 : raw.TicketInvoicesAmount / raw.Tickets;
-        kpis.RefundCount = raw.RefundedInvoices;
-        kpis.RefundAmount = raw.RefundedAmount;
-        kpis.RefundRateByCount = Ratio(raw.RefundedInvoices, raw.SoldInvoices);
-        kpis.RefundRateByAmount = raw.SoldAmount == 0 ? 0 : raw.RefundedAmount / raw.SoldAmount;
         return kpis;
     }
 
@@ -336,9 +317,7 @@ public partial class StaffReportManager
             TicketRevenue = rows.Any(r => r.TicketRevenue.HasValue) ? rows.Sum(r => r.TicketRevenue ?? 0) : null,
             FoodRevenue = rows.Any(r => r.FoodRevenue.HasValue) ? rows.Sum(r => r.FoodRevenue ?? 0) : null,
             DiscountAmount = rows.Any(r => r.DiscountAmount.HasValue) ? rows.Sum(r => r.DiscountAmount ?? 0) : null,
-            NetRevenue = rows.Sum(r => r.NetRevenue),
-            RefundCount = rows.Sum(r => r.RefundCount),
-            RefundAmount = rows.Sum(r => r.RefundAmount)
+            NetRevenue = rows.Sum(r => r.NetRevenue)
         };
     }
 }

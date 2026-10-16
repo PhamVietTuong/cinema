@@ -1,2 +1,3 @@
 ﻿namespace Cinema.Data.Enums;
-public enum InvoiceStatus { Pending = 0, Paid = 1, Cancelled = 2, Failed = 3, Refunded = 4 }
+// 4 reserved (was Refunded) — do not reuse.
+public enum InvoiceStatus { Pending = 0, Paid = 1, Cancelled = 2, Failed = 3 }

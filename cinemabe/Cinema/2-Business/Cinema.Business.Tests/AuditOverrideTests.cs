@@ -1,4 +1,4 @@
-using Cinema.Business.Contracts.Exceptions;
+﻿using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Staff;
 using Cinema.Business.Managers;
@@ -57,7 +57,7 @@ public class AuditOverrideTests
     [Fact]
     public async Task Verify_CorrectPin_ReturnsApproverId_AndWritesNoFailureAudit()
     {
-        var approverId = await _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, _pin), AuditAction.Refund);
+        var approverId = await _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, _pin), AuditAction.PriceOverride);
 
         approverId.Should().Be(_manager.Id);
         _staged.Should().BeEmpty();
@@ -68,7 +68,7 @@ public class AuditOverrideTests
     {
         _manager.OverridePinFailedCount = 3;
 
-        await _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, _pin), AuditAction.Refund);
+        await _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, _pin), AuditAction.PriceOverride);
 
         _manager.OverridePinFailedCount.Should().Be(0);
     }
@@ -76,7 +76,7 @@ public class AuditOverrideTests
     [Fact]
     public async Task Verify_WrongPin_Throws403Exception_IncrementsCounter_AndAuditsOverrideFailed()
     {
-        var act = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, "0000"), AuditAction.Refund);
+        var act = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, "0000"), AuditAction.PriceOverride);
 
         await act.Should().ThrowAsync<AccessDeniedException>();
         _manager.OverridePinFailedCount.Should().Be(1);
@@ -94,14 +94,14 @@ public class AuditOverrideTests
     {
         for (var attempt = 0; attempt < 5; attempt++)
         {
-            var wrong = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, "0000"), AuditAction.Refund);
+            var wrong = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, "0000"), AuditAction.PriceOverride);
             await wrong.Should().ThrowAsync<AccessDeniedException>();
         }
 
         _manager.OverridePinFailedCount.Should().Be(5);
         _manager.OverridePinLockoutEndUtc.Should().BeAfter(DateTime.UtcNow);
 
-        var correct = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, _pin), AuditAction.Refund);
+        var correct = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, _pin), AuditAction.PriceOverride);
         await correct.Should().ThrowAsync<AccessDeniedException>();
         _staged.Should().HaveCount(6).And.OnlyContain(r => r.Action == AuditAction.OverrideFailed);
     }
@@ -112,7 +112,7 @@ public class AuditOverrideTests
         _manager.OverridePinFailedCount = 5;
         _manager.OverridePinLockoutEndUtc = DateTime.UtcNow.AddMinutes(-1);
 
-        var approverId = await _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, _pin), AuditAction.Refund);
+        var approverId = await _sut.VerifyAsync(_theaterId, _staff.Id, Override(_manager, _pin), AuditAction.PriceOverride);
 
         approverId.Should().Be(_manager.Id);
         _manager.OverridePinFailedCount.Should().Be(0);
@@ -127,7 +127,7 @@ public class AuditOverrideTests
         colleague.OverridePinHash = hash;
         colleague.OverridePinSalt = salt;
 
-        var act = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(colleague, _pin), AuditAction.Refund);
+        var act = () => _sut.VerifyAsync(_theaterId, _staff.Id, Override(colleague, _pin), AuditAction.PriceOverride);
 
         await act.Should().ThrowAsync<AccessDeniedException>();
     }
@@ -135,7 +135,7 @@ public class AuditOverrideTests
     [Fact]
     public async Task Verify_NoOverrideSupplied_ForNonApprover_Throws403Exception()
     {
-        var act = () => _sut.VerifyAsync(_theaterId, _staff.Id, null, AuditAction.Refund);
+        var act = () => _sut.VerifyAsync(_theaterId, _staff.Id, null, AuditAction.PriceOverride);
 
         await act.Should().ThrowAsync<AccessDeniedException>();
     }
@@ -185,7 +185,7 @@ public class AuditOverrideTests
     {
         var logger = new AuditLogger(_uowMock.Object);
 
-        await logger.LogAsync(new AuditEntry { ActorUserId = _staff.Id, Action = AuditAction.Refund, EntityType = nameof(Invoice) });
+        await logger.LogAsync(new AuditEntry { ActorUserId = _staff.Id, Action = AuditAction.PriceOverride, EntityType = nameof(Invoice) });
 
         _staged.Should().ContainSingle();
         _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);

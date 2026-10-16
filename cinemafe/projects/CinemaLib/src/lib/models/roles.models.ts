@@ -50,7 +50,7 @@ export const CONCESSION_ROLES: readonly string[] = [
   UserRoles.TheaterStaff,
 ];
 
-/** Manager override PIN, drawer reconciliation, compensation, rosters, checklist templates. */
+/** Manager override PIN, drawer reconciliation, compensation, rosters. */
 export const APPROVER_ROLES: readonly string[] = [
   UserRoles.Admin,
 ];

@@ -26,7 +26,7 @@ export class ChatbotComponent {
   readonly quickReplies: { label: string; q: string }[] = [
     { label: 'chatbot.quickBooking', q: 'Đặt vé thế nào?' },
     { label: 'chatbot.quickShowtimes', q: 'Giờ chiếu' },
-    { label: 'chatbot.quickCancel', q: 'Hủy / hoàn vé' },
+    { label: 'chatbot.quickCancel', q: 'Hủy vé' },
     { label: 'chatbot.quickMembership', q: 'Ưu đãi thành viên' },
     { label: 'chatbot.quickNearby', q: 'Rạp gần tôi' },
   ];
@@ -35,7 +35,7 @@ export class ChatbotComponent {
   private readonly faqs: { k: string[]; a: string }[] = [
     { k: ['đặt vé', 'mua vé', 'booking', 'đặt'], a: 'chatbot.answerBooking' },
     { k: ['giờ', 'suất', 'lịch chiếu', 'showtime'], a: 'chatbot.answerShowtimes' },
-    { k: ['hủy', 'hoàn', 'refund', 'cancel'], a: 'chatbot.answerCancel' },
+    { k: ['hủy', 'cancel'], a: 'chatbot.answerCancel' },
     { k: ['thành viên', 'điểm', 'tích điểm', 'membership', 'voucher', 'mã giảm', 'khuyến mãi'], a: 'chatbot.answerMembership' },
     { k: ['rạp', 'gần', 'địa chỉ', 'theater', 'vị trí'], a: 'chatbot.answerNearby' },
     { k: ['thanh toán', 'payment', 'momo', 'thẻ', 'ví'], a: 'chatbot.answerPayment' },

@@ -128,7 +128,6 @@
                   <td><span class="pl-pill" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></td>
                   <td class="pl-td-actions">
                     <button *ngIf="r.status === InvoiceStatus.Pending" type="button" class="pl-icon-btn is-danger" (click)="$event.stopPropagation(); cancelById(r.id)" [title]="'profile.cancelBookingTooltip' | translate"><mat-icon>close</mat-icon></button>
-                    <button *ngIf="r.status === InvoiceStatus.Paid" type="button" class="pl-icon-btn is-warn" (click)="$event.stopPropagation(); refundById(r.id)" [title]="'profile.requestRefundTooltip' | translate"><mat-icon>undo</mat-icon></button>
                     <mat-icon *ngIf="isPaid(r.status)">{{ expandedId === r.id ? 'expand_less' : 'expand_more' }}</mat-icon>
                   </td>
                 </tr>

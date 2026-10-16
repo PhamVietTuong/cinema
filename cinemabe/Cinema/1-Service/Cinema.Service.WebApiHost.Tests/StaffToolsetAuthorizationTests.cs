@@ -46,11 +46,7 @@ public class StaffToolsetAuthorizationTests
     public static IEnumerable<object[]> ApproverOnlyActions()
     {
         foreach (var action in new[] { nameof(CinemaController.SaveShift), nameof(CinemaController.DeleteShift), nameof(CinemaController.GetRoster),
-            nameof(CinemaController.GetTheaterStaff), nameof(CinemaController.GetTimeSheet), nameof(CinemaController.SaveTask), nameof(CinemaController.GetTasks) })
-        {
-            yield return new object[] { typeof(CinemaController), action };
-        }
-        foreach (var action in new[] { nameof(CinemaController.GetChecklistTemplates), nameof(CinemaController.SaveChecklistTemplate) })
+            nameof(CinemaController.GetTheaterStaff) })
         {
             yield return new object[] { typeof(CinemaController), action };
         }
@@ -58,13 +54,11 @@ public class StaffToolsetAuthorizationTests
 
     public static IEnumerable<object[]> EveryStaffActions()
     {
-        foreach (var action in new[] { nameof(CinemaController.ClockIn), nameof(CinemaController.ClockOut), nameof(CinemaController.GetMyClockStatus),
-            nameof(CinemaController.GetMyShifts), nameof(CinemaController.GetMyTasks), nameof(CinemaController.SetMyTaskStatus) })
+        foreach (var action in new[] { nameof(CinemaController.GetMyShifts) })
         {
             yield return new object[] { typeof(CinemaController), action };
         }
-        foreach (var action in new[] { nameof(CinemaController.GetScheduleBoard), nameof(CinemaController.ReportIncident), nameof(CinemaController.GetIncidents),
-            nameof(CinemaController.OpenChecklist), nameof(CinemaController.SetChecklistItem), nameof(CinemaController.CompleteChecklist) })
+        foreach (var action in new[] { nameof(CinemaController.GetScheduleBoard), nameof(CinemaController.ReportIncident), nameof(CinemaController.GetIncidents) })
         {
             yield return new object[] { typeof(CinemaController), action };
         }
@@ -86,7 +80,7 @@ public class StaffToolsetAuthorizationTests
 
     [Theory]
     [MemberData(nameof(EveryStaffActions))]
-    public async Task EveryStaffRole_CanUseClockTasksIncidentsAndChecklists_ButCustomersCannot(Type controller, string action)
+    public async Task EveryStaffRole_CanUseShiftsScheduleAndIncidents_ButCustomersCannot(Type controller, string action)
     {
         foreach (var role in RoleNames.StaffApp.Split(','))
         {

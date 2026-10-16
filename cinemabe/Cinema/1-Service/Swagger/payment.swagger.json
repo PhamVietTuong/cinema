@@ -329,46 +329,6 @@
         ]
       }
     },
-    "/api/Payment/RefundBooking": {
-      "post": {
-        "tags": [
-          "Payment"
-        ],
-        "operationId": "Payment_RefundBooking",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefundBookingRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
     "/api/Payment/ValidateDiscountCode": {
       "post": {
         "tags": [
@@ -1136,15 +1096,13 @@
           "Pending",
           "Paid",
           "Cancelled",
-          "Failed",
-          "Refunded"
+          "Failed"
         ],
         "enum": [
           0,
           1,
           2,
-          3,
-          4
+          3
         ]
       },
       "TicketItemDTO": {
@@ -1347,16 +1305,6 @@
           "returnUrl": {
             "type": "string",
             "nullable": true
-          }
-        }
-      },
-      "RefundBookingRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "invoiceId": {
-            "type": "string",
-            "format": "guid"
           }
         }
       },

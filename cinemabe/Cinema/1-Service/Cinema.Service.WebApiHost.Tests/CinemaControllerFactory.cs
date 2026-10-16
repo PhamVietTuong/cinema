@@ -17,12 +17,9 @@ internal static class CinemaControllerFactory
         ClaimsPrincipal user,
         IGateManager? gate = null,
         IBoxOfficeManager? boxOffice = null,
-        ICustomerServiceManager? customerService = null,
         IStaffReportManager? reports = null,
-        IDailyCloseManager? dailyClose = null,
         IScheduleBoardManager? board = null,
         IIncidentManager? incidents = null,
-        IChecklistManager? checklists = null,
         IManagerOverrideService? overrides = null,
         IWorkforceManager? workforce = null)
     {
@@ -53,12 +50,9 @@ internal static class CinemaControllerFactory
             concessions: null!,
             gate: gate!,
             boxOffice: boxOffice!,
-            customerService: customerService!,
             reports: reports!,
-            dailyClose: dailyClose!,
             board: board!,
             incidents: incidents!,
-            checklists: checklists!,
             overrides: overrides!,
             workforce: workforce!)
         {

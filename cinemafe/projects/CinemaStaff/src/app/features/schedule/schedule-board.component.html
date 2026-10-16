@@ -52,14 +52,12 @@
                   @for (st of room.showTimes; track st.source.showTimeId) {
                     <span class="buffer" [style.left.%]="st.block.bufferLeftPct" [style.width.%]="st.block.bufferWidthPct"
                       [title]="'schedule.bufferTitle' | translate: { minutes: room.source.turnoverBufferMinutes }"></span>
-                    <button type="button" class="show" [style.left.%]="st.block.leftPct" [style.width.%]="st.block.widthPct"
-                      [title]="'schedule.openChecklist' | translate"
-                      (click)="openChecklist(st.source, room.source)">
+                    <div class="show" [style.left.%]="st.block.leftPct" [style.width.%]="st.block.widthPct">
                       <strong class="show-title">{{ st.source.movieTitle }}</strong>
                       <span class="show-time">{{ st.source.start | date: 'HH:mm' }} - {{ st.source.end | date: 'HH:mm' }}</span>
                       <span class="show-sold">{{ st.source.sold }}/{{ st.source.capacity }}</span>
                       <span class="fill" [style.width.%]="st.soldPct"></span>
-                    </button>
+                    </div>
                   }
                 </div>
               </div>

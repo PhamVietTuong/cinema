@@ -16,7 +16,7 @@ import {
 } from 'CinemaLib';
 import { TheaterContextService } from '../../../core/theater-context.service';
 
-/** Paged audit trail of sensitive staff actions (overrides, refunds, voids, ...), filterable by action and date. */
+/** Paged audit trail of sensitive staff actions (overrides, voids, ...), filterable by action and date. */
 @Component({
   selector: 'staff-audit-log',
   standalone: true,

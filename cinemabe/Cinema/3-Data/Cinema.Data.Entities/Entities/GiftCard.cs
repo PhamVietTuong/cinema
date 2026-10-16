@@ -3,7 +3,7 @@ namespace Cinema.Data.Entities;
 /// <summary>
 /// A stored-value gift card / voucher. Issued by an admin with an initial balance; the remaining
 /// <see cref="Balance"/> is drawn down as it's applied to bookings and restored if a booking is
-/// cancelled, expires, or is refunded.
+/// cancelled or expires.
 /// </summary>
 public class GiftCard : BaseEntity
 {

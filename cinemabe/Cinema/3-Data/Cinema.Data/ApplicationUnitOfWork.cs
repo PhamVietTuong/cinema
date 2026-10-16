@@ -40,17 +40,11 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IRoomTypePatronCategoryPriceStore RoomTypePatronCategoryPriceStore { get; }
     public IComboItemStore ComboItemStore { get; }
     public IStockMovementStore StockMovementStore { get; }
-    public IStoragePlanStore StoragePlanStore { get; }
     public IAuditLogStore AuditLogStore { get; }
     public IIncidentStore IncidentStore { get; }
     public IScheduleBoardStore ScheduleBoardStore { get; }
-    public IChecklistStore ChecklistStore { get; }
     public IWorkforceStore WorkforceStore { get; }
-    public ICashDrawerStore CashDrawerStore { get; }
     public IStaffReportStore StaffReportStore { get; }
-    public IAfterSalesStore AfterSalesStore { get; }
-    public IComplaintStore ComplaintStore { get; }
-    public ICustomerServiceStore CustomerServiceStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
     {
@@ -84,17 +78,11 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         RoomTypePatronCategoryPriceStore = new RoomTypePatronCategoryPriceStore(db);
         ComboItemStore = new ComboItemStore(db);
         StockMovementStore = new StockMovementStore(db);
-        StoragePlanStore = new StoragePlanStore(db);
         AuditLogStore = new AuditLogStore(db);
         IncidentStore = new IncidentStore(db);
         ScheduleBoardStore = new ScheduleBoardStore(db);
-        ChecklistStore = new ChecklistStore(db);
         WorkforceStore = new WorkforceStore(db);
-        CashDrawerStore = new CashDrawerStore(db);
         StaffReportStore = new StaffReportStore(db);
-        AfterSalesStore = new AfterSalesStore(db);
-        ComplaintStore = new ComplaintStore(db);
-        CustomerServiceStore = new CustomerServiceStore(db);
     }
 
     public Task<int> SaveChangesAsync()

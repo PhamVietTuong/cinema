@@ -46,11 +46,5 @@
   @if (settlement().missingReference) {
     <p class="pos-warn">{{ 'pos.pay.missingReference' | translate }}</p>
   }
-  @if (needsDrawer()) {
-    <p class="pos-warn">
-      {{ 'pos.pay.needDrawer' | translate }}
-      <a routerLink="/drawer">{{ 'pos.drawer.openLink' | translate }}</a>
-    </p>
-  }
   <ng-content />
 </section>

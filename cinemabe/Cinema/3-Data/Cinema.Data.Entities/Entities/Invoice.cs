@@ -13,12 +13,11 @@ public class Invoice : BaseEntity
     public string? PaymentMethod { get; set; }
     public string? PaymentReference { get; set; }
     public DateTime? PaidAt { get; set; }
-    public DateTime? RefundedAt { get; set; }
     /// <summary>Loyalty points spent on this booking, reserved at creation and restored if it is
-    /// cancelled, expired, or refunded.</summary>
+    /// cancelled or expires.</summary>
     public int PointsRedeemed { get; set; }
     /// <summary>Gift card applied to this booking (if any) and the amount drawn from it; the amount is
-    /// restored to the card if the booking is cancelled, expired, or refunded.</summary>
+    /// restored to the card if the booking is cancelled or expires.</summary>
     public Guid? GiftCardId { get; set; }
     public double GiftCardAmount { get; set; }
     public Guid? DiscountId { get; set; }
@@ -32,10 +31,8 @@ public class Invoice : BaseEntity
     public FoodOrderStatus FoodStatus { get; set; } = FoodOrderStatus.None;
     public DateTime? FoodHandedOverAt { get; set; }
     public Guid? FoodHandedOverByUserId { get; set; }
-    /// <summary>The invoice this one replaced in a counter exchange (the old one is then Refunded).</summary>
+    /// <summary>The invoice this one replaced in a counter exchange.</summary>
     public Guid? ExchangedFromInvoiceId { get; set; }
-    /// <summary>Why staff refunded this invoice (null for an online/owner refund).</summary>
-    public StaffReasonCode? RefundReasonCode { get; set; }
     public User? User { get; set; }
     public Discount? Discount { get; set; }
     public ICollection<InvoiceTicket> InvoiceTickets { get; set; } = new List<InvoiceTicket>();

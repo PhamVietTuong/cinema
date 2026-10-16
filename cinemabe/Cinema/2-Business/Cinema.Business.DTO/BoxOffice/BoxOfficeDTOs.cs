@@ -137,84 +137,9 @@ public class CounterSaleContext
 {
     public Guid TheaterId { get; set; }
     public Guid StaffUserId { get; set; }
-    /// <summary>The seller's open drawer in this theater, if any (required when cash is tendered).</summary>
-    public Guid? CashDrawerSessionId { get; set; }
     /// <summary>Approver of the price overrides (the staff member themself when they are an approver).</summary>
     public Guid? ApproverUserId { get; set; }
     public CounterSaleRequest Request { get; set; } = new();
-
-    /// <summary>Exchange only: the tracked, fully loaded invoice this sale replaces. It is reversed in the same
-    /// transaction as the new sale. The caller has already validated that it can be exchanged.</summary>
-    public Cinema.Data.Entities.Invoice? ExchangedFrom { get; set; }
-    public StaffReasonCode? ExchangeReasonCode { get; set; }
-    public string? ExchangeNote { get; set; }
-    /// <summary>Exchange only: how the customer is paid back when the new sale is cheaper (Cash, Card or QrWallet).</summary>
-    public PaymentTender ExchangeRefundTender { get; set; } = PaymentTender.Cash;
-}
-
-public class OpenDrawerRequest
-{
-    public Guid? TheaterId { get; set; }
-
-    [Required]
-    [StringLength(100)]
-    public string TerminalName { get; set; } = string.Empty;
-
-    [Range(0, 100000000)]
-    public double OpeningFloat { get; set; }
-}
-
-public class BoxOfficeScopeRequest
-{
-    public Guid? TheaterId { get; set; }
-}
-
-public class PayInOutRequest
-{
-    public Guid? TheaterId { get; set; }
-
-    /// <summary>PayIn or PayOut only.</summary>
-    public CashMovementType Type { get; set; }
-
-    [Range(1, 100000000)]
-    public double Amount { get; set; }
-
-    [Required]
-    [StringLength(500)]
-    public string Note { get; set; } = string.Empty;
-
-    /// <summary>Required for a PayOut.</summary>
-    public ManagerOverrideDTO? Override { get; set; }
-}
-
-public class CashMovementDTO
-{
-    public Guid Id { get; set; }
-    public CashMovementType Type { get; set; }
-    /// <summary>Signed: positive money in, negative money out.</summary>
-    public double Amount { get; set; }
-    public Guid? InvoiceId { get; set; }
-    public string? Note { get; set; }
-    public DateTime CreationTime { get; set; }
-}
-
-public class CashDrawerDTO
-{
-    /// <summary>False when the caller has no open drawer (all other fields are then empty).</summary>
-    public bool IsOpen { get; set; }
-    public Guid Id { get; set; }
-    public Guid TheaterId { get; set; }
-    public string TerminalName { get; set; } = string.Empty;
-    public DateTime OpenedAt { get; set; }
-    public double OpeningFloat { get; set; }
-    public double CashSales { get; set; }
-    public double PayIns { get; set; }
-    public double PayOuts { get; set; }
-    public double Refunds { get; set; }
-    /// <summary>Opening float + sales + pay-ins - pay-outs - refunds.</summary>
-    public double ExpectedCash { get; set; }
-    /// <summary>Newest first (up to 20).</summary>
-    public List<CashMovementDTO> RecentMovements { get; set; } = new();
 }
 
 public class ShowtimesTodayRequest

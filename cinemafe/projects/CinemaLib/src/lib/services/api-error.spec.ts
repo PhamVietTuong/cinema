@@ -57,15 +57,13 @@ describe('api error translation', () => {
   it('translates an exact message', () => {
     registerApiErrorTranslator(translatorFor(API_ERRORS_VI));
 
-    expect(translateApiError('This theater has no active checklist of that kind.'))
-      .toBe('Rạp này chưa có danh sách kiểm tra nào đang dùng thuộc loại đó.');
+    expect(translateApiError('A combo needs at least one component.'))
+      .toBe('Combo cần có ít nhất một thành phần.');
   });
 
   it('translates an interpolated message with its captured params', () => {
     registerApiErrorTranslator(translatorFor(API_ERRORS_VI));
 
-    expect(translateApiError('3 required item(s) are not done yet.'))
-      .toBe('Còn 3 mục bắt buộc chưa hoàn thành.');
     expect(translateApiError("'Dune' runs 155 minutes; the showtime must end no earlier than 21:30."))
       .toBe("'Dune' dài 155 phút; suất chiếu phải kết thúc không sớm hơn 21:30.");
     expect(translateApiError('Movie 3f2a9c1e-0000-4000-8000-000000000001 not found.'))

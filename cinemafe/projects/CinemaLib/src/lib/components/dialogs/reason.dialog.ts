@@ -61,7 +61,7 @@ export interface ReasonDialogResult {
 
 /**
  * One dialog for every "confirm this with a reason" step: reject with a note, receive with quantities,
- * void/refund/waste with a reason code. Configure only the parts you need through `ReasonDialogData`.
+ * void/waste with a reason code. Configure only the parts you need through `ReasonDialogData`.
  * Opened through `DialogService.openReasonDialog()`; resolves a `ReasonDialogResult`, or undefined on cancel.
  */
 @Component({

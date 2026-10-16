@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, Component, effect, inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import {
   EmptyStateComponent, SharedModule, CinemaServiceAgent, StatusPillComponent,
@@ -38,7 +37,6 @@ export class ScheduleBoardComponent {
   private readonly _ops = inject(CinemaServiceAgent.HttpService);
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _store = inject(Store);
-  private readonly _router = inject(Router);
   private readonly _cd = inject(ChangeDetectorRef);
 
   constructor() {
@@ -87,12 +85,6 @@ export class ScheduleBoardComponent {
       this.loading = false;
       this._store.dispatch(hideLoading());
       this._cd.markForCheck();
-    });
-  }
-
-  openChecklist(showTime: CinemaServiceAgent.ScheduleBoardShowTimeDTO, room: CinemaServiceAgent.ScheduleBoardRoomDTO): void {
-    this._router.navigate(['/checklists/run', showTime.showTimeId, room.roomId], {
-      queryParams: { kind: CinemaServiceAgent.ChecklistKind.PreShow },
     });
   }
 

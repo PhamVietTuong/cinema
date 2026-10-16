@@ -450,12 +450,7 @@
     "statusPaid": "Paid",
     "statusPending": "Pending Payment",
     "statusCancelled": "Cancelled",
-    "statusFailed": "Failed",
-    "statusRefunded": "Refunded",
-    "requestRefundTooltip": "Request refund",
-    "confirmRefundBooking": "Are you sure you want to refund this booking?",
-    "refundSuccess": "Refund request successful.",
-    "refundFailed": "Refund failed."
+    "statusFailed": "Failed"
   },
   "chatbot": {
     "openAssistant": "Open support assistant",
@@ -465,7 +460,7 @@
     "send": "Send",
     "quickBooking": "How to book?",
     "quickShowtimes": "Showtimes",
-    "quickCancel": "Cancel / refund",
+    "quickCancel": "Cancel booking",
     "quickMembership": "Member offers",
     "quickNearby": "Theaters near me",
     "greeting": "Hello! I'm the CINEMA assistant. How can I help you?",
@@ -476,7 +471,7 @@
     "answerNearby": "Go to the \"Theaters\" page and tap \"Find nearest theater\" to sort by distance to you.",
     "answerPayment": "We support domestic cards and e-wallets (MoMo / Apple Pay / Google Pay) at the payment step.",
     "answerCombo": "You can add popcorn, drinks & combos right at the payment step, bundled into your order.",
-    "fallback": "I didn't quite get that. Try asking about: booking, showtimes, cancel/refund, membership, payment, or theaters near you."
+    "fallback": "I didn't quite get that. Try asking about: booking, showtimes, cancel, membership, payment, or theaters near you."
   },
   "promotions": {
     "pageTitle": "Promotions",
