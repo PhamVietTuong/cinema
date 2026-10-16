@@ -9,7 +9,7 @@ import { CinemaServiceAgent, ToastService } from 'CinemaLib';
   selector: 'app-theater-loyalty',
   standalone: false,
   templateUrl: './theater-loyalty.component.html',
-  styleUrls: ['./theater-catalog-tab.scss'],
+  styleUrls: ['./theater-catalog-tab.scss', './theater-loyalty.component.scss'],
 })
 export class TheaterLoyaltyComponent implements OnChanges {
   @Input({ required: true }) theaterId!: string;
@@ -19,6 +19,10 @@ export class TheaterLoyaltyComponent implements OnChanges {
   loading = false;
   saving = false;
   clearing = false;
+
+  /** Sample order used to turn the raw rates into a plain-language example under each field. */
+  readonly sampleOrderAmount = 165000;
+  readonly samplePoints = 100;
 
   constructor(
     private _fb: FormBuilder,
@@ -114,6 +118,19 @@ export class TheaterLoyaltyComponent implements OnChanges {
         this._cdr.markForCheck();
       },
     });
+  }
+
+  get earnExamplePoints(): number {
+    const rate = Number(this.form.value.pointsPerUnit) || 0;
+    if (rate <= 0) {
+      return 0;
+    }
+    return Math.floor(this.sampleOrderAmount / rate);
+  }
+
+  get redeemExampleAmount(): number {
+    const rate = Number(this.form.value.pointValueVnd) || 0;
+    return this.samplePoints * rate;
   }
 
   private _err(e: any, fallback: string): string {

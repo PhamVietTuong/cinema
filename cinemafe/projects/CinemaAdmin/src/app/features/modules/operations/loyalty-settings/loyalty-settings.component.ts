@@ -9,6 +9,7 @@ import { CinemaServiceAgent, ToastService } from 'CinemaLib';
   selector: 'app-loyalty-settings',
   standalone: false,
   templateUrl: './loyalty-settings.component.html',
+  styleUrls: ['./loyalty-settings.component.scss'],
 })
 export class LoyaltySettingsComponent implements OnInit {
   form: FormGroup;
