@@ -49,8 +49,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public ICashDrawerStore CashDrawerStore { get; }
     public IStaffReportStore StaffReportStore { get; }
     public IAfterSalesStore AfterSalesStore { get; }
-    public IComplaintStore ComplaintStore { get; }
-    public ICustomerServiceStore CustomerServiceStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
     {
@@ -93,8 +91,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         CashDrawerStore = new CashDrawerStore(db);
         StaffReportStore = new StaffReportStore(db);
         AfterSalesStore = new AfterSalesStore(db);
-        ComplaintStore = new ComplaintStore(db);
-        CustomerServiceStore = new CustomerServiceStore(db);
     }
 
     public Task<int> SaveChangesAsync()
