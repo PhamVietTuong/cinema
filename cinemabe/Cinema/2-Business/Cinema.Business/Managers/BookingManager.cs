@@ -227,19 +227,6 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
-            // Exchange: the old invoice is reversed first, inside this same transaction, so its seats are free for
-            // the new sale and everything commits or rolls back together.
-            var exchangedFrom = context.ExchangedFrom;
-            if (exchangedFrom is not null)
-            {
-                if (!await _uow.AfterSalesStore.TryClaimRefundAsync(exchangedFrom.Id, context.ExchangeReasonCode, DateTime.UtcNow))
-                {
-                    throw new InvalidOperationException("This invoice can no longer be exchanged.");
-                }
-                exchangedFrom.RefundReasonCode = context.ExchangeReasonCode;
-                await ReverseInvoiceEffectsAsync(exchangedFrom, context.StaffUserId, "Exchanged");
-            }
-
             var composed = await ComposeInvoiceAsync(BuildCounterInput(context, dryRun: false));
             var invoice = composed.Invoice;
             if (composed.Overrides.Count > 0 && context.ApproverUserId is null)
@@ -247,21 +234,8 @@ public class BookingManager : IBookingManager
                 throw new AccessDeniedException("Manager approval is required for a price override.");
             }
 
-            // Tenders are settled against what is still owed: the whole final amount, or in an exchange only the
-            // difference over the invoice being replaced (a cheaper replacement is paid back instead).
             var amountDue = invoice.FinalAmount;
-            double refundBack = 0;
-            if (exchangedFrom is not null)
-            {
-                var difference = Money(invoice.FinalAmount - exchangedFrom.FinalAmount, true);
-                amountDue = Math.Max(difference, 0);
-                refundBack = Math.Max(-difference, 0);
-            }
             var settlement = TenderSettlement.Settle(amountDue, request.Tenders);
-            if (settlement.CashApplied > 0 && context.CashDrawerSessionId is null)
-            {
-                throw new InvalidOperationException("Open a cash drawer before taking cash.");
-            }
 
             var paidAt = DateTime.UtcNow;
             invoice.Status              = InvoiceStatus.Paid;
@@ -270,7 +244,6 @@ public class BookingManager : IBookingManager
             invoice.PaymentMethod       = _counterPaymentMethod;
             invoice.TheaterId           = context.TheaterId;
             invoice.SoldByUserId        = context.StaffUserId;
-            invoice.CashDrawerSessionId = context.CashDrawerSessionId;
             if (invoice.FoodStatus == FoodOrderStatus.Pending && !request.HoldForPickup)
             {
                 // Food handed over at the counter with the receipt, unless the customer asked the kitchen to hold it.
@@ -278,7 +251,6 @@ public class BookingManager : IBookingManager
                 invoice.FoodHandedOverAt       = paidAt;
                 invoice.FoodHandedOverByUserId = context.StaffUserId;
             }
-            invoice.ExchangedFromInvoiceId = exchangedFrom?.Id;
 
             if (composed.PointsValue > 0)
             {
@@ -302,67 +274,6 @@ public class BookingManager : IBookingManager
             await RecordSaleMovementsAsync(composed.StockDemand, invoice, context.StaffUserId);
             var customer = await ApplyPaidSideEffectsAsync(invoice);
 
-            if (settlement.CashApplied > 0)
-            {
-                _uow.CashDrawerStore.StageMovement(new CashMovement
-                {
-                    CashDrawerSessionId = context.CashDrawerSessionId!.Value,
-                    TheaterId           = context.TheaterId,
-                    Type                = CashMovementType.Sale,
-                    Amount              = settlement.CashApplied,
-                    InvoiceId           = invoice.Id,
-                    UserId              = context.StaffUserId,
-                    Note                = invoice.Code,
-                });
-            }
-            if (refundBack > 0 && context.ExchangeRefundTender == PaymentTender.Cash)
-            {
-                if (context.CashDrawerSessionId is null)
-                {
-                    throw new InvalidOperationException("Open a cash drawer before paying cash back.");
-                }
-                var drawerTotals = await _uow.CashDrawerStore.GetTotalsByTypeAsync(context.CashDrawerSessionId.Value);
-                if (drawerTotals.Values.Sum() + settlement.CashApplied < refundBack)
-                {
-                    throw new InvalidOperationException("The drawer does not hold enough cash to pay the difference back.");
-                }
-                _uow.CashDrawerStore.StageMovement(new CashMovement
-                {
-                    CashDrawerSessionId = context.CashDrawerSessionId.Value,
-                    TheaterId           = context.TheaterId,
-                    Type                = CashMovementType.Refund,
-                    Amount              = -refundBack,
-                    InvoiceId           = exchangedFrom!.Id,
-                    UserId              = context.StaffUserId,
-                    Note                = $"Exchange {exchangedFrom.Code} -> {invoice.Code}",
-                });
-            }
-            if (exchangedFrom is not null)
-            {
-                _uow.AuditLogStore.Stage(new AuditLog
-                {
-                    TheaterId      = context.TheaterId,
-                    ActorUserId    = context.StaffUserId,
-                    ApproverUserId = context.ApproverUserId,
-                    Action         = AuditAction.Exchange,
-                    EntityType     = nameof(Invoice),
-                    EntityId       = invoice.Id,
-                    Amount         = invoice.FinalAmount,
-                    ReasonCode     = context.ExchangeReasonCode,
-                    Reason         = context.ExchangeNote,
-                    DataJson       = JsonSerializer.Serialize(new
-                    {
-                        FromInvoiceId = exchangedFrom.Id,
-                        FromInvoiceCode = exchangedFrom.Code,
-                        FromFinalAmount = exchangedFrom.FinalAmount,
-                        ToInvoiceCode = invoice.Code,
-                        ToFinalAmount = invoice.FinalAmount,
-                        AmountCollected = amountDue,
-                        RefundedBack = refundBack,
-                        RefundTender = refundBack > 0 ? context.ExchangeRefundTender : (PaymentTender?)null,
-                    }),
-                });
-            }
             if (composed.Overrides.Count > 0)
             {
                 _uow.AuditLogStore.Stage(new AuditLog

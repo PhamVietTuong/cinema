@@ -48,8 +48,6 @@ public class CinemaContext : DbContext
     public DbSet<ChecklistRunItem> ChecklistRunItem => Set<ChecklistRunItem>();
     public DbSet<StaffShift> StaffShift => Set<StaffShift>();
     public DbSet<InvoicePayment> InvoicePayment => Set<InvoicePayment>();
-    public DbSet<CashDrawerSession> CashDrawerSession => Set<CashDrawerSession>();
-    public DbSet<CashMovement> CashMovement => Set<CashMovement>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
