@@ -10,6 +10,7 @@
 -- table it references (FK target) — otherwise SQL Server refuses the drop.
 IF OBJECT_ID('dbo.__EFMigrationsHistory', 'U') IS NOT NULL
 DROP TABLE dbo.__EFMigrationsHistory;
+-- legacy (removed staff features: time clock, tasks)
 IF OBJECT_ID('dbo.StaffTask', 'U') IS NOT NULL
 DROP TABLE dbo.StaffTask;
 IF OBJECT_ID('dbo.TimeClockEntry', 'U') IS NOT NULL
@@ -26,21 +27,23 @@ IF OBJECT_ID('dbo.ChecklistTemplate', 'U') IS NOT NULL
 DROP TABLE dbo.ChecklistTemplate;
 IF OBJECT_ID('dbo.Incident', 'U') IS NOT NULL
 DROP TABLE dbo.Incident;
--- P7 customer service
+-- legacy (removed staff features: customer service / complaints)
 IF OBJECT_ID('dbo.Complaint', 'U') IS NOT NULL
 DROP TABLE dbo.Complaint;
 -- legacy (removed staff roles)
 IF OBJECT_ID('dbo.UserTheater', 'U') IS NOT NULL
 DROP TABLE dbo.UserTheater;
--- P4 box office
+-- legacy (removed staff features: cash close / drawer)
 IF OBJECT_ID('dbo.CashMovement', 'U') IS NOT NULL
 DROP TABLE dbo.CashMovement;
 IF OBJECT_ID('dbo.CashDrawerSession', 'U') IS NOT NULL
 DROP TABLE dbo.CashDrawerSession;
+-- P4 box office
 IF OBJECT_ID('dbo.InvoicePayment', 'U') IS NOT NULL
 DROP TABLE dbo.InvoicePayment;
 IF OBJECT_ID('dbo.AuditLog', 'U') IS NOT NULL
 DROP TABLE dbo.AuditLog;
+-- legacy (removed staff features: storage plans)
 IF OBJECT_ID('dbo.StoragePlanItem', 'U') IS NOT NULL
 DROP TABLE dbo.StoragePlanItem;
 IF OBJECT_ID('dbo.StoragePlan', 'U') IS NOT NULL
@@ -531,48 +534,6 @@ CREATE INDEX [IX_StockMovement_FoodAndDrinkId_CreationTime] ON [StockMovement] (
 CREATE INDEX [IX_StockMovement_TheaterId_CreationTime] ON [StockMovement] ([TheaterId], [CreationTime]);
 CREATE INDEX [IX_StockMovement_InvoiceId] ON [StockMovement] ([InvoiceId]);
 
-CREATE TABLE [StoragePlan] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [Code] nvarchar(30) NOT NULL,
-    [TheaterId] uniqueidentifier NOT NULL,
-    [Status] int NOT NULL,
-    [TargetDate] datetime NOT NULL,
-    [Supplier] nvarchar(200) NULL,
-    [Note] nvarchar(1000) NULL,
-    [CreatedByUserId] uniqueidentifier NOT NULL,
-    [SubmittedAt] datetime NULL,
-    [DecidedByUserId] uniqueidentifier NULL,
-    [DecidedAt] datetime NULL,
-    [RejectionReason] nvarchar(500) NULL,
-    [ReceivedByUserId] uniqueidentifier NULL,
-    [ReceivedAt] datetime NULL,
-    [RowVersion] rowversion NOT NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_StoragePlan] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_StoragePlan_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE CASCADE
-);
-CREATE UNIQUE INDEX [IX_StoragePlan_Code] ON [StoragePlan] ([Code]);
-CREATE INDEX [IX_StoragePlan_TheaterId_Status] ON [StoragePlan] ([TheaterId], [Status]);
-
-CREATE TABLE [StoragePlanItem] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [StoragePlanId] uniqueidentifier NOT NULL,
-    [FoodAndDrinkId] uniqueidentifier NOT NULL,
-    [PlannedQuantity] int NOT NULL,
-    [ReceivedQuantity] int NULL,
-    [UnitCost] float NULL,
-    [Note] nvarchar(500) NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_StoragePlanItem] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_StoragePlanItem_StoragePlan_StoragePlanId] FOREIGN KEY ([StoragePlanId]) REFERENCES [StoragePlan] ([Id]) ON DELETE CASCADE,
-    CONSTRAINT [FK_StoragePlanItem_FoodAndDrink_FoodAndDrinkId] FOREIGN KEY ([FoodAndDrinkId]) REFERENCES [FoodAndDrink] ([Id]) ON DELETE NO ACTION,
-    CONSTRAINT [CK_StoragePlanItem_PlannedQuantity] CHECK ([PlannedQuantity] > 0)
-);
-CREATE UNIQUE INDEX [IX_StoragePlanItem_StoragePlanId_FoodAndDrinkId] ON [StoragePlanItem] ([StoragePlanId], [FoodAndDrinkId]);
-CREATE INDEX [IX_StoragePlanItem_FoodAndDrinkId] ON [StoragePlanItem] ([FoodAndDrinkId]);
-
 CREATE TABLE [InvoiceTicket] (
     [InvoiceId] uniqueidentifier NOT NULL,
     [ShowTimeId] uniqueidentifier NOT NULL,
@@ -850,39 +811,6 @@ CREATE TABLE [StaffShift] (
 CREATE INDEX [IX_StaffShift_TheaterId_StartTime] ON [StaffShift] ([TheaterId], [StartTime]);
 CREATE INDEX [IX_StaffShift_UserId_StartTime] ON [StaffShift] ([UserId], [StartTime]);
 
-CREATE TABLE [TimeClockEntry] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [UserId] uniqueidentifier NOT NULL,
-    [ClockInAt] datetime NOT NULL,
-    [ClockOutAt] datetime NULL,
-    [Note] nvarchar(500) NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_TimeClockEntry] PRIMARY KEY ([Id])
-);
--- At most one open (not clocked out) entry per user.
-CREATE UNIQUE INDEX [IX_TimeClockEntry_UserId_Open] ON [TimeClockEntry] ([UserId]) WHERE [ClockOutAt] IS NULL;
-CREATE INDEX [IX_TimeClockEntry_TheaterId_ClockInAt] ON [TimeClockEntry] ([TheaterId], [ClockInAt]);
-
-CREATE TABLE [StaffTask] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [AssignedToUserId] uniqueidentifier NOT NULL,
-    [CreatedByUserId] uniqueidentifier NOT NULL,
-    [Title] nvarchar(200) NOT NULL,
-    [Description] nvarchar(2000) NULL,
-    [DueAt] datetime NULL,
-    [Status] int NOT NULL,
-    [CompletedAt] datetime NULL,
-    [IncidentId] uniqueidentifier NULL,
-    [ChecklistRunId] uniqueidentifier NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_StaffTask] PRIMARY KEY ([Id])
-);
-CREATE INDEX [IX_StaffTask_AssignedToUserId_Status] ON [StaffTask] ([AssignedToUserId], [Status]);
-CREATE INDEX [IX_StaffTask_TheaterId_Status_CreationTime] ON [StaffTask] ([TheaterId], [Status], [CreationTime]);
 -- ── end P8c workforce ────────────────────────────────────────────────────────
 
 -- ============================================================
@@ -953,50 +881,6 @@ BEGIN
     CREATE INDEX [IX_InvoicePayment_InvoiceId] ON [InvoicePayment] ([InvoiceId]);
 END
 
--- A cashier's drawer shift (Status: 0 Open, 1 Closed, 2 Reconciled). One Open session per user and per terminal.
-IF OBJECT_ID('dbo.CashDrawerSession', 'U') IS NULL
-BEGIN
-    CREATE TABLE [CashDrawerSession] (
-        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-        [TheaterId] uniqueidentifier NOT NULL,
-        [UserId] uniqueidentifier NOT NULL,
-        [TerminalName] nvarchar(100) NOT NULL,
-        [Status] int NOT NULL,
-        [OpenedAt] datetime NOT NULL,
-        [ClosedAt] datetime NULL,
-        [OpeningFloat] float NOT NULL,
-        [CountedCash] float NULL,
-        [ExpectedCash] float NULL,
-        [Variance] float NULL,
-        [CreationTime] datetime NOT NULL,
-        [LastUpdatedTime] datetime NULL,
-        CONSTRAINT [PK_CashDrawerSession] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_CashDrawerSession_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION,
-        CONSTRAINT [FK_CashDrawerSession_User_UserId] FOREIGN KEY ([UserId]) REFERENCES [User] ([Id]) ON DELETE NO ACTION
-    );
-    CREATE UNIQUE INDEX [IX_CashDrawerSession_UserId] ON [CashDrawerSession] ([UserId]) WHERE [Status] = 0;
-    CREATE UNIQUE INDEX [IX_CashDrawerSession_TheaterId_TerminalName] ON [CashDrawerSession] ([TheaterId], [TerminalName]) WHERE [Status] = 0;
-END
-
--- Signed cash change in a session (Type: 0 OpeningFloat, 1 Sale, 2 Refund, 3 PayIn, 4 PayOut); expected cash = SUM(Amount).
-IF OBJECT_ID('dbo.CashMovement', 'U') IS NULL
-BEGIN
-    CREATE TABLE [CashMovement] (
-        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-        [CashDrawerSessionId] uniqueidentifier NOT NULL,
-        [TheaterId] uniqueidentifier NOT NULL,
-        [Type] int NOT NULL,
-        [Amount] float NOT NULL,
-        [InvoiceId] uniqueidentifier NULL,
-        [UserId] uniqueidentifier NOT NULL,
-        [Note] nvarchar(500) NULL,
-        [CreationTime] datetime NOT NULL,
-        [LastUpdatedTime] datetime NULL,
-        CONSTRAINT [PK_CashMovement] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_CashMovement_CashDrawerSession_CashDrawerSessionId] FOREIGN KEY ([CashDrawerSessionId]) REFERENCES [CashDrawerSession] ([Id]) ON DELETE NO ACTION
-    );
-    CREATE INDEX [IX_CashMovement_CashDrawerSessionId] ON [CashMovement] ([CashDrawerSessionId]);
-END
 -- ===== end P4 box office =====
 
 -- ============================================================
@@ -1050,31 +934,6 @@ BEGIN
     EXEC('CREATE INDEX [IX_Invoice_ExchangedFromInvoiceId] ON [Invoice] ([ExchangedFromInvoiceId]) WHERE [ExchangedFromInvoiceId] IS NOT NULL');
 END
 -- ===== end P5 after-sales =====
-
--- ── P7 customer service ──────────────────────────────────────────────────────
--- Customer complaints and their compensation outcome. No FKs, like AuditLog/Incident: history survives deletions.
-CREATE TABLE [Complaint] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [CustomerUserId] uniqueidentifier NULL,
-    [InvoiceId] uniqueidentifier NULL,
-    [Category] int NOT NULL,
-    [Description] nvarchar(2000) NOT NULL,
-    [Status] int NOT NULL,
-    [Resolution] int NOT NULL DEFAULT 0,
-    [CompensationAmount] float NULL,
-    [CompensationRef] nvarchar(100) NULL,
-    [AssignedToUserId] uniqueidentifier NULL,
-    [CreatedByUserId] uniqueidentifier NOT NULL,
-    [ResolvedByUserId] uniqueidentifier NULL,
-    [ResolvedAt] datetime NULL,
-    [ResolutionNote] nvarchar(1000) NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_Complaint] PRIMARY KEY ([Id])
-);
-CREATE INDEX [IX_Complaint_TheaterId_Status_CreationTime] ON [Complaint] ([TheaterId], [Status], [CreationTime]);
--- ── end P7 customer service ──────────────────────────────────────────────────
 
 -- ============================================================
 -- EF Core migrations baseline
