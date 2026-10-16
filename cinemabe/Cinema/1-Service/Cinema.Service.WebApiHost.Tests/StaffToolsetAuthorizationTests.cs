@@ -46,7 +46,7 @@ public class StaffToolsetAuthorizationTests
     public static IEnumerable<object[]> ApproverOnlyActions()
     {
         foreach (var action in new[] { nameof(CinemaController.SaveShift), nameof(CinemaController.DeleteShift), nameof(CinemaController.GetRoster),
-            nameof(CinemaController.GetTheaterStaff), nameof(CinemaController.GetTimeSheet), nameof(CinemaController.SaveTask), nameof(CinemaController.GetTasks) })
+            nameof(CinemaController.GetTheaterStaff) })
         {
             yield return new object[] { typeof(CinemaController), action };
         }
@@ -58,8 +58,7 @@ public class StaffToolsetAuthorizationTests
 
     public static IEnumerable<object[]> EveryStaffActions()
     {
-        foreach (var action in new[] { nameof(CinemaController.ClockIn), nameof(CinemaController.ClockOut), nameof(CinemaController.GetMyClockStatus),
-            nameof(CinemaController.GetMyShifts), nameof(CinemaController.GetMyTasks), nameof(CinemaController.SetMyTaskStatus) })
+        foreach (var action in new[] { nameof(CinemaController.GetMyShifts) })
         {
             yield return new object[] { typeof(CinemaController), action };
         }

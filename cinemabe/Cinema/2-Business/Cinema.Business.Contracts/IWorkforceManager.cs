@@ -20,24 +20,4 @@ public interface IWorkforceManager
     /// <summary>Creates/edits a shift. The user must be an active staff member of the theater with no overlapping shift (400 otherwise).</summary>
     Task<StaffShiftDTO> SaveShiftAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, Guid theaterId, SaveStaffShiftRequest request);
     Task DeleteShiftAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, DeleteStaffShiftRequest request);
-
-    /// <summary>Starts a time-clock entry. A second clock-in while one is open is 400 (also enforced by a unique index).</summary>
-    Task<TimeClockEntryDTO> ClockInAsync(Guid theaterId, Guid userId, ClockInRequest request);
-
-    /// <summary>Closes the caller's open entry; 400 when they are not clocked in.</summary>
-    Task<TimeClockEntryDTO> ClockOutAsync(Guid userId, ClockOutRequest request);
-    Task<ClockStatusDTO> GetMyClockStatusAsync(Guid userId);
-
-    /// <summary>Clock entries of a theater in a range (at most 31 days), with worked minutes. Reporting only (D8).</summary>
-    Task<List<TimeClockEntryDTO>> GetTimeSheetAsync(Guid theaterId, TimeSheetRequest request);
-
-    /// <summary>Creates/edits a task assigned to a staff member of the theater, optionally linked to an incident or checklist run.</summary>
-    Task<StaffTaskDTO> SaveTaskAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, Guid theaterId, Guid actorUserId, SaveStaffTaskRequest request);
-
-    /// <summary>Task page, newest first. Filters: assignedTo, status.</summary>
-    Task<DefaultSearchResults<StaffTaskDTO>> GetTasksAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, PagingSearchDTO search);
-    Task<List<StaffTaskDTO>> GetMyTasksAsync(Guid userId, MyTasksRequest request);
-
-    /// <summary>Moves one of the caller's own tasks between Open, InProgress and Done (403 for someone else's task).</summary>
-    Task<StaffTaskDTO> SetMyTaskStatusAsync(Guid userId, SetMyTaskStatusRequest request);
 }

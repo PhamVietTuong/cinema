@@ -8,8 +8,6 @@ namespace Cinema.Data.Stores;
 
 public class WorkforceStore : IWorkforceStore
 {
-    private const int _maxUserTasks = 200;
-
     private readonly CinemaContext _db;
 
     public WorkforceStore(CinemaContext db)
@@ -71,85 +69,4 @@ public class WorkforceStore : IWorkforceStore
             .ToListAsync();
     }
 
-    // ── Time clock ───────────────────────────────────────────────────────────
-
-    public async Task<TimeClockEntry?> GetOpenClockEntryAsync(Guid userId)
-    {
-        return await _db.TimeClockEntry.FirstOrDefaultAsync(e => e.UserId == userId && e.ClockOutAt == null);
-    }
-
-    public async Task AddClockEntryAsync(TimeClockEntry entry)
-    {
-        _db.TimeClockEntry.Add(entry);
-        await _db.SaveChangesAsync();
-    }
-
-    public async Task<List<TimeClockEntry>> GetClockEntriesAsync(Guid theaterId, DateTime fromUtc, DateTime toUtc, Guid? userId)
-    {
-        var query = _db.TimeClockEntry.AsNoTracking()
-            .Where(e => e.TheaterId == theaterId && e.ClockInAt >= fromUtc && e.ClockInAt < toUtc);
-        if (userId.HasValue)
-        {
-            var id = userId.Value;
-            query = query.Where(e => e.UserId == id);
-        }
-        return await query.OrderByDescending(e => e.ClockInAt).ToListAsync();
-    }
-
-    // ── Tasks ────────────────────────────────────────────────────────────────
-
-    public async Task<StaffTask?> GetTaskAsync(Guid id)
-    {
-        return await _db.StaffTask.FirstOrDefaultAsync(t => t.Id == id);
-    }
-
-    public void StageTask(StaffTask task)
-    {
-        _db.StaffTask.Add(task);
-    }
-
-    public async Task<(List<StaffTask> Items, int Total)> SearchTasksAsync(StaffTaskSearchCriteria criteria)
-    {
-        var query = _db.StaffTask.AsNoTracking().AsQueryable();
-        if (criteria.TheaterIds != null)
-        {
-            var theaterIds = criteria.TheaterIds;
-            query = query.Where(t => theaterIds.Contains(t.TheaterId));
-        }
-        if (criteria.AssignedToUserId.HasValue)
-        {
-            var assignedTo = criteria.AssignedToUserId.Value;
-            query = query.Where(t => t.AssignedToUserId == assignedTo);
-        }
-        if (criteria.Status.HasValue)
-        {
-            var status = criteria.Status.Value;
-            query = query.Where(t => t.Status == status);
-        }
-
-        var total = await query.CountAsync();
-        var items = await query
-            .OrderByDescending(t => t.CreationTime)
-            .ThenByDescending(t => t.Id)
-            .Skip(criteria.PageIndex * criteria.PageSize)
-            .Take(criteria.PageSize)
-            .ToListAsync();
-        return (items, total);
-    }
-
-    public async Task<List<StaffTask>> GetUserTasksAsync(Guid userId, bool includeClosed)
-    {
-        var query = _db.StaffTask.AsNoTracking().Where(t => t.AssignedToUserId == userId);
-        if (!includeClosed)
-        {
-            query = query.Where(t => t.Status == StaffTaskStatus.Open || t.Status == StaffTaskStatus.InProgress);
-        }
-        return await query
-            .OrderBy(t => t.Status)
-            .ThenBy(t => t.DueAt == null)
-            .ThenBy(t => t.DueAt)
-            .ThenByDescending(t => t.CreationTime)
-            .Take(_maxUserTasks)
-            .ToListAsync();
-    }
 }
