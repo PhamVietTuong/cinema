@@ -53,7 +53,6 @@ public static class DependencyInjection
         services.AddScoped<IGateManager, GateManager>();
         services.AddScoped<IScheduleBoardManager, ScheduleBoardManager>();
         services.AddScoped<IIncidentManager, IncidentManager>();
-        services.AddScoped<IChecklistManager, ChecklistManager>();
         services.AddScoped<IWorkforceManager, WorkforceManager>();
         services.AddScoped<IBoxOfficeManager, BoxOfficeManager>();
         services.AddSingleton<IStaffNotificationService, NoOpStaffNotificationService>();

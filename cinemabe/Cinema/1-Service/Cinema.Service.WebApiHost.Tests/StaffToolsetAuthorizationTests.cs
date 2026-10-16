@@ -50,10 +50,6 @@ public class StaffToolsetAuthorizationTests
         {
             yield return new object[] { typeof(CinemaController), action };
         }
-        foreach (var action in new[] { nameof(CinemaController.GetChecklistTemplates), nameof(CinemaController.SaveChecklistTemplate) })
-        {
-            yield return new object[] { typeof(CinemaController), action };
-        }
     }
 
     public static IEnumerable<object[]> EveryStaffActions()
@@ -62,8 +58,7 @@ public class StaffToolsetAuthorizationTests
         {
             yield return new object[] { typeof(CinemaController), action };
         }
-        foreach (var action in new[] { nameof(CinemaController.GetScheduleBoard), nameof(CinemaController.ReportIncident), nameof(CinemaController.GetIncidents),
-            nameof(CinemaController.OpenChecklist), nameof(CinemaController.SetChecklistItem), nameof(CinemaController.CompleteChecklist) })
+        foreach (var action in new[] { nameof(CinemaController.GetScheduleBoard), nameof(CinemaController.ReportIncident), nameof(CinemaController.GetIncidents) })
         {
             yield return new object[] { typeof(CinemaController), action };
         }
@@ -85,7 +80,7 @@ public class StaffToolsetAuthorizationTests
 
     [Theory]
     [MemberData(nameof(EveryStaffActions))]
-    public async Task EveryStaffRole_CanUseClockTasksIncidentsAndChecklists_ButCustomersCannot(Type controller, string action)
+    public async Task EveryStaffRole_CanUseShiftsScheduleAndIncidents_ButCustomersCannot(Type controller, string action)
     {
         foreach (var role in RoleNames.StaffApp.Split(','))
         {

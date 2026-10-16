@@ -17,6 +17,7 @@ IF OBJECT_ID('dbo.TimeClockEntry', 'U') IS NOT NULL
 DROP TABLE dbo.TimeClockEntry;
 IF OBJECT_ID('dbo.StaffShift', 'U') IS NOT NULL
 DROP TABLE dbo.StaffShift;
+-- legacy (removed staff features: checklists)
 IF OBJECT_ID('dbo.ChecklistRunItem', 'U') IS NOT NULL
 DROP TABLE dbo.ChecklistRunItem;
 IF OBJECT_ID('dbo.ChecklistRun', 'U') IS NOT NULL
@@ -731,68 +732,6 @@ CREATE TABLE [Incident] (
 CREATE INDEX [IX_Incident_TheaterId_Status_CreationTime] ON [Incident] ([TheaterId], [Status], [CreationTime]);
 -- ── end P8a incidents ────────────────────────────────────────────────────────
 
--- ── P8b checklists ───────────────────────────────────────────────────────────
--- Reusable per-theater templates; a run (a showtime's copy of the template) is created lazily on first open.
--- Runs keep no FK to the template or showtime, so template edits/deletions never rewrite history.
-CREATE TABLE [ChecklistTemplate] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [Name] nvarchar(200) NOT NULL,
-    [Kind] int NOT NULL,
-    [IsActive] bit NOT NULL DEFAULT 1,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_ChecklistTemplate] PRIMARY KEY ([Id])
-);
-CREATE UNIQUE INDEX [IX_ChecklistTemplate_TheaterId_Kind] ON [ChecklistTemplate] ([TheaterId], [Kind]) WHERE [IsActive] = 1;
-
-CREATE TABLE [ChecklistTemplateItem] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [ChecklistTemplateId] uniqueidentifier NOT NULL,
-    [SortOrder] int NOT NULL,
-    [Text] nvarchar(300) NOT NULL,
-    [IsRequired] bit NOT NULL DEFAULT 1,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_ChecklistTemplateItem] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_ChecklistTemplateItem_ChecklistTemplate] FOREIGN KEY ([ChecklistTemplateId]) REFERENCES [ChecklistTemplate] ([Id]) ON DELETE CASCADE
-);
-CREATE INDEX [IX_ChecklistTemplateItem_ChecklistTemplateId] ON [ChecklistTemplateItem] ([ChecklistTemplateId]);
-
-CREATE TABLE [ChecklistRun] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [ShowTimeId] uniqueidentifier NOT NULL,
-    [RoomId] uniqueidentifier NOT NULL,
-    [Kind] int NOT NULL,
-    [ChecklistTemplateId] uniqueidentifier NOT NULL,
-    [TemplateName] nvarchar(200) NOT NULL,
-    [CompletedAt] datetime NULL,
-    [CompletedByUserId] uniqueidentifier NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_ChecklistRun] PRIMARY KEY ([Id])
-);
-CREATE UNIQUE INDEX [IX_ChecklistRun_ShowTimeId_RoomId_Kind] ON [ChecklistRun] ([ShowTimeId], [RoomId], [Kind]);
-CREATE INDEX [IX_ChecklistRun_TheaterId_CreationTime] ON [ChecklistRun] ([TheaterId], [CreationTime]);
-
-CREATE TABLE [ChecklistRunItem] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [ChecklistRunId] uniqueidentifier NOT NULL,
-    [SortOrder] int NOT NULL,
-    [Text] nvarchar(300) NOT NULL,
-    [IsRequired] bit NOT NULL DEFAULT 1,
-    [IsDone] bit NOT NULL DEFAULT 0,
-    [DoneByUserId] uniqueidentifier NULL,
-    [DoneAt] datetime NULL,
-    [Note] nvarchar(500) NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_ChecklistRunItem] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_ChecklistRunItem_ChecklistRun] FOREIGN KEY ([ChecklistRunId]) REFERENCES [ChecklistRun] ([Id]) ON DELETE CASCADE
-);
-CREATE INDEX [IX_ChecklistRunItem_ChecklistRunId] ON [ChecklistRunItem] ([ChecklistRunId]);
--- ── end P8b checklists ───────────────────────────────────────────────────────
 
 -- ── P8c workforce ────────────────────────────────────────────────────────────
 -- Rosters, time clock and staff tasks. No FKs (like AuditLog/Incident): history survives user/theater deletions.

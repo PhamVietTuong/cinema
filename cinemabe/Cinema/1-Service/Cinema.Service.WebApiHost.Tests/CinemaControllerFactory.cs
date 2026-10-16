@@ -20,7 +20,6 @@ internal static class CinemaControllerFactory
         IStaffReportManager? reports = null,
         IScheduleBoardManager? board = null,
         IIncidentManager? incidents = null,
-        IChecklistManager? checklists = null,
         IManagerOverrideService? overrides = null,
         IWorkforceManager? workforce = null)
     {
@@ -54,7 +53,6 @@ internal static class CinemaControllerFactory
             reports: reports!,
             board: board!,
             incidents: incidents!,
-            checklists: checklists!,
             overrides: overrides!,
             workforce: workforce!)
         {

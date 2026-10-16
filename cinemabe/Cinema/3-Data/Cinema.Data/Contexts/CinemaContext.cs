@@ -42,10 +42,6 @@ public class CinemaContext : DbContext
     public DbSet<StockMovement> StockMovement => Set<StockMovement>();
     public DbSet<AuditLog> AuditLog => Set<AuditLog>();
     public DbSet<Incident> Incident => Set<Incident>();
-    public DbSet<ChecklistTemplate> ChecklistTemplate => Set<ChecklistTemplate>();
-    public DbSet<ChecklistTemplateItem> ChecklistTemplateItem => Set<ChecklistTemplateItem>();
-    public DbSet<ChecklistRun> ChecklistRun => Set<ChecklistRun>();
-    public DbSet<ChecklistRunItem> ChecklistRunItem => Set<ChecklistRunItem>();
     public DbSet<StaffShift> StaffShift => Set<StaffShift>();
     public DbSet<InvoicePayment> InvoicePayment => Set<InvoicePayment>();
 

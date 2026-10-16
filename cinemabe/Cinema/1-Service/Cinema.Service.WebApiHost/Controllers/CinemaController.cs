@@ -56,7 +56,6 @@ public class CinemaController : ApiControllerBase
     private readonly IStaffReportManager _reports;
     private readonly IScheduleBoardManager _board;
     private readonly IIncidentManager _incidents;
-    private readonly IChecklistManager _checklists;
     private readonly IManagerOverrideService _overrides;
     private readonly IWorkforceManager _workforce;
 
@@ -91,7 +90,6 @@ public class CinemaController : ApiControllerBase
         IStaffReportManager reports,
         IScheduleBoardManager board,
         IIncidentManager incidents,
-        IChecklistManager checklists,
         IManagerOverrideService overrides,
         IWorkforceManager workforce)
     {
@@ -102,7 +100,6 @@ public class CinemaController : ApiControllerBase
         _reports             = reports;
         _board               = board;
         _incidents           = incidents;
-        _checklists          = checklists;
         _overrides           = overrides;
         _workforce           = workforce;
         _movieManager    = movieManager;
@@ -2054,113 +2051,6 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    /// <summary>The theater's checklist templates (approvers manage them).</summary>
-    [Authorize(Roles = RoleNames.Approvers)]
-    [HttpPost]
-    [ProducesResponseType(typeof(List<ChecklistTemplateDTO>), 200)]
-    public async Task<IActionResult> GetChecklistTemplates([FromBody] GetChecklistTemplatesRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetChecklistTemplates)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _checklists.GetTemplatesAsync(theaterId));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetChecklistTemplates));
-        }
-    }
-
-    /// <summary>Creates or edits a checklist template (approvers only; one active template per theater and kind).</summary>
-    [Authorize(Roles = RoleNames.Approvers)]
-    [HttpPost]
-    [ProducesResponseType(typeof(ChecklistTemplateDTO), 200)]
-    public async Task<IActionResult> SaveChecklistTemplate([FromBody] SaveChecklistTemplateRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(SaveChecklistTemplate)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _checklists.SaveTemplateAsync(scope.ToTheaterFilter(), theaterId, request));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(SaveChecklistTemplate));
-        }
-    }
-
-    /// <summary>Opens a showtime's checklist, creating the run from the active template the first time (every staff role).</summary>
-    [Authorize(Roles = RoleNames.StaffApp)]
-    [HttpPost]
-    [ProducesResponseType(typeof(ChecklistRunDTO), 200)]
-    public async Task<IActionResult> OpenChecklist([FromBody] OpenChecklistRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(OpenChecklist)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _checklists.OpenAsync(theaterId, request));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(OpenChecklist));
-        }
-    }
-
-    /// <summary>Ticks or unticks one checklist item (every staff role).</summary>
-    [Authorize(Roles = RoleNames.StaffApp)]
-    [HttpPost]
-    [ProducesResponseType(typeof(ChecklistRunDTO), 200)]
-    public async Task<IActionResult> SetChecklistItem([FromBody] SetChecklistItemRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(SetChecklistItem)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            return Ok(await _checklists.SetItemAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(SetChecklistItem));
-        }
-    }
-
-    /// <summary>Completes a checklist; every required item must be done (400 otherwise).</summary>
-    [Authorize(Roles = RoleNames.StaffApp)]
-    [HttpPost]
-    [ProducesResponseType(typeof(ChecklistRunDTO), 200)]
-    public async Task<IActionResult> CompleteChecklist([FromBody] CompleteChecklistRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(CompleteChecklist)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            return Ok(await _checklists.CompleteAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(CompleteChecklist));
-        }
-    }
     #endregion
 
     #region Workforce
