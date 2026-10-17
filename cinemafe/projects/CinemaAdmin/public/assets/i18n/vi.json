@@ -17,6 +17,7 @@
     "invoices": "Hóa Đơn",
     "comments": "Kiểm Duyệt",
     "giftCards": "Thẻ Quà Tặng",
+    "loyaltySettings": "Cài Đặt Điểm Thưởng",
     "auditLog": "Nhật Ký Thao Tác"
   },
   "section": {
@@ -40,6 +41,7 @@
     "discounts": "Quản Lý Mã Giảm Giá",
     "invoices": "Quản Lý Hóa Đơn",
     "auditLog": "Nhật Ký Thao Tác",
+    "loyaltySettings": "Cài Đặt Điểm Thưởng",
     "default": "Bảng Điều Khiển"
   },
   "profile": {
@@ -278,7 +280,28 @@
       "tabFood": "Đồ Ăn & Thức Uống",
       "tabTimeSlots": "Khung Giờ",
       "tabTicketPrices": "Giá Vé",
-      "tabPatronCategories": "Đối Tượng Vé"
+      "tabPatronCategories": "Đối Tượng Vé",
+      "tabLoyalty": "Điểm Thưởng"
+    },
+    "loyalty": {
+      "title": "Điểm Thưởng",
+      "customSubtitle": "Rạp này đang dùng mức riêng",
+      "defaultSubtitle": "Đang áp dụng mức mặc định chung",
+      "customRate": "Mức riêng",
+      "earnLabel": "Mức tích điểm",
+      "earnUnit": "đ chi tiêu = 1 điểm",
+      "redeemLabel": "Mức quy đổi",
+      "redeemUnit": "đ mỗi điểm",
+      "earnExample": "Đơn hàng {{amount}}đ sẽ tích được {{points}} điểm",
+      "redeemExample": "Dùng {{points}} điểm sẽ được giảm {{amount}}đ",
+      "required": "Trường này là bắt buộc.",
+      "min": "Phải lớn hơn hoặc bằng 1.",
+      "saving": "Đang lưu…",
+      "clearOverride": "Dùng Lại Mức Mặc Định",
+      "saved": "Đã lưu mức điểm thưởng",
+      "saveFailed": "Không thể lưu mức điểm thưởng",
+      "cleared": "Đã chuyển về mức mặc định chung",
+      "clearFailed": "Không thể chuyển về mức mặc định chung"
     },
     "rooms": {
       "subtitle": "Phòng chiếu và sơ đồ ghế (số hàng × số cột).",
@@ -650,6 +673,21 @@
     "pageInfo": "Trang {{current}} / {{total}}",
     "prev": "Trước",
     "next": "Sau"
+  },
+  "loyaltySettings": {
+    "title": "Cài Đặt Điểm Thưởng",
+    "subtitle": "Mức quy đổi mặc định chung, áp dụng cho mọi rạp chưa có mức riêng.",
+    "cardTitle": "Mức Mặc Định Chung",
+    "earnLabel": "Mức tích điểm",
+    "earnUnit": "đ chi tiêu = 1 điểm",
+    "redeemLabel": "Mức quy đổi",
+    "redeemUnit": "đ mỗi điểm",
+    "required": "Trường này là bắt buộc.",
+    "min": "Phải lớn hơn hoặc bằng 1.",
+    "lastUpdated": "Cập nhật lần cuối",
+    "saving": "Đang lưu…",
+    "saved": "Đã lưu cài đặt điểm thưởng",
+    "saveFailed": "Không thể lưu cài đặt điểm thưởng"
   },
   "auditLog": {
     "title": "Nhật ký thao tác",

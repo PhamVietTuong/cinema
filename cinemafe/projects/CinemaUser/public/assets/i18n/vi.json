@@ -216,8 +216,9 @@
       "redeemPoints": "Đổi Điểm Thưởng",
       "pointsBalance": "Bạn có {{points}} điểm khả dụng",
       "pointsPlaceholder": "Số điểm muốn đổi",
-      "pointsHint": "Tối đa {{max}} điểm (1 điểm = 1.000đ)",
-      "pointsDiscount": "Giảm giá từ điểm ({{points}} điểm)"
+      "pointsHint": "Tối đa {{max}} điểm (1 điểm = {{value}}đ)",
+      "pointsDiscount": "Giảm giá từ điểm ({{points}} điểm)",
+      "pointsToEarn": "Bạn có thể nhận tối đa {{points}} điểm từ lần thanh toán này"
     },
     "confirm": {
       "title": "Thanh Toán",
@@ -467,7 +468,7 @@
     "answerBooking": "Chọn phim → suất chiếu → ghế → thanh toán. Vé điện tử (mã QR) sẽ nằm trong \"Tài khoản → Lịch Sử Đặt Vé\".",
     "answerShowtimes": "Lịch chiếu hiển thị trong trang chi tiết từng phim, nhóm theo định dạng 2D/3D/IMAX/4DX.",
     "answerCancel": "Bạn có thể hủy vé khi đơn còn ở trạng thái \"Chờ Thanh Toán\" trong mục Lịch Sử Đặt Vé.",
-    "answerMembership": "Mỗi 10.000đ chi tiêu được 1 điểm; hạng thành viên tự nâng theo điểm. Nhập mã giảm giá ở bước thanh toán.",
+    "answerMembership": "Bạn tích điểm trên mỗi lần thanh toán (tỷ lệ hiển thị khi thanh toán và có thể khác nhau theo rạp); hạng thành viên tự nâng theo điểm. Nhập mã giảm giá ở bước thanh toán.",
     "answerNearby": "Vào trang \"Rạp Chiếu\" và bấm \"Tìm rạp gần nhất\" để sắp xếp theo khoảng cách tới bạn.",
     "answerPayment": "Hỗ trợ thẻ nội địa và ví điện tử (MoMo / Apple Pay / Google Pay) ở bước thanh toán.",
     "answerCombo": "Bạn có thể thêm bắp nước & combo ngay ở bước thanh toán, tính gộp vào đơn.",

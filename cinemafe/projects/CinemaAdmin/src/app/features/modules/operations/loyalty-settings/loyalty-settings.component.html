@@ -1,0 +1,49 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'loyaltySettings.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'loyaltySettings.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <div class="ad-card loy-card">
+    <div class="loy-head">
+      <div class="loy-head-title">
+        <span class="loy-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2L3 7V12C3 16.97 6.84 21.6 12 23C17.16 21.6 21 16.97 21 12V7L12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M9 12.5L11 14.5L15.5 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <h3 class="ad-card-title">{{ 'loyaltySettings.cardTitle' | translate }}</h3>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()" class="loy-grid">
+      <div class="loy-field-card">
+        <label class="loy-field-label" for="globalEarnRate">{{ 'loyaltySettings.earnLabel' | translate }}</label>
+        <div class="loy-input-row">
+          <input id="globalEarnRate" class="loy-input" type="number" min="1" step="1" formControlName="pointsPerUnit">
+          <span class="loy-input-unit">{{ 'loyaltySettings.earnUnit' | translate }}</span>
+        </div>
+        <span class="ad-field-err" *ngIf="form.get('pointsPerUnit')?.touched && form.get('pointsPerUnit')?.hasError('required')">{{ 'loyaltySettings.required' | translate }}</span>
+        <span class="ad-field-err" *ngIf="form.get('pointsPerUnit')?.touched && form.get('pointsPerUnit')?.hasError('min')">{{ 'loyaltySettings.min' | translate }}</span>
+      </div>
+
+      <div class="loy-field-card">
+        <label class="loy-field-label" for="globalRedeemRate">{{ 'loyaltySettings.redeemLabel' | translate }}</label>
+        <div class="loy-input-row">
+          <input id="globalRedeemRate" class="loy-input" type="number" min="1" step="1" formControlName="pointValueVnd">
+          <span class="loy-input-unit">{{ 'loyaltySettings.redeemUnit' | translate }}</span>
+        </div>
+        <span class="ad-field-err" *ngIf="form.get('pointValueVnd')?.touched && form.get('pointValueVnd')?.hasError('required')">{{ 'loyaltySettings.required' | translate }}</span>
+        <span class="ad-field-err" *ngIf="form.get('pointValueVnd')?.touched && form.get('pointValueVnd')?.hasError('min')">{{ 'loyaltySettings.min' | translate }}</span>
+      </div>
+
+      <div class="loy-actions loy-footer">
+        <button class="ad-btn ad-btn--primary" type="submit" [disabled]="saving || loading">{{ (saving ? 'loyaltySettings.saving' : 'common.save') | translate }}</button>
+        <span class="loy-last-updated" *ngIf="lastUpdatedTime">{{ 'loyaltySettings.lastUpdated' | translate }}: {{ lastUpdatedTime | date:'medium' }}</span>
+      </div>
+    </form>
+  </div>
+</div>

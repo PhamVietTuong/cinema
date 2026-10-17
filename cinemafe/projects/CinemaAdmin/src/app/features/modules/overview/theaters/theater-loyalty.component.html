@@ -1,0 +1,54 @@
+<div class="ad-card loy-card">
+  <div class="loy-head">
+    <div class="loy-head-title">
+      <span class="loy-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2L3 7V12C3 16.97 6.84 21.6 12 23C17.16 21.6 21 16.97 21 12V7L12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M9 12.5L11 14.5L15.5 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <div>
+        <h3 class="ad-card-title">{{ 'theaters.loyalty.title' | translate }}</h3>
+        <p class="loy-subtitle">{{ (hasOverride ? 'theaters.loyalty.customSubtitle' : 'theaters.loyalty.defaultSubtitle') | translate }}</p>
+      </div>
+    </div>
+
+    <div class="loy-switch">
+      <span>{{ 'theaters.loyalty.customRate' | translate }}</span>
+      <span class="loy-switch-track" [class.on]="hasOverride">
+        <span class="loy-switch-knob"></span>
+      </span>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="loy-grid">
+    <div class="loy-field-card">
+      <label class="loy-field-label" for="theaterEarnRate">{{ 'theaters.loyalty.earnLabel' | translate }}</label>
+      <div class="loy-input-row">
+        <input id="theaterEarnRate" class="loy-input" type="number" min="1" step="1" formControlName="pointsPerUnit">
+        <span class="loy-input-unit">{{ 'theaters.loyalty.earnUnit' | translate }}</span>
+      </div>
+      <span class="ad-field-err" *ngIf="form.get('pointsPerUnit')?.touched && form.get('pointsPerUnit')?.hasError('required')">{{ 'theaters.loyalty.required' | translate }}</span>
+      <span class="ad-field-err" *ngIf="form.get('pointsPerUnit')?.touched && form.get('pointsPerUnit')?.hasError('min')">{{ 'theaters.loyalty.min' | translate }}</span>
+      <p class="loy-example">{{ 'theaters.loyalty.earnExample' | translate:{ amount: (sampleOrderAmount | number:'1.0-0'), points: earnExamplePoints } }}</p>
+    </div>
+
+    <div class="loy-field-card">
+      <label class="loy-field-label" for="theaterRedeemRate">{{ 'theaters.loyalty.redeemLabel' | translate }}</label>
+      <div class="loy-input-row">
+        <input id="theaterRedeemRate" class="loy-input" type="number" min="1" step="1" formControlName="pointValueVnd">
+        <span class="loy-input-unit">{{ 'theaters.loyalty.redeemUnit' | translate }}</span>
+      </div>
+      <span class="ad-field-err" *ngIf="form.get('pointValueVnd')?.touched && form.get('pointValueVnd')?.hasError('required')">{{ 'theaters.loyalty.required' | translate }}</span>
+      <span class="ad-field-err" *ngIf="form.get('pointValueVnd')?.touched && form.get('pointValueVnd')?.hasError('min')">{{ 'theaters.loyalty.min' | translate }}</span>
+      <p class="loy-example">{{ 'theaters.loyalty.redeemExample' | translate:{ points: samplePoints, amount: (redeemExampleAmount | number:'1.0-0') } }}</p>
+    </div>
+
+    <div class="loy-actions">
+      <button class="ad-btn ad-btn--primary" type="submit" [disabled]="saving || loading">{{ (saving ? 'theaters.loyalty.saving' : 'common.save') | translate }}</button>
+      <button class="ad-btn ad-btn--ghost" type="button" [disabled]="!hasOverride || clearing || loading" (click)="clearOverride()">
+        {{ 'theaters.loyalty.clearOverride' | translate }}
+      </button>
+    </div>
+  </form>
+</div>

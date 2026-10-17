@@ -36,6 +36,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public ITicketPriceStore TicketPriceStore { get; }
     public IReminderLogStore ReminderLogStore { get; }
     public IGiftCardStore GiftCardStore { get; }
+    public ILoyaltySettingStore LoyaltySettingStore { get; }
     public IPatronCategoryStore PatronCategoryStore { get; }
     public IRoomTypePatronCategoryPriceStore RoomTypePatronCategoryPriceStore { get; }
     public IComboItemStore ComboItemStore { get; }
@@ -74,6 +75,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         TicketPriceStore = new TicketPriceStore(db);
         ReminderLogStore = new ReminderLogStore(db);
         GiftCardStore = new GiftCardStore(db);
+        LoyaltySettingStore = new LoyaltySettingStore(db);
         PatronCategoryStore = new PatronCategoryStore(db);
         RoomTypePatronCategoryPriceStore = new RoomTypePatronCategoryPriceStore(db);
         ComboItemStore = new ComboItemStore(db);

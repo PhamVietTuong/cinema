@@ -27,6 +27,7 @@ public interface IApplicationUnitOfWork : IDisposable
     ITicketPriceStore TicketPriceStore { get; }
     IReminderLogStore ReminderLogStore { get; }
     IGiftCardStore GiftCardStore { get; }
+    ILoyaltySettingStore LoyaltySettingStore { get; }
     IPatronCategoryStore PatronCategoryStore { get; }
     IRoomTypePatronCategoryPriceStore RoomTypePatronCategoryPriceStore { get; }
     IComboItemStore ComboItemStore { get; }

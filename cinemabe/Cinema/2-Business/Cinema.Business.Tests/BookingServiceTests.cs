@@ -169,7 +169,7 @@ public class BookingServiceTests
         IReadOnlyDictionary<SeatKind, Guid>? kindMap = null)
     {
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId))
-            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, Room = new Room { Id = roomId, Status = RoomStatus.Active } });
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, Room = new Room { Id = roomId, TheaterId = theaterId, Status = RoomStatus.Active } });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(roomId))
             .ReturnsAsync(new Room { Id = roomId, TheaterId = theaterId, RoomTypeId = roomTypeId });
         _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(showTimeId))
@@ -593,7 +593,7 @@ public class BookingServiceTests
     private void SetupBaselineBookingMocks(Guid theaterId, Guid roomTypeId, Guid showTimeId, Guid roomId, int basePrice)
     {
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId))
-            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, Room = new Room { Id = roomId, Status = RoomStatus.Active } });
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, Room = new Room { Id = roomId, TheaterId = theaterId, Status = RoomStatus.Active } });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(roomId))
             .ReturnsAsync(new Room { Id = roomId, TheaterId = theaterId, RoomTypeId = roomTypeId });
         _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(showTimeId))
@@ -659,6 +659,116 @@ public class BookingServiceTests
         result.Tickets.First(t => t.SeatLabel == "A2").PatronCategory.Should().Be("Student");
         result.TotalAmount.Should().Be(175);
         result.FinalAmount.Should().Be(175);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_RedeemsPoints_UsesTheaterLoyaltyOverrideRate()
+    {
+        var theaterId    = Guid.NewGuid();
+        var roomTypeId   = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var seatA        = Guid.NewGuid();
+        var adultId      = Guid.NewGuid();
+        var customerId   = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult", Price = 100000, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+
+        var customer = new User { Id = customerId, Points = 50 };
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(customer)).ReturnsAsync(customer);
+        // Theater A overrides the global default: 1 point = 2,000 VND here.
+        _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId))
+            .ReturnsAsync(new LoyaltySetting { TheaterId = theaterId, PointsPerUnit = 1000, PointValueVnd = 2000 });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId      = ShowTimeId1,
+            RoomId          = RoomId1,
+            Seats           = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
+            PointsToRedeem  = 5,
+            PaymentMethod   = "Sandbox",
+        };
+
+        var result = await _sut.CreateBookingAsync(customerId, request);
+
+        result.PointsRedeemed.Should().Be(5);
+        result.DiscountAmount.Should().Be(10000);
+        result.FinalAmount.Should().Be(90000);
+        customer.Points.Should().Be(45);
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentAsync_CreditsPoints_UsesTheaterLoyaltyOverrideRate()
+    {
+        var theaterId  = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var invoice = new Invoice
+        {
+            Id          = Guid.NewGuid(),
+            UserId      = customerId,
+            TheaterId   = theaterId,
+            Status      = InvoiceStatus.Pending,
+            FinalAmount = 100000,
+            PaymentMethod = "Sandbox",
+        };
+        var customer = new User { Id = customerId, Points = 0 };
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(customer)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<Expression<Func<MemberShip, bool>>>()))
+            .ReturnsAsync(new List<MemberShip>());
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        // Theater A overrides the global default: 1 point per 500 VND earned here.
+        _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId))
+            .ReturnsAsync(new LoyaltySetting { TheaterId = theaterId, PointsPerUnit = 500, PointValueVnd = 500 });
+
+        var confirmed = await _sut.ConfirmPaymentAsync(customerId, invoice.Id, "SANDBOX-REF");
+
+        confirmed.Should().BeTrue();
+        customer.Points.Should().Be(200); // 100000 / 500
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentAsync_CreditsPoints_FallsBackToGlobalDefaultWhenNoOverride()
+    {
+        var theaterId  = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var invoice = new Invoice
+        {
+            Id          = Guid.NewGuid(),
+            UserId      = customerId,
+            TheaterId   = theaterId,
+            Status      = InvoiceStatus.Pending,
+            FinalAmount = 100000,
+            PaymentMethod = "Sandbox",
+        };
+        var customer = new User { Id = customerId, Points = 0 };
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(customer)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<Expression<Func<MemberShip, bool>>>()))
+            .ReturnsAsync(new List<MemberShip>());
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        // No theater override and no global row configured -> LoyaltyRates' hardcoded 1000/1000 fallback.
+        _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId)).ReturnsAsync((LoyaltySetting?)null);
+        _uowMock.Setup(u => u.LoyaltySettingStore.GetGlobalAsync()).ReturnsAsync((LoyaltySetting?)null);
+
+        var confirmed = await _sut.ConfirmPaymentAsync(customerId, invoice.Id, "SANDBOX-REF");
+
+        confirmed.Should().BeTrue();
+        customer.Points.Should().Be(100); // 100000 / 1000 (hardcoded default)
     }
 
     [Fact]

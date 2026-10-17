@@ -334,7 +334,7 @@ public class BoxOfficeTests
         await _sut.SellAsync(_theaterId, _staff.Id, request);
 
         _created.Single().UserId.Should().Be(member.Id);
-        member.Points.Should().Be(3 + 10);   // 1 point per 10,000 VND
+        member.Points.Should().Be(3 + 100);   // default rate: 1 point per 1,000 VND
         _notifications.Verify(n => n.SendAsync("member@cinema.vn", It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 

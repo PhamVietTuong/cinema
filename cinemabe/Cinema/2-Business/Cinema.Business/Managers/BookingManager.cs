@@ -624,8 +624,9 @@ public class BookingManager : IBookingManager
         }
 
         // Loyalty redemption: spend points for a discount. The points are reserved (deducted) now and
-        // restored if the booking is cancelled or expires. 1 point = _pointValueVnd VND,
-        // capped at the customer's balance and the order total so the amount can't go negative.
+        // restored if the booking is cancelled or expires. 1 point = this theater's PointValueVnd rate
+        // (its own override, or the global default), capped at the customer's balance and the order
+        // total so the amount can't go negative.
         var pointsRedeemed = 0;
         double pointsValue = 0;
         if (input.PointsToRedeem > 0 && input.CustomerUserId is Guid pointsUserId)
@@ -633,12 +634,13 @@ public class BookingManager : IBookingManager
             var redeemingUser = await _uow.UserStore.GetByIdAsync(pointsUserId);
             if (redeemingUser is not null)
             {
+                var (_, pointValueVnd) = await LoyaltyRates.LoadAsync(_uow, invoiceTheaterId);
                 var maxByBalance = redeemingUser.Points;
-                var maxByAmount  = (int)(finalAmount / _pointValueVnd);
+                var maxByAmount  = (int)(finalAmount / pointValueVnd);
                 pointsRedeemed = Math.Min(input.PointsToRedeem, Math.Min(maxByBalance, maxByAmount));
                 if (pointsRedeemed > 0)
                 {
-                    pointsValue     = pointsRedeemed * _pointValueVnd;
+                    pointsValue     = pointsRedeemed * pointValueVnd;
                     finalAmount    -= pointsValue;
                     discountAmount += pointsValue;
                     if (!input.DryRun)
@@ -1139,7 +1141,8 @@ public class BookingManager : IBookingManager
             user = await _uow.UserStore.GetByIdAsync(customerId);
             if (user is not null)
             {
-                user.Points += (int)(invoice.FinalAmount / _pointsPerUnit);
+                var (pointsPerUnit, _) = await LoyaltyRates.LoadAsync(_uow, invoice.TheaterId);
+                user.Points += (int)(invoice.FinalAmount / pointsPerUnit);
                 var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
                 var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
                 if (tier is not null)
@@ -1335,11 +1338,6 @@ public class BookingManager : IBookingManager
             Message     = "Ticket valid — checked in."
         };
     }
-
-    // 1 loyalty point per 10,000 VND of the paid amount.
-    private const int _pointsPerUnit = 10000;
-    // Redemption value: 1 loyalty point is worth this many VND when spent at checkout.
-    private const int _pointValueVnd = 1000;
 
     // Pricing: apply the member's tier discount first, then either a valid promo code or — when no
     // code is given — the best-value auto-apply promotion whose scope (theater/movie/day/time) matches

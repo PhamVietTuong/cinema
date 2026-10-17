@@ -18,7 +18,7 @@
   </div>
 
   <p class="saving">{{ 'booking.summary.pointsSaving' | translate:{ amount: (points * data.pointValue | number:'1.0-0') } }}</p>
-  <p class="tk-note centered">{{ 'booking.summary.pointsHint' | translate:{ max: data.max } }}</p>
+  <p class="tk-note centered">{{ 'booking.summary.pointsHint' | translate:{ max: data.max, value: (data.pointValue | number:'1.0-0') } }}</p>
 </div>
 <div class="tk-foot">
   <button type="button" class="tk-btn full" (click)="apply()">{{ 'booking.summary.discountApply' | translate }}</button>

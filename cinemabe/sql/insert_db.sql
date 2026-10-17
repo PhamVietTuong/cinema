@@ -43,6 +43,10 @@ INSERT INTO [MemberShip] ([Id], [Name], [MinPoints], [MaxPoints], [DiscountPerce
 (@MemberGold,    N'Hạng Vàng',       5000,  9999,  10, GETUTCDATE()),
 (@MemberDiamond, N'Hạng Kim Cương',  10000, 99999, 15, GETUTCDATE());
 
+-- ── Loyalty points (global default rate; theaters may override in LoyaltySetting) ──
+INSERT INTO [LoyaltySetting] ([Id], [TheaterId], [PointsPerUnit], [PointValueVnd], [CreationTime]) VALUES
+(NEWID(), NULL, 1000, 1000, GETUTCDATE());
+
 -- ── Movie Types ───────────────────────────────────────────────────────────────
 DECLARE @MTActionMovie uniqueidentifier = NEWID();
 DECLARE @MTComedy      uniqueidentifier = NEWID();

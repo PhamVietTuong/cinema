@@ -46,6 +46,7 @@ internal static class CinemaControllerFactory
             patronCategories: null!,
             roomTypePatronCategoryPrices: null!,
             combos: null!,
+            loyaltySettings: null!,
             env: null!,
             concessions: null!,
             gate: gate!,

@@ -4,6 +4,7 @@ using Cinema.Business.DTO.BoxOffice;
 using Cinema.Business.DTO.Catalog;
 using Cinema.Business.DTO.Concession;
 using Cinema.Business.DTO.Gate;
+using Cinema.Business.DTO.Loyalty;
 using Cinema.Business.DTO.Movies;
 using Cinema.Business.DTO.Operations;
 using Cinema.Business.DTO.Requests;
@@ -47,6 +48,7 @@ public class CinemaController : ApiControllerBase
     private readonly IPatronCategoryManager      _patronCategories;
     private readonly IRoomTypePatronCategoryPriceManager _roomTypePatronCategoryPrices;
     private readonly IComboManager               _combos;
+    private readonly ILoyaltySettingManager      _loyaltySettings;
     private readonly IWebHostEnvironment         _env;
 
     // Staff
@@ -82,6 +84,7 @@ public class CinemaController : ApiControllerBase
         IPatronCategoryManager patronCategories,
         IRoomTypePatronCategoryPriceManager roomTypePatronCategoryPrices,
         IComboManager combos,
+        ILoyaltySettingManager loyaltySettings,
         IWebHostEnvironment env,
         // Staff
         IConcessionManager concessions,
@@ -123,6 +126,7 @@ public class CinemaController : ApiControllerBase
         _ticketPrices        = ticketPrices;
         _patronCategories    = patronCategories;
         _roomTypePatronCategoryPrices = roomTypePatronCategoryPrices;
+        _loyaltySettings     = loyaltySettings;
         _env                 = env;
     }
 
@@ -1497,6 +1501,61 @@ public class CinemaController : ApiControllerBase
     public Task<IActionResult> DeleteInvoice([FromQuery] Guid id)
     {
         return RunNoContent(nameof(DeleteInvoice), () => _invoices.DeleteAsync(id));
+    }
+    #endregion
+
+    #region Loyalty
+    [HttpGet]
+    [ProducesResponseType(typeof(EffectiveLoyaltyRateDTO), 200)]
+    public Task<IActionResult> GetEffectiveLoyaltyRate([FromQuery] Guid? theaterId)
+    {
+        return Run(nameof(GetEffectiveLoyaltyRate), () => _loyaltySettings.GetEffectiveAsync(theaterId));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(LoyaltySettingDTO), 200)]
+    public Task<IActionResult> GetGlobalLoyaltySetting()
+    {
+        return Run(nameof(GetGlobalLoyaltySetting), () => _loyaltySettings.GetGlobalAsync());
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(LoyaltySettingDTO), 200)]
+    public Task<IActionResult> GetTheaterLoyaltySetting([FromQuery] Guid theaterId)
+    {
+        return Run(nameof(GetTheaterLoyaltySetting), () => _loyaltySettings.GetOverrideAsync(theaterId));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(LoyaltySettingDTO), 200)]
+    public Task<IActionResult> SaveLoyaltySetting([FromBody] SaveLoyaltySettingRequest request)
+    {
+        return Run(nameof(SaveLoyaltySetting), () => _loyaltySettings.SaveAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> ClearTheaterLoyaltyOverride([FromQuery] Guid theaterId)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ClearTheaterLoyaltyOverride)} being awakened to process request...");
+        try
+        {
+            var cleared = await _loyaltySettings.ClearOverrideAsync(theaterId);
+            if (cleared)
+            {
+                return NoContent();
+            }
+            return NotFound();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(ClearTheaterLoyaltyOverride));
+        }
     }
     #endregion
 

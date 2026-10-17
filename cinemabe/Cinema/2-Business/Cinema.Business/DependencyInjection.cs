@@ -23,6 +23,7 @@ public static class DependencyInjection
         // Web API host's Program.cs, where IConfiguration is available to read the "Payments" section.
         services.AddScoped<IInvoiceManager, InvoiceManager>();
         services.AddScoped<IGiftCardManager, GiftCardManager>();
+        services.AddScoped<ILoyaltySettingManager, LoyaltySettingManager>();
         services.AddScoped<ITheaterManager, TheaterManager>();
 
         // Catalog (simple lookup) managers
