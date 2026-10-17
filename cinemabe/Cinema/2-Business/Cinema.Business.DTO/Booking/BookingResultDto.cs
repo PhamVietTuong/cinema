@@ -11,6 +11,9 @@ public class BookingResultDTO
     public int PointsRedeemed { get; set; }
     public InvoiceStatus Status { get; set; }
     public string? PaymentUrl { get; set; }
+    /// <summary>Title of the auto-apply PromotionProgram that produced this price, if any (null when a
+    /// Discount — code or auto-apply — was the cheaper source instead, or neither applied).</summary>
+    public string? AppliedPromotionTitle { get; set; }
     public List<TicketItemDTO> Tickets { get; set; } = new();
 }
 

@@ -21,6 +21,9 @@ public class Invoice : BaseEntity
     public Guid? GiftCardId { get; set; }
     public double GiftCardAmount { get; set; }
     public Guid? DiscountId { get; set; }
+    /// <summary>Set when an auto-apply PromotionProgram (not a Discount) produced the cheaper price for
+    /// this invoice. Mutually exclusive with DiscountId being the source of the saving.</summary>
+    public Guid? PromotionProgramId { get; set; }
     /// <summary>Theater the sale belongs to (null only on rows predating the column).</summary>
     public Guid? TheaterId { get; set; }
     public SalesChannel Channel { get; set; } = SalesChannel.Online;
@@ -35,6 +38,7 @@ public class Invoice : BaseEntity
     public Guid? ExchangedFromInvoiceId { get; set; }
     public User? User { get; set; }
     public Discount? Discount { get; set; }
+    public PromotionProgram? PromotionProgram { get; set; }
     public ICollection<InvoiceTicket> InvoiceTickets { get; set; } = new List<InvoiceTicket>();
     public ICollection<InvoiceFoodAndDrink> InvoiceFoodAndDrinks { get; set; } = new List<InvoiceFoodAndDrink>();
     public ICollection<InvoicePayment> Payments { get; set; } = new List<InvoicePayment>();

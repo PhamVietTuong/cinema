@@ -52,6 +52,12 @@ public class BookingServiceTests
         // Default: no stock ledger rows (nothing sold) unless a test sets them up.
         _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new List<StockNetQuantity>());
+        // Default: no auto-apply PromotionProgram candidates unless a test sets them up — keeps every
+        // existing booking test's pricing on today's Discount-only path.
+        _uowMock.Setup(u => u.PromotionProgramStore.GetAutoApplyCandidatesAsync(It.IsAny<DateOnly>()))
+            .ReturnsAsync(new List<PromotionProgram>());
+        _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<Expression<Func<Holiday, bool>>>()))
+            .ReturnsAsync(new List<Holiday>());
     }
 
     private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId)
@@ -1549,6 +1555,210 @@ public class BookingServiceTests
         _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, 1), Times.Once);
         movements.Should().HaveCount(2).And.OnlyContain(m => m.Type == StockMovementType.SaleReversal && m.UserId == null);
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    // ── PromotionProgram auto-apply pricing ─────────────────────────────────────
+
+    /// <summary>Books one Adult-category standard seat at the given list price, with the given
+    /// auto-apply PromotionProgram candidates in scope. Monday 2026-03-02 19:00 (see SetupBaselineBookingMocks).</summary>
+    private async Task<BookingResultDTO> BookOneSeatWithProgramsAsync(
+        double listPrice, List<PromotionProgram> candidates, Guid? customerId = null, User? customer = null,
+        List<Discount>? autoApplyDiscounts = null, List<Holiday>? holidays = null)
+    {
+        var theaterId    = Guid.NewGuid();
+        var roomTypeId   = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var seatA        = Guid.NewGuid();
+        var adultId      = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult", Price = listPrice, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+        // These must be (re)configured after SetupBaselineBookingMocks above, which sets its own
+        // (empty) defaults for the same members — a setup made before calling this helper would
+        // otherwise be silently overridden by that call's defaults.
+        _uowMock.Setup(u => u.PromotionProgramStore.GetAutoApplyCandidatesAsync(It.IsAny<DateOnly>())).ReturnsAsync(candidates);
+        if (autoApplyDiscounts != null)
+        {
+            _uowMock.Setup(u => u.DiscountStore.GetActiveAutoApplyAsync(It.IsAny<DateTime>())).ReturnsAsync(autoApplyDiscounts);
+        }
+        if (holidays != null)
+        {
+            _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<Expression<Func<Holiday, bool>>>())).ReturnsAsync(holidays);
+        }
+        if (customer != null)
+        {
+            _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId!.Value)).ReturnsAsync(customer);
+        }
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId = ShowTimeId1,
+            RoomId     = RoomId1,
+            Seats = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
+            PaymentMethod = "Sandbox",
+        };
+
+        return await _sut.CreateBookingAsync(customerId ?? Guid.NewGuid(), request);
+    }
+
+    private static PromotionProgram FixedPriceProgram(double price, int displayOrder = 0, PromotionEligibility eligibility = PromotionEligibility.Everyone, Guid? minMemberShipId = null) => new()
+    {
+        Id = Guid.NewGuid(),
+        Title = "Happy Hour",
+        Mechanic = PromotionMechanic.FixedPrice,
+        Eligibility = eligibility,
+        MinMemberShipId = minMemberShipId,
+        IsPublished = true,
+        AutoApply = true,
+        DisplayOrder = displayOrder,
+        StartDate = new DateTime(2026, 1, 1),
+        EndDate = new DateTime(2026, 12, 31),
+        Prices = new List<PromotionProgramPrice> { new() { Price = price } },
+        Schedules = new List<PromotionProgramSchedule>(),
+    };
+
+    [Fact]
+    public async Task CreateBookingAsync_FixedPriceEveryoneProgram_AppliesAutomaticallyWithNoCode()
+    {
+        var program = FixedPriceProgram(price: 45000);
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(45000);
+        result.AppliedPromotionTitle.Should().Be("Happy Hour");
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_FixedPriceAboveListPrice_GivesNoSaving()
+    {
+        var program = FixedPriceProgram(price: 999999);
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(80000);
+        result.AppliedPromotionTitle.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_MembersProgram_AppliesOnlyToQualifyingTier()
+    {
+        var goldTierId = Guid.NewGuid();
+        _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<Expression<Func<MemberShip, bool>>>()))
+            .ReturnsAsync(new List<MemberShip> { new() { Id = goldTierId, Name = "Gold", MinPoints = 1000 } });
+        var program = FixedPriceProgram(price: 45000, eligibility: PromotionEligibility.Members, minMemberShipId: goldTierId);
+
+        var customerId = Guid.NewGuid();
+        var goldUser = new User { Id = customerId, MemberShipId = goldTierId };
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(goldTierId)).ReturnsAsync(new MemberShip { Id = goldTierId, Name = "Gold", MinPoints = 1000 });
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program }, customerId: customerId, customer: goldUser);
+
+        result.FinalAmount.Should().Be(45000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_MembersProgram_DoesNotApplyToAnonymousWalkIn()
+    {
+        var goldTierId = Guid.NewGuid();
+        _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<Expression<Func<MemberShip, bool>>>()))
+            .ReturnsAsync(new List<MemberShip> { new() { Id = goldTierId, Name = "Gold", MinPoints = 1000 } });
+        var program = FixedPriceProgram(price: 45000, eligibility: PromotionEligibility.Members, minMemberShipId: goldTierId);
+
+        // No customer set up at all (UserStore.GetByIdAsync defaults to null — see SetupBaselineBookingMocks).
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(80000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_InfoOrStudentProgram_NeverChangesPrice()
+    {
+        var infoProgram = FixedPriceProgram(price: 1);
+        infoProgram.Mechanic = PromotionMechanic.Info;
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { infoProgram });
+
+        result.FinalAmount.Should().Be(80000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AutoApplyDiscountCheaperThanProgram_ChargesDiscountNotProgram()
+    {
+        var program = FixedPriceProgram(price: 70000); // saves 10,000 off 80,000
+        var discount = new Discount
+        {
+            Id = Guid.NewGuid(), Percent = 50, IsActive = true, AutoApply = true, ApplyToAllTheaters = true,
+            StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31), DiscountTheaters = new List<DiscountTheater>(),
+        };
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program },
+            autoApplyDiscounts: new List<Discount> { discount });
+
+        result.FinalAmount.Should().Be(40000); // 50% off 80,000 beats the program's 70,000
+        result.AppliedPromotionTitle.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ProgramCheaperThanAutoApplyDiscount_ChargesProgramNotDiscount()
+    {
+        var program = FixedPriceProgram(price: 20000); // saves 60,000 off 80,000
+        var discount = new Discount
+        {
+            Id = Guid.NewGuid(), Percent = 10, IsActive = true, AutoApply = true, ApplyToAllTheaters = true,
+            StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31), DiscountTheaters = new List<DiscountTheater>(),
+        };
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program },
+            autoApplyDiscounts: new List<Discount> { discount });
+
+        result.FinalAmount.Should().Be(20000);
+        result.AppliedPromotionTitle.Should().Be("Happy Hour");
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ProgramExcludesHolidays_NotAppliedOnHolidayShowtime()
+    {
+        var program = FixedPriceProgram(price: 45000);
+        program.ExcludeHolidays = true;
+        var holidays = new List<Holiday> { new() { Date = DateOnly.FromDateTime(new DateTime(2026, 3, 2)), PriceMultiplier = 1.5 } };
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program }, holidays: holidays);
+
+        // The holiday's own 1.5x price multiplier still applies to the base ticket price (an existing,
+        // unrelated pricing factor) — only the program's own discount is excluded by ExcludeHolidays.
+        result.FinalAmount.Should().Be(120000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ProgramScheduleRestrictedToOtherDay_NotApplied()
+    {
+        var program = FixedPriceProgram(price: 45000);
+        // SetupBaselineBookingMocks' showtime is Monday 2026-03-02; restrict the program to Tuesday only (bit 2).
+        program.Schedules = new List<PromotionProgramSchedule> { new() { DaysOfWeekMask = 1 << (int)DayOfWeek.Tuesday } };
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(80000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ProgramChannelRestrictedToCounterOnly_NotAppliedOnline()
+    {
+        var program = FixedPriceProgram(price: 45000);
+        program.AllowedChannelsMask = 1 << (int)SalesChannel.Counter;
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(80000);
     }
 
 }
