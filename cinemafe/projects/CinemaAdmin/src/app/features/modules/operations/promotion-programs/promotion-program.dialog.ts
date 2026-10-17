@@ -95,10 +95,15 @@ export class PromotionProgramDialog implements OnInit {
     this.channelSelection = new Set(channelsMaskToList(item?.allowedChannelsMask));
     (item?.schedules ?? []).forEach(s => this._addScheduleRow(s));
 
-    this.form.get('mechanic')!.valueChanges.subscribe(() => this._cdr.markForCheck());
-    this.form.get('eligibility')!.valueChanges.subscribe(() => this._cdr.markForCheck());
-    this.form.get('autoApply')!.valueChanges.subscribe(() => this._cdr.markForCheck());
-    this.form.get('linkedDiscountId')!.valueChanges.subscribe(() => this._cdr.markForCheck());
+    const resetAutoApplyIfNowDisabled = () => {
+      if (this.autoApplyDisabled && this.form.value.autoApply) {
+        this.form.get('autoApply')!.setValue(false, { emitEvent: false });
+      }
+      this._cdr.markForCheck();
+    };
+    this.form.get('mechanic')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
+    this.form.get('eligibility')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
+    this.form.get('linkedDiscountId')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
   }
 
   ngOnInit(): void {
