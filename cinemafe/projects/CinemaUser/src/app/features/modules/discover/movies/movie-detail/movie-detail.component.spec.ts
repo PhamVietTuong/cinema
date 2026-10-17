@@ -22,12 +22,16 @@ describe('MovieDetailComponent', () => {
 
   const build = () => {
     const store = { select: (selector: unknown) => selector === selectIsAuthenticated ? of(isAuthenticated) : of(null), dispatch: vi.fn() };
-    const route = { snapshot: { paramMap: { get: () => 'movie-1' } } };
+    const route = { snapshot: { paramMap: { get: (key: string) => key === 'id' ? 'movie-1' : null } } };
     router = { navigate: vi.fn() };
+    const location = { replaceState: vi.fn() };
+    const destroyRef = { onDestroy: () => () => {} };
     const cdr = { markForCheck: vi.fn() };
     const translate = { instant: (key: string) => key };
     const toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
-    return new MovieDetailComponent(store as never, route as never, router as never, cdr as never, translate as never, toast as never);
+    return new MovieDetailComponent(
+      store as never, route as never, router as never, location as never, destroyRef as never, cdr as never, translate as never, toast as never,
+    );
   };
 
   describe('buildDateTabs', () => {

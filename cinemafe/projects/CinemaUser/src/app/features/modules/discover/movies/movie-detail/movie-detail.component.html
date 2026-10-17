@@ -159,7 +159,7 @@
               <button type="button" class="composer-btn" [disabled]="!newComment.trim()" (click)="submitComment()">{{ 'movies.detail.submitComment' | translate }}</button>
             </ng-container>
             <ng-template #loginToComment>
-              <a class="composer-btn" routerLink="/auth/login" [queryParams]="{ returnUrl: '/movies/' + movieId }">{{ 'movies.detail.loginToComment' | translate }}</a>
+              <a class="composer-btn" routerLink="/auth/login" [queryParams]="{ returnUrl: detailUrl }">{{ 'movies.detail.loginToComment' | translate }}</a>
             </ng-template>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { SharedModule } from 'CinemaLib';
+import { movieDetailCommands } from '../movie-route';
 
 /**
  * One movie poster card, shared by Home's carousels/grid and the Movies list —
@@ -19,6 +20,10 @@ export class MovieCardComponent {
   @Input() variant: 'showing' | 'coming' = 'showing';
   /** Fixed 234px width for a horizontal carousel row vs. fluid width in a grid. */
   @Input() fixedWidth = false;
+
+  get detailCommands(): string[] {
+    return movieDetailCommands(this.movie.id, this.movie.title);
+  }
 
   /** Falls back to the bundled placeholder when a poster URL fails to load. */
   onImgError(e: Event): void {

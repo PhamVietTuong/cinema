@@ -15,6 +15,11 @@ export const DISCOVER_ROUTES: Routes = [
         loadComponent: () => import('./movies/movie-list/movie-list.component').then(m => m.MovieListComponent)
       },
       {
+        path: ':id/:slug',
+        loadComponent: () => import('./movies/movie-detail/movie-detail.component').then(m => m.MovieDetailComponent)
+      },
+      {
+        // Legacy/no-slug fallback: kept so existing bookmarks and shared links without a slug still work.
         path: ':id',
         loadComponent: () => import('./movies/movie-detail/movie-detail.component').then(m => m.MovieDetailComponent)
       }
