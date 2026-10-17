@@ -4,11 +4,16 @@
 
 // ── Hero ──────────────────────────────────────────────────────────────────────
 .hero { position: relative; min-height: 460px; display: flex; align-items: flex-end; overflow: hidden; }
+.hero-backdrop-blur {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  filter: saturate(1.05) blur(30px) brightness(0.75);
+  transform: scale(1.1);
+  pointer-events: none;
+}
 .hero-backdrop {
   position: absolute; inset: 0;
-  background-size: cover; background-position: center top;
-  filter: saturate(1.05);
-  transform: scale(1.03);
+  background-size: contain; background-repeat: no-repeat; background-position: center;
   pointer-events: none;
 }
 // A two-stop scrim resolving to the page ground works in both light and dark —
