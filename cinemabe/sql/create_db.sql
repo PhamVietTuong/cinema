@@ -883,6 +883,61 @@ END
 -- ===== end P5 after-sales =====
 
 -- ============================================================
+-- Notification templates: DB-stored email/SMS templates ({{Token}} placeholders)
+-- ============================================================
+-- Identical in create_db.sql and upgrade_db.sql (idempotent). Code is the lookup key the sending
+-- code (BookingManager) uses; Channel: 1 Email, 2 Sms.
+IF OBJECT_ID('dbo.Template', 'U') IS NULL
+BEGIN
+    CREATE TABLE [Template] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [Code] nvarchar(100) NOT NULL,
+        [Name] nvarchar(200) NOT NULL,
+        [Channel] int NOT NULL,
+        [Subject] nvarchar(500) NULL,
+        [Body] nvarchar(max) NOT NULL,
+        [IsActive] bit NOT NULL DEFAULT 1,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_Template] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_Template_Code] ON [Template] ([Code]);
+END
+
+IF NOT EXISTS (SELECT 1 FROM [Template] WHERE [Code] = N'BookingConfirmationEmail')
+BEGIN
+    INSERT INTO [Template] ([Id], [Code], [Name], [Channel], [Subject], [Body], [IsActive], [CreationTime]) VALUES
+    (NEWID(), N'BookingConfirmationEmail', N'Xác nhận đặt vé (Email)', 1, N'Đặt vé thành công — {{BookingCode}}',
+N'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#faf6f0;padding:24px;">
+  <div style="text-align:center;margin-bottom:16px;">
+    <h2 style="color:#2b2420;margin:8px 0 4px;">Đặt Vé Thành Công!</h2>
+    <p style="color:#6b6258;margin:0;">Cảm ơn bạn, {{CustomerName}}. Vé của bạn đã được xác nhận.</p>
+  </div>
+  <div style="background:#ffffff;border-radius:12px;padding:20px;border:1px solid #eee2d2;">
+    <p><strong>Mã đặt vé:</strong> {{BookingCode}}</p>
+    <p><strong>Phim:</strong> {{MovieTitle}}</p>
+    <p><strong>Rạp chiếu:</strong> {{TheaterName}}</p>
+    <p><strong>Suất chiếu:</strong> {{ShowTime}}</p>
+    <p><strong>Phòng chiếu:</strong> {{RoomName}} ({{RoomTypeName}}, {{ProjectionForm}})</p>
+    <p><strong>Loại vé:</strong> {{TicketTypes}}</p>
+    <p><strong>Ghế:</strong> {{SeatLabels}}</p>
+    <p><strong>Bắp nước:</strong> {{Concessions}}</p>
+    <p style="font-size:18px;"><strong>Tổng tiền:</strong> {{TotalAmount}}</p>
+    <p><strong>Mã vé (QR):</strong> {{QrCodes}}</p>
+  </div>
+  <p style="text-align:center;color:#9a9186;margin-top:16px;">Xuất trình mã QR tại quầy hoặc cổng soát vé.</p>
+</div>', 1, GETUTCDATE());
+END
+
+IF NOT EXISTS (SELECT 1 FROM [Template] WHERE [Code] = N'BookingConfirmationSms')
+BEGIN
+    INSERT INTO [Template] ([Id], [Code], [Name], [Channel], [Subject], [Body], [IsActive], [CreationTime]) VALUES
+    (NEWID(), N'BookingConfirmationSms', N'Xác nhận đặt vé (SMS)', 2, NULL,
+N'Cinema: dat ve {{BookingCode}} thanh cong. {{MovieTitle}} {{ShowTime}} {{RoomName}}, ghe {{SeatLabels}}. Tong {{TotalAmount}}. Xuat trinh ma QR tai cong soat ve.', 1, GETUTCDATE());
+END
+-- ===== end notification templates =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- The schema above is intentionally maintained by hand (see CLAUDE.md: schema changes go into

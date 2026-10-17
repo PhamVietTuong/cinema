@@ -31,6 +31,7 @@ public class CinemaController : ApiControllerBase
     private readonly IAgeRestrictionManager _ageRestrictions;
     private readonly IDiscountTypeManager   _discountTypes;
     private readonly IMovieTypeManager      _movieTypes;
+    private readonly ITemplateManager       _templates;
     private readonly ISeatTypeManager       _seatTypes;
     private readonly IUserTypeManager       _userTypes;
     private readonly IMemberShipManager     _memberShips;
@@ -67,6 +68,7 @@ public class CinemaController : ApiControllerBase
         IAgeRestrictionManager ageRestrictions,
         IDiscountTypeManager discountTypes,
         IMovieTypeManager movieTypes,
+        ITemplateManager templates,
         ISeatTypeManager seatTypes,
         IUserTypeManager userTypes,
         IMemberShipManager memberShips,
@@ -110,6 +112,7 @@ public class CinemaController : ApiControllerBase
         _ageRestrictions = ageRestrictions;
         _discountTypes   = discountTypes;
         _movieTypes      = movieTypes;
+        _templates       = templates;
         _seatTypes       = seatTypes;
         _userTypes       = userTypes;
         _memberShips     = memberShips;
@@ -687,6 +690,63 @@ public class CinemaController : ApiControllerBase
             return notFound;
         }
         return await RunNoContent(nameof(DeleteMovieType), () => _movieTypes.DeleteAsync(id));
+    }
+    #endregion
+
+    #region Template
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<TemplateDTO>), 200)]
+    public Task<IActionResult> GetTemplates([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetTemplates), () => _templates.GetAsync(search));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(TemplateDTO), 200)]
+    public async Task<IActionResult> GetTemplate([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _templates.ExistsAsync(id), nameof(GetTemplate), nameof(Template), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(GetTemplate), () => _templates.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(TemplateDTO), 200)]
+    public Task<IActionResult> CreateTemplate([FromBody] CreateTemplateRequest request)
+    {
+        return Run(nameof(CreateTemplate), () => _templates.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(TemplateDTO), 200)]
+    public async Task<IActionResult> UpdateTemplate([FromBody] UpdateTemplateRequest request)
+    {
+        var notFound = await EnsureExistsAsync(() => _templates.ExistsAsync(request.Id), nameof(UpdateTemplate), nameof(Template), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(UpdateTemplate), () => _templates.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeleteTemplate([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _templates.ExistsAsync(id), nameof(DeleteTemplate), nameof(Template), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await RunNoContent(nameof(DeleteTemplate), () => _templates.DeleteAsync(id));
     }
     #endregion
 

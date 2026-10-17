@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Text.Json;
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Exceptions;
@@ -1168,21 +1169,141 @@ public class BookingManager : IBookingManager
 
     private async Task SendConfirmationAsync(Invoice invoice, User user)
     {
-        if (!string.IsNullOrWhiteSpace(user.Email))
+        var hasEmail = !string.IsNullOrWhiteSpace(user.Email);
+        var hasPhone = !string.IsNullOrWhiteSpace(user.Phone);
+        if (!hasEmail && !hasPhone)
         {
-            await _notifications.SendAsync(
-                user.Email,
-                $"Booking confirmed — {invoice.Code}",
-                $"Your payment was received. Booking code: {invoice.Code}. " +
-                $"Total paid: {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
+            return;
+        }
+
+        // Fallback text, used when no active template is found/configured for a channel, or if
+        // template lookup/render fails — a notification failure here must never break the payment.
+        var fallbackSubject = $"Booking confirmed — {invoice.Code}";
+        var fallbackBody = $"Your payment was received. Booking code: {invoice.Code}. " +
+            $"Total paid: {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.";
+        var fallbackSms = $"Cinema: booking {invoice.Code} confirmed. Total {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.";
+
+        var emailSubject = fallbackSubject;
+        var emailBody = fallbackBody;
+        var smsBody = fallbackSms;
+
+        try
+        {
+            var templates = (await _uow.TemplateStore.GetActiveByCodesAsync(
+                new[] { TemplateCodes.BookingConfirmationEmail, TemplateCodes.BookingConfirmationSms }))
+                .ToDictionary(t => t.Code);
+
+            if (templates.Count > 0)
+            {
+                var row = await _uow.InvoiceStore.GetBookingConfirmationAsync(invoice.Id);
+                var values = BuildConfirmationValues(invoice, user, row);
+
+                if (templates.TryGetValue(TemplateCodes.BookingConfirmationEmail, out var emailTemplate)
+                    && emailTemplate.Channel == TemplateChannel.Email)
+                {
+                    var renderedSubject = TemplateRenderer.Render(emailTemplate.Subject, values, encodeHtml: false);
+                    if (string.IsNullOrWhiteSpace(renderedSubject))
+                    {
+                        emailSubject = fallbackSubject;
+                    }
+                    else
+                    {
+                        emailSubject = renderedSubject;
+                    }
+                    emailBody = TemplateRenderer.Render(emailTemplate.Body, values);
+                }
+
+                if (templates.TryGetValue(TemplateCodes.BookingConfirmationSms, out var smsTemplate)
+                    && smsTemplate.Channel == TemplateChannel.Sms)
+                {
+                    smsBody = TemplateRenderer.Render(smsTemplate.Body, values, encodeHtml: false);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(SendConfirmationAsync)} template lookup/render failed for {invoice.Code}: {e.Message}");
+        }
+
+        if (hasEmail)
+        {
+            await _notifications.SendAsync(user.Email, emailSubject, emailBody);
         }
 
         // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
-        if (!string.IsNullOrWhiteSpace(user.Phone))
+        if (hasPhone)
         {
-            await _sms.SendSmsAsync(user.Phone,
-                $"Cinema: booking {invoice.Code} confirmed. Total {invoice.FinalAmount:0} VND. Show your e-ticket QR at the entrance.");
+            await _sms.SendSmsAsync(user.Phone, smsBody);
         }
+    }
+
+    private static Dictionary<string, string> BuildConfirmationValues(Invoice invoice, User user, BookingConfirmationRow? row)
+    {
+        var tickets = row?.Tickets ?? new List<BookingConfirmationTicketRow>();
+        var foods = row?.Foods ?? new List<BookingConfirmationFoodRow>();
+
+        string projectionForm;
+        string showDate;
+        string showStartTime;
+        string showTime;
+        if (row?.ShowStartTime is DateTime start)
+        {
+            if (row.ProjectionForm == ProjectionForm.ThreeD)
+            {
+                projectionForm = "3D";
+            }
+            else
+            {
+                projectionForm = "2D";
+            }
+            showDate = start.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+            showStartTime = start.ToString("HH:mm", CultureInfo.InvariantCulture);
+            showTime = start.ToString("HH:mm · dd/MM/yyyy", CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            projectionForm = "-";
+            showDate = "-";
+            showStartTime = "-";
+            showTime = "-";
+        }
+
+        return new Dictionary<string, string>
+        {
+            ["CustomerName"] = user.Name,
+            ["BookingCode"] = invoice.Code,
+            ["MovieTitle"] = row?.MovieTitle ?? "-",
+            ["TheaterName"] = row?.TheaterName ?? "-",
+            ["RoomName"] = row?.RoomName ?? "-",
+            ["RoomTypeName"] = row?.RoomTypeName ?? "-",
+            ["ProjectionForm"] = projectionForm,
+            ["ShowDate"] = showDate,
+            ["ShowStartTime"] = showStartTime,
+            ["ShowTime"] = showTime,
+            ["TicketTypes"] = JoinOrDash(tickets.Select(t => t.PatronCategoryName ?? string.Empty).Distinct()),
+            ["SeatLabels"] = JoinOrDash(tickets.Select(t => t.SeatLabel)),
+            ["TicketCount"] = tickets.Count.ToString(CultureInfo.InvariantCulture),
+            ["Concessions"] = JoinOrDash(foods.Select(f => $"{f.Quantity} x {f.Name}")),
+            ["SubTotal"] = Money(invoice.TotalAmount),
+            ["DiscountAmount"] = Money(invoice.DiscountAmount),
+            ["TotalAmount"] = Money(invoice.FinalAmount),
+            ["QrCodes"] = JoinOrDash(tickets.Select(t => t.QrCode ?? string.Empty)),
+        };
+    }
+
+    private static string Money(double amount)
+    {
+        return amount.ToString("N0", CultureInfo.InvariantCulture) + "đ";
+    }
+
+    private static string JoinOrDash(IEnumerable<string> values)
+    {
+        var list = values.Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
+        if (list.Count > 0)
+        {
+            return string.Join(", ", list);
+        }
+        return "-";
     }
 
     // ── Seat pricing ────────────────────────────────────────────────────────────

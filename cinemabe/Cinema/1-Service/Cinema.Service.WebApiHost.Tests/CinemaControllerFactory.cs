@@ -29,6 +29,7 @@ internal static class CinemaControllerFactory
             ageRestrictions: null!,
             discountTypes: null!,
             movieTypes: null!,
+            templates: null!,
             seatTypes: null!,
             userTypes: null!,
             memberShips: null!,

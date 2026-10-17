@@ -43,7 +43,7 @@ public class SmtpNotificationService : INotificationService
             {
                 client.Credentials = new NetworkCredential(user, pass);
             }
-            using var message = new MailMessage(from, to, subject, body);
+            using var message = new MailMessage(from, to, subject, body) { IsBodyHtml = true };
             await client.SendMailAsync(message);
             LogProvider.Current.Information($"[Notification:sent] To={to} | Subject={subject}");
         }
