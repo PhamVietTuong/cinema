@@ -6820,6 +6820,13 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "requiresIdCheck": {
+            "type": "boolean"
+          },
+          "idCheckMessage": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -6854,6 +6861,15 @@
             "type": "number",
             "format": "double",
             "minimum": 0.0
+          },
+          "requiresIdCheck": {
+            "type": "boolean"
+          },
+          "idCheckMessage": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0,
+            "nullable": true
           }
         }
       },
@@ -6888,6 +6904,15 @@
             "type": "number",
             "format": "double",
             "minimum": 0.0
+          },
+          "requiresIdCheck": {
+            "type": "boolean"
+          },
+          "idCheckMessage": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0,
+            "nullable": true
           }
         }
       },

@@ -379,7 +379,12 @@
       "empty": "This theater has no patron categories yet.",
       "seatKindLabel": "Seat kind",
       "priceLabel": "Price",
-      "pricePlaceholder": "90000"
+      "pricePlaceholder": "90000",
+      "requiresIdCheckLabel": "Requires ID check",
+      "requiresIdCheckHint": "Customers booking this category online must acknowledge that they need to present a national ID or student ID at the cinema.",
+      "idCheckMessageLabel": "Custom notice text (optional)",
+      "idCheckMessagePlaceholder": "Leave blank to use the default notice",
+      "idCheckMessageHint": "Shown to the customer instead of the default wording when set."
     },
     "food": {
       "subtitle": "Popcorn and drinks sold at this theater (combos are in the Combos tab).",

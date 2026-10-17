@@ -250,6 +250,8 @@ CREATE TABLE [PatronCategory] (
     [Description] nvarchar(max) NULL,
     [Price] float NOT NULL DEFAULT 0,
     [IsActive] bit NOT NULL DEFAULT 1,
+    [RequiresIdCheck] bit NOT NULL DEFAULT 0,
+    [IdCheckMessage] nvarchar(1000) NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_PatronCategory] PRIMARY KEY ([Id]),

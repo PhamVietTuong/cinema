@@ -18,6 +18,23 @@
         <mat-slide-toggle formControlName="isActive" aria-labelledby="pc-isActive-lbl"></mat-slide-toggle>
       </div>
 
+      <div class="dlg-switch">
+        <span class="dlg-switch-label" id="pc-requiresIdCheck-lbl">{{ 'theaters.patronCategories.requiresIdCheckLabel' | translate }}</span>
+        <mat-slide-toggle formControlName="requiresIdCheck" aria-labelledby="pc-requiresIdCheck-lbl"></mat-slide-toggle>
+      </div>
+      <p class="dlg-hint">{{ 'theaters.patronCategories.requiresIdCheckHint' | translate }}</p>
+
+      <div class="dlg-row" *ngIf="requiresIdCheck">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pc-idCheckMessage">{{ 'theaters.patronCategories.idCheckMessageLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <textarea matInput id="pc-idCheckMessage" rows="3" formControlName="idCheckMessage" maxlength="1000"
+                      [placeholder]="'theaters.patronCategories.idCheckMessagePlaceholder' | translate"></textarea>
+          </mat-form-field>
+          <p class="dlg-hint">{{ 'theaters.patronCategories.idCheckMessageHint' | translate }}</p>
+        </div>
+      </div>
+
       <div class="dlg-row">
         <div class="dlg-field">
           <label class="dlg-label" for="pc-description">{{ 'common.description' | translate }}</label>

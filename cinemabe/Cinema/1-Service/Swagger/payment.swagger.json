@@ -1032,6 +1032,13 @@
           "price": {
             "type": "number",
             "format": "double"
+          },
+          "requiresIdCheck": {
+            "type": "boolean"
+          },
+          "idCheckMessage": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

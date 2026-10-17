@@ -167,18 +167,18 @@ CROSS JOIN (VALUES
 ) AS s(Kind, Name, Description, Color);
 
 -- ── Patron categories (per theater, one row per (name, seat kind) combination) ──
-INSERT INTO [PatronCategory] ([Id], [TheaterId], [SeatTypeId], [Name], [Price], [IsActive], [CreationTime])
-SELECT NEWID(), t.Id, st.Id, c.Name, c.Price, 1, GETUTCDATE()
+INSERT INTO [PatronCategory] ([Id], [TheaterId], [SeatTypeId], [Name], [Price], [IsActive], [RequiresIdCheck], [CreationTime])
+SELECT NEWID(), t.Id, st.Id, c.Name, c.Price, 1, c.RequiresIdCheck, GETUTCDATE()
 FROM [Theater] t
 JOIN [SeatType] st ON st.TheaterId = t.Id
 CROSS JOIN (VALUES
-    (N'Người Lớn',              0, 90000),
-    (N'Người Lớn',              1, 170000),
-    (N'Học Sinh - Sinh Viên',   0, 65000),
-    (N'Người Cao Tuổi',         0, 60000),
-    (N'Người Cao Tuổi',         1, 115000),
-    (N'Trẻ Em',                 0, 50000)
-) AS c(Name, Kind, Price)
+    (N'Người Lớn',              0, 90000,  0),
+    (N'Người Lớn',              1, 170000, 0),
+    (N'Học Sinh - Sinh Viên',   0, 65000,  1),
+    (N'Người Cao Tuổi',         0, 60000,  1),
+    (N'Người Cao Tuổi',         1, 115000, 1),
+    (N'Trẻ Em',                 0, 50000,  0)
+) AS c(Name, Kind, Price, RequiresIdCheck)
 WHERE st.Kind = c.Kind;
 
 -- ── Food & drinks (per theater) ───────────────────────────────────────────────
