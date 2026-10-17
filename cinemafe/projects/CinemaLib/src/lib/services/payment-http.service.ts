@@ -1546,6 +1546,7 @@ export class BookingResultDTO implements IBookingResultDTO {
     pointsRedeemed?: number;
     status?: InvoiceStatus;
     paymentUrl?: string | undefined;
+    appliedPromotionTitle?: string | undefined;
     tickets?: TicketItemDTO[];
 
     constructor(data?: IBookingResultDTO) {
@@ -1567,6 +1568,7 @@ export class BookingResultDTO implements IBookingResultDTO {
             this.pointsRedeemed = _data["pointsRedeemed"];
             this.status = _data["status"];
             this.paymentUrl = _data["paymentUrl"];
+            this.appliedPromotionTitle = _data["appliedPromotionTitle"];
             if (Array.isArray(_data["tickets"])) {
                 this.tickets = [] as any;
                 for (let item of _data["tickets"])
@@ -1592,6 +1594,7 @@ export class BookingResultDTO implements IBookingResultDTO {
         data["pointsRedeemed"] = this.pointsRedeemed;
         data["status"] = this.status;
         data["paymentUrl"] = this.paymentUrl;
+        data["appliedPromotionTitle"] = this.appliedPromotionTitle;
         if (Array.isArray(this.tickets)) {
             data["tickets"] = [];
             for (let item of this.tickets)
@@ -1610,6 +1613,7 @@ export interface IBookingResultDTO {
     pointsRedeemed?: number;
     status?: InvoiceStatus;
     paymentUrl?: string | undefined;
+    appliedPromotionTitle?: string | undefined;
     tickets?: TicketItemDTO[];
 }
 
