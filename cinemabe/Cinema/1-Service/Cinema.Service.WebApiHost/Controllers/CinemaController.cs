@@ -249,7 +249,9 @@ public class CinemaController : ApiControllerBase
         LogProvider.Current.Information($"{GetType().Name}.GetMovie being awakened to process request...");
         try
         {
-            var result = await _movieManager.GetDetailAsync(id);
+            // Personalise CanReview for a signed-in user; anonymous callers always see false.
+            Guid? userId = User?.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+            var result = await _movieManager.GetDetailAsync(id, userId);
             return Ok(result);
         }
         catch (Exception e)

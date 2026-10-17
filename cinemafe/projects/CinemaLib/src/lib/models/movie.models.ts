@@ -27,6 +27,7 @@ export interface MovieDetail extends Movie {
   ageRestrictionMinAge: number;
   showTimes: ShowTimeSummary[];
   recentComments: Comment[];
+  canReview: boolean;
 }
 
 export interface ShowTimeSummary {

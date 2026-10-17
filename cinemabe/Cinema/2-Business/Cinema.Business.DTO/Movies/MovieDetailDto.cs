@@ -7,4 +7,7 @@ public class MovieDetailDTO : MovieDTO
     /// screening) — the movie-detail page's date tabs slice this window client-side.</summary>
     public List<ShowTimeSummaryDTO> ShowTimes { get; set; } = new();
     public List<CommentDTO> RecentComments { get; set; } = new();
+    /// <summary>True when the requesting user has watched the movie (paid, active ticket for a finished
+    /// screening) and may rate/comment. Always false for anonymous callers.</summary>
+    public bool CanReview { get; set; }
 }

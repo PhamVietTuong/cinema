@@ -57,4 +57,8 @@ public interface IInvoiceStore : IGenericStore<Invoice>
 
     /// <summary>Invoice code by invoice id for a batch of ids (one query). Unknown ids are absent.</summary>
     Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids);
+
+    /// <summary>True when the user holds at least one Paid, active ticket for a finished screening
+    /// (ShowTime.EndTime &lt; now) of the movie.</summary>
+    Task<bool> HasWatchedMovieAsync(Guid userId, Guid movieId, DateTime now);
 }

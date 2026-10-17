@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 import { selectIsAuthenticated } from 'CinemaLib';
 import { MovieDetailComponent } from './movie-detail.component';
 
@@ -18,16 +18,23 @@ const showTime = (over: Partial<any>): any => ({
 
 describe('MovieDetailComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
+  let store: { select: (selector: unknown) => unknown; dispatch: ReturnType<typeof vi.fn> };
+  let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; info: ReturnType<typeof vi.fn> };
   let isAuthenticated = true;
 
   const build = () => {
-    const store = { select: (selector: unknown) => selector === selectIsAuthenticated ? of(isAuthenticated) : of(null), dispatch: vi.fn() };
+    store = { select: (selector: unknown) => selector === selectIsAuthenticated ? of(isAuthenticated) : of(null), dispatch: vi.fn() };
     const route = { snapshot: { paramMap: { get: () => 'movie-1' } } };
     router = { navigate: vi.fn() };
     const cdr = { markForCheck: vi.fn() };
     const translate = { instant: (key: string) => key };
-    const toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
-    return new MovieDetailComponent(store as never, route as never, router as never, cdr as never, translate as never, toast as never);
+    toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
+    const actions$ = NEVER;
+    const destroyRef = { onDestroy: () => () => {} };
+    return new MovieDetailComponent(
+      store as never, route as never, router as never, cdr as never, translate as never, toast as never,
+      actions$ as never, destroyRef as never,
+    );
   };
 
   describe('buildDateTabs', () => {
@@ -168,6 +175,66 @@ describe('MovieDetailComponent', () => {
       c.selectDate(c.dateTabs[1].key);
 
       expect(c.selectedShowTimeId).toBe('');
+    });
+  });
+
+  describe('rateFromHero / submitComment eligibility gating', () => {
+    beforeEach(() => { isAuthenticated = true; });
+
+    it('rateFromHero dispatches rateMovie when the user can review', () => {
+      const c = build();
+      c.ngOnInit();
+
+      c.rateFromHero({ canReview: true }, 8);
+
+      expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({ movieId: 'movie-1', score: 8 }));
+      expect(toast.info).not.toHaveBeenCalled();
+    });
+
+    it('rateFromHero shows a hint and does not dispatch when the user has not watched the movie', () => {
+      const c = build();
+      c.ngOnInit();
+      store.dispatch.mockClear();
+
+      c.rateFromHero({ canReview: false }, 8);
+
+      expect(store.dispatch).not.toHaveBeenCalled();
+      expect(toast.info).toHaveBeenCalledWith('movies.detail.watchFirstToReview');
+    });
+
+    it('submitComment dispatches addComment when the user can review', () => {
+      const c = build();
+      c.ngOnInit();
+      c.newComment = 'Great movie';
+
+      c.submitComment({ canReview: true });
+
+      expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({ movieId: 'movie-1', content: 'Great movie' }));
+    });
+
+    it('submitComment shows a hint and does not dispatch when the user has not watched the movie', () => {
+      const c = build();
+      c.ngOnInit();
+      store.dispatch.mockClear();
+      c.newComment = 'Great movie';
+
+      c.submitComment({ canReview: false });
+
+      expect(store.dispatch).not.toHaveBeenCalled();
+      expect(toast.info).toHaveBeenCalledWith('movies.detail.watchFirstToReview');
+    });
+
+    it('redirects to login before checking eligibility when anonymous', () => {
+      isAuthenticated = false;
+      const c = build();
+      c.ngOnInit();
+      store.dispatch.mockClear();
+
+      c.rateFromHero({ canReview: false }, 8);
+
+      expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], { queryParams: { returnUrl: '/movies/movie-1' } });
+      expect(store.dispatch).not.toHaveBeenCalled();
+      expect(toast.info).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, mergeMap, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { CinemaServiceAgent } from '../../services/cinema-http.service';
+import { apiErrorMessage } from '../../services/api-error';
 import * as MoviesActions from './movies.actions';
 
 @Injectable()
@@ -83,8 +84,11 @@ export class MoviesEffects {
       ofType(MoviesActions.rateMovie),
       switchMap(({ movieId, score, review }) =>
         this._cinemaService.rateMovie(CinemaServiceAgent.RateMovieRequest.fromJS({ score, review }), movieId).pipe(
-          map(() => MoviesActions.loadMovieDetail({ id: movieId })),
-          catchError(err => of(MoviesActions.rateMovieFailure({ error: err.message })))
+          mergeMap(() => of(
+            MoviesActions.rateMovieSuccess({ movieId, score }),
+            MoviesActions.loadMovieDetail({ id: movieId })
+          )),
+          catchError(err => of(MoviesActions.rateMovieFailure({ error: apiErrorMessage(err, err?.message ?? '') })))
         )
       )
     )
@@ -95,8 +99,11 @@ export class MoviesEffects {
       ofType(MoviesActions.addComment),
       switchMap(({ movieId, content, parentId }) =>
         this._cinemaService.addComment(CinemaServiceAgent.AddCommentRequest.fromJS({ content, parentId }), movieId).pipe(
-          map(() => MoviesActions.loadMovieDetail({ id: movieId })),
-          catchError(err => of(MoviesActions.addCommentFailure({ error: err.message })))
+          mergeMap(() => of(
+            MoviesActions.addCommentSuccess({ movieId }),
+            MoviesActions.loadMovieDetail({ id: movieId })
+          )),
+          catchError(err => of(MoviesActions.addCommentFailure({ error: apiErrorMessage(err, err?.message ?? '') })))
         )
       )
     )

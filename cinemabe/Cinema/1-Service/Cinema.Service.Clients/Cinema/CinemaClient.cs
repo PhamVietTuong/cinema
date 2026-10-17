@@ -11757,6 +11757,9 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("recentComments", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public IList<CommentDTO> RecentComments { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("canReview", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool CanReview { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]

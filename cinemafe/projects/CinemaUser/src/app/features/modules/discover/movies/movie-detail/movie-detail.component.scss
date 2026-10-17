@@ -52,8 +52,10 @@
   transition: color 0.12s ease, transform 0.12s ease;
   &:hover { transform: scale(1.18); }
   &.on { color: var(--ml-action-strong); }
+  &:disabled { cursor: default; opacity: 0.5; &:hover { transform: none; } }
 }
 .score-count { font-size: 0.78rem; color: var(--ml-muted); }
+.score-hint { font-size: 0.72rem; color: var(--ml-muted); font-style: italic; }
 
 // ── Body ────────────────────────────────────────────────────────────────────
 .md-body { max-width: 1280px; margin: 0 auto; padding: 8px 40px 64px; }
@@ -159,6 +161,7 @@
   padding: 9px 20px; cursor: pointer; text-decoration: none; display: inline-block;
   &:disabled { opacity: 0.5; cursor: default; }
 }
+.composer-hint { font-size: 0.8rem; color: var(--ml-muted); font-style: italic; }
 
 .comment-list { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
 .comment-row { display: flex; gap: 12px; }

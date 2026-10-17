@@ -7998,6 +7998,7 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
     ageRestrictionMinAge?: number;
     showTimes?: ShowTimeSummaryDTO[];
     recentComments?: CommentDTO[];
+    canReview?: boolean;
 
     constructor(data?: IMovieDetailDTO) {
         super(data);
@@ -8018,6 +8019,7 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
                 for (let item of _data["recentComments"])
                     this.recentComments!.push(CommentDTO.fromJS(item));
             }
+            this.canReview = _data["canReview"];
         }
     }
 
@@ -8042,6 +8044,7 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
             for (let item of this.recentComments)
                 data["recentComments"].push(item.toJSON());
         }
+        data["canReview"] = this.canReview;
         super.toJSON(data);
         return data;
     }
@@ -8052,6 +8055,7 @@ export interface IMovieDetailDTO extends IMovieDTO {
     ageRestrictionMinAge?: number;
     showTimes?: ShowTimeSummaryDTO[];
     recentComments?: CommentDTO[];
+    canReview?: boolean;
 }
 
 export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {

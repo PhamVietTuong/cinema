@@ -45,13 +45,15 @@
         <div class="score-stars" (mouseleave)="onHeroStarLeave()">
           <button type="button" class="score-star" *ngFor="let s of heroStars"
                   [class.on]="s <= (hoverScore || myScore || displayScore(movie))"
+                  [disabled]="(isAuthenticated$ | async) && !canReview(movie)"
                   (mouseenter)="onHeroStarHover(s)"
-                  (click)="rateFromHero(s)"
+                  (click)="rateFromHero(movie, s)"
                   [attr.aria-label]="(('movies.detail.rateThisMovie' | translate) + ' ' + s + '/10')"
                   [title]="s + '/10'">★</button>
         </div>
         <span class="score-count" *ngIf="movie.ratingCount > 0; else noRatingsYet">{{ 'movies.detail.ratingCount' | translate:{ count: (movie.ratingCount | number) } }}</span>
         <ng-template #noRatingsYet><span class="score-count">{{ 'movies.detail.noRatingsYet' | translate }}</span></ng-template>
+        <span class="score-hint" *ngIf="(isAuthenticated$ | async) && !canReview(movie)">{{ 'movies.detail.watchFirstToReview' | translate }}</span>
       </div>
     </div>
   </section>
@@ -152,11 +154,16 @@
         </div>
         <div class="composer-body">
           <textarea class="comment-input" [(ngModel)]="newComment" rows="3"
-                    [readonly]="!(isAuthenticated$ | async)"
+                    [readonly]="!(isAuthenticated$ | async) || !canReview(movie)"
                     [placeholder]="'movies.detail.commentPlaceholder' | translate"></textarea>
           <div class="composer-actions">
             <ng-container *ngIf="(isAuthenticated$ | async); else loginToComment">
-              <button type="button" class="composer-btn" [disabled]="!newComment.trim()" (click)="submitComment()">{{ 'movies.detail.submitComment' | translate }}</button>
+              <ng-container *ngIf="canReview(movie); else watchFirstToComment">
+                <button type="button" class="composer-btn" [disabled]="!newComment.trim()" (click)="submitComment(movie)">{{ 'movies.detail.submitComment' | translate }}</button>
+              </ng-container>
+              <ng-template #watchFirstToComment>
+                <span class="composer-hint">{{ 'movies.detail.watchFirstToReview' | translate }}</span>
+              </ng-template>
             </ng-container>
             <ng-template #loginToComment>
               <a class="composer-btn" routerLink="/auth/login" [queryParams]="{ returnUrl: '/movies/' + movieId }">{{ 'movies.detail.loginToComment' | translate }}</a>

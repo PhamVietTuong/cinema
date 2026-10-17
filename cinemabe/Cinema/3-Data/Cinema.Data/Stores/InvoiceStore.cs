@@ -320,4 +320,12 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         }
         return await DbSet.AsNoTracking().Where(i => ids.Contains(i.Id)).ToDictionaryAsync(i => i.Id, i => i.Code);
     }
+
+    public async Task<bool> HasWatchedMovieAsync(Guid userId, Guid movieId, DateTime now)
+        => await Context.InvoiceTicket
+            .AnyAsync(t => t.Invoice.UserId == userId
+                           && t.Invoice.Status == InvoiceStatus.Paid
+                           && t.IsActive
+                           && t.ShowTimeRoom.ShowTime.MovieId == movieId
+                           && t.ShowTimeRoom.ShowTime.EndTime < now);
 }

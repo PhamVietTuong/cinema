@@ -368,7 +368,8 @@
       "noRatingsYet": "No ratings yet",
       "ratingSaved": "Thanks! Your rating was saved.",
       "commentPosted": "Comment posted.",
-      "rateThisMovie": "Rate this movie"
+      "rateThisMovie": "Rate this movie",
+      "watchFirstToReview": "Watch this movie first to rate or comment."
     },
     "showtimes": {
       "seats": "{{count}} seats",
