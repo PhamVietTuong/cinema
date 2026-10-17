@@ -1,0 +1,74 @@
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'templates.editTitle' : 'templates.newTitle') | translate }}</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="dlg-grid">
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="tpl-code">{{ 'templates.code' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="tpl-code" formControlName="code" [placeholder]="'templates.codePlaceholder' | translate">
+            <mat-error *ngIf="form.controls['code'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+        <div class="dlg-field">
+          <label class="dlg-label" for="tpl-channel">{{ 'templates.channel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select id="tpl-channel" formControlName="channel">
+              <mat-option *ngFor="let c of channelValues" [value]="c.value">{{ c.name | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="tpl-name">{{ 'templates.name' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="tpl-name" formControlName="name" [placeholder]="'templates.namePlaceholder' | translate">
+            <mat-error *ngIf="form.controls['name'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row" *ngIf="form.controls['channel'].value === channelEmail">
+        <div class="dlg-field">
+          <label class="dlg-label" for="tpl-subject">{{ 'templates.subject' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="tpl-subject" formControlName="subject" [placeholder]="'templates.subjectPlaceholder' | translate">
+            <mat-error *ngIf="form.controls['subject'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="tpl-body">{{ 'templates.body' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <textarea matInput id="tpl-body" formControlName="body" rows="14" style="font-family: monospace;"
+              [placeholder]="'templates.bodyPlaceholder' | translate"></textarea>
+            <mat-error *ngIf="form.controls['body'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <mat-checkbox formControlName="isActive">{{ 'templates.active' | translate }}</mat-checkbox>
+      </div>
+
+      <div class="dlg-row">
+        <p>{{ 'templates.placeholdersHint' | translate }}</p>
+        <code *ngFor="let token of placeholderTokens" style="margin-right: 8px;">{{ '{{' + token + '}}' }}</code>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+  </div>
+</form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

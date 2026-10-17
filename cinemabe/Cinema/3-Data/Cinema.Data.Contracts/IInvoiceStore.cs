@@ -57,4 +57,8 @@ public interface IInvoiceStore : IGenericStore<Invoice>
 
     /// <summary>Invoice code by invoice id for a batch of ids (one query). Unknown ids are absent.</summary>
     Task<Dictionary<Guid, string>> GetCodesByIdsAsync(IReadOnlyCollection<Guid> ids);
+
+    /// <summary>No-tracking projection of movie/theater/room/showtime plus ticket and food lines, for
+    /// rendering a booking-confirmation notification. Null only if the invoice does not exist.</summary>
+    Task<BookingConfirmationRow?> GetBookingConfirmationAsync(Guid invoiceId);
 }

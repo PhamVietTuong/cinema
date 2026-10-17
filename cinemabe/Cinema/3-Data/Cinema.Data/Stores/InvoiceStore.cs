@@ -320,4 +320,60 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         }
         return await DbSet.AsNoTracking().Where(i => ids.Contains(i.Id)).ToDictionaryAsync(i => i.Id, i => i.Code);
     }
+
+    public async Task<BookingConfirmationRow?> GetBookingConfirmationAsync(Guid invoiceId)
+    {
+        if (!await DbSet.AsNoTracking().AnyAsync(i => i.Id == invoiceId))
+        {
+            return null;
+        }
+
+        var header = await Context.InvoiceTicket
+            .AsNoTracking()
+            .Where(t => t.InvoiceId == invoiceId && t.IsActive)
+            .Select(t => new
+            {
+                MovieTitle = t.ShowTimeRoom.ShowTime.Movie.Title,
+                TheaterName = t.ShowTimeRoom.Room.Theater.Name,
+                RoomName = t.ShowTimeRoom.Room.Name,
+                RoomTypeName = t.ShowTimeRoom.Room.RoomType.Name,
+                ShowStartTime = t.ShowTimeRoom.ShowTime.StartTime,
+                ProjectionForm = t.ShowTimeRoom.ShowTime.ProjectionForm
+            })
+            .FirstOrDefaultAsync();
+
+        var tickets = await Context.InvoiceTicket
+            .AsNoTracking()
+            .Where(t => t.InvoiceId == invoiceId && t.IsActive)
+            .OrderBy(t => t.SeatLabel)
+            .Select(t => new BookingConfirmationTicketRow
+            {
+                SeatLabel = t.SeatLabel ?? (t.Seat.RowName + t.Seat.ColIndex),
+                PatronCategoryName = t.PatronCategoryName,
+                QrCode = t.QrCode
+            })
+            .ToListAsync();
+
+        var foods = await Context.InvoiceFoodAndDrink
+            .AsNoTracking()
+            .Where(f => f.InvoiceId == invoiceId)
+            .Select(f => new BookingConfirmationFoodRow
+            {
+                Name = f.FoodAndDrink.Name,
+                Quantity = f.Quantity
+            })
+            .ToListAsync();
+
+        return new BookingConfirmationRow
+        {
+            MovieTitle = header?.MovieTitle,
+            TheaterName = header?.TheaterName,
+            RoomName = header?.RoomName,
+            RoomTypeName = header?.RoomTypeName,
+            ShowStartTime = header?.ShowStartTime,
+            ProjectionForm = header?.ProjectionForm,
+            Tickets = tickets,
+            Foods = foods
+        };
+    }
 }

@@ -12,6 +12,7 @@ public class CinemaContext : DbContext
     public DbSet<MemberShip> MemberShip => Set<MemberShip>();
     public DbSet<Movie> Movie => Set<Movie>();
     public DbSet<MovieType> MovieType => Set<MovieType>();
+    public DbSet<Template> Template => Set<Template>();
     public DbSet<MovieTypeDetail> MovieTypeDetail => Set<MovieTypeDetail>();
     public DbSet<AgeRestriction> AgeRestriction => Set<AgeRestriction>();
     public DbSet<Theater> Theater => Set<Theater>();
