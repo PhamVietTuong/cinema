@@ -322,10 +322,12 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
     }
 
     public async Task<bool> HasWatchedMovieAsync(Guid userId, Guid movieId, DateTime now)
-        => await Context.InvoiceTicket
+    {
+        return await Context.InvoiceTicket
             .AnyAsync(t => t.Invoice.UserId == userId
                            && t.Invoice.Status == InvoiceStatus.Paid
                            && t.IsActive
                            && t.ShowTimeRoom.ShowTime.MovieId == movieId
                            && t.ShowTimeRoom.ShowTime.EndTime < now);
+    }
 }

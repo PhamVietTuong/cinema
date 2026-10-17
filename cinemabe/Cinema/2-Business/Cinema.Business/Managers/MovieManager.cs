@@ -148,10 +148,6 @@ public class MovieManager : IMovieManager
         {
             dto.CanReview = await CanReviewAsync(id, uid);
         }
-        else
-        {
-            dto.CanReview = false;
-        }
         return dto;
     }
 
@@ -322,7 +318,9 @@ public class MovieManager : IMovieManager
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Task<bool> CanReviewAsync(Guid movieId, Guid userId)
-        => _uow.InvoiceStore.HasWatchedMovieAsync(userId, movieId, DateTime.Now);
+    {
+        return _uow.InvoiceStore.HasWatchedMovieAsync(userId, movieId, DateTime.Now);
+    }
 
     private async Task EnsureCanReviewAsync(Guid movieId, Guid userId)
     {
