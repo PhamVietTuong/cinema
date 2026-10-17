@@ -22,6 +22,14 @@ public class PatronCategoryDTO
     public double Price { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>When true, CinemaUser shows a notice that ID will be checked at the theater. UI-only;
+    /// not enforced by the booking flow.</summary>
+    public bool RequiresIdCheck { get; set; }
+
+    /// <summary>Custom wording for the RequiresIdCheck notice. Null/empty means CinemaUser falls back
+    /// to its default translated message.</summary>
+    public string? IdCheckMessage { get; set; }
 }
 
 /// <summary>Creates one independent pricing row.</summary>
@@ -41,6 +49,11 @@ public class CreatePatronCategoryRequest
 
     [Range(0, double.MaxValue)]
     public double Price { get; set; }
+
+    public bool RequiresIdCheck { get; set; }
+
+    [StringLength(1000)]
+    public string? IdCheckMessage { get; set; }
 }
 
 /// <summary>Updates exactly the row with this Id — never touches rows sharing its Name.</summary>
@@ -60,4 +73,9 @@ public class UpdatePatronCategoryRequest : IHasId
 
     [Range(0, double.MaxValue)]
     public double Price { get; set; }
+
+    public bool RequiresIdCheck { get; set; }
+
+    [StringLength(1000)]
+    public string? IdCheckMessage { get; set; }
 }

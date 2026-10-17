@@ -172,6 +172,11 @@
       "kindStandard": "Ghế Đơn",
       "kindDouble": "Ghế Đôi"
     },
+    "idCheck": {
+      "title": "Yêu cầu xác minh giấy tờ",
+      "message": "Bạn đang mua loại vé đặc biệt dành cho học sinh, sinh viên, người dưới 22 tuổi hoặc người cao tuổi. Vui lòng mang theo Căn cước công dân (CCCD) hoặc thẻ học sinh/sinh viên (có ảnh) để nhân viên kiểm tra trước khi vào rạp. Nhân viên rạp có quyền từ chối cho vào nếu không đáp ứng các yêu cầu trên. Xin cảm ơn.",
+      "confirm": "Tôi đã hiểu"
+    },
     "summary": {
       "subtotal": "Tạm tính ({{count}} ghế)",
       "comboTotal": "Tổng cộng",

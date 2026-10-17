@@ -108,6 +108,8 @@ public class BookingManager : IBookingManager
                 Kind               = c.Kind,
                 IsDouble           = c.Kind == SeatKind.Double,
                 Price              = c.Price,
+                RequiresIdCheck    = c.RequiresIdCheck,
+                IdCheckMessage     = c.IdCheckMessage,
             })
             .OrderBy(p => p.Price)
             .ToList();
@@ -1197,7 +1199,7 @@ public class BookingManager : IBookingManager
     // for a new release, 0 for a long-running title — NOT a multiplier, so it never interacts with the
     // factor above). The whole context is resolved once per showtime+room and reused for every
     // seat/category.
-    private sealed record ResolvedCategory(Guid Id, string Name, Guid SeatTypeId, SeatKind Kind, double Price);
+    private sealed record ResolvedCategory(Guid Id, string Name, Guid SeatTypeId, SeatKind Kind, double Price, bool RequiresIdCheck, string? IdCheckMessage);
 
     private sealed record SeatPricingContext(
         IReadOnlyDictionary<Guid, ResolvedCategory> ByCategoryId,
@@ -1287,7 +1289,7 @@ public class BookingManager : IBookingManager
             }
             var price = Math.Round(roomTypePrice * priceFactor + threeDSurcharge + showTimeRoom.BasePrice, 2);
             var kind  = kindBySeatTypeId.TryGetValue(c.SeatTypeId, out var k) ? k : SeatKind.Standard;
-            byCategoryId[c.Id] = new ResolvedCategory(c.Id, c.Name, c.SeatTypeId, kind, price);
+            byCategoryId[c.Id] = new ResolvedCategory(c.Id, c.Name, c.SeatTypeId, kind, price, c.RequiresIdCheck, c.IdCheckMessage);
         }
 
         var minPriceByKind = byCategoryId.Values

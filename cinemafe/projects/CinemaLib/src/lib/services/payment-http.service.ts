@@ -1483,6 +1483,8 @@ export class ShowTimePriceDTO implements IShowTimePriceDTO {
     kind?: SeatKind;
     isDouble?: boolean;
     price?: number;
+    requiresIdCheck?: boolean;
+    idCheckMessage?: string | undefined;
 
     constructor(data?: IShowTimePriceDTO) {
         if (data) {
@@ -1501,6 +1503,8 @@ export class ShowTimePriceDTO implements IShowTimePriceDTO {
             this.kind = _data["kind"];
             this.isDouble = _data["isDouble"];
             this.price = _data["price"];
+            this.requiresIdCheck = _data["requiresIdCheck"];
+            this.idCheckMessage = _data["idCheckMessage"];
         }
     }
 
@@ -1519,6 +1523,8 @@ export class ShowTimePriceDTO implements IShowTimePriceDTO {
         data["kind"] = this.kind;
         data["isDouble"] = this.isDouble;
         data["price"] = this.price;
+        data["requiresIdCheck"] = this.requiresIdCheck;
+        data["idCheckMessage"] = this.idCheckMessage;
         return data;
     }
 }
@@ -1530,6 +1536,8 @@ export interface IShowTimePriceDTO {
     kind?: SeatKind;
     isDouble?: boolean;
     price?: number;
+    requiresIdCheck?: boolean;
+    idCheckMessage?: string | undefined;
 }
 
 export enum SeatKind {

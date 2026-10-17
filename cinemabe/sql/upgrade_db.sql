@@ -519,6 +519,18 @@ BEGIN
     (NEWID(), NULL, 1000, 1000, GETUTCDATE());
 END
 
+-- ===== patron category ID-check notice =====
+IF COL_LENGTH('dbo.PatronCategory', 'RequiresIdCheck') IS NULL
+BEGIN
+    ALTER TABLE [PatronCategory] ADD [RequiresIdCheck] bit NOT NULL CONSTRAINT [DF_PatronCategory_RequiresIdCheck] DEFAULT 0;
+END
+
+IF COL_LENGTH('dbo.PatronCategory', 'IdCheckMessage') IS NULL
+BEGIN
+    ALTER TABLE [PatronCategory] ADD [IdCheckMessage] nvarchar(1000) NULL;
+END
+-- ===== end patron category ID-check notice =====
+
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================

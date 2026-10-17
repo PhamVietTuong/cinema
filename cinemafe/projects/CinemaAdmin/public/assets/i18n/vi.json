@@ -379,7 +379,12 @@
       "empty": "Rạp này chưa có đối tượng vé nào.",
       "seatKindLabel": "Loại Ghế",
       "priceLabel": "Giá",
-      "pricePlaceholder": "90000"
+      "pricePlaceholder": "90000",
+      "requiresIdCheckLabel": "Yêu cầu kiểm tra giấy tờ",
+      "requiresIdCheckHint": "Khách đặt vé trực tuyến cho loại vé này phải xác nhận sẽ xuất trình CCCD hoặc thẻ học sinh/sinh viên tại rạp.",
+      "idCheckMessageLabel": "Nội dung thông báo tùy chỉnh (không bắt buộc)",
+      "idCheckMessagePlaceholder": "Để trống để dùng thông báo mặc định",
+      "idCheckMessageHint": "Hiển thị cho khách thay cho nội dung mặc định khi được thiết lập."
     },
     "food": {
       "subtitle": "Bắp và nước bán tại rạp này (combo nằm ở tab Combo).",
