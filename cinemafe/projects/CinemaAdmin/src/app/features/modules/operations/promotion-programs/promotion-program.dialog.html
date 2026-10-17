@@ -1,0 +1,245 @@
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'promotionPrograms.editTitle' : 'promotionPrograms.newTitle') | translate }}</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="dlg-grid">
+
+      <!-- Content -->
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-title">{{ 'promotionPrograms.titleLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-title" formControlName="title">
+            <mat-error *ngIf="form.controls['title'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-summary">{{ 'promotionPrograms.summaryLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-summary" formControlName="summary">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row dlg-row--2">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-banner">{{ 'promotionPrograms.bannerLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-banner" formControlName="bannerUrl" placeholder="https://...">
+          </mat-form-field>
+        </div>
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-order">{{ 'promotionPrograms.displayOrderLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-order" type="number" formControlName="displayOrder">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-switch">
+        <span class="dlg-switch-label" id="pp-published-lbl">{{ 'promotionPrograms.publishedLabel' | translate }}</span>
+        <mat-slide-toggle formControlName="isPublished" aria-labelledby="pp-published-lbl"></mat-slide-toggle>
+      </div>
+
+      <!-- Mechanic -->
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-mechanic">{{ 'promotionPrograms.mechanic' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select id="pp-mechanic" formControlName="mechanic">
+              <mat-option *ngFor="let m of mechanics" [value]="m.value">{{ m.name | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row" *ngIf="isPercentOff">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-percent">{{ 'promotionPrograms.percentOffLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-percent" type="number" min="0" max="100" formControlName="percentOff">
+            <span matTextSuffix>%</span>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row" *ngIf="isFixedPrice">
+        <div class="dlg-field dlg-field--full">
+          <label class="dlg-label">{{ 'promotionPrograms.priceRowsLabel' | translate }}</label>
+          <p class="dlg-hint">{{ 'promotionPrograms.priceRowsHint' | translate }}</p>
+          <div formArrayName="prices">
+            <div class="pp-row" *ngFor="let row of priceRows.controls; let i = index" [formGroupName]="i">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="projectionForm" [placeholder]="'promoProgram.anyFormat' | translate">
+                  <mat-option *ngFor="let f of formats" [value]="f.value">{{ f.value === null ? (f.name | translate) : f.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="seatKind" [placeholder]="'promoProgram.anySeatKind' | translate">
+                  <mat-option *ngFor="let k of seatKinds" [value]="k.value">{{ k.name | translate }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" min="0" formControlName="price" [placeholder]="'promotionPrograms.priceLabel' | translate">
+                <span matTextSuffix>đ</span>
+              </mat-form-field>
+              <button mat-icon-button type="button" (click)="removePriceRow(i)"><mat-icon>close</mat-icon></button>
+            </div>
+          </div>
+          <button mat-stroked-button type="button" (click)="addPriceRow()"><mat-icon>add</mat-icon> {{ 'promotionPrograms.addPriceRow' | translate }}</button>
+        </div>
+      </div>
+
+      <!-- Eligibility -->
+      <div class="dlg-row dlg-row--2">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-eligibility">{{ 'promotionPrograms.eligibility' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select id="pp-eligibility" formControlName="eligibility">
+              <mat-option *ngFor="let e of eligibilities" [value]="e.value">{{ e.name | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="dlg-field" *ngIf="isMembers">
+          <label class="dlg-label" for="pp-tier">{{ 'promotionPrograms.minTierLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select id="pp-tier" formControlName="minMemberShipId">
+              <mat-option *ngFor="let m of memberShips" [value]="m.id">{{ m.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="dlg-field" *ngIf="isAgeLimit">
+          <label class="dlg-label" for="pp-maxage">{{ 'promotionPrograms.maxAgeLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-maxage" type="number" min="1" formControlName="maxAge">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Validity -->
+      <div class="dlg-row dlg-row--2">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-start">{{ 'promotionPrograms.startDateLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-start" type="date" formControlName="startDate">
+            <mat-error *ngIf="form.controls['startDate'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-end">{{ 'promotionPrograms.endDateLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-end" type="date" formControlName="endDate">
+            <mat-error *ngIf="form.controls['endDate'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field dlg-field--full">
+          <label class="dlg-label">{{ 'promotionPrograms.schedulesLabel' | translate }}</label>
+          <p class="dlg-hint">{{ 'promotionPrograms.schedulesHint' | translate }}</p>
+          <div formArrayName="schedules">
+            <div class="pp-schedule-row" *ngFor="let row of scheduleRows.controls; let i = index" [formGroupName]="i">
+              <div class="pp-row">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="theaterId" [placeholder]="'promotionPrograms.allTheaters' | translate">
+                    <mat-option [value]="null">{{ 'promotionPrograms.allTheaters' | translate }}</mat-option>
+                    <mat-option *ngFor="let t of theaters" [value]="t.id">{{ t.name }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput type="time" formControlName="startTimeOfDay" [placeholder]="'promotionPrograms.startTimeLabel' | translate">
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput type="time" formControlName="endTimeOfDay" [placeholder]="'promotionPrograms.endTimeLabel' | translate">
+                </mat-form-field>
+                <button mat-icon-button type="button" (click)="removeScheduleRow(i)"><mat-icon>close</mat-icon></button>
+              </div>
+              <div class="pp-chips">
+                <button mat-stroked-button type="button" *ngFor="let d of weekDays"
+                        class="pp-chip" [class.pp-chip--active]="isScheduleDaySelected(i, d.value)"
+                        (click)="toggleScheduleDay(i, d.value)">{{ d.shortName | translate }}</button>
+              </div>
+            </div>
+          </div>
+          <button mat-stroked-button type="button" (click)="addScheduleRow()"><mat-icon>add</mat-icon> {{ 'promotionPrograms.addSchedule' | translate }}</button>
+        </div>
+      </div>
+
+      <!-- Terms -->
+      <div class="dlg-switch">
+        <span class="dlg-switch-label" id="pp-holidays-lbl">{{ 'promotionPrograms.excludeHolidaysLabel' | translate }}</span>
+        <mat-slide-toggle formControlName="excludeHolidays" aria-labelledby="pp-holidays-lbl"></mat-slide-toggle>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field dlg-field--full">
+          <label class="dlg-label">{{ 'promotionPrograms.channelsLabel' | translate }}</label>
+          <p class="dlg-hint">{{ 'promotionPrograms.channelsHint' | translate }}</p>
+          <div class="pp-chips">
+            <button mat-stroked-button type="button" *ngFor="let c of channels"
+                    class="pp-chip" [class.pp-chip--active]="isChannelSelected(c.value)"
+                    (click)="toggleChannel(c.value)">{{ c.name | translate }}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dlg-row dlg-row--2">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-maxtickets">{{ 'promotionPrograms.maxTicketsLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-maxtickets" type="number" min="1" formControlName="maxTicketsPerTransaction">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-switch">
+        <span class="dlg-switch-label" id="pp-stacks-lbl">{{ 'promotionPrograms.stacksLabel' | translate }}</span>
+        <mat-slide-toggle formControlName="stacksWithMembershipDiscount" aria-labelledby="pp-stacks-lbl"></mat-slide-toggle>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field dlg-field--full">
+          <label class="dlg-label" for="pp-terms">{{ 'promotionPrograms.termsTextLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <textarea matInput id="pp-terms" rows="3" formControlName="termsText" [placeholder]="'promotionPrograms.termsTextPlaceholder' | translate"></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Automatic application -->
+      <div class="dlg-switch">
+        <span class="dlg-switch-label" id="pp-autoapply-lbl">{{ 'promotionPrograms.autoApplyLabel' | translate }}</span>
+        <mat-slide-toggle formControlName="autoApply" [disabled]="autoApplyDisabled" aria-labelledby="pp-autoapply-lbl"></mat-slide-toggle>
+      </div>
+      <p class="dlg-hint" *ngIf="autoApplyDisabled">{{ 'promotionPrograms.autoApplyDisabledHint' | translate }}</p>
+      <p class="dlg-hint" *ngIf="!autoApplyDisabled">{{ 'promotionPrograms.autoApplyHint' | translate }}</p>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-linkeddiscount">{{ 'promotionPrograms.linkedDiscountLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select id="pp-linkeddiscount" formControlName="linkedDiscountId">
+              <mat-option [value]="null">{{ 'common.none' | translate }}</mat-option>
+              <mat-option *ngFor="let d of discounts" [value]="d.id">{{ d.code || d.description }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <p class="dlg-hint">{{ 'promotionPrograms.linkedDiscountHint' | translate }}</p>
+        </div>
+      </div>
+
+    </div>
+  </mat-dialog-content>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+  </div>
+</form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

@@ -11,6 +11,7 @@ public interface IApplicationUnitOfWork : IDisposable
     IRoomStore RoomStore { get; }
     IRoomTypeStore RoomTypeStore { get; }
     IDiscountStore DiscountStore { get; }
+    IPromotionProgramStore PromotionProgramStore { get; }
     IMovieTypeDetailStore MovieTypeDetailStore { get; }
     IUserTypeStore UserTypeStore { get; }
     ICommentStore CommentStore { get; }

@@ -19,6 +19,7 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         b.HasOne<Theater>().WithMany().HasForeignKey(i => i.TheaterId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(i => new { i.TheaterId, i.PaidAt });
         b.HasOne(i => i.Discount).WithMany().HasForeignKey(i => i.DiscountId).OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(i => i.PromotionProgram).WithMany().HasForeignKey(i => i.PromotionProgramId).OnDelete(DeleteBehavior.SetNull);
     }
 }
 

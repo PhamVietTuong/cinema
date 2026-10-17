@@ -3008,6 +3008,229 @@
         ]
       }
     },
+    "/api/Cinema/GetPublishedPromotionPrograms": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPublishedPromotionPrograms",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfPromotionProgramDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetPromotionPrograms": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPromotionPrograms",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfPromotionProgramDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetPromotionProgram": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPromotionProgram",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionProgramDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/CreatePromotionProgram": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_CreatePromotionProgram",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromotionProgramRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionProgramDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/UpdatePromotionProgram": {
+      "put": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpdatePromotionProgram",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromotionProgramRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionProgramDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/DeletePromotionProgram": {
+      "delete": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_DeletePromotionProgram",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetFoodAndDrinks": {
       "post": {
         "tags": [
@@ -7825,6 +8048,439 @@
           "endTimeOfDay": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "DefaultSearchResultsOfPromotionProgramDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfPromotionProgramDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfPromotionProgramDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromotionProgramDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PromotionProgramDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true
+          },
+          "bannerUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "mechanic": {
+            "$ref": "#/components/schemas/PromotionMechanic"
+          },
+          "percentOff": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "eligibility": {
+            "$ref": "#/components/schemas/PromotionEligibility"
+          },
+          "minMemberShipId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "minMemberShipName": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxAge": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "excludeHolidays": {
+            "type": "boolean"
+          },
+          "allowedChannelsMask": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxTicketsPerTransaction": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "stacksWithMembershipDiscount": {
+            "type": "boolean"
+          },
+          "termsText": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isPublished": {
+            "type": "boolean"
+          },
+          "autoApply": {
+            "type": "boolean"
+          },
+          "linkedDiscountId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "linkedDiscountCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromotionProgramPriceDTO"
+            }
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromotionProgramScheduleDTO"
+            }
+          }
+        }
+      },
+      "PromotionMechanic": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Info",
+          "FixedPrice",
+          "PercentOff"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
+      },
+      "PromotionEligibility": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Everyone",
+          "Members",
+          "StudentOrTeacher",
+          "AgeLimit"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "PromotionProgramPriceDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "projectionForm": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectionForm"
+              }
+            ]
+          },
+          "seatKind": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SeatKind"
+              }
+            ]
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PromotionProgramScheduleDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "theaterId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "theaterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "daysOfWeekMask": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startTimeOfDay": {
+            "type": "string",
+            "nullable": true
+          },
+          "endTimeOfDay": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreatePromotionProgramRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          },
+          "bannerUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "mechanic": {
+            "$ref": "#/components/schemas/PromotionMechanic"
+          },
+          "percentOff": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "eligibility": {
+            "$ref": "#/components/schemas/PromotionEligibility"
+          },
+          "minMemberShipId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "maxAge": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "excludeHolidays": {
+            "type": "boolean"
+          },
+          "allowedChannelsMask": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxTicketsPerTransaction": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "stacksWithMembershipDiscount": {
+            "type": "boolean"
+          },
+          "termsText": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isPublished": {
+            "type": "boolean"
+          },
+          "autoApply": {
+            "type": "boolean"
+          },
+          "linkedDiscountId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromotionProgramPriceDTO"
+            }
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromotionProgramScheduleDTO"
+            }
+          }
+        }
+      },
+      "UpdatePromotionProgramRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "nullable": true
+          },
+          "bannerUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "mechanic": {
+            "$ref": "#/components/schemas/PromotionMechanic"
+          },
+          "percentOff": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "eligibility": {
+            "$ref": "#/components/schemas/PromotionEligibility"
+          },
+          "minMemberShipId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "maxAge": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "excludeHolidays": {
+            "type": "boolean"
+          },
+          "allowedChannelsMask": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxTicketsPerTransaction": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "stacksWithMembershipDiscount": {
+            "type": "boolean"
+          },
+          "termsText": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isPublished": {
+            "type": "boolean"
+          },
+          "autoApply": {
+            "type": "boolean"
+          },
+          "linkedDiscountId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromotionProgramPriceDTO"
+            }
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromotionProgramScheduleDTO"
+            }
           }
         }
       },

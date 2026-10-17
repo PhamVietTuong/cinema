@@ -338,3 +338,50 @@ export const MultiplierBandSpecs: Record<MultiplierBand, { labelKey: string; css
   peak: { labelKey: 'theaters.ticketPrices.bands.peak', cssClass: 'tp-band--peak' },
   holiday: { labelKey: 'theaters.ticketPrices.bands.holiday', cssClass: 'tp-band--holiday' },
 };
+
+/** Display label for each PromotionProgram.Mechanic value (how the program affects price). */
+export const PromotionMechanicValues: { value: CinemaServiceAgent.PromotionMechanic; name: string }[] = [
+  { value: CinemaServiceAgent.PromotionMechanic.Info, name: 'promoProgram.mechanic.info' },
+  { value: CinemaServiceAgent.PromotionMechanic.FixedPrice, name: 'promoProgram.mechanic.fixedPrice' },
+  { value: CinemaServiceAgent.PromotionMechanic.PercentOff, name: 'promoProgram.mechanic.percentOff' },
+];
+
+/** Display label for each PromotionProgram.Eligibility value (who qualifies). */
+export const PromotionEligibilityValues: { value: CinemaServiceAgent.PromotionEligibility; name: string }[] = [
+  { value: CinemaServiceAgent.PromotionEligibility.Everyone, name: 'promoProgram.eligibility.everyone' },
+  { value: CinemaServiceAgent.PromotionEligibility.Members, name: 'promoProgram.eligibility.members' },
+  { value: CinemaServiceAgent.PromotionEligibility.StudentOrTeacher, name: 'promoProgram.eligibility.studentOrTeacher' },
+  { value: CinemaServiceAgent.PromotionEligibility.AgeLimit, name: 'promoProgram.eligibility.ageLimit' },
+];
+
+/** Display label for each SalesChannel value, used by PromotionProgram.AllowedChannelsMask. */
+export const SalesChannelValues: { value: CinemaServiceAgent.SalesChannel; name: string }[] = [
+  { value: CinemaServiceAgent.SalesChannel.Online, name: 'promoProgram.channel.online' },
+  { value: CinemaServiceAgent.SalesChannel.Counter, name: 'promoProgram.channel.counter' },
+];
+
+/** Decodes a DaysOfWeekMask bitmask (bit n = CinemaServiceAgent.DayOfWeek value n) into a day list. */
+export function daysMaskToList(mask?: number | null): CinemaServiceAgent.DayOfWeek[] {
+  if (!mask) {
+    return [];
+  }
+  return DayOfWeekValues.map(d => d.value).filter(d => (mask & (1 << d)) !== 0);
+}
+
+/** Encodes a day list back into a DaysOfWeekMask bitmask; an empty list means "any day" (null). */
+export function daysListToMask(days: CinemaServiceAgent.DayOfWeek[]): number | null {
+  return days.length ? days.reduce((mask, d) => mask | (1 << d), 0) : null;
+}
+
+/** Decodes an AllowedChannelsMask bitmask into a channel list. */
+export function channelsMaskToList(mask?: number | null): CinemaServiceAgent.SalesChannel[] {
+  if (!mask) {
+    return [];
+  }
+  return SalesChannelValues.map(c => c.value).filter(c => (mask & (1 << c)) !== 0);
+}
+
+/** Encodes a channel list back into an AllowedChannelsMask bitmask; empty means "all channels" (null). */
+export function channelsListToMask(channels: CinemaServiceAgent.SalesChannel[]): number | null {
+  return channels.length ? channels.reduce((mask, c) => mask | (1 << c), 0) : null;
+}

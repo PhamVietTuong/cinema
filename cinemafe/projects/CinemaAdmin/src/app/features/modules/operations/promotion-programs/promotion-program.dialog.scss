@@ -1,0 +1,18 @@
+.dlg-field--full { grid-column: 1 / -1; }
+
+.pp-row {
+  display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;
+  mat-form-field { flex: 1 1 0; min-width: 0; }
+}
+
+.pp-schedule-row {
+  border: 1px solid var(--ml-rule, #ddd); border-radius: var(--ml-r-lg, 8px);
+  padding: 10px; margin-bottom: 10px;
+}
+
+.pp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+.pp-chip {
+  min-width: 0; padding: 0 10px; line-height: 32px; height: 32px;
+  &.pp-chip--active { background: var(--ml-action-soft, #fde7c8); border-color: var(--ml-action, #d98324); color: var(--ml-action-strong, #b35f10); }
+}

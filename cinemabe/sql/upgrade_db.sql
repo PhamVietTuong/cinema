@@ -520,6 +520,95 @@ BEGIN
 END
 
 -- ============================================================
+-- Promotion programs: customer-facing promo cards (Cinestar-style), separate from Discount.
+-- Identical in create_db.sql and upgrade_db.sql (idempotent).
+-- ============================================================
+IF OBJECT_ID('dbo.PromotionProgram', 'U') IS NULL
+BEGIN
+    CREATE TABLE [PromotionProgram] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [Title] nvarchar(200) NOT NULL,
+        [Summary] nvarchar(500) NULL,
+        [BannerUrl] nvarchar(max) NULL,
+        [Mechanic] int NOT NULL DEFAULT 0,
+        [PercentOff] float NULL,
+        [Eligibility] int NOT NULL DEFAULT 0,
+        [MinMemberShipId] uniqueidentifier NULL,
+        [MaxAge] int NULL,
+        [StartDate] datetime NOT NULL,
+        [EndDate] datetime NOT NULL,
+        [ExcludeHolidays] bit NOT NULL DEFAULT 0,
+        [AllowedChannelsMask] int NULL,
+        [MaxTicketsPerTransaction] int NULL,
+        [StacksWithMembershipDiscount] bit NOT NULL DEFAULT 0,
+        [TermsText] nvarchar(2000) NULL,
+        [DisplayOrder] int NOT NULL DEFAULT 0,
+        [IsPublished] bit NOT NULL DEFAULT 0,
+        [AutoApply] bit NOT NULL DEFAULT 0,
+        [LinkedDiscountId] uniqueidentifier NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_PromotionProgram] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_PromotionProgram_MemberShip_MinMemberShipId] FOREIGN KEY ([MinMemberShipId]) REFERENCES [MemberShip] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_PromotionProgram_Discount_LinkedDiscountId] FOREIGN KEY ([LinkedDiscountId]) REFERENCES [Discount] ([Id]) ON DELETE SET NULL
+    );
+    CREATE INDEX [IX_PromotionProgram_IsPublished_EndDate] ON [PromotionProgram] ([IsPublished], [EndDate]);
+    CREATE INDEX [IX_PromotionProgram_MinMemberShipId] ON [PromotionProgram] ([MinMemberShipId]);
+    CREATE INDEX [IX_PromotionProgram_LinkedDiscountId] ON [PromotionProgram] ([LinkedDiscountId]);
+END
+
+IF OBJECT_ID('dbo.PromotionProgramPrice', 'U') IS NULL
+BEGIN
+    CREATE TABLE [PromotionProgramPrice] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [PromotionProgramId] uniqueidentifier NOT NULL,
+        [ProjectionForm] int NULL,
+        [SeatKind] int NULL,
+        [Price] float NOT NULL DEFAULT 0,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_PromotionProgramPrice] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_PromotionProgramPrice_PromotionProgram_PromotionProgramId] FOREIGN KEY ([PromotionProgramId]) REFERENCES [PromotionProgram] ([Id]) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX [IX_PromotionProgramPrice_PromotionProgramId_ProjectionForm_SeatKind] ON [PromotionProgramPrice] ([PromotionProgramId], [ProjectionForm], [SeatKind]);
+END
+
+IF OBJECT_ID('dbo.PromotionProgramSchedule', 'U') IS NULL
+BEGIN
+    CREATE TABLE [PromotionProgramSchedule] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [PromotionProgramId] uniqueidentifier NOT NULL,
+        [TheaterId] uniqueidentifier NULL,
+        [DaysOfWeekMask] int NULL,
+        [StartTimeOfDay] time NULL,
+        [EndTimeOfDay] time NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_PromotionProgramSchedule] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_PromotionProgramSchedule_PromotionProgram_PromotionProgramId] FOREIGN KEY ([PromotionProgramId]) REFERENCES [PromotionProgram] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_PromotionProgramSchedule_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_PromotionProgramSchedule_PromotionProgramId] ON [PromotionProgramSchedule] ([PromotionProgramId]);
+    CREATE INDEX [IX_PromotionProgramSchedule_TheaterId] ON [PromotionProgramSchedule] ([TheaterId]);
+END
+
+IF COL_LENGTH('dbo.Invoice', 'PromotionProgramId') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [PromotionProgramId] uniqueidentifier NULL;
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Invoice_PromotionProgram_PromotionProgramId')
+BEGIN
+    EXEC('ALTER TABLE [Invoice] ADD CONSTRAINT [FK_Invoice_PromotionProgram_PromotionProgramId] FOREIGN KEY ([PromotionProgramId]) REFERENCES [PromotionProgram] ([Id]) ON DELETE SET NULL');
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_PromotionProgramId' AND object_id = OBJECT_ID('dbo.Invoice'))
+BEGIN
+    EXEC('CREATE INDEX [IX_Invoice_PromotionProgramId] ON [Invoice] ([PromotionProgramId])');
+END
+-- ===== end promotion programs =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

@@ -101,6 +101,12 @@ export interface IHttpService {
     createDiscount(request: CreateDiscountRequest): Observable<DiscountDTO>;
     updateDiscount(request: UpdateDiscountRequest): Observable<DiscountDTO>;
     deleteDiscount(id?: string | undefined): Observable<void>;
+    getPublishedPromotionPrograms(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPromotionProgramDTO>;
+    getPromotionPrograms(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPromotionProgramDTO>;
+    getPromotionProgram(id?: string | undefined): Observable<PromotionProgramDTO>;
+    createPromotionProgram(request: CreatePromotionProgramRequest): Observable<PromotionProgramDTO>;
+    updatePromotionProgram(request: UpdatePromotionProgramRequest): Observable<PromotionProgramDTO>;
+    deletePromotionProgram(id?: string | undefined): Observable<void>;
     getFoodAndDrinks(search: PagingSearchDTO): Observable<DefaultSearchResultsOfFoodAndDrinkDTO>;
     getFoodAndDrink(id?: string | undefined): Observable<FoodAndDrinkDTO>;
     createFoodAndDrink(request: CreateFoodAndDrinkRequest): Observable<FoodAndDrinkDTO>;
@@ -4355,6 +4361,314 @@ export class HttpService implements IHttpService {
     }
 
     protected processDeleteDiscount(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPublishedPromotionPrograms(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPromotionProgramDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPublishedPromotionPrograms";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPublishedPromotionPrograms(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPublishedPromotionPrograms(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfPromotionProgramDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfPromotionProgramDTO>;
+        }));
+    }
+
+    protected processGetPublishedPromotionPrograms(response: HttpResponseBase): Observable<DefaultSearchResultsOfPromotionProgramDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfPromotionProgramDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPromotionPrograms(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPromotionProgramDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPromotionPrograms";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPromotionPrograms(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPromotionPrograms(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfPromotionProgramDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfPromotionProgramDTO>;
+        }));
+    }
+
+    protected processGetPromotionPrograms(response: HttpResponseBase): Observable<DefaultSearchResultsOfPromotionProgramDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfPromotionProgramDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPromotionProgram(id?: string | undefined): Observable<PromotionProgramDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPromotionProgram?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPromotionProgram(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPromotionProgram(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PromotionProgramDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PromotionProgramDTO>;
+        }));
+    }
+
+    protected processGetPromotionProgram(response: HttpResponseBase): Observable<PromotionProgramDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PromotionProgramDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createPromotionProgram(request: CreatePromotionProgramRequest): Observable<PromotionProgramDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreatePromotionProgram";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreatePromotionProgram(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreatePromotionProgram(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PromotionProgramDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PromotionProgramDTO>;
+        }));
+    }
+
+    protected processCreatePromotionProgram(response: HttpResponseBase): Observable<PromotionProgramDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PromotionProgramDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updatePromotionProgram(request: UpdatePromotionProgramRequest): Observable<PromotionProgramDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdatePromotionProgram";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdatePromotionProgram(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdatePromotionProgram(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PromotionProgramDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PromotionProgramDTO>;
+        }));
+    }
+
+    protected processUpdatePromotionProgram(response: HttpResponseBase): Observable<PromotionProgramDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PromotionProgramDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deletePromotionProgram(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeletePromotionProgram?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeletePromotionProgram(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeletePromotionProgram(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeletePromotionProgram(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -12431,6 +12745,608 @@ export interface IUpdateDiscountRequest {
     daysOfWeekMask?: number | undefined;
     startTimeOfDay?: string | undefined;
     endTimeOfDay?: string | undefined;
+}
+
+export abstract class BaseSearchResultsOfPromotionProgramDTO implements IBaseSearchResultsOfPromotionProgramDTO {
+    results?: PromotionProgramDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfPromotionProgramDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(PromotionProgramDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfPromotionProgramDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfPromotionProgramDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfPromotionProgramDTO {
+    results?: PromotionProgramDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfPromotionProgramDTO extends BaseSearchResultsOfPromotionProgramDTO implements IDefaultSearchResultsOfPromotionProgramDTO {
+
+    constructor(data?: IDefaultSearchResultsOfPromotionProgramDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfPromotionProgramDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfPromotionProgramDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfPromotionProgramDTO extends IBaseSearchResultsOfPromotionProgramDTO {
+}
+
+export class PromotionProgramDTO implements IPromotionProgramDTO {
+    id?: string;
+    title?: string;
+    summary?: string | undefined;
+    bannerUrl?: string | undefined;
+    mechanic?: PromotionMechanic;
+    percentOff?: number | undefined;
+    eligibility?: PromotionEligibility;
+    minMemberShipId?: string | undefined;
+    minMemberShipName?: string | undefined;
+    maxAge?: number | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    excludeHolidays?: boolean;
+    allowedChannelsMask?: number | undefined;
+    maxTicketsPerTransaction?: number | undefined;
+    stacksWithMembershipDiscount?: boolean;
+    termsText?: string | undefined;
+    displayOrder?: number;
+    isPublished?: boolean;
+    autoApply?: boolean;
+    linkedDiscountId?: string | undefined;
+    linkedDiscountCode?: string | undefined;
+    prices?: PromotionProgramPriceDTO[];
+    schedules?: PromotionProgramScheduleDTO[];
+
+    constructor(data?: IPromotionProgramDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.summary = _data["summary"];
+            this.bannerUrl = _data["bannerUrl"];
+            this.mechanic = _data["mechanic"];
+            this.percentOff = _data["percentOff"];
+            this.eligibility = _data["eligibility"];
+            this.minMemberShipId = _data["minMemberShipId"];
+            this.minMemberShipName = _data["minMemberShipName"];
+            this.maxAge = _data["maxAge"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.excludeHolidays = _data["excludeHolidays"];
+            this.allowedChannelsMask = _data["allowedChannelsMask"];
+            this.maxTicketsPerTransaction = _data["maxTicketsPerTransaction"];
+            this.stacksWithMembershipDiscount = _data["stacksWithMembershipDiscount"];
+            this.termsText = _data["termsText"];
+            this.displayOrder = _data["displayOrder"];
+            this.isPublished = _data["isPublished"];
+            this.autoApply = _data["autoApply"];
+            this.linkedDiscountId = _data["linkedDiscountId"];
+            this.linkedDiscountCode = _data["linkedDiscountCode"];
+            if (Array.isArray(_data["prices"])) {
+                this.prices = [] as any;
+                for (let item of _data["prices"])
+                    this.prices!.push(PromotionProgramPriceDTO.fromJS(item));
+            }
+            if (Array.isArray(_data["schedules"])) {
+                this.schedules = [] as any;
+                for (let item of _data["schedules"])
+                    this.schedules!.push(PromotionProgramScheduleDTO.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): PromotionProgramDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PromotionProgramDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["summary"] = this.summary;
+        data["bannerUrl"] = this.bannerUrl;
+        data["mechanic"] = this.mechanic;
+        data["percentOff"] = this.percentOff;
+        data["eligibility"] = this.eligibility;
+        data["minMemberShipId"] = this.minMemberShipId;
+        data["minMemberShipName"] = this.minMemberShipName;
+        data["maxAge"] = this.maxAge;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["excludeHolidays"] = this.excludeHolidays;
+        data["allowedChannelsMask"] = this.allowedChannelsMask;
+        data["maxTicketsPerTransaction"] = this.maxTicketsPerTransaction;
+        data["stacksWithMembershipDiscount"] = this.stacksWithMembershipDiscount;
+        data["termsText"] = this.termsText;
+        data["displayOrder"] = this.displayOrder;
+        data["isPublished"] = this.isPublished;
+        data["autoApply"] = this.autoApply;
+        data["linkedDiscountId"] = this.linkedDiscountId;
+        data["linkedDiscountCode"] = this.linkedDiscountCode;
+        if (Array.isArray(this.prices)) {
+            data["prices"] = [];
+            for (let item of this.prices)
+                data["prices"].push(item.toJSON());
+        }
+        if (Array.isArray(this.schedules)) {
+            data["schedules"] = [];
+            for (let item of this.schedules)
+                data["schedules"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IPromotionProgramDTO {
+    id?: string;
+    title?: string;
+    summary?: string | undefined;
+    bannerUrl?: string | undefined;
+    mechanic?: PromotionMechanic;
+    percentOff?: number | undefined;
+    eligibility?: PromotionEligibility;
+    minMemberShipId?: string | undefined;
+    minMemberShipName?: string | undefined;
+    maxAge?: number | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    excludeHolidays?: boolean;
+    allowedChannelsMask?: number | undefined;
+    maxTicketsPerTransaction?: number | undefined;
+    stacksWithMembershipDiscount?: boolean;
+    termsText?: string | undefined;
+    displayOrder?: number;
+    isPublished?: boolean;
+    autoApply?: boolean;
+    linkedDiscountId?: string | undefined;
+    linkedDiscountCode?: string | undefined;
+    prices?: PromotionProgramPriceDTO[];
+    schedules?: PromotionProgramScheduleDTO[];
+}
+
+export enum PromotionMechanic {
+    Info = 0,
+    FixedPrice = 1,
+    PercentOff = 2,
+}
+
+export enum PromotionEligibility {
+    Everyone = 0,
+    Members = 1,
+    StudentOrTeacher = 2,
+    AgeLimit = 3,
+}
+
+export class PromotionProgramPriceDTO implements IPromotionProgramPriceDTO {
+    projectionForm?: ProjectionForm | undefined;
+    seatKind?: SeatKind | undefined;
+    price?: number;
+
+    constructor(data?: IPromotionProgramPriceDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.projectionForm = _data["projectionForm"];
+            this.seatKind = _data["seatKind"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): PromotionProgramPriceDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PromotionProgramPriceDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["projectionForm"] = this.projectionForm;
+        data["seatKind"] = this.seatKind;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface IPromotionProgramPriceDTO {
+    projectionForm?: ProjectionForm | undefined;
+    seatKind?: SeatKind | undefined;
+    price?: number;
+}
+
+export class PromotionProgramScheduleDTO implements IPromotionProgramScheduleDTO {
+    theaterId?: string | undefined;
+    theaterName?: string | undefined;
+    daysOfWeekMask?: number | undefined;
+    startTimeOfDay?: string | undefined;
+    endTimeOfDay?: string | undefined;
+
+    constructor(data?: IPromotionProgramScheduleDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.theaterId = _data["theaterId"];
+            this.theaterName = _data["theaterName"];
+            this.daysOfWeekMask = _data["daysOfWeekMask"];
+            this.startTimeOfDay = _data["startTimeOfDay"];
+            this.endTimeOfDay = _data["endTimeOfDay"];
+        }
+    }
+
+    static fromJS(data: any): PromotionProgramScheduleDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PromotionProgramScheduleDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["theaterId"] = this.theaterId;
+        data["theaterName"] = this.theaterName;
+        data["daysOfWeekMask"] = this.daysOfWeekMask;
+        data["startTimeOfDay"] = this.startTimeOfDay;
+        data["endTimeOfDay"] = this.endTimeOfDay;
+        return data;
+    }
+}
+
+export interface IPromotionProgramScheduleDTO {
+    theaterId?: string | undefined;
+    theaterName?: string | undefined;
+    daysOfWeekMask?: number | undefined;
+    startTimeOfDay?: string | undefined;
+    endTimeOfDay?: string | undefined;
+}
+
+export class CreatePromotionProgramRequest implements ICreatePromotionProgramRequest {
+    title!: string;
+    summary?: string | undefined;
+    bannerUrl?: string | undefined;
+    mechanic?: PromotionMechanic;
+    percentOff?: number | undefined;
+    eligibility?: PromotionEligibility;
+    minMemberShipId?: string | undefined;
+    maxAge?: number | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    excludeHolidays?: boolean;
+    allowedChannelsMask?: number | undefined;
+    maxTicketsPerTransaction?: number | undefined;
+    stacksWithMembershipDiscount?: boolean;
+    termsText?: string | undefined;
+    displayOrder?: number;
+    isPublished?: boolean;
+    autoApply?: boolean;
+    linkedDiscountId?: string | undefined;
+    prices?: PromotionProgramPriceDTO[];
+    schedules?: PromotionProgramScheduleDTO[];
+
+    constructor(data?: ICreatePromotionProgramRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.title = _data["title"];
+            this.summary = _data["summary"];
+            this.bannerUrl = _data["bannerUrl"];
+            this.mechanic = _data["mechanic"];
+            this.percentOff = _data["percentOff"];
+            this.eligibility = _data["eligibility"];
+            this.minMemberShipId = _data["minMemberShipId"];
+            this.maxAge = _data["maxAge"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.excludeHolidays = _data["excludeHolidays"];
+            this.allowedChannelsMask = _data["allowedChannelsMask"];
+            this.maxTicketsPerTransaction = _data["maxTicketsPerTransaction"];
+            this.stacksWithMembershipDiscount = _data["stacksWithMembershipDiscount"];
+            this.termsText = _data["termsText"];
+            this.displayOrder = _data["displayOrder"];
+            this.isPublished = _data["isPublished"];
+            this.autoApply = _data["autoApply"];
+            this.linkedDiscountId = _data["linkedDiscountId"];
+            if (Array.isArray(_data["prices"])) {
+                this.prices = [] as any;
+                for (let item of _data["prices"])
+                    this.prices!.push(PromotionProgramPriceDTO.fromJS(item));
+            }
+            if (Array.isArray(_data["schedules"])) {
+                this.schedules = [] as any;
+                for (let item of _data["schedules"])
+                    this.schedules!.push(PromotionProgramScheduleDTO.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): CreatePromotionProgramRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreatePromotionProgramRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["title"] = this.title;
+        data["summary"] = this.summary;
+        data["bannerUrl"] = this.bannerUrl;
+        data["mechanic"] = this.mechanic;
+        data["percentOff"] = this.percentOff;
+        data["eligibility"] = this.eligibility;
+        data["minMemberShipId"] = this.minMemberShipId;
+        data["maxAge"] = this.maxAge;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["excludeHolidays"] = this.excludeHolidays;
+        data["allowedChannelsMask"] = this.allowedChannelsMask;
+        data["maxTicketsPerTransaction"] = this.maxTicketsPerTransaction;
+        data["stacksWithMembershipDiscount"] = this.stacksWithMembershipDiscount;
+        data["termsText"] = this.termsText;
+        data["displayOrder"] = this.displayOrder;
+        data["isPublished"] = this.isPublished;
+        data["autoApply"] = this.autoApply;
+        data["linkedDiscountId"] = this.linkedDiscountId;
+        if (Array.isArray(this.prices)) {
+            data["prices"] = [];
+            for (let item of this.prices)
+                data["prices"].push(item.toJSON());
+        }
+        if (Array.isArray(this.schedules)) {
+            data["schedules"] = [];
+            for (let item of this.schedules)
+                data["schedules"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ICreatePromotionProgramRequest {
+    title: string;
+    summary?: string | undefined;
+    bannerUrl?: string | undefined;
+    mechanic?: PromotionMechanic;
+    percentOff?: number | undefined;
+    eligibility?: PromotionEligibility;
+    minMemberShipId?: string | undefined;
+    maxAge?: number | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    excludeHolidays?: boolean;
+    allowedChannelsMask?: number | undefined;
+    maxTicketsPerTransaction?: number | undefined;
+    stacksWithMembershipDiscount?: boolean;
+    termsText?: string | undefined;
+    displayOrder?: number;
+    isPublished?: boolean;
+    autoApply?: boolean;
+    linkedDiscountId?: string | undefined;
+    prices?: PromotionProgramPriceDTO[];
+    schedules?: PromotionProgramScheduleDTO[];
+}
+
+export class UpdatePromotionProgramRequest implements IUpdatePromotionProgramRequest {
+    id?: string;
+    title!: string;
+    summary?: string | undefined;
+    bannerUrl?: string | undefined;
+    mechanic?: PromotionMechanic;
+    percentOff?: number | undefined;
+    eligibility?: PromotionEligibility;
+    minMemberShipId?: string | undefined;
+    maxAge?: number | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    excludeHolidays?: boolean;
+    allowedChannelsMask?: number | undefined;
+    maxTicketsPerTransaction?: number | undefined;
+    stacksWithMembershipDiscount?: boolean;
+    termsText?: string | undefined;
+    displayOrder?: number;
+    isPublished?: boolean;
+    autoApply?: boolean;
+    linkedDiscountId?: string | undefined;
+    prices?: PromotionProgramPriceDTO[];
+    schedules?: PromotionProgramScheduleDTO[];
+
+    constructor(data?: IUpdatePromotionProgramRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.summary = _data["summary"];
+            this.bannerUrl = _data["bannerUrl"];
+            this.mechanic = _data["mechanic"];
+            this.percentOff = _data["percentOff"];
+            this.eligibility = _data["eligibility"];
+            this.minMemberShipId = _data["minMemberShipId"];
+            this.maxAge = _data["maxAge"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.excludeHolidays = _data["excludeHolidays"];
+            this.allowedChannelsMask = _data["allowedChannelsMask"];
+            this.maxTicketsPerTransaction = _data["maxTicketsPerTransaction"];
+            this.stacksWithMembershipDiscount = _data["stacksWithMembershipDiscount"];
+            this.termsText = _data["termsText"];
+            this.displayOrder = _data["displayOrder"];
+            this.isPublished = _data["isPublished"];
+            this.autoApply = _data["autoApply"];
+            this.linkedDiscountId = _data["linkedDiscountId"];
+            if (Array.isArray(_data["prices"])) {
+                this.prices = [] as any;
+                for (let item of _data["prices"])
+                    this.prices!.push(PromotionProgramPriceDTO.fromJS(item));
+            }
+            if (Array.isArray(_data["schedules"])) {
+                this.schedules = [] as any;
+                for (let item of _data["schedules"])
+                    this.schedules!.push(PromotionProgramScheduleDTO.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): UpdatePromotionProgramRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdatePromotionProgramRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["summary"] = this.summary;
+        data["bannerUrl"] = this.bannerUrl;
+        data["mechanic"] = this.mechanic;
+        data["percentOff"] = this.percentOff;
+        data["eligibility"] = this.eligibility;
+        data["minMemberShipId"] = this.minMemberShipId;
+        data["maxAge"] = this.maxAge;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["excludeHolidays"] = this.excludeHolidays;
+        data["allowedChannelsMask"] = this.allowedChannelsMask;
+        data["maxTicketsPerTransaction"] = this.maxTicketsPerTransaction;
+        data["stacksWithMembershipDiscount"] = this.stacksWithMembershipDiscount;
+        data["termsText"] = this.termsText;
+        data["displayOrder"] = this.displayOrder;
+        data["isPublished"] = this.isPublished;
+        data["autoApply"] = this.autoApply;
+        data["linkedDiscountId"] = this.linkedDiscountId;
+        if (Array.isArray(this.prices)) {
+            data["prices"] = [];
+            for (let item of this.prices)
+                data["prices"].push(item.toJSON());
+        }
+        if (Array.isArray(this.schedules)) {
+            data["schedules"] = [];
+            for (let item of this.schedules)
+                data["schedules"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IUpdatePromotionProgramRequest {
+    id?: string;
+    title: string;
+    summary?: string | undefined;
+    bannerUrl?: string | undefined;
+    mechanic?: PromotionMechanic;
+    percentOff?: number | undefined;
+    eligibility?: PromotionEligibility;
+    minMemberShipId?: string | undefined;
+    maxAge?: number | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    excludeHolidays?: boolean;
+    allowedChannelsMask?: number | undefined;
+    maxTicketsPerTransaction?: number | undefined;
+    stacksWithMembershipDiscount?: boolean;
+    termsText?: string | undefined;
+    displayOrder?: number;
+    isPublished?: boolean;
+    autoApply?: boolean;
+    linkedDiscountId?: string | undefined;
+    prices?: PromotionProgramPriceDTO[];
+    schedules?: PromotionProgramScheduleDTO[];
 }
 
 export abstract class BaseSearchResultsOfFoodAndDrinkDTO implements IBaseSearchResultsOfFoodAndDrinkDTO {

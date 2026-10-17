@@ -167,7 +167,8 @@ public class BookingManager : IBookingManager
                 FinalAmount    = invoice.FinalAmount,
                 PointsRedeemed = invoice.PointsRedeemed,
                 Status         = InvoiceStatus.Pending,
-                Tickets        = composed.TicketItems
+                Tickets        = composed.TicketItems,
+                AppliedPromotionTitle = composed.PromotionTitle,
             };
         }
         catch (SeatUnavailableException)
@@ -409,6 +410,7 @@ public class BookingManager : IBookingManager
         public List<CounterQuoteLineDTO> Lines { get; init; } = new();
         public List<PriceOverrideLine> Overrides { get; init; } = new();
         public double PointsValue { get; init; }
+        public string? PromotionTitle { get; init; }
     }
 
     private static double Money(double value, bool wholeVnd)
@@ -431,7 +433,9 @@ public class BookingManager : IBookingManager
         var ticketItems = new List<TicketItemDTO>();
         var lines       = new List<CounterQuoteLineDTO>();
         var overrides   = new List<PriceOverrideLine>();
+        var ticketUnits = new List<TicketUnit>();
         Guid? invoiceTheaterId = input.TheaterId;
+        ShowTime? bookingShowTime = null;
 
         // An online booking always has a showtime and room; a counter sale only when it sells seats.
         var hasSeatSection = !input.IsCounter || input.Seats.Count > 0;
@@ -463,6 +467,7 @@ public class BookingManager : IBookingManager
                 }
             }
             invoiceTheaterId ??= showTimeRoom.Room.TheaterId;
+            bookingShowTime = showTimeRoom.ShowTime ?? await _uow.ShowTimeStore.GetByIdAsync(showTimeId);
             var pricing = await BuildSeatPricingContextAsync(showTimeRoom);
 
             var bookedIds = (await _uow.SeatStore.GetBookedSeatIdsAsync(showTimeId, roomId)).ToHashSet();
@@ -551,12 +556,20 @@ public class BookingManager : IBookingManager
                 var listPrice = Money(seatKind == SeatKind.Double ? category.Price / 2 : category.Price, wholeVnd);
                 var price = listPrice;
                 var seatLabel = SeatNumbering.Label(seat.RowName, displayNumbers[seat.Id]);
-                if (input.SeatPriceOverrides.TryGetValue(seatItem.SeatId, out var seatOverride))
+                var hasOverride = input.SeatPriceOverrides.TryGetValue(seatItem.SeatId, out var seatOverride);
+                if (hasOverride)
                 {
                     price = ValidateOverride(seatOverride, listPrice, seatLabel);
                     overrides.Add(new PriceOverrideLine("Seat", seatItem.SeatId, seatLabel, 1, listPrice, price));
                 }
                 ticketTotal += price;
+                // A promotion's FixedPrice row for Double gives the whole-pair price, same convention as
+                // PatronCategory.Price — halved here to compare against this row's own half-price, just
+                // like listPrice above. A seat with a staff override is excluded: the staff decision wins.
+                if (!hasOverride && bookingShowTime != null)
+                {
+                    ticketUnits.Add(new TicketUnit(seatKind, bookingShowTime.ProjectionForm, listPrice));
+                }
 
                 // Unguessable per-ticket token; encoded as the e-ticket QR and checked at the gate.
                 var qr = Guid.NewGuid().ToString("N");
@@ -615,8 +628,10 @@ public class BookingManager : IBookingManager
         overrides.AddRange(food.Overrides);
 
         var total = Money(ticketTotal + food.Total, wholeVnd);
-        var (discountAmount, finalAmount, discountId) =
-            await ComputePricingAsync(input.CustomerUserId, total, input.DiscountCode, hasSeatSection ? input.RoomId : null, hasSeatSection ? input.ShowTimeId : null, input.TheaterId);
+        var channel = input.IsCounter ? SalesChannel.Counter : SalesChannel.Online;
+        var (discountAmount, finalAmount, discountId, promotionProgramId, promotionTitle) =
+            await ComputePricingAsync(input.CustomerUserId, total, input.DiscountCode, hasSeatSection ? input.RoomId : null,
+                hasSeatSection ? input.ShowTimeId : null, input.TheaterId, channel, ticketUnits, bookingShowTime);
         if (wholeVnd)
         {
             finalAmount    = Money(finalAmount, true);
@@ -697,6 +712,7 @@ public class BookingManager : IBookingManager
             GiftCardId           = giftCardId,
             GiftCardAmount       = giftCardAmount,
             DiscountId           = discountId,
+            PromotionProgramId   = promotionProgramId,
             InvoiceTickets       = tickets,
             InvoiceFoodAndDrinks = food.Lines,
             FoodStatus           = food.Lines.Count > 0 ? FoodOrderStatus.Pending : FoodOrderStatus.None
@@ -710,6 +726,7 @@ public class BookingManager : IBookingManager
             Lines       = lines,
             Overrides   = overrides,
             PointsValue = pointsValue,
+            PromotionTitle = promotionTitle,
         };
     }
 
@@ -1199,6 +1216,10 @@ public class BookingManager : IBookingManager
     // seat/category.
     private sealed record ResolvedCategory(Guid Id, string Name, Guid SeatTypeId, SeatKind Kind, double Price);
 
+    /// <summary>One priced, non-overridden seat row, for PromotionProgram auto-apply evaluation. A
+    /// Double seat's ListUnitPrice is already the half-price of the pair (see ComposeInvoiceAsync).</summary>
+    private sealed record TicketUnit(SeatKind Kind, ProjectionForm Form, double ListUnitPrice);
+
     private sealed record SeatPricingContext(
         IReadOnlyDictionary<Guid, ResolvedCategory> ByCategoryId,
         IReadOnlyDictionary<SeatKind, double> MinPriceByKind);
@@ -1339,21 +1360,22 @@ public class BookingManager : IBookingManager
         };
     }
 
-    // Pricing: apply the member's tier discount first, then either a valid promo code or — when no
-    // code is given — the best-value auto-apply promotion whose scope (theater/movie/day/time) matches
-    // this booking. A provided-but-invalid code is rejected so the customer is never silently charged
-    // full price. Returns (discountAmount, finalAmount, discountId).
-    private async Task<(double DiscountAmount, double FinalAmount, Guid? DiscountId)> ComputePricingAsync(
-        Guid? userId, double total, string? discountCode, Guid? roomId, Guid? showTimeId, Guid? theaterIdHint)
+    // Pricing: Scenario A is the existing membership% + code/auto-apply Discount logic (unchanged, see
+    // below). Scenario B is a PromotionProgram auto-applying directly on the ticket units — never
+    // combined with a Discount, only with the membership % when the program allows it (StacksWithMembershipDiscount).
+    // Whichever scenario ends up cheaper is charged; a tie favors Scenario A (today's behavior).
+    private async Task<(double DiscountAmount, double FinalAmount, Guid? DiscountId, Guid? PromotionProgramId, string? PromotionTitle)> ComputePricingAsync(
+        Guid? userId, double total, string? discountCode, Guid? roomId, Guid? showTimeId, Guid? theaterIdHint,
+        SalesChannel channel, IReadOnlyList<TicketUnit> ticketUnits, ShowTime? showTime)
     {
-        var running = await ApplyMembershipDiscountAsync(userId, total);
-
         var now = DateTime.UtcNow;
         // A food-only counter sale has no room or showtime: its theater is the one the sale happens in, and a
         // showtime-scoped promotion cannot match.
         var bookingTheaterId = roomId.HasValue ? (await _uow.RoomStore.GetByIdAsync(roomId.Value))?.TheaterId : theaterIdHint;
-        var showTime = showTimeId.HasValue ? await _uow.ShowTimeStore.GetByIdAsync(showTimeId.Value) : null;
+        showTime ??= showTimeId.HasValue ? await _uow.ShowTimeStore.GetByIdAsync(showTimeId.Value) : null;
 
+        // ── Scenario A: membership % then code/auto-apply Discount (unchanged) ──────────────────────
+        var runningA = await ApplyMembershipDiscountAsync(userId, total);
         Guid? discountId = null;
         if (!string.IsNullOrWhiteSpace(discountCode))
         {
@@ -1363,7 +1385,7 @@ public class BookingManager : IBookingManager
                 throw new InvalidOperationException(_invalidDiscountMessage);
             }
 
-            running -= ApplyPercent(running, discount);
+            runningA -= ApplyPercent(runningA, discount);
             discountId = discount.Id;
         }
         else
@@ -1373,21 +1395,191 @@ public class BookingManager : IBookingManager
             var best = candidates
                 .Where(d => (d.MaxUsage == null || d.UsedCount < d.MaxUsage)
                             && MatchesScope(d, bookingTheaterId, showTime))
-                .Select(d => (Discount: d, Amount: ApplyPercent(running, d)))
+                .Select(d => (Discount: d, Amount: ApplyPercent(runningA, d)))
                 .OrderByDescending(x => x.Amount)
                 .FirstOrDefault();
             if (best.Discount != null && best.Amount > 0)
             {
-                running -= best.Amount;
+                runningA -= best.Amount;
                 discountId = best.Discount.Id;
             }
         }
-
-        if (running < 0)
+        if (runningA < 0)
         {
-            running = 0;
+            runningA = 0;
         }
-        return (Math.Round(total - running, 2), Math.Round(running, 2), discountId);
+        var finalA = Math.Round(runningA, 2);
+
+        // ── Scenario B: auto-apply PromotionProgram on the ticket units ─────────────────────────────
+        double? finalB = null;
+        Guid? bestProgramId = null;
+        string? bestProgramTitle = null;
+        if (ticketUnits.Count > 0 && showTime != null)
+        {
+            var (program, saving) = await FindBestAutoApplyProgramAsync(userId, bookingTheaterId, showTime, channel, ticketUnits);
+            if (program != null && saving > 0)
+            {
+                var runningB = total - saving;
+                if (program.StacksWithMembershipDiscount)
+                {
+                    runningB = await ApplyMembershipDiscountAsync(userId, runningB);
+                }
+                if (runningB < 0)
+                {
+                    runningB = 0;
+                }
+                finalB = Math.Round(runningB, 2);
+                bestProgramId = program.Id;
+                bestProgramTitle = program.Title;
+            }
+        }
+
+        if (finalB.HasValue && finalB.Value < finalA)
+        {
+            return (Math.Round(total - finalB.Value, 2), finalB.Value, null, bestProgramId, bestProgramTitle);
+        }
+        return (Math.Round(total - finalA, 2), finalA, discountId, null, null);
+    }
+
+    // The best-saving, in-scope, auto-apply PromotionProgram for this booking, and the VND amount it
+    // would take off (0 / null program when none qualifies). A fixed number of queries regardless of
+    // the number of tickets or candidate programs.
+    private async Task<(PromotionProgram? Program, double Saving)> FindBestAutoApplyProgramAsync(
+        Guid? userId, Guid? bookingTheaterId, ShowTime showTime, SalesChannel channel, IReadOnlyList<TicketUnit> units)
+    {
+        var showDate = DateOnly.FromDateTime(showTime.StartTime);
+        var candidates = await _uow.PromotionProgramStore.GetAutoApplyCandidatesAsync(showDate);
+        if (candidates.Count == 0)
+        {
+            return (null, 0);
+        }
+
+        var isHoliday = (await _uow.HolidayStore.FindAsync(h => h.Date == showDate)).Any();
+
+        int? userMinPoints = null;
+        if (userId.HasValue && candidates.Any(c => c.Eligibility == PromotionEligibility.Members))
+        {
+            var user = await _uow.UserStore.GetByIdAsync(userId.Value);
+            if (user?.MemberShipId is Guid userTierId)
+            {
+                var tier = await _uow.MemberShipStore.GetByIdAsync(userTierId);
+                userMinPoints = tier?.MinPoints;
+            }
+        }
+
+        var requiredTierIds = candidates.Where(c => c.MinMemberShipId.HasValue).Select(c => c.MinMemberShipId!.Value).Distinct().ToList();
+        var minPointsByTier = requiredTierIds.Count > 0
+            ? (await _uow.MemberShipStore.FindAsync(m => requiredTierIds.Contains(m.Id))).ToDictionary(m => m.Id, m => m.MinPoints)
+            : new Dictionary<Guid, int>();
+
+        PromotionProgram? best = null;
+        var bestSaving = 0.0;
+
+        foreach (var program in candidates)
+        {
+            if (program.AllowedChannelsMask is int mask && mask != 0 && (mask & (1 << (int)channel)) == 0)
+            {
+                continue;
+            }
+            if (program.ExcludeHolidays && isHoliday)
+            {
+                continue;
+            }
+            if (program.Schedules.Count > 0)
+            {
+                var matchesAnySchedule = program.Schedules.Any(s =>
+                    (s.TheaterId == null || s.TheaterId == bookingTheaterId)
+                    && ScheduleWindowMatches(s.DaysOfWeekMask, s.StartTimeOfDay, s.EndTimeOfDay, showTime.StartTime));
+                if (!matchesAnySchedule)
+                {
+                    continue;
+                }
+            }
+            if (program.Eligibility == PromotionEligibility.Members)
+            {
+                if (userMinPoints is null
+                    || program.MinMemberShipId is not Guid requiredTierId
+                    || !minPointsByTier.TryGetValue(requiredTierId, out var requiredMinPoints)
+                    || userMinPoints.Value < requiredMinPoints)
+                {
+                    continue;
+                }
+            }
+
+            var saving = ComputeProgramSaving(program, units);
+            if (saving <= 0)
+            {
+                continue;
+            }
+            if (saving > bestSaving || (best != null && saving == bestSaving && IsBetterTiebreak(program, best)))
+            {
+                best = program;
+                bestSaving = saving;
+            }
+        }
+
+        return (best, bestSaving);
+    }
+
+    private static bool IsBetterTiebreak(PromotionProgram candidate, PromotionProgram current)
+    {
+        if (candidate.DisplayOrder != current.DisplayOrder)
+        {
+            return candidate.DisplayOrder < current.DisplayOrder;
+        }
+        return candidate.Id.CompareTo(current.Id) < 0;
+    }
+
+    // Sums the per-unit savings for the N units (N = MaxTicketsPerTransaction, or all of them when
+    // unset) with the largest individual savings; the rest pay list price.
+    private static double ComputeProgramSaving(PromotionProgram program, IReadOnlyList<TicketUnit> units)
+    {
+        var perUnitSavings = units.Select(u => UnitSaving(program, u)).Where(s => s > 0).OrderByDescending(s => s).ToList();
+        var cap = program.MaxTicketsPerTransaction ?? perUnitSavings.Count;
+        return Math.Round(perUnitSavings.Take(cap).Sum(), 2);
+    }
+
+    private static double UnitSaving(PromotionProgram program, TicketUnit unit)
+    {
+        switch (program.Mechanic)
+        {
+            case PromotionMechanic.PercentOff:
+                return Math.Max(0, unit.ListUnitPrice * ((program.PercentOff ?? 0) / 100.0));
+
+            case PromotionMechanic.FixedPrice:
+                // Most specific matching row wins: both dimensions set > one set > neither.
+                var row = program.Prices
+                    .Where(p => (p.ProjectionForm == null || p.ProjectionForm == unit.Form) && (p.SeatKind == null || p.SeatKind == unit.Kind))
+                    .OrderByDescending(p => (p.ProjectionForm != null ? 1 : 0) + (p.SeatKind != null ? 1 : 0))
+                    .FirstOrDefault();
+                if (row is null)
+                {
+                    return 0;
+                }
+                // A Double row prices the whole pair; this unit already carries the per-row half-price.
+                var fixedUnitPrice = unit.Kind == SeatKind.Double ? row.Price / 2 : row.Price;
+                return Math.Max(0, unit.ListUnitPrice - fixedUnitPrice);
+
+            default:
+                return 0;
+        }
+    }
+
+    private static bool ScheduleWindowMatches(int? daysOfWeekMask, TimeOnly? from, TimeOnly? to, DateTime showStart)
+    {
+        if (daysOfWeekMask.HasValue && (daysOfWeekMask.Value & (1 << (int)showStart.DayOfWeek)) == 0)
+        {
+            return false;
+        }
+        if (from.HasValue && to.HasValue)
+        {
+            var t = TimeOnly.FromDateTime(showStart);
+            if (t < from.Value || t > to.Value)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private const string _invalidDiscountMessage = "Discount code is invalid or no longer available.";

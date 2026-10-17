@@ -2097,6 +2097,9 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("paymentUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string PaymentUrl { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("appliedPromotionTitle", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string AppliedPromotionTitle { get; set; }
+
         [Newtonsoft.Json.JsonProperty("tickets", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public IList<TicketItemDTO> Tickets { get; set; }
 
