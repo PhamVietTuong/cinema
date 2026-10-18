@@ -6,6 +6,7 @@
 
   <!-- ── HERO ──────────────────────────────────────────────────────────────── -->
   <section class="hero">
+    <div class="hero-backdrop-blur" [style.background-image]="'url(' + (movie.posterUrl || 'assets/no-poster.jpg') + ')'"></div>
     <div class="hero-backdrop" [style.background-image]="'url(' + (movie.posterUrl || 'assets/no-poster.jpg') + ')'"></div>
     <div class="hero-scrim"></div>
 
