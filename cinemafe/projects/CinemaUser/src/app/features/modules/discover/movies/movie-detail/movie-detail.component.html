@@ -122,6 +122,8 @@
             [showTimeId]="selectedShowTimeId"
             [roomId]="selectedRoomId"
             [headerLabel]="selectedShowTimeLabel"
+            [backUrl]="detailUrl"
+            [restoreState]="pendingRestore"
             (closed)="closeBookingPanel()">
           </app-booking-selection>
         </div>

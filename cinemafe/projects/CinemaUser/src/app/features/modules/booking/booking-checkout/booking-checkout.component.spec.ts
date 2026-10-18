@@ -3,7 +3,7 @@ import { BookingCheckoutComponent } from './booking-checkout.component';
 import { BookingCheckoutState } from './booking-checkout.state';
 
 describe('BookingCheckoutComponent', () => {
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn>; navigateByUrl: ReturnType<typeof vi.fn> };
   let payment: { createBooking: ReturnType<typeof vi.fn>; validateGiftCard: ReturnType<typeof vi.fn>; initiatePayment: ReturnType<typeof vi.fn>; confirmPayment: ReturnType<typeof vi.fn> };
   let identity: { getProfile: ReturnType<typeof vi.fn> };
   let hub: { connectionId: string; stopConnection: ReturnType<typeof vi.fn> };
@@ -22,7 +22,7 @@ describe('BookingCheckoutComponent', () => {
   const build = (historyState: unknown, queryParams: Record<string, string> = {}, loyaltyRate: { pointsPerUnit: number; pointValueVnd: number; isOverride: boolean } | null = { pointsPerUnit: 1000, pointValueVnd: 1000, isOverride: false }) => {
     Object.defineProperty(window, 'history', { value: { state: historyState }, writable: true });
 
-    router = { navigate: vi.fn() };
+    router = { navigate: vi.fn(), navigateByUrl: vi.fn() };
     payment = {
       createBooking: vi.fn().mockReturnValue(of({ invoiceId: 'inv-1', invoiceCode: 'CIN123' })),
       validateGiftCard: vi.fn(),
@@ -138,7 +138,20 @@ describe('BookingCheckoutComponent', () => {
     c.ngOnDestroy();
 
     expect(hub.stopConnection).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/booking/seats'], { queryParams: { showTimeId: 'st-1', roomId: 'room-1' } });
+    expect(router.navigate).toHaveBeenCalledWith(['/booking/seats'], {
+      queryParams: { showTimeId: 'st-1', roomId: 'room-1' },
+      state: { restore: { showTimeId: 'st-1', roomId: 'room-1', seats: state.seats, foods: state.foods } },
+    });
+  });
+
+  it('sends "back to seats" to the movie-detail page with the order to restore, when it came from there', () => {
+    const c = build({ ...state, backUrl: '/movies/m1/the-movie' });
+
+    c.backToSeats();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/movies/m1/the-movie', {
+      state: { restore: { showTimeId: 'st-1', roomId: 'room-1', seats: state.seats, foods: state.foods } },
+    });
   });
 
   it('loads the theater-specific loyalty rate and applies it to redemption math', () => {

@@ -151,7 +151,8 @@
       "continueCta": "Continue to Checkout",
       "selectMore": "Select {{count}} more seat(s) to continue",
       "capReached": "You've selected all your tickets — increase a quantity to add more",
-      "removedByQuantityChange": "Deselected (you reduced the quantity): {{seats}}"
+      "removedByQuantityChange": "Deselected (you reduced the quantity): {{seats}}",
+      "someSeatsUnavailable": "Some of your previously selected seats are no longer available — please pick new ones"
     },
     "checkout": {
       "backToSeats": "Back to seats"

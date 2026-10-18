@@ -151,7 +151,8 @@
       "continueCta": "Tiếp Tục Thanh Toán",
       "selectMore": "Chọn thêm {{count}} ghế để tiếp tục",
       "capReached": "Bạn đã chọn đủ số vé — tăng số lượng để chọn thêm",
-      "removedByQuantityChange": "Đã bỏ chọn (bạn đã giảm số lượng): {{seats}}"
+      "removedByQuantityChange": "Đã bỏ chọn (bạn đã giảm số lượng): {{seats}}",
+      "someSeatsUnavailable": "Một số ghế bạn đã chọn trước đó không còn trống — vui lòng chọn ghế khác"
     },
     "checkout": {
       "backToSeats": "Quay lại chọn ghế"

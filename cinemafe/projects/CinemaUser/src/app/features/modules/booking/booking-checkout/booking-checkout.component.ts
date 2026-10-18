@@ -11,9 +11,11 @@ import { GiftCardDialog, GiftCardCheckResult, GiftCardDialogResult } from './gif
 import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState, takePendingCheckout } from './booking-checkout.state';
 
 /**
- * Second page of the booking flow: payment. Reached only via BookingPageComponent's
- * `proceedToCheckout()`, which hands over the chosen seats/food as router navigation state — this
- * page never re-fetches seats/categories, it just prices and pays what arrived in that state.
+ * Second page of the booking flow: payment. Reached via BookingSelectionComponent's
+ * `proceedToCheckout()` — either the standalone `/booking/seats` page or the panel embedded on the
+ * movie-detail page — which hands over the chosen seats/food (and, when embedded, the detail page's
+ * URL as `backUrl`) as router navigation state; this page never re-fetches seats/categories, it just
+ * prices and pays what arrived in that state.
  */
 @Component({
   selector: 'app-booking-checkout',
@@ -31,6 +33,9 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   foods: BookingCheckoutFood[] = [];
   showTimeId = '';
   roomId = '';
+  /** Where "Quay lại chọn ghế" returns to — the movie-detail page when the booking panel was
+   * embedded there, or unset to fall back to the standalone `/booking/seats` page. */
+  private _backUrl = '';
 
   // Mirrors PendingBookingReaper's hold window server-side.
   private static readonly HOLD_SECONDS = 15 * 60;
@@ -186,6 +191,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this.roomId = state.roomId ?? '';
     this.seats = state.seats;
     this.foods = state.foods ?? [];
+    this._backUrl = state.backUrl ?? '';
 
     this._startHoldCountdown();
     this._loadOrderContext();
@@ -340,7 +346,14 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   }
 
   backToSeats(): void {
-    this._router.navigate(['/booking/seats'], { queryParams: { showTimeId: this.showTimeId, roomId: this.roomId } });
+    // Hands the order back so the seat-selection UI (standalone page or movie-detail panel) can
+    // re-select and re-lock the same seats/tickets/food instead of starting the customer over.
+    const restore: BookingCheckoutState = { showTimeId: this.showTimeId, roomId: this.roomId, seats: this.seats, foods: this.foods };
+    if (this._backUrl) {
+      this._router.navigateByUrl(this._backUrl, { state: { restore } });
+      return;
+    }
+    this._router.navigate(['/booking/seats'], { queryParams: { showTimeId: this.showTimeId, roomId: this.roomId }, state: { restore } });
   }
 
   private _startHoldCountdown(): void {

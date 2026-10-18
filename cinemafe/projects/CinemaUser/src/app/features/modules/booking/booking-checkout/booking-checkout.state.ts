@@ -33,6 +33,9 @@ export interface BookingCheckoutState {
   seats: BookingCheckoutSeat[];
   /** Only entries with quantity > 0. */
   foods: BookingCheckoutFood[];
+  /** Where "Quay lại chọn ghế" should return to — the movie-detail page's URL when the booking
+   * panel was embedded there, or unset when started from the standalone `/booking/seats` page. */
+  backUrl?: string;
 }
 
 const PENDING_KEY = 'pendingCheckout';
