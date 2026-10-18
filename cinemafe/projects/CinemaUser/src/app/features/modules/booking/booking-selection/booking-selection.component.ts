@@ -45,6 +45,14 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   @Input() embedded = false;
   /** "Cinema · 19:30 · IMAX 2D" — composed by the caller, shown in the embedded header. */
   @Input() headerLabel = '';
+  /** Movie-detail page URL to send checkout's "back to seats" to when embedded there; left unset
+   * for the standalone `/booking/seats` page, which checkout returns to by default. */
+  @Input() backUrl = '';
+  /** Order carried back from checkout's "back to seats" for this same showtime — re-applied (ticket
+   * quantities, seat selections re-locked, food quantities) once this showtime's data has loaded.
+   * Only the value seen on the very first `ngOnChanges` is used; later changes are ignored, so
+   * reopening the panel on a different showtime later in the same host's lifetime never restores it. */
+  @Input() restoreState?: BookingCheckoutState;
   /** Emitted when the embedded panel's close/cancel control is used, after locks are released. */
   @Output() closed = new EventEmitter<void>();
 
@@ -112,6 +120,13 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
 
   private _subs = new Subscription();
   private _navigatingToCheckout = false;
+
+  /** Snapshot of `restoreState` taken the moment this instance starts loading its first target —
+   * decoupled from the `@Input` itself so the host is free to clear `restoreState` right after
+   * binding it without racing the async seat/price/food loads that apply it. */
+  private _pendingRestore?: BookingCheckoutState;
+  private _restoreTicketsApplied = false;
+  private _restoreFoodsApplied = false;
 
   constructor(
     private _router: Router,
@@ -236,6 +251,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     const isFirst = this._currentKey === '';
     this._currentKey = key;
     if (isFirst) {
+      this._pendingRestore = this.restoreState;
       this._load();
     } else {
       this._switchChain = this._switchChain.then(() => this._doSwitch());
@@ -330,6 +346,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         this.seats = r.results ?? [];
         this.loadingSeats = false;
         this._applyGate();
+        this._tryRestoreTickets();
         this._cdr.markForCheck();
       },
       error: () => {
@@ -353,6 +370,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
               if (seq !== this._loadSeq) { return; }
               this.foods = (r.results ?? []).filter(f => f.isAvailable);
               this._clampFoodQty();
+              this._restoreFoods();
               this._cdr.markForCheck();
             });
         },
@@ -370,6 +388,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         for (const row of this.showTimePrices) {
           this.ticketQty[row.patronCategoryId!] = 0;
         }
+        this._tryRestoreTickets();
         this._cdr.markForCheck();
       },
       error: () => {
@@ -379,6 +398,86 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     });
 
     this._session.start(this.showTimeId, this.roomId); // a failed handshake degrades to non-realtime
+  }
+
+  /** Re-creates the ticket slots and, where still possible, re-selects and re-locks the exact seats
+   * from `_pendingRestore` — runs once both the seat map and price list are in, since a slot can only
+   * be opened for a patron-category row that `showTimePrices` has resolved. A seat someone else took
+   * in the meantime just leaves its slot open with a warning, instead of blocking the rest. */
+  private _tryRestoreTickets(): void {
+    const restore = this._pendingRestore;
+    if (!restore || this._restoreTicketsApplied || this.seats.length === 0 || this.showTimePrices.length === 0) {
+      return;
+    }
+    this._restoreTicketsApplied = true;
+
+    const seen = new Set<string>();
+    let anyUnavailable = false;
+    for (const rs of restore.seats) {
+      if (seen.has(rs.seatId)) {
+        continue;
+      }
+      seen.add(rs.seatId);
+      if (!this._rowFor(rs.patronCategoryId)) {
+        anyUnavailable = true;
+        continue;
+      }
+
+      const isDouble = rs.seatKind === 'Double';
+      const seatIds = [rs.seatId];
+      if (isDouble && rs.seatGroupId) {
+        const partner = restore.seats.find(o => o.seatGroupId === rs.seatGroupId && o.seatId !== rs.seatId);
+        if (partner) {
+          seen.add(partner.seatId);
+          seatIds.push(partner.seatId);
+        }
+      }
+
+      const seatObjs = seatIds.map(id => this.seats.find(s => s.id === id)).filter((s): s is SelectableSeat => !!s);
+      const available = seatObjs.length === seatIds.length
+        && seatObjs.every(s => s.status === PaymentServiceAgent.SeatStatus.Available && !s.isLocked);
+
+      this.setTicketQty(rs.patronCategoryId, (this.ticketQty[rs.patronCategoryId] ?? 0) + 1, isDouble);
+
+      if (!available) {
+        anyUnavailable = true;
+        continue;
+      }
+      const slotIndex = this.slots.findIndex(sl => sl.seatIds.length === 0 && sl.patronCategoryId === rs.patronCategoryId);
+      if (slotIndex === -1) {
+        continue;
+      }
+      this.slots[slotIndex].seatIds = seatObjs.map(s => s.id!);
+      for (const s of seatObjs) {
+        s.isSelected = true;
+        if (!this.selectedSeats.includes(s)) {
+          this.selectedSeats.push(s);
+        }
+        this._session.lock(s.id!); // a lost race surfaces through lockFailed$, same as a fresh pick
+      }
+    }
+
+    if (anyUnavailable) {
+      this.categoryWarning = this._translate.instant('booking.tickets.someSeatsUnavailable');
+    }
+    this._applyGate();
+    this._refreshHoldTimer();
+  }
+
+  /** Re-applies food quantities from `_pendingRestore` once the food menu for this theater has
+   * loaded — foods are identified by id, so one no longer offered is silently dropped. */
+  private _restoreFoods(): void {
+    const restore = this._pendingRestore;
+    if (!restore || this._restoreFoodsApplied) {
+      return;
+    }
+    this._restoreFoodsApplied = true;
+    for (const f of restore.foods) {
+      if (this.foods.some(x => x.id === f.foodAndDrinkId)) {
+        this.foodQty[f.foodAndDrinkId] = f.quantity;
+      }
+    }
+    this._clampFoodQty();
   }
 
   incTicket(row: ShowTimePriceDTO): void {
@@ -660,6 +759,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
         unitPrice: f.price ?? 0,
         quantity: this.foodQty[f.id!] ?? 0,
       })),
+      backUrl: this.backUrl || undefined,
     };
     this._store.select(selectIsAuthenticated).pipe(take(1)).subscribe(isAuthenticated => {
       const queryParams = { showTimeId: this.showTimeId, roomId: this.roomId };

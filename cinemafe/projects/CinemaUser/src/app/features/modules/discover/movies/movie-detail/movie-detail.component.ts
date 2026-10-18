@@ -8,6 +8,7 @@ import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, slugify, ToastService } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
+import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
 import { movieDetailUrl } from '../../../../../shared/movie-route';
 
 @Component({
@@ -46,6 +47,10 @@ export class MovieDetailComponent implements OnInit {
   selectedShowTimeId = '';
   selectedRoomId = '';
   selectedShowTimeLabel = '';
+  /** Order carried back via BookingCheckoutComponent's "back to seats" — handed down to the panel
+   * once it reopens on the same showtime, then cleared so a later, unrelated showtime pick never
+   * replays it. */
+  pendingRestore?: BookingCheckoutState;
 
   constructor(
     private _store: Store,
@@ -66,14 +71,28 @@ export class MovieDetailComponent implements OnInit {
     this.movieId = this._route.snapshot.paramMap.get('id') ?? '';
     this._urlSlug = this._route.snapshot.paramMap.get('slug') ?? '';
     this.detailUrl = movieDetailUrl(this.movieId);
+
+    // Must be set up before subscribing to movie$ below: when this movie is already cached in the
+    // store (e.g. navigating straight back from checkout), that subscription emits SYNCHRONOUSLY,
+    // so _applyRestore's date-tab selection would otherwise get immediately clobbered by these two
+    // lines running after it.
+    this.dateTabs.push(...this.buildDateTabs());
+    this.selectedDateKey = this.dateTabs[0].key;
+
     this._store.dispatch(loadMovieDetail({ id: this.movieId }));
+
+    const restore = (history.state as { restore?: BookingCheckoutState } | undefined)?.restore;
+    let restoreApplied = false;
 
     this.movie$
       .pipe(filter(movie => !!movie && movie.id === this.movieId), takeUntilDestroyed(this._destroyRef))
-      .subscribe(movie => this._syncCanonicalUrl(movie));
-
-    this.dateTabs.push(...this.buildDateTabs());
-    this.selectedDateKey = this.dateTabs[0].key;
+      .subscribe(movie => {
+        this._syncCanonicalUrl(movie);
+        if (restore && !restoreApplied) {
+          restoreApplied = true;
+          this._applyRestore(movie, restore);
+        }
+      });
   }
 
   /** Keeps the address bar on `/movies/:id/:slug` without re-navigating (which would recreate this
@@ -120,6 +139,12 @@ export class MovieDetailComponent implements OnInit {
    * checkout, where BookingSelectionComponent parks the order and resumes it after sign-in.
    */
   selectShowTime(st: any): void {
+    this._openShowTime(st);
+    this._cdr.markForCheck();
+    setTimeout(() => this._scrollToBookingPanel(), 0);
+  }
+
+  private _openShowTime(st: any): void {
     this.selectedShowTimeId = st.id;
     this.selectedRoomId = st.roomId;
     const time = new Date(st.startTime);
@@ -127,8 +152,30 @@ export class MovieDetailComponent implements OnInit {
     const mm = time.getMinutes().toString().padStart(2, '0');
     const format = screeningFormatLabel(st.roomTypeName, st.projectionForm);
     this.selectedShowTimeLabel = `${st.theaterName} · ${hh}:${mm} · ${format}`;
+  }
+
+  /** Reopens the inline panel on the showtime carried back from checkout's "back to seats", on the
+   * date tab it falls on, and hands the restored order down so BookingSelectionComponent re-selects
+   * (and re-locks) the same seats/tickets/food once that showtime's data loads. A showtime that no
+   * longer exists on this movie (e.g. cancelled) is silently ignored — the page just opens normally. */
+  private _applyRestore(movie: any, restore: BookingCheckoutState): void {
+    const st = (movie.showTimes ?? []).find((s: any) => s.id === restore.showTimeId);
+    if (!st) {
+      return;
+    }
+    const dateKey = this.toDateKey(st.startTime);
+    if (this.dateTabs.some(t => t.key === dateKey)) {
+      this.selectedDateKey = dateKey;
+    }
+    this._openShowTime(st);
+    this.pendingRestore = restore;
     this._cdr.markForCheck();
-    setTimeout(() => this._scrollToBookingPanel(), 0);
+    setTimeout(() => {
+      // Cleared once the embedded panel has had a chance to snapshot it (see BookingSelectionComponent),
+      // so selecting a different showtime later never replays this same restore.
+      this.pendingRestore = undefined;
+      this._scrollToBookingPanel();
+    }, 0);
   }
 
   closeBookingPanel(): void {
