@@ -42,7 +42,7 @@ export const routes: Routes = [
       },
 
       // ── Catalog (lookup) management ──────────────────────────────────────────
-      // All 7 pages below share one lazy module (CatalogAdminModule) — this single
+      // All 8 pages below share one lazy module (CatalogAdminModule) — this single
       // pass-through entry (`path: ''`) loads it once; the module's OWN routes
       // array then matches the real segment (age-restrictions, movie-types, ...).
       // Angular backtracks to the next sibling below if the module doesn't own

@@ -54,6 +54,12 @@ export const RoomStatusValues: { value: CinemaServiceAgent.RoomStatus; name: str
   { value: CinemaServiceAgent.RoomStatus.Inactive, name: 'theaters.rooms.statusInactive' },
 ];
 
+/** i18n-key label for each Template.Channel value. */
+export const TemplateChannelValues: { value: CinemaServiceAgent.TemplateChannel; name: string }[] = [
+  { value: CinemaServiceAgent.TemplateChannel.Email, name: 'templates.channelEmail' },
+  { value: CinemaServiceAgent.TemplateChannel.Sms, name: 'templates.channelSms' },
+];
+
 /** i18n-key label for each Invoice.InvoiceStatus value. */
 export const InvoiceStatusValues = [
   { value: CinemaServiceAgent.InvoiceStatus.Pending, name: 'invoices.statusPending' },

@@ -19,6 +19,7 @@ public interface IApplicationUnitOfWork : IDisposable
     IAgeRestrictionStore AgeRestrictionStore { get; }
     IDiscountTypeStore DiscountTypeStore { get; }
     IMovieTypeStore MovieTypeStore { get; }
+    ITemplateStore TemplateStore { get; }
     ISeatTypeStore SeatTypeStore { get; }
     IMemberShipStore MemberShipStore { get; }
     IHolidayStore HolidayStore { get; }

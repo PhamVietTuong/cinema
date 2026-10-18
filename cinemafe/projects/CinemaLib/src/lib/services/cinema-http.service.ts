@@ -56,6 +56,11 @@ export interface IHttpService {
     createMovieType(request: CreateMovieTypeRequest): Observable<MovieTypeDTO>;
     updateMovieType(request: UpdateMovieTypeRequest): Observable<MovieTypeDTO>;
     deleteMovieType(id?: string | undefined): Observable<void>;
+    getTemplates(search: PagingSearchDTO): Observable<DefaultSearchResultsOfTemplateDTO>;
+    getTemplate(id?: string | undefined): Observable<TemplateDTO>;
+    createTemplate(request: CreateTemplateRequest): Observable<TemplateDTO>;
+    updateTemplate(request: UpdateTemplateRequest): Observable<TemplateDTO>;
+    deleteTemplate(id?: string | undefined): Observable<void>;
     getSeatTypes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSeatTypeDTO>;
     getSeatType(id?: string | undefined): Observable<SeatTypeDTO>;
     updateSeatType(request: UpdateSeatTypeRequest): Observable<SeatTypeDTO>;
@@ -2033,6 +2038,262 @@ export class HttpService implements IHttpService {
     }
 
     protected processDeleteMovieType(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getTemplates(search: PagingSearchDTO): Observable<DefaultSearchResultsOfTemplateDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetTemplates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetTemplates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetTemplates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfTemplateDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfTemplateDTO>;
+        }));
+    }
+
+    protected processGetTemplates(response: HttpResponseBase): Observable<DefaultSearchResultsOfTemplateDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfTemplateDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getTemplate(id?: string | undefined): Observable<TemplateDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetTemplate?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TemplateDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TemplateDTO>;
+        }));
+    }
+
+    protected processGetTemplate(response: HttpResponseBase): Observable<TemplateDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TemplateDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createTemplate(request: CreateTemplateRequest): Observable<TemplateDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateTemplate";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TemplateDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TemplateDTO>;
+        }));
+    }
+
+    protected processCreateTemplate(response: HttpResponseBase): Observable<TemplateDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TemplateDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateTemplate(request: UpdateTemplateRequest): Observable<TemplateDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateTemplate";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TemplateDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TemplateDTO>;
+        }));
+    }
+
+    protected processUpdateTemplate(response: HttpResponseBase): Observable<TemplateDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TemplateDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteTemplate(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteTemplate?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteTemplate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteTemplate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteTemplate(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -10123,6 +10384,268 @@ export class UpdateMovieTypeRequest implements IUpdateMovieTypeRequest {
 export interface IUpdateMovieTypeRequest {
     id?: string;
     name?: string;
+}
+
+export abstract class BaseSearchResultsOfTemplateDTO implements IBaseSearchResultsOfTemplateDTO {
+    results?: TemplateDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfTemplateDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(TemplateDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfTemplateDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfTemplateDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfTemplateDTO {
+    results?: TemplateDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfTemplateDTO extends BaseSearchResultsOfTemplateDTO implements IDefaultSearchResultsOfTemplateDTO {
+
+    constructor(data?: IDefaultSearchResultsOfTemplateDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfTemplateDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfTemplateDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfTemplateDTO extends IBaseSearchResultsOfTemplateDTO {
+}
+
+export class TemplateDTO implements ITemplateDTO {
+    id?: string;
+    code?: string;
+    name?: string;
+    channel?: TemplateChannel;
+    subject?: string | undefined;
+    body?: string;
+    isActive?: boolean;
+    lastUpdatedTime?: Date | undefined;
+
+    constructor(data?: ITemplateDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.code = _data["code"];
+            this.name = _data["name"];
+            this.channel = _data["channel"];
+            this.subject = _data["subject"];
+            this.body = _data["body"];
+            this.isActive = _data["isActive"];
+            this.lastUpdatedTime = _data["lastUpdatedTime"] ? new Date(_data["lastUpdatedTime"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): TemplateDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new TemplateDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["code"] = this.code;
+        data["name"] = this.name;
+        data["channel"] = this.channel;
+        data["subject"] = this.subject;
+        data["body"] = this.body;
+        data["isActive"] = this.isActive;
+        data["lastUpdatedTime"] = this.lastUpdatedTime ? this.lastUpdatedTime.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ITemplateDTO {
+    id?: string;
+    code?: string;
+    name?: string;
+    channel?: TemplateChannel;
+    subject?: string | undefined;
+    body?: string;
+    isActive?: boolean;
+    lastUpdatedTime?: Date | undefined;
+}
+
+export enum TemplateChannel {
+    Email = 1,
+    Sms = 2,
+}
+
+export class CreateTemplateRequest implements ICreateTemplateRequest {
+    code!: string;
+    name!: string;
+    channel?: TemplateChannel;
+    subject?: string | undefined;
+    body!: string;
+    isActive?: boolean;
+
+    constructor(data?: ICreateTemplateRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.code = _data["code"];
+            this.name = _data["name"];
+            this.channel = _data["channel"];
+            this.subject = _data["subject"];
+            this.body = _data["body"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): CreateTemplateRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateTemplateRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        data["name"] = this.name;
+        data["channel"] = this.channel;
+        data["subject"] = this.subject;
+        data["body"] = this.body;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface ICreateTemplateRequest {
+    code: string;
+    name: string;
+    channel?: TemplateChannel;
+    subject?: string | undefined;
+    body: string;
+    isActive?: boolean;
+}
+
+export class UpdateTemplateRequest implements IUpdateTemplateRequest {
+    id?: string;
+    name!: string;
+    channel?: TemplateChannel;
+    subject?: string | undefined;
+    body!: string;
+    isActive?: boolean;
+
+    constructor(data?: IUpdateTemplateRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.channel = _data["channel"];
+            this.subject = _data["subject"];
+            this.body = _data["body"];
+            this.isActive = _data["isActive"];
+        }
+    }
+
+    static fromJS(data: any): UpdateTemplateRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateTemplateRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["channel"] = this.channel;
+        data["subject"] = this.subject;
+        data["body"] = this.body;
+        data["isActive"] = this.isActive;
+        return data;
+    }
+}
+
+export interface IUpdateTemplateRequest {
+    id?: string;
+    name: string;
+    channel?: TemplateChannel;
+    subject?: string | undefined;
+    body: string;
+    isActive?: boolean;
 }
 
 export abstract class BaseSearchResultsOfSeatTypeDTO implements IBaseSearchResultsOfSeatTypeDTO {

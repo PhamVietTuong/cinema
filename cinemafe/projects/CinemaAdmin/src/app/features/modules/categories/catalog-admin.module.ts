@@ -17,6 +17,8 @@ import { UserTypeDialog } from './user-types/user-type.dialog';
 import { HolidaysManagementComponent } from './holidays/holidays.component';
 import { NewsManagementComponent } from './news/news.component';
 import { NewsDialog } from './news/news.dialog';
+import { TemplatesManagementComponent } from './templates/templates.component';
+import { TemplateDialog } from './templates/template.dialog';
 
 const routes: Routes = [
   { path: 'age-restrictions', component: AgeRestrictionsManagementComponent },
@@ -26,6 +28,7 @@ const routes: Routes = [
   { path: 'user-types', component: UserTypesManagementComponent },
   { path: 'holidays', component: HolidaysManagementComponent },
   { path: 'news', component: NewsManagementComponent },
+  { path: 'templates', component: TemplatesManagementComponent },
 ];
 
 @NgModule({
@@ -43,6 +46,8 @@ const routes: Routes = [
     HolidaysManagementComponent,
     NewsManagementComponent,
     NewsDialog,
+    TemplatesManagementComponent,
+    TemplateDialog,
   ],
   imports: [
     SharedModule,

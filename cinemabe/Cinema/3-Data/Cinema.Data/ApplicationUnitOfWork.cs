@@ -28,6 +28,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IAgeRestrictionStore AgeRestrictionStore { get; }
     public IDiscountTypeStore DiscountTypeStore { get; }
     public IMovieTypeStore MovieTypeStore { get; }
+    public ITemplateStore TemplateStore { get; }
     public ISeatTypeStore SeatTypeStore { get; }
     public IMemberShipStore MemberShipStore { get; }
     public IHolidayStore HolidayStore { get; }
@@ -67,6 +68,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         AgeRestrictionStore = new AgeRestrictionStore(db);
         DiscountTypeStore = new DiscountTypeStore(db);
         MovieTypeStore = new MovieTypeStore(db);
+        TemplateStore = new TemplateStore(db);
         SeatTypeStore = new SeatTypeStore(db);
         MemberShipStore = new MemberShipStore(db);
         HolidayStore = new HolidayStore(db);

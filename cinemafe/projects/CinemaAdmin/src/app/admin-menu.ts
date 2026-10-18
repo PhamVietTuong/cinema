@@ -27,6 +27,7 @@ export const ADMIN_MENU: NavSection[] = [
       { icon: 'badge', labelKey: 'nav.userTypes', route: '/user-types', titleKey: 'pageTitle.userTypes', roles: ADMIN_ONLY },
       { icon: 'celebration', labelKey: 'nav.holidays', route: '/holidays', titleKey: 'pageTitle.holidays', roles: ADMIN_ONLY },
       { icon: 'article', labelKey: 'nav.news', route: '/news', titleKey: 'pageTitle.news', roles: ADMIN_ONLY },
+      { icon: 'mail', labelKey: 'nav.templates', route: '/templates', titleKey: 'pageTitle.templates', roles: ADMIN_ONLY },
     ],
   },
   {
