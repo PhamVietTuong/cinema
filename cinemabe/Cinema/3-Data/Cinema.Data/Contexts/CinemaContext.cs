@@ -31,6 +31,9 @@ public class CinemaContext : DbContext
     public DbSet<Discount> Discount => Set<Discount>();
     public DbSet<DiscountTheater> DiscountTheater => Set<DiscountTheater>();
     public DbSet<DiscountType> DiscountType => Set<DiscountType>();
+    public DbSet<PromotionProgram> PromotionProgram => Set<PromotionProgram>();
+    public DbSet<PromotionProgramPrice> PromotionProgramPrice => Set<PromotionProgramPrice>();
+    public DbSet<PromotionProgramSchedule> PromotionProgramSchedule => Set<PromotionProgramSchedule>();
     public DbSet<Holiday> Holiday => Set<Holiday>();
     public DbSet<TimeSlot> TimeSlot => Set<TimeSlot>();
     public DbSet<TicketPrice> TicketPrice => Set<TicketPrice>();

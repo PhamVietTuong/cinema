@@ -38,6 +38,7 @@ public class CinemaController : ApiControllerBase
     private readonly IHolidayManager        _holidays;
     private readonly INewsManager           _news;
     private readonly IDiscountManager       _discounts;
+    private readonly IPromotionProgramManager _promotionPrograms;
     private readonly IFoodAndDrinkManager   _foodAndDrinks;
     private readonly IRoomManager           _rooms;
     private readonly IRoomTypeManager       _roomTypes;
@@ -75,6 +76,7 @@ public class CinemaController : ApiControllerBase
         IHolidayManager holidays,
         INewsManager news,
         IDiscountManager discounts,
+        IPromotionProgramManager promotionPrograms,
         IFoodAndDrinkManager foodAndDrinks,
         IRoomManager rooms,
         IRoomTypeManager roomTypes,
@@ -119,6 +121,7 @@ public class CinemaController : ApiControllerBase
         _holidays        = holidays;
         _news            = news;
         _discounts       = discounts;
+        _promotionPrograms = promotionPrograms;
         _foodAndDrinks   = foodAndDrinks;
         _rooms           = rooms;
         _roomTypes       = roomTypes;
@@ -1241,6 +1244,71 @@ public class CinemaController : ApiControllerBase
             return notFound;
         }
         return await RunNoContent(nameof(DeleteDiscount), () => _discounts.DeleteAsync(id));
+    }
+    #endregion
+
+    #region PromotionProgram
+    [AllowAnonymous]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<PromotionProgramDTO>), 200)]
+    public Task<IActionResult> GetPublishedPromotionPrograms([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetPublishedPromotionPrograms), () => _promotionPrograms.GetPublishedAsync(search));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<PromotionProgramDTO>), 200)]
+    public Task<IActionResult> GetPromotionPrograms([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetPromotionPrograms), () => _promotionPrograms.GetAsync(search));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(PromotionProgramDTO), 200)]
+    public async Task<IActionResult> GetPromotionProgram([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _promotionPrograms.ExistsAsync(id), nameof(GetPromotionProgram), nameof(PromotionProgram), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(GetPromotionProgram), () => _promotionPrograms.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(PromotionProgramDTO), 200)]
+    public Task<IActionResult> CreatePromotionProgram([FromBody] CreatePromotionProgramRequest request)
+    {
+        return Run(nameof(CreatePromotionProgram), () => _promotionPrograms.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(PromotionProgramDTO), 200)]
+    public async Task<IActionResult> UpdatePromotionProgram([FromBody] UpdatePromotionProgramRequest request)
+    {
+        var notFound = await EnsureExistsAsync(() => _promotionPrograms.ExistsAsync(request.Id), nameof(UpdatePromotionProgram), nameof(PromotionProgram), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(UpdatePromotionProgram), () => _promotionPrograms.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeletePromotionProgram([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _promotionPrograms.ExistsAsync(id), nameof(DeletePromotionProgram), nameof(PromotionProgram), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await RunNoContent(nameof(DeletePromotionProgram), () => _promotionPrograms.DeleteAsync(id));
     }
     #endregion
 

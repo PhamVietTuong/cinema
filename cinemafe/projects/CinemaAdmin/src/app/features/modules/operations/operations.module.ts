@@ -13,6 +13,8 @@ import { GiftCardsManagementComponent } from './gift-cards/gift-cards.component'
 import { GiftCardDialog } from './gift-cards/gift-card.dialog';
 import { AuditLogManagementComponent } from './audit-log/audit-log.component';
 import { LoyaltySettingsComponent } from './loyalty-settings/loyalty-settings.component';
+import { PromotionProgramsManagementComponent } from './promotion-programs/promotion-programs.component';
+import { PromotionProgramDialog } from './promotion-programs/promotion-program.dialog';
 
 /**
  * "Vận Hành" (Operations) admin pages: discount codes, invoices, comment
@@ -28,6 +30,7 @@ const routes: Routes = [
   { path: 'gift-cards', component: GiftCardsManagementComponent },
   { path: 'audit-log', component: AuditLogManagementComponent },
   { path: 'loyalty-settings', component: LoyaltySettingsComponent },
+  { path: 'promotion-programs', component: PromotionProgramsManagementComponent },
 ];
 
 @NgModule({
@@ -41,6 +44,8 @@ const routes: Routes = [
     GiftCardDialog,
     AuditLogManagementComponent,
     LoyaltySettingsComponent,
+    PromotionProgramsManagementComponent,
+    PromotionProgramDialog,
   ],
   imports: [
     SharedModule,

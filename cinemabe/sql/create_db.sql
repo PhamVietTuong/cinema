@@ -73,6 +73,12 @@ IF OBJECT_ID('dbo.ShowTimeRoom', 'U') IS NOT NULL
 DROP TABLE dbo.ShowTimeRoom;
 IF OBJECT_ID('dbo.Invoice', 'U') IS NOT NULL
 DROP TABLE dbo.Invoice;
+IF OBJECT_ID('dbo.PromotionProgramSchedule', 'U') IS NOT NULL
+DROP TABLE dbo.PromotionProgramSchedule;
+IF OBJECT_ID('dbo.PromotionProgramPrice', 'U') IS NOT NULL
+DROP TABLE dbo.PromotionProgramPrice;
+IF OBJECT_ID('dbo.PromotionProgram', 'U') IS NOT NULL
+DROP TABLE dbo.PromotionProgram;
 IF OBJECT_ID('dbo.Evaluation', 'U') IS NOT NULL
 DROP TABLE dbo.Evaluation;
 IF OBJECT_ID('dbo.Comment', 'U') IS NOT NULL
@@ -335,6 +341,62 @@ CREATE TABLE [DiscountTheater] (
     CONSTRAINT [PK_DiscountTheater] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_DiscountTheater_Discount_DiscountId] FOREIGN KEY ([DiscountId]) REFERENCES [Discount] ([Id]) ON DELETE CASCADE,
     CONSTRAINT [FK_DiscountTheater_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
+);
+
+-- Customer-facing promotion programs (Cinestar-style cards) — a separate, display/eligibility-rich
+-- aggregate from Discount above. See PromotionProgram.cs for the design rationale.
+CREATE TABLE [PromotionProgram] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [Title] nvarchar(200) NOT NULL,
+    [Summary] nvarchar(500) NULL,
+    [BannerUrl] nvarchar(max) NULL,
+    [Mechanic] int NOT NULL DEFAULT 0,
+    [PercentOff] float NULL,
+    [Eligibility] int NOT NULL DEFAULT 0,
+    [MinMemberShipId] uniqueidentifier NULL,
+    [MaxAge] int NULL,
+    [StartDate] datetime NOT NULL,
+    [EndDate] datetime NOT NULL,
+    [ExcludeHolidays] bit NOT NULL DEFAULT 0,
+    [AllowedChannelsMask] int NULL,
+    [MaxTicketsPerTransaction] int NULL,
+    [StacksWithMembershipDiscount] bit NOT NULL DEFAULT 0,
+    [TermsText] nvarchar(2000) NULL,
+    [DisplayOrder] int NOT NULL DEFAULT 0,
+    [IsPublished] bit NOT NULL DEFAULT 0,
+    [AutoApply] bit NOT NULL DEFAULT 0,
+    [LinkedDiscountId] uniqueidentifier NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_PromotionProgram] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_PromotionProgram_MemberShip_MinMemberShipId] FOREIGN KEY ([MinMemberShipId]) REFERENCES [MemberShip] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_PromotionProgram_Discount_LinkedDiscountId] FOREIGN KEY ([LinkedDiscountId]) REFERENCES [Discount] ([Id]) ON DELETE SET NULL
+);
+
+CREATE TABLE [PromotionProgramPrice] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [PromotionProgramId] uniqueidentifier NOT NULL,
+    [ProjectionForm] int NULL,
+    [SeatKind] int NULL,
+    [Price] float NOT NULL DEFAULT 0,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_PromotionProgramPrice] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_PromotionProgramPrice_PromotionProgram_PromotionProgramId] FOREIGN KEY ([PromotionProgramId]) REFERENCES [PromotionProgram] ([Id]) ON DELETE CASCADE
+);
+
+CREATE TABLE [PromotionProgramSchedule] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [PromotionProgramId] uniqueidentifier NOT NULL,
+    [TheaterId] uniqueidentifier NULL,
+    [DaysOfWeekMask] int NULL,
+    [StartTimeOfDay] time NULL,
+    [EndTimeOfDay] time NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_PromotionProgramSchedule] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_PromotionProgramSchedule_PromotionProgram_PromotionProgramId] FOREIGN KEY ([PromotionProgramId]) REFERENCES [PromotionProgram] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_PromotionProgramSchedule_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
 );
 
 CREATE TABLE [Room] (
@@ -664,6 +726,12 @@ CREATE INDEX [IX_Discount_DiscountTypeId] ON [Discount] ([DiscountTypeId]);
 CREATE INDEX [IX_Discount_MovieId] ON [Discount] ([MovieId]);
 CREATE UNIQUE INDEX [IX_DiscountTheater_DiscountId_TheaterId] ON [DiscountTheater] ([DiscountId], [TheaterId]);
 CREATE INDEX [IX_DiscountTheater_TheaterId] ON [DiscountTheater] ([TheaterId]);
+CREATE INDEX [IX_PromotionProgram_IsPublished_EndDate] ON [PromotionProgram] ([IsPublished], [EndDate]);
+CREATE INDEX [IX_PromotionProgram_MinMemberShipId] ON [PromotionProgram] ([MinMemberShipId]);
+CREATE INDEX [IX_PromotionProgram_LinkedDiscountId] ON [PromotionProgram] ([LinkedDiscountId]);
+CREATE UNIQUE INDEX [IX_PromotionProgramPrice_PromotionProgramId_ProjectionForm_SeatKind] ON [PromotionProgramPrice] ([PromotionProgramId], [ProjectionForm], [SeatKind]);
+CREATE INDEX [IX_PromotionProgramSchedule_PromotionProgramId] ON [PromotionProgramSchedule] ([PromotionProgramId]);
+CREATE INDEX [IX_PromotionProgramSchedule_TheaterId] ON [PromotionProgramSchedule] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_Evaluation_MovieId_UserId] ON [Evaluation] ([MovieId], [UserId]);
 CREATE INDEX [IX_Evaluation_UserId] ON [Evaluation] ([UserId]);
 CREATE INDEX [IX_FoodAndDrink_TheaterId] ON [FoodAndDrink] ([TheaterId]);
@@ -796,6 +864,11 @@ BEGIN
     ALTER TABLE [Invoice] ADD [CashDrawerSessionId] uniqueidentifier NULL;
 END
 
+IF COL_LENGTH('dbo.Invoice', 'PromotionProgramId') IS NULL
+BEGIN
+    ALTER TABLE [Invoice] ADD [PromotionProgramId] uniqueidentifier NULL;
+END
+
 IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.Invoice') AND name = 'UserId' AND is_nullable = 0)
 BEGIN
     ALTER TABLE [Invoice] ALTER COLUMN [UserId] uniqueidentifier NULL;
@@ -810,6 +883,16 @@ EXEC('UPDATE i SET i.[TheaterId] = x.[TheaterId]
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Invoice_Theater_TheaterId')
 BEGIN
     EXEC('ALTER TABLE [Invoice] ADD CONSTRAINT [FK_Invoice_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION');
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Invoice_PromotionProgram_PromotionProgramId')
+BEGIN
+    EXEC('ALTER TABLE [Invoice] ADD CONSTRAINT [FK_Invoice_PromotionProgram_PromotionProgramId] FOREIGN KEY ([PromotionProgramId]) REFERENCES [PromotionProgram] ([Id]) ON DELETE SET NULL');
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_PromotionProgramId' AND object_id = OBJECT_ID('dbo.Invoice'))
+BEGIN
+    EXEC('CREATE INDEX [IX_Invoice_PromotionProgramId] ON [Invoice] ([PromotionProgramId])');
 END
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_TheaterId_PaidAt' AND object_id = OBJECT_ID('dbo.Invoice'))

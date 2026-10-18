@@ -1088,6 +1088,10 @@
             "type": "string",
             "nullable": true
           },
+          "appliedPromotionTitle": {
+            "type": "string",
+            "nullable": true
+          },
           "tickets": {
             "type": "array",
             "items": {
