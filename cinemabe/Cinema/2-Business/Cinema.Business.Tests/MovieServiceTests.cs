@@ -1,3 +1,4 @@
+using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Movies;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Managers;
@@ -57,11 +58,114 @@ public class MovieServiceTests
         _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10))
             .ReturnsAsync(new List<CommentView>());
 
-        var result = await _sut.GetDetailAsync(movieId);
+        var result = await _sut.GetDetailAsync(movieId, null);
 
         result.Should().NotBeNull();
         result.Id.Should().Be(movieId);
         result.AverageRating.Should().Be(4.0);
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_Anonymous_CanReviewFalse_AndSkipsEligibilityQuery()
+    {
+        var movieId = Guid.NewGuid();
+        var movie   = new Movie { Id = movieId, Title = "Test Movie", Evaluations = new List<Evaluation>() };
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(0);
+        _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10)).ReturnsAsync(new List<CommentView>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetMovieScheduleAsync(movieId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<MovieScheduleRow>());
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
+            .ReturnsAsync(new Dictionary<(Guid, Guid), int>());
+
+        var result = await _sut.GetDetailAsync(movieId, null);
+
+        result.CanReview.Should().BeFalse();
+        _uowMock.Verify(u => u.InvoiceStore.HasWatchedMovieAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<DateTime>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_UserWhoWatched_CanReviewTrue()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        var movie   = new Movie { Id = movieId, Title = "Test Movie", Evaluations = new List<Evaluation>() };
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(0);
+        _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10)).ReturnsAsync(new List<CommentView>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetMovieScheduleAsync(movieId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<MovieScheduleRow>());
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
+            .ReturnsAsync(new Dictionary<(Guid, Guid), int>());
+        _uowMock.Setup(u => u.InvoiceStore.HasWatchedMovieAsync(userId, movieId, It.IsAny<DateTime>()))
+            .ReturnsAsync(true);
+
+        var result = await _sut.GetDetailAsync(movieId, userId);
+
+        result.CanReview.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RateMovieAsync_NotWatched_ThrowsAccessDenied_AndDoesNotWrite()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.HasWatchedMovieAsync(userId, movieId, It.IsAny<DateTime>()))
+            .ReturnsAsync(false);
+
+        await _sut.Invoking(s => s.RateMovieAsync(movieId, userId, 5, null))
+            .Should().ThrowAsync<AccessDeniedException>();
+
+        _uowMock.Verify(u => u.EvaluationStore.CreateAsync(It.IsAny<Evaluation>()), Times.Never);
+        _uowMock.Verify(u => u.EvaluationStore.UpdateAsync(It.IsAny<Evaluation>()), Times.Never);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task RateMovieAsync_Watched_Upserts()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.HasWatchedMovieAsync(userId, movieId, It.IsAny<DateTime>()))
+            .ReturnsAsync(true);
+        _uowMock.Setup(u => u.EvaluationStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Evaluation, bool>>>()))
+            .ReturnsAsync(new List<Evaluation>());
+
+        var score = await _sut.RateMovieAsync(movieId, userId, 5, "Great");
+
+        score.Should().Be(5);
+        _uowMock.Verify(u => u.EvaluationStore.CreateAsync(It.IsAny<Evaluation>()), Times.Once);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_NotWatched_ThrowsAccessDenied_AndDoesNotCreate()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.HasWatchedMovieAsync(userId, movieId, It.IsAny<DateTime>()))
+            .ReturnsAsync(false);
+
+        await _sut.Invoking(s => s.AddCommentAsync(movieId, userId, "Nice movie", null))
+            .Should().ThrowAsync<AccessDeniedException>();
+
+        _uowMock.Verify(u => u.CommentStore.CreateAsync(It.IsAny<Comment>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_Watched_CreatesComment()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.HasWatchedMovieAsync(userId, movieId, It.IsAny<DateTime>()))
+            .ReturnsAsync(true);
+        _uowMock.Setup(u => u.CommentStore.CreateAsync(It.IsAny<Comment>()))
+            .ReturnsAsync((Comment c) => c);
+
+        var result = await _sut.AddCommentAsync(movieId, userId, "Nice movie", null);
+
+        result.Content.Should().Be("Nice movie");
+        _uowMock.Verify(u => u.CommentStore.CreateAsync(It.IsAny<Comment>()), Times.Once);
     }
 
     [Fact]
@@ -80,7 +184,7 @@ public class MovieServiceTests
             .Callback<Guid, DateTime, DateTime>((_, from, to) => { capturedFrom = from; capturedTo = to; })
             .ReturnsAsync(new List<MovieScheduleRow>());
 
-        await _sut.GetDetailAsync(movieId);
+        await _sut.GetDetailAsync(movieId, null);
 
         capturedFrom.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(2));
         capturedTo.Should().Be(DateTime.Today.AddDays(4));
@@ -112,7 +216,7 @@ public class MovieServiceTests
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
             .ReturnsAsync(new Dictionary<(Guid, Guid), int> { [(showTime, roomA)] = 30 });
 
-        var result = await _sut.GetDetailAsync(movieId);
+        var result = await _sut.GetDetailAsync(movieId, null);
 
         result.ShowTimes.Should().HaveCount(2);
         var a = result.ShowTimes.Single(x => x.RoomId == roomA);
@@ -133,7 +237,7 @@ public class MovieServiceTests
         var missingId = Guid.NewGuid();
         _uowMock.Setup(u => u.MovieStore.GetDetailAsync(missingId)).ReturnsAsync((Movie?)null);
 
-        await _sut.Invoking(s => s.GetDetailAsync(missingId))
+        await _sut.Invoking(s => s.GetDetailAsync(missingId, null))
             .Should().ThrowAsync<KeyNotFoundException>();
     }
 

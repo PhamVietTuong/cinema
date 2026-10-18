@@ -5776,6 +5776,9 @@
                 "items": {
                   "$ref": "#/components/schemas/CommentDTO"
                 }
+              },
+              "canReview": {
+                "type": "boolean"
               }
             }
           }

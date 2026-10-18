@@ -259,6 +259,7 @@ export const API_ERROR_RULES: readonly ApiErrorRule[] = [
   { key: 'ticketPriceDuplicate', exact: 'A ticket price already exists for this room type, time slot and day.' },
   { key: 'ticketPriceDayRequired', exact: 'At least one day of week is required.' },
   { key: 'ticketPriceInvalidDay', exact: 'Invalid day of week.' },
+  { key: 'reviewRequiresWatchedTicket', exact: 'You can only rate or comment on a movie after watching it.' },
 ];
 
 const EXACT = new Map<string, string>();

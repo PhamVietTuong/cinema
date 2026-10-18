@@ -369,7 +369,8 @@
       "noRatingsYet": "Chưa có đánh giá",
       "ratingSaved": "Cảm ơn! Đánh giá của bạn đã được lưu.",
       "commentPosted": "Đã đăng bình luận.",
-      "rateThisMovie": "Đánh giá phim này"
+      "rateThisMovie": "Đánh giá phim này",
+      "watchFirstToReview": "Hãy xem phim này trước khi đánh giá hoặc bình luận."
     },
     "showtimes": {
       "seats": "{{count}} ghế",

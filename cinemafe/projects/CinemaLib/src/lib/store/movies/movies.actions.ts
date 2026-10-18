@@ -19,7 +19,9 @@ export const loadMovieDetailFailure = createAction('[Movies] Load Movie Detail F
 
 // Reviews & comments (re-load the detail on success to refresh the list)
 export const rateMovie = createAction('[Movies] Rate Movie', props<{ movieId: string; score: number; review?: string }>());
+export const rateMovieSuccess = createAction('[Movies] Rate Movie Success', props<{ movieId: string; score: number }>());
 export const rateMovieFailure = createAction('[Movies] Rate Movie Failure', props<{ error: string }>());
 
 export const addComment = createAction('[Movies] Add Comment', props<{ movieId: string; content: string; parentId?: string }>());
+export const addCommentSuccess = createAction('[Movies] Add Comment Success', props<{ movieId: string }>());
 export const addCommentFailure = createAction('[Movies] Add Comment Failure', props<{ error: string }>());

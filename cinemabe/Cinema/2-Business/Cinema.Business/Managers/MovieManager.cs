@@ -1,4 +1,5 @@
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO;
 using Cinema.Business.DTO.Movies;
 using Cinema.Business.DTO.Requests;
@@ -15,6 +16,8 @@ public class MovieManager : IMovieManager
     /// <summary>The movie-detail page shows today + the next 3 days; its date tabs slice this window
     /// entirely client-side (no re-fetch per tab), so the response must cover exactly it.</summary>
     private const int ScheduleWindowDays = 4;
+
+    private const string ReviewNotAllowedMessage = "You can only rate or comment on a movie after watching it.";
 
     public MovieManager(IApplicationUnitOfWork uow)
     {
@@ -94,7 +97,7 @@ public class MovieManager : IMovieManager
         };
     }
 
-    public async Task<MovieDetailDTO> GetDetailAsync(Guid id)
+    public async Task<MovieDetailDTO> GetDetailAsync(Guid id, Guid? userId)
     {
         var movie = await _uow.MovieStore.GetDetailAsync(id);
         if (movie == null)
@@ -141,6 +144,10 @@ public class MovieManager : IMovieManager
         dto.RatingCount               = movie.Evaluations.Count;
         dto.RecentComments = (await _uow.CommentStore.GetRecentForMovieAsync(id, 10))
             .Select(ToCommentDTO).ToList();
+        if (userId is Guid uid)
+        {
+            dto.CanReview = await CanReviewAsync(id, uid);
+        }
         return dto;
     }
 
@@ -188,6 +195,7 @@ public class MovieManager : IMovieManager
 
     public async Task<CommentDTO> AddCommentAsync(Guid movieId, Guid userId, string content, Guid? parentId)
     {
+        await EnsureCanReviewAsync(movieId, userId);
         var comment = new Comment { MovieId = movieId, UserId = userId, Content = content, ParentId = parentId };
         await _uow.CommentStore.CreateAsync(comment);
         return new CommentDTO { Id = comment.Id, Content = content, CreationTime = DateTime.UtcNow };
@@ -265,6 +273,7 @@ public class MovieManager : IMovieManager
 
     public async Task<int> RateMovieAsync(Guid movieId, Guid userId, int score, string? review)
     {
+        await EnsureCanReviewAsync(movieId, userId);
         var existing = (await _uow.EvaluationStore.FindAsync(e => e.MovieId == movieId && e.UserId == userId)).FirstOrDefault();
         if (existing != null)
         {
@@ -307,6 +316,19 @@ public class MovieManager : IMovieManager
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private Task<bool> CanReviewAsync(Guid movieId, Guid userId)
+    {
+        return _uow.InvoiceStore.HasWatchedMovieAsync(userId, movieId, DateTime.Now);
+    }
+
+    private async Task EnsureCanReviewAsync(Guid movieId, Guid userId)
+    {
+        if (!await CanReviewAsync(movieId, userId))
+        {
+            throw new AccessDeniedException(ReviewNotAllowedMessage);
+        }
+    }
 
     /// <summary>Maps a comment (and its approved replies, recursively) to a DTO.</summary>
     private static CommentDTO ToCommentDTO(CommentView c)

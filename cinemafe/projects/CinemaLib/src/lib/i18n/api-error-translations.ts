@@ -246,6 +246,7 @@ export const API_ERRORS_VI: Record<string, string> = {
   ticketPriceDuplicate: 'Đã có mức giá cho loại phòng, khung giờ và ngày này.',
   ticketPriceDayRequired: 'Cần chọn ít nhất một ngày trong tuần.',
   ticketPriceInvalidDay: 'Ngày trong tuần không hợp lệ.',
+  reviewRequiresWatchedTicket: 'Bạn chỉ có thể đánh giá hoặc bình luận sau khi đã xem phim này.',
 };
 
 export const API_ERRORS_EN: Record<string, string> = {
@@ -495,4 +496,5 @@ export const API_ERRORS_EN: Record<string, string> = {
   ticketPriceDuplicate: 'A ticket price already exists for this room type, time slot and day.',
   ticketPriceDayRequired: 'At least one day of week is required.',
   ticketPriceInvalidDay: 'Invalid day of week.',
+  reviewRequiresWatchedTicket: 'You can only rate or comment on a movie after watching it.',
 };

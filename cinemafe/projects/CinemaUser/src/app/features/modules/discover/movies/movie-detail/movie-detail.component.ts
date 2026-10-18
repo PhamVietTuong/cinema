@@ -5,8 +5,9 @@ import { Observable } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { Actions, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, loadMovieDetail, rateMovie, addComment, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, slugify, ToastService } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, slugify, ToastService } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 import { movieDetailUrl } from '../../../../../shared/movie-route';
 
@@ -56,6 +57,7 @@ export class MovieDetailComponent implements OnInit {
     private _cdr: ChangeDetectorRef,
     private _translate: TranslateService,
     private _toast: ToastService,
+    private _actions$: Actions,
   ) {
     this.movie$ = this._store.select(selectSelectedMovie);
     this.loading$ = this._store.select(selectMoviesLoading);
@@ -74,6 +76,36 @@ export class MovieDetailComponent implements OnInit {
 
     this.dateTabs.push(...this.buildDateTabs());
     this.selectedDateKey = this.dateTabs[0].key;
+
+    this._actions$.pipe(
+      ofType(rateMovieSuccess),
+      filter(a => a.movieId === this.movieId),
+      takeUntilDestroyed(this._destroyRef),
+    ).subscribe(a => {
+      this.myScore = a.score;
+      this._toast.success(this._translate.instant('movies.detail.ratingSaved'));
+      this._cdr.markForCheck();
+    });
+
+    this._actions$.pipe(
+      ofType(addCommentSuccess),
+      filter(a => a.movieId === this.movieId),
+      takeUntilDestroyed(this._destroyRef),
+    ).subscribe(() => {
+      this.newComment = '';
+      this._toast.success(this._translate.instant('movies.detail.commentPosted'));
+      this._cdr.markForCheck();
+    });
+
+    this._actions$.pipe(
+      ofType(rateMovieFailure, addCommentFailure),
+      takeUntilDestroyed(this._destroyRef),
+    ).subscribe(() => {
+      // The interceptor already showed the translated error toast; just resync eligibility/state.
+      this.hoverScore = 0;
+      this._store.dispatch(loadMovieDetail({ id: this.movieId }));
+      this._cdr.markForCheck();
+    });
   }
 
   /** Keeps the address bar on `/movies/:id/:slug` without re-navigating (which would recreate this
@@ -188,18 +220,26 @@ export class MovieDetailComponent implements OnInit {
     this._cdr.markForCheck();
   }
 
+  /** True once the user has a paid, watched (finished-screening) ticket for this movie — only then
+   * can they rate or comment. Backend re-checks this regardless; this just drives the UI. */
+  canReview(movie: any): boolean {
+    return !!movie?.canReview;
+  }
+
   /** Submits immediately on star click — no separate confirm button. RateMovieAsync is an upsert,
-   * so re-clicking just updates this user's existing rating rather than adding a duplicate. */
-  rateFromHero(score: number): void {
+   * so re-clicking just updates this user's existing rating rather than adding a duplicate. The
+   * rating is only applied locally once the server confirms it (see the rateMovieSuccess handler). */
+  rateFromHero(movie: any, score: number): void {
     this.isAuthenticated$.pipe(take(1)).subscribe(isAuthenticated => {
       if (!isAuthenticated) {
         this._router.navigate(['/auth/login'], { queryParams: { returnUrl: this.detailUrl } });
         return;
       }
+      if (!this.canReview(movie)) {
+        this._toast.info(this._translate.instant('movies.detail.watchFirstToReview'));
+        return;
+      }
       this._store.dispatch(rateMovie({ movieId: this.movieId, score, review: undefined }));
-      this.myScore = score;
-      this._toast.success(this._translate.instant('movies.detail.ratingSaved'));
-      this._cdr.markForCheck();
     });
   }
 
@@ -207,7 +247,7 @@ export class MovieDetailComponent implements OnInit {
     return (movie.recentComments ?? []).reduce((n: number, c: any) => n + 1 + (c.replies?.length ?? 0), 0);
   }
 
-  submitComment(): void {
+  submitComment(movie: any): void {
     const content = this.newComment.trim();
     if (!content) { return; }
     this.isAuthenticated$.pipe(take(1)).subscribe(isAuthenticated => {
@@ -215,10 +255,11 @@ export class MovieDetailComponent implements OnInit {
         this._router.navigate(['/auth/login'], { queryParams: { returnUrl: this.detailUrl } });
         return;
       }
+      if (!this.canReview(movie)) {
+        this._toast.info(this._translate.instant('movies.detail.watchFirstToReview'));
+        return;
+      }
       this._store.dispatch(addComment({ movieId: this.movieId, content }));
-      this.newComment = '';
-      this._toast.success(this._translate.instant('movies.detail.commentPosted'));
-      this._cdr.markForCheck();
     });
   }
 
