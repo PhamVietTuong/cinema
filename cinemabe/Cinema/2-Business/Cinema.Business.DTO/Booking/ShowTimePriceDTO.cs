@@ -16,4 +16,12 @@ public class ShowTimePriceDTO
 
     /// <summary>Final price for one seat row of this kind under this category, for this showtime.</summary>
     public double Price { get; set; }
+
+    /// <summary>When true, CinemaUser must show a notice that ID will be checked at the theater before
+    /// letting the customer add a ticket of this category. UI-only; not enforced server-side.</summary>
+    public bool RequiresIdCheck { get; set; }
+
+    /// <summary>Custom wording for the RequiresIdCheck notice. Null/empty means CinemaUser falls back
+    /// to its default translated message.</summary>
+    public string? IdCheckMessage { get; set; }
 }

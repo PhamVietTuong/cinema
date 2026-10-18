@@ -172,6 +172,11 @@
       "kindStandard": "Single",
       "kindDouble": "Double"
     },
+    "idCheck": {
+      "title": "ID verification required",
+      "message": "You are purchasing a special ticket category reserved for students, individuals under 22, or senior citizens. Please bring your national ID card (CCCD) or a student ID card (with a photo) for verification before entering the cinema. Cinema staff may deny entry if these requirements are not met. Thank you.",
+      "confirm": "I understand"
+    },
     "summary": {
       "subtotal": "Subtotal ({{count}} seats)",
       "comboTotal": "Total",

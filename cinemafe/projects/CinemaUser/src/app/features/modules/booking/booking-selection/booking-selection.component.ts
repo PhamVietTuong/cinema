@@ -2,12 +2,14 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Subscription, take } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
 import {
   SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, selectIsAuthenticated,
   SeatMapComponent, SeatLockSessionService, SelectableSeat, seatRows, seatsByRow, seatLabel, joinSeatLabels, seatGroupOf, isGroupBlocked, physicalSeatPrice, foodOrderCap,
 } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import { BookingCheckoutState, stashPendingCheckout } from '../booking-checkout/booking-checkout.state';
+import { IdCheckNoticeDialog } from './id-check-notice.dialog';
 
 type ShowTimePriceDTO = PaymentServiceAgent.ShowTimePriceDTO;
 
@@ -121,6 +123,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     private _hub: BookingHubService,
     private _cdr: ChangeDetectorRef,
     private _translate: TranslateService,
+    private _dialog: MatDialog,
   ) {}
 
   /** The seat-lock session on the booking hub (hold clocks, lock/unlock, room events). Created on
@@ -382,7 +385,26 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   incTicket(row: ShowTimePriceDTO): void {
-    this.setTicketQty(row.patronCategoryId!, (this.ticketQty[row.patronCategoryId!] ?? 0) + 1, !!row.isDouble);
+    const patronCategoryId = row.patronCategoryId!;
+    const prev = this.ticketQty[patronCategoryId] ?? 0;
+
+    if (!row.requiresIdCheck || prev > 0 || !this.canIncrement(row)) {
+      this.setTicketQty(patronCategoryId, prev + 1, !!row.isDouble);
+      return;
+    }
+
+    const seq = this._loadSeq;
+    this._dialog.open(IdCheckNoticeDialog, {
+      data: { categoryName: row.patronCategoryName, customMessage: row.idCheckMessage },
+      width: '440px',
+      maxWidth: '92vw',
+    }).afterClosed().subscribe(result => {
+      if (result !== true || seq !== this._loadSeq) {
+        return;
+      }
+      this.setTicketQty(patronCategoryId, (this.ticketQty[patronCategoryId] ?? 0) + 1, !!row.isDouble);
+      this._cdr.markForCheck();
+    });
   }
 
   decTicket(row: ShowTimePriceDTO): void {

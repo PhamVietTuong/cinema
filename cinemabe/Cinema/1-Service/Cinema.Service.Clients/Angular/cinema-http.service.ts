@@ -10933,6 +10933,8 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
     description?: string | undefined;
     price?: number;
     isActive?: boolean;
+    requiresIdCheck?: boolean;
+    idCheckMessage?: string | undefined;
 
     constructor(data?: IPatronCategoryDTO) {
         if (data) {
@@ -10954,6 +10956,8 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
             this.description = _data["description"];
             this.price = _data["price"];
             this.isActive = _data["isActive"];
+            this.requiresIdCheck = _data["requiresIdCheck"];
+            this.idCheckMessage = _data["idCheckMessage"];
         }
     }
 
@@ -10975,6 +10979,8 @@ export class PatronCategoryDTO implements IPatronCategoryDTO {
         data["description"] = this.description;
         data["price"] = this.price;
         data["isActive"] = this.isActive;
+        data["requiresIdCheck"] = this.requiresIdCheck;
+        data["idCheckMessage"] = this.idCheckMessage;
         return data;
     }
 }
@@ -10989,6 +10995,8 @@ export interface IPatronCategoryDTO {
     description?: string | undefined;
     price?: number;
     isActive?: boolean;
+    requiresIdCheck?: boolean;
+    idCheckMessage?: string | undefined;
 }
 
 export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest {
@@ -10998,6 +11006,8 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
     isActive?: boolean;
     seatTypeId?: string;
     price?: number;
+    requiresIdCheck?: boolean;
+    idCheckMessage?: string | undefined;
 
     constructor(data?: ICreatePatronCategoryRequest) {
         if (data) {
@@ -11016,6 +11026,8 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
             this.isActive = _data["isActive"];
             this.seatTypeId = _data["seatTypeId"];
             this.price = _data["price"];
+            this.requiresIdCheck = _data["requiresIdCheck"];
+            this.idCheckMessage = _data["idCheckMessage"];
         }
     }
 
@@ -11034,6 +11046,8 @@ export class CreatePatronCategoryRequest implements ICreatePatronCategoryRequest
         data["isActive"] = this.isActive;
         data["seatTypeId"] = this.seatTypeId;
         data["price"] = this.price;
+        data["requiresIdCheck"] = this.requiresIdCheck;
+        data["idCheckMessage"] = this.idCheckMessage;
         return data;
     }
 }
@@ -11045,6 +11059,8 @@ export interface ICreatePatronCategoryRequest {
     isActive?: boolean;
     seatTypeId?: string;
     price?: number;
+    requiresIdCheck?: boolean;
+    idCheckMessage?: string | undefined;
 }
 
 export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest {
@@ -11054,6 +11070,8 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
     isActive?: boolean;
     seatTypeId?: string;
     price?: number;
+    requiresIdCheck?: boolean;
+    idCheckMessage?: string | undefined;
 
     constructor(data?: IUpdatePatronCategoryRequest) {
         if (data) {
@@ -11072,6 +11090,8 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
             this.isActive = _data["isActive"];
             this.seatTypeId = _data["seatTypeId"];
             this.price = _data["price"];
+            this.requiresIdCheck = _data["requiresIdCheck"];
+            this.idCheckMessage = _data["idCheckMessage"];
         }
     }
 
@@ -11090,6 +11110,8 @@ export class UpdatePatronCategoryRequest implements IUpdatePatronCategoryRequest
         data["isActive"] = this.isActive;
         data["seatTypeId"] = this.seatTypeId;
         data["price"] = this.price;
+        data["requiresIdCheck"] = this.requiresIdCheck;
+        data["idCheckMessage"] = this.idCheckMessage;
         return data;
     }
 }
@@ -11101,6 +11123,8 @@ export interface IUpdatePatronCategoryRequest {
     isActive?: boolean;
     seatTypeId?: string;
     price?: number;
+    requiresIdCheck?: boolean;
+    idCheckMessage?: string | undefined;
 }
 
 export abstract class BaseSearchResultsOfTimeSlotDTO implements IBaseSearchResultsOfTimeSlotDTO {

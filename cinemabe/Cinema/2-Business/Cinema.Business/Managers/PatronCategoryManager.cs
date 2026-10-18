@@ -124,6 +124,8 @@ public class PatronCategoryManager : IPatronCategoryManager
             Description = request.Description,
             Price       = request.Price,
             IsActive    = request.IsActive,
+            RequiresIdCheck = request.RequiresIdCheck,
+            IdCheckMessage  = string.IsNullOrWhiteSpace(request.IdCheckMessage) ? null : request.IdCheckMessage,
         };
         await _uow.PatronCategoryStore.CreateAsync(entity);
 
@@ -147,6 +149,8 @@ public class PatronCategoryManager : IPatronCategoryManager
         entity.SeatTypeId  = request.SeatTypeId;
         entity.Price       = request.Price;
         entity.IsActive    = request.IsActive;
+        entity.RequiresIdCheck = request.RequiresIdCheck;
+        entity.IdCheckMessage  = string.IsNullOrWhiteSpace(request.IdCheckMessage) ? null : request.IdCheckMessage;
         await _uow.PatronCategoryStore.UpdateAsync(entity);
 
         var dto = entity.ToDTO<PatronCategory, PatronCategoryDTO>();

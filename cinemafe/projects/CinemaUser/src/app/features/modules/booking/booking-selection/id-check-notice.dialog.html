@@ -1,0 +1,12 @@
+<div class="tk-top">
+  <span class="tk-badge"><mat-icon>badge</mat-icon></span>
+  <h2 mat-dialog-title class="tk-title">{{ 'booking.idCheck.title' | translate }}</h2>
+</div>
+<div class="tk-body">
+  <p class="tk-subtitle">{{ data.categoryName }}</p>
+  <p class="tk-note" role="alert">{{ data.customMessage?.trim() || ('booking.idCheck.message' | translate) }}</p>
+</div>
+<div class="tk-foot">
+  <button type="button" class="tk-btn full" cdkFocusInitial (click)="confirm()">{{ 'booking.idCheck.confirm' | translate }}</button>
+  <button type="button" class="tk-btn text" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+</div>

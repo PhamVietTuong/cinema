@@ -27,5 +27,16 @@ public class PatronCategory : BaseEntity
 
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// When true, CinemaUser shows a customer-facing notice that ID (CCCD or student card) will be
+    /// checked at the theater before this category can be booked online. This is a UI notice only —
+    /// it is not verified or enforced anywhere in the booking flow.
+    /// </summary>
+    public bool RequiresIdCheck { get; set; }
+
+    /// <summary>Custom wording for the RequiresIdCheck notice shown in CinemaUser. Null/empty means
+    /// CinemaUser falls back to its default translated message.</summary>
+    public string? IdCheckMessage { get; set; }
+
     public ICollection<RoomTypePatronCategoryPrice> RoomTypePrices { get; set; } = new List<RoomTypePatronCategoryPrice>();
 }

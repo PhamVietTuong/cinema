@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -26,11 +26,15 @@ export class PatronCategoryDialog {
   readonly isEditing: boolean;
   readonly seatTypes: CinemaServiceAgent.SeatTypeDTO[];
   form: FormGroup;
+  /** Mirrors the requiresIdCheck control for the template, since zoneless CD isn't notified by a
+   * plain `form.value` read when the control changes outside a template-bound event. */
+  requiresIdCheck = false;
 
   constructor(
     private _svc: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
     private _store: Store<any>,
+    private _cdr: ChangeDetectorRef,
     private _dialogRef: MatDialogRef<PatronCategoryDialog, boolean>,
     @Inject(MAT_DIALOG_DATA) private _data: PatronCategoryDialogData,
   ) {
@@ -44,6 +48,14 @@ export class PatronCategoryDialog {
       isActive: [category?.isActive ?? true],
       seatTypeId: [category?.seatTypeId ?? this.seatTypes[0]?.id, Validators.required],
       price: [category?.price ?? null, [Validators.required, Validators.min(0)]],
+      requiresIdCheck: [category?.requiresIdCheck ?? false],
+      idCheckMessage: [category?.idCheckMessage ?? ''],
+    });
+
+    this.requiresIdCheck = this.form.value.requiresIdCheck;
+    this.form.get('requiresIdCheck')!.valueChanges.subscribe(value => {
+      this.requiresIdCheck = value;
+      this._cdr.markForCheck();
     });
   }
 
@@ -58,10 +70,10 @@ export class PatronCategoryDialog {
 
     const obs = category
       ? this._svc.updatePatronCategory(CinemaServiceAgent.UpdatePatronCategoryRequest.fromJS({
-          id: category.id, name: v.name, description: v.description, isActive: v.isActive, seatTypeId: v.seatTypeId, price: v.price,
+          id: category.id, name: v.name, description: v.description, isActive: v.isActive, seatTypeId: v.seatTypeId, price: v.price, requiresIdCheck: v.requiresIdCheck, idCheckMessage: v.idCheckMessage,
         }))
       : this._svc.createPatronCategory(CinemaServiceAgent.CreatePatronCategoryRequest.fromJS({
-          theaterId: this._data.theaterId, name: v.name, description: v.description, isActive: v.isActive, seatTypeId: v.seatTypeId, price: v.price,
+          theaterId: this._data.theaterId, name: v.name, description: v.description, isActive: v.isActive, seatTypeId: v.seatTypeId, price: v.price, requiresIdCheck: v.requiresIdCheck, idCheckMessage: v.idCheckMessage,
         }));
 
     this._store.dispatch(showLoading());
