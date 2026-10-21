@@ -482,9 +482,31 @@
     "fallback": "Mình chưa hiểu ý bạn. Thử hỏi về: đặt vé, giờ chiếu, hủy vé, thành viên, thanh toán, hoặc rạp gần bạn nhé."
   },
   "promotions": {
+    "eyebrow": "Ưu đãi",
     "pageTitle": "Khuyến Mãi",
     "pageSubtitle": "Khám phá những ưu đãi đặc quyền dành riêng cho thành viên Midnight Premium. Tận hưởng trải nghiệm điện ảnh đẳng cấp với chi phí tối ưu.",
     "empty": "Hiện chưa có chương trình khuyến mãi nào.",
+    "emptyFiltered": "Không có ưu đãi nào trong mục này.",
+    "pricesTitle": "Bảng giá",
+    "tabs": {
+      "all": "Tất cả",
+      "auto": "Tự động áp dụng",
+      "code": "Cần mã",
+      "members": "Thành viên",
+      "students": "HSSV"
+    },
+    "ledger": {
+      "eligibility": "Đối tượng",
+      "period": "Thời gian",
+      "timeWindow": "Khung giờ",
+      "theaters": "Rạp áp dụng"
+    },
+    "stubCaption": {
+      "everyone": "Mọi khách hàng",
+      "members": "Thành viên",
+      "studentOrTeacher": "HSSV",
+      "ageLimit": "Giới hạn tuổi"
+    },
     "details": "Chi tiết",
     "hideDetails": "Ẩn chi tiết",
     "startsOn": "Bắt đầu {{date}}",
