@@ -383,6 +383,14 @@ BEGIN
 END
 
 -- ============================================================
+-- Seat.Kind: Standard (0) or Aisle (2). Double is still derived from SeatGroupId.
+-- ============================================================
+IF COL_LENGTH('dbo.Seat', 'Kind') IS NULL
+BEGIN
+    ALTER TABLE [Seat] ADD [Kind] int NOT NULL CONSTRAINT [DF_Seat_Kind] DEFAULT 0;
+END
+
+-- ============================================================
 -- InvoiceTicket.SeatLabel: seat label frozen at sale time
 -- ============================================================
 -- InvoiceTicket has a filtered index (IX_InvoiceTicket_ActiveSeat), so any UPDATE against it requires
@@ -396,19 +404,23 @@ BEGIN
 END
 
 -- One-time BEST-EFFORT backfill: numbers each existing ticket's seat with TODAY's room layout
--- (row-position numbering; a double seat = one slot; blocked seats still count). If the room was
--- re-paired/resized since the sale this is NOT a true historical reconstruction — it only keeps old
--- rows from being blank. Must stay equivalent to Cinema.Business/Helpers/SeatNumbering.cs. Safe to
--- re-run: only rows where SeatLabel IS NULL are touched.
+-- (row-position numbering; a double seat = one slot; an aisle takes no slot; blocked seats still
+-- count). If the room was re-paired/resized since the sale this is NOT a true historical
+-- reconstruction — it only keeps old rows from being blank. Must stay equivalent to
+-- Cinema.Business/Helpers/SeatNumbering.cs. Safe to re-run: only rows where SeatLabel IS NULL are
+-- touched. An aisle seat is never ticketed, so it never matches the JOIN below.
 EXEC('
 ;WITH s1 AS (
-    SELECT s.[Id], s.[RoomId], s.[RowName], s.[ColIndex], s.[SeatGroupId],
-           LAG(s.[SeatGroupId]) OVER (PARTITION BY s.[RoomId], s.[RowName] ORDER BY s.[ColIndex]) AS [PrevGroupId],
+    SELECT s.[Id], s.[RoomId], s.[RowName], s.[ColIndex], s.[Kind],
+           CASE WHEN s.[Kind] = 2 THEN NULL ELSE s.[SeatGroupId] END AS [SeatGroupId],
+           LAG(CASE WHEN s.[Kind] = 2 THEN NULL ELSE s.[SeatGroupId] END)
+               OVER (PARTITION BY s.[RoomId], s.[RowName] ORDER BY s.[ColIndex]) AS [PrevGroupId],
            COUNT(*) OVER (PARTITION BY s.[RoomId], s.[RowName], s.[SeatGroupId]) AS [GroupSizeInRow]
     FROM [Seat] s
 ), s2 AS (
     SELECT [Id], [RowName],
-           SUM(CASE WHEN [SeatGroupId] IS NOT NULL AND [PrevGroupId] = [SeatGroupId] AND [GroupSizeInRow] = 2
+           SUM(CASE WHEN [Kind] = 2 THEN 0
+                    WHEN [SeatGroupId] IS NOT NULL AND [PrevGroupId] = [SeatGroupId] AND [GroupSizeInRow] = 2
                     THEN 0 ELSE 1 END)
                OVER (PARTITION BY [RoomId], [RowName] ORDER BY [ColIndex] ROWS UNBOUNDED PRECEDING) AS [DisplayNumber]
     FROM s1

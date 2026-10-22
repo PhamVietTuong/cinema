@@ -22,7 +22,7 @@ export function seatRows(seats: readonly SelectableSeat[]): string[] {
 }
 
 /** Minimal shape a seat needs to be grouped into rows and double-seat cells. */
-export type RowedSeat = { id?: string; rowName?: string; colIndex?: number; seatGroupId?: string; displayNumber?: number };
+export type RowedSeat = { id?: string; rowName?: string; colIndex?: number; seatGroupId?: string; displayNumber?: number; isAisle?: boolean };
 
 /** The seats of one row ordered by column index. */
 export function seatsByRow<T extends RowedSeat>(seats: readonly T[], row: string): T[] {
@@ -96,22 +96,26 @@ export interface SeatCell<T extends RowedSeat = SelectableSeat> {
   key: string;
   seats: T[];
   isDouble: boolean;
+  /** A non-bookable gap cell (aisle/walkway), rendered as empty space. Takes no position. */
+  isAisle: boolean;
   /** 1-based position of this box within its row — a double seat counts as one position, so later
-   * cells don't jump by two. Only meaningful when seatCellsByRow saw every seat of the row (as the
-   * admin seat-map editor does); the live booking/POS grid uses the server's DisplayNumber instead. */
+   * cells don't jump by two, and an aisle takes none at all. Only meaningful when seatCellsByRow saw
+   * every seat of the row (as the admin seat-map editor does); the live booking/POS grid uses the
+   * server's DisplayNumber instead. */
   position: number;
 }
 
 /**
  * The boxes to draw for one row: adjacent seats sharing a seatGroupId are merged into one wide cell.
  * A group that isn't exactly two adjacent seats in this row falls back to separate single-seat cells.
- * Generic so both the booking seat map (SelectableSeat) and the admin seat-map editor (RoomSeatDTO) share it.
+ * An aisle cell is never merged and never advances position. Generic so both the booking seat map
+ * (SelectableSeat) and the admin seat-map editor (RoomSeatDTO) share it.
  */
 export function seatCellsByRow<T extends RowedSeat>(seats: readonly T[], row: string): SeatCell<T>[] {
   const ordered = seatsByRow(seats, row);
   const groupCounts = new Map<string, number>();
   for (const s of ordered) {
-    if (s.seatGroupId) {
+    if (!s.isAisle && s.seatGroupId) {
       groupCounts.set(s.seatGroupId, (groupCounts.get(s.seatGroupId) ?? 0) + 1);
     }
   }
@@ -120,18 +124,24 @@ export function seatCellsByRow<T extends RowedSeat>(seats: readonly T[], row: st
   let position = 0;
   for (let i = 0; i < ordered.length; i++) {
     const seat = ordered[i];
+    if (seat.isAisle) {
+      cells.push({ key: `${seat.id}`, seats: [seat], isDouble: false, isAisle: true, position: 0 });
+      continue;
+    }
+
     const next = ordered[i + 1];
     const canMerge = !!seat.seatGroupId
       && !!next
+      && !next.isAisle
       && next.seatGroupId === seat.seatGroupId
       && groupCounts.get(seat.seatGroupId) === 2;
 
     position++;
     if (canMerge) {
-      cells.push({ key: `${seat.id}-${next.id}`, seats: [seat, next], isDouble: true, position });
+      cells.push({ key: `${seat.id}-${next.id}`, seats: [seat, next], isDouble: true, isAisle: false, position });
       i++;
     } else {
-      cells.push({ key: `${seat.id}`, seats: [seat], isDouble: false, position });
+      cells.push({ key: `${seat.id}`, seats: [seat], isDouble: false, isAisle: false, position });
     }
   }
   return cells;

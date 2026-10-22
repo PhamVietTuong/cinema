@@ -208,6 +208,10 @@ public class IncidentManager : IIncidentManager
     public async Task<BlockResultDTO> BlockSeatAsync(Guid theaterId, Guid actorUserId, BlockSeatRequest request)
     {
         var seat = await LoadSeatAsync(request.SeatId);
+        if (seat.IsAisle())
+        {
+            throw new InvalidOperationException("An aisle cannot be blocked.");
+        }
         var room = await LoadRoomInTheaterAsync(theaterId, seat.RoomId);
         var incident = await LoadOpenIncidentAsync(theaterId, request.IncidentId);
 

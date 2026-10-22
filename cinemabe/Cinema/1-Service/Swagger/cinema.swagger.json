@@ -7284,11 +7284,13 @@
         "description": "",
         "x-enumNames": [
           "Standard",
-          "Double"
+          "Double",
+          "Aisle"
         ],
         "enum": [
           0,
-          1
+          1,
+          2
         ]
       },
       "UpdateSeatTypeRequest": {
@@ -9059,6 +9061,10 @@
           },
           "status": {
             "$ref": "#/components/schemas/RoomStatus"
+          },
+          "seatCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -9594,6 +9600,9 @@
           "isDouble": {
             "type": "boolean"
           },
+          "isAisle": {
+            "type": "boolean"
+          },
           "seatGroupId": {
             "type": "string",
             "format": "guid",
@@ -9634,6 +9643,9 @@
             "nullable": true
           },
           "isActive": {
+            "type": "boolean"
+          },
+          "isAisle": {
             "type": "boolean"
           }
         }

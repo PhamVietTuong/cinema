@@ -180,6 +180,10 @@ public class PromotionProgramManager : IPromotionProgramManager
                 {
                     throw new InvalidOperationException("Price rows must not be negative.");
                 }
+                if (prices.Any(p => p.SeatKind == SeatKind.Aisle))
+                {
+                    throw new InvalidOperationException("Aisle is not a priced seat kind.");
+                }
                 if (prices.GroupBy(p => (p.ProjectionForm, p.SeatKind)).Any(g => g.Count() > 1))
                 {
                     throw new InvalidOperationException("Duplicate price rows for the same format/seat kind.");

@@ -12,7 +12,7 @@ public class SeatStore : GenericStore<Seat>, ISeatStore
 
     public async Task<IEnumerable<Seat>> GetByRoomAsync(Guid roomId)
         => await DbSet
-            .Where(s => s.RoomId == roomId && s.IsActive)
+            .Where(s => s.RoomId == roomId && s.IsActive && s.Kind != SeatKind.Aisle)
             .OrderBy(s => s.RowName).ThenBy(s => s.ColIndex)
             .ToListAsync();
 
@@ -50,6 +50,16 @@ public class SeatStore : GenericStore<Seat>, ISeatStore
             .ToListAsync();
 
         return rows.ToDictionary(r => (r.ShowTimeId, r.RoomId), r => r.Count);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, int>> GetBookableSeatCountsAsync(IReadOnlyCollection<Guid> roomIds)
+    {
+        var rows = await DbSet
+            .Where(s => roomIds.Contains(s.RoomId) && s.IsActive && s.Kind != SeatKind.Aisle)
+            .GroupBy(s => s.RoomId)
+            .Select(g => new { RoomId = g.Key, Count = g.Count() })
+            .ToListAsync();
+        return rows.ToDictionary(r => r.RoomId, r => r.Count);
     }
 
     public async Task<bool> HasAnyTicketAsync(Guid seatId)

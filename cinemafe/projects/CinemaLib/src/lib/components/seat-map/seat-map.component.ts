@@ -69,6 +69,9 @@ export class SeatMapComponent {
   }
 
   onCellClick(cell: SeatCell): void {
+    if (cell.isAisle) {
+      return;
+    }
     this.seatToggle.emit(cell.seats[0]);
   }
 }

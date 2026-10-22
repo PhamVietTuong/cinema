@@ -474,15 +474,17 @@ CREATE TABLE [ShowTime] (
     CONSTRAINT [FK_ShowTime_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE CASCADE
 );
 
--- A seat has no stored kind of its own: Standard vs Double is derived from SeatGroupId being set
+-- [Kind] stores only Standard (0) or Aisle (2): Double is still derived from SeatGroupId being set
 -- (a non-null group id always links exactly 2 seats). This avoids two places that could disagree
--- about a seat's kind.
+-- about whether a seat is a double. An aisle is a non-bookable gap cell: SeatGroupId is always NULL
+-- and IsActive is always 1 on an aisle.
 CREATE TABLE [Seat] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [RoomId] uniqueidentifier NOT NULL,
     [RowName] nvarchar(5) NOT NULL,
     [ColIndex] int NOT NULL,
     [IsActive] bit NOT NULL,
+    [Kind] int NOT NULL DEFAULT 0,
     [SeatGroupId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,

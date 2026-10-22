@@ -11102,6 +11102,7 @@ export interface ISeatTypeDTO {
 export enum SeatKind {
     Standard = 0,
     Double = 1,
+    Aisle = 2,
 }
 
 export class UpdateSeatTypeRequest implements IUpdateSeatTypeRequest {
@@ -14262,6 +14263,7 @@ export class RoomDTO implements IRoomDTO {
     totalRows?: number;
     totalColumns?: number;
     status?: RoomStatus;
+    seatCount?: number;
 
     constructor(data?: IRoomDTO) {
         if (data) {
@@ -14281,6 +14283,7 @@ export class RoomDTO implements IRoomDTO {
             this.totalRows = _data["totalRows"];
             this.totalColumns = _data["totalColumns"];
             this.status = _data["status"];
+            this.seatCount = _data["seatCount"];
         }
     }
 
@@ -14300,6 +14303,7 @@ export class RoomDTO implements IRoomDTO {
         data["totalRows"] = this.totalRows;
         data["totalColumns"] = this.totalColumns;
         data["status"] = this.status;
+        data["seatCount"] = this.seatCount;
         return data;
     }
 }
@@ -14312,6 +14316,7 @@ export interface IRoomDTO {
     totalRows?: number;
     totalColumns?: number;
     status?: RoomStatus;
+    seatCount?: number;
 }
 
 export enum RoomStatus {
@@ -15324,6 +15329,7 @@ export class RoomSeatDTO implements IRoomSeatDTO {
     rowName?: string;
     colIndex?: number;
     isDouble?: boolean;
+    isAisle?: boolean;
     seatGroupId?: string | undefined;
     isActive?: boolean;
 
@@ -15342,6 +15348,7 @@ export class RoomSeatDTO implements IRoomSeatDTO {
             this.rowName = _data["rowName"];
             this.colIndex = _data["colIndex"];
             this.isDouble = _data["isDouble"];
+            this.isAisle = _data["isAisle"];
             this.seatGroupId = _data["seatGroupId"];
             this.isActive = _data["isActive"];
         }
@@ -15360,6 +15367,7 @@ export class RoomSeatDTO implements IRoomSeatDTO {
         data["rowName"] = this.rowName;
         data["colIndex"] = this.colIndex;
         data["isDouble"] = this.isDouble;
+        data["isAisle"] = this.isAisle;
         data["seatGroupId"] = this.seatGroupId;
         data["isActive"] = this.isActive;
         return data;
@@ -15371,6 +15379,7 @@ export interface IRoomSeatDTO {
     rowName?: string;
     colIndex?: number;
     isDouble?: boolean;
+    isAisle?: boolean;
     seatGroupId?: string | undefined;
     isActive?: boolean;
 }
@@ -15427,6 +15436,7 @@ export class SeatAssignmentItem implements ISeatAssignmentItem {
     seatId?: string;
     seatGroupId?: string | undefined;
     isActive?: boolean;
+    isAisle?: boolean;
 
     constructor(data?: ISeatAssignmentItem) {
         if (data) {
@@ -15442,6 +15452,7 @@ export class SeatAssignmentItem implements ISeatAssignmentItem {
             this.seatId = _data["seatId"];
             this.seatGroupId = _data["seatGroupId"];
             this.isActive = _data["isActive"];
+            this.isAisle = _data["isAisle"];
         }
     }
 
@@ -15457,6 +15468,7 @@ export class SeatAssignmentItem implements ISeatAssignmentItem {
         data["seatId"] = this.seatId;
         data["seatGroupId"] = this.seatGroupId;
         data["isActive"] = this.isActive;
+        data["isAisle"] = this.isAisle;
         return data;
     }
 }
@@ -15465,6 +15477,7 @@ export interface ISeatAssignmentItem {
     seatId?: string;
     seatGroupId?: string | undefined;
     isActive?: boolean;
+    isAisle?: boolean;
 }
 
 export class ResizeSeatGridRequest implements IResizeSeatGridRequest {

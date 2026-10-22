@@ -28,6 +28,9 @@ public class RoomSeatMapTests
         // Default: no upcoming showtimes and no ticket history, unless a test overrides it.
         _uowMock.Setup(u => u.ShowTimeStore.ExistsAsync(It.IsAny<Expression<Func<ShowTime, bool>>>())).ReturnsAsync(false);
         _uowMock.Setup(u => u.SeatStore.HasAnyTicketAsync(It.IsAny<Guid>())).ReturnsAsync(false);
+        _uowMock.Setup(u => u.IncidentStore.GetUpcomingTicketsAsync(It.IsAny<Guid>(), It.IsAny<IReadOnlyCollection<Guid>?>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<AffectedTicketRow>());
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         _uowMock.Setup(u => u.SeatStore.FindAsync(It.IsAny<Expression<Func<Seat, bool>>>()))
             .ReturnsAsync((Expression<Func<Seat, bool>> predicate) => _seats.Where(predicate.Compile()).ToList());
@@ -50,9 +53,9 @@ public class RoomSeatMapTests
             .ReturnsAsync(0);
     }
 
-    private Seat GivenSeat(string row, int col, Guid? groupId = null)
+    private Seat GivenSeat(string row, int col, Guid? groupId = null, SeatKind kind = SeatKind.Standard)
     {
-        var seat = new Seat { Id = Guid.NewGuid(), RoomId = _room.Id, RowName = row, ColIndex = col, SeatGroupId = groupId, IsActive = true };
+        var seat = new Seat { Id = Guid.NewGuid(), RoomId = _room.Id, RowName = row, ColIndex = col, SeatGroupId = groupId, IsActive = true, Kind = kind };
         _seats.Add(seat);
         return seat;
     }
@@ -223,5 +226,92 @@ public class RoomSeatMapTests
 
         deletedIds.Should().ContainSingle();
         deletedIds.Should().Contain(_seats.Single(s => s.RowName == "B" && s.ColIndex == 3).Id);
+    }
+
+    [Fact]
+    public async Task ResizeGrid_KeepsExistingAisleCellsInKeptPositions_AndNewCellsAreStandard()
+    {
+        GivenSeat("A", 1);
+        GivenSeat("A", 2, kind: SeatKind.Aisle);
+        GivenSeat("A", 3);
+        _uowMock.Setup(u => u.SeatStore.CreateRangeAsync(It.IsAny<List<Seat>>()))
+            .ReturnsAsync((List<Seat> list) => { _seats.AddRange(list); return list; });
+        _uowMock.Setup(u => u.SeatStore.DeleteAsync(It.IsAny<Expression<Func<Seat, bool>>>())).ReturnsAsync(true);
+
+        var result = await _sut.ResizeSeatGridAsync(new ResizeSeatGridRequest { RoomId = _room.Id, TotalRows = 1, TotalColumns = 4 });
+
+        result.Single(s => s.ColIndex == 2).IsAisle.Should().BeTrue();
+        result.Single(s => s.ColIndex == 4).IsAisle.Should().BeFalse();
+    }
+
+    // ── SaveSeatMapAsync ─────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task SaveSeatMap_ItemMarkedAisle_PersistsAsAisle_AndClearsGroupAndSetsActive()
+    {
+        var seat = GivenSeat("A", 1);
+        var request = new SaveSeatMapRequest
+        {
+            RoomId = _room.Id,
+            Seats = [new SeatAssignmentItem { SeatId = seat.Id, IsAisle = true, IsActive = false }]
+        };
+
+        await _sut.SaveSeatMapAsync(request);
+
+        seat.Kind.Should().Be(SeatKind.Aisle);
+        seat.SeatGroupId.Should().BeNull();
+        seat.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SaveSeatMap_PaintingAisleOnHalfOfADouble_UnpairsThePartner()
+    {
+        var groupId = Guid.NewGuid();
+        var a = GivenSeat("A", 1, groupId);
+        var b = GivenSeat("A", 2, groupId);
+        var request = new SaveSeatMapRequest
+        {
+            RoomId = _room.Id,
+            Seats =
+            [
+                new SeatAssignmentItem { SeatId = a.Id, IsAisle = true },
+                new SeatAssignmentItem { SeatId = b.Id, SeatGroupId = groupId },
+            ]
+        };
+
+        await _sut.SaveSeatMapAsync(request);
+
+        a.Kind.Should().Be(SeatKind.Aisle);
+        b.Kind.Should().Be(SeatKind.Standard);
+        b.SeatGroupId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SaveSeatMap_SeatTurningIntoAisleHasUpcomingTickets_Throws_AndPersistsNothing()
+    {
+        var seat = GivenSeat("A", 1);
+        _uowMock.Setup(u => u.IncidentStore.GetUpcomingTicketsAsync(_room.Id, It.Is<IReadOnlyCollection<Guid>>(ids => ids.Contains(seat.Id)), It.IsAny<DateTime>()))
+            .ReturnsAsync([new AffectedTicketRow(Guid.NewGuid(), "INV-1", "John", "0123456789", Guid.NewGuid(), _room.Id, "Room 1", "Movie", DateTime.Now.AddHours(1), seat.Id, seat.RowName, seat.ColIndex)]);
+        var request = new SaveSeatMapRequest
+        {
+            RoomId = _room.Id,
+            Seats = [new SeatAssignmentItem { SeatId = seat.Id, IsAisle = true }]
+        };
+
+        var act = () => _sut.SaveSeatMapAsync(request);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        seat.Kind.Should().Be(SeatKind.Standard);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetSeatMap_ReturnsIsAisle()
+    {
+        GivenSeat("A", 1, kind: SeatKind.Aisle);
+
+        var result = await _sut.GetSeatMapAsync(_room.Id);
+
+        result.Single().IsAisle.Should().BeTrue();
     }
 }

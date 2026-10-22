@@ -73,9 +73,21 @@ describe('seat-selection helpers', () => {
     const four = seat({ id: '4', colIndex: 4 });
     const cells = seatCellsByRow([four, three, one, two], 'A');
     expect(cells).toEqual([
-      { key: '1', seats: [one], isDouble: false, position: 1 },
-      { key: '2-3', seats: [two, three], isDouble: true, position: 2 },
-      { key: '4', seats: [four], isDouble: false, position: 3 },
+      { key: '1', seats: [one], isDouble: false, isAisle: false, position: 1 },
+      { key: '2-3', seats: [two, three], isDouble: true, isAisle: false, position: 2 },
+      { key: '4', seats: [four], isDouble: false, isAisle: false, position: 3 },
+    ]);
+  });
+
+  it('gives an aisle cell no position and never merges it into a pair', () => {
+    const a = seat({ id: 'a', colIndex: 1, seatGroupId: 'g' });
+    const aisle = seat({ id: 'x', colIndex: 2, isAisle: true });
+    const b = seat({ id: 'b', colIndex: 3, seatGroupId: 'g' });
+    const cells = seatCellsByRow([a, aisle, b], 'A');
+    expect(cells).toEqual([
+      { key: 'a', seats: [a], isDouble: false, isAisle: false, position: 1 },
+      { key: 'x', seats: [aisle], isDouble: false, isAisle: true, position: 0 },
+      { key: 'b', seats: [b], isDouble: false, isAisle: false, position: 2 },
     ]);
   });
 
@@ -98,8 +110,8 @@ describe('seat-selection helpers', () => {
     const one = seat({ id: '1', rowName: 'N', colIndex: 1, displayNumber: 1 });
     const two = seat({ id: '2', rowName: 'N', colIndex: 2, displayNumber: 2 });
     const three = seat({ id: '3', rowName: 'N', colIndex: 3, displayNumber: 2 });
-    expect(seatCellLabel({ key: '1', seats: [one], isDouble: false, position: 1 })).toBe('N1');
-    expect(seatCellLabel({ key: '2-3', seats: [two, three], isDouble: true, position: 2 })).toBe('N2');
+    expect(seatCellLabel({ key: '1', seats: [one], isDouble: false, isAisle: false, position: 1 })).toBe('N1');
+    expect(seatCellLabel({ key: '2-3', seats: [two, three], isDouble: true, isAisle: false, position: 2 })).toBe('N2');
   });
 
   it('derives a cell visual state from the most urgent seat state in it', () => {
@@ -109,11 +121,11 @@ describe('seat-selection helpers', () => {
     const locked = seat({ id: 'd', isLocked: true });
     const blocked = seat({ id: 'e', isAllowedForPatronCategory: false });
 
-    expect(seatCellVisualState({ key: 'x', seats: [avail, avail], isDouble: true, position: 1 })).toBe('available');
-    expect(seatCellVisualState({ key: 'x', seats: [avail, sel], isDouble: true, position: 1 })).toBe('selected');
-    expect(seatCellVisualState({ key: 'x', seats: [avail, occ], isDouble: true, position: 1 })).toBe('occupied');
-    expect(seatCellVisualState({ key: 'x', seats: [avail, locked], isDouble: true, position: 1 })).toBe('locked');
-    expect(seatCellVisualState({ key: 'x', seats: [avail, blocked], isDouble: true, position: 1 })).toBe('unavailable-category');
+    expect(seatCellVisualState({ key: 'x', seats: [avail, avail], isDouble: true, isAisle: false, position: 1 })).toBe('available');
+    expect(seatCellVisualState({ key: 'x', seats: [avail, sel], isDouble: true, isAisle: false, position: 1 })).toBe('selected');
+    expect(seatCellVisualState({ key: 'x', seats: [avail, occ], isDouble: true, isAisle: false, position: 1 })).toBe('occupied');
+    expect(seatCellVisualState({ key: 'x', seats: [avail, locked], isDouble: true, isAisle: false, position: 1 })).toBe('locked');
+    expect(seatCellVisualState({ key: 'x', seats: [avail, blocked], isDouble: true, isAisle: false, position: 1 })).toBe('unavailable-category');
   });
 });
 
