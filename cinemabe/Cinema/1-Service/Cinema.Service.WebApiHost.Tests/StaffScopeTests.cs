@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Auth;
-using Cinema.Service.WebApiHost.Controllers;
 using Cinema.Service.WebApiHost.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;

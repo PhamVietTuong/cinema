@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Cinema.Data.Enums;
 
 namespace Cinema.Business.DTO.Staff;

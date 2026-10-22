@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Cinema.Business.DTO.Requests;
 using Cinema.Data.Entities;
 

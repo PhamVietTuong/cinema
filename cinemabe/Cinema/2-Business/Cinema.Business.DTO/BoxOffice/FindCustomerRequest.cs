@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.Staff;
 using Cinema.Business.DTO.Validation;
 using Cinema.Data.Enums;

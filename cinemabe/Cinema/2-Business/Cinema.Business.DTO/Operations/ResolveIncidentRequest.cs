@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using Cinema.Business.DTO.Staff;
-using Cinema.Data.Enums;
 
 namespace Cinema.Business.DTO.Operations;
 

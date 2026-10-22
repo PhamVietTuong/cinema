@@ -2,9 +2,6 @@ using Cinema.Data.Entities;
 
 namespace Cinema.Data.Contracts;
 
-/// <summary>An active staff member of a theater, for the roster picker.</summary>
-public record TheaterStaffRow(Guid Id, string Name, string RoleName);
-
 /// <summary>
 /// Rosters. Methods that return tracked entities say so: edit them, then call
 /// <c>IApplicationUnitOfWork.SaveChangesAsync</c>. <c>Stage*</c> methods only track; the caller saves.

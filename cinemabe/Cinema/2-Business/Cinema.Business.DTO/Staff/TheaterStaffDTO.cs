@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 
 namespace Cinema.Business.DTO.Staff;
 

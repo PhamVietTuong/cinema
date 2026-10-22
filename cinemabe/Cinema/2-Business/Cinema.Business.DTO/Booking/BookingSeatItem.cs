@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Cinema.Business.DTO.Validation;
 
 namespace Cinema.Business.DTO.Booking;

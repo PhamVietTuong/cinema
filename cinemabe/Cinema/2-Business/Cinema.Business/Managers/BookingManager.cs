@@ -4,7 +4,6 @@ using System.Text.Json;
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.Contracts.Payments;
-using Cinema.Business.DTO;
 using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.BoxOffice;
 using Cinema.Business.DTO.Concession;

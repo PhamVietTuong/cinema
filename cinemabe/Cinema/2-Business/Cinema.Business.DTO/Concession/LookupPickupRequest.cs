@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Cinema.Business.DTO.Validation;
 using Cinema.Data.Enums;
 
 namespace Cinema.Business.DTO.Concession;

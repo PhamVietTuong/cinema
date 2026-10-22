@@ -2,7 +2,6 @@ using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Staff;
 using Cinema.Data.Contracts;
 using Cinema.Data.Enums;
-using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Managers;
 

@@ -1,4 +1,3 @@
-using Cinema.Business.DTO.Requests;
 using Cinema.Data.Enums;
 
 namespace Cinema.Business.DTO.Catalog;
