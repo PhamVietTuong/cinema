@@ -422,13 +422,3 @@ public class PaymentController : ApiControllerBase
         }
     }
 }
-
-// ── Request classes ───────────────────────────────────────────────────────────
-
-public record ConfirmPaymentRequest(Guid InvoiceId, string PaymentReference);
-public record InitiatePaymentRequest(Guid InvoiceId, string? Provider, string? ReturnUrl);
-public record ValidateTicketRequest(string QrCode);
-public record CancelBookingRequest(Guid InvoiceId);
-public record ValidateGiftCardRequest(string Code);
-public record ValidateDiscountCodeRequest(string Code, Guid RoomId, Guid ShowTimeId, double Total);
-public record SetGiftCardActiveRequest(Guid Id, bool Active);

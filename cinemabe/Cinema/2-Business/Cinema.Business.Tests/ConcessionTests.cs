@@ -16,20 +16,6 @@ namespace Cinema.Business.Tests;
 
 public class ConcessionTests
 {
-    private sealed class FixedClock : TimeProvider
-    {
-        private readonly DateTimeOffset _now;
-
-        public FixedClock(DateTime utcNow)
-        {
-            _now = new DateTimeOffset(DateTime.SpecifyKind(utcNow, DateTimeKind.Utc));
-        }
-
-        public override DateTimeOffset GetUtcNow() => _now;
-
-        public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
-    }
-
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new() { DefaultValue = DefaultValue.Mock };
     private readonly Mock<IStaffNotificationService> _staffNotifications = new();
     private readonly Guid _theaterId = Guid.NewGuid();

@@ -14,21 +14,6 @@ public class GateManagerTests
 {
     private const string _qr = "QR-1";
 
-    private sealed class FixedClock : TimeProvider
-    {
-        private readonly DateTimeOffset _now;
-
-        public FixedClock(DateTime utcNow)
-        {
-            _now = new DateTimeOffset(DateTime.SpecifyKind(utcNow, DateTimeKind.Utc));
-        }
-
-        public override DateTimeOffset GetUtcNow() => _now;
-
-        // Local time == UTC, so the test's "now" is also the theater's local now.
-        public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
-    }
-
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();
     private readonly Guid _theaterId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();

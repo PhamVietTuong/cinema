@@ -4,18 +4,6 @@ using Cinema.Data.Enums;
 
 namespace Cinema.Business.Managers;
 
-public sealed class TenderSettlementResult
-{
-    /// <summary>One cash row (if any cash was handed over) plus one row per Card/QR tender.</summary>
-    public List<InvoicePayment> Payments { get; init; } = new();
-
-    /// <summary>The part of the price actually paid in cash (what enters the drawer).</summary>
-    public double CashApplied { get; init; }
-
-    /// <summary>Cash handed back to the customer.</summary>
-    public double ChangeDue { get; init; }
-}
-
 /// <summary>
 /// Pure rules for splitting a counter sale's amount due across tenders. Cash is the only tender that may overpay
 /// (change is returned); Card and QrWallet are exact and need a terminal reference. Points and gift cards are not

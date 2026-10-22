@@ -137,23 +137,6 @@ public class StaffReportStore : IStaffReportStore
         return Expression.Lambda<Func<TLine, TKey>>(body, navigation.Parameters);
     }
 
-    private sealed class ParameterRebinder : ExpressionVisitor
-    {
-        private readonly ParameterExpression _parameter;
-        private readonly Expression _replacement;
-
-        public ParameterRebinder(ParameterExpression parameter, Expression replacement)
-        {
-            _parameter = parameter;
-            _replacement = replacement;
-        }
-
-        protected override Expression VisitParameter(ParameterExpression node)
-        {
-            return node == _parameter ? _replacement : base.VisitParameter(node);
-        }
-    }
-
     /// <summary>
     /// Movie: one row per movie (ticket lines only, food has no movie) plus a movie-less row (null key) that carries
     /// everything a movie cannot: the F&amp;B lines, the invoice discounts and the food-only invoices, so the rows add

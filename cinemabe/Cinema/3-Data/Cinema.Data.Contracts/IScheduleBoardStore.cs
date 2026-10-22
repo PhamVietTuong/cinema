@@ -1,12 +1,4 @@
-using Cinema.Data.Enums;
-
 namespace Cinema.Data.Contracts;
-
-/// <summary>A room of the theater with its class buffer and its sellable (active) seat count.</summary>
-public record BoardRoomRow(Guid RoomId, string RoomName, string RoomTypeName, RoomStatus Status, int TurnoverBufferMinutes, int Capacity);
-
-/// <summary>A showtime screening in a room, with its movie title.</summary>
-public record BoardShowTimeRow(Guid ShowTimeId, Guid RoomId, Guid MovieId, string MovieTitle, DateTime StartTime, DateTime EndTime);
 
 /// <summary>Read-only queries behind the staff schedule board.</summary>
 public interface IScheduleBoardStore

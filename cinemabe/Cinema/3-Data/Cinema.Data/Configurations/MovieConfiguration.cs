@@ -17,13 +17,3 @@ public class MovieConfiguration : IEntityTypeConfiguration<Movie>
         b.HasOne(m => m.AgeRestriction).WithMany(a => a.Movies).HasForeignKey(m => m.AgeRestrictionId).OnDelete(DeleteBehavior.Restrict);
     }
 }
-
-public class MovieTypeDetailConfiguration : IEntityTypeConfiguration<MovieTypeDetail>
-{
-    public void Configure(EntityTypeBuilder<MovieTypeDetail> b)
-    {
-        b.HasKey(mt => new { mt.MovieId, mt.MovieTypeId });
-        b.HasOne(mt => mt.Movie).WithMany(m => m.MovieTypeDetails).HasForeignKey(mt => mt.MovieId);
-        b.HasOne(mt => mt.MovieType).WithMany(t => t.MovieTypeDetails).HasForeignKey(mt => mt.MovieTypeId);
-    }
-}

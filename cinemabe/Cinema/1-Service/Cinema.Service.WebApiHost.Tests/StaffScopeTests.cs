@@ -110,14 +110,6 @@ public class StaffScopeTests
 
     // ── Exception mapping: authorization failures are 403, never 401 ─────────
 
-    private sealed class Probe : ApiControllerBase
-    {
-        public IActionResult Map(Exception e)
-        {
-            return HandleException(e, nameof(Map));
-        }
-    }
-
     [Fact]
     public void HandleException_AccessDenied_Maps403_NotUnauthorized()
     {

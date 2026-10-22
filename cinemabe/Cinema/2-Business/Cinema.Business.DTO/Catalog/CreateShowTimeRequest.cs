@@ -1,0 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+using Cinema.Business.DTO.Requests;
+using Cinema.Data.Enums;
+
+namespace Cinema.Business.DTO.Catalog;
+
+public class CreateShowTimeRequest
+{
+    public Guid MovieId { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    public ProjectionForm ProjectionForm { get; set; } = ProjectionForm.TwoD;
+    public ShowTimeType ShowTimeType { get; set; } = ShowTimeType.Normal;
+    public bool IsActive { get; set; } = true;
+    public Guid RoomId { get; set; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "Base price cannot be negative.")]
+    public int BasePrice { get; set; }
+}

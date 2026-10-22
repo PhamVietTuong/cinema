@@ -381,41 +381,6 @@ public class BookingManager : IBookingManager
 
     // ── Shared invoice composition ──────────────────────────────────────────────
 
-    private sealed class ComposeInput
-    {
-        public Guid? CustomerUserId { get; init; }
-        /// <summary>The theater the sale happens in. Null for an online booking: derived from the showtime's room.</summary>
-        public Guid? TheaterId { get; init; }
-        public Guid? ShowTimeId { get; init; }
-        public Guid? RoomId { get; init; }
-        public IReadOnlyList<BookingSeatItem> Seats { get; init; } = Array.Empty<BookingSeatItem>();
-        public IReadOnlyList<BookingFoodItem> Foods { get; init; } = Array.Empty<BookingFoodItem>();
-        public string? DiscountCode { get; init; }
-        public int PointsToRedeem { get; init; }
-        public string? GiftCardCode { get; init; }
-        public string? ConnectionId { get; init; }
-        /// <summary>Counter sale: whole-VND amounts, the showtime must be sellable and belong to <see cref="TheaterId"/>.</summary>
-        public bool IsCounter { get; init; }
-        /// <summary>Quote: run every check but write nothing (no stock, points or gift-card change, no invoice).</summary>
-        public bool DryRun { get; init; }
-        public IReadOnlyDictionary<Guid, double> SeatPriceOverrides { get; init; } = new Dictionary<Guid, double>();
-        public IReadOnlyDictionary<Guid, double> FoodPriceOverrides { get; init; } = new Dictionary<Guid, double>();
-    }
-
-    private sealed record PriceOverrideLine(string Kind, Guid ItemId, string Description, int Quantity, double ListUnitPrice, double AppliedUnitPrice);
-
-    private sealed class ComposedInvoice
-    {
-        /// <summary>Unsaved invoice (tickets + food lines attached). Status/Channel/payment fields are the caller's.</summary>
-        public Invoice Invoice { get; init; } = null!;
-        public List<TicketItemDTO> TicketItems { get; init; } = new();
-        public List<StockDemand> StockDemand { get; init; } = new();
-        public List<CounterQuoteLineDTO> Lines { get; init; } = new();
-        public List<PriceOverrideLine> Overrides { get; init; } = new();
-        public double PointsValue { get; init; }
-        public string? PromotionTitle { get; init; }
-    }
-
     private static double Money(double value, bool wholeVnd)
     {
         return wholeVnd ? Math.Round(value, 0, MidpointRounding.AwayFromZero) : value;
@@ -743,26 +708,6 @@ public class BookingManager : IBookingManager
         }
         return rounded;
     }
-
-    // Units of one tracked item to take off the shelf for a booking, and the combos (if any) that asked for it.
-    private sealed class StockDemand
-    {
-        public StockDemand(FoodAndDrink food)
-        {
-            Food = food;
-        }
-
-        public FoodAndDrink Food { get; }
-        public int Quantity { get; set; }
-        public List<string> ComboNames { get; } = new();
-    }
-
-    private sealed record FoodBuild(
-        List<InvoiceFoodAndDrink> Lines,
-        double Total,
-        List<StockDemand> Demand,
-        List<CounterQuoteLineDTO> QuoteLines,
-        List<PriceOverrideLine> Overrides);
 
     // Merges the requested food lines, validates them (theater + availability), expands combos into their
     // tracked components and takes the stock — all inside the caller's transaction, so a shortage throws and
@@ -1337,16 +1282,6 @@ public class BookingManager : IBookingManager
     // for a new release, 0 for a long-running title — NOT a multiplier, so it never interacts with the
     // factor above). The whole context is resolved once per showtime+room and reused for every
     // seat/category.
-    private sealed record ResolvedCategory(Guid Id, string Name, Guid SeatTypeId, SeatKind Kind, double Price, bool RequiresIdCheck, string? IdCheckMessage);
-
-    /// <summary>One priced, non-overridden seat row, for PromotionProgram auto-apply evaluation. A
-    /// Double seat's ListUnitPrice is already the half-price of the pair (see ComposeInvoiceAsync).</summary>
-    private sealed record TicketUnit(SeatKind Kind, ProjectionForm Form, double ListUnitPrice);
-
-    private sealed record SeatPricingContext(
-        IReadOnlyDictionary<Guid, ResolvedCategory> ByCategoryId,
-        IReadOnlyDictionary<SeatKind, double> MinPriceByKind);
-
     private static readonly SeatPricingContext _emptyPricingContext =
         new(new Dictionary<Guid, ResolvedCategory>(), new Dictionary<SeatKind, double>());
 

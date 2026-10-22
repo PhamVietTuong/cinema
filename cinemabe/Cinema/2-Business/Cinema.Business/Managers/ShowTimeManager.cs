@@ -162,12 +162,6 @@ public class ShowTimeManager : IShowTimeManager
         entity.ShowTimeRooms.Add(new ShowTimeRoom { ShowTimeId = entity.Id, RoomId = roomId, BasePrice = basePrice });
     }
 
-    /// <summary>Snapshot of the room's commercial class and availability this manager validates
-    /// against, loaded once per Create/Update instead of separate tracked Room/Theater fetches.
-    /// Public so the store's <c>FindSelectAsync&lt;Class&gt;</c> explicit type argument can be named
-    /// from the test project's mock setup.</summary>
-    public sealed record RoomClassInfo(string Name, bool SupportsThreeD, int TurnoverBufferMinutes, RoomStatus RoomStatus, string TheaterName, bool TheaterIsActive);
-
     private async Task<RoomClassInfo> LoadRoomClassAsync(Guid roomId)
     {
         var roomClass = await _uow.RoomStore.FindSelectAsync<RoomClassInfo>(
@@ -179,12 +173,6 @@ public class ShowTimeManager : IShowTimeManager
         }
         return roomClass;
     }
-
-    /// <summary>Snapshot of the movie properties this manager validates a showtime's window and
-    /// availability against. Public for the same reason as <see cref="RoomClassInfo"/> — the test
-    /// project's mock setup needs to name the store's <c>FindSelectAsync&lt;Class&gt;</c> explicit
-    /// type argument.</summary>
-    public sealed record MovieRuntimeInfo(string Title, int Duration, bool IsActive, DateOnly ReleaseDate, DateOnly? EndDate);
 
     private async Task<MovieRuntimeInfo> LoadMovieRuntimeAsync(Guid movieId)
     {

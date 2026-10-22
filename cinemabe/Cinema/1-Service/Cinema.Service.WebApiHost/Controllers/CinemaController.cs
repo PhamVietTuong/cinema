@@ -2393,10 +2393,3 @@ public class CinemaController : ApiControllerBase
 
     #endregion
 }
-
-// ── Request classes ───────────────────────────────────────────────────────────
-
-public record AddCommentRequest(string Content, Guid? ParentId);
-public record ModerateCommentRequest(Guid CommentId, bool Approved);
-public record DeleteCommentRequest(Guid CommentId);
-public record RateMovieRequest(int Score, string? Review);
