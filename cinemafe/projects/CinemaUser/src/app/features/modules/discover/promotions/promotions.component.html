@@ -1,11 +1,25 @@
 <div class="page-header">
   <div class="ph-inner">
+    <span class="ph-eyebrow">{{ 'promotions.eyebrow' | translate }}</span>
     <h1 class="page-title">{{ 'promotions.pageTitle' | translate }}</h1>
     <p class="page-sub">{{ 'promotions.pageSubtitle' | translate }}</p>
   </div>
 </div>
 
 <div class="promo-page">
+  <nav class="promo-tabs" role="tablist" *ngIf="!loading && programs.length">
+    <button
+      type="button"
+      role="tab"
+      class="promo-tab"
+      *ngFor="let t of tabs"
+      [class.is-active]="activeTab === t.key"
+      [attr.aria-selected]="activeTab === t.key"
+      (click)="setTab(t.key)">
+      {{ t.label | translate }}
+    </button>
+  </nav>
+
   <div *ngIf="loading" class="spinner-wrap"><mat-spinner diameter="40"></mat-spinner></div>
 
   <div *ngIf="!loading && !programs.length" class="empty">
@@ -13,46 +27,91 @@
     <p>{{ 'promotions.empty' | translate }}</p>
   </div>
 
-  <div class="promo-list">
-    <article class="promo-card" *ngFor="let p of programs">
-      <div class="promo-banner" [class.promo-banner--placeholder]="!p.bannerUrl">
-        <img *ngIf="p.bannerUrl" [src]="p.bannerUrl" alt="">
-        <mat-icon *ngIf="!p.bannerUrl">local_activity</mat-icon>
+  <div *ngIf="!loading && programs.length && !visible.length" class="empty">
+    <mat-icon>filter_alt_off</mat-icon>
+    <p>{{ 'promotions.emptyFiltered' | translate }}</p>
+  </div>
+
+  <div class="ticket-list">
+    <article class="ticket" *ngFor="let p of visible">
+
+      <div class="ticket-stub">
+        <span class="notch notch--top" aria-hidden="true"></span>
+        <span class="notch notch--bottom" aria-hidden="true"></span>
+        <span class="stub-value" *ngIf="stubValue(p) as sv; else stubIcon">{{ sv }}</span>
+        <ng-template #stubIcon><mat-icon class="stub-icon">local_activity</mat-icon></ng-template>
+        <span class="stub-caption">{{ stubCaption(p) }}</span>
       </div>
 
-      <div class="promo-body">
-        <div class="promo-head">
-          <h3 class="promo-title">{{ p.title }}</h3>
-          <span class="promo-starts" *ngIf="!hasStarted(p)">{{ 'promotions.startsOn' | translate:{ date: (p.startDate | date:'dd/MM') } }}</span>
+      <div class="ticket-body">
+        <div class="ticket-head">
+          <h3 class="ticket-title">{{ p.title }}</h3>
+          <span class="pill pill--auto" *ngIf="p.autoApply">{{ 'promotions.autoApplied' | translate }}</span>
+          <span class="pill pill--starts" *ngIf="!hasStarted(p)">{{ 'promotions.startsOn' | translate:{ date: (p.startDate | date:'dd/MM') } }}</span>
         </div>
 
-        <p class="promo-summary" *ngIf="p.summary">{{ p.summary }}</p>
+        <span class="ticket-mechanic" *ngIf="mechanicLabel(p) as mLabel">{{ mLabel | translate }}</span>
 
-        <div class="promo-chips" *ngIf="mechanicLabel(p) as mLabel">
-          <span class="promo-chip promo-chip--deal">{{ mLabel | translate }}</span>
-          <span class="promo-chip" *ngIf="p.mechanic === 2">-{{ p.percentOff }}%</span>
-          <span class="promo-chip" *ngFor="let row of p.prices">
-            {{ (row.projectionForm == null ? ('promotions.allFormats' | translate) : (row.projectionForm === 1 ? '2D' : '3D')) }}
-            {{ row.seatKind == null ? ('promotions.allSeats' | translate) : (row.seatKind === 1 ? ('booking.seats.kindDouble' | translate) : ('booking.seats.kindStandard' | translate)) }}
-            · {{ row.price | number }}đ
-          </span>
-          <span class="promo-chip promo-chip--auto" *ngIf="p.autoApply">{{ 'promotions.autoApplied' | translate }}</span>
+        <p class="ticket-summary" *ngIf="p.summary">{{ p.summary }}</p>
+
+        <dl class="ledger">
+          <div class="ledger-row">
+            <dt>{{ 'promotions.ledger.eligibility' | translate }}</dt>
+            <dd>
+              {{ eligibilityLabel(p) | translate }}
+              <ng-container *ngIf="p.eligibility === 1 && p.minMemberShipName">· {{ p.minMemberShipName }}</ng-container>
+              <ng-container *ngIf="p.eligibility === 3 && p.maxAge">· {{ 'promotions.underAge' | translate:{ age: p.maxAge } }}</ng-container>
+            </dd>
+          </div>
+          <div class="ledger-row">
+            <dt>{{ 'promotions.ledger.period' | translate }}</dt>
+            <dd>{{ (p.startDate | date:'dd/MM/yyyy') }} – {{ (p.endDate | date:'dd/MM/yyyy') }}</dd>
+          </div>
+          <div class="ledger-row" *ngIf="scheduleWindow(p) as win">
+            <dt>{{ 'promotions.ledger.timeWindow' | translate }}</dt>
+            <dd>{{ win }}</dd>
+          </div>
+          <div class="ledger-row">
+            <dt>{{ 'promotions.ledger.theaters' | translate }}</dt>
+            <dd>{{ theaterCountLabel(p) | translate:{ n: theaterCount(p) } }}</dd>
+          </div>
+        </dl>
+
+        <div class="ticket-foot">
+          <div class="ticket-code" *ngIf="p.linkedDiscountCode as code">
+            <span class="code-label">{{ 'promotions.codeLabel' | translate }}</span>
+            <span class="code-val">{{ code }}</span>
+            <button mat-stroked-button type="button" (click)="copyCode(p.id, code)">
+              {{ (isCopied(p.id) ? 'promotions.copied' : 'promotions.copyCode') | translate }}
+            </button>
+          </div>
+
+          <button type="button" class="promo-toggle" [attr.aria-expanded]="isExpanded(p.id)" (click)="toggle(p.id)">
+            {{ (isExpanded(p.id) ? 'promotions.hideDetails' : 'promotions.details') | translate }}
+            <mat-icon>{{ isExpanded(p.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+
+          <a mat-raised-button class="ticket-cta" routerLink="/movies">
+            {{ 'promotions.bookNow' | translate }} <span aria-hidden="true">→</span>
+          </a>
         </div>
-
-        <div class="promo-badges">
-          <span class="promo-badge">{{ eligibilityLabel(p) | translate }}</span>
-          <span class="promo-badge" *ngIf="p.eligibility === 1 && p.minMemberShipName">{{ p.minMemberShipName }}</span>
-          <span class="promo-badge" *ngIf="p.eligibility === 3 && p.maxAge">{{ 'promotions.underAge' | translate:{ age: p.maxAge } }}</span>
-          <span class="promo-badge">{{ (p.startDate | date:'dd/MM/yyyy') }} – {{ (p.endDate | date:'dd/MM/yyyy') }}</span>
-          <span class="promo-badge">{{ theaterCountLabel(p) | translate:{ n: theaterCount(p) } }}</span>
-        </div>
-
-        <button type="button" class="promo-toggle" [attr.aria-expanded]="isExpanded(p.id)" (click)="toggle(p.id)">
-          {{ (isExpanded(p.id) ? 'promotions.hideDetails' : 'promotions.details') | translate }}
-          <mat-icon>{{ isExpanded(p.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
-        </button>
 
         <div class="promo-details" *ngIf="isExpanded(p.id)">
+          <div class="promo-banner" *ngIf="p.bannerUrl">
+            <img [src]="p.bannerUrl" alt="">
+          </div>
+
+          <div class="promo-prices" *ngIf="p.prices?.length">
+            <h4>{{ 'promotions.pricesTitle' | translate }}</h4>
+            <div class="price-chips">
+              <span class="chip" *ngFor="let row of p.prices">
+                {{ (row.projectionForm == null ? ('promotions.allFormats' | translate) : (row.projectionForm === 1 ? '2D' : '3D')) }}
+                {{ row.seatKind == null ? ('promotions.allSeats' | translate) : (row.seatKind === 1 ? ('booking.seats.kindDouble' | translate) : ('booking.seats.kindStandard' | translate)) }}
+                · {{ row.price | number }}đ
+              </span>
+            </div>
+          </div>
+
           <div class="promo-schedule" *ngIf="p.schedules?.length">
             <h4>{{ 'promotions.scheduleTitle' | translate }}</h4>
             <ul>
@@ -78,16 +137,6 @@
               <li *ngFor="let line of termsLines(p)">{{ line }}</li>
             </ul>
           </div>
-
-          <div class="promo-code-row" *ngIf="p.linkedDiscountCode as code">
-            <span class="code-label">{{ 'promotions.codeLabel' | translate }}</span>
-            <span class="code-val">{{ code }}</span>
-            <button mat-stroked-button type="button" (click)="copyCode(p.id, code)">
-              {{ (isCopied(p.id) ? 'promotions.copied' : 'promotions.copyCode') | translate }}
-            </button>
-          </div>
-
-          <a mat-raised-button color="primary" class="promo-book-btn" routerLink="/movies">{{ 'promotions.bookNow' | translate }}</a>
         </div>
       </div>
     </article>

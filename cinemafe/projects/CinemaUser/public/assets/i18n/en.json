@@ -482,9 +482,31 @@
     "fallback": "I didn't quite get that. Try asking about: booking, showtimes, cancel, membership, payment, or theaters near you."
   },
   "promotions": {
+    "eyebrow": "Offers",
     "pageTitle": "Promotions",
     "pageSubtitle": "Discover exclusive offers reserved for Midnight Premium members. Enjoy a premium cinema experience at an optimal cost.",
     "empty": "There are no promotions available at the moment.",
+    "emptyFiltered": "No promotions in this category.",
+    "pricesTitle": "Price list",
+    "tabs": {
+      "all": "All",
+      "auto": "Auto-applied",
+      "code": "Code required",
+      "members": "Members",
+      "students": "Students"
+    },
+    "ledger": {
+      "eligibility": "Eligibility",
+      "period": "Valid",
+      "timeWindow": "Hours",
+      "theaters": "Theaters"
+    },
+    "stubCaption": {
+      "everyone": "Everyone",
+      "members": "Members",
+      "studentOrTeacher": "Students",
+      "ageLimit": "Age limit"
+    },
     "details": "Details",
     "hideDetails": "Hide details",
     "startsOn": "Starts {{date}}",
