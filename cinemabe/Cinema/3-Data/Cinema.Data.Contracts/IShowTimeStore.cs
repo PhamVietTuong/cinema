@@ -1,33 +1,6 @@
 using Cinema.Data.Entities;
-using Cinema.Data.Enums;
 
 namespace Cinema.Data.Contracts;
-
-/// <summary>Flattened ShowTime x Room row for the movie-detail schedule strip. Projected + untracked:
-/// one query, only the columns that page renders.</summary>
-public record MovieScheduleRow(
-    Guid ShowTimeId,
-    DateTime StartTime,
-    DateTime EndTime,
-    ProjectionForm ProjectionForm,
-    Guid RoomId,
-    string RoomName,
-    string RoomTypeName,
-    Guid TheaterId,
-    string TheaterName,
-    string TheaterAddress,
-    int Capacity);
-
-/// <summary>One ShowTime x Room row of a theater for the box-office showtime picker. Projected + untracked.</summary>
-public record TheaterShowTimeRow(
-    Guid ShowTimeId,
-    Guid RoomId,
-    string RoomName,
-    Guid MovieId,
-    string MovieTitle,
-    DateTime StartTime,
-    DateTime EndTime,
-    ProjectionForm ProjectionForm);
 
 public interface IShowTimeStore : IGenericStore<ShowTime>
 {

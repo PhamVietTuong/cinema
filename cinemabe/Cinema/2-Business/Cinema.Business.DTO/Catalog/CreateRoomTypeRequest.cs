@@ -1,0 +1,12 @@
+
+namespace Cinema.Business.DTO.Catalog;
+
+public class CreateRoomTypeRequest
+{
+    public Guid TheaterId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool SupportsThreeD { get; set; }
+    public double ThreeDSurcharge { get; set; }
+    public int TurnoverBufferMinutes { get; set; }
+}

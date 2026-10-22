@@ -23,27 +23,3 @@ public class PromotionProgramConfiguration : IEntityTypeConfiguration<PromotionP
         b.HasOne(p => p.LinkedDiscount).WithMany().HasForeignKey(p => p.LinkedDiscountId).OnDelete(DeleteBehavior.SetNull);
     }
 }
-
-public class PromotionProgramPriceConfiguration : IEntityTypeConfiguration<PromotionProgramPrice>
-{
-    public void Configure(EntityTypeBuilder<PromotionProgramPrice> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Price).HasColumnType("float");
-        b.HasIndex(x => new { x.PromotionProgramId, x.ProjectionForm, x.SeatKind }).IsUnique();
-        b.HasOne(x => x.PromotionProgram).WithMany(p => p.Prices).HasForeignKey(x => x.PromotionProgramId).OnDelete(DeleteBehavior.Cascade);
-    }
-}
-
-public class PromotionProgramScheduleConfiguration : IEntityTypeConfiguration<PromotionProgramSchedule>
-{
-    public void Configure(EntityTypeBuilder<PromotionProgramSchedule> b)
-    {
-        b.HasKey(x => x.Id);
-        b.HasIndex(x => x.PromotionProgramId);
-        b.HasIndex(x => x.TheaterId);
-        b.HasOne(x => x.PromotionProgram).WithMany(p => p.Schedules).HasForeignKey(x => x.PromotionProgramId).OnDelete(DeleteBehavior.Cascade);
-        // No cascade from Theater: avoids SQL Server's multiple-cascade-path error, same as DiscountTheater.
-        b.HasOne(x => x.Theater).WithMany().HasForeignKey(x => x.TheaterId).OnDelete(DeleteBehavior.Restrict);
-    }
-}

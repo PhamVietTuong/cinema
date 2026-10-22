@@ -35,18 +35,18 @@ public class ShowTimeServiceTests
         string name, bool supportsThreeD, int turnoverBufferMinutes = 0,
         RoomStatus roomStatus = RoomStatus.Active, bool theaterIsActive = true, string theaterName = "Default Theater")
     {
-        _uowMock.Setup(u => u.RoomStore.FindSelectAsync<ShowTimeManager.RoomClassInfo>(
+        _uowMock.Setup(u => u.RoomStore.FindSelectAsync<RoomClassInfo>(
                 It.IsAny<System.Linq.Expressions.Expression<Func<Room, bool>>>(),
                 It.IsAny<System.Linq.Expressions.Expression<Func<Room, object>>>()))
-            .ReturnsAsync(new ShowTimeManager.RoomClassInfo(name, supportsThreeD, turnoverBufferMinutes, roomStatus, theaterName, theaterIsActive));
+            .ReturnsAsync(new RoomClassInfo(name, supportsThreeD, turnoverBufferMinutes, roomStatus, theaterName, theaterIsActive));
     }
 
     private void GivenMovie(string title, int duration, bool isActive = true, DateOnly? releaseDate = null, DateOnly? endDate = null)
     {
-        _uowMock.Setup(u => u.MovieStore.FindSelectAsync<ShowTimeManager.MovieRuntimeInfo>(
+        _uowMock.Setup(u => u.MovieStore.FindSelectAsync<MovieRuntimeInfo>(
                 It.IsAny<System.Linq.Expressions.Expression<Func<Movie, bool>>>(),
                 It.IsAny<System.Linq.Expressions.Expression<Func<Movie, object>>>()))
-            .ReturnsAsync(new ShowTimeManager.MovieRuntimeInfo(
+            .ReturnsAsync(new MovieRuntimeInfo(
                 title, duration, isActive, releaseDate ?? DateOnly.FromDateTime(DateTime.Now.AddYears(-1)), endDate));
     }
 

@@ -2,7 +2,6 @@ using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Staff;
 using Cinema.Data.Contracts;
 using Cinema.Data.Enums;
-using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Managers;
 
@@ -17,16 +16,6 @@ public partial class StaffReportManager
     private const string _windowsVietnamTimeZoneId = "SE Asia Standard Time";
     private const string _dayKeyFormat = "yyyy-MM-dd";
     private const string _unattributedLabel = "Unattributed";
-
-    /// <summary>The business-day range of a request in UTC (invoice events), local (screenings) and the SQL day shift.</summary>
-    private sealed record ReportWindow(
-        DateTime From,
-        DateTime To,
-        DateTime FromLocal,
-        DateTime ToLocal,
-        DateTime FromUtc,
-        DateTime ToUtc,
-        int DayShiftMinutes);
 
     public async Task<SalesReportDTO> GetSalesAsync(StaffReportRequest request, IReadOnlyCollection<Guid>? scope)
     {

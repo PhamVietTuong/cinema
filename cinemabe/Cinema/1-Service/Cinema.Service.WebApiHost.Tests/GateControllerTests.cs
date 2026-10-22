@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Gate;
 using Cinema.Data.Enums;
@@ -14,22 +13,6 @@ public class GateControllerTests
 {
     private readonly Guid _theaterA = Guid.NewGuid();
     private readonly Guid _theaterB = Guid.NewGuid();
-
-    private sealed class FakeGate : IGateManager
-    {
-        public Guid? ScannedTheater { get; private set; }
-
-        public Task<ScanTicketResultDTO> ScanAsync(Guid theaterId, Guid userId, ScanTicketRequest request)
-        {
-            ScannedTheater = theaterId;
-            return Task.FromResult(new ScanTicketResultDTO { Outcome = ScanOutcome.AlreadyUsed });
-        }
-
-        public Task<List<GateLookupResultDTO>> LookupAsync(Guid theaterId, GateLookupRequest request)
-        {
-            return Task.FromResult(new List<GateLookupResultDTO>());
-        }
-    }
 
     private static CinemaController Controller(FakeGate gate, string role, params Guid[] theaterIds)
     {

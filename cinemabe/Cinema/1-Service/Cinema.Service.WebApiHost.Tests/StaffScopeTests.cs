@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Auth;
-using Cinema.Service.WebApiHost.Controllers;
 using Cinema.Service.WebApiHost.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
@@ -109,14 +108,6 @@ public class StaffScopeTests
     }
 
     // ── Exception mapping: authorization failures are 403, never 401 ─────────
-
-    private sealed class Probe : ApiControllerBase
-    {
-        public IActionResult Map(Exception e)
-        {
-            return HandleException(e, nameof(Map));
-        }
-    }
 
     [Fact]
     public void HandleException_AccessDenied_Maps403_NotUnauthorized()

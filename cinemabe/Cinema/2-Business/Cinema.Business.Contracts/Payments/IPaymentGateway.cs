@@ -1,17 +1,5 @@
 namespace Cinema.Business.Contracts.Payments;
 
-/// <summary>Result of asking the gateway to start a payment for an invoice.</summary>
-public record PaymentInitiation(string PaymentReference, string? RedirectUrl);
-
-/// <summary>Result of verifying a payment against the gateway.</summary>
-public record PaymentVerification(bool Success, string? FailureReason = null);
-
-/// <summary>
-/// Result of parsing &amp; signature-verifying a provider callback (IPN / redirect / webhook).
-/// This is the authoritative "money really moved" signal for real providers.
-/// </summary>
-public record PaymentCallbackResult(bool Success, Guid InvoiceId, string PaymentReference, string? FailureReason = null);
-
 /// <summary>
 /// Abstraction over a payment provider. The dev default is <c>Sandbox</c>; VNPay / MoMo / Stripe
 /// plug in behind this interface without touching booking logic. Multiple implementations are
@@ -45,14 +33,4 @@ public interface IPaymentGateway
     /// under <c>__signature</c>). Returns whether the payment succeeded plus the invoice + reference.
     /// </summary>
     PaymentCallbackResult ParseCallback(IReadOnlyDictionary<string, string> data);
-}
-
-/// <summary>Selects a registered <see cref="IPaymentGateway"/> by name, falling back to the configured default.</summary>
-public interface IPaymentGatewayResolver
-{
-    /// <summary>The provider chosen by <c>Payments:Provider</c> config (Sandbox when unset).</summary>
-    IPaymentGateway Default { get; }
-
-    /// <summary>Returns the named gateway, or <see cref="Default"/> when the name is null/unknown.</summary>
-    IPaymentGateway Resolve(string? providerName);
 }
