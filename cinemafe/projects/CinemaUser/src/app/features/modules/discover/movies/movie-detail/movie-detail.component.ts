@@ -359,9 +359,34 @@ export class MovieDetailComponent implements OnInit {
     return this._photoByName.get(name.trim().toLocaleLowerCase());
   }
 
+  /** True when the movie has explicit MovieCredit rows — the Cast & Crew section then renders those
+   * (with real linked photos and character names) instead of splitting Director/Cast strings. */
+  hasCredits(movie: any): boolean {
+    return (movie?.credits?.length ?? 0) > 0;
+  }
+
+  creditDirectors(movie: any): any[] {
+    return (movie?.credits ?? [])
+      .filter((c: any) => c.creditType === CinemaServiceAgent.CreditType.Director)
+      .sort((a: any, b: any) => a.displayOrder - b.displayOrder);
+  }
+
+  creditActors(movie: any): any[] {
+    return (movie?.credits ?? [])
+      .filter((c: any) => c.creditType === CinemaServiceAgent.CreditType.Actor)
+      .sort((a: any, b: any) => a.displayOrder - b.displayOrder);
+  }
+
   /** Batch-resolves photos for this movie's director(s) + cast in a single request, once per
-   * distinct name set — later movie$ re-emissions (rating/comment reloads) don't re-fetch. */
+   * distinct name set — later movie$ re-emissions (rating/comment reloads) don't re-fetch. Skipped
+   * entirely when the movie has explicit MovieCredit rows, since those already carry their photo. */
   private _loadPhotos(movie: any): void {
+    if (this.hasCredits(movie)) {
+      this._photoByName = new Map<string, string>();
+      this._photoLookupKey = 'credits:' + movie.id;
+      return;
+    }
+
     const names = [...this.getDirectors(movie.director), ...this.getCastMembers(movie.cast)];
     const key = names.join('|').toLocaleLowerCase();
     if (key === this._photoLookupKey) {

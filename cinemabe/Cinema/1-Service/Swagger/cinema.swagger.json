@@ -6455,6 +6455,12 @@
               },
               "canReview": {
                 "type": "boolean"
+              },
+              "credits": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MovieCreditDTO"
+                }
               }
             }
           }
@@ -6552,6 +6558,50 @@
           }
         }
       },
+      "MovieCreditDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "personId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "personName": {
+            "type": "string"
+          },
+          "personPhotoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditType": {
+            "$ref": "#/components/schemas/CreditType"
+          },
+          "characterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreditType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Director",
+          "Actor"
+        ],
+        "enum": [
+          1,
+          2
+        ]
+      },
       "CreateMovieRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -6611,6 +6661,48 @@
               "type": "string",
               "format": "guid"
             }
+          },
+          "credits": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/MovieCreditRequest"
+            }
+          }
+        }
+      },
+      "MovieCreditRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "newPersonName": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "newPersonPhotoUrl": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "creditType": {
+            "$ref": "#/components/schemas/CreditType"
+          },
+          "characterName": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 10000.0,
+            "minimum": 0.0
           }
         }
       },
@@ -6676,6 +6768,13 @@
             "items": {
               "type": "string",
               "format": "guid"
+            }
+          },
+          "credits": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/MovieCreditRequest"
             }
           }
         }

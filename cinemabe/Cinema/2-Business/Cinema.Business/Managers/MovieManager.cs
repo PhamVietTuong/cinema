@@ -7,6 +7,7 @@ using Cinema.Business.Extensions;
 using Cinema.Business.Helpers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 
 namespace Cinema.Business.Managers;
 
@@ -166,6 +167,7 @@ public class MovieManager : IMovieManager
         {
             dto.CanReview = await CanReviewAsync(id, uid);
         }
+        dto.Credits = (await _uow.MovieCreditStore.GetByMovieAsync(id)).Select(ToCreditDTO).ToList();
         return dto;
     }
 
@@ -174,6 +176,19 @@ public class MovieManager : IMovieManager
         var movie = request.ToNewEntity<CreateMovieRequest, Movie>();
         movie.Slug = await GenerateUniqueSlugAsync(request.Title);
         movie.MovieTypeDetails = request.MovieTypeIds.Select(id => new MovieTypeDetail { MovieTypeId = id }).ToList();
+        if (request.Credits is { Count: > 0 })
+        {
+            var normalized = await NormalizeCreditsAsync(request.Credits);
+            movie.MovieCredits = normalized.Select(c => new MovieCredit
+            {
+                PersonId      = c.PersonId,
+                CreditType    = c.CreditType,
+                CharacterName = c.CharacterName,
+                DisplayOrder  = c.DisplayOrder,
+            }).ToList();
+        }
+        // Any Person staged by NormalizeCreditsAsync (via PersonStore.TrackNew) for a brand-new
+        // "+ Add new person" credit commits here, atomically with the movie and its credits.
         await _uow.MovieStore.CreateAsync(movie);
         return await GetBasicDTOAsync(movie.Id);
     }
@@ -185,6 +200,10 @@ public class MovieManager : IMovieManager
         {
             throw new KeyNotFoundException($"Movie {request.Id} not found.");
         }
+
+        // Validate before mutating anything, so a bad request leaves the movie untouched.
+        var normalizedCredits = request.Credits != null ? await NormalizeCreditsAsync(request.Credits) : null;
+
         // Slug is deliberately not patched here: it is generated once at creation and stays stable
         // across title edits so shared links and bookmarks keep working.
         movie.PatchEntity<Movie, UpdateMovieRequest>(request);
@@ -195,6 +214,11 @@ public class MovieManager : IMovieManager
         foreach (var typeId in request.MovieTypeIds.Distinct())
         {
             movie.MovieTypeDetails.Add(new MovieTypeDetail { MovieId = movie.Id, MovieTypeId = typeId });
+        }
+
+        if (normalizedCredits != null)
+        {
+            SyncCredits(movie, normalizedCredits, _uow.MovieCreditStore);
         }
 
         movie.LastUpdatedTime = DateTime.UtcNow;
@@ -337,6 +361,196 @@ public class MovieManager : IMovieManager
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>A credit row after validation/resolution: PersonId is always a real, resolved Guid —
+    /// either the request's explicit PersonId, an existing Person whose name matched the request's
+    /// NewPersonName case-insensitively, or a Person just staged (via PersonStore.TrackNew) for a
+    /// brand-new name with no match.</summary>
+    private sealed record NormalizedCredit(Guid PersonId, CreditType CreditType, string? CharacterName, int DisplayOrder);
+
+    /// <summary>Validates and resolves a requested credit list, in three read-only phases followed by
+    /// one deliberate write phase:
+    /// 1. Per-row validation with no DB access: a defined CreditType, and exactly one of PersonId /
+    ///    NewPersonName (a blank/whitespace NewPersonName counts as not provided).
+    /// 2. Looks up explicit PersonIds (must all exist) and new names (matched case-insensitively
+    ///    against existing People) — at most one query each, skipped when there's nothing to look up.
+    /// 3. Resolves each row to a real PersonId — explicit, an existing match reused as-is (any typed
+    ///    photo URL for a reused match is ignored; changing a photo stays a People-screen action), or
+    ///    a brand-new Person object (not yet saved) the first time a new name is seen — and rejects a
+    ///    duplicate (PersonId, CreditType) pair against the *resolved* ids.
+    /// 4. Stages every newly-created Person via PersonStore.TrackNew (no save), so creation commits
+    ///    atomically with whatever SaveChanges the caller performs for the movie/credits.
+    /// Throws InvalidOperationException (-> 400) on any violation, before phase 4 ever runs.</summary>
+    private async Task<List<NormalizedCredit>> NormalizeCreditsAsync(List<MovieCreditRequest> credits)
+    {
+        if (credits.Count == 0)
+        {
+            return new List<NormalizedCredit>();
+        }
+
+        var explicitIds = new List<Guid>();
+        var newNames = new List<string>();
+        // Catches an explicit-id duplicate immediately, with no DB access — the common case, and what
+        // lets this reject before ever touching PersonStore (matters for a request with only explicit
+        // picks). A duplicate that only emerges after resolving a new name is still caught below.
+        var seenKeys = new HashSet<(Guid PersonId, CreditType CreditType)>();
+        foreach (var c in credits)
+        {
+            if (!Enum.IsDefined(c.CreditType))
+            {
+                throw new InvalidOperationException("Invalid credit type.");
+            }
+
+            var hasId = c.PersonId is { } id && id != Guid.Empty;
+            var hasName = !string.IsNullOrWhiteSpace(c.NewPersonName);
+            if (hasId == hasName)
+            {
+                throw hasId
+                    ? new InvalidOperationException("A credit must either reference an existing person or name a new one, not both.")
+                    : new InvalidOperationException("Each credit must reference a person.");
+            }
+
+            if (hasId)
+            {
+                explicitIds.Add(c.PersonId!.Value);
+                if (!seenKeys.Add((c.PersonId.Value, c.CreditType)))
+                {
+                    throw new InvalidOperationException("The same person cannot be credited twice in the same role.");
+                }
+            }
+            else
+            {
+                newNames.Add(c.NewPersonName!.Trim());
+            }
+        }
+
+        var distinctExplicitIds = explicitIds.Distinct().ToList();
+        if (distinctExplicitIds.Count > 0)
+        {
+            var existingCount = await _uow.PersonStore.CountAsync(p => distinctExplicitIds.Contains(p.Id));
+            if (existingCount != distinctExplicitIds.Count)
+            {
+                throw new InvalidOperationException("One or more credited people no longer exist.");
+            }
+        }
+
+        var distinctNewNames = newNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var existingByName = distinctNewNames.Count > 0
+            ? await _uow.PersonStore.GetIdsByNamesAsync(distinctNewNames)
+            : new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+
+        var pendingByName = new Dictionary<string, Person>(StringComparer.OrdinalIgnoreCase);
+        var normalized = new List<NormalizedCredit>(credits.Count);
+        foreach (var c in credits)
+        {
+            Guid personId;
+            if (c.PersonId is { } id && id != Guid.Empty)
+            {
+                // Already de-duplicated and seenKeys-checked above with no DB access.
+                personId = id;
+            }
+            else
+            {
+                var name = c.NewPersonName!.Trim();
+                if (existingByName.TryGetValue(name, out var existingId))
+                {
+                    personId = existingId;
+                }
+                else if (pendingByName.TryGetValue(name, out var pending))
+                {
+                    personId = pending.Id;
+                }
+                else
+                {
+                    var created = new Person { Name = name, PhotoUrl = NormalizePhotoUrl(c.NewPersonPhotoUrl) };
+                    pendingByName[name] = created;
+                    personId = created.Id;
+                }
+
+                // A resolved name can still collide with an explicit pick or another resolved name
+                // (seenKeys already holds every explicit-id key from the loop above).
+                if (!seenKeys.Add((personId, c.CreditType)))
+                {
+                    throw new InvalidOperationException("The same person cannot be credited twice in the same role.");
+                }
+            }
+
+            var characterName = c.CreditType == CreditType.Director ? null : NormalizeCharacterName(c.CharacterName);
+            normalized.Add(new NormalizedCredit(personId, c.CreditType, characterName, c.DisplayOrder));
+        }
+
+        foreach (var person in pendingByName.Values)
+        {
+            _uow.PersonStore.TrackNew(person);
+        }
+
+        return normalized;
+    }
+
+    private static string? NormalizeCharacterName(string? characterName)
+    {
+        return string.IsNullOrWhiteSpace(characterName) ? null : characterName.Trim();
+    }
+
+    private static string? NormalizePhotoUrl(string? photoUrl)
+    {
+        return string.IsNullOrWhiteSpace(photoUrl) ? null : photoUrl.Trim();
+    }
+
+    /// <summary>Reconciles the movie's tracked MovieCredits collection against the requested list by
+    /// key (PersonId, CreditType): updates matches in place, adds new rows, removes rows no longer
+    /// requested. Keeps Ids stable instead of clearing and re-adding everything.</summary>
+    private static void SyncCredits(Movie movie, List<NormalizedCredit> requested, IMovieCreditStore creditStore)
+    {
+        var existingByKey = movie.MovieCredits.ToDictionary(c => (c.PersonId, c.CreditType));
+        var requestedKeys = new HashSet<(Guid PersonId, CreditType CreditType)>();
+
+        foreach (var r in requested)
+        {
+            var key = (r.PersonId, r.CreditType);
+            requestedKeys.Add(key);
+            if (existingByKey.TryGetValue(key, out var existing))
+            {
+                existing.CharacterName   = r.CharacterName;
+                existing.DisplayOrder    = r.DisplayOrder;
+                existing.LastUpdatedTime = DateTime.UtcNow;
+            }
+            else
+            {
+                // Appending to the tracked Movie's collection isn't enough here: BaseEntity.Id already
+                // has a non-default Guid by the time EF sees this object, so the change tracker's
+                // fixup would mark it Modified (-> a no-op UPDATE) instead of Added. TrackNew makes
+                // the Add explicit.
+                creditStore.TrackNew(new MovieCredit
+                {
+                    MovieId       = movie.Id,
+                    PersonId      = r.PersonId,
+                    CreditType    = r.CreditType,
+                    CharacterName = r.CharacterName,
+                    DisplayOrder  = r.DisplayOrder,
+                });
+            }
+        }
+
+        foreach (var stale in existingByKey.Where(kv => !requestedKeys.Contains(kv.Key)).Select(kv => kv.Value).ToList())
+        {
+            movie.MovieCredits.Remove(stale);
+        }
+    }
+
+    private static MovieCreditDTO ToCreditDTO(MovieCreditRow r)
+    {
+        return new MovieCreditDTO
+        {
+            Id              = r.Id,
+            PersonId        = r.PersonId,
+            PersonName      = r.PersonName,
+            PersonPhotoUrl  = r.PersonPhotoUrl,
+            CreditType      = r.CreditType,
+            CharacterName   = r.CharacterName,
+            DisplayOrder    = r.DisplayOrder,
+        };
+    }
 
     private async Task<string> GenerateUniqueSlugAsync(string title)
     {

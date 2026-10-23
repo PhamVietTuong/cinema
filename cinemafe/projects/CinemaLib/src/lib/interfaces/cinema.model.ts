@@ -60,6 +60,17 @@ export const TemplateChannelValues: { value: CinemaServiceAgent.TemplateChannel;
   { value: CinemaServiceAgent.TemplateChannel.Sms, name: 'templates.channelSms' },
 ];
 
+/** i18n-key label for each MovieCredit.CreditType value. */
+export const CreditTypeValues: { value: CinemaServiceAgent.CreditType; name: string }[] = [
+  { value: CinemaServiceAgent.CreditType.Director, name: 'movies.form.creditDirector' },
+  { value: CinemaServiceAgent.CreditType.Actor, name: 'movies.form.creditActor' },
+];
+
+/** i18n key for a CreditType value (falls back to Director). */
+export function creditTypeLabel(c?: CinemaServiceAgent.CreditType): string {
+  return CreditTypeValues.find(v => v.value === c)?.name ?? CreditTypeValues[0].name;
+}
+
 /** i18n-key label for each Invoice.InvoiceStatus value. */
 export const InvoiceStatusValues = [
   { value: CinemaServiceAgent.InvoiceStatus.Pending, name: 'invoices.statusPending' },

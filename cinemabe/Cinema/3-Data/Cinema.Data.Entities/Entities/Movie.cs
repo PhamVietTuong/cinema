@@ -20,4 +20,5 @@ public class Movie : BaseEntity
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public ICollection<Evaluation> Evaluations { get; set; } = new List<Evaluation>();
+    public ICollection<MovieCredit> MovieCredits { get; set; } = new List<MovieCredit>();
 }

@@ -1,5 +1,5 @@
 import { NEVER, of, throwError } from 'rxjs';
-import { selectIsAuthenticated } from 'CinemaLib';
+import { selectIsAuthenticated, CinemaServiceAgent } from 'CinemaLib';
 import { MovieDetailComponent } from './movie-detail.component';
 
 const showTime = (over: Partial<any>): any => ({
@@ -350,6 +350,57 @@ describe('MovieDetailComponent', () => {
 
       expect(() => c.ngOnInit()).not.toThrow();
       expect(c.photoFor('Christopher Nolan')).toBeFalsy();
+    });
+  });
+
+  describe('Cast & Crew explicit credits', () => {
+    it('uses MovieCredit rows and does not call getPeopleByNames when credits are present', () => {
+      selectedMovie = {
+        id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [],
+        credits: [
+          { personId: 'p2', personName: 'Emily Blunt', personPhotoUrl: 'eb.jpg', creditType: CinemaServiceAgent.CreditType.Actor, characterName: 'Kitty Oppenheimer', displayOrder: 1 },
+          { personId: 'p1', personName: 'Christopher Nolan', personPhotoUrl: 'cn.jpg', creditType: CinemaServiceAgent.CreditType.Director, characterName: null, displayOrder: 0 },
+        ],
+      };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).not.toHaveBeenCalled();
+      expect(c.hasCredits(selectedMovie)).toBe(true);
+      expect(c.creditDirectors(selectedMovie).map((x: any) => x.personName)).toEqual(['Christopher Nolan']);
+      expect(c.creditActors(selectedMovie).map((x: any) => x.personName)).toEqual(['Emily Blunt']);
+    });
+
+    it('sorts directors and actors by displayOrder', () => {
+      selectedMovie = {
+        id: 'movie-1', slug: 'movie-1', showTimes: [],
+        credits: [
+          { personId: 'p2', personName: 'Second Actor', creditType: CinemaServiceAgent.CreditType.Actor, displayOrder: 1 },
+          { personId: 'p1', personName: 'First Actor', creditType: CinemaServiceAgent.CreditType.Actor, displayOrder: 0 },
+        ],
+      };
+      const c = build();
+
+      expect(c.creditActors(selectedMovie).map((x: any) => x.personName)).toEqual(['First Actor', 'Second Actor']);
+    });
+
+    it('falls back to string-splitting + getPeopleByNames when credits is an empty array', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [], credits: [] };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledTimes(1);
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledWith(['Christopher Nolan', 'A', 'B']);
+    });
+
+    it('hasCredits is false for undefined or empty credits', () => {
+      const c = build();
+
+      expect(c.hasCredits({ credits: undefined })).toBe(false);
+      expect(c.hasCredits({ credits: [] })).toBe(false);
+      expect(c.hasCredits({ credits: [{ creditType: CinemaServiceAgent.CreditType.Actor }] })).toBe(true);
     });
   });
 });

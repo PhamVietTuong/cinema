@@ -136,12 +136,51 @@
           </mat-form-field>
         </div>
       </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field dlg-field--full">
+          <label class="dlg-label">{{ 'movies.form.creditsTitle' | translate }}</label>
+          <p class="dlg-hint">{{ 'movies.form.creditsHint' | translate }}</p>
+          <p class="img-upload-status" *ngIf="!creditsLoaded">{{ 'movies.form.creditsLoading' | translate }}</p>
+          <div formArrayName="credits">
+            <div class="mc-row" *ngFor="let row of creditRows.controls; let i = index" [formGroupName]="i">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="personId" [placeholder]="'movies.form.creditPerson' | translate">
+                  <mat-option [value]="newPersonValue">+ {{ 'movies.form.addNewPerson' | translate }}</mat-option>
+                  <mat-option *ngFor="let p of people" [value]="p.id">{{ p.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <ng-container *ngIf="isNewPerson(i)">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="newPersonName" [placeholder]="'movies.form.newPersonName' | translate">
+                  <mat-error *ngIf="creditRows.at(i).get('newPersonName')?.hasError('required') || creditRows.at(i).get('newPersonName')?.hasError('pattern')">{{ 'common.required' | translate }}</mat-error>
+                  <mat-error *ngIf="creditRows.at(i).get('newPersonName')?.hasError('maxlength')">{{ 'common.tooLong' | translate }}</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="newPersonPhotoUrl" [placeholder]="'movies.form.newPersonPhotoUrl' | translate">
+                  <mat-error *ngIf="creditRows.at(i).get('newPersonPhotoUrl')?.hasError('maxlength')">{{ 'common.tooLong' | translate }}</mat-error>
+                </mat-form-field>
+              </ng-container>
+              <mat-button-toggle-group formControlName="creditType" name="creditType-{{i}}">
+                <mat-button-toggle *ngFor="let o of creditTypeOptions" [value]="o.value">{{ o.name | translate }}</mat-button-toggle>
+              </mat-button-toggle-group>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" *ngIf="isActor(i)">
+                <input matInput formControlName="characterName" [placeholder]="'movies.form.characterName' | translate">
+              </mat-form-field>
+              <button mat-icon-button type="button" (click)="moveCreditRow(i, -1)" [disabled]="i === 0" [matTooltip]="'movies.form.moveUp' | translate"><mat-icon>arrow_upward</mat-icon></button>
+              <button mat-icon-button type="button" (click)="moveCreditRow(i, 1)" [disabled]="i === creditRows.length - 1" [matTooltip]="'movies.form.moveDown' | translate"><mat-icon>arrow_downward</mat-icon></button>
+              <button mat-icon-button type="button" (click)="removeCreditRow(i)"><mat-icon>close</mat-icon></button>
+            </div>
+          </div>
+          <button mat-stroked-button type="button" [disabled]="!creditsLoaded" (click)="addCreditRow()"><mat-icon>add</mat-icon> {{ 'movies.form.addCredit' | translate }}</button>
+        </div>
+      </div>
     </div>
   </mat-dialog-content>
 
   <div mat-dialog-actions class="dialog-actions">
     <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="!creditsLoaded">{{ 'common.save' | translate }}</button>
   </div>
 </form>
 

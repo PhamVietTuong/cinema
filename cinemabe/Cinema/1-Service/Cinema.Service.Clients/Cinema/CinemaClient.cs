@@ -13595,6 +13595,9 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("canReview", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool CanReview { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("credits", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public IList<MovieCreditDTO> Credits { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -13672,6 +13675,42 @@ namespace Cinema.Service.Clients.Cinema
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class MovieCreditDTO
+    {
+        [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Guid Id { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("personId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Guid PersonId { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("personName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string PersonName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("personPhotoUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string PersonPhotoUrl { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("creditType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public CreditType CreditType { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("characterName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string CharacterName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("displayOrder", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int DisplayOrder { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CreditType
+    {
+
+        Director = 1,
+
+        Actor = 2,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class CreateMovieRequest
     {
         [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -13715,6 +13754,36 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("movieTypeIds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public IList<System.Guid> MovieTypeIds { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("credits", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public IList<MovieCreditRequest> Credits { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class MovieCreditRequest
+    {
+        [Newtonsoft.Json.JsonProperty("personId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Guid? PersonId { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("newPersonName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string NewPersonName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("newPersonPhotoUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.StringLength(500)]
+        public string NewPersonPhotoUrl { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("creditType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public CreditType CreditType { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("characterName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string CharacterName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("displayOrder", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, 10000)]
+        public int DisplayOrder { get; set; }
 
     }
 
@@ -13765,6 +13834,9 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("movieTypeIds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public IList<System.Guid> MovieTypeIds { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("credits", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public IList<MovieCreditRequest> Credits { get; set; }
 
     }
 

@@ -114,6 +114,7 @@
     "filters": "Filters",
     "totalEntries": "in total",
     "required": "This field is required.",
+    "tooLong": "This value is too long.",
     "remove": "Remove",
     "days": {
       "mon": "Monday", "tue": "Tuesday", "wed": "Wednesday", "thu": "Thursday",
@@ -193,7 +194,20 @@
       "uploading": "Uploading...",
       "uploadFailed": "Image upload failed.",
       "description": "Description",
-      "descriptionPlaceholder": "Movie synopsis..."
+      "descriptionPlaceholder": "Movie synopsis...",
+      "creditsTitle": "Cast & Crew",
+      "creditsHint": "Linked people override the Director/Cast text above on the movie page.",
+      "creditsLoading": "Loading credits...",
+      "addCredit": "Add Credit",
+      "creditPerson": "Person",
+      "addNewPerson": "Add new person",
+      "newPersonName": "New person's name",
+      "newPersonPhotoUrl": "Photo URL (optional)",
+      "creditDirector": "Director",
+      "creditActor": "Actor",
+      "characterName": "Character Name",
+      "moveUp": "Move up",
+      "moveDown": "Move down"
     },
     "list": {
       "title": "Movie Management",

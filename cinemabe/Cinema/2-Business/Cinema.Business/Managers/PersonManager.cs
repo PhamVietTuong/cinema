@@ -142,6 +142,10 @@ public class PersonManager : IPersonManager
 
     public async Task DeleteAsync(Guid id)
     {
+        if (await _uow.MovieCreditStore.ExistsAsync(c => c.PersonId == id))
+        {
+            throw new InvalidOperationException("This person is credited on one or more movies. Remove those credits first.");
+        }
         await _uow.PersonStore.DeleteAsync(id);
     }
 

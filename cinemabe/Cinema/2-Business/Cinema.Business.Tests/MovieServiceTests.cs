@@ -18,6 +18,10 @@ public class MovieServiceTests
     public MovieServiceTests()
     {
         _sut = new MovieManager(_uowMock.Object);
+        // Default: no credits set up for any movie, so existing GetDetailAsync tests that don't care
+        // about credits don't need to stub this explicitly.
+        _uowMock.Setup(u => u.MovieCreditStore.GetByMovieAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new List<MovieCreditRow>());
     }
 
     [Fact]
@@ -349,5 +353,418 @@ public class MovieServiceTests
 
         await _sut.Invoking(s => s.GetDetailBySlugAsync("nope", null))
             .Should().ThrowAsync<KeyNotFoundException>();
+    }
+
+    // ── MovieCredit ──────────────────────────────────────────────────────────
+
+    private void SetupBasicDetailRead(Guid movieId, Movie movie)
+    {
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(0);
+        _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10)).ReturnsAsync(new List<CommentView>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetMovieScheduleAsync(movieId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<MovieScheduleRow>());
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
+            .ReturnsAsync(new Dictionary<(Guid, Guid), int>());
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_MapsCreditsFromStore()
+    {
+        var movieId  = Guid.NewGuid();
+        var personId = Guid.NewGuid();
+        var movie    = new Movie { Id = movieId, Title = "Test Movie", Evaluations = new List<Evaluation>() };
+        SetupBasicDetailRead(movieId, movie);
+        _uowMock.Setup(u => u.MovieCreditStore.GetByMovieAsync(movieId)).ReturnsAsync(new List<MovieCreditRow>
+        {
+            new(Guid.NewGuid(), personId, "Christopher Nolan", "photo.jpg", CreditType.Director, null, 0),
+        });
+
+        var result = await _sut.GetDetailAsync(movieId, null);
+
+        result.Credits.Should().ContainSingle();
+        var credit = result.Credits.Single();
+        credit.PersonId.Should().Be(personId);
+        credit.PersonName.Should().Be("Christopher Nolan");
+        credit.PersonPhotoUrl.Should().Be("photo.jpg");
+        credit.CreditType.Should().Be(CreditType.Director);
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_NoCredits_ReturnsEmptyList()
+    {
+        var movieId = Guid.NewGuid();
+        var movie   = new Movie { Id = movieId, Title = "Test Movie", Evaluations = new List<Evaluation>() };
+        SetupBasicDetailRead(movieId, movie);
+
+        var result = await _sut.GetDetailAsync(movieId, null);
+
+        result.Credits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithCredits_AttachesNormalizedCredits()
+    {
+        var personId = Guid.NewGuid();
+        Movie? created = null;
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+        _uowMock.Setup(u => u.PersonStore.CountAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Person, bool>>>()))
+            .ReturnsAsync(1);
+        _uowMock.Setup(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()))
+            .Callback<Movie>(m => created = m)
+            .ReturnsAsync((Movie m) => m);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(It.IsAny<Guid>())).ReturnsAsync(() => created);
+
+        await _sut.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest>
+            {
+                new() { PersonId = personId, CreditType = CreditType.Director, CharacterName = "ignored", DisplayOrder = 0 },
+            },
+        });
+
+        created!.MovieCredits.Should().ContainSingle();
+        var credit = created.MovieCredits.Single();
+        credit.PersonId.Should().Be(personId);
+        credit.CreditType.Should().Be(CreditType.Director);
+        credit.CharacterName.Should().BeNull("Director credits never carry a character name");
+    }
+
+    [Fact]
+    public async Task CreateAsync_NullCredits_CreatesNone()
+    {
+        Movie? created = null;
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+        _uowMock.Setup(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()))
+            .Callback<Movie>(m => created = m)
+            .ReturnsAsync((Movie m) => m);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(It.IsAny<Guid>())).ReturnsAsync(() => created);
+
+        await _sut.CreateAsync(new CreateMovieRequest { Title = "Wicked" });
+
+        created!.MovieCredits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UpdateAsync_NullCredits_LeavesExistingCreditsUntouched()
+    {
+        var movieId = Guid.NewGuid();
+        var existingCredit = new MovieCredit { Id = Guid.NewGuid(), MovieId = movieId, PersonId = Guid.NewGuid(), CreditType = CreditType.Actor };
+        var movie = new Movie
+        {
+            Id = movieId, Title = "Wicked", Slug = "wicked",
+            MovieTypeDetails = new List<MovieTypeDetail>(),
+            MovieCredits = new List<MovieCredit> { existingCredit },
+        };
+        _uowMock.Setup(u => u.MovieStore.GetForUpdateAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+
+        await _sut.UpdateAsync(new UpdateMovieRequest { Id = movieId, Title = "Wicked", Credits = null });
+
+        movie.MovieCredits.Should().ContainSingle().Which.Should().BeSameAs(existingCredit);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReconcilesCredits()
+    {
+        var movieId = Guid.NewGuid();
+        var personA = Guid.NewGuid();
+        var personB = Guid.NewGuid();
+        var personC = Guid.NewGuid();
+        var creditA = new MovieCredit { Id = Guid.NewGuid(), MovieId = movieId, PersonId = personA, CreditType = CreditType.Actor, DisplayOrder = 0 };
+        var creditB = new MovieCredit { Id = Guid.NewGuid(), MovieId = movieId, PersonId = personB, CreditType = CreditType.Director, DisplayOrder = 0 };
+        var movie = new Movie
+        {
+            Id = movieId, Title = "Wicked", Slug = "wicked",
+            MovieTypeDetails = new List<MovieTypeDetail>(),
+            MovieCredits = new List<MovieCredit> { creditA, creditB },
+        };
+        _uowMock.Setup(u => u.MovieStore.GetForUpdateAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.PersonStore.CountAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Person, bool>>>()))
+            .ReturnsAsync(2);
+        // A brand-new credit must go through TrackNew (see SyncCredits), not movie.MovieCredits.Add
+        // directly — simulate EF's relationship fixup so the collection still reflects it afterwards,
+        // the way a real DbContext would.
+        _uowMock.Setup(u => u.MovieCreditStore.TrackNew(It.IsAny<MovieCredit>()))
+            .Callback<MovieCredit>(c => movie.MovieCredits.Add(c));
+
+        await _sut.UpdateAsync(new UpdateMovieRequest
+        {
+            Id = movieId, Title = "Wicked",
+            Credits = new List<MovieCreditRequest>
+            {
+                new() { PersonId = personB, CreditType = CreditType.Director, DisplayOrder = 5 },
+                new() { PersonId = personC, CreditType = CreditType.Actor, CharacterName = "Elphaba", DisplayOrder = 1 },
+            },
+        });
+
+        _uowMock.Verify(u => u.MovieCreditStore.TrackNew(It.Is<MovieCredit>(c => c.PersonId == personC && c.CharacterName == "Elphaba")), Times.Once);
+        movie.MovieCredits.Should().HaveCount(2);
+        movie.MovieCredits.Should().NotContain(creditA);
+        var keptB = movie.MovieCredits.Single(c => c.PersonId == personB);
+        keptB.Should().BeSameAs(creditB, "an existing credit is updated in place, not replaced");
+        keptB.DisplayOrder.Should().Be(5);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_AddingFirstCredit_UsesTrackNew_NotCollectionAddDirectly()
+    {
+        // Regression test: BaseEntity.Id is assigned a non-default Guid in its property initializer,
+        // so appending a brand-new MovieCredit straight to an already-tracked Movie's MovieCredits
+        // collection makes EF Core's change tracker treat it as Modified instead of Added, producing
+        // a no-op UPDATE and a DbUpdateConcurrencyException at SaveChanges. SyncCredits must route
+        // every new row through IMovieCreditStore.TrackNew instead.
+        var movieId = Guid.NewGuid();
+        var personId = Guid.NewGuid();
+        var movie = new Movie { Id = movieId, Title = "Wicked", Slug = "wicked", MovieTypeDetails = new List<MovieTypeDetail>(), MovieCredits = new List<MovieCredit>() };
+        _uowMock.Setup(u => u.MovieStore.GetForUpdateAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.PersonStore.CountAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Person, bool>>>()))
+            .ReturnsAsync(1);
+
+        await _sut.UpdateAsync(new UpdateMovieRequest
+        {
+            Id = movieId, Title = "Wicked",
+            Credits = new List<MovieCreditRequest> { new() { PersonId = personId, CreditType = CreditType.Director, DisplayOrder = 0 } },
+        });
+
+        _uowMock.Verify(u => u.MovieCreditStore.TrackNew(It.Is<MovieCredit>(c => c.PersonId == personId)), Times.Once);
+        // Without a real DbContext the mocked TrackNew never actually appends to the collection, so an
+        // empty collection here confirms the manager isn't also doing `movie.MovieCredits.Add(...)`.
+        movie.MovieCredits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UpdateAsync_EmptyCredits_ClearsAll()
+    {
+        var movieId = Guid.NewGuid();
+        var movie = new Movie
+        {
+            Id = movieId, Title = "Wicked", Slug = "wicked",
+            MovieTypeDetails = new List<MovieTypeDetail>(),
+            MovieCredits = new List<MovieCredit> { new() { Id = Guid.NewGuid(), MovieId = movieId, PersonId = Guid.NewGuid(), CreditType = CreditType.Actor } },
+        };
+        _uowMock.Setup(u => u.MovieStore.GetForUpdateAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+
+        await _sut.UpdateAsync(new UpdateMovieRequest { Id = movieId, Title = "Wicked", Credits = new List<MovieCreditRequest>() });
+
+        movie.MovieCredits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateAsync_DuplicatePersonAndRole_Throws()
+    {
+        var personId = Guid.NewGuid();
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+
+        await _sut.Invoking(s => s.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest>
+            {
+                new() { PersonId = personId, CreditType = CreditType.Actor, DisplayOrder = 0 },
+                new() { PersonId = personId, CreditType = CreditType.Actor, DisplayOrder = 1 },
+            },
+        })).Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_UnknownPerson_Throws_AndDoesNotSave()
+    {
+        var movieId = Guid.NewGuid();
+        var movie = new Movie { Id = movieId, Title = "Wicked", Slug = "wicked", MovieTypeDetails = new List<MovieTypeDetail>(), MovieCredits = new List<MovieCredit>() };
+        _uowMock.Setup(u => u.MovieStore.GetForUpdateAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.PersonStore.CountAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Person, bool>>>()))
+            .ReturnsAsync(0);
+
+        await _sut.Invoking(s => s.UpdateAsync(new UpdateMovieRequest
+        {
+            Id = movieId, Title = "Wicked",
+            Credits = new List<MovieCreditRequest> { new() { PersonId = Guid.NewGuid(), CreditType = CreditType.Actor } },
+        })).Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    // ── Inline "+ Add new person" credits ───────────────────────────────────────
+
+    [Fact]
+    public async Task CreateAsync_NewPersonName_NoMatch_StagesNewPersonAndCreditReferencesIt()
+    {
+        Movie? created = null;
+        Person? staged = null;
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+        _uowMock.Setup(u => u.PersonStore.GetIdsByNamesAsync(It.IsAny<IReadOnlyCollection<string>>()))
+            .ReturnsAsync(new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase));
+        _uowMock.Setup(u => u.PersonStore.TrackNew(It.IsAny<Person>())).Callback<Person>(p => staged = p);
+        _uowMock.Setup(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()))
+            .Callback<Movie>(m => created = m)
+            .ReturnsAsync((Movie m) => m);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(It.IsAny<Guid>())).ReturnsAsync(() => created);
+
+        await _sut.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest>
+            {
+                new() { NewPersonName = "  Cynthia Erivo ", NewPersonPhotoUrl = "  photo.jpg  ", CreditType = CreditType.Actor, CharacterName = "Elphaba" },
+            },
+        });
+
+        staged.Should().NotBeNull();
+        staged!.Name.Should().Be("Cynthia Erivo");
+        staged.PhotoUrl.Should().Be("photo.jpg");
+        created!.MovieCredits.Should().ContainSingle().Which.PersonId.Should().Be(staged.Id);
+        _uowMock.Verify(u => u.PersonStore.CreateAsync(It.IsAny<Person>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_NewPersonName_MatchesExistingCaseInsensitively_ReusesExistingId()
+    {
+        var existingId = Guid.NewGuid();
+        Movie? created = null;
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+        _uowMock.Setup(u => u.PersonStore.GetIdsByNamesAsync(It.IsAny<IReadOnlyCollection<string>>()))
+            .ReturnsAsync(new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase) { ["Cynthia Erivo"] = existingId });
+        _uowMock.Setup(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()))
+            .Callback<Movie>(m => created = m)
+            .ReturnsAsync((Movie m) => m);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(It.IsAny<Guid>())).ReturnsAsync(() => created);
+
+        await _sut.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest>
+            {
+                new() { NewPersonName = " cynthia erivo ", NewPersonPhotoUrl = "ignored.jpg", CreditType = CreditType.Actor },
+            },
+        });
+
+        _uowMock.Verify(u => u.PersonStore.TrackNew(It.IsAny<Person>()), Times.Never);
+        created!.MovieCredits.Should().ContainSingle().Which.PersonId.Should().Be(existingId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_BothPersonIdAndNewPersonName_Throws()
+    {
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+
+        await _sut.Invoking(s => s.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest> { new() { PersonId = Guid.NewGuid(), NewPersonName = "Someone", CreditType = CreditType.Actor } },
+        })).Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()), Times.Never);
+        _uowMock.Verify(u => u.PersonStore.TrackNew(It.IsAny<Person>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_NeitherPersonIdNorNewPersonName_Throws()
+    {
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+
+        await _sut.Invoking(s => s.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest> { new() { CreditType = CreditType.Actor } },
+        })).Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()), Times.Never);
+        _uowMock.Verify(u => u.PersonStore.TrackNew(It.IsAny<Person>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhitespaceOnlyNewPersonName_TreatedAsAbsent_Throws()
+    {
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+
+        await _sut.Invoking(s => s.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest> { new() { NewPersonName = "   ", CreditType = CreditType.Actor } },
+        })).Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()), Times.Never);
+        _uowMock.Verify(u => u.PersonStore.TrackNew(It.IsAny<Person>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_SameNewNameTwiceInDifferentRoles_CreatesOnePerson()
+    {
+        Movie? created = null;
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+        _uowMock.Setup(u => u.PersonStore.GetIdsByNamesAsync(It.IsAny<IReadOnlyCollection<string>>()))
+            .ReturnsAsync(new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase));
+        _uowMock.Setup(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()))
+            .Callback<Movie>(m => created = m)
+            .ReturnsAsync((Movie m) => m);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(It.IsAny<Guid>())).ReturnsAsync(() => created);
+
+        await _sut.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest>
+            {
+                new() { NewPersonName = "Jon M. Chu", CreditType = CreditType.Director },
+                new() { NewPersonName = "JON M. CHU", CreditType = CreditType.Actor, CharacterName = "Cameo" },
+            },
+        });
+
+        _uowMock.Verify(u => u.PersonStore.TrackNew(It.IsAny<Person>()), Times.Once);
+        created!.MovieCredits.Should().HaveCount(2);
+        created.MovieCredits.Select(c => c.PersonId).Distinct().Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task CreateAsync_SameNewNameTwiceInSameRole_Throws_AndStagesNothing()
+    {
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+        _uowMock.Setup(u => u.PersonStore.GetIdsByNamesAsync(It.IsAny<IReadOnlyCollection<string>>()))
+            .ReturnsAsync(new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase));
+
+        await _sut.Invoking(s => s.CreateAsync(new CreateMovieRequest
+        {
+            Title = "Wicked",
+            Credits = new List<MovieCreditRequest>
+            {
+                new() { NewPersonName = "Jon M. Chu", CreditType = CreditType.Director },
+                new() { NewPersonName = "jon m. chu", CreditType = CreditType.Director },
+            },
+        })).Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.PersonStore.TrackNew(It.IsAny<Person>()), Times.Never);
+        _uowMock.Verify(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReusedPersonCollidesWithExplicitPick_SameRole_Throws_AndDoesNotStageOrSave()
+    {
+        var movieId = Guid.NewGuid();
+        var existingId = Guid.NewGuid();
+        var movie = new Movie { Id = movieId, Title = "Wicked", Slug = "wicked", MovieTypeDetails = new List<MovieTypeDetail>(), MovieCredits = new List<MovieCredit>() };
+        _uowMock.Setup(u => u.MovieStore.GetForUpdateAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.PersonStore.CountAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Person, bool>>>()))
+            .ReturnsAsync(1);
+        _uowMock.Setup(u => u.PersonStore.GetIdsByNamesAsync(It.IsAny<IReadOnlyCollection<string>>()))
+            .ReturnsAsync(new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase) { ["Cynthia Erivo"] = existingId });
+
+        await _sut.Invoking(s => s.UpdateAsync(new UpdateMovieRequest
+        {
+            Id = movieId, Title = "Wicked",
+            Credits = new List<MovieCreditRequest>
+            {
+                new() { PersonId = existingId, CreditType = CreditType.Actor },
+                new() { NewPersonName = "Cynthia Erivo", CreditType = CreditType.Actor },
+            },
+        })).Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.PersonStore.TrackNew(It.IsAny<Person>()), Times.Never);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

@@ -20,4 +20,6 @@ public class UpdateMovieRequest
     public string? Subtitle { get; set; }
     public Guid AgeRestrictionId { get; set; }
     public List<Guid> MovieTypeIds { get; set; } = new();
+    /// <summary>null = leave existing credits untouched; [] = clear all credits.</summary>
+    public List<MovieCreditRequest>? Credits { get; set; }
 }

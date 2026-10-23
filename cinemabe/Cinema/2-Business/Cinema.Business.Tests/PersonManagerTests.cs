@@ -91,4 +91,30 @@ public class PersonManagerTests
         result.Should().BeEmpty();
         _uowMock.Verify(u => u.PersonStore.GetWithPhotoByNamesAsync(It.IsAny<IReadOnlyCollection<string>>()), Times.Never);
     }
+
+    [Fact]
+    public async Task DeleteAsync_PersonWithCredits_ThrowsAndDoesNotDelete()
+    {
+        var id = Guid.NewGuid();
+        _uowMock.Setup(u => u.MovieCreditStore.ExistsAsync(It.IsAny<System.Linq.Expressions.Expression<Func<MovieCredit, bool>>>()))
+            .ReturnsAsync(true);
+
+        await FluentActions.Awaiting(() => _sut.DeleteAsync(id))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.PersonStore.DeleteAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_PersonWithoutCredits_Deletes()
+    {
+        var id = Guid.NewGuid();
+        _uowMock.Setup(u => u.MovieCreditStore.ExistsAsync(It.IsAny<System.Linq.Expressions.Expression<Func<MovieCredit, bool>>>()))
+            .ReturnsAsync(false);
+        _uowMock.Setup(u => u.PersonStore.DeleteAsync(id)).ReturnsAsync(new Person { Id = id });
+
+        await _sut.DeleteAsync(id);
+
+        _uowMock.Verify(u => u.PersonStore.DeleteAsync(id), Times.Once);
+    }
 }

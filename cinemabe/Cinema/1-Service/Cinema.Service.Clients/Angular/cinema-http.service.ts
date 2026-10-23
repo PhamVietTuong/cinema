@@ -9214,6 +9214,7 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
     showTimes?: ShowTimeSummaryDTO[];
     recentComments?: CommentDTO[];
     canReview?: boolean;
+    credits?: MovieCreditDTO[];
 
     constructor(data?: IMovieDetailDTO) {
         super(data);
@@ -9235,6 +9236,11 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
                     this.recentComments!.push(CommentDTO.fromJS(item));
             }
             this.canReview = _data["canReview"];
+            if (Array.isArray(_data["credits"])) {
+                this.credits = [] as any;
+                for (let item of _data["credits"])
+                    this.credits!.push(MovieCreditDTO.fromJS(item));
+            }
         }
     }
 
@@ -9260,6 +9266,11 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
                 data["recentComments"].push(item.toJSON());
         }
         data["canReview"] = this.canReview;
+        if (Array.isArray(this.credits)) {
+            data["credits"] = [];
+            for (let item of this.credits)
+                data["credits"].push(item.toJSON());
+        }
         super.toJSON(data);
         return data;
     }
@@ -9271,6 +9282,7 @@ export interface IMovieDetailDTO extends IMovieDTO {
     showTimes?: ShowTimeSummaryDTO[];
     recentComments?: CommentDTO[];
     canReview?: boolean;
+    credits?: MovieCreditDTO[];
 }
 
 export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
@@ -9422,6 +9434,71 @@ export interface ICommentDTO {
     replies?: CommentDTO[];
 }
 
+export class MovieCreditDTO implements IMovieCreditDTO {
+    id?: string;
+    personId?: string;
+    personName?: string;
+    personPhotoUrl?: string | undefined;
+    creditType?: CreditType;
+    characterName?: string | undefined;
+    displayOrder?: number;
+
+    constructor(data?: IMovieCreditDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.personId = _data["personId"];
+            this.personName = _data["personName"];
+            this.personPhotoUrl = _data["personPhotoUrl"];
+            this.creditType = _data["creditType"];
+            this.characterName = _data["characterName"];
+            this.displayOrder = _data["displayOrder"];
+        }
+    }
+
+    static fromJS(data: any): MovieCreditDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new MovieCreditDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["personId"] = this.personId;
+        data["personName"] = this.personName;
+        data["personPhotoUrl"] = this.personPhotoUrl;
+        data["creditType"] = this.creditType;
+        data["characterName"] = this.characterName;
+        data["displayOrder"] = this.displayOrder;
+        return data;
+    }
+}
+
+export interface IMovieCreditDTO {
+    id?: string;
+    personId?: string;
+    personName?: string;
+    personPhotoUrl?: string | undefined;
+    creditType?: CreditType;
+    characterName?: string | undefined;
+    displayOrder?: number;
+}
+
+export enum CreditType {
+    Director = 1,
+    Actor = 2,
+}
+
 export class CreateMovieRequest implements ICreateMovieRequest {
     title?: string;
     description?: string;
@@ -9436,6 +9513,7 @@ export class CreateMovieRequest implements ICreateMovieRequest {
     subtitle?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
+    credits?: MovieCreditRequest[] | undefined;
 
     constructor(data?: ICreateMovieRequest) {
         if (data) {
@@ -9464,6 +9542,11 @@ export class CreateMovieRequest implements ICreateMovieRequest {
                 this.movieTypeIds = [] as any;
                 for (let item of _data["movieTypeIds"])
                     this.movieTypeIds!.push(item);
+            }
+            if (Array.isArray(_data["credits"])) {
+                this.credits = [] as any;
+                for (let item of _data["credits"])
+                    this.credits!.push(MovieCreditRequest.fromJS(item));
             }
         }
     }
@@ -9494,6 +9577,11 @@ export class CreateMovieRequest implements ICreateMovieRequest {
             for (let item of this.movieTypeIds)
                 data["movieTypeIds"].push(item);
         }
+        if (Array.isArray(this.credits)) {
+            data["credits"] = [];
+            for (let item of this.credits)
+                data["credits"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -9512,6 +9600,63 @@ export interface ICreateMovieRequest {
     subtitle?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
+    credits?: MovieCreditRequest[] | undefined;
+}
+
+export class MovieCreditRequest implements IMovieCreditRequest {
+    personId?: string | undefined;
+    newPersonName?: string | undefined;
+    newPersonPhotoUrl?: string | undefined;
+    creditType?: CreditType;
+    characterName?: string | undefined;
+    displayOrder?: number;
+
+    constructor(data?: IMovieCreditRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.personId = _data["personId"];
+            this.newPersonName = _data["newPersonName"];
+            this.newPersonPhotoUrl = _data["newPersonPhotoUrl"];
+            this.creditType = _data["creditType"];
+            this.characterName = _data["characterName"];
+            this.displayOrder = _data["displayOrder"];
+        }
+    }
+
+    static fromJS(data: any): MovieCreditRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new MovieCreditRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["personId"] = this.personId;
+        data["newPersonName"] = this.newPersonName;
+        data["newPersonPhotoUrl"] = this.newPersonPhotoUrl;
+        data["creditType"] = this.creditType;
+        data["characterName"] = this.characterName;
+        data["displayOrder"] = this.displayOrder;
+        return data;
+    }
+}
+
+export interface IMovieCreditRequest {
+    personId?: string | undefined;
+    newPersonName?: string | undefined;
+    newPersonPhotoUrl?: string | undefined;
+    creditType?: CreditType;
+    characterName?: string | undefined;
+    displayOrder?: number;
 }
 
 export class UpdateMovieRequest implements IUpdateMovieRequest {
@@ -9529,6 +9674,7 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
     subtitle?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
+    credits?: MovieCreditRequest[] | undefined;
 
     constructor(data?: IUpdateMovieRequest) {
         if (data) {
@@ -9558,6 +9704,11 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
                 this.movieTypeIds = [] as any;
                 for (let item of _data["movieTypeIds"])
                     this.movieTypeIds!.push(item);
+            }
+            if (Array.isArray(_data["credits"])) {
+                this.credits = [] as any;
+                for (let item of _data["credits"])
+                    this.credits!.push(MovieCreditRequest.fromJS(item));
             }
         }
     }
@@ -9589,6 +9740,11 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
             for (let item of this.movieTypeIds)
                 data["movieTypeIds"].push(item);
         }
+        if (Array.isArray(this.credits)) {
+            data["credits"] = [];
+            for (let item of this.credits)
+                data["credits"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -9608,6 +9764,7 @@ export interface IUpdateMovieRequest {
     subtitle?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
+    credits?: MovieCreditRequest[] | undefined;
 }
 
 export class AddCommentRequest implements IAddCommentRequest {
