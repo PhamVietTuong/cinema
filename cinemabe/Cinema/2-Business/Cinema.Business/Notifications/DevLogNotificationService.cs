@@ -15,4 +15,11 @@ public class DevLogNotificationService : INotificationService
         LogProvider.Current.Information($"[Notification] To={to} | Subject={subject}\n{body}");
         return Task.CompletedTask;
     }
+
+    public Task SendAsync(string to, string subject, string htmlBody, IReadOnlyList<EmailInlineImage> inlineImages)
+    {
+        var contentIds = string.Join(", ", inlineImages.Select(i => i.ContentId));
+        LogProvider.Current.Information($"[Notification] To={to} | Subject={subject} | InlineImages={inlineImages.Count} ({contentIds})\n{htmlBody}");
+        return Task.CompletedTask;
+    }
 }

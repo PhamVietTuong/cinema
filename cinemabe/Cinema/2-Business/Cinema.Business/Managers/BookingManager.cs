@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Net;
+using System.Net.Mime;
 using System.Text.Json;
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Exceptions;
@@ -1177,6 +1179,7 @@ public class BookingManager : IBookingManager
         var emailSubject = fallbackSubject;
         var emailBody = fallbackBody;
         var smsBody = fallbackSms;
+        var inlineImages = new List<EmailInlineImage>();
 
         try
         {
@@ -1201,7 +1204,12 @@ public class BookingManager : IBookingManager
                     {
                         emailSubject = renderedSubject;
                     }
-                    emailBody = TemplateRenderer.Render(emailTemplate.Body, values);
+                    emailBody = TemplateRenderer.Render(emailTemplate.Body, values, rawKeys: QrImageKeys);
+
+                    var qrTickets = GetQrTickets(row?.Tickets ?? new List<BookingConfirmationTicketRow>());
+                    inlineImages = BuildQrImages(qrTickets)
+                        .Where(image => emailBody.Contains($"cid:{image.ContentId}", StringComparison.Ordinal))
+                        .ToList();
                 }
 
                 if (templates.TryGetValue(TemplateCodes.BookingConfirmationSms, out var smsTemplate)
@@ -1214,11 +1222,12 @@ public class BookingManager : IBookingManager
         catch (Exception e)
         {
             LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(SendConfirmationAsync)} template lookup/render failed for {invoice.Code}: {e.Message}");
+            inlineImages = new List<EmailInlineImage>();
         }
 
         if (hasEmail)
         {
-            await _notifications.SendAsync(user.Email, emailSubject, emailBody);
+            await _notifications.SendAsync(user.Email, emailSubject, emailBody, inlineImages);
         }
 
         // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
@@ -1279,6 +1288,7 @@ public class BookingManager : IBookingManager
             ["DiscountAmount"] = Money(invoice.DiscountAmount),
             ["TotalAmount"] = Money(invoice.FinalAmount),
             ["QrCodes"] = JoinOrDash(tickets.Select(t => t.QrCode ?? string.Empty)),
+            [QrImagesKey] = BuildQrImagesHtml(GetQrTickets(tickets)),
         };
     }
 
@@ -1295,6 +1305,45 @@ public class BookingManager : IBookingManager
             return string.Join(", ", list);
         }
         return "-";
+    }
+
+    private const string QrImagesKey = "QrImages";
+    private static readonly HashSet<string> QrImageKeys = new() { QrImagesKey };
+
+    private static string QrContentId(int index)
+    {
+        return $"qr-{index}@cinema";
+    }
+
+    private static List<BookingConfirmationTicketRow> GetQrTickets(IReadOnlyList<BookingConfirmationTicketRow> tickets)
+    {
+        return tickets.Where(t => !string.IsNullOrWhiteSpace(t.QrCode)).ToList();
+    }
+
+    private static string BuildQrImagesHtml(IReadOnlyList<BookingConfirmationTicketRow> qrTickets)
+    {
+        if (qrTickets.Count == 0)
+        {
+            return "-";
+        }
+
+        var blocks = qrTickets.Select((t, i) =>
+            $"<div style=\"display:inline-block;margin:4px 8px;text-align:center;\">" +
+            $"<img src=\"cid:{QrContentId(i)}\" width=\"160\" height=\"160\" alt=\"QR {WebUtility.HtmlEncode(t.SeatLabel)}\" />" +
+            $"<div style=\"font-size:12px;color:#6b6258;margin-top:4px;\">{WebUtility.HtmlEncode(t.SeatLabel)}</div>" +
+            "</div>");
+        return string.Join(string.Empty, blocks);
+    }
+
+    private static List<EmailInlineImage> BuildQrImages(IReadOnlyList<BookingConfirmationTicketRow> qrTickets)
+    {
+        var images = new List<EmailInlineImage>();
+        for (var i = 0; i < qrTickets.Count; i++)
+        {
+            var ticket = qrTickets[i];
+            images.Add(new EmailInlineImage(QrContentId(i), QrCodeImage.ToPng(ticket.QrCode!), MediaTypeNames.Image.Png, $"qr-{ticket.SeatLabel}.png"));
+        }
+        return images;
     }
 
     // ── Seat pricing ────────────────────────────────────────────────────────────
