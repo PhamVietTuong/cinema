@@ -111,6 +111,16 @@ describe('BookingCheckoutComponent', () => {
     expect(c.loading).toBe(false);
   });
 
+  it('initiates payment with provider VNPay when VNPay is selected', () => {
+    const c = build(state);
+    c.paymentMethod = 'VNPay';
+
+    c.confirmBooking();
+
+    const request = payment.initiatePayment.mock.calls[0][0];
+    expect(request.provider).toBe('VNPay');
+  });
+
   it('does not flag a stock problem for other booking failures', () => {
     const c = build(state);
     payment.createBooking.mockReturnValue(throwError(() => ({ error: 'Seat is locked' })));

@@ -948,7 +948,7 @@ public class BookingManager : IBookingManager
         }
     }
 
-    public async Task<PaymentInitiationDTO?> InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl)
+    public async Task<PaymentInitiationDTO?> InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl, string? clientIp)
     {
         var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
         if (invoice == null)
@@ -980,7 +980,7 @@ public class BookingManager : IBookingManager
         }
 
         var gateway = _gateways.Resolve(provider);
-        var initiation = await gateway.CreatePaymentAsync(invoice.Id, invoice.FinalAmount, returnUrl);
+        var initiation = await gateway.CreatePaymentAsync(invoice.Id, invoice.FinalAmount, returnUrl, clientIp);
 
         // Remember which provider owns this invoice so ConfirmPayment/HandlePaymentCallback resolve the same one.
         invoice.PaymentMethod    = gateway.Name;

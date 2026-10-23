@@ -31,11 +31,17 @@ public class VnPayGateway : IPaymentGateway
     private string HashSecret => _config["Payments:VnPay:HashSecret"] ?? "";
     private string PayUrl     => _config["Payments:VnPay:PayUrl"]     ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 
-    public Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl)
+    public Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl, string? clientIp)
     {
         if (string.IsNullOrWhiteSpace(TmnCode) || string.IsNullOrWhiteSpace(HashSecret))
         {
             throw new InvalidOperationException("VNPay is not configured (Payments:VnPay:TmnCode / HashSecret).");
+        }
+
+        var ipAddr = clientIp;
+        if (string.IsNullOrWhiteSpace(ipAddr))
+        {
+            ipAddr = "127.0.0.1";
         }
 
         var txnRef = invoiceId.ToString("N");
@@ -52,7 +58,7 @@ public class VnPayGateway : IPaymentGateway
             ["vnp_OrderType"] = "other",
             ["vnp_Locale"]    = "vn",
             ["vnp_ReturnUrl"] = returnUrl ?? _config["Payments:VnPay:ReturnUrl"] ?? "",
-            ["vnp_IpAddr"]    = "127.0.0.1",
+            ["vnp_IpAddr"]    = ipAddr,
             ["vnp_CreateDate"] = now.ToString("yyyyMMddHHmmss"),
             ["vnp_ExpireDate"] = now.AddMinutes(15).ToString("yyyyMMddHHmmss"),
         };

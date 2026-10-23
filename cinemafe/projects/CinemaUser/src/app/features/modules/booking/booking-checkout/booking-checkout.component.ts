@@ -49,7 +49,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   holdExpired = false;
   private _holdTimer: any;
 
-  paymentMethod = 'Card';
+  paymentMethod = 'Momo';
   loading = false;
   error = '';
   /** The last createBooking failure was a stock problem — show the localized hint to go back and adjust. */
@@ -61,9 +61,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
   readonly methods: { value: string; labelKey: string; svg?: string; icon?: string }[] = [
     { value: 'Momo', labelKey: 'booking.confirm.momoWallet', icon: 'account_balance_wallet' },
-    { value: 'Card', labelKey: 'booking.confirm.domesticCard', icon: 'credit_card' },
-    { value: 'ApplePay', labelKey: 'booking.confirm.applePay', svg: 'apple' },
-    { value: 'GooglePay', labelKey: 'booking.confirm.googlePay', svg: 'google' },
+    { value: 'VNPay', labelKey: 'booking.confirm.vnpay', svg: 'vnpay' },
   ];
 
   // Order context for the summary card, loaded after arrival; blank until each lookup answers.
@@ -466,11 +464,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       case 'Momo': {
         return 'MoMo';
       }
-      case 'ApplePay':
-      case 'GooglePay': {
-        return 'Stripe';
-      }
-      case 'Card': {
+      case 'VNPay': {
         return 'VNPay';
       }
       default: {

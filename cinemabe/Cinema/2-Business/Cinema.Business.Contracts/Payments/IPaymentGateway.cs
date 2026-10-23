@@ -17,8 +17,12 @@ public interface IPaymentGateway
     /// </summary>
     bool IsConfigured { get; }
 
-    /// <summary>Begins a payment; returns a provider reference and (usually) a redirect URL for hosted checkout.</summary>
-    Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl);
+    /// <summary>
+    /// Begins a payment; returns a provider reference and (usually) a redirect URL for hosted checkout.
+    /// <paramref name="clientIp"/> is the end-user's IP, which some providers require (VNPay's
+    /// <c>vnp_IpAddr</c>); gateways that don't need it ignore the parameter.
+    /// </summary>
+    Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl, string? clientIp);
 
     /// <summary>
     /// Synchronous, owner-initiated confirm. Only the dev <c>Sandbox</c> gateway approves here;

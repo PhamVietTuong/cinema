@@ -29,31 +29,9 @@
         </button>
       </div>
 
-      <div class="form-card" *ngIf="paymentMethod === 'Card'">
-        <h3 class="card-title">{{ 'booking.confirm.creditDebit' | translate }}</h3>
-        <mat-form-field class="field-group" appearance="outline">
-          <mat-label>{{ 'booking.confirm.cardNumber' | translate }}</mat-label>
-          <input matInput placeholder="0000 0000 0000 0000" maxlength="19">
-        </mat-form-field>
-        <div class="field-row">
-          <mat-form-field class="field-group" appearance="outline">
-            <mat-label>{{ 'booking.confirm.expiry' | translate }}</mat-label>
-            <input matInput placeholder="MM / YY" maxlength="7">
-          </mat-form-field>
-          <mat-form-field class="field-group" appearance="outline">
-            <mat-label>CVV</mat-label>
-            <input matInput placeholder="•••" maxlength="4" type="password">
-          </mat-form-field>
-        </div>
-        <mat-form-field class="field-group" appearance="outline">
-          <mat-label>{{ 'booking.confirm.cardName' | translate }}</mat-label>
-          <input matInput placeholder="NGUYEN VAN A">
-        </mat-form-field>
-      </div>
-
-      <div class="form-card center" *ngIf="paymentMethod !== 'Card'">
+      <div class="form-card center">
         <div class="qr-placeholder"><mat-icon>qr_code_2</mat-icon></div>
-        <p class="qr-note">{{ 'booking.confirm.qrNote' | translate:{ app: paymentMethod === 'Momo' ? 'MoMo' : paymentMethod === 'ApplePay' ? 'Apple Pay' : 'Google Pay' } }}</p>
+        <p class="qr-note">{{ 'booking.confirm.qrNote' | translate:{ app: paymentMethod === 'Momo' ? 'MoMo' : 'VNPAY' } }}</p>
       </div>
 
       <div class="section-rule"></div>
