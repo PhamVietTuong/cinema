@@ -1032,32 +1032,60 @@ public class BookingManager : IBookingManager
         return true;
     }
 
-    public async Task<bool> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData)
+    public async Task<PaymentCallbackHandlingResult> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData)
     {
-        // Signature-verify the provider callback first; this is the authoritative "money moved" signal.
-        var result = _gateways.Resolve(provider).ParseCallback(callbackData);
-        if (!result.Success)
+        var gateway = _gateways.Resolve(provider);
+        var result = gateway.ParseCallback(callbackData);
+
+        switch (result.Status)
         {
-            return false;
+            case PaymentCallbackStatus.InvalidSignature:
+                LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: invalid signature from {gateway.Name}. {result.FailureReason}");
+                return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.InvalidSignature);
+            case PaymentCallbackStatus.InvalidOrderReference:
+                LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: invalid order reference from {gateway.Name}. {result.FailureReason}");
+                return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
+            case PaymentCallbackStatus.InvalidAmount:
+                LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: invalid amount from {gateway.Name}. {result.FailureReason}");
+                return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.InvalidAmount);
+            case PaymentCallbackStatus.Rejected:
+                return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.Rejected);
         }
 
         var invoice = await _uow.InvoiceStore.GetByIdAsync(result.InvoiceId);
         if (invoice == null)
         {
-            return false;
+            LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: no invoice for callback reference from {gateway.Name}. InvoiceId={result.InvoiceId}");
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
         }
+
+        // Matches VnPayGateway.CreatePaymentAsync's own rounding ((long)Math.Round(amount)) so a genuine
+        // payment can't be rejected by a decimal-vs-double rounding mismatch between the two sides.
+        var expectedAmount = (decimal)(long)Math.Round(invoice.FinalAmount);
+        if (result.ReceivedAmount.HasValue && result.ReceivedAmount.Value != expectedAmount)
+        {
+            LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: amount mismatch for invoice {invoice.Id}. Expected={invoice.FinalAmount}, Received={result.ReceivedAmount}");
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.InvalidAmount);
+        }
+
         // Idempotency: a provider may deliver the callback more than once.
         if (invoice.Status == InvoiceStatus.Paid)
         {
-            return true;
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.AlreadyConfirmed);
         }
         if (invoice.Status != InvoiceStatus.Pending)
         {
-            return false;
+            LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: callback for invoice {invoice.Id} in unexpected status {invoice.Status}.");
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.NotPending);
+        }
+
+        if (result.Status == PaymentCallbackStatus.PaymentFailed)
+        {
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.PaymentFailedAcknowledged);
         }
 
         await FinalizePaidInvoiceAsync(invoice, result.PaymentReference);
-        return true;
+        return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.Confirmed);
     }
 
     /// <summary>Marks the invoice Paid and applies the side effects: loyalty accrual, tier re-eval,
