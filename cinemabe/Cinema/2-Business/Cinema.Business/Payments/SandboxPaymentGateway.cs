@@ -17,7 +17,7 @@ public class SandboxPaymentGateway : IPaymentGateway
     /// <summary>The sandbox needs no credentials, so it is always available.</summary>
     public bool IsConfigured => true;
 
-    public Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl)
+    public Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl, string? clientIp)
         => Task.FromResult(new PaymentInitiation($"SANDBOX-{invoiceId:N}", returnUrl));
 
     public Task<PaymentVerification> VerifyPaymentAsync(string paymentReference, double expectedAmount)

@@ -127,7 +127,7 @@ public class PaymentController : ApiControllerBase
         LogProvider.Current.Information($"{GetType().Name}.InitiatePayment being awakened to process request...");
         try
         {
-            var result = await _bookingManager.InitiatePaymentAsync(User.GetUserId(), request.InvoiceId, request.Provider, request.ReturnUrl);
+            var result = await _bookingManager.InitiatePaymentAsync(User.GetUserId(), request.InvoiceId, request.Provider, request.ReturnUrl, HttpContext.GetClientIp());
             if (result is null)
             {
                 return BadRequest(new { error = "Cannot start payment for this invoice." });

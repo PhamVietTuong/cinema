@@ -20,7 +20,7 @@ public interface IBookingManager
     /// what it would take off <paramref name="total"/>. Never throws for an unusable code.</summary>
     Task<DiscountCodeValidationDTO>     ValidateDiscountCodeAsync(Guid userId, string code, Guid roomId, Guid showTimeId, double total);
     /// <summary>Starts a payment for the owner's Pending invoice via the chosen provider; returns the redirect/checkout info.</summary>
-    Task<PaymentInitiationDTO?>         InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl);
+    Task<PaymentInitiationDTO?>         InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl, string? clientIp);
     Task<bool>                          ConfirmPaymentAsync(Guid userId, Guid invoiceId, string paymentReference);
     /// <summary>Server-to-server gateway callback (IPN/webhook): signature-verifies and finalizes payment. No owner check.</summary>
     Task<bool>                          HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData);
