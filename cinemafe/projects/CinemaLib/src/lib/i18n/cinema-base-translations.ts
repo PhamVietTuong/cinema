@@ -27,6 +27,7 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       legendDouble: 'Ghế Đôi',
       notAvailableForCategory: 'Không khả dụng cho loại vé này',
       capReached: 'Bạn đã chọn đủ số vé — tăng số lượng để chọn thêm',
+      selectTicketTypeFirst: 'Vui lòng chọn loại vé trước khi chọn ghế',
     },
     ticket: {
       showTime: 'Suất chiếu',
@@ -117,6 +118,7 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       legendDouble: 'Double Seat',
       notAvailableForCategory: 'Not available for this ticket type',
       capReached: "You've selected all your tickets — increase a quantity to add more",
+      selectTicketTypeFirst: 'Please select a ticket type first to pick your seats',
     },
     ticket: {
       showTime: 'Showtime',

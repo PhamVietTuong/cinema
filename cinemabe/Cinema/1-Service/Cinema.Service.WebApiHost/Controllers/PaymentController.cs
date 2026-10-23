@@ -1,7 +1,9 @@
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Payments;
 using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.Invoices;
 using Cinema.Business.DTO.Requests;
+using Cinema.Business.Payments;
 using Cinema.Data.Entities;
 using Cinema.Foundation.Logging;
 using Cinema.Service.WebApiHost.Helpers;
@@ -21,12 +23,14 @@ public class PaymentController : ApiControllerBase
     private readonly IBookingManager _bookingManager;
     private readonly IInvoiceManager _invoiceManager;
     private readonly IGiftCardManager _giftCardManager;
+    private readonly IPaymentGatewayResolver _gateways;
 
-    public PaymentController(IBookingManager bookingManager, IInvoiceManager invoiceManager, IGiftCardManager giftCardManager)
+    public PaymentController(IBookingManager bookingManager, IInvoiceManager invoiceManager, IGiftCardManager giftCardManager, IPaymentGatewayResolver gateways)
     {
         _bookingManager = bookingManager;
         _invoiceManager = invoiceManager;
         _giftCardManager = giftCardManager;
+        _gateways = gateways;
     }
 
     // ── Booking ───────────────────────────────────────────────────────────────
@@ -141,7 +145,9 @@ public class PaymentController : ApiControllerBase
     }
 
     /// <summary>Server-to-server gateway callback (VNPay/MoMo IPN, Stripe webhook). Signature is verified
-    /// inside the resolved gateway; only a valid, paid callback flips the invoice to Paid.</summary>
+    /// inside the resolved gateway; only a valid, paid callback flips the invoice to Paid. VNPay requires its
+    /// specific {RspCode, Message} acknowledgement shape (see <see cref="VnPayGateway.BuildIpnResponse"/>) —
+    /// other providers keep the generic Ok/BadRequest shape.</summary>
     [AllowAnonymous]
     [HttpPost]
     [HttpGet]
@@ -150,6 +156,7 @@ public class PaymentController : ApiControllerBase
     public async Task<IActionResult> PaymentCallback([FromQuery] string provider)
     {
         LogProvider.Current.Information($"{GetType().Name}.PaymentCallback being awakened to process request...");
+        var isVnPay = string.Equals(_gateways.Resolve(provider).Name, VnPayGateway.ProviderName, StringComparison.OrdinalIgnoreCase);
         try
         {
             var data = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -175,8 +182,13 @@ public class PaymentController : ApiControllerBase
                 data["__signature"] = signature.ToString();
             }
 
-            var ok = await _bookingManager.HandlePaymentCallbackAsync(provider, data);
-            if (ok)
+            var handling = await _bookingManager.HandlePaymentCallbackAsync(provider, data);
+            if (isVnPay)
+            {
+                LogProvider.Current.Information($"{GetType().Name}.{nameof(PaymentCallback)}: VNPay outcome {handling.Outcome}.");
+                return Ok(VnPayGateway.BuildIpnResponse(handling.Outcome));
+            }
+            if (handling.Outcome is PaymentCallbackOutcome.Confirmed or PaymentCallbackOutcome.AlreadyConfirmed)
             {
                 return Ok(new { message = "Payment processed." });
             }
@@ -184,6 +196,11 @@ public class PaymentController : ApiControllerBase
         }
         catch (Exception e)
         {
+            if (isVnPay)
+            {
+                LogProvider.Current.Fatal(e, $"{GetType().Name}.{nameof(PaymentCallback)}->Exception: {e.Message}");
+                return Ok(VnPayGateway.BuildIpnResponse(PaymentCallbackOutcome.Error));
+            }
             return HandleException(e, nameof(PaymentCallback));
         }
     }

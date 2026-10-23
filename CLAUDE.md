@@ -59,6 +59,18 @@ $env:CINEMA_DESIGNTIME_CONNECTION = "Server=...;Database=Cinema;..."
 dotnet ef database update --project Cinema/3-Data/Cinema.Data
 ```
 
+### Payments & VNPay IPN
+
+- `PaymentController.PaymentCallback` (`[AllowAnonymous]`, POST/GET, `api/Payment/PaymentCallback?provider=...`) is the single generic server-to-server callback endpoint for every gateway (VNPay IPN, MoMo IPN, Stripe webhook). Each `IPaymentGateway.ParseCallback` verifies its own signature; only a valid, paid callback can flip an invoice to `Paid`.
+- **VNPay is callback-authoritative, not redirect-authoritative.** `VnPayGateway.VerifyPaymentAsync` always returns `false` — the browser's `vnp_ReturnUrl` redirect is for display only and is never trusted to confirm payment (it travels through the customer's own browser and can be tampered with). Only the signed IPN call, made directly from VNPay's servers to the backend, can mark an invoice Paid. The frontend's `payment-return` page polls `GetInvoice` for ~30s after redirect and shows "Payment pending" if the IPN hasn't landed by then — this is expected, not a bug, whenever the backend isn't reachable from VNPay's servers.
+- VNPay's IPN response must be the exact JSON `{"RspCode": "..", "Message": ".."}` (00=success, 01=order not found, 02=already confirmed, 04=invalid amount, 97=invalid signature, 99=unknown error) — see `VnPayGateway.BuildIpnResponse`. A wrong shape or status code makes VNPay retry the IPN for up to 50 minutes (10 attempts, 5 min apart). Other providers keep a generic `Ok`/`BadRequest` shape.
+- **Testing VNPay locally requires a public tunnel**, because VNPay's sandbox servers must reach the IPN URL directly — `localhost` is not reachable from them under any configuration. Steps:
+  1. `ngrok` is installed (via `winget install ngrok.ngrok`) with an authtoken already configured on this machine. Start a tunnel: `ngrok http 5102` (run from any terminal; use the full path under `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe` if a fresh terminal hasn't picked up the updated PATH yet).
+  2. Copy the printed `https://....ngrok-free.dev` URL.
+  3. In the VNPay sandbox merchant portal (`sandbox.vnpayment.vn`, terminal code in `appsettings.Development.json` under `Payments:VnPay:TmnCode`), set the IPN URL field to `<ngrok-url>/api/Payment/PaymentCallback?provider=VNPay` and save.
+  4. The free ngrok plan issues a **new random URL every restart** — repeat step 3 whenever the tunnel is restarted.
+  5. Sandbox test card: Bank NCB, card `9704198526191432198`, name `NGUYEN VAN A`, issue date `07/15`, OTP `123456`.
+
 ### Common backend commands
 
 Run from `cinemabe/`:

@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Cinema.Business.Contracts.Payments;
+using Cinema.Business.DTO.Invoices;
 using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Payments;
@@ -9,21 +10,26 @@ namespace Cinema.Business.Payments;
 /// <summary>
 /// VNPay gateway (Vietnam). Payment is a signed redirect: we build a query signed with HMAC-SHA512 over
 /// the sorted parameters and send the user to <c>vpcpay.html</c>. VNPay then calls our IPN endpoint with
-/// signed params — <see cref="ParseCallback"/> re-verifies that signature and the response code; that
-/// callback is the only path that marks an invoice paid.
+/// signed params — <see cref="ParseCallback"/> re-verifies that signature, the response code, and (once
+/// the signature is trusted) the <c>vnp_Amount</c> the invoice is actually expecting.
+///
+/// VNPay also requires its IPN endpoint to acknowledge with a specific <c>{RspCode, Message}</c> JSON
+/// body (see <see cref="BuildIpnResponse"/>) — anything else and it retries the IPN for up to 50 minutes.
 ///
 /// Config under <c>Payments:VnPay</c>: <c>TmnCode</c>, <c>HashSecret</c>, <c>PayUrl</c>, <c>ReturnUrl</c>.
 /// Get merchant credentials from the VNPay merchant portal.
 /// </summary>
 public class VnPayGateway : IPaymentGateway
 {
+    public const string ProviderName = "VNPay";
+
     private readonly IConfiguration _config;
     public VnPayGateway(IConfiguration config)
     {
         _config = config;
     }
 
-    public string Name => "VNPay";
+    public string Name => ProviderName;
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(TmnCode) && !string.IsNullOrWhiteSpace(HashSecret);
 
@@ -95,7 +101,7 @@ public class VnPayGateway : IPaymentGateway
         var expected = HmacSha512(HashSecret, signData);
         if (!string.Equals(expected, received, StringComparison.OrdinalIgnoreCase))
         {
-            return new PaymentCallbackResult(false, Guid.Empty, "", "VNPay signature mismatch.");
+            return new PaymentCallbackResult(false, Guid.Empty, "", "VNPay signature mismatch.") { Status = PaymentCallbackStatus.InvalidSignature };
         }
 
         var responseOk = data.TryGetValue("vnp_ResponseCode", out var rc) && rc == "00"
@@ -103,15 +109,55 @@ public class VnPayGateway : IPaymentGateway
         var reference = data.TryGetValue("vnp_TransactionNo", out var tn) ? tn : received;
         if (!data.TryGetValue("vnp_TxnRef", out var txnRef) || !Guid.TryParseExact(txnRef, "N", out var invoiceId))
         {
-            return new PaymentCallbackResult(false, Guid.Empty, reference, "Missing/invalid vnp_TxnRef.");
+            return new PaymentCallbackResult(false, Guid.Empty, reference, "Missing/invalid vnp_TxnRef.") { Status = PaymentCallbackStatus.InvalidOrderReference };
         }
+
+        if (!data.TryGetValue("vnp_Amount", out var amountRaw) || !long.TryParse(amountRaw, out var vnpAmount))
+        {
+            return new PaymentCallbackResult(false, invoiceId, reference, "Missing/invalid vnp_Amount.") { Status = PaymentCallbackStatus.InvalidAmount };
+        }
+        var receivedAmount = vnpAmount / 100m;
 
         if (responseOk)
         {
-            return new PaymentCallbackResult(true, invoiceId, reference);
+            return new PaymentCallbackResult(true, invoiceId, reference) { Status = PaymentCallbackStatus.Paid, ReceivedAmount = receivedAmount };
         }
         var code = data.TryGetValue("vnp_ResponseCode", out var c) ? c : "?";
-        return new PaymentCallbackResult(false, invoiceId, reference, $"VNPay response code {code}.");
+        return new PaymentCallbackResult(false, invoiceId, reference, $"VNPay response code {code}.") { Status = PaymentCallbackStatus.PaymentFailed, ReceivedAmount = receivedAmount };
+    }
+
+    /// <summary>Maps a business-level callback outcome to VNPay's required IPN acknowledgement body.</summary>
+    public static VnPayIpnResponseDTO BuildIpnResponse(PaymentCallbackOutcome outcome)
+    {
+        switch (outcome)
+        {
+            case PaymentCallbackOutcome.Confirmed:
+            case PaymentCallbackOutcome.PaymentFailedAcknowledged:
+            {
+                return new VnPayIpnResponseDTO { RspCode = "00", Message = "Confirm Success" };
+            }
+            case PaymentCallbackOutcome.OrderNotFound:
+            {
+                return new VnPayIpnResponseDTO { RspCode = "01", Message = "Order not found" };
+            }
+            case PaymentCallbackOutcome.AlreadyConfirmed:
+            case PaymentCallbackOutcome.NotPending:
+            {
+                return new VnPayIpnResponseDTO { RspCode = "02", Message = "Order already confirmed" };
+            }
+            case PaymentCallbackOutcome.InvalidAmount:
+            {
+                return new VnPayIpnResponseDTO { RspCode = "04", Message = "Invalid amount" };
+            }
+            case PaymentCallbackOutcome.InvalidSignature:
+            {
+                return new VnPayIpnResponseDTO { RspCode = "97", Message = "Invalid signature" };
+            }
+            default:
+            {
+                return new VnPayIpnResponseDTO { RspCode = "99", Message = "Unknown error" };
+            }
+        }
     }
 
     private static string HmacSha512(string key, string data)

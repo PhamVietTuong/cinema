@@ -1,26 +1,13 @@
 using System.Net;
-using System.Security.Cryptography;
-using System.Text;
+using System.Text.Json;
+using Cinema.Business.Contracts.Payments;
 using Cinema.Business.Payments;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Tests;
 
 public class VnPayGatewayTests
 {
-    private static VnPayGateway Gateway()
-    {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Payments:VnPay:TmnCode"] = "TESTCODE",
-                ["Payments:VnPay:HashSecret"] = "TESTSECRET",
-                ["Payments:VnPay:PayUrl"] = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
-            })
-            .Build();
-        return new VnPayGateway(config);
-    }
 
     private static IReadOnlyDictionary<string, string> QueryOf(string? redirectUrl)
     {
@@ -43,7 +30,7 @@ public class VnPayGatewayTests
     [Fact]
     public async Task CreatePayment_UsesClientIp()
     {
-        var gateway = Gateway();
+        var gateway = VnPayTestHelper.Gateway();
 
         var initiation = await gateway.CreatePaymentAsync(Guid.NewGuid(), 100_000, null, "203.0.113.7");
 
@@ -53,7 +40,7 @@ public class VnPayGatewayTests
     [Fact]
     public async Task CreatePayment_NullClientIp_FallsBackToLoopback()
     {
-        var gateway = Gateway();
+        var gateway = VnPayTestHelper.Gateway();
 
         var initiation = await gateway.CreatePaymentAsync(Guid.NewGuid(), 100_000, null, null);
 
@@ -63,25 +50,10 @@ public class VnPayGatewayTests
     [Fact]
     public void ParseCallback_AcceptsValidlySignedIpn()
     {
-        var gateway = Gateway();
+        var gateway = VnPayTestHelper.Gateway();
         var invoiceId = Guid.NewGuid();
 
-        // Simulates VNPay's own IPN: its own param set, signed with the shared secret — not a reuse
-        // of the create-request's hash, which covers a different set of fields.
-        var p = new SortedDictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["vnp_Amount"] = "10000000",
-            ["vnp_BankCode"] = "NCB",
-            ["vnp_ResponseCode"] = "00",
-            ["vnp_TransactionNo"] = "13456789",
-            ["vnp_TransactionStatus"] = "00",
-            ["vnp_TxnRef"] = invoiceId.ToString("N"),
-        };
-        var signData = string.Join("&", p.Select(kv => $"{WebUtility.UrlEncode(kv.Key)}={WebUtility.UrlEncode(kv.Value)}"));
-        using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes("TESTSECRET"));
-        var secureHash = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(signData))).ToLowerInvariant();
-
-        var callbackData = new Dictionary<string, string>(p) { ["vnp_SecureHash"] = secureHash };
+        var callbackData = VnPayTestHelper.SignedIpn(invoiceId, 10_000_000);
 
         var result = gateway.ParseCallback(callbackData);
 
@@ -90,9 +62,21 @@ public class VnPayGatewayTests
     }
 
     [Fact]
+    public void ParseCallback_ValidIpn_ExposesReceivedAmountInVnd()
+    {
+        var gateway = VnPayTestHelper.Gateway();
+        var callbackData = VnPayTestHelper.SignedIpn(Guid.NewGuid(), 10_000_000);
+
+        var result = gateway.ParseCallback(callbackData);
+
+        result.Status.Should().Be(PaymentCallbackStatus.Paid);
+        result.ReceivedAmount.Should().Be(100_000m);
+    }
+
+    [Fact]
     public void ParseCallback_RejectsTamperedSignature()
     {
-        var gateway = Gateway();
+        var gateway = VnPayTestHelper.Gateway();
         var callbackData = new Dictionary<string, string>
         {
             ["vnp_ResponseCode"] = "00",
@@ -104,5 +88,73 @@ public class VnPayGatewayTests
         var result = gateway.ParseCallback(callbackData);
 
         result.Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ParseCallback_TamperedSignature_StatusInvalidSignature()
+    {
+        var gateway = VnPayTestHelper.Gateway();
+        var callbackData = new Dictionary<string, string>
+        {
+            ["vnp_ResponseCode"] = "00",
+            ["vnp_TransactionStatus"] = "00",
+            ["vnp_TxnRef"] = Guid.NewGuid().ToString("N"),
+            ["vnp_SecureHash"] = "not-a-valid-hash",
+        };
+
+        var result = gateway.ParseCallback(callbackData);
+
+        result.Status.Should().Be(PaymentCallbackStatus.InvalidSignature);
+    }
+
+    [Fact]
+    public void ParseCallback_FailedResponseCode_StatusPaymentFailed()
+    {
+        var gateway = VnPayTestHelper.Gateway();
+        var callbackData = VnPayTestHelper.SignedIpn(Guid.NewGuid(), 10_000_000, responseCode: "24", transactionStatus: "02");
+
+        var result = gateway.ParseCallback(callbackData);
+
+        result.Status.Should().Be(PaymentCallbackStatus.PaymentFailed);
+        result.Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ParseCallback_MissingAmount_StatusInvalidAmount()
+    {
+        var gateway = VnPayTestHelper.Gateway();
+        var signed = VnPayTestHelper.SignedIpn(Guid.NewGuid(), 10_000_000, includeAmount: false);
+
+        var result = gateway.ParseCallback(signed);
+
+        result.Status.Should().Be(PaymentCallbackStatus.InvalidAmount);
+    }
+
+    public static IEnumerable<object[]> AllOutcomes()
+    {
+        foreach (PaymentCallbackOutcome outcome in Enum.GetValues(typeof(PaymentCallbackOutcome)))
+        {
+            yield return new object[] { outcome };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(AllOutcomes))]
+    public void BuildIpnResponse_MapsEveryOutcome(PaymentCallbackOutcome outcome)
+    {
+        var response = VnPayGateway.BuildIpnResponse(outcome);
+
+        response.RspCode.Should().NotBeNullOrEmpty();
+        response.Message.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void BuildIpnResponse_Confirmed_SerializesWithPascalCaseKeys()
+    {
+        var response = VnPayGateway.BuildIpnResponse(PaymentCallbackOutcome.Confirmed);
+
+        var json = JsonSerializer.Serialize(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+        json.Should().Be("""{"RspCode":"00","Message":"Confirm Success"}""");
     }
 }
