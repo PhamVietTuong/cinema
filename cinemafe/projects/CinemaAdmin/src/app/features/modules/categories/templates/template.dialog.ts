@@ -16,7 +16,7 @@ export interface TemplateDialogData {
 const PLACEHOLDER_TOKENS = [
   'CustomerName', 'BookingCode', 'MovieTitle', 'TheaterName', 'RoomName', 'RoomTypeName',
   'ProjectionForm', 'ShowDate', 'ShowStartTime', 'ShowTime', 'TicketTypes', 'SeatLabels',
-  'TicketCount', 'Concessions', 'SubTotal', 'DiscountAmount', 'TotalAmount', 'QrCodes',
+  'TicketCount', 'Concessions', 'SubTotal', 'DiscountAmount', 'TotalAmount', 'QrCodes', 'QrImages',
 ];
 
 /** Create/edit form for a notification template, opened via MatDialog. Resolves `true` on save, `false` on cancel. */

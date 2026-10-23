@@ -12,7 +12,10 @@ public static partial class TemplateRenderer
     private static partial Regex TokenPattern();
 
     /// <param name="encodeHtml">True for an HTML body (email); false for plain text (SMS).</param>
-    public static string Render(string? text, IReadOnlyDictionary<string, string> values, bool encodeHtml = true)
+    /// <param name="rawKeys">Keys whose value is inserted verbatim, bypassing <paramref name="encodeHtml"/>.
+    /// Only for HTML built server-side from trusted data (e.g. a generated &lt;img&gt; fragment) — the caller
+    /// must encode any user-supplied data inside that HTML itself.</param>
+    public static string Render(string? text, IReadOnlyDictionary<string, string> values, bool encodeHtml = true, IReadOnlySet<string>? rawKeys = null)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -21,9 +24,14 @@ public static partial class TemplateRenderer
 
         return TokenPattern().Replace(text, m =>
         {
-            if (!values.TryGetValue(m.Groups[1].Value, out var value))
+            var key = m.Groups[1].Value;
+            if (!values.TryGetValue(key, out var value))
             {
                 return m.Value;
+            }
+            if (rawKeys is not null && rawKeys.Contains(key))
+            {
+                return value;
             }
             if (encodeHtml)
             {

@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Mail;
+using System.Net.Mime;
+using System.Text;
 using Cinema.Business.Contracts;
 using Cinema.Foundation.Logging;
 using Microsoft.Extensions.Configuration;
@@ -21,7 +23,17 @@ public class SmtpNotificationService : INotificationService
         _config = config;
     }
 
-    public async Task SendAsync(string to, string subject, string body)
+    public Task SendAsync(string to, string subject, string body)
+    {
+        return SendCoreAsync(to, subject, body, inlineImages: null);
+    }
+
+    public Task SendAsync(string to, string subject, string htmlBody, IReadOnlyList<EmailInlineImage> inlineImages)
+    {
+        return SendCoreAsync(to, subject, htmlBody, inlineImages);
+    }
+
+    private async Task SendCoreAsync(string to, string subject, string body, IReadOnlyList<EmailInlineImage>? inlineImages)
     {
         var host = _config["Smtp:Host"];
         if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(to))
@@ -43,7 +55,29 @@ public class SmtpNotificationService : INotificationService
             {
                 client.Credentials = new NetworkCredential(user, pass);
             }
-            using var message = new MailMessage(from, to, subject, body) { IsBodyHtml = true };
+
+            using var message = new MailMessage(from, to, subject, body: null) { IsBodyHtml = true };
+
+            if (inlineImages is { Count: > 0 })
+            {
+                var view = AlternateView.CreateAlternateViewFromString(body, Encoding.UTF8, MediaTypeNames.Text.Html);
+                foreach (var image in inlineImages)
+                {
+                    var resource = new LinkedResource(new MemoryStream(image.Content), image.MediaType)
+                    {
+                        ContentId = image.ContentId,
+                        TransferEncoding = TransferEncoding.Base64,
+                        ContentType = { Name = image.FileName },
+                    };
+                    view.LinkedResources.Add(resource);
+                }
+                message.AlternateViews.Add(view);
+            }
+            else
+            {
+                message.Body = body;
+            }
+
             await client.SendMailAsync(message);
             LogProvider.Current.Information($"[Notification:sent] To={to} | Subject={subject}");
         }
