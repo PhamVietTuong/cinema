@@ -3,29 +3,34 @@
   <span class="screen-label">{{ 'seatMap.screen' | translate }}</span>
 </div>
 
-<div class="seat-grid" [class.not-ready]="!ready">
-  @for (row of rows; track row) {
-    <div class="seat-row">
-      <div class="row-label">{{ row }}</div>
-      @for (cell of cellsOf(row); track cell.key) {
-        <div class="seat"
-             role="button"
-             [attr.aria-label]="label(cell)"
-             [class.unavailable-category]="isCategoryBlocked(cell)"
-             [class.not-selectable]="isNotSelectable(cell)"
-             [title]="titleOf(cell) | translate"
-             [ngClass]="{
-               'available': state(cell) === 'available',
-               'selected': state(cell) === 'selected',
-               'occupied': state(cell) === 'occupied',
-               'locked': state(cell) === 'locked',
-               'double': cell.seats[0].isDouble,
-               'double-wide': cell.isDouble
-             }"
-             (click)="onCellClick(cell)">{{ label(cell) }}</div>
-      }
-    </div>
+<div class="seat-grid-wrap">
+  @if (!ready) {
+    <div class="seat-grid-hint">{{ 'seatMap.selectTicketTypeFirst' | translate }}</div>
   }
+    <div class="seat-grid" [class.not-ready]="!ready">
+    @for (row of rows; track row) {
+      <div class="seat-row">
+        <div class="row-label">{{ row }}</div>
+        @for (cell of cellsOf(row); track cell.key) {
+          <div class="seat"
+               role="button"
+               [attr.aria-label]="label(cell)"
+               [class.unavailable-category]="isCategoryBlocked(cell)"
+               [class.not-selectable]="isNotSelectable(cell)"
+               [title]="titleOf(cell) | translate"
+               [ngClass]="{
+                 'available': state(cell) === 'available',
+                 'selected': state(cell) === 'selected',
+                 'occupied': state(cell) === 'occupied',
+                 'locked': state(cell) === 'locked',
+                 'double': cell.seats[0].isDouble,
+                 'double-wide': cell.isDouble
+               }"
+               (click)="onCellClick(cell)">{{ label(cell) }}</div>
+        }
+      </div>
+    }
+    </div>
 </div>
 
 <div class="legend">
