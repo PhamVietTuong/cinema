@@ -370,7 +370,9 @@
       "ratingSaved": "Thanks! Your rating was saved.",
       "commentPosted": "Comment posted.",
       "rateThisMovie": "Rate this movie",
-      "watchFirstToReview": "Watch this movie first to rate or comment."
+      "watchFirstToReview": "Watch this movie first to rate or comment.",
+      "notFound": "We couldn't find this movie.",
+      "backToMovies": "Back to Movies"
     },
     "showtimes": {
       "seats": "{{count}} seats",

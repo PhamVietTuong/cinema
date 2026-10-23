@@ -1008,11 +1008,21 @@ N'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;backgro
     <p><strong>Ghế:</strong> {{SeatLabels}}</p>
     <p><strong>Bắp nước:</strong> {{Concessions}}</p>
     <p style="font-size:18px;"><strong>Tổng tiền:</strong> {{TotalAmount}}</p>
-    <p><strong>Mã vé (QR):</strong> {{QrCodes}}</p>
+    <div style="text-align:center;margin-top:12px;">{{QrImages}}</div>
+    <p style="text-align:center;color:#9a9186;font-size:12px;">Mã vé: {{QrCodes}}</p>
   </div>
   <p style="text-align:center;color:#9a9186;margin-top:16px;">Xuất trình mã QR tại quầy hoặc cổng soát vé.</p>
 </div>', 1, GETUTCDATE());
 END
+
+-- Existing DBs seeded before {{QrImages}} existed: rewrite only a still-stock body, leave admin customizations alone.
+UPDATE [Template]
+SET [Body] = REPLACE([Body], N'<p><strong>Mã vé (QR):</strong> {{QrCodes}}</p>', N'<div style="text-align:center;margin-top:12px;">{{QrImages}}</div>
+    <p style="text-align:center;color:#9a9186;font-size:12px;">Mã vé: {{QrCodes}}</p>'),
+    [LastUpdatedTime] = GETUTCDATE()
+WHERE [Code] = N'BookingConfirmationEmail'
+  AND [Body] NOT LIKE N'%{{QrImages}}%'
+  AND [Body] LIKE N'%<p><strong>Mã vé (QR):</strong> {{QrCodes}}</p>%';
 
 IF NOT EXISTS (SELECT 1 FROM [Template] WHERE [Code] = N'BookingConfirmationSms')
 BEGIN
@@ -1021,6 +1031,118 @@ BEGIN
 N'Cinema: dat ve {{BookingCode}} thanh cong. {{MovieTitle}} {{ShowTime}} {{RoomName}}, ghe {{SeatLabels}}. Tong {{TotalAmount}}. Xuat trinh ma QR tai cong soat ve.', 1, GETUTCDATE());
 END
 -- ===== end notification templates =====
+
+-- ============================================================
+-- Movie friendly-URL slug
+-- Identical in create_db.sql and upgrade_db.sql (idempotent). Backfill + dedupe run through
+-- sp_executesql so they compile after the column exists, matching the pattern used for
+-- DayOfWeek/TheaterId above. On a fresh database the backfill is a no-op (no rows yet).
+-- ============================================================
+IF COL_LENGTH('dbo.Movie', 'Slug') IS NULL
+BEGIN
+    ALTER TABLE [Movie] ADD [Slug] nvarchar(320) NULL;
+END
+
+DECLARE @movieSlugVnFrom nvarchar(100) = N'áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđäåëîïöûüñç';
+DECLARE @movieSlugVnTo   nvarchar(100) =
+    REPLICATE(N'a', 17) + REPLICATE(N'e', 11) + REPLICATE(N'i', 5) + REPLICATE(N'o', 17) +
+    REPLICATE(N'u', 11) + REPLICATE(N'y', 5) + N'd' +
+    REPLICATE(N'a', 2) + N'e' + REPLICATE(N'i', 2) + N'o' + REPLICATE(N'u', 2) + N'n' + N'c';
+
+DECLARE @movieSlugBackfillSql nvarchar(max) = N'
+;WITH Base AS (
+    SELECT [Id], TRANSLATE(LOWER(LTRIM(RTRIM([Title]))), @vnFrom, @vnTo) AS txt
+    FROM [Movie]
+    WHERE [Slug] IS NULL OR [Slug] = @empty
+),
+Tally AS (
+    SELECT TOP (320) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS n
+    FROM sys.all_objects
+),
+Chars AS (
+    SELECT b.[Id], t.n, SUBSTRING(b.txt, t.n, 1) AS ch
+    FROM Base b CROSS JOIN Tally t
+    WHERE t.n <= LEN(b.txt)
+),
+Mapped AS (
+    SELECT [Id], n, CASE WHEN ch LIKE @alnumPattern THEN ch ELSE @dash END AS mch
+    FROM Chars
+),
+Dashed AS (
+    SELECT [Id], STRING_AGG(mch, @empty) WITHIN GROUP (ORDER BY n) AS dashed
+    FROM Mapped
+    GROUP BY [Id]
+),
+Collapsed AS (
+    SELECT [Id],
+        TRIM(@dash FROM REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(dashed,
+            @doubleDash, @dash), @doubleDash, @dash), @doubleDash, @dash), @doubleDash, @dash),
+            @doubleDash, @dash), @doubleDash, @dash), @doubleDash, @dash), @doubleDash, @dash), @doubleDash, @dash)) AS collapsed
+    FROM Dashed
+),
+BaseSlugs AS (
+    SELECT [Id],
+        CASE
+            WHEN collapsed IS NULL OR LEFT(collapsed, 300) = @empty THEN @moviePattern
+            WHEN TRY_CONVERT(uniqueidentifier, TRIM(@dash FROM LEFT(collapsed, 300))) IS NOT NULL
+                THEN @moviePrefix + TRIM(@dash FROM LEFT(collapsed, 300))
+            ELSE TRIM(@dash FROM LEFT(collapsed, 300))
+        END AS baseSlug
+    FROM Collapsed
+)
+UPDATE m
+SET m.[Slug] = bs.baseSlug
+FROM [Movie] m
+JOIN BaseSlugs bs ON bs.[Id] = m.[Id];
+';
+EXEC sp_executesql @movieSlugBackfillSql,
+    N'@vnFrom nvarchar(100), @vnTo nvarchar(100), @empty nvarchar(10), @alnumPattern nvarchar(10), @dash nvarchar(5), @doubleDash nvarchar(5), @moviePattern nvarchar(20), @moviePrefix nvarchar(20)',
+    @vnFrom = @movieSlugVnFrom, @vnTo = @movieSlugVnTo, @empty = N'', @alnumPattern = N'[a-z0-9]', @dash = N'-', @doubleDash = N'--', @moviePattern = N'movie', @moviePrefix = N'movie-';
+
+-- Safety net: a blank/whitespace-only Title produces no characters to slugify, so the CTE chain
+-- above drops that row entirely and its Slug is still NULL here. Title is required at the
+-- application layer, so this only guards old/bad data; it runs before dedup so any resulting
+-- collisions still get a numeric suffix below.
+DECLARE @movieSlugFallbackSql nvarchar(max) = N'UPDATE [Movie] SET [Slug] = @moviePattern WHERE [Slug] IS NULL OR [Slug] = @empty;';
+EXEC sp_executesql @movieSlugFallbackSql, N'@moviePattern nvarchar(20), @empty nvarchar(10)', @moviePattern = N'movie', @empty = N'';
+
+-- First collision pass: numeric suffix by creation order.
+DECLARE @movieSlugDedupe1Sql nvarchar(max) = N'
+;WITH Dupes AS (
+    SELECT [Id], [Slug], ROW_NUMBER() OVER (PARTITION BY [Slug] ORDER BY [CreationTime], [Id]) AS rn
+    FROM [Movie]
+)
+UPDATE m
+SET m.[Slug] = m.[Slug] + @dash + CAST(d.rn AS nvarchar(10))
+FROM [Movie] m
+JOIN Dupes d ON d.[Id] = m.[Id] AND d.rn > 1;
+';
+EXEC sp_executesql @movieSlugDedupe1Sql, N'@dash nvarchar(5)', @dash = N'-';
+
+-- Safety pass: a numeric suffix above can itself collide with an already-taken slug (e.g. "Wicked"
+-- and "Wicked 2" both landing on "wicked-2"). Disambiguate any survivors with part of their own Id.
+DECLARE @movieSlugDedupe2Sql nvarchar(max) = N'
+;WITH StillDupes AS (
+    SELECT [Id], [Slug], ROW_NUMBER() OVER (PARTITION BY [Slug] ORDER BY [CreationTime], [Id]) AS rn
+    FROM [Movie]
+)
+UPDATE m
+SET m.[Slug] = m.[Slug] + @dash + LOWER(LEFT(CONVERT(nvarchar(36), m.[Id]), 8))
+FROM [Movie] m
+JOIN StillDupes d ON d.[Id] = m.[Id] AND d.rn > 1;
+';
+EXEC sp_executesql @movieSlugDedupe2Sql, N'@dash nvarchar(5)', @dash = N'-';
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.Movie') AND name = 'Slug' AND is_nullable = 1)
+BEGIN
+    EXEC('ALTER TABLE [Movie] ALTER COLUMN [Slug] nvarchar(320) NOT NULL');
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Movie_Slug' AND object_id = OBJECT_ID('dbo.Movie'))
+BEGIN
+    EXEC('CREATE UNIQUE INDEX [IX_Movie_Slug] ON [Movie] ([Slug])');
+END
+-- ===== end movie slug =====
 
 -- ============================================================
 -- EF Core migrations baseline

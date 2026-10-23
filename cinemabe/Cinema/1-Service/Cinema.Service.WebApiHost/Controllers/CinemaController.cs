@@ -270,6 +270,24 @@ public class CinemaController : ApiControllerBase
         }
     }
 
+    [HttpGet]
+    [ProducesResponseType(typeof(MovieDetailDTO), 200)]
+    public async Task<IActionResult> GetMovieBySlug([FromQuery] string slug)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetMovieBySlug being awakened to process request...");
+        try
+        {
+            // Personalise CanReview for a signed-in user; anonymous callers always see false.
+            Guid? userId = User?.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+            var result = await _movieManager.GetDetailBySlugAsync(slug, userId);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetMovieBySlug));
+        }
+    }
+
     [Authorize(Roles = _adminRole)]
     [HttpPost]
     [ProducesResponseType(typeof(MovieDetailDTO), 200)]

@@ -236,6 +236,41 @@
         ]
       }
     },
+    "/api/Cinema/GetMovieBySlug": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetMovieBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieDetailDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Cinema/CreateMovie": {
       "post": {
         "tags": [
@@ -5996,6 +6031,9 @@
             "format": "guid"
           },
           "title": {
+            "type": "string"
+          },
+          "slug": {
             "type": "string"
           },
           "description": {

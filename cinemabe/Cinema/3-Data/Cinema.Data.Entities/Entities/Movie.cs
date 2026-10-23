@@ -2,6 +2,7 @@
 public class Movie : BaseEntity
 {
     public string Title { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public int Duration { get; set; }
     public DateOnly ReleaseDate { get; set; }

@@ -17,16 +17,31 @@ const showTime = (over: Partial<any>): any => ({
 });
 
 describe('MovieDetailComponent', () => {
+  beforeEach(() => {
+    selectedMovie = null;
+    routeParam = 'movie-1';
+  });
+
+
   let router: { navigate: ReturnType<typeof vi.fn> };
   let store: { select: (selector: unknown) => unknown; dispatch: ReturnType<typeof vi.fn> };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; info: ReturnType<typeof vi.fn> };
   let isAuthenticated = true;
+  let selectedMovie: unknown = null;
+  let location: { replaceState: ReturnType<typeof vi.fn> };
+  let routeParam = 'movie-1';
 
   const build = () => {
-    store = { select: (selector: unknown) => selector === selectIsAuthenticated ? of(isAuthenticated) : of(null), dispatch: vi.fn() };
-    const route = { snapshot: { paramMap: { get: (key: string) => key === 'id' ? 'movie-1' : null } } };
+    store = {
+      select: (selector: unknown) => {
+        if (selector === selectIsAuthenticated) { return of(isAuthenticated); }
+        return of(selectedMovie);
+      },
+      dispatch: vi.fn(),
+    };
+    const route = { snapshot: { paramMap: { get: (key: string) => key === 'slug' ? routeParam : null } } };
     router = { navigate: vi.fn() };
-    const location = { replaceState: vi.fn() };
+    location = { replaceState: vi.fn() };
     const destroyRef = { onDestroy: () => () => {} };
     const cdr = { markForCheck: vi.fn() };
     const translate = { instant: (key: string) => key };
@@ -236,6 +251,43 @@ describe('MovieDetailComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], { queryParams: { returnUrl: '/movies/movie-1' } });
       expect(store.dispatch).not.toHaveBeenCalled();
       expect(toast.info).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('route param resolution (slug vs. legacy GUID)', () => {
+    it('a slug param dispatches loadMovieDetailBySlug', () => {
+      routeParam = 'wicked';
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({ slug: 'wicked' }));
+    });
+
+    it('a GUID param dispatches loadMovieDetail by id and, once the movie loads, rewrites the URL to its slug', () => {
+      routeParam = '0383e9ff-d765-4f42-9421-8d79586ac766';
+      const c = build();
+
+      c.ngOnInit();
+      expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({ id: '0383e9ff-d765-4f42-9421-8d79586ac766' }));
+
+      selectedMovie = { id: '0383e9ff-d765-4f42-9421-8d79586ac766', slug: 'wicked', showTimes: [] };
+      const c2 = build();
+      c2.ngOnInit();
+
+      expect(c2.movieId).toBe('0383e9ff-d765-4f42-9421-8d79586ac766');
+      expect(location.replaceState).toHaveBeenCalledWith('/movies/wicked');
+    });
+
+    it('a slug param that already matches the loaded movie does not rewrite the URL', () => {
+      routeParam = 'wicked';
+      selectedMovie = { id: 'movie-id-1', slug: 'wicked', showTimes: [] };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(location.replaceState).not.toHaveBeenCalled();
+      expect(c.movieId).toBe('movie-id-1');
     });
   });
 });

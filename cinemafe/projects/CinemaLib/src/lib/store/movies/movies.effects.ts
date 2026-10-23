@@ -79,6 +79,18 @@ export class MoviesEffects {
     )
   );
 
+  loadMovieDetailBySlug$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(MoviesActions.loadMovieDetailBySlug),
+      switchMap(({ slug }) =>
+        this._cinemaService.getMovieBySlug(slug).pipe(
+          map(movie => MoviesActions.loadMovieDetailSuccess({ movie: movie as any })),
+          catchError(err => of(MoviesActions.loadMovieDetailFailure({ error: err.message })))
+        )
+      )
+    )
+  );
+
   rateMovie$ = createEffect(() =>
     this.actions$.pipe(
       ofType(MoviesActions.rateMovie),

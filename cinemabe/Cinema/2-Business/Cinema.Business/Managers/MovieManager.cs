@@ -4,6 +4,7 @@ using Cinema.Business.DTO;
 using Cinema.Business.DTO.Movies;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
+using Cinema.Business.Helpers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 
@@ -104,6 +105,23 @@ public class MovieManager : IMovieManager
         {
             throw new KeyNotFoundException($"Movie {id} not found.");
         }
+        return await BuildDetailAsync(movie, userId);
+    }
+
+    public async Task<MovieDetailDTO> GetDetailBySlugAsync(string slug, Guid? userId)
+    {
+        var normalizedSlug = slug?.Trim().ToLowerInvariant() ?? string.Empty;
+        var movie = normalizedSlug.Length > 0 ? await _uow.MovieStore.GetDetailBySlugAsync(normalizedSlug) : null;
+        if (movie == null)
+        {
+            throw new KeyNotFoundException($"Movie '{slug}' not found.");
+        }
+        return await BuildDetailAsync(movie, userId);
+    }
+
+    private async Task<MovieDetailDTO> BuildDetailAsync(Movie movie, Guid? userId)
+    {
+        var id = movie.Id;
         var dto = movie.ToDTO<Movie, MovieDetailDTO>();
         ApplyMovieComputedFields(movie, dto);
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
@@ -154,6 +172,7 @@ public class MovieManager : IMovieManager
     public async Task<MovieDTO> CreateAsync(CreateMovieRequest request)
     {
         var movie = request.ToNewEntity<CreateMovieRequest, Movie>();
+        movie.Slug = await GenerateUniqueSlugAsync(request.Title);
         movie.MovieTypeDetails = request.MovieTypeIds.Select(id => new MovieTypeDetail { MovieTypeId = id }).ToList();
         await _uow.MovieStore.CreateAsync(movie);
         return await GetBasicDTOAsync(movie.Id);
@@ -166,6 +185,8 @@ public class MovieManager : IMovieManager
         {
             throw new KeyNotFoundException($"Movie {request.Id} not found.");
         }
+        // Slug is deliberately not patched here: it is generated once at creation and stays stable
+        // across title edits so shared links and bookmarks keep working.
         movie.PatchEntity<Movie, UpdateMovieRequest>(request);
         movie.EndDate = request.EndDate;
 
@@ -316,6 +337,13 @@ public class MovieManager : IMovieManager
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private async Task<string> GenerateUniqueSlugAsync(string title)
+    {
+        var baseSlug = SlugHelper.ToBaseSlug(title);
+        var taken = await _uow.MovieStore.GetSlugsStartingWithAsync(baseSlug);
+        return SlugHelper.PickUnique(baseSlug, taken);
+    }
 
     private Task<bool> CanReviewAsync(Guid movieId, Guid userId)
     {

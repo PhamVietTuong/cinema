@@ -55,6 +55,15 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id);
 
+    public async Task<Movie?> GetDetailBySlugAsync(string slug)
+        => await DbSet
+            .AsNoTracking()
+            .Include(m => m.AgeRestriction)
+            .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
+            .Include(m => m.Evaluations)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(m => m.Slug == slug);
+
     public async Task<Movie?> GetForUpdateAsync(Guid id)
         => await DbSet
             .Include(m => m.MovieTypeDetails)
@@ -109,4 +118,11 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
 
         return rows.ToDictionary(r => r.MovieId, r => r.Average);
     }
+
+    public async Task<IReadOnlyList<string>> GetSlugsStartingWithAsync(string baseSlug)
+        => await DbSet
+            .AsNoTracking()
+            .Where(m => m.Slug == baseSlug || m.Slug.StartsWith(baseSlug + "-"))
+            .Select(m => m.Slug)
+            .ToListAsync();
 }
