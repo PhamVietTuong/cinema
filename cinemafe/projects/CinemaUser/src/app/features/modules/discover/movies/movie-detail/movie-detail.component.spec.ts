@@ -1,4 +1,4 @@
-import { NEVER, of } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { selectIsAuthenticated } from 'CinemaLib';
 import { MovieDetailComponent } from './movie-detail.component';
 
@@ -30,6 +30,7 @@ describe('MovieDetailComponent', () => {
   let selectedMovie: unknown = null;
   let location: { replaceState: ReturnType<typeof vi.fn> };
   let routeParam = 'movie-1';
+  let cinemaSvc: { getPeopleByNames: ReturnType<typeof vi.fn> };
 
   const build = () => {
     store = {
@@ -47,9 +48,10 @@ describe('MovieDetailComponent', () => {
     const translate = { instant: (key: string) => key };
     toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
     const actions$ = NEVER;
+    cinemaSvc = { getPeopleByNames: vi.fn(() => of([])) };
     return new MovieDetailComponent(
       store as never, route as never, router as never, location as never, destroyRef as never, cdr as never, translate as never, toast as never,
-      actions$ as never,
+      actions$ as never, cinemaSvc as never,
     );
   };
 
@@ -288,6 +290,66 @@ describe('MovieDetailComponent', () => {
 
       expect(location.replaceState).not.toHaveBeenCalled();
       expect(c.movieId).toBe('movie-id-1');
+    });
+  });
+
+  describe('Cast & Crew photo lookup', () => {
+    it('requests photos once for director + cast names on movie load', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [] };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledTimes(1);
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledWith(['Christopher Nolan', 'A', 'B']);
+    });
+
+    it('maps a matched name (case-insensitively) to its photo URL, leaving unmatched names falsy', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [] };
+      cinemaSvc = { getPeopleByNames: vi.fn(() => of([{ name: 'A', photoUrl: 'photo-a.jpg' }])) };
+      const c = new MovieDetailComponent(
+        store as never, { snapshot: { paramMap: { get: () => 'movie-1' } } } as never, router as never, location as never,
+        { onDestroy: () => () => {} } as never, { markForCheck: vi.fn() } as never, { instant: (k: string) => k } as never, toast as never,
+        NEVER as never, cinemaSvc as never,
+      );
+
+      c.ngOnInit();
+
+      expect(c.photoFor('A')).toBe('photo-a.jpg');
+      expect(c.photoFor('a')).toBe('photo-a.jpg');
+      expect(c.photoFor('B')).toBeFalsy();
+    });
+
+    it('does not re-request photos on a second emission of the same movie', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [] };
+      const c = build();
+
+      c.ngOnInit();
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledTimes(1);
+    });
+
+    it('sends no request when the movie has neither director nor cast', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', showTimes: [] };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).not.toHaveBeenCalled();
+    });
+
+    it('leaves the photo map empty and does not throw when the lookup request fails', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', showTimes: [] };
+      cinemaSvc = { getPeopleByNames: vi.fn(() => throwError(() => new Error('network error'))) };
+      const c = new MovieDetailComponent(
+        store as never, { snapshot: { paramMap: { get: () => 'movie-1' } } } as never, router as never, location as never,
+        { onDestroy: () => () => {} } as never, { markForCheck: vi.fn() } as never, { instant: (k: string) => k } as never, toast as never,
+        NEVER as never, cinemaSvc as never,
+      );
+
+      expect(() => c.ngOnInit()).not.toThrow();
+      expect(c.photoFor('Christopher Nolan')).toBeFalsy();
     });
   });
 });

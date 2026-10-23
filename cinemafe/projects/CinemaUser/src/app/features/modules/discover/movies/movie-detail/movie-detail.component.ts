@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, ToastService } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, ToastService, CinemaServiceAgent } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
 import { movieDetailUrl, isLegacyMovieId } from '../../../../../shared/movie-route';
@@ -54,6 +54,13 @@ export class MovieDetailComponent implements OnInit {
    * replays it. */
   pendingRestore?: BookingCheckoutState;
 
+  /** Name (lower-cased, trimmed) -> photo URL, resolved from the Person directory for the current
+   * movie's director(s) and cast. Looked up once per movie load; a cache-miss name just keeps the
+   * initials fallback in the template. */
+  private _photoByName = new Map<string, string>();
+  /** Guards against re-fetching on every movie$ re-emission (e.g. after rating/commenting). */
+  private _photoLookupKey = '';
+
   constructor(
     private _store: Store,
     private _route: ActivatedRoute,
@@ -64,6 +71,7 @@ export class MovieDetailComponent implements OnInit {
     private _translate: TranslateService,
     private _toast: ToastService,
     private _actions$: Actions,
+    private _cinemaSvc: CinemaServiceAgent.HttpService,
   ) {
     this.movie$ = this._store.select(selectSelectedMovie);
     this.loading$ = this._store.select(selectMoviesLoading);
@@ -108,6 +116,7 @@ export class MovieDetailComponent implements OnInit {
       .subscribe(movie => {
         this.movieId = movie.id;
         this._syncCanonicalUrl(movie);
+        this._loadPhotos(movie);
         if (restore && !restoreApplied) {
           restoreApplied = true;
           this._applyRestore(movie, restore);
@@ -328,12 +337,59 @@ export class MovieDetailComponent implements OnInit {
     });
   }
 
+  private _splitNames(value: string | undefined): string[] {
+    return value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }
+
   getCastMembers(cast: string | undefined): string[] {
-    return cast ? cast.split(',').map(s => s.trim()).filter(Boolean).slice(0, 6) : [];
+    return this._splitNames(cast).slice(0, 6);
+  }
+
+  getDirectors(director: string | undefined): string[] {
+    return this._splitNames(director);
   }
 
   getInitials(name: string): string {
     return name.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  /** Photo URL for a Cast & Crew tile name, resolved from the Person directory; undefined falls
+   * back to the initials tile in the template. */
+  photoFor(name: string): string | undefined {
+    return this._photoByName.get(name.trim().toLocaleLowerCase());
+  }
+
+  /** Batch-resolves photos for this movie's director(s) + cast in a single request, once per
+   * distinct name set — later movie$ re-emissions (rating/comment reloads) don't re-fetch. */
+  private _loadPhotos(movie: any): void {
+    const names = [...this.getDirectors(movie.director), ...this.getCastMembers(movie.cast)];
+    const key = names.join('|').toLocaleLowerCase();
+    if (key === this._photoLookupKey) {
+      return;
+    }
+    this._photoLookupKey = key;
+
+    if (names.length === 0) {
+      this._photoByName = new Map<string, string>();
+      return;
+    }
+
+    this._cinemaSvc.getPeopleByNames(names)
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: people => {
+          const map = new Map<string, string>();
+          for (const p of people) {
+            if (p.name && p.photoUrl) {
+              map.set(p.name.trim().toLocaleLowerCase(), p.photoUrl);
+            }
+          }
+          this._photoByName = map;
+          this._cdr.markForCheck();
+        },
+        // Lookup failure just keeps the initials fallback — no toast, not worth interrupting the page.
+        error: () => {},
+      });
   }
 
   scrollToShowtimes(): void {

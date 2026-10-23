@@ -13,6 +13,7 @@
     "userTypes": "User Types",
     "holidays": "Holidays",
     "news": "News",
+    "people": "People",
     "templates": "Templates",
     "discounts": "Discount Codes",
     "promotionPrograms": "Promotion Programs",
@@ -40,6 +41,7 @@
     "userTypes": "User Type Management",
     "holidays": "Holiday Management",
     "news": "News Management",
+    "people": "People Management",
     "templates": "Notification Template Management",
     "discounts": "Discount Code Management",
     "promotionPrograms": "Promotion Program Management",
@@ -830,6 +832,18 @@
     "page": "Page {{index}}/{{total}}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "people": {
+    "title": "People Management",
+    "subtitle": "Director and actor photo directory used on movie pages.",
+    "editTitle": "Edit Person",
+    "newTitle": "New Person",
+    "name": "Name",
+    "namePlaceholder": "e.g. Cillian Murphy",
+    "photo": "Photo",
+    "photoPlaceholder": "Paste a URL or upload an image",
+    "uploadImage": "Upload Image",
+    "empty": "No people yet."
   },
   "showTimes": {
     "title": "Showtimes",

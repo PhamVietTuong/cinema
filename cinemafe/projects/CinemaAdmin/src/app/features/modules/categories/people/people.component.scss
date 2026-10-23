@@ -1,0 +1,10 @@
+:host { display: block; }
+
+.person-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  background: var(--ad-surface-3) center/cover no-repeat;
+  display: inline-flex; align-items: center; justify-content: center;
+  mat-icon { color: var(--ad-faint); font-size: 19px; width: 19px; height: 19px; }
+}
+
+.ad-mobile-card-title { display: flex; align-items: center; gap: 12px; }

@@ -139,11 +139,22 @@
     </section>
 
     <!-- Cast -->
-    <section class="md-section" *ngIf="getCastMembers(movie.cast).length">
+    <section class="md-section" *ngIf="getDirectors(movie.director).length || getCastMembers(movie.cast).length">
       <h2 class="md-title">{{ 'movies.detail.castTitle' | translate }}</h2>
       <div class="cast-row">
+        <div class="cast-item" *ngFor="let name of getDirectors(movie.director)">
+          <div class="cast-avatar">
+            <img *ngIf="photoFor(name)" [src]="photoFor(name)" [alt]="name">
+            <span *ngIf="!photoFor(name)">{{ getInitials(name) }}</span>
+          </div>
+          <p class="cast-name">{{ name }}</p>
+          <p class="cast-role">{{ 'movies.detail.directorRole' | translate }}</p>
+        </div>
         <div class="cast-item" *ngFor="let name of getCastMembers(movie.cast)">
-          <div class="cast-avatar">{{ getInitials(name) }}</div>
+          <div class="cast-avatar">
+            <img *ngIf="photoFor(name)" [src]="photoFor(name)" [alt]="name">
+            <span *ngIf="!photoFor(name)">{{ getInitials(name) }}</span>
+          </div>
           <p class="cast-name">{{ name }}</p>
         </div>
       </div>

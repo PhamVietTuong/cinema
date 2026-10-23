@@ -17,6 +17,8 @@ import { UserTypeDialog } from './user-types/user-type.dialog';
 import { HolidaysManagementComponent } from './holidays/holidays.component';
 import { NewsManagementComponent } from './news/news.component';
 import { NewsDialog } from './news/news.dialog';
+import { PeopleManagementComponent } from './people/people.component';
+import { PersonDialog } from './people/person.dialog';
 import { TemplatesManagementComponent } from './templates/templates.component';
 import { TemplateDialog } from './templates/template.dialog';
 
@@ -28,6 +30,7 @@ const routes: Routes = [
   { path: 'user-types', component: UserTypesManagementComponent },
   { path: 'holidays', component: HolidaysManagementComponent },
   { path: 'news', component: NewsManagementComponent },
+  { path: 'people', component: PeopleManagementComponent },
   { path: 'templates', component: TemplatesManagementComponent },
 ];
 
@@ -46,6 +49,8 @@ const routes: Routes = [
     HolidaysManagementComponent,
     NewsManagementComponent,
     NewsDialog,
+    PeopleManagementComponent,
+    PersonDialog,
     TemplatesManagementComponent,
     TemplateDialog,
   ],

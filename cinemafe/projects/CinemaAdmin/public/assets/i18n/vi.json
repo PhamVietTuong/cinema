@@ -13,6 +13,7 @@
     "userTypes": "Loại Người Dùng",
     "holidays": "Ngày Lễ",
     "news": "Tin Tức",
+    "people": "Diễn Viên & Đạo Diễn",
     "templates": "Mẫu Thông Báo",
     "discounts": "Mã Giảm Giá",
     "promotionPrograms": "Chương Trình Khuyến Mãi",
@@ -40,6 +41,7 @@
     "userTypes": "Quản Lý Loại Người Dùng",
     "holidays": "Quản Lý Ngày Lễ",
     "news": "Quản Lý Tin Tức",
+    "people": "Quản Lý Diễn Viên & Đạo Diễn",
     "templates": "Quản Lý Mẫu Thông Báo",
     "discounts": "Quản Lý Mã Giảm Giá",
     "promotionPrograms": "Quản Lý Chương Trình Khuyến Mãi",
@@ -830,6 +832,18 @@
     "page": "Trang {{index}}/{{total}}",
     "prev": "Trước",
     "next": "Sau"
+  },
+  "people": {
+    "title": "Quản Lý Diễn Viên & Đạo Diễn",
+    "subtitle": "Thư viện ảnh đạo diễn và diễn viên hiển thị trên trang phim.",
+    "editTitle": "Chỉnh Sửa Người",
+    "newTitle": "Thêm Người Mới",
+    "name": "Tên",
+    "namePlaceholder": "VD: Cillian Murphy",
+    "photo": "Ảnh",
+    "photoPlaceholder": "Dán URL hoặc tải ảnh lên",
+    "uploadImage": "Tải Ảnh Lên",
+    "empty": "Chưa có người nào."
   },
   "showTimes": {
     "title": "Lịch Chiếu",

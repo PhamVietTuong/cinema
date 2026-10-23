@@ -37,6 +37,7 @@ public class CinemaController : ApiControllerBase
     private readonly IMemberShipManager     _memberShips;
     private readonly IHolidayManager        _holidays;
     private readonly INewsManager           _news;
+    private readonly IPersonManager         _people;
     private readonly IDiscountManager       _discounts;
     private readonly IPromotionProgramManager _promotionPrograms;
     private readonly IFoodAndDrinkManager   _foodAndDrinks;
@@ -75,6 +76,7 @@ public class CinemaController : ApiControllerBase
         IMemberShipManager memberShips,
         IHolidayManager holidays,
         INewsManager news,
+        IPersonManager people,
         IDiscountManager discounts,
         IPromotionProgramManager promotionPrograms,
         IFoodAndDrinkManager foodAndDrinks,
@@ -120,6 +122,7 @@ public class CinemaController : ApiControllerBase
         _memberShips     = memberShips;
         _holidays        = holidays;
         _news            = news;
+        _people          = people;
         _discounts       = discounts;
         _promotionPrograms = promotionPrograms;
         _foodAndDrinks   = foodAndDrinks;
@@ -1207,6 +1210,71 @@ public class CinemaController : ApiControllerBase
             return notFound;
         }
         return await RunNoContent(nameof(DeleteNews), () => _news.DeleteAsync(id));
+    }
+    #endregion
+
+    #region Person
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<PersonDTO>), 200)]
+    public Task<IActionResult> GetPeople([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetPeople), () => _people.GetAsync(search));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(PersonDTO), 200)]
+    public async Task<IActionResult> GetPerson([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _people.ExistsAsync(id), nameof(GetPerson), nameof(Person), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(GetPerson), () => _people.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(PersonDTO), 200)]
+    public Task<IActionResult> CreatePerson([FromBody] CreatePersonRequest request)
+    {
+        return Run(nameof(CreatePerson), () => _people.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(PersonDTO), 200)]
+    public async Task<IActionResult> UpdatePerson([FromBody] UpdatePersonRequest request)
+    {
+        var notFound = await EnsureExistsAsync(() => _people.ExistsAsync(request.Id), nameof(UpdatePerson), nameof(Person), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(UpdatePerson), () => _people.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeletePerson([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _people.ExistsAsync(id), nameof(DeletePerson), nameof(Person), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await RunNoContent(nameof(DeletePerson), () => _people.DeleteAsync(id));
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<PersonDTO>), 200)]
+    public Task<IActionResult> GetPeopleByNames([FromBody] List<string> names)
+    {
+        return Run(nameof(GetPeopleByNames), () => _people.GetByNamesAsync(names));
     }
     #endregion
 

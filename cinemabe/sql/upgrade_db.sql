@@ -798,6 +798,25 @@ END
 -- ===== end movie slug =====
 
 -- ============================================================
+-- Person directory: name -> photo lookup for Cast & Crew (no FKs)
+-- ============================================================
+-- Identical in create_db.sql and upgrade_db.sql (idempotent). Name-keyed lookup only: no
+-- relation to Movie, Director or Cast. Used to resolve a photo for a cast/director name.
+IF OBJECT_ID('dbo.Person', 'U') IS NULL
+BEGIN
+    CREATE TABLE [Person] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [Name] nvarchar(200) NOT NULL,
+        [PhotoUrl] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_Person] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_Person_Name] ON [Person] ([Name]);
+END
+-- ===== end person directory =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already
