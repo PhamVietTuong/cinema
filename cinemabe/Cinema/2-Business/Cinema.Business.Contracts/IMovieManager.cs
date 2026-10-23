@@ -9,6 +9,7 @@ public interface IMovieManager
     Task<DefaultSearchResults<MovieDTO>>       GetComingSoonAsync(PagingSearchDTO search);
     Task<DefaultSearchResults<ShowTimeListDTO>> GetShowTimesAsync(PagingSearchDTO search);
     Task<MovieDetailDTO>                       GetDetailAsync(Guid id, Guid? userId);
+    Task<MovieDetailDTO>                       GetDetailBySlugAsync(string slug, Guid? userId);
     Task<MovieDTO>                             CreateAsync(CreateMovieRequest request);
     Task<MovieDTO>                             UpdateAsync(UpdateMovieRequest request);
     Task                                       DeleteAsync(Guid id);

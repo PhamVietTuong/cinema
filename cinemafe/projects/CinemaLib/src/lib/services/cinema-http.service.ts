@@ -26,6 +26,7 @@ export interface IHttpService {
     getNowShowingMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO>;
     getComingSoonMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO>;
     getMovie(id?: string | undefined): Observable<MovieDetailDTO>;
+    getMovieBySlug(slug?: string | undefined): Observable<MovieDetailDTO>;
     createMovie(request: CreateMovieRequest): Observable<MovieDetailDTO>;
     updateMovie(request: UpdateMovieRequest): Observable<MovieDetailDTO>;
     deleteMovie(id?: string | undefined): Observable<void>;
@@ -491,6 +492,58 @@ export class HttpService implements IHttpService {
     }
 
     protected processGetMovie(response: HttpResponseBase): Observable<MovieDetailDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MovieDetailDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMovieBySlug(slug?: string | undefined): Observable<MovieDetailDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMovieBySlug?";
+        if (slug === null)
+            throw new Error("The parameter 'slug' cannot be null.");
+        else if (slug !== undefined)
+            url_ += "slug=" + encodeURIComponent("" + slug) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMovieBySlug(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMovieBySlug(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MovieDetailDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MovieDetailDTO>;
+        }));
+    }
+
+    protected processGetMovieBySlug(response: HttpResponseBase): Observable<MovieDetailDTO> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -8520,6 +8573,7 @@ export interface IUploadResultDTO {
 export class MovieDTO implements IMovieDTO {
     id?: string;
     title?: string;
+    slug?: string;
     description?: string;
     duration?: number;
     releaseDate?: Date;
@@ -8553,6 +8607,7 @@ export class MovieDTO implements IMovieDTO {
         if (_data) {
             this.id = _data["id"];
             this.title = _data["title"];
+            this.slug = _data["slug"];
             this.description = _data["description"];
             this.duration = _data["duration"];
             this.releaseDate = _data["releaseDate"] ? new Date(_data["releaseDate"].toString()) : <any>undefined;
@@ -8594,6 +8649,7 @@ export class MovieDTO implements IMovieDTO {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["title"] = this.title;
+        data["slug"] = this.slug;
         data["description"] = this.description;
         data["duration"] = this.duration;
         data["releaseDate"] = this.releaseDate ? formatDate(this.releaseDate) : <any>undefined;
@@ -8628,6 +8684,7 @@ export class MovieDTO implements IMovieDTO {
 export interface IMovieDTO {
     id?: string;
     title?: string;
+    slug?: string;
     description?: string;
     duration?: number;
     releaseDate?: Date;

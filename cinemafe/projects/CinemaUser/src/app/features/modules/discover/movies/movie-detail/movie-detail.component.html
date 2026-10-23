@@ -2,6 +2,11 @@
   <mat-spinner diameter="48"></mat-spinner>
 </div>
 
+<div *ngIf="!(loading$ | async) && !(movie$ | async)" class="not-found">
+  <p>{{ 'movies.detail.notFound' | translate }}</p>
+  <a mat-stroked-button routerLink="/movies">{{ 'movies.detail.backToMovies' | translate }}</a>
+</div>
+
 <ng-container *ngIf="movie$ | async as movie">
 
   <!-- ── HERO ──────────────────────────────────────────────────────────────── -->

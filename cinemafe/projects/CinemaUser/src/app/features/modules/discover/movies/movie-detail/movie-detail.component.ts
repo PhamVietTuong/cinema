@@ -7,10 +7,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, loadMovieDetail, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, slugify, ToastService } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, ToastService } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
-import { movieDetailUrl } from '../../../../../shared/movie-route';
+import { movieDetailUrl, isLegacyMovieId } from '../../../../../shared/movie-route';
 
 @Component({
   selector: 'app-movie-detail',
@@ -25,12 +25,13 @@ export class MovieDetailComponent implements OnInit {
   isAuthenticated$: Observable<boolean>;
 
   movieId = '';
-  /** Canonical `/movies/:id/:slug` URL for the loaded movie; falls back to the slugless URL until it
-   * loads. Used for the login `returnUrl` so it always points at the friendly URL, not the raw path. */
+  /** Canonical `/movies/:slug` URL for the loaded movie. Used for the login `returnUrl` so it always
+   * points at the friendly URL, not the raw path. */
   detailUrl = '';
-  /** Slug currently written into the address bar (kept separately because `Location.replaceState`
-   * does not update the router's snapshot/url). */
-  private _urlSlug = '';
+  /** The route param as last written into the address bar: either the slug, or (until resolved) a
+   * legacy GUID. Kept separately because `Location.replaceState` does not update the router's
+   * snapshot/url. */
+  private _routeParam = '';
   /** The current user's rating, once submitted (1–10; 0 = none submitted yet this session). */
   myScore = 0;
   /** Hovered star while picking a rating in the hero widget; 0 when not hovering. */
@@ -70,9 +71,7 @@ export class MovieDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.movieId = this._route.snapshot.paramMap.get('id') ?? '';
-    this._urlSlug = this._route.snapshot.paramMap.get('slug') ?? '';
-    this.detailUrl = movieDetailUrl(this.movieId);
+    this._routeParam = this._route.snapshot.paramMap.get('slug') ?? '';
 
     // Must be set up before subscribing to movie$ below: when this movie is already cached in the
     // store (e.g. navigating straight back from checkout), that subscription emits SYNCHRONOUSLY,
@@ -81,14 +80,33 @@ export class MovieDetailComponent implements OnInit {
     this.dateTabs.push(...this.buildDateTabs());
     this.selectedDateKey = this.dateTabs[0].key;
 
-    this._store.dispatch(loadMovieDetail({ id: this.movieId }));
+    // Lowercase up front (backend GUIDs and slugs are both always lowercase) so a differently-cased
+    // legacy link still matches movie.id/movie.slug in the filter below and gets healed.
+    this._routeParam = this._routeParam.toLowerCase();
+
+    // Provisional until the real movie loads (corrected to movie.id in the subscription below): for
+    // a legacy GUID route this is already the real id; for a slug route it lets callers that fire
+    // before load (there are none in production — rating/commenting require the loaded movie anyway)
+    // still have a stable, non-empty value.
+    this.movieId = this._routeParam;
+
+    if (isLegacyMovieId(this._routeParam)) {
+      this._store.dispatch(loadMovieDetail({ id: this._routeParam }));
+    } else {
+      this.detailUrl = movieDetailUrl(this._routeParam);
+      this._store.dispatch(loadMovieDetailBySlug({ slug: this._routeParam }));
+    }
 
     const restore = (history.state as { restore?: BookingCheckoutState } | undefined)?.restore;
     let restoreApplied = false;
 
     this.movie$
-      .pipe(filter(movie => !!movie && movie.id === this.movieId), takeUntilDestroyed(this._destroyRef))
+      .pipe(
+        filter(movie => !!movie && (movie.id === this._routeParam || movie.slug === this._routeParam)),
+        takeUntilDestroyed(this._destroyRef),
+      )
       .subscribe(movie => {
+        this.movieId = movie.id;
         this._syncCanonicalUrl(movie);
         if (restore && !restoreApplied) {
           restoreApplied = true;
@@ -127,13 +145,13 @@ export class MovieDetailComponent implements OnInit {
     });
   }
 
-  /** Keeps the address bar on `/movies/:id/:slug` without re-navigating (which would recreate this
-   * component and re-dispatch loadMovieDetail): corrects a missing, wrong or now-outdated slug in place. */
+  /** Keeps the address bar on `/movies/:slug` without re-navigating (which would recreate this
+   * component and re-dispatch loadMovieDetail): replaces a legacy GUID, or a differently-cased
+   * slug, with the movie's real slug in place. */
   private _syncCanonicalUrl(movie: any): void {
-    this.detailUrl = movieDetailUrl(this.movieId, movie.title);
-    const expectedSlug = slugify(movie.title);
-    if (this._urlSlug !== expectedSlug) {
-      this._urlSlug = expectedSlug;
+    this.detailUrl = movieDetailUrl(movie.slug);
+    if (this._routeParam !== movie.slug) {
+      this._routeParam = movie.slug;
       this._location.replaceState(this.detailUrl);
     }
   }

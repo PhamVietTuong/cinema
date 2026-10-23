@@ -276,4 +276,78 @@ public class MovieServiceTests
         await _sut.Invoking(s => s.DeleteAsync(missingId))
             .Should().ThrowAsync<KeyNotFoundException>();
     }
+
+    [Fact]
+    public async Task CreateAsync_FreeBaseSlug_UsesBaseSlug()
+    {
+        Movie? created = null;
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+        _uowMock.Setup(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()))
+            .Callback<Movie>(m => created = m)
+            .ReturnsAsync((Movie m) => m);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(() => created);
+
+        await _sut.CreateAsync(new CreateMovieRequest { Title = "Wicked" });
+
+        created.Should().NotBeNull();
+        created!.Slug.Should().Be("wicked");
+    }
+
+    [Fact]
+    public async Task CreateAsync_TakenBaseSlug_AppendsSuffix()
+    {
+        Movie? created = null;
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string> { "wicked" });
+        _uowMock.Setup(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()))
+            .Callback<Movie>(m => created = m)
+            .ReturnsAsync((Movie m) => m);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(() => created);
+
+        await _sut.CreateAsync(new CreateMovieRequest { Title = "Wicked" });
+
+        created!.Slug.Should().Be("wicked-2");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_TitleChanged_SlugUnchanged()
+    {
+        var movieId = Guid.NewGuid();
+        var movie = new Movie { Id = movieId, Title = "Wicked", Slug = "wicked", MovieTypeDetails = new List<MovieTypeDetail>() };
+        _uowMock.Setup(u => u.MovieStore.GetForUpdateAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+
+        await _sut.UpdateAsync(new UpdateMovieRequest { Id = movieId, Title = "Wicked: Part One" });
+
+        movie.Slug.Should().Be("wicked");
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_ExistingSlug_ReturnsMappedDetail()
+    {
+        var movieId = Guid.NewGuid();
+        var movie = new Movie { Id = movieId, Title = "Wicked", Slug = "wicked", Evaluations = new List<Evaluation>() };
+        _uowMock.Setup(u => u.MovieStore.GetDetailBySlugAsync("wicked")).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingAsync(movieId)).ReturnsAsync(0);
+        _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10)).ReturnsAsync(new List<CommentView>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetMovieScheduleAsync(movieId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<MovieScheduleRow>());
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatCountsByMovieAsync(movieId))
+            .ReturnsAsync(new Dictionary<(Guid, Guid), int>());
+
+        var result = await _sut.GetDetailBySlugAsync("Wicked", null);
+
+        result.Id.Should().Be(movieId);
+        result.Slug.Should().Be("wicked");
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_UnknownSlug_Throws()
+    {
+        _uowMock.Setup(u => u.MovieStore.GetDetailBySlugAsync("nope")).ReturnsAsync((Movie?)null);
+
+        await _sut.Invoking(s => s.GetDetailBySlugAsync("nope", null))
+            .Should().ThrowAsync<KeyNotFoundException>();
+    }
 }

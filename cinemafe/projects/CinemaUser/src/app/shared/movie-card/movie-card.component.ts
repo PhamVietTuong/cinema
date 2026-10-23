@@ -22,7 +22,7 @@ export class MovieCardComponent {
   @Input() fixedWidth = false;
 
   get detailCommands(): string[] {
-    return movieDetailCommands(this.movie.id, this.movie.title);
+    return movieDetailCommands(this.movie.slug);
   }
 
   /** Falls back to the bundled placeholder when a poster URL fails to load. */

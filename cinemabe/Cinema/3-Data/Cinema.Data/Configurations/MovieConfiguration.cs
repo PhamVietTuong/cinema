@@ -10,6 +10,8 @@ public class MovieConfiguration : IEntityTypeConfiguration<Movie>
     {
         b.HasKey(m => m.Id);
         b.Property(m => m.Title).IsRequired().HasMaxLength(300);
+        b.Property(m => m.Slug).IsRequired().HasMaxLength(320);
+        b.HasIndex(m => m.Slug).IsUnique().HasDatabaseName("IX_Movie_Slug");
         b.Property(m => m.Description).HasMaxLength(2000);
         b.Property(m => m.Director).HasMaxLength(200);
         b.Property(m => m.Cast).HasMaxLength(1000);

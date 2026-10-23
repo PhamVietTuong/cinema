@@ -14,6 +14,7 @@ export const loadMoviesSuccess = createAction('[Movies] Load Movies Success', pr
 export const loadMoviesFailure = createAction('[Movies] Load Movies Failure', props<{ error: string }>());
 
 export const loadMovieDetail = createAction('[Movies] Load Movie Detail', props<{ id: string }>());
+export const loadMovieDetailBySlug = createAction('[Movies] Load Movie Detail By Slug', props<{ slug: string }>());
 export const loadMovieDetailSuccess = createAction('[Movies] Load Movie Detail Success', props<{ movie: MovieDetail }>());
 export const loadMovieDetailFailure = createAction('[Movies] Load Movie Detail Failure', props<{ error: string }>());
 
