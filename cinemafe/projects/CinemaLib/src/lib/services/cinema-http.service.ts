@@ -9215,6 +9215,7 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
     recentComments?: CommentDTO[];
     canReview?: boolean;
     credits?: MovieCreditDTO[];
+    externalRatings?: ExternalRatingsDTO | undefined;
 
     constructor(data?: IMovieDetailDTO) {
         super(data);
@@ -9241,6 +9242,7 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
                 for (let item of _data["credits"])
                     this.credits!.push(MovieCreditDTO.fromJS(item));
             }
+            this.externalRatings = _data["externalRatings"] ? ExternalRatingsDTO.fromJS(_data["externalRatings"]) : <any>undefined;
         }
     }
 
@@ -9271,6 +9273,7 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
             for (let item of this.credits)
                 data["credits"].push(item.toJSON());
         }
+        data["externalRatings"] = this.externalRatings ? this.externalRatings.toJSON() : <any>undefined;
         super.toJSON(data);
         return data;
     }
@@ -9283,6 +9286,7 @@ export interface IMovieDetailDTO extends IMovieDTO {
     recentComments?: CommentDTO[];
     canReview?: boolean;
     credits?: MovieCreditDTO[];
+    externalRatings?: ExternalRatingsDTO | undefined;
 }
 
 export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
@@ -9497,6 +9501,50 @@ export interface IMovieCreditDTO {
 export enum CreditType {
     Director = 1,
     Actor = 2,
+}
+
+export class ExternalRatingsDTO implements IExternalRatingsDTO {
+    rottenTomatoes?: string | undefined;
+    imdbRating?: string | undefined;
+    metascore?: string | undefined;
+
+    constructor(data?: IExternalRatingsDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rottenTomatoes = _data["rottenTomatoes"];
+            this.imdbRating = _data["imdbRating"];
+            this.metascore = _data["metascore"];
+        }
+    }
+
+    static fromJS(data: any): ExternalRatingsDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ExternalRatingsDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rottenTomatoes"] = this.rottenTomatoes;
+        data["imdbRating"] = this.imdbRating;
+        data["metascore"] = this.metascore;
+        return data;
+    }
+}
+
+export interface IExternalRatingsDTO {
+    rottenTomatoes?: string | undefined;
+    imdbRating?: string | undefined;
+    metascore?: string | undefined;
 }
 
 export class CreateMovieRequest implements ICreateMovieRequest {

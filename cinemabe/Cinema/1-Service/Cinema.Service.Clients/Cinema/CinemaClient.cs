@@ -13598,6 +13598,9 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("credits", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public IList<MovieCreditDTO> Credits { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("externalRatings", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public ExternalRatingsDTO ExternalRatings { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -13707,6 +13710,20 @@ namespace Cinema.Service.Clients.Cinema
         Director = 1,
 
         Actor = 2,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ExternalRatingsDTO
+    {
+        [Newtonsoft.Json.JsonProperty("rottenTomatoes", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string RottenTomatoes { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("imdbRating", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string ImdbRating { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("metascore", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Metascore { get; set; }
 
     }
 

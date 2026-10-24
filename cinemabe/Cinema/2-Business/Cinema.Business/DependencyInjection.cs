@@ -1,5 +1,6 @@
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Auth;
+using Cinema.Business.ExternalRatings;
 using Cinema.Business.Managers;
 using Cinema.Business.Managers.Auth;
 using Cinema.Business.Notifications;
@@ -17,6 +18,13 @@ public static class DependencyInjection
         services.AddSingleton<ISeatNotificationService, NoOpSeatNotificationService>();
         services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddSingleton<IFacebookTokenValidator, FacebookTokenValidator>();
+        services.AddMemoryCache();
+        services.AddHttpClient(OmdbRatingsProvider.HttpClientName, c =>
+        {
+            c.BaseAddress = new Uri("https://www.omdbapi.com");
+            c.Timeout = TimeSpan.FromSeconds(3);
+        });
+        services.AddSingleton<IExternalRatingsProvider, OmdbRatingsProvider>();
         services.AddScoped<IMovieManager, MovieManager>();
         services.AddScoped<IBookingManager, BookingManager>();
         // Payment gateways (Sandbox + VNPay/MoMo/Stripe) and their resolver are registered in the

@@ -403,4 +403,27 @@ describe('MovieDetailComponent', () => {
       expect(c.hasCredits({ credits: [{ creditType: CinemaServiceAgent.CreditType.Actor }] })).toBe(true);
     });
   });
+
+  describe('external ratings (rtTier)', () => {
+    it('classifies a Rotten Tomatoes score as fresh at or above 60%', () => {
+      const c = build();
+
+      expect(c.rtTier('93%')).toBe('fresh');
+      expect(c.rtTier('60%')).toBe('fresh');
+    });
+
+    it('classifies a Rotten Tomatoes score as rotten below 60%', () => {
+      const c = build();
+
+      expect(c.rtTier('59%')).toBe('rotten');
+    });
+
+    it('returns null for missing or unparsable scores', () => {
+      const c = build();
+
+      expect(c.rtTier(undefined)).toBeNull();
+      expect(c.rtTier(null)).toBeNull();
+      expect(c.rtTier('N/A')).toBeNull();
+    });
+  });
 });

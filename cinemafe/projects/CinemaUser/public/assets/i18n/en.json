@@ -373,7 +373,11 @@
       "rateThisMovie": "Rate this movie",
       "watchFirstToReview": "Watch this movie first to rate or comment.",
       "notFound": "We couldn't find this movie.",
-      "backToMovies": "Back to Movies"
+      "backToMovies": "Back to Movies",
+      "rottenTomatoes": "Rotten Tomatoes",
+      "imdbRating": "IMDb",
+      "metascore": "Metascore",
+      "externalRatingsSource": "Scores via OMDb"
     },
     "showtimes": {
       "seats": "{{count}} seats",

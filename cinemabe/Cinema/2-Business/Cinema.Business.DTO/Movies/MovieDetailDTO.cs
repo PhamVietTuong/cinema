@@ -14,4 +14,8 @@ public class MovieDetailDTO : MovieDTO
     /// Empty means this movie has none set up yet; the client then falls back to splitting the
     /// Director/Cast strings.</summary>
     public List<MovieCreditDTO> Credits { get; set; } = new();
+    /// <summary>Third-party review scores (OMDb, matched by title and release year). Null when no
+    /// OMDb API key is configured, the movie isn't found on OMDb, or OMDb couldn't be reached —
+    /// the client hides the section in each of those cases.</summary>
+    public ExternalRatingsDTO? ExternalRatings { get; set; }
 }
