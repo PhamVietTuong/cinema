@@ -6461,6 +6461,14 @@
                 "items": {
                   "$ref": "#/components/schemas/MovieCreditDTO"
                 }
+              },
+              "externalRatings": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ExternalRatingsDTO"
+                  }
+                ]
               }
             }
           }
@@ -6601,6 +6609,24 @@
           1,
           2
         ]
+      },
+      "ExternalRatingsDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rottenTomatoes": {
+            "type": "string",
+            "nullable": true
+          },
+          "imdbRating": {
+            "type": "string",
+            "nullable": true
+          },
+          "metascore": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "CreateMovieRequest": {
         "type": "object",

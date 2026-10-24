@@ -1,3 +1,4 @@
+using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Movies;
 using Cinema.Business.DTO.Requests;
@@ -13,15 +14,19 @@ namespace Cinema.Business.Tests;
 public class MovieServiceTests
 {
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();
+    private readonly Mock<IExternalRatingsProvider> _externalRatingsMock = new();
     private readonly MovieManager _sut;
 
     public MovieServiceTests()
     {
-        _sut = new MovieManager(_uowMock.Object);
+        _sut = new MovieManager(_uowMock.Object, _externalRatingsMock.Object);
         // Default: no credits set up for any movie, so existing GetDetailAsync tests that don't care
         // about credits don't need to stub this explicitly.
         _uowMock.Setup(u => u.MovieCreditStore.GetByMovieAsync(It.IsAny<Guid>()))
             .ReturnsAsync(new List<MovieCreditRow>());
+        // Default: no external ratings, so existing GetDetailAsync tests don't need to stub this.
+        _externalRatingsMock.Setup(p => p.GetRatingsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ExternalRatingsDTO?)null);
     }
 
     [Fact]
@@ -407,6 +412,49 @@ public class MovieServiceTests
         var result = await _sut.GetDetailAsync(movieId, null);
 
         result.Credits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_ExternalRatingsFound_SetsExternalRatings()
+    {
+        var movieId = Guid.NewGuid();
+        var releaseDate = new DateOnly(2010, 7, 16);
+        var movie = new Movie { Id = movieId, Title = "Inception", ReleaseDate = releaseDate, Evaluations = new List<Evaluation>() };
+        SetupBasicDetailRead(movieId, movie);
+        var ratings = new ExternalRatingsDTO { RottenTomatoes = "87%", ImdbRating = "8.8", Metascore = "74" };
+        _externalRatingsMock.Setup(p => p.GetRatingsAsync("Inception", 2010, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ratings);
+
+        var result = await _sut.GetDetailAsync(movieId, null);
+
+        result.ExternalRatings.Should().BeSameAs(ratings);
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_ExternalRatingsNotFound_LeavesExternalRatingsNull()
+    {
+        var movieId = Guid.NewGuid();
+        var movie = new Movie { Id = movieId, Title = "Test Movie", Evaluations = new List<Evaluation>() };
+        SetupBasicDetailRead(movieId, movie);
+
+        var result = await _sut.GetDetailAsync(movieId, null);
+
+        result.ExternalRatings.Should().BeNull();
+        result.Credits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetMoviesAsync_NeverCallsExternalRatingsProvider()
+    {
+        var movieId = Guid.NewGuid();
+        var movies  = new List<Movie> { new() { Id = movieId, Title = "Movie A" } };
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(null, null, (Guid?)null, 1, 12)).ReturnsAsync((movies, 1));
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, double>());
+
+        await _sut.GetMoviesAsync(new PagingSearchDTO { PageIndex = 1, PageSize = 12 });
+
+        _externalRatingsMock.Verify(p => p.GetRatingsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

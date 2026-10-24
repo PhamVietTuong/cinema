@@ -60,6 +60,19 @@
         <span class="score-count" *ngIf="movie.ratingCount > 0; else noRatingsYet">{{ 'movies.detail.ratingCount' | translate:{ count: (movie.ratingCount | number) } }}</span>
         <ng-template #noRatingsYet><span class="score-count">{{ 'movies.detail.noRatingsYet' | translate }}</span></ng-template>
         <span class="score-hint" *ngIf="(isAuthenticated$ | async) && !canReview(movie)">{{ 'movies.detail.watchFirstToReview' | translate }}</span>
+
+        <div class="external-ratings" *ngIf="movie.externalRatings?.rottenTomatoes || movie.externalRatings?.imdbRating || movie.externalRatings?.metascore">
+          <span class="ext-rating ext-rating--rt" [class.rt-fresh]="rtTier(movie.externalRatings.rottenTomatoes) === 'fresh'" [class.rt-rotten]="rtTier(movie.externalRatings.rottenTomatoes) === 'rotten'" *ngIf="movie.externalRatings.rottenTomatoes">
+            {{ movie.externalRatings.rottenTomatoes }} {{ 'movies.detail.rottenTomatoes' | translate }}
+          </span>
+          <span class="ext-rating ext-rating--secondary" *ngIf="movie.externalRatings.imdbRating">
+            {{ 'movies.detail.imdbRating' | translate }} {{ movie.externalRatings.imdbRating }}/10
+          </span>
+          <span class="ext-rating ext-rating--secondary" *ngIf="movie.externalRatings.metascore">
+            {{ 'movies.detail.metascore' | translate }} {{ movie.externalRatings.metascore }}
+          </span>
+          <span class="ext-rating-source">{{ 'movies.detail.externalRatingsSource' | translate }}</span>
+        </div>
       </div>
     </div>
   </section>

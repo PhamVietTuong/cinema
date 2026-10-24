@@ -14,6 +14,7 @@ namespace Cinema.Business.Managers;
 public class MovieManager : IMovieManager
 {
     private readonly IApplicationUnitOfWork _uow;
+    private readonly IExternalRatingsProvider _externalRatings;
 
     /// <summary>The movie-detail page shows today + the next 3 days; its date tabs slice this window
     /// entirely client-side (no re-fetch per tab), so the response must cover exactly it.</summary>
@@ -21,9 +22,10 @@ public class MovieManager : IMovieManager
 
     private const string ReviewNotAllowedMessage = "You can only rate or comment on a movie after watching it.";
 
-    public MovieManager(IApplicationUnitOfWork uow)
+    public MovieManager(IApplicationUnitOfWork uow, IExternalRatingsProvider externalRatings)
     {
         _uow = uow;
+        _externalRatings = externalRatings;
     }
 
     public async Task<DefaultSearchResults<MovieDTO>> GetMoviesAsync(PagingSearchDTO search)
@@ -123,6 +125,8 @@ public class MovieManager : IMovieManager
     private async Task<MovieDetailDTO> BuildDetailAsync(Movie movie, Guid? userId)
     {
         var id = movie.Id;
+        // Started first so it overlaps the DB queries below; the provider never touches the DbContext.
+        var externalRatingsTask = _externalRatings.GetRatingsAsync(movie.Title, movie.ReleaseDate.Year);
         var dto = movie.ToDTO<Movie, MovieDetailDTO>();
         ApplyMovieComputedFields(movie, dto);
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
@@ -168,6 +172,7 @@ public class MovieManager : IMovieManager
             dto.CanReview = await CanReviewAsync(id, uid);
         }
         dto.Credits = (await _uow.MovieCreditStore.GetByMovieAsync(id)).Select(ToCreditDTO).ToList();
+        dto.ExternalRatings = await externalRatingsTask;
         return dto;
     }
 

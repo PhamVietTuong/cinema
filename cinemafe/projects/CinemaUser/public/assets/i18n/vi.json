@@ -373,7 +373,11 @@
       "rateThisMovie": "Đánh giá phim này",
       "watchFirstToReview": "Hãy xem phim này trước khi đánh giá hoặc bình luận.",
       "notFound": "Không tìm thấy phim này.",
-      "backToMovies": "Quay lại danh sách phim"
+      "backToMovies": "Quay lại danh sách phim",
+      "rottenTomatoes": "Rotten Tomatoes",
+      "imdbRating": "IMDb",
+      "metascore": "Metascore",
+      "externalRatingsSource": "Điểm số từ OMDb"
     },
     "showtimes": {
       "seats": "{{count}} ghế",

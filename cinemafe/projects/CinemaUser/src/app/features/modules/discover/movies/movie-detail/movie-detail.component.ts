@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, ToastService, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, rottenTomatoesTier, ToastService, CinemaServiceAgent } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
 import { movieDetailUrl, isLegacyMovieId } from '../../../../../shared/movie-route';
@@ -38,6 +38,7 @@ export class MovieDetailComponent implements OnInit {
   hoverScore = 0;
   newComment = '';
   readonly heroStars = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  readonly rtTier = rottenTomatoesTier;
 
   /** Today + the next 3 days — the movie-detail response already covers exactly this window
    * (MovieManager.GetDetailAsync), so switching tabs is a client-side filter, no re-fetch. */
