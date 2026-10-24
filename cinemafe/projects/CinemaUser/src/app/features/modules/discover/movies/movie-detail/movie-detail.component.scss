@@ -128,13 +128,15 @@
 .cast-row { display: flex; flex-wrap: wrap; gap: 28px; }
 .cast-item { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 92px; text-align: center; }
 .cast-avatar {
-  width: 72px; height: 72px; border-radius: 50%;
+  width: 72px; height: 72px; border-radius: 50%; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   background: var(--ml-panel-3); color: var(--ml-ink-2);
   font-family: var(--ml-font-head); font-weight: 600; font-size: 1.2rem;
   border: 1px solid var(--ml-rule);
+  img { width: 100%; height: 100%; object-fit: cover; }
 }
 .cast-name { font-size: 0.82rem; color: var(--ml-ink); margin: 0; line-height: 1.3; }
+.cast-role { font-size: 0.72rem; color: var(--ml-muted); margin: 0; line-height: 1.2; }
 
 // Comments
 .md-title-row { display: flex; align-items: center; gap: 10px; margin: 0 0 20px; padding-left: 14px; border-left: 3px solid var(--ml-action); }

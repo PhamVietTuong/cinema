@@ -10,4 +10,8 @@ public class MovieDetailDTO : MovieDTO
     /// <summary>True when the requesting user has watched the movie (paid, active ticket for a finished
     /// screening) and may rate/comment. Always false for anonymous callers.</summary>
     public bool CanReview { get; set; }
+    /// <summary>Explicit Director/Actor credits, ordered Directors then Actors then DisplayOrder.
+    /// Empty means this movie has none set up yet; the client then falls back to splitting the
+    /// Director/Cast strings.</summary>
+    public List<MovieCreditDTO> Credits { get; set; } = new();
 }

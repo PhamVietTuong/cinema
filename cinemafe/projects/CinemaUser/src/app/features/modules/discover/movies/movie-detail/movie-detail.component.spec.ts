@@ -1,5 +1,5 @@
-import { NEVER, of } from 'rxjs';
-import { selectIsAuthenticated } from 'CinemaLib';
+import { NEVER, of, throwError } from 'rxjs';
+import { selectIsAuthenticated, CinemaServiceAgent } from 'CinemaLib';
 import { MovieDetailComponent } from './movie-detail.component';
 
 const showTime = (over: Partial<any>): any => ({
@@ -30,6 +30,7 @@ describe('MovieDetailComponent', () => {
   let selectedMovie: unknown = null;
   let location: { replaceState: ReturnType<typeof vi.fn> };
   let routeParam = 'movie-1';
+  let cinemaSvc: { getPeopleByNames: ReturnType<typeof vi.fn> };
 
   const build = () => {
     store = {
@@ -47,9 +48,10 @@ describe('MovieDetailComponent', () => {
     const translate = { instant: (key: string) => key };
     toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
     const actions$ = NEVER;
+    cinemaSvc = { getPeopleByNames: vi.fn(() => of([])) };
     return new MovieDetailComponent(
       store as never, route as never, router as never, location as never, destroyRef as never, cdr as never, translate as never, toast as never,
-      actions$ as never,
+      actions$ as never, cinemaSvc as never,
     );
   };
 
@@ -288,6 +290,117 @@ describe('MovieDetailComponent', () => {
 
       expect(location.replaceState).not.toHaveBeenCalled();
       expect(c.movieId).toBe('movie-id-1');
+    });
+  });
+
+  describe('Cast & Crew photo lookup', () => {
+    it('requests photos once for director + cast names on movie load', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [] };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledTimes(1);
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledWith(['Christopher Nolan', 'A', 'B']);
+    });
+
+    it('maps a matched name (case-insensitively) to its photo URL, leaving unmatched names falsy', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [] };
+      cinemaSvc = { getPeopleByNames: vi.fn(() => of([{ name: 'A', photoUrl: 'photo-a.jpg' }])) };
+      const c = new MovieDetailComponent(
+        store as never, { snapshot: { paramMap: { get: () => 'movie-1' } } } as never, router as never, location as never,
+        { onDestroy: () => () => {} } as never, { markForCheck: vi.fn() } as never, { instant: (k: string) => k } as never, toast as never,
+        NEVER as never, cinemaSvc as never,
+      );
+
+      c.ngOnInit();
+
+      expect(c.photoFor('A')).toBe('photo-a.jpg');
+      expect(c.photoFor('a')).toBe('photo-a.jpg');
+      expect(c.photoFor('B')).toBeFalsy();
+    });
+
+    it('does not re-request photos on a second emission of the same movie', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [] };
+      const c = build();
+
+      c.ngOnInit();
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledTimes(1);
+    });
+
+    it('sends no request when the movie has neither director nor cast', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', showTimes: [] };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).not.toHaveBeenCalled();
+    });
+
+    it('leaves the photo map empty and does not throw when the lookup request fails', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', showTimes: [] };
+      cinemaSvc = { getPeopleByNames: vi.fn(() => throwError(() => new Error('network error'))) };
+      const c = new MovieDetailComponent(
+        store as never, { snapshot: { paramMap: { get: () => 'movie-1' } } } as never, router as never, location as never,
+        { onDestroy: () => () => {} } as never, { markForCheck: vi.fn() } as never, { instant: (k: string) => k } as never, toast as never,
+        NEVER as never, cinemaSvc as never,
+      );
+
+      expect(() => c.ngOnInit()).not.toThrow();
+      expect(c.photoFor('Christopher Nolan')).toBeFalsy();
+    });
+  });
+
+  describe('Cast & Crew explicit credits', () => {
+    it('uses MovieCredit rows and does not call getPeopleByNames when credits are present', () => {
+      selectedMovie = {
+        id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [],
+        credits: [
+          { personId: 'p2', personName: 'Emily Blunt', personPhotoUrl: 'eb.jpg', creditType: CinemaServiceAgent.CreditType.Actor, characterName: 'Kitty Oppenheimer', displayOrder: 1 },
+          { personId: 'p1', personName: 'Christopher Nolan', personPhotoUrl: 'cn.jpg', creditType: CinemaServiceAgent.CreditType.Director, characterName: null, displayOrder: 0 },
+        ],
+      };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).not.toHaveBeenCalled();
+      expect(c.hasCredits(selectedMovie)).toBe(true);
+      expect(c.creditDirectors(selectedMovie).map((x: any) => x.personName)).toEqual(['Christopher Nolan']);
+      expect(c.creditActors(selectedMovie).map((x: any) => x.personName)).toEqual(['Emily Blunt']);
+    });
+
+    it('sorts directors and actors by displayOrder', () => {
+      selectedMovie = {
+        id: 'movie-1', slug: 'movie-1', showTimes: [],
+        credits: [
+          { personId: 'p2', personName: 'Second Actor', creditType: CinemaServiceAgent.CreditType.Actor, displayOrder: 1 },
+          { personId: 'p1', personName: 'First Actor', creditType: CinemaServiceAgent.CreditType.Actor, displayOrder: 0 },
+        ],
+      };
+      const c = build();
+
+      expect(c.creditActors(selectedMovie).map((x: any) => x.personName)).toEqual(['First Actor', 'Second Actor']);
+    });
+
+    it('falls back to string-splitting + getPeopleByNames when credits is an empty array', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', director: 'Christopher Nolan', cast: 'A, B', showTimes: [], credits: [] };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledTimes(1);
+      expect(cinemaSvc.getPeopleByNames).toHaveBeenCalledWith(['Christopher Nolan', 'A', 'B']);
+    });
+
+    it('hasCredits is false for undefined or empty credits', () => {
+      const c = build();
+
+      expect(c.hasCredits({ credits: undefined })).toBe(false);
+      expect(c.hasCredits({ credits: [] })).toBe(false);
+      expect(c.hasCredits({ credits: [{ creditType: CinemaServiceAgent.CreditType.Actor }] })).toBe(true);
     });
   });
 });

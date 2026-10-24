@@ -112,6 +112,7 @@
     "filters": "Bộ Lọc",
     "totalEntries": "Tổng cộng",
     "required": "Trường này là bắt buộc.",
+    "tooLong": "Giá trị này quá dài.",
     "remove": "Xóa",
     "days": {
       "mon": "Thứ Hai", "tue": "Thứ Ba", "wed": "Thứ Tư", "thu": "Thứ Năm",
@@ -191,7 +192,21 @@
       "uploading": "Đang tải...",
       "uploadFailed": "Tải ảnh thất bại.",
       "description": "Mô Tả",
-      "descriptionPlaceholder": "Nội dung phim..."
+      "descriptionPlaceholder": "Nội dung phim...",
+      "creditsTitle": "Diễn Viên & Đạo Diễn",
+      "creditsHint": "Người được liên kết sẽ thay thế văn bản Đạo Diễn/Diễn Viên ở trên khi hiển thị trên trang phim.",
+      "creditsEditHint": "Sửa tên hoặc ảnh của một người tại đây sẽ cập nhật trên mọi phim có người đó.",
+      "creditsLoading": "Đang tải thông tin...",
+      "addCredit": "Thêm Người",
+      "creditPerson": "Người",
+      "addNewPerson": "Thêm người mới",
+      "creditPersonName": "Tên",
+      "creditPersonPhoto": "URL ảnh (không bắt buộc)",
+      "creditDirector": "Đạo Diễn",
+      "creditActor": "Diễn Viên",
+      "characterName": "Tên Nhân Vật",
+      "moveUp": "Di chuyển lên",
+      "moveDown": "Di chuyển xuống"
     },
     "list": {
       "title": "Quản Lý Phim",

@@ -18,4 +18,5 @@ public class CreateMovieRequest
     public string? Subtitle { get; set; }
     public Guid AgeRestrictionId { get; set; }
     public List<Guid> MovieTypeIds { get; set; } = new();
+    public List<MovieCreditRequest>? Credits { get; set; }
 }

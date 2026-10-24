@@ -38,6 +38,8 @@ public class CinemaContext : DbContext
     public DbSet<TimeSlot> TimeSlot => Set<TimeSlot>();
     public DbSet<TicketPrice> TicketPrice => Set<TicketPrice>();
     public DbSet<News> News => Set<News>();
+    public DbSet<Person> Person => Set<Person>();
+    public DbSet<MovieCredit> MovieCredit => Set<MovieCredit>();
     public DbSet<Comment> Comment => Set<Comment>();
     public DbSet<Evaluation> Evaluation => Set<Evaluation>();
     public DbSet<ReminderLog> ReminderLog => Set<ReminderLog>();

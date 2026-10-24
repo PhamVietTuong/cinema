@@ -65,9 +65,21 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .FirstOrDefaultAsync(m => m.Slug == slug);
 
     public async Task<Movie?> GetForUpdateAsync(Guid id)
-        => await DbSet
+    {
+        // MovieTypeDetails and MovieCredits are independent collections: including both in one query
+        // produces a cartesian result (rows = genres x credits), per this repo's own guidance against
+        // including a collection navigation alongside other includes. Load the credits in a second
+        // query instead; EF tracks and attaches them to the same Movie instance via the FK, since both
+        // come from this store's single DbContext.
+        var movie = await DbSet
             .Include(m => m.MovieTypeDetails)
             .FirstOrDefaultAsync(m => m.Id == id);
+        if (movie != null)
+        {
+            await Context.Set<MovieCredit>().Where(c => c.MovieId == id).LoadAsync();
+        }
+        return movie;
+    }
 
     public async Task<IEnumerable<Movie>> GetNowShowingAsync()
     {

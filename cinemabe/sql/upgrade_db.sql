@@ -798,6 +798,50 @@ END
 -- ===== end movie slug =====
 
 -- ============================================================
+-- Person directory: name -> photo lookup for Cast & Crew (no FKs)
+-- ============================================================
+-- Identical in create_db.sql and upgrade_db.sql (idempotent). Name-keyed lookup only: no
+-- relation to Movie, Director or Cast. Used to resolve a photo for a cast/director name.
+IF OBJECT_ID('dbo.Person', 'U') IS NULL
+BEGIN
+    CREATE TABLE [Person] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [Name] nvarchar(200) NOT NULL,
+        [PhotoUrl] nvarchar(500) NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_Person] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_Person_Name] ON [Person] ([Name]);
+END
+-- ===== end person directory =====
+
+-- ============================================================
+-- MovieCredit: explicit Person <-> Movie credits (Director/Actor, ordered, optional character name)
+-- ============================================================
+-- Identical in create_db.sql and upgrade_db.sql (idempotent). Movie.Director/Movie.Cast stay as
+-- plain text and are unaffected; when a movie has MovieCredit rows the app prefers those.
+IF OBJECT_ID('dbo.MovieCredit', 'U') IS NULL
+BEGIN
+    CREATE TABLE [MovieCredit] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [MovieId] uniqueidentifier NOT NULL,
+        [PersonId] uniqueidentifier NOT NULL,
+        [CreditType] int NOT NULL,
+        [CharacterName] nvarchar(200) NULL,
+        [DisplayOrder] int NOT NULL DEFAULT 0,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_MovieCredit] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_MovieCredit_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_MovieCredit_Person_PersonId] FOREIGN KEY ([PersonId]) REFERENCES [Person] ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_MovieCredit_MovieId_PersonId_CreditType] ON [MovieCredit] ([MovieId], [PersonId], [CreditType]);
+    CREATE INDEX [IX_MovieCredit_PersonId] ON [MovieCredit] ([PersonId]);
+END
+-- ===== end movie credit =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

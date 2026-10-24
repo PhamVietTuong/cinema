@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IMemberShipManager, MemberShipManager>();
         services.AddScoped<IHolidayManager, HolidayManager>();
         services.AddScoped<INewsManager, NewsManager>();
+        services.AddScoped<IPersonManager, PersonManager>();
         services.AddScoped<IDiscountManager, DiscountManager>();
         services.AddScoped<IPromotionProgramManager, PromotionProgramManager>();
         services.AddScoped<IFoodAndDrinkManager, FoodAndDrinkManager>();
