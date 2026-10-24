@@ -13766,13 +13766,14 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("personId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid? PersonId { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("newPersonName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(200)]
-        public string NewPersonName { get; set; }
+        [Newtonsoft.Json.JsonProperty("personName", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
+        public string PersonName { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("newPersonPhotoUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("personPhotoUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.StringLength(500)]
-        public string NewPersonPhotoUrl { get; set; }
+        public string PersonPhotoUrl { get; set; }
 
         [Newtonsoft.Json.JsonProperty("creditType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public CreditType CreditType { get; set; }

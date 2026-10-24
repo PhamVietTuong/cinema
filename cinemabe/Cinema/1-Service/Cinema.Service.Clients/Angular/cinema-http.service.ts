@@ -9605,8 +9605,8 @@ export interface ICreateMovieRequest {
 
 export class MovieCreditRequest implements IMovieCreditRequest {
     personId?: string | undefined;
-    newPersonName?: string | undefined;
-    newPersonPhotoUrl?: string | undefined;
+    personName!: string;
+    personPhotoUrl?: string | undefined;
     creditType?: CreditType;
     characterName?: string | undefined;
     displayOrder?: number;
@@ -9623,8 +9623,8 @@ export class MovieCreditRequest implements IMovieCreditRequest {
     init(_data?: any) {
         if (_data) {
             this.personId = _data["personId"];
-            this.newPersonName = _data["newPersonName"];
-            this.newPersonPhotoUrl = _data["newPersonPhotoUrl"];
+            this.personName = _data["personName"];
+            this.personPhotoUrl = _data["personPhotoUrl"];
             this.creditType = _data["creditType"];
             this.characterName = _data["characterName"];
             this.displayOrder = _data["displayOrder"];
@@ -9641,8 +9641,8 @@ export class MovieCreditRequest implements IMovieCreditRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["personId"] = this.personId;
-        data["newPersonName"] = this.newPersonName;
-        data["newPersonPhotoUrl"] = this.newPersonPhotoUrl;
+        data["personName"] = this.personName;
+        data["personPhotoUrl"] = this.personPhotoUrl;
         data["creditType"] = this.creditType;
         data["characterName"] = this.characterName;
         data["displayOrder"] = this.displayOrder;
@@ -9652,8 +9652,8 @@ export class MovieCreditRequest implements IMovieCreditRequest {
 
 export interface IMovieCreditRequest {
     personId?: string | undefined;
-    newPersonName?: string | undefined;
-    newPersonPhotoUrl?: string | undefined;
+    personName: string;
+    personPhotoUrl?: string | undefined;
     creditType?: CreditType;
     characterName?: string | undefined;
     displayOrder?: number;

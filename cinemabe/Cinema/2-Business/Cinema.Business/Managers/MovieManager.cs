@@ -187,8 +187,8 @@ public class MovieManager : IMovieManager
                 DisplayOrder  = c.DisplayOrder,
             }).ToList();
         }
-        // Any Person staged by NormalizeCreditsAsync (via PersonStore.TrackNew) for a brand-new
-        // "+ Add new person" credit commits here, atomically with the movie and its credits.
+        // Any Person created or edited by NormalizeCreditsAsync (staged via PersonStore.TrackNew, or
+        // mutated on an already-tracked/loaded entity) commits here, atomically with the movie.
         await _uow.MovieStore.CreateAsync(movie);
         return await GetBasicDTOAsync(movie.Id);
     }
@@ -362,25 +362,30 @@ public class MovieManager : IMovieManager
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /// <summary>A credit row after validation/resolution: PersonId is always a real, resolved Guid —
-    /// either the request's explicit PersonId, an existing Person whose name matched the request's
-    /// NewPersonName case-insensitively, or a Person just staged (via PersonStore.TrackNew) for a
-    /// brand-new name with no match.</summary>
+    /// <summary>A credit row after validation/resolution: PersonId is always a real, resolved Guid.</summary>
     private sealed record NormalizedCredit(Guid PersonId, CreditType CreditType, string? CharacterName, int DisplayOrder);
 
-    /// <summary>Validates and resolves a requested credit list, in three read-only phases followed by
-    /// one deliberate write phase:
-    /// 1. Per-row validation with no DB access: a defined CreditType, and exactly one of PersonId /
-    ///    NewPersonName (a blank/whitespace NewPersonName counts as not provided).
-    /// 2. Looks up explicit PersonIds (must all exist) and new names (matched case-insensitively
-    ///    against existing People) — at most one query each, skipped when there's nothing to look up.
-    /// 3. Resolves each row to a real PersonId — explicit, an existing match reused as-is (any typed
-    ///    photo URL for a reused match is ignored; changing a photo stays a People-screen action), or
-    ///    a brand-new Person object (not yet saved) the first time a new name is seen — and rejects a
-    ///    duplicate (PersonId, CreditType) pair against the *resolved* ids.
-    /// 4. Stages every newly-created Person via PersonStore.TrackNew (no save), so creation commits
-    ///    atomically with whatever SaveChanges the caller performs for the movie/credits.
-    /// Throws InvalidOperationException (-> 400) on any violation, before phase 4 ever runs.</summary>
+    /// <summary>Validates and resolves a requested credit list. Every row always carries a PersonName
+    /// (and optional PersonPhotoUrl): when PersonId is set, these edit that Person in place (applies to
+    /// every movie they're credited on); when absent, they match-or-create by name. Phases 1-5 are
+    /// read-only; phase 6 is the only mutation, reached only once every row has validated.
+    /// 1. Per row, no DB access: a defined CreditType, a non-blank PersonName, and an explicit-id
+    ///    (PersonId, CreditType) duplicate check — so a request using only explicit picks never
+    ///    touches PersonStore.
+    /// 2. One query loads every Person referenced by an explicit PersonId or by any row's PersonName
+    ///    (tracked — a row with an id may edit that Person).
+    /// 3. Every explicit PersonId must resolve to a loaded Person.
+    /// 4. Computes the desired (Name, PhotoUrl) per explicit id (rows disagreeing about the same
+    ///    person are rejected), then validates each resulting rename against every other loaded
+    ///    person's current name and every other rename in this request — this also rejects a two-way
+    ///    name swap, since each side's target name is still "currently taken" by the other.
+    /// 5. Resolves every row, in request order, to a real PersonId: explicit; a name matching a phase-4
+    ///    rename target; an existing Person matched by name (a non-blank photo here replaces theirs,
+    ///    unless that person already has an explicit edit in this request, which wins); or a brand-new,
+    ///    not-yet-saved Person (first non-blank photo among same-named new rows wins) — then checks the
+    ///    resulting (PersonId, CreditType) pair for duplicates.
+    /// 6. Applies every Person edit and stages every new Person via PersonStore.TrackNew.
+    /// Throws InvalidOperationException (-> 400) on any violation.</summary>
     private async Task<List<NormalizedCredit>> NormalizeCreditsAsync(List<MovieCreditRequest> credits)
     {
         if (credits.Count == 0)
@@ -388,97 +393,176 @@ public class MovieManager : IMovieManager
             return new List<NormalizedCredit>();
         }
 
+        var trimmedNames = new string[credits.Count];
         var explicitIds = new List<Guid>();
-        var newNames = new List<string>();
-        // Catches an explicit-id duplicate immediately, with no DB access — the common case, and what
-        // lets this reject before ever touching PersonStore (matters for a request with only explicit
-        // picks). A duplicate that only emerges after resolving a new name is still caught below.
+        var allNames = new List<string>();
         var seenKeys = new HashSet<(Guid PersonId, CreditType CreditType)>();
-        foreach (var c in credits)
+
+        for (var i = 0; i < credits.Count; i++)
         {
+            var c = credits[i];
             if (!Enum.IsDefined(c.CreditType))
             {
                 throw new InvalidOperationException("Invalid credit type.");
             }
 
-            var hasId = c.PersonId is { } id && id != Guid.Empty;
-            var hasName = !string.IsNullOrWhiteSpace(c.NewPersonName);
-            if (hasId == hasName)
+            var name = c.PersonName.Trim();
+            if (name.Length == 0)
             {
-                throw hasId
-                    ? new InvalidOperationException("A credit must either reference an existing person or name a new one, not both.")
-                    : new InvalidOperationException("Each credit must reference a person.");
+                throw new InvalidOperationException("Each credit must name a person.");
             }
+            trimmedNames[i] = name;
+            allNames.Add(name);
 
-            if (hasId)
+            if (c.PersonId is { } id && id != Guid.Empty)
             {
-                explicitIds.Add(c.PersonId!.Value);
-                if (!seenKeys.Add((c.PersonId.Value, c.CreditType)))
+                explicitIds.Add(id);
+                if (!seenKeys.Add((id, c.CreditType)))
                 {
                     throw new InvalidOperationException("The same person cannot be credited twice in the same role.");
                 }
-            }
-            else
-            {
-                newNames.Add(c.NewPersonName!.Trim());
             }
         }
 
         var distinctExplicitIds = explicitIds.Distinct().ToList();
-        if (distinctExplicitIds.Count > 0)
+        var distinctNames = allNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        var loaded = distinctExplicitIds.Count > 0 || distinctNames.Count > 0
+            ? (await _uow.PersonStore.FindAllAsync(p => distinctExplicitIds.Contains(p.Id) || distinctNames.Contains(p.Name))).ToList()
+            : new List<Person>();
+
+        var byId = loaded.ToDictionary(p => p.Id);
+        var byName = new Dictionary<string, Person>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in loaded)
         {
-            var existingCount = await _uow.PersonStore.CountAsync(p => distinctExplicitIds.Contains(p.Id));
-            if (existingCount != distinctExplicitIds.Count)
-            {
-                throw new InvalidOperationException("One or more credited people no longer exist.");
-            }
+            byName[p.Name] = p;
         }
 
-        var distinctNewNames = newNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        var existingByName = distinctNewNames.Count > 0
-            ? await _uow.PersonStore.GetIdsByNamesAsync(distinctNewNames)
-            : new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
-
-        var pendingByName = new Dictionary<string, Person>(StringComparer.OrdinalIgnoreCase);
-        var normalized = new List<NormalizedCredit>(credits.Count);
-        foreach (var c in credits)
+        if (distinctExplicitIds.Any(id => !byId.ContainsKey(id)))
         {
-            Guid personId;
-            if (c.PersonId is { } id && id != Guid.Empty)
+            throw new InvalidOperationException("One or more credited people no longer exist.");
+        }
+
+        // Phase 4: the desired Name/PhotoUrl per explicit id, and the renames that result.
+        var desiredById = new Dictionary<Guid, (string Name, string? Photo)>();
+        for (var i = 0; i < credits.Count; i++)
+        {
+            if (credits[i].PersonId is not { } id || id == Guid.Empty)
             {
-                // Already de-duplicated and seenKeys-checked above with no DB access.
-                personId = id;
+                continue;
+            }
+            var desired = (Name: trimmedNames[i], Photo: NormalizePhotoUrl(credits[i].PersonPhotoUrl));
+            if (desiredById.TryGetValue(id, out var already) &&
+                (!string.Equals(already.Name, desired.Name, StringComparison.Ordinal) || already.Photo != desired.Photo))
+            {
+                throw new InvalidOperationException("Conflicting name/photo for the same person in this save.");
+            }
+            desiredById[id] = desired;
+        }
+
+        var renameTargets = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (id, desired) in desiredById)
+        {
+            if (string.Equals(byId[id].Name, desired.Name, StringComparison.Ordinal))
+            {
+                continue;
+            }
+            if (byName.TryGetValue(desired.Name, out var clash) && clash.Id != id)
+            {
+                throw new InvalidOperationException("A person with this name already exists.");
+            }
+            if (renameTargets.TryGetValue(desired.Name, out var claimedBy) && claimedBy != id)
+            {
+                throw new InvalidOperationException("A person with this name already exists.");
+            }
+            renameTargets[desired.Name] = id;
+        }
+
+        // Phase 5: resolve every row to a real PersonId, in request order.
+        var pendingByName = new Dictionary<string, Person>(StringComparer.OrdinalIgnoreCase);
+        var matchedPhotoById = new Dictionary<Guid, string?>();
+        var normalized = new List<NormalizedCredit>(credits.Count);
+
+        for (var i = 0; i < credits.Count; i++)
+        {
+            var c = credits[i];
+            var name = trimmedNames[i];
+            var hasId = c.PersonId is { } pid && pid != Guid.Empty;
+            Guid personId;
+
+            if (hasId)
+            {
+                personId = c.PersonId!.Value;
+            }
+            else if (renameTargets.TryGetValue(name, out var renamedId))
+            {
+                personId = renamedId;
+            }
+            else if (byName.TryGetValue(name, out var existing))
+            {
+                if (desiredById.TryGetValue(existing.Id, out var existingDesired) &&
+                    !string.Equals(existingDesired.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException($"'{name}' conflicts with a person being renamed in this save.");
+                }
+                personId = existing.Id;
+                // An explicit edit elsewhere in this request already governs this person's final
+                // photo (applied in phase 6); only track a name-matched photo when there isn't one.
+                var photo = NormalizePhotoUrl(c.PersonPhotoUrl);
+                if (photo != null && !desiredById.ContainsKey(existing.Id))
+                {
+                    if (matchedPhotoById.TryGetValue(existing.Id, out var already) && already != photo)
+                    {
+                        throw new InvalidOperationException("Conflicting name/photo for the same person in this save.");
+                    }
+                    matchedPhotoById[existing.Id] = photo;
+                }
+            }
+            else if (pendingByName.TryGetValue(name, out var pending))
+            {
+                personId = pending.Id;
+                var photo = NormalizePhotoUrl(c.PersonPhotoUrl);
+                if (pending.PhotoUrl == null && photo != null)
+                {
+                    pending.PhotoUrl = photo;
+                }
             }
             else
             {
-                var name = c.NewPersonName!.Trim();
-                if (existingByName.TryGetValue(name, out var existingId))
-                {
-                    personId = existingId;
-                }
-                else if (pendingByName.TryGetValue(name, out var pending))
-                {
-                    personId = pending.Id;
-                }
-                else
-                {
-                    var created = new Person { Name = name, PhotoUrl = NormalizePhotoUrl(c.NewPersonPhotoUrl) };
-                    pendingByName[name] = created;
-                    personId = created.Id;
-                }
+                var created = new Person { Name = name, PhotoUrl = NormalizePhotoUrl(c.PersonPhotoUrl) };
+                pendingByName[name] = created;
+                personId = created.Id;
+            }
 
-                // A resolved name can still collide with an explicit pick or another resolved name
-                // (seenKeys already holds every explicit-id key from the loop above).
-                if (!seenKeys.Add((personId, c.CreditType)))
-                {
-                    throw new InvalidOperationException("The same person cannot be credited twice in the same role.");
-                }
+            if (!hasId && !seenKeys.Add((personId, c.CreditType)))
+            {
+                throw new InvalidOperationException("The same person cannot be credited twice in the same role.");
             }
 
             var characterName = c.CreditType == CreditType.Director ? null : NormalizeCharacterName(c.CharacterName);
             normalized.Add(new NormalizedCredit(personId, c.CreditType, characterName, c.DisplayOrder));
         }
 
+        // Phase 6: the only mutation, reached only once every row above has validated.
+        foreach (var (id, desired) in desiredById)
+        {
+            var person = byId[id];
+            if (!string.Equals(person.Name, desired.Name, StringComparison.Ordinal) || person.PhotoUrl != desired.Photo)
+            {
+                person.Name = desired.Name;
+                person.PhotoUrl = desired.Photo;
+                person.LastUpdatedTime = DateTime.UtcNow;
+            }
+        }
+        foreach (var (id, photo) in matchedPhotoById)
+        {
+            var person = byId[id];
+            if (person.PhotoUrl != photo)
+            {
+                person.PhotoUrl = photo;
+                person.LastUpdatedTime = DateTime.UtcNow;
+            }
+        }
         foreach (var person in pendingByName.Values)
         {
             _uow.PersonStore.TrackNew(person);

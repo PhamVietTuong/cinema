@@ -141,26 +141,38 @@
         <div class="dlg-field dlg-field--full">
           <label class="dlg-label">{{ 'movies.form.creditsTitle' | translate }}</label>
           <p class="dlg-hint">{{ 'movies.form.creditsHint' | translate }}</p>
+          <p class="dlg-hint">{{ 'movies.form.creditsEditHint' | translate }}</p>
           <p class="img-upload-status" *ngIf="!creditsLoaded">{{ 'movies.form.creditsLoading' | translate }}</p>
           <div formArrayName="credits">
             <div class="mc-row" *ngFor="let row of creditRows.controls; let i = index" [formGroupName]="i">
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-select formControlName="personId" [placeholder]="'movies.form.creditPerson' | translate">
+                <mat-select formControlName="personId" [placeholder]="'movies.form.creditPerson' | translate" (selectionChange)="onPersonPicked($any(row))">
                   <mat-option [value]="newPersonValue">+ {{ 'movies.form.addNewPerson' | translate }}</mat-option>
                   <mat-option *ngFor="let p of people" [value]="p.id">{{ p.name }}</mat-option>
                 </mat-select>
               </mat-form-field>
-              <ng-container *ngIf="isNewPerson(i)">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="personName" [placeholder]="'movies.form.creditPersonName' | translate">
+                <mat-error *ngIf="creditRows.at(i).get('personName')?.hasError('required') || creditRows.at(i).get('personName')?.hasError('pattern')">{{ 'common.required' | translate }}</mat-error>
+                <mat-error *ngIf="creditRows.at(i).get('personName')?.hasError('maxlength')">{{ 'common.tooLong' | translate }}</mat-error>
+              </mat-form-field>
+              <div class="mc-photo">
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                  <input matInput formControlName="newPersonName" [placeholder]="'movies.form.newPersonName' | translate">
-                  <mat-error *ngIf="creditRows.at(i).get('newPersonName')?.hasError('required') || creditRows.at(i).get('newPersonName')?.hasError('pattern')">{{ 'common.required' | translate }}</mat-error>
-                  <mat-error *ngIf="creditRows.at(i).get('newPersonName')?.hasError('maxlength')">{{ 'common.tooLong' | translate }}</mat-error>
+                  <input matInput formControlName="personPhotoUrl" [placeholder]="'movies.form.creditPersonPhoto' | translate">
+                  <mat-error *ngIf="creditRows.at(i).get('personPhotoUrl')?.hasError('maxlength')">{{ 'common.tooLong' | translate }}</mat-error>
                 </mat-form-field>
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                  <input matInput formControlName="newPersonPhotoUrl" [placeholder]="'movies.form.newPersonPhotoUrl' | translate">
-                  <mat-error *ngIf="creditRows.at(i).get('newPersonPhotoUrl')?.hasError('maxlength')">{{ 'common.tooLong' | translate }}</mat-error>
-                </mat-form-field>
-              </ng-container>
+                <div class="img-upload-row">
+                  <label class="ad-btn ad-btn--ghost">
+                    <mat-icon>upload</mat-icon> {{ 'movies.form.uploadImage' | translate }}
+                    <input type="file" accept="image/*" hidden (change)="onPickCreditPhoto($event, $any(row))">
+                  </label>
+                  <span class="img-upload-status" *ngIf="rowUploading(row)">{{ 'movies.form.uploading' | translate }}</span>
+                  <span class="img-upload-status err" *ngIf="rowUploadError(row)">{{ rowUploadError(row) }}</span>
+                </div>
+                <div class="img-preview" *ngIf="row.value.personPhotoUrl">
+                  <img [src]="row.value.personPhotoUrl" alt="">
+                </div>
+              </div>
               <mat-button-toggle-group formControlName="creditType" name="creditType-{{i}}">
                 <mat-button-toggle *ngFor="let o of creditTypeOptions" [value]="o.value">{{ o.name | translate }}</mat-button-toggle>
               </mat-button-toggle-group>

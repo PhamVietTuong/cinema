@@ -3,18 +3,20 @@ using Cinema.Data.Enums;
 
 namespace Cinema.Business.DTO.Movies;
 
-/// <summary>Exactly one of PersonId or NewPersonName must be set. PersonId references an existing
-/// Person. NewPersonName creates one inline (or reuses an existing Person whose name matches
-/// case-insensitively) — NewPersonPhotoUrl is used only when a brand-new Person is actually created.</summary>
+/// <summary>PersonId, when set, edits that Person's Name/PhotoUrl in place (applies to every movie
+/// they're credited on). PersonId absent means match-or-create: an existing Person whose Name matches
+/// PersonName case-insensitively is reused (a non-blank PersonPhotoUrl then replaces theirs), otherwise
+/// a brand-new Person is created.</summary>
 public class MovieCreditRequest
 {
     public Guid? PersonId { get; set; }
 
+    [Required]
     [MaxLength(200)]
-    public string? NewPersonName { get; set; }
+    public string PersonName { get; set; } = string.Empty;
 
     [MaxLength(500)]
-    public string? NewPersonPhotoUrl { get; set; }
+    public string? PersonPhotoUrl { get; set; }
 
     public CreditType CreditType { get; set; }
 

@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, CreditTypeValues } from 'CinemaLib';
@@ -39,6 +39,10 @@ export class MovieDialog implements OnInit {
 
   uploading = false;
   uploadError = '';
+
+  /** Per-row upload state for the Cast & Crew photo field, keyed by the row's own FormGroup instance
+   * so it survives reordering (moveCreditRow splices the FormArray's controls). */
+  private _rowUpload = new WeakMap<AbstractControl, { uploading: boolean; error: string }>();
 
   constructor(
     private _svc: CinemaServiceAgent.HttpService,
@@ -88,14 +92,20 @@ export class MovieDialog implements OnInit {
       this._svc.getMovie(this.editingId).subscribe({
         next: movie => {
           // An existing credit's person might not be in the first 200 people — merge it in so the
-          // select never shows blank for an already-assigned person.
+          // dropdown shows them selected instead of blank.
           for (const c of movie.credits ?? []) {
-            if (!this.people.some(p => p.id === c.personId)) {
+            if (c.personId && !this.people.some(p => p.id === c.personId)) {
               this.people = [...this.people, CinemaServiceAgent.PersonDTO.fromJS({ id: c.personId, name: c.personName, photoUrl: c.personPhotoUrl })];
             }
           }
           for (const c of movie.credits ?? []) {
-            this.creditRows.push(this._creditRow(c.personId ?? '', c.creditType ?? CinemaServiceAgent.CreditType.Actor, c.characterName ?? ''));
+            this.creditRows.push(this._creditRow({
+              personId: c.personId ?? NEW_PERSON,
+              personName: c.personName ?? '',
+              personPhotoUrl: c.personPhotoUrl ?? '',
+              creditType: c.creditType ?? CinemaServiceAgent.CreditType.Actor,
+              characterName: c.characterName ?? '',
+            }));
           }
           this.creditsLoaded = true;
           this._cdr.markForCheck();
@@ -112,7 +122,10 @@ export class MovieDialog implements OnInit {
   get creditRows(): FormArray { return this.form.get('credits') as FormArray; }
 
   addCreditRow(): void {
-    this.creditRows.push(this._creditRow('', CinemaServiceAgent.CreditType.Actor, ''));
+    this.creditRows.push(this._creditRow({
+      personId: NEW_PERSON, personName: '', personPhotoUrl: '',
+      creditType: CinemaServiceAgent.CreditType.Actor, characterName: '',
+    }));
   }
 
   removeCreditRow(index: number): void {
@@ -134,30 +147,91 @@ export class MovieDialog implements OnInit {
     return this.creditRows.at(index).value.creditType === CinemaServiceAgent.CreditType.Actor;
   }
 
-  isNewPerson(index: number): boolean {
-    return this.creditRows.at(index).value.personId === NEW_PERSON;
+  /** Picking a person (including "+ Add new person") replaces whatever Name/Photo this row had with
+   * that person's own — the row then edits whichever person is currently selected. Bound to
+   * (selectionChange) rather than a value subscription so it only fires on an actual user pick, not
+   * while rows are being built from a loaded movie. */
+  onPersonPicked(row: FormGroup): void {
+    const personId = row.value.personId;
+    if (personId === NEW_PERSON) {
+      row.patchValue({ personName: '', personPhotoUrl: '' });
+      return;
+    }
+    // Prefer another row already crediting this same person (e.g. Director + Actor on one movie):
+    // it may carry an edit the admin just typed, which the `people` list snapshot wouldn't have yet.
+    // The backend rejects two rows for the same person with different Name/PhotoUrl in one save, so
+    // rows for the same person must always agree.
+    const sibling = this._siblingRow(row, personId);
+    if (sibling) {
+      row.patchValue({ personName: sibling.value.personName, personPhotoUrl: sibling.value.personPhotoUrl });
+      return;
+    }
+    const person = this.people.find(p => p.id === personId);
+    row.patchValue({ personName: person?.name ?? '', personPhotoUrl: person?.photoUrl ?? '' });
   }
 
-  private _creditRow(personId: string, creditType: CinemaServiceAgent.CreditType, characterName: string): FormGroup {
+  private _siblingRow(row: FormGroup, personId: string): FormGroup | undefined {
+    return this.creditRows.controls.find(c => c !== row && (c as FormGroup).value.personId === personId) as FormGroup | undefined;
+  }
+
+  /** Keeps every row crediting the same person in sync as the admin edits Name/Photo in any one of
+   * them, so two rows for the same person (e.g. Director + Actor) never disagree at save time — the
+   * backend rejects that as a conflicting edit. Also updates the `people` list so the dropdown's own
+   * label reflects the live edit. */
+  private _syncSiblingRows(row: FormGroup, field: 'personName' | 'personPhotoUrl', value: string): void {
+    const personId = row.value.personId;
+    if (!personId || personId === NEW_PERSON) {
+      return;
+    }
+    for (const control of this.creditRows.controls) {
+      if (control === row) {
+        continue;
+      }
+      const sibling = control as FormGroup;
+      if (sibling.value.personId === personId && sibling.value[field] !== value) {
+        sibling.get(field)!.setValue(value, { emitEvent: false });
+      }
+    }
+    const person = this.people.find(p => p.id === personId);
+    if (person) {
+      if (field === 'personName') {
+        person.name = value;
+      } else {
+        person.photoUrl = value;
+      }
+    }
+    this._cdr.markForCheck();
+  }
+
+  rowUploading(row: AbstractControl): boolean {
+    return this._rowUpload.get(row)?.uploading ?? false;
+  }
+
+  rowUploadError(row: AbstractControl): string {
+    return this._rowUpload.get(row)?.error ?? '';
+  }
+
+  onPickCreditPhoto(event: Event, row: FormGroup): void {
+    this._uploadImage(
+      event,
+      url => row.patchValue({ personPhotoUrl: url }),
+      (uploading, error) => this._rowUpload.set(row, { uploading, error }),
+    );
+  }
+
+  private _creditRow(init: {
+    personId: string; personName: string; personPhotoUrl: string;
+    creditType: CinemaServiceAgent.CreditType; characterName: string;
+  }): FormGroup {
     const group = this._fb.group({
-      personId: [personId, Validators.required],
-      creditType: [creditType],
-      characterName: [characterName],
-      newPersonName: [''],
-      newPersonPhotoUrl: [''],
+      personId: [init.personId, Validators.required],
+      personName: [init.personName, [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
+      personPhotoUrl: [init.personPhotoUrl, Validators.maxLength(500)],
+      creditType: [init.creditType],
+      characterName: [init.characterName],
     });
-    const newPersonName = group.controls['newPersonName'];
-    const newPersonPhotoUrl = group.controls['newPersonPhotoUrl'];
-    // Typed inline values are kept (not cleared) if the admin picks a real person and then switches
-    // back to "+ Add new person" — only the validators toggle with the selection, so a value typed
-    // while the sentinel was picked can't silently invalidate the form once it's hidden again.
-    group.controls['personId'].valueChanges.subscribe(value => {
-      const isNew = value === NEW_PERSON;
-      newPersonName.setValidators(isNew ? [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)] : null);
-      newPersonPhotoUrl.setValidators(isNew ? Validators.maxLength(500) : null);
-      newPersonName.updateValueAndValidity();
-      newPersonPhotoUrl.updateValueAndValidity();
-    });
+    group.controls['personName'].valueChanges.subscribe(v => this._syncSiblingRows(group, 'personName', v ?? ''));
+    group.controls['personPhotoUrl'].valueChanges.subscribe(v => this._syncSiblingRows(group, 'personPhotoUrl', v ?? ''));
     return group;
   }
 
@@ -184,21 +258,27 @@ export class MovieDialog implements OnInit {
   }
 
   onPickImage(event: Event): void {
+    this._uploadImage(
+      event,
+      url => this.form.patchValue({ posterUrl: url }),
+      (uploading, error) => { this.uploading = uploading; this.uploadError = error; },
+    );
+  }
+
+  private _uploadImage(event: Event, onUrl: (url: string) => void, setState: (uploading: boolean, error: string) => void): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) {
       return;
     }
-    this.uploading = true;
-    this.uploadError = '';
+    setState(true, '');
     this._upload.upload(file).subscribe({
       next: url => {
-        this.form.patchValue({ posterUrl: url });
-        this.uploading = false;
+        onUrl(url);
+        setState(false, '');
         this._cdr.markForCheck();
       },
       error: () => {
-        this.uploadError = 'Tải ảnh thất bại.';
-        this.uploading = false;
+        setState(false, 'Tải ảnh thất bại.');
         this._cdr.markForCheck();
       },
     });
@@ -214,9 +294,9 @@ export class MovieDialog implements OnInit {
     // Reached only once creditsLoaded is true (either a new movie with none yet, or an existing
     // movie whose credits have finished loading), so the current rows are always safe to send.
     payload['credits'] = creditRowValues.map((r: any, i: number) => ({
-      ...(r.personId === NEW_PERSON
-        ? { personId: undefined, newPersonName: r.newPersonName.trim(), newPersonPhotoUrl: r.newPersonPhotoUrl?.trim() || undefined }
-        : { personId: r.personId }),
+      personId: r.personId === NEW_PERSON ? undefined : r.personId,
+      personName: r.personName.trim(),
+      personPhotoUrl: r.personPhotoUrl?.trim() || undefined,
       creditType: r.creditType,
       characterName: r.creditType === CinemaServiceAgent.CreditType.Actor ? (r.characterName?.trim() || undefined) : undefined,
       displayOrder: i,

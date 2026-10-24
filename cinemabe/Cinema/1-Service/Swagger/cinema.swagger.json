@@ -6674,18 +6674,21 @@
       "MovieCreditRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "personName"
+        ],
         "properties": {
           "personId": {
             "type": "string",
             "format": "guid",
             "nullable": true
           },
-          "newPersonName": {
+          "personName": {
             "type": "string",
             "maxLength": 200,
-            "nullable": true
+            "minLength": 1
           },
-          "newPersonPhotoUrl": {
+          "personPhotoUrl": {
             "type": "string",
             "maxLength": 500,
             "nullable": true
