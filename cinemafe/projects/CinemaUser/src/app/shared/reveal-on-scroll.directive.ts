@@ -1,9 +1,9 @@
 import { Directive, ElementRef, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 
 /**
- * Fades a card in with a slight rise the first time it scrolls into the viewport. Toggles classes
- * directly on the host via Renderer2 (no binding, no change detection) since the app is zoneless and
- * this is pure CSS motion — see `.reveal`/`.is-revealed` in movie-card/home SCSS for the actual transition.
+ * Fades a card in with a slight rise the first time it scrolls into the viewport. Toggles the
+ * `is-revealed` class directly on the host via Renderer2 (no binding, no change detection) since the
+ * app is zoneless — see `.is-revealed` in movie-card/home SCSS for the actual transition.
  */
 @Directive({
   selector: '[appRevealOnScroll]',
@@ -16,7 +16,6 @@ export class RevealOnScrollDirective implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const host = this._el.nativeElement;
-    this._renderer.addClass(host, 'reveal');
 
     if (!('IntersectionObserver' in window)) {
       this._renderer.addClass(host, 'is-revealed');

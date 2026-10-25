@@ -170,7 +170,7 @@
   .mc-card--actions.is-revealed .badge-fade { animation: mc-badge-fade-in 0.4s ease 0.3s both; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mc-card--actions.is-revealed .badge-fade { opacity: 1; }
+  .badge-fade { opacity: 1; }
 }
 
 @keyframes mc-badge-fade-in {

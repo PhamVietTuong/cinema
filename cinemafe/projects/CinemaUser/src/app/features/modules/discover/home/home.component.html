@@ -9,6 +9,7 @@
       <div class="hero-content">
         <div class="hero-badges hero-fade-up" style="animation-delay:0.1s">
           <span class="badge-pill badge-imax">IMAX EXCLUSIVE</span>
+          <span class="badge-pill badge-age">{{ f.ageRestrictionCode }}</span>
         </div>
         <h1 class="hero-title hero-fade-up" style="animation-delay:0.2s">{{ f.title }}</h1>
         <div class="hero-meta hero-fade-up" style="animation-delay:0.3s">
@@ -123,7 +124,7 @@
     <a *ngFor="let p of promotions" class="promo-card" routerLink="/promotions" appRevealOnScroll>
       <div class="promo-card-img">
         <img [src]="p.bannerUrl || 'assets/promo-banner.png'" [alt]="p.title">
-        <span class="promo-card-badge badge-fade">{{ eligibilityLabel(p) | translate }}</span>
+        <span class="promo-card-badge">{{ eligibilityLabel(p) | translate }}</span>
       </div>
       <div class="promo-card-body">
         <h3 class="promo-card-title">{{ p.title }}</h3>
