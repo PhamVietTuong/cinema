@@ -1,21 +1,58 @@
-<div class="mc-card" [class.mc-card--fixed]="fixedWidth" [routerLink]="variant === 'showing' ? detailCommands : null">
-  <div class="mc-poster">
-    <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
-    <ng-container *ngIf="variant === 'showing'">
-      <div class="mc-hover-overlay">
-        <span class="mc-btn-book"><mat-icon>confirmation_number</mat-icon> {{ 'home.card.book' | translate }}</span>
-      </div>
-      <div class="mc-rate" *ngIf="movie.averageRating"><mat-icon>star</mat-icon> {{ movie.averageRating | number:'1.1-1' }}</div>
-      <span class="mc-age" *ngIf="movie.ageRestrictionCode">{{ movie.ageRestrictionCode }}</span>
-    </ng-container>
-    <div class="mc-coming-badge" *ngIf="variant === 'coming'">{{ 'home.card.comingSoonBadge' | translate }}</div>
-  </div>
-  <div class="mc-body">
-    <h3 class="mc-title">{{ movie.title }}</h3>
-    <div class="mc-genres">
-      <span class="mc-chip" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
+<ng-container *ngIf="!actions; else actionsCard">
+  <div class="mc-card" [class.mc-card--fixed]="fixedWidth" [routerLink]="variant === 'showing' ? detailCommands : null">
+    <div class="mc-poster">
+      <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
+      <ng-container *ngIf="variant === 'showing'">
+        <div class="mc-hover-overlay">
+          <span class="mc-btn-book"><mat-icon>confirmation_number</mat-icon> {{ 'home.card.book' | translate }}</span>
+        </div>
+        <div class="mc-rate" *ngIf="movie.averageRating"><mat-icon>star</mat-icon> {{ movie.averageRating | number:'1.1-1' }}</div>
+        <span class="mc-age" *ngIf="movie.ageRestrictionCode">{{ movie.ageRestrictionCode }}</span>
+      </ng-container>
+      <div class="mc-coming-badge" *ngIf="variant === 'coming'">{{ 'home.card.comingSoonBadge' | translate }}</div>
     </div>
-    <p class="mc-duration" *ngIf="variant === 'showing'"><mat-icon>schedule</mat-icon> {{ 'home.movie.minutes' | translate:{ n: movie.duration } }}</p>
-    <p class="mc-duration" *ngIf="variant === 'coming'"><mat-icon>event</mat-icon> {{ movie.releaseDate | date:'dd/MM/yyyy' }}</p>
+    <div class="mc-body">
+      <h3 class="mc-title">{{ movie.title }}</h3>
+      <div class="mc-genres">
+        <span class="mc-chip" *ngFor="let g of movie.genres | slice:0:2">{{ g }}</span>
+      </div>
+      <p class="mc-duration" *ngIf="variant === 'showing'"><mat-icon>schedule</mat-icon> {{ 'home.movie.minutes' | translate:{ n: movie.duration } }}</p>
+      <p class="mc-duration" *ngIf="variant === 'coming'"><mat-icon>event</mat-icon> {{ movie.releaseDate | date:'dd/MM/yyyy' }}</p>
+    </div>
   </div>
-</div>
+</ng-container>
+
+<ng-template #actionsCard>
+  <div class="mc-card mc-card--actions" [class.mc-card--fixed]="fixedWidth" appRevealOnScroll>
+    <div class="mc-poster" (click)="openTrailer($event)" [routerLink]="!hasTrailer ? detailCommands : null">
+      <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
+      <span class="mc-badge mc-badge--age badge-fade" *ngIf="movie.ageRestrictionCode">{{ movie.ageRestrictionCode }}</span>
+      <span class="mc-badge mc-badge--genre badge-fade" *ngIf="movie.genres?.length">{{ movie.genres[0] }}</span>
+      <div class="mc-info-overlay">
+        <dl class="mc-info-list">
+          <div *ngIf="movie.genres?.length"><dt>{{ 'home.card.info.genre' | translate }}</dt><dd>{{ movie.genres[0] }}</dd></div>
+          <div *ngIf="movie.duration"><dt>{{ 'home.card.info.duration' | translate }}</dt><dd>{{ 'home.movie.minutes' | translate:{ n: movie.duration } }}</dd></div>
+          <div *ngIf="movie.subtitle"><dt>{{ 'home.card.info.subtitles' | translate }}</dt><dd>{{ movie.subtitle }}</dd></div>
+          <div *ngIf="movie.language"><dt>{{ 'home.card.info.language' | translate }}</dt><dd>{{ movie.language }}</dd></div>
+        </dl>
+      </div>
+      <div class="mc-play-overlay" *ngIf="hasTrailer">
+        <div class="mc-play-btn"><mat-icon>play_arrow</mat-icon></div>
+      </div>
+    </div>
+    <div class="mc-body">
+      <a class="mc-title mc-title--link" [routerLink]="detailCommands">{{ movie.title }}</a>
+      <div class="mc-action-row">
+        <button type="button" class="mc-btn mc-btn--trailer" *ngIf="hasTrailer" (click)="openTrailer($event)">
+          <mat-icon>play_arrow</mat-icon> {{ 'home.card.trailer' | translate }}
+        </button>
+        <a *ngIf="variant === 'showing'" class="mc-btn mc-btn--book" [routerLink]="detailCommands">
+          {{ 'home.card.bookTickets' | translate }}
+        </a>
+        <a *ngIf="variant === 'coming'" class="mc-btn mc-btn--notify" [routerLink]="detailCommands">
+          {{ 'home.card.notifyMe' | translate }}
+        </a>
+      </div>
+    </div>
+  </div>
+</ng-template>

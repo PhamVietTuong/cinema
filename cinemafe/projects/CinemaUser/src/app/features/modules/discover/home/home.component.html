@@ -2,13 +2,16 @@
 <section class="hero">
   <ng-container *ngIf="featuredMovie$ | async as f; else heroDefault">
     <div class="hero-inner">
+      <div class="hero-corner-badges">
+        <span class="badge-pill badge-age hero-fade-up" style="animation-delay:0.05s" *ngIf="f.ageRestrictionCode">{{ f.ageRestrictionCode }}</span>
+        <span class="badge-pill badge-genre hero-fade-up" style="animation-delay:0.1s" *ngIf="f.genres?.length">{{ f.genres[0] }}</span>
+      </div>
       <div class="hero-content">
-        <div class="hero-badges">
+        <div class="hero-badges hero-fade-up" style="animation-delay:0.1s">
           <span class="badge-pill badge-imax">IMAX EXCLUSIVE</span>
-          <span class="badge-pill badge-age">{{ f.ageRestrictionCode }}</span>
         </div>
-        <h1 class="hero-title">{{ f.title }}</h1>
-        <div class="hero-meta">
+        <h1 class="hero-title hero-fade-up" style="animation-delay:0.2s">{{ f.title }}</h1>
+        <div class="hero-meta hero-fade-up" style="animation-delay:0.3s">
           <span class="meta-rating"><mat-icon>star</mat-icon> {{ f.averageRating | number:'1.1-1' }}</span>
           <span class="meta-dot">·</span>
           <span class="meta-duration">{{ 'home.movie.minutes' | translate:{ n: f.duration } }}</span>
@@ -21,14 +24,17 @@
             </span>
           </ng-container>
         </div>
-        <p class="hero-desc">{{ f.description }}</p>
-        <div class="hero-actions">
+        <p class="hero-desc hero-fade-up" style="animation-delay:0.3s">{{ f.description }}</p>
+        <div class="hero-actions hero-fade-up" style="animation-delay:0.4s">
           <a mat-raised-button [routerLink]="movieDetailCommands(f.slug)">
             <mat-icon>confirmation_number</mat-icon> {{ 'home.hero.bookNow' | translate }}
           </a>
-          <button mat-stroked-button type="button">
+          <button mat-stroked-button type="button" *ngIf="f.trailerUrl" (click)="openTrailer(f)">
             <mat-icon>play_arrow</mat-icon> {{ 'home.hero.watchTrailer' | translate }}
           </button>
+        </div>
+        <div class="hero-dots hero-fade-up" style="animation-delay:0.5s" aria-hidden="true">
+          <span class="hero-dot" *ngFor="let d of heroDots; let first = first" [class.is-active]="first"></span>
         </div>
       </div>
       <div class="hero-visual">
@@ -68,9 +74,9 @@
       <h2 class="section-title">{{ 'home.sections.recommended' | translate }}</h2>
     </div>
   </div>
-  <div class="scroll-row">
-    <app-movie-card *ngFor="let movie of recommended" [movie]="movie" [fixedWidth]="true"></app-movie-card>
-  </div>
+  <app-scroll-row>
+    <app-movie-card *ngFor="let movie of recommended" [movie]="movie" [fixedWidth]="true" [actions]="true"></app-movie-card>
+  </app-scroll-row>
 </section>
 
 <!-- ── NOW SHOWING ─────────────────────────────────────────────────────────── -->
@@ -85,9 +91,9 @@
   <div *ngIf="loading$ | async" class="spinner-wrap">
     <mat-spinner diameter="36"></mat-spinner>
   </div>
-  <div class="scroll-row">
-    <app-movie-card *ngFor="let movie of nowShowing$ | async" [movie]="movie" [fixedWidth]="true"></app-movie-card>
-  </div>
+  <app-scroll-row>
+    <app-movie-card *ngFor="let movie of nowShowing$ | async" [movie]="movie" [fixedWidth]="true" [actions]="true"></app-movie-card>
+  </app-scroll-row>
 </section>
 
 <!-- ── COMING SOON ─────────────────────────────────────────────────────────── -->
@@ -99,9 +105,32 @@
     </div>
     <a routerLink="/movies" class="section-more">{{ 'home.sections.viewAll' | translate }} <mat-icon>chevron_right</mat-icon></a>
   </div>
-  <div class="movie-grid">
-    <app-movie-card *ngFor="let movie of comingSoon$ | async" [movie]="movie" variant="coming"></app-movie-card>
+  <app-scroll-row>
+    <app-movie-card *ngFor="let movie of comingSoon$ | async" [movie]="movie" variant="coming" [fixedWidth]="true" [actions]="true"></app-movie-card>
+  </app-scroll-row>
+</section>
+
+<!-- ── PROMOTIONS ──────────────────────────────────────────────────────────── -->
+<section class="section" *ngIf="promotions.length">
+  <div class="section-header">
+    <div class="section-titlewrap">
+      <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
+      <h2 class="section-title">{{ 'home.sections.promotions' | translate }}</h2>
+    </div>
+    <a routerLink="/promotions" class="section-more">{{ 'home.sections.viewAll' | translate }} <mat-icon>chevron_right</mat-icon></a>
   </div>
+  <app-scroll-row>
+    <a *ngFor="let p of promotions" class="promo-card" routerLink="/promotions" appRevealOnScroll>
+      <div class="promo-card-img">
+        <img [src]="p.bannerUrl || 'assets/promo-banner.png'" [alt]="p.title">
+        <span class="promo-card-badge badge-fade">{{ eligibilityLabel(p) | translate }}</span>
+      </div>
+      <div class="promo-card-body">
+        <h3 class="promo-card-title">{{ p.title }}</h3>
+        <p class="promo-card-summary" *ngIf="p.summary">{{ p.summary }}</p>
+      </div>
+    </a>
+  </app-scroll-row>
 </section>
 
 <!-- ── MEMBERSHIP ──────────────────────────────────────────────────────────── -->
@@ -119,16 +148,17 @@
         <li><mat-icon>check_circle</mat-icon> {{ 'home.membership.perk3' | translate }}</li>
         <li><mat-icon>check_circle</mat-icon> {{ 'home.membership.perk4' | translate }}</li>
       </ul>
+      <div class="tier-chips" *ngIf="tiers.length">
+        <span class="tier-chip" *ngFor="let t of tiers; let i = index" [class.is-top]="isTopTier(i)">
+          {{ t.name }}<ng-container *ngIf="t.discountPercent"> · {{ t.discountPercent }}%</ng-container>
+        </span>
+      </div>
       <a mat-raised-button routerLink="/auth/register">
         <mat-icon>workspace_premium</mat-icon> {{ 'home.membership.join' | translate }}
       </a>
     </div>
     <div class="membership-visual">
-      <div class="glass-card-member">
-        <mat-icon>workspace_premium</mat-icon>
-        <p>GOLD MEMBER</p>
-        <span>Midnight Premium</span>
-      </div>
+      <img class="membership-img" src="assets/gold-member.png" alt="">
     </div>
   </div>
 </section>

@@ -1,0 +1,55 @@
+:host { display: block; }
+
+.sr-wrap { position: relative; }
+
+.sr-track {
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  padding: 6px 2px 18px;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.sr-chevron {
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ml-r-full);
+  background: var(--ml-panel);
+  border: 1px solid var(--ml-rule);
+  color: var(--ml-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  transition: transform var(--cx-dur) var(--cx-ease), box-shadow var(--cx-dur) var(--cx-ease);
+
+  &:hover { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); transform: translateY(-50%) scale(1.06); }
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+.sr-chevron--left { left: -18px; }
+.sr-chevron--right { right: -18px; }
+
+// A single hint pulse ~1.3s after the row mounts, so first-time visitors notice it scrolls.
+@media (prefers-reduced-motion: no-preference) {
+  .sr-chevron {
+    animation: sr-chevron-hint 0.9s ease-in-out 1;
+    animation-delay: 1.3s;
+  }
+}
+
+@keyframes sr-chevron-hint {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.18); }
+}
+
+@media (max-width: 768px) {
+  .sr-chevron { display: none; }
+}

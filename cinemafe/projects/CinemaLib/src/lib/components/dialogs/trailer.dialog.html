@@ -1,0 +1,30 @@
+<div mat-dialog-title class="cl-trailer-title">
+  <span class="cl-trailer-titletext">{{ data.title }}</span>
+  <span class="cl-trailer-eyebrow">{{ 'trailerDialog.officialTrailer' | translate }}</span>
+</div>
+
+<mat-dialog-content class="cl-trailer-content">
+  <div class="cl-trailer-frame" *ngIf="embedUrl; else unavailable">
+    <iframe
+      [src]="embedUrl"
+      [title]="data.title"
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"
+      frameborder="0">
+    </iframe>
+  </div>
+  <ng-template #unavailable>
+    <div class="cl-trailer-fallback">
+      <mat-icon>movie</mat-icon>
+      <p>{{ 'trailerDialog.unavailable' | translate }}</p>
+    </div>
+  </ng-template>
+  <a class="cl-trailer-external" [href]="data.trailerUrl" target="_blank" rel="noopener">
+    <mat-icon>open_in_new</mat-icon> {{ 'trailerDialog.openExternal' | translate }}
+  </a>
+</mat-dialog-content>
+
+<button mat-icon-button type="button" class="cl-trailer-close" [attr.aria-label]="'trailerDialog.close' | translate" (click)="close()">
+  <mat-icon>close</mat-icon>
+</button>

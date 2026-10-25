@@ -132,3 +132,143 @@
   gap: 6px;
   mat-icon { font-size: 14px; width: 14px; height: 14px; color: var(--ml-faint); }
 }
+
+// ── Home slider mode: corner badges, trailer play overlay, Trailer/Book Tickets row ────────────
+// Hover-only trailer overlay is reserved for input devices with real hover — on touch, the badges
+// and both buttons below are always visible, so nothing here is hover-gated.
+.mc-card--actions {
+  .mc-poster { cursor: pointer; }
+}
+
+// Hidden-until-revealed state only exists when motion is allowed, so a reduced-motion visitor
+// never waits on an IntersectionObserver callback to see content that's already on screen.
+@media (prefers-reduced-motion: no-preference) {
+  .mc-card--actions {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+
+    &.is-revealed { opacity: 1; transform: translateY(0); }
+  }
+}
+
+.mc-badge {
+  position: absolute;
+  top: 10px;
+  padding: 3px 8px;
+  border-radius: var(--ml-r-sm);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.mc-badge--age { left: 10px; background: color-mix(in srgb, var(--ml-ink) 75%, transparent); color: var(--ml-panel); }
+.mc-badge--genre { right: 10px; background: var(--ml-panel); color: var(--ml-ink); border: 1px solid var(--ml-rule); }
+
+.badge-fade { opacity: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .mc-card--actions.is-revealed .badge-fade { animation: mc-badge-fade-in 0.4s ease 0.3s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-card--actions.is-revealed .badge-fade { opacity: 1; }
+}
+
+@keyframes mc-badge-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mc-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ml-ink) 30%, transparent);
+
+  @media (hover: hover) {
+    display: flex;
+    opacity: 0;
+    transition: opacity var(--cx-dur) var(--cx-ease);
+    .mc-card--actions:hover & { opacity: 1; }
+  }
+}
+
+// Genre/Duration/Subtitles/Language — hover-only (desktop), same as the play overlay: on touch the
+// corner badges + Trailer/Book Tickets row already carry the essential info without needing hover.
+.mc-info-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+
+  @media (hover: hover) {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 12px;
+    box-sizing: border-box;
+    background: linear-gradient(0deg, color-mix(in srgb, var(--ml-ink) 92%, transparent) 8%, transparent 60%);
+    opacity: 0;
+    transition: opacity var(--cx-dur) var(--cx-ease);
+    .mc-card--actions:hover & { opacity: 1; }
+  }
+}
+.mc-info-list {
+  margin: 0;
+  color: var(--ml-panel);
+  font-size: 0.68rem;
+  line-height: 1.7;
+
+  div { display: flex; gap: 4px; }
+  dt { margin: 0; font-weight: 700; }
+  dd { margin: 0; }
+}
+.mc-play-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--ml-r-full);
+  background: var(--ml-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  mat-icon { color: var(--ml-ink); }
+}
+
+.mc-title--link {
+  display: block;
+  font-family: var(--ml-font-head);
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--ml-ink);
+  margin: 0 0 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  &:hover { color: var(--ml-action-strong); }
+}
+
+.mc-action-row { display: flex; gap: 8px; }
+
+.mc-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 0;
+  border-radius: var(--ml-r-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: transform var(--cx-dur) var(--cx-ease), background var(--cx-dur) var(--cx-ease);
+
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  &:hover { transform: translateY(-1px); }
+}
+
+.mc-btn--trailer { background: var(--ml-panel-3); color: var(--ml-ink); }
+.mc-btn--trailer:hover { background: var(--ml-rule); }
+.mc-btn--book, .mc-btn--notify { background: var(--ml-action); color: var(--ml-on-action); }
