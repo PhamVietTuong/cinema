@@ -1,0 +1,84 @@
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'splashBanners.editTitle' : 'splashBanners.newTitle') | translate }}</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="dlg-grid">
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="sb-title">{{ 'splashBanners.titleLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="sb-title" formControlName="title">
+            <mat-error *ngIf="form.controls['title'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="sb-imageUrl">{{ 'splashBanners.imageLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="sb-imageUrl" formControlName="imageUrl">
+            <mat-error *ngIf="form.controls['imageUrl'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+          <div class="img-upload-row">
+            <label class="ad-btn ad-btn--ghost">
+              <mat-icon>upload</mat-icon> {{ 'splashBanners.uploadImage' | translate }}
+              <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
+            </label>
+            <button mat-button type="button" *ngIf="form.value.imageUrl" (click)="clearImage()">{{ 'common.clear' | translate }}</button>
+            <span class="img-upload-status" *ngIf="uploading">{{ 'splashBanners.uploading' | translate }}</span>
+            <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError | translate }}</span>
+          </div>
+          <div class="img-preview" *ngIf="form.value.imageUrl">
+            <img [src]="form.value.imageUrl" alt="">
+          </div>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="sb-linkUrl">{{ 'splashBanners.linkUrlLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="sb-linkUrl" formControlName="linkUrl" placeholder="https://... or /promotions">
+            <mat-error *ngIf="form.controls['linkUrl'].hasError('pattern')">{{ 'splashBanners.invalidLinkUrl' | translate }}</mat-error>
+            <mat-hint>{{ 'splashBanners.linkUrlHint' | translate }}</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row dlg-row--2">
+        <div class="dlg-field">
+          <label class="dlg-label" for="sb-startDate">{{ 'splashBanners.startDateLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="sb-startDate" type="date" formControlName="startDate">
+            <mat-error *ngIf="form.controls['startDate'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+        <div class="dlg-field">
+          <label class="dlg-label" for="sb-endDate">{{ 'splashBanners.endDateLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="sb-endDate" type="date" formControlName="endDate">
+            <mat-error *ngIf="form.controls['endDate'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="dlg-row" *ngIf="form.hasError('dateRangeInvalid')">
+        <span class="img-upload-status err">{{ 'splashBanners.dateRangeInvalid' | translate }}</span>
+      </div>
+
+      <div class="dlg-switch">
+        <span class="dlg-switch-label" id="sb-isPublished-lbl">{{ 'splashBanners.publishedLabel' | translate }}</span>
+        <mat-slide-toggle formControlName="isPublished" aria-labelledby="sb-isPublished-lbl"></mat-slide-toggle>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+  </div>
+</form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>

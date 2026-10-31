@@ -15,6 +15,8 @@ import { AuditLogManagementComponent } from './audit-log/audit-log.component';
 import { LoyaltySettingsComponent } from './loyalty-settings/loyalty-settings.component';
 import { PromotionProgramsManagementComponent } from './promotion-programs/promotion-programs.component';
 import { PromotionProgramDialog } from './promotion-programs/promotion-program.dialog';
+import { SplashBannersManagementComponent } from './splash-banners/splash-banners.component';
+import { SplashBannerDialog } from './splash-banners/splash-banner.dialog';
 
 /**
  * "Vận Hành" (Operations) admin pages: discount codes, invoices, comment
@@ -31,6 +33,7 @@ const routes: Routes = [
   { path: 'audit-log', component: AuditLogManagementComponent },
   { path: 'loyalty-settings', component: LoyaltySettingsComponent },
   { path: 'promotion-programs', component: PromotionProgramsManagementComponent },
+  { path: 'splash-banners', component: SplashBannersManagementComponent },
 ];
 
 @NgModule({
@@ -46,6 +49,8 @@ const routes: Routes = [
     LoyaltySettingsComponent,
     PromotionProgramsManagementComponent,
     PromotionProgramDialog,
+    SplashBannersManagementComponent,
+    SplashBannerDialog,
   ],
   imports: [
     SharedModule,

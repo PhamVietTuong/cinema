@@ -153,6 +153,15 @@ PromotionProgramId (Cascade), ProjectionForm (enum)?, SeatKind (enum)? — null 
 ### PromotionProgramSchedule ("where and when" validity windows)
 PromotionProgramId (Cascade), TheaterId (Guid?, **Restrict**, null = all theaters), DaysOfWeekMask (int?), StartTimeOfDay/EndTimeOfDay (TimeOnly?). Zero rows = applies everywhere/always; multiple rows needed to express different windows per theater.
 
+### SplashBanner (`cinemabe/Cinema/3-Data/Cinema.Data.Entities/Entities/SplashBanner.cs`, deliberately independent of PromotionProgram/Discount — a one-off popup, not a catalog/promo-card entity)
+| Field | Notes |
+|---|---|
+| Title (admin label), ImageUrl | required |
+| LinkUrl | optional |
+| StartDate/EndDate (DateTime) | date-only (time-of-day zeroed), inclusive range |
+| IsPublished (bool) | |
+No FKs, no nav properties. "Active" is computed, not stored — see `catalog.md` for the rule — and is evaluated against the Vietnam local date (`BusinessCalendar.LocalNow`), not raw UTC.
+
 ### LoyaltySetting (points conversion rate)
 TheaterId (Guid?, **unique when not null** — one global default row with TheaterId=null plus optional per-theater overrides), PointsPerUnit (int, VND spent per 1 point earned), PointValueVnd (int, VND value of 1 point redeemed).
 

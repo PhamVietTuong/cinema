@@ -1,7 +1,7 @@
 # Catalog / Scheduling / Pricing / Promotions — Business Logic Reference
 
 Scope: Movies, Theaters/Rooms/Seats, PatronCategory, ShowTime scheduling, ticket pricing, PromotionProgram,
-loyalty points, gift cards. Backend only (`cinemabe`). All facts verified against current code as of this
+SplashBanner, loyalty points, gift cards. Backend only (`cinemabe`). All facts verified against current code as of this
 writing (branch `feature/business-docs`, after the omdb-imdb-id, promotion-programs-redesign, pricing-matrix,
 redeem-points-config, loyalty-redemption and gift-cards merges).
 
@@ -364,7 +364,50 @@ pricing engine. `GetPublishedAsync` (customer-facing promotions list) additional
 
 ---
 
-## 7. Loyalty points & gift cards
+## 7. Splash banner (SplashBanner + SplashBannerManager)
+
+A single-image popup shown once per browser session on CinemaUser, deliberately independent of
+`PromotionProgram`/`Discount` — see `domain-model.md`. No FKs, no catalog relationships.
+
+### Validation (`SplashBannerManager.Validate`)
+- `Title` required, `ImageUrl` required.
+- `EndDate` must not be before `StartDate`.
+- `LinkUrl`, if set, must be an absolute `http://`/`https://` URL or a site-relative path starting
+  with a single `/` — this blocks `javascript:` URLs and protocol-relative `//evil.com` URLs.
+
+### "Which banner is active" rule
+A banner is active when `IsPublished` is true AND the current Vietnam-local date
+(`BusinessCalendar.LocalNow`) falls within `[StartDate, EndDate]`, inclusive. If multiple banners
+qualify simultaneously, the one with the latest `StartDate` wins (ties broken by `CreationTime`
+then `Id`, both descending) — so the newest campaign silently takes over; there is no error for
+overlapping published banners.
+
+### Endpoints (`CinemaController`, `#region SplashBanner`)
+- `GetActiveSplashBanner` — `[AllowAnonymous]`, GET, returns a `List<SplashBannerDTO>` with 0 or 1
+  items (never a nullable single DTO, to avoid the NSwag client treating a 204 as an error).
+- `GetSplashBanners`, `GetSplashBanner`, `CreateSplashBanner`, `UpdateSplashBanner`,
+  `DeleteSplashBanner` — admin CRUD, require the `Admin` role.
+
+### Frontend behavior (CinemaUser)
+On the first navigation that does not start with `/booking` or `/auth`, the app fetches the active
+banner and, if not already shown this browser session (tracked via a `sessionStorage` key
+namespaced per banner `Id`, written the moment the dialog opens), displays it as a dismissible
+Angular Material dialog. Clicking the image opens `LinkUrl` in a new tab (if set) and closes the
+popup; the X button just closes it. A newly published banner (different `Id`) shows again even in
+a session where an older banner was already dismissed; editing an existing banner (same `Id`) does
+NOT re-show it in a session where it was already seen.
+
+### Admin UI
+CinemaAdmin → Operations → "Splash Banners" (`/splash-banners`), reusing the existing generic
+image upload endpoint (`CinemaController.UploadImage`) for the banner image.
+
+### Schema
+The `SplashBanner` table was added by hand to `create_db.sql`/`upgrade_db.sql` (idempotent
+blocks), not via an EF Core migration, per this repo's "schema via SQL scripts" convention.
+
+---
+
+## 8. Loyalty points & gift cards
 
 ### Loyalty settings (`LoyaltySetting` + `LoyaltySettingManager` + `LoyaltyRates` helper)
 - One **global** row (`TheaterId == null`) plus optional **per-theater overrides** (`TheaterId` set).
@@ -425,7 +468,7 @@ pricing has produced `finalAmount`. A `DryRun` booking computes but does not per
 
 ---
 
-## 8. Search/filter key conventions across list endpoints
+## 9. Search/filter key conventions across list endpoints
 
 All list endpoints take `PagingSearchDTO { PageIndex, PageSize, Filters: Dictionary<string,string>, Sort:
 SortDTO{Field,Ascending} }` in a POST body. Recurring filter keys across this area:
@@ -450,7 +493,7 @@ PatronCategory: `name`, `price`) — anything else silently no-ops rather than e
 
 ---
 
-## 9. Validation / error conditions (this area)
+## 10. Validation / error conditions (this area)
 
 All thrown as `InvalidOperationException` (→ 400 via `ApiControllerBase`/`ExceptionMiddleware`) unless noted;
 `KeyNotFoundException` → 404; `AccessDeniedException` → 403(ish, see middleware).
@@ -483,6 +526,9 @@ All thrown as `InvalidOperationException` (→ 400 via `ApiControllerBase`/`Exce
 | "Info programs cannot be set to auto-apply." | PromotionProgramManager.ValidateAsync |
 | "StudentOrTeacher/AgeLimit eligibility cannot be auto-applied online..." | PromotionProgramManager.ValidateAsync |
 | "An auto-apply program cannot also be linked to a code-based discount." | PromotionProgramManager.ValidateAsync |
+| "Title is required." / "An image is required." | SplashBannerManager.Validate |
+| "End date must not be before start date." | SplashBannerManager.Validate |
+| "Link must be an http(s) URL or a site path starting with '/'." | SplashBannerManager.Validate |
 | "Point rates must be positive." | LoyaltySettingManager.SaveAsync |
 | "Gift card amount must be positive." | GiftCardManager.IssueAsync |
 | "Invalid or expired gift card." | BookingManager (strict redeem path) |
@@ -495,7 +541,7 @@ All thrown as `InvalidOperationException` (→ 400 via `ApiControllerBase`/`Exce
 
 ---
 
-## 10. Key invariants / gotchas
+## 11. Key invariants / gotchas
 
 1. **VNPay-style "callback-authoritative" pattern does not apply here** — this section is catalog/pricing, not
    payments; see root CLAUDE.md for payment-specific invariants.

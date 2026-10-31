@@ -1,0 +1,125 @@
+<div class="ad-page">
+  <div class="ad-page-header">
+    <div>
+      <h1 class="ad-h1">{{ 'splashBanners.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'splashBanners.subtitle' | translate }}</p>
+    </div>
+    <div class="ad-toolbar">
+      <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'common.add' | translate }}</button>
+    </div>
+  </div>
+
+  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
+  <mat-card class="ad-filter-card">
+    <mat-card-content>
+      <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
+      <form [formGroup]="searchForm" class="ad-filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.keyword' | translate }}</mat-label>
+          <input matInput formControlName="keyword" (input)="onFilterChange()">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.status' | translate }}</mat-label>
+          <mat-select formControlName="isPublished" (selectionChange)="onFilterChange()">
+            <mat-option value="">{{ 'common.all' | translate }}</mat-option>
+            <mat-option value="True">{{ 'splashBanners.published' | translate }}</mat-option>
+            <mat-option value="False">{{ 'splashBanners.unpublished' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="ad-card--pad-0">
+    <!-- Desktop / tablet: ngx-datatable grid. -->
+    <div class="ad-table-wrap ad-desktop-only">
+      <ngx-datatable
+        class="material ad-datatable"
+        [rows]="pageRows"
+        [columnMode]="'force'"
+        [headerHeight]="44"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="total"
+        [offset]="pageOffset"
+        [limit]="pageSize"
+        [loadingIndicator]="loadingIndicator"
+        [messages]="{ emptyMessage: 'splashBanners.empty' | translate, selectedMessage: '' }"
+        (page)="onChangePage($event)">
+
+        <ngx-datatable-column [name]="'splashBanners.imageColumn' | translate" prop="imageUrl" [sortable]="false" [width]="110" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <img [src]="row.imageUrl" alt="" style="width:80px;height:45px;object-fit:cover;border-radius:4px;">
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'splashBanners.titleColumn' | translate" prop="title" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.title }}</strong></ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.date' | translate" prop="startDate" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.startDate | date:'dd/MM/yy' }} – {{ row.endDate | date:'dd/MM/yy' }}</ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.status' | translate" prop="isPublished" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span class="ad-pill" [class.ad-pill--success]="row.isPublished" [class.ad-pill--neutral]="!row.isPublished">
+              {{ (row.isPublished ? 'splashBanners.published' : 'splashBanners.unpublished') | translate }}
+            </span>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <div class="ad-td-actions ad-td-actions--mat">
+              <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+
+        <ngx-datatable-footer>
+          <ng-template ngx-datatable-footer-template>
+            <div class="page-count">{{ 'common.totalEntries' | translate }} {{ total }}</div>
+            <ngx-datatable-pager *ngIf="total > pageSize"></ngx-datatable-pager>
+          </ng-template>
+        </ngx-datatable-footer>
+      </ngx-datatable>
+    </div>
+
+    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+    <div class="ad-mobile-only">
+      <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+        <mat-card-content>
+          <div class="ad-mobile-card-title"><strong>{{ row.title }}</strong></div>
+          <div class="ad-mobile-card-row">
+            <span>{{ 'common.date' | translate }}</span>
+            <span>{{ row.startDate | date:'dd/MM/yy' }} – {{ row.endDate | date:'dd/MM/yy' }}</span>
+          </div>
+          <div class="ad-mobile-card-row">
+            <span>{{ 'common.status' | translate }}</span>
+            <span class="ad-pill" [class.ad-pill--success]="row.isPublished" [class.ad-pill--neutral]="!row.isPublished">
+              {{ (row.isPublished ? 'splashBanners.published' : 'splashBanners.unpublished') | translate }}
+            </span>
+          </div>
+          <div class="ad-mobile-card-actions">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>wallpaper</mat-icon><p>{{ 'splashBanners.empty' | translate }}</p></div>
+
+      <mat-paginator
+        *ngIf="total > 0"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="pageOffset"
+        [hidePageSize]="true"
+        (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+      </mat-paginator>
+    </div>
+  </mat-card>
+</div>
