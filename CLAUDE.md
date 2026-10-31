@@ -10,6 +10,21 @@ Monorepo with two siblings:
 
 There is no top-level build/test runner — backend and frontend are operated independently.
 
+## Business logic reference (`business/`)
+
+Before planning or implementing any non-trivial feature, bug fix, or refactor, **read
+`business/README.md`** and whichever of its linked files cover the area you're touching
+(domain model, auth, booking, payments, catalog, admin/staff & frontend flows). That folder
+documents business rules, state machines, and invariants (role model, seat-lock lifecycle,
+payment callback authority, pricing formulas, etc.) that aren't always obvious from the code
+alone — getting these wrong is a common source of subtle bugs.
+
+**Keep it current**: if a change you make alters a state machine, validation rule, role
+mapping, enum meaning, or pricing formula documented in `business/`, update the relevant file
+in the same change (same commit/PR), not as a follow-up. Treat a stale business doc as a bug.
+**Commit `business/` changes alongside the code** — this folder must never be left as
+uncommitted working-tree state (it was lost once already that way).
+
 ## Backend (`cinemabe/`)
 
 ### Architecture — 4 numbered layers
