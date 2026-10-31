@@ -131,9 +131,8 @@
   scroll-margin-top: 90px; // keeps the smooth-scroll target clear of any sticky header
 }
 
-// Cast
-.cast-row { display: flex; flex-wrap: wrap; gap: 28px; }
-.cast-item { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 92px; text-align: center; }
+// Cast — single row, horizontally scrolled via the shared app-scroll-row chevrons.
+.cast-item { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 92px; flex: none; text-align: center; }
 .cast-avatar {
   width: 72px; height: 72px; border-radius: 50%; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
