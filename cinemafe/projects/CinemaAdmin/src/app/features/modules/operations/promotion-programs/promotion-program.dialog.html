@@ -30,6 +30,17 @@
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput id="pp-banner" formControlName="bannerUrl" placeholder="https://...">
           </mat-form-field>
+          <div class="img-upload-row">
+            <label class="ad-btn ad-btn--ghost">
+              <mat-icon>upload</mat-icon> {{ 'promotionPrograms.uploadImage' | translate }}
+              <input type="file" accept="image/*" hidden (change)="onPickImage($event)">
+            </label>
+            <span class="img-upload-status" *ngIf="uploading">{{ 'promotionPrograms.uploading' | translate }}</span>
+            <span class="img-upload-status err" *ngIf="uploadError">{{ uploadError | translate }}</span>
+          </div>
+          <div class="img-preview" *ngIf="form.value.bannerUrl">
+            <img [src]="form.value.bannerUrl" alt="">
+          </div>
         </div>
         <div class="dlg-field">
           <label class="dlg-label" for="pp-order">{{ 'promotionPrograms.displayOrderLabel' | translate }}</label>
