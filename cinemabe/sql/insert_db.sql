@@ -2,7 +2,7 @@
 -- insert_db.sql  --  Seed data (Guid primary keys, Vietnamese content)
 -- Run after create_db.sql to populate with initial/demo data
 --
--- Assembled in 4 GO-separated batches (each batch's local DECLAREs are
+-- Assembled in 5 GO-separated batches (each batch's local DECLAREs are
 -- scoped to that batch only; cross-batch lookups go by Name/Code via
 -- subqueries against already-inserted rows, never by shared variables).
 -- ============================================================
@@ -15542,3 +15542,59 @@ VALUES
     0xdc0ffc3cfb98dc604123601afbdb1dc190d634acb3c3b04cdfa3a9be04eb8bc2,
     0x207cda702cf9ae21f6b34108baaa9eb0,
     0, @UT_Customer, @MS_Bronze, 200, 1, GETUTCDATE());
+
+GO
+
+-- ── Part F: Promotion Programs (CinemaUser homepage/promotions page) ────────
+DECLARE @PromoMonday  uniqueidentifier = NEWID();
+DECLARE @PromoStudent uniqueidentifier = NEWID();
+DECLARE @PromoGold    uniqueidentifier = NEWID();
+DECLARE @PromoWeekend uniqueidentifier = NEWID();
+
+INSERT INTO [PromotionProgram]
+    ([Id], [Title], [Summary], [BannerUrl], [Mechanic], [PercentOff],
+     [Eligibility], [MinMemberShipId], [MaxAge], [StartDate], [EndDate],
+     [ExcludeHolidays], [AllowedChannelsMask], [MaxTicketsPerTransaction],
+     [StacksWithMembershipDiscount], [TermsText], [DisplayOrder], [IsPublished],
+     [AutoApply], [LinkedDiscountId], [CreationTime])
+VALUES
+(@PromoMonday, N'Thứ Hai Vui Vẻ - Giảm 50%',
+    N'Giảm ngay 50% giá vé cho tất cả suất chiếu vào thứ Hai hàng tuần.', N'assets/promo-banner-monday.png',
+    2, 50,
+    0, NULL, NULL, GETUTCDATE(), DATEADD(month, 6, GETUTCDATE()),
+    1, NULL, 8,
+    0, N'Áp dụng cho tất cả định dạng phim.
+Không áp dụng vào ngày lễ.
+Không giới hạn số lượng vé.', 1, 1,
+    0, NULL, GETUTCDATE()),
+(@PromoStudent, N'Giá Vé Học Sinh, Sinh Viên',
+    N'Chỉ 45.000đ/vé khi xuất trình thẻ học sinh, sinh viên còn hiệu lực.', N'assets/promo-banner-student.png',
+    1, NULL,
+    2, NULL, NULL, GETUTCDATE(), DATEADD(year, 1, GETUTCDATE()),
+    0, NULL, 4,
+    0, N'Xuất trình thẻ học sinh/sinh viên tại quầy vé.
+Áp dụng tất cả các ngày trong tuần.', 2, 1,
+    0, NULL, GETUTCDATE()),
+(@PromoGold, N'Ưu Đãi Hội Viên Hạng Vàng',
+    N'Giảm thêm 20% cho hội viên Hạng Vàng trở lên vào mọi suất chiếu.', N'assets/promo-banner-gold.png',
+    2, 20,
+    1, (SELECT Id FROM [MemberShip] WHERE Name = N'Hạng Vàng'), NULL,
+    GETUTCDATE(), DATEADD(year, 1, GETUTCDATE()),
+    0, NULL, NULL,
+    1, N'Áp dụng cho hội viên Hạng Vàng và Hạng Kim Cương.', 3, 1,
+    0, NULL, GETUTCDATE()),
+(@PromoWeekend, N'Khung Giờ Vàng Cuối Tuần',
+    N'Trải nghiệm điện ảnh trọn vẹn với ưu đãi đặc biệt mỗi cuối tuần.', N'assets/promo-banner-weekend.png',
+    0, NULL,
+    0, NULL, NULL, GETUTCDATE(), DATEADD(month, 6, GETUTCDATE()),
+    0, NULL, NULL,
+    0, N'Áp dụng vào Thứ Bảy và Chủ Nhật, từ 18:00 đến 23:00.', 4, 1,
+    0, NULL, GETUTCDATE());
+
+-- Fixed price for the student promo (any format/seat kind)
+INSERT INTO [PromotionProgramPrice] ([Id], [PromotionProgramId], [ProjectionForm], [SeatKind], [Price], [CreationTime]) VALUES
+(NEWID(), @PromoStudent, NULL, NULL, 45000, GETUTCDATE());
+
+-- Weekend evening schedule window (all theaters); DaysOfWeekMask 65 = Sunday (bit0) + Saturday (bit6)
+INSERT INTO [PromotionProgramSchedule] ([Id], [PromotionProgramId], [TheaterId], [DaysOfWeekMask], [StartTimeOfDay], [EndTimeOfDay], [CreationTime]) VALUES
+(NEWID(), @PromoWeekend, NULL, 65, '18:00:00', '23:00:00', GETUTCDATE());

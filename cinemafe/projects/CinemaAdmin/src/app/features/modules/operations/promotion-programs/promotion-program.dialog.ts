@@ -7,6 +7,7 @@ import {
   PromotionMechanicValues, PromotionEligibilityValues, SalesChannelValues, DayOfWeekValues,
   daysMaskToList, daysListToMask, channelsMaskToList, channelsListToMask,
 } from 'CinemaLib';
+import { ImageUploadService } from '../../../../shared/image-upload.service';
 
 type Dto = CinemaServiceAgent.PromotionProgramDTO;
 type Mechanic = CinemaServiceAgent.PromotionMechanic;
@@ -52,10 +53,14 @@ export class PromotionProgramDialog implements OnInit {
   /** Sales-channel selections, shared across the whole program. */
   channelSelection = new Set<number>();
 
+  uploading = false;
+  uploadError = '';
+
   constructor(
     private _svc: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
     private _store: Store<any>,
+    private _upload: ImageUploadService,
     private _cdr: ChangeDetectorRef,
     private _dialogRef: MatDialogRef<PromotionProgramDialog, boolean>,
     @Inject(MAT_DIALOG_DATA) private _data: PromotionProgramDialogData,
@@ -186,6 +191,34 @@ export class PromotionProgramDialog implements OnInit {
 
   isChannelSelected(value: CinemaServiceAgent.SalesChannel): boolean {
     return this.channelSelection.has(value);
+  }
+
+  // ── Banner upload ────────────────────────────────────────────────────────────
+  onPickImage(event: Event): void {
+    this._uploadImage(
+      event,
+      url => this.form.patchValue({ bannerUrl: url }),
+      (uploading, error) => { this.uploading = uploading; this.uploadError = error; },
+    );
+  }
+
+  private _uploadImage(event: Event, onUrl: (url: string) => void, setState: (uploading: boolean, error: string) => void): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) {
+      return;
+    }
+    setState(true, '');
+    this._upload.upload(file).subscribe({
+      next: url => {
+        onUrl(url);
+        setState(false, '');
+        this._cdr.markForCheck();
+      },
+      error: () => {
+        setState(false, 'promotionPrograms.uploadFailed');
+        this._cdr.markForCheck();
+      },
+    });
   }
 
   save(): void {
