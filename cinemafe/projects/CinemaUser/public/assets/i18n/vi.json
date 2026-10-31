@@ -276,11 +276,25 @@
       "recommended": "Đề Xuất Cho Bạn",
       "nowShowing": "Phim Đang Chiếu",
       "comingSoon": "Phim Sắp Chiếu",
+      "promotions": "Khuyến Mãi",
       "viewAll": "Xem Tất Cả"
     },
     "card": {
       "book": "Đặt Vé",
-      "comingSoonBadge": "Sắp Chiếu"
+      "comingSoonBadge": "Sắp Chiếu",
+      "trailer": "Trailer",
+      "bookTickets": "Đặt Vé",
+      "notifyMe": "Nhắc Tôi",
+      "info": {
+        "genre": "Thể loại:",
+        "duration": "Thời lượng:",
+        "subtitles": "Phụ đề:",
+        "language": "Ngôn ngữ:"
+      }
+    },
+    "scrollRow": {
+      "prev": "Cuộn sang trái",
+      "next": "Cuộn sang phải"
     },
     "membership": {
       "titleLine1": "Nâng Tầm Trải Nghiệm",

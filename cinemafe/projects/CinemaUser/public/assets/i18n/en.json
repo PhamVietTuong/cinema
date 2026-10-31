@@ -276,11 +276,25 @@
       "recommended": "Recommended For You",
       "nowShowing": "Now Showing",
       "comingSoon": "Coming Soon",
+      "promotions": "Promotions",
       "viewAll": "View All"
     },
     "card": {
       "book": "Book",
-      "comingSoonBadge": "Coming Soon"
+      "comingSoonBadge": "Coming Soon",
+      "trailer": "Trailer",
+      "bookTickets": "Book Tickets",
+      "notifyMe": "Notify Me",
+      "info": {
+        "genre": "Genre:",
+        "duration": "Duration:",
+        "subtitles": "Subtitles:",
+        "language": "Language:"
+      }
+    },
+    "scrollRow": {
+      "prev": "Scroll left",
+      "next": "Scroll right"
     },
     "membership": {
       "titleLine1": "Elevate Your Cinema",

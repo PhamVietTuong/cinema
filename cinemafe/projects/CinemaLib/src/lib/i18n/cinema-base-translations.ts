@@ -100,6 +100,12 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       forgotPassword: 'Quên mật khẩu?',
       submit: 'Đăng Nhập',
     },
+    trailerDialog: {
+      officialTrailer: 'Trailer Chính Thức',
+      close: 'Đóng',
+      unavailable: 'Không thể phát trailer này.',
+      openExternal: 'Mở trên YouTube',
+    },
   },
   en: {
     apiErrors: API_ERRORS_EN,
@@ -190,6 +196,12 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       rememberMe: 'Remember me',
       forgotPassword: 'Forgot password?',
       submit: 'Sign In',
+    },
+    trailerDialog: {
+      officialTrailer: 'Official Trailer',
+      close: 'Close',
+      unavailable: 'This trailer can\'t be played here.',
+      openExternal: 'Open on YouTube',
     },
   },
 };

@@ -3,6 +3,7 @@ import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dial
 import { ConfirmDialog, ConfirmDialogData } from './confirm.dialog';
 import { ReasonDialogComponent, ReasonDialogData, ReasonDialogResult } from './reason.dialog';
 import { ManagerOverrideDialogComponent, ManagerOverrideDialogData } from './manager-override.dialog';
+import { TrailerDialogComponent, TrailerDialogData } from './trailer.dialog';
 import { CinemaServiceAgent } from '../../services/cinema-http.service';
 
 /** Drives the panel's accent colour for a given dialog (e.g. warn-tinted for a destructive confirm). */
@@ -32,5 +33,18 @@ export class DialogService {
    */
   openManagerOverrideDialog(data: ManagerOverrideDialogData, config?: MatDialogConfig): MatDialogRef<ManagerOverrideDialogComponent, CinemaServiceAgent.ManagerOverrideDTO | undefined> {
     return this._matDialog.open(ManagerOverrideDialogComponent, { width: '420px', maxWidth: '95vw', ...config, data });
+  }
+
+  /** Plays a movie's trailer. Fades/scales in and out (Material's built-in dialog animation). */
+  openTrailerDialog(data: TrailerDialogData, config?: MatDialogConfig): MatDialogRef<TrailerDialogComponent, void> {
+    return this._matDialog.open(TrailerDialogComponent, {
+      width: '960px',
+      maxWidth: '95vw',
+      panelClass: 'cl-trailer-dialog',
+      enterAnimationDuration: '200ms',
+      exitAnimationDuration: '200ms',
+      ...config,
+      data,
+    });
   }
 }
