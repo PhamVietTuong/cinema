@@ -13495,6 +13495,9 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("language", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Language { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("imdbId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string ImdbId { get; set; }
+
         [Newtonsoft.Json.JsonProperty("ageRestrictionId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid AgeRestrictionId { get; set; }
 
@@ -13766,6 +13769,10 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("subtitle", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Subtitle { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("imdbId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^\s*tt\d{7,10}\s*$")]
+        public string ImdbId { get; set; }
+
         [Newtonsoft.Json.JsonProperty("ageRestrictionId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid AgeRestrictionId { get; set; }
 
@@ -13846,6 +13853,10 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("subtitle", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Subtitle { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("imdbId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^\s*tt\d{7,10}\s*$")]
+        public string ImdbId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("ageRestrictionId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid AgeRestrictionId { get; set; }

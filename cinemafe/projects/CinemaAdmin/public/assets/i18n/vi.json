@@ -184,6 +184,8 @@
       "ageRestriction": "Giới Hạn Độ Tuổi",
       "selectOption": "— Chọn —",
       "trailer": "Trailer (URL)",
+      "imdbId": "Mã IMDb",
+      "imdbIdInvalid": "Mã IMDb phải có dạng tt1234567",
       "genres": "Thể Loại",
       "genresHint": "Giữ Ctrl (Cmd) để chọn nhiều thể loại.",
       "poster": "Poster",

@@ -25,7 +25,7 @@ public class MovieServiceTests
         _uowMock.Setup(u => u.MovieCreditStore.GetByMovieAsync(It.IsAny<Guid>()))
             .ReturnsAsync(new List<MovieCreditRow>());
         // Default: no external ratings, so existing GetDetailAsync tests don't need to stub this.
-        _externalRatingsMock.Setup(p => p.GetRatingsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _externalRatingsMock.Setup(p => p.GetRatingsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ExternalRatingsDTO?)null);
     }
 
@@ -320,6 +320,22 @@ public class MovieServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_TrimsImdbId()
+    {
+        Movie? created = null;
+        _uowMock.Setup(u => u.MovieStore.GetSlugsStartingWithAsync("wicked")).ReturnsAsync(new List<string>());
+        _uowMock.Setup(u => u.MovieStore.CreateAsync(It.IsAny<Movie>()))
+            .Callback<Movie>(m => created = m)
+            .ReturnsAsync((Movie m) => m);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(() => created);
+
+        await _sut.CreateAsync(new CreateMovieRequest { Title = "Wicked", ImdbId = "  tt0133093  " });
+
+        created!.ImdbId.Should().Be("tt0133093");
+    }
+
+    [Fact]
     public async Task UpdateAsync_TitleChanged_SlugUnchanged()
     {
         var movieId = Guid.NewGuid();
@@ -330,6 +346,19 @@ public class MovieServiceTests
         await _sut.UpdateAsync(new UpdateMovieRequest { Id = movieId, Title = "Wicked: Part One" });
 
         movie.Slug.Should().Be("wicked");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_BlankImdbId_ClearsExistingValue()
+    {
+        var movieId = Guid.NewGuid();
+        var movie = new Movie { Id = movieId, Title = "Wicked", Slug = "wicked", ImdbId = "tt0133093", MovieTypeDetails = new List<MovieTypeDetail>() };
+        _uowMock.Setup(u => u.MovieStore.GetForUpdateAsync(movieId)).ReturnsAsync(movie);
+        _uowMock.Setup(u => u.MovieStore.GetDetailAsync(movieId)).ReturnsAsync(movie);
+
+        await _sut.UpdateAsync(new UpdateMovieRequest { Id = movieId, Title = "Wicked", ImdbId = "" });
+
+        movie.ImdbId.Should().BeNull();
     }
 
     [Fact]
@@ -422,12 +451,25 @@ public class MovieServiceTests
         var movie = new Movie { Id = movieId, Title = "Inception", ReleaseDate = releaseDate, Evaluations = new List<Evaluation>() };
         SetupBasicDetailRead(movieId, movie);
         var ratings = new ExternalRatingsDTO { RottenTomatoes = "87%", ImdbRating = "8.8", Metascore = "74" };
-        _externalRatingsMock.Setup(p => p.GetRatingsAsync("Inception", 2010, It.IsAny<CancellationToken>()))
+        _externalRatingsMock.Setup(p => p.GetRatingsAsync("Inception", 2010, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ratings);
 
         var result = await _sut.GetDetailAsync(movieId, null);
 
         result.ExternalRatings.Should().BeSameAs(ratings);
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_PassesMovieImdbIdToProvider()
+    {
+        var movieId = Guid.NewGuid();
+        var releaseDate = new DateOnly(2010, 7, 16);
+        var movie = new Movie { Id = movieId, Title = "Inception", ReleaseDate = releaseDate, ImdbId = "tt1375666", Evaluations = new List<Evaluation>() };
+        SetupBasicDetailRead(movieId, movie);
+
+        await _sut.GetDetailAsync(movieId, null);
+
+        _externalRatingsMock.Verify(p => p.GetRatingsAsync("Inception", 2010, "tt1375666", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -454,7 +496,7 @@ public class MovieServiceTests
 
         await _sut.GetMoviesAsync(new PagingSearchDTO { PageIndex = 1, PageSize = 12 });
 
-        _externalRatingsMock.Verify(p => p.GetRatingsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _externalRatingsMock.Verify(p => p.GetRatingsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

@@ -101,6 +101,16 @@
 
       <div class="dlg-row">
         <div class="dlg-field">
+          <label class="dlg-label" for="mv-imdbId">{{ 'movies.form.imdbId' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="mv-imdbId" formControlName="imdbId" placeholder="tt1234567">
+            <mat-error *ngIf="form.controls['imdbId'].hasError('pattern')">{{ 'movies.form.imdbIdInvalid' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
           <label class="dlg-label" for="mv-posterUrl">{{ 'movies.form.poster' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput id="mv-posterUrl" formControlName="posterUrl" [placeholder]="'movies.form.posterPlaceholder' | translate">

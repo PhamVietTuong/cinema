@@ -16,7 +16,7 @@ public class OmdbRatingsProviderTests
     {
         var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, FullPayloadJson()));
 
-        var result = await sut.GetRatingsAsync("Inception", 2010);
+        var result = await sut.GetRatingsAsync("Inception", 2010, null);
 
         result.Should().NotBeNull();
         result!.RottenTomatoes.Should().Be("87%");
@@ -33,7 +33,7 @@ public class OmdbRatingsProviderTests
             """;
         var (sut, _) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, json));
 
-        var result = await sut.GetRatingsAsync("Some Movie", 2020);
+        var result = await sut.GetRatingsAsync("Some Movie", 2020, null);
 
         result.Should().NotBeNull();
         result!.RottenTomatoes.Should().BeNull();
@@ -48,7 +48,7 @@ public class OmdbRatingsProviderTests
             """;
         var (sut, _) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, json));
 
-        var result = await sut.GetRatingsAsync("Obscure Movie", 2020);
+        var result = await sut.GetRatingsAsync("Obscure Movie", 2020, null);
 
         result.Should().BeNull();
     }
@@ -59,8 +59,8 @@ public class OmdbRatingsProviderTests
         const string json = """{"Response":"False","Error":"Movie not found!"}""";
         var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, json));
 
-        var first  = await sut.GetRatingsAsync("Unknown Movie", 2020);
-        var second = await sut.GetRatingsAsync("Unknown Movie", 2020);
+        var first  = await sut.GetRatingsAsync("Unknown Movie", 2020, null);
+        var second = await sut.GetRatingsAsync("Unknown Movie", 2020, null);
 
         first.Should().BeNull();
         second.Should().BeNull();
@@ -73,8 +73,8 @@ public class OmdbRatingsProviderTests
         const string json = """{"Response":"False","Error":"Invalid API key!"}""";
         var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, json));
 
-        var first  = await sut.GetRatingsAsync("Any Movie", 2020);
-        var second = await sut.GetRatingsAsync("Any Movie", 2020);
+        var first  = await sut.GetRatingsAsync("Any Movie", 2020, null);
+        var second = await sut.GetRatingsAsync("Any Movie", 2020, null);
 
         first.Should().BeNull();
         second.Should().BeNull();
@@ -87,7 +87,7 @@ public class OmdbRatingsProviderTests
         const string json = """{"Response":true,"Ratings":[]}""";
         var (sut, _) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, json));
 
-        var result = await sut.GetRatingsAsync("Any Movie", 2020);
+        var result = await sut.GetRatingsAsync("Any Movie", 2020, null);
 
         result.Should().BeNull();
     }
@@ -98,7 +98,7 @@ public class OmdbRatingsProviderTests
         const string json = """{"Response":"True","imdbRating":"7.0","Ratings":["not-an-object"]}""";
         var (sut, _) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, json));
 
-        var result = await sut.GetRatingsAsync("Any Movie", 2020);
+        var result = await sut.GetRatingsAsync("Any Movie", 2020, null);
 
         result.Should().NotBeNull();
         result!.ImdbRating.Should().Be("7.0");
@@ -110,7 +110,7 @@ public class OmdbRatingsProviderTests
     {
         var (sut, _) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, "[]"));
 
-        var result = await sut.GetRatingsAsync("Any Movie", 2020);
+        var result = await sut.GetRatingsAsync("Any Movie", 2020, null);
 
         result.Should().BeNull();
     }
@@ -120,7 +120,7 @@ public class OmdbRatingsProviderTests
     {
         var (sut, _) = CreateSut(ApiKey, Respond(HttpStatusCode.InternalServerError, ""));
 
-        var result = await sut.GetRatingsAsync("Any Movie", 2020);
+        var result = await sut.GetRatingsAsync("Any Movie", 2020, null);
 
         result.Should().BeNull();
     }
@@ -130,7 +130,7 @@ public class OmdbRatingsProviderTests
     {
         var (sut, _) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, "{not json"));
 
-        var result = await sut.GetRatingsAsync("Any Movie", 2020);
+        var result = await sut.GetRatingsAsync("Any Movie", 2020, null);
 
         result.Should().BeNull();
     }
@@ -140,7 +140,7 @@ public class OmdbRatingsProviderTests
     {
         var (sut, _) = CreateSut(ApiKey, new ThrowingHandler());
 
-        var result = await sut.GetRatingsAsync("Any Movie", 2020);
+        var result = await sut.GetRatingsAsync("Any Movie", 2020, null);
 
         result.Should().BeNull();
     }
@@ -150,7 +150,7 @@ public class OmdbRatingsProviderTests
     {
         var (sut, handler) = CreateSut("", Respond(HttpStatusCode.OK, FullPayloadJson()));
 
-        var result = await sut.GetRatingsAsync("Inception", 2010);
+        var result = await sut.GetRatingsAsync("Inception", 2010, null);
 
         result.Should().BeNull();
         handler.CallCount.Should().Be(0);
@@ -161,8 +161,8 @@ public class OmdbRatingsProviderTests
     {
         var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, FullPayloadJson()));
 
-        await sut.GetRatingsAsync("Inception", 2010);
-        await sut.GetRatingsAsync("  INCEPTION  ", 2010);
+        await sut.GetRatingsAsync("Inception", 2010, null);
+        await sut.GetRatingsAsync("  INCEPTION  ", 2010, null);
 
         handler.CallCount.Should().Be(1);
     }
@@ -172,13 +172,86 @@ public class OmdbRatingsProviderTests
     {
         var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, FullPayloadJson()));
 
-        await sut.GetRatingsAsync("The Matrix", 1999);
+        await sut.GetRatingsAsync("The Matrix", 1999, null);
 
         handler.LastRequestUri.Should().NotBeNull();
         var query = handler.LastRequestUri!.Query;
         query.Should().Contain("t=The%20Matrix");
         query.Should().Contain("y=1999");
         query.Should().Contain($"apikey={ApiKey}");
+    }
+
+    [Fact]
+    public async Task GetRatingsAsync_WithImdbId_QueriesByIdNotTitle()
+    {
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, FullPayloadJson()));
+
+        await sut.GetRatingsAsync("Inception", 2010, "tt0133093");
+
+        var query = handler.LastRequestUri!.Query;
+        query.Should().Contain("i=tt0133093");
+        query.Should().Contain($"apikey={ApiKey}");
+        query.Should().NotContain("&t=");
+        query.Should().NotContain("&y=");
+    }
+
+    [Fact]
+    public async Task GetRatingsAsync_WithImdbId_IgnoresBlankTitleAndZeroYear()
+    {
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, FullPayloadJson()));
+
+        var result = await sut.GetRatingsAsync("", 0, "tt0133093");
+
+        result.Should().NotBeNull();
+        handler.CallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetRatingsAsync_WhitespaceImdbId_FallsBackToTitleYear()
+    {
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, FullPayloadJson()));
+
+        await sut.GetRatingsAsync("Inception", 2010, "   ");
+
+        var query = handler.LastRequestUri!.Query;
+        query.Should().Contain("t=Inception");
+        query.Should().Contain("y=2010");
+    }
+
+    [Fact]
+    public async Task GetRatingsAsync_WithImdbId_NotFound_NegativeCaches_NoTitleFallback()
+    {
+        const string json = """{"Response":"False","Error":"Movie not found!"}""";
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, json));
+
+        var first  = await sut.GetRatingsAsync("Inception", 2010, "tt9999999");
+        var second = await sut.GetRatingsAsync("Inception", 2010, "tt9999999");
+
+        first.Should().BeNull();
+        second.Should().BeNull();
+        handler.CallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetRatingsAsync_SameImdbIdDifferentCase_MakesOneHttpCall()
+    {
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, FullPayloadJson()));
+
+        await sut.GetRatingsAsync("Inception", 2010, "tt0133093");
+        await sut.GetRatingsAsync("Inception", 2010, "TT0133093");
+
+        handler.CallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetRatingsAsync_ImdbIdAndTitleLookups_UseSeparateCacheEntries()
+    {
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, FullPayloadJson()));
+
+        await sut.GetRatingsAsync("Inception", 2010, null);
+        await sut.GetRatingsAsync("Inception", 2010, "tt0133093");
+
+        handler.CallCount.Should().Be(2);
     }
 
     private static string FullPayloadJson()

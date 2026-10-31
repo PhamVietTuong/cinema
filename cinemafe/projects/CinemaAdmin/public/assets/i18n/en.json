@@ -184,6 +184,8 @@
       "ageRestriction": "Age Restriction",
       "selectOption": "— Select —",
       "trailer": "Trailer (URL)",
+      "imdbId": "IMDb ID",
+      "imdbIdInvalid": "IMDb ID must look like tt1234567",
       "genres": "Genres",
       "genresHint": "Hold Ctrl (Cmd) to select multiple genres.",
       "poster": "Poster",

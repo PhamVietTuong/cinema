@@ -9,10 +9,12 @@ namespace Cinema.Business.ExternalRatings;
 
 /// <summary>
 /// Looks up Rotten Tomatoes/IMDb/Metascore review data from the OMDb API (http://www.omdbapi.com),
-/// matching by title + release year since OMDb has no "search by local movie id" endpoint.
+/// by IMDb id when one is stored on the movie (exact match), otherwise by title + release year
+/// (best-effort, since titles that don't exactly match OMDb's catalog — e.g. a Vietnamese title —
+/// simply miss).
 ///
 /// Config under <c>OMDb:ApiKey</c>. Results are cached in-process (not persisted): a found result for
-/// 24h, a "not found" result for 6h (so repeated misses for the same title don't keep calling OMDb),
+/// 24h, a "not found" result for 6h (so repeated misses for the same lookup don't keep calling OMDb),
 /// and a transient failure for 10 minutes before retrying. Never throws — every failure path (missing
 /// config, bad input, non-2xx, timeout, malformed/unexpected-shape JSON) returns null so callers can
 /// treat "no data" and "couldn't fetch" the same way.
@@ -53,8 +55,31 @@ public class OmdbRatingsProvider : IExternalRatingsProvider
         return apiKey;
     }
 
-    public async Task<ExternalRatingsDTO?> GetRatingsAsync(string title, int year, CancellationToken cancellationToken = default)
+    public Task<ExternalRatingsDTO?> GetRatingsAsync(string title, int year, string? imdbId, CancellationToken cancellationToken = default)
     {
+        string trimmedImdbId;
+        if (imdbId == null)
+        {
+            trimmedImdbId = "";
+        }
+        else
+        {
+            trimmedImdbId = imdbId.Trim();
+        }
+
+        var apiKey = GetApiKey();
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return Task.FromResult<ExternalRatingsDTO?>(null);
+        }
+
+        if (trimmedImdbId.Length > 0)
+        {
+            var cacheKey = $"omdb:imdb:{trimmedImdbId.ToLowerInvariant()}";
+            var url = $"/?apikey={Uri.EscapeDataString(apiKey)}&i={Uri.EscapeDataString(trimmedImdbId)}&type=movie";
+            return FetchAsync(url, cacheKey, $"imdb {trimmedImdbId}", cancellationToken);
+        }
+
         string trimmedTitle;
         if (title == null)
         {
@@ -66,16 +91,16 @@ public class OmdbRatingsProvider : IExternalRatingsProvider
         }
         if (trimmedTitle.Length == 0 || year <= 0)
         {
-            return null;
+            return Task.FromResult<ExternalRatingsDTO?>(null);
         }
 
-        var apiKey = GetApiKey();
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            return null;
-        }
+        var titleCacheKey = $"omdb:title:{trimmedTitle.ToLowerInvariant()}:{year}";
+        var titleUrl = $"/?apikey={Uri.EscapeDataString(apiKey)}&t={Uri.EscapeDataString(trimmedTitle)}&y={year}&type=movie";
+        return FetchAsync(titleUrl, titleCacheKey, $"'{trimmedTitle}' ({year})", cancellationToken);
+    }
 
-        var cacheKey = $"omdb:{trimmedTitle.ToLowerInvariant()}:{year}";
+    private async Task<ExternalRatingsDTO?> FetchAsync(string relativeUrl, string cacheKey, string lookupLabel, CancellationToken cancellationToken)
+    {
         if (_cache.TryGetValue(cacheKey, out CacheEntry? cached) && cached != null)
         {
             return cached.Ratings;
@@ -84,11 +109,10 @@ public class OmdbRatingsProvider : IExternalRatingsProvider
         try
         {
             var http = _httpFactory.CreateClient(HttpClientName);
-            var url = $"/?apikey={Uri.EscapeDataString(apiKey)}&t={Uri.EscapeDataString(trimmedTitle)}&y={year}&type=movie";
-            using var response = await http.GetAsync(url, cancellationToken);
+            using var response = await http.GetAsync(relativeUrl, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                CacheFailure(cacheKey, trimmedTitle, year, $"HTTP {(int)response.StatusCode}", null);
+                CacheFailure(cacheKey, lookupLabel, $"HTTP {(int)response.StatusCode}", null);
                 return null;
             }
 
@@ -107,7 +131,7 @@ public class OmdbRatingsProvider : IExternalRatingsProvider
                 if (error.Contains("key", StringComparison.OrdinalIgnoreCase) ||
                     error.Contains("limit", StringComparison.OrdinalIgnoreCase))
                 {
-                    CacheFailure(cacheKey, trimmedTitle, year, error, null);
+                    CacheFailure(cacheKey, lookupLabel, error, null);
                     return null;
                 }
                 _cache.Set(cacheKey, new CacheEntry(null), NotFoundTtl);
@@ -120,7 +144,7 @@ public class OmdbRatingsProvider : IExternalRatingsProvider
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            CacheFailure(cacheKey, trimmedTitle, year, "timeout", null);
+            CacheFailure(cacheKey, lookupLabel, "timeout", null);
             return null;
         }
         catch (Exception e) when (e is not OperationCanceledException)
@@ -128,20 +152,20 @@ public class OmdbRatingsProvider : IExternalRatingsProvider
             // Every other failure (bad HTTP, malformed JSON, or an unexpected response shape such as
             // a non-string field) must still honor the "never throws" contract. Never log the request
             // URL anywhere here: it carries the OMDb API key.
-            CacheFailure(cacheKey, trimmedTitle, year, e.Message, e);
+            CacheFailure(cacheKey, lookupLabel, e.Message, e);
             return null;
         }
     }
 
-    private void CacheFailure(string cacheKey, string title, int year, string reason, Exception? exception)
+    private void CacheFailure(string cacheKey, string lookupLabel, string reason, Exception? exception)
     {
         if (exception == null)
         {
-            LogProvider.Current.Warning($"OmdbRatingsProvider.GetRatingsAsync failed for '{title}' ({year}): {reason}");
+            LogProvider.Current.Warning($"OmdbRatingsProvider.GetRatingsAsync failed for {lookupLabel}: {reason}");
         }
         else
         {
-            LogProvider.Current.Warning(exception, $"OmdbRatingsProvider.GetRatingsAsync failed for '{title}' ({year}): {reason}");
+            LogProvider.Current.Warning(exception, $"OmdbRatingsProvider.GetRatingsAsync failed for {lookupLabel}: {reason}");
         }
         _cache.Set(cacheKey, new CacheEntry(null), FailureTtl);
     }
