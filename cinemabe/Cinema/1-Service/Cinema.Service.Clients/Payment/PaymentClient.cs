@@ -1981,6 +1981,9 @@ namespace Cinema.Service.Clients.Payment
         [Newtonsoft.Json.JsonProperty("isDouble", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsDouble { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("isAisle", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool IsAisle { get; set; }
+
         [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public SeatStatus Status { get; set; }
 
@@ -2073,6 +2076,8 @@ namespace Cinema.Service.Clients.Payment
         Standard = 0,
 
         Double = 1,
+
+        Aisle = 2,
 
     }
 

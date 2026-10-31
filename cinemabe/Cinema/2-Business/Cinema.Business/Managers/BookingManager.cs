@@ -70,10 +70,27 @@ public class BookingManager : IBookingManager
         // unfiltered/unrestricted default of true.
         var dtos = roomSeats.Where(s => s.IsActive).Select(s =>
         {
+            if (s.IsAisle())
+            {
+                return new SeatDTO
+                {
+                    Id            = s.Id,
+                    RowName       = s.RowName,
+                    ColIndex      = s.ColIndex,
+                    DisplayNumber = 0,
+                    IsDouble      = false,
+                    IsAisle       = true,
+                    Status        = SeatStatus.Available,
+                    Price         = 0,
+                    IsLocked      = false,
+                    SeatGroupId   = null,
+                };
+            }
+
             var key      = SeatKey(showTimeId, roomId, s.Id);
             var isBooked = bookedIds.Contains(s.Id);
             var isLocked = _lockedSeats.ContainsKey(key);
-            var kind     = s.SeatGroupId.HasValue ? SeatKind.Double : SeatKind.Standard;
+            var kind     = s.EffectiveKind();
             return new SeatDTO
             {
                 Id            = s.Id,
@@ -498,7 +515,11 @@ public class BookingManager : IBookingManager
                 {
                     throw new InvalidOperationException($"Seat {seat.RowName}{seat.ColIndex} is blocked and cannot be booked.");
                 }
-                var seatKind = seat.SeatGroupId.HasValue ? SeatKind.Double : SeatKind.Standard;
+                if (seat.IsAisle())
+                {
+                    throw new InvalidOperationException($"Seat {seat.RowName}{seat.ColIndex} is an aisle and cannot be booked.");
+                }
+                var seatKind = seat.EffectiveKind();
 
                 // A PatronCategory is now the only source of a ticket's price, so every seat must name
                 // one. The category's Price already has every pricing factor (RoomType override,

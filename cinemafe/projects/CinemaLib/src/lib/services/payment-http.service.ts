@@ -1308,6 +1308,7 @@ export class SeatDTO implements ISeatDTO {
     colIndex?: number;
     displayNumber?: number;
     isDouble?: boolean;
+    isAisle?: boolean;
     status?: SeatStatus;
     price?: number;
     isLocked?: boolean;
@@ -1329,6 +1330,7 @@ export class SeatDTO implements ISeatDTO {
             this.colIndex = _data["colIndex"];
             this.displayNumber = _data["displayNumber"];
             this.isDouble = _data["isDouble"];
+            this.isAisle = _data["isAisle"];
             this.status = _data["status"];
             this.price = _data["price"];
             this.isLocked = _data["isLocked"];
@@ -1350,6 +1352,7 @@ export class SeatDTO implements ISeatDTO {
         data["colIndex"] = this.colIndex;
         data["displayNumber"] = this.displayNumber;
         data["isDouble"] = this.isDouble;
+        data["isAisle"] = this.isAisle;
         data["status"] = this.status;
         data["price"] = this.price;
         data["isLocked"] = this.isLocked;
@@ -1364,6 +1367,7 @@ export interface ISeatDTO {
     colIndex?: number;
     displayNumber?: number;
     isDouble?: boolean;
+    isAisle?: boolean;
     status?: SeatStatus;
     price?: number;
     isLocked?: boolean;
@@ -1543,6 +1547,7 @@ export interface IShowTimePriceDTO {
 export enum SeatKind {
     Standard = 0,
     Double = 1,
+    Aisle = 2,
 }
 
 export class BookingResultDTO implements IBookingResultDTO {

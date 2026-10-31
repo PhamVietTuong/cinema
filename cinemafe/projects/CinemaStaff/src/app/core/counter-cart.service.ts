@@ -267,7 +267,7 @@ export class CounterCartService implements OnDestroy {
 
   /** `busy` blocks changes while a sale is being submitted. */
   toggleSeat(seat: SelectableSeat, busy = false): void {
-    if (busy || this.loadingSeats()) {
+    if (busy || this.loadingSeats() || seat.isAisle) {
       return;
     }
     const existing = this.tickets().find(t => t.seatIds.includes(seat.id!));
@@ -333,6 +333,10 @@ export class CounterCartService implements OnDestroy {
   /** Recomputes which seats can be clicked: free, and the kind has at least one patron category. */
   private _applyGate(): void {
     for (const seat of this.seats()) {
+      if (seat.isAisle) {
+        seat.isSelectable = false;
+        continue;
+      }
       const hasCategory = this.priceRows().length === 0 || this.rowsFor(!!seat.isDouble).length > 0;
       seat.isAllowedForPatronCategory = hasCategory;
       seat.isSelectable = seat.status === PaymentServiceAgent.SeatStatus.Available && !seat.isLocked && hasCategory;

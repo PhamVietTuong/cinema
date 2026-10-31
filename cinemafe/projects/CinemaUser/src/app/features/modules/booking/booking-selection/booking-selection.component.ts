@@ -577,6 +577,10 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       return;
     }
     for (const seat of this.seats) {
+      if (seat.isAisle) {
+        seat.isSelectable = false;
+        continue;
+      }
       const isDouble = !!seat.isDouble;
       const allowedByAny = this.slots.length === 0 || this.slots.some(sl => sl.isDouble === isDouble);
       const hasFreeMatch = this.slots.some(sl => sl.seatIds.length === 0 && sl.isDouble === isDouble);
@@ -587,6 +591,9 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   toggleSeat(seat: SelectableSeat): void {
+    if (seat.isAisle) {
+      return;
+    }
     if (!seat.isSelected && seat.isSelectable === false) {
       return;
     }

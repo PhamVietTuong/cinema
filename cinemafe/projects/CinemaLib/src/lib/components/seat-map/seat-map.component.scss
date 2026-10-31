@@ -97,6 +97,13 @@ $seat-gap: 7px;
   }
 }
 
+/* Non-bookable gap cell (aisle/walkway): same footprint as a seat, but empty and inert. */
+.seat-aisle {
+  width: $seat-size; height: $seat-size; flex: none;
+  background: transparent; border: none;
+  pointer-events: none;
+}
+
 .legend {
   display: flex; gap: var(--cx-space-5, 20px); flex-wrap: wrap; justify-content: center;
   padding: var(--cx-space-4, 16px); border-top: 1px dashed var(--ml-rule);

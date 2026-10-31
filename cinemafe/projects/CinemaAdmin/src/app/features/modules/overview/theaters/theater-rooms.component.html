@@ -42,7 +42,7 @@
         </ngx-datatable-column>
 
         <ngx-datatable-column [name]="'theaters.rooms.capacity' | translate" [sortable]="false">
-          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.totalRows }} × {{ row.totalColumns }} = {{ (row.totalRows ?? 0) * (row.totalColumns ?? 0) }} ghế</ng-template>
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.totalRows }} × {{ row.totalColumns }} = {{ row.seatCount ?? 0 }} ghế</ng-template>
         </ngx-datatable-column>
 
         <ngx-datatable-column [name]="'common.status' | translate" prop="status" [sortable]="false">
@@ -73,7 +73,7 @@
         <mat-card-content>
           <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong></div>
           <div class="ad-mobile-card-row"><span>{{ 'theaters.rooms.roomTypeLabel' | translate }}</span><span>{{ roomTypeName(row.roomTypeId) }}</span></div>
-          <div class="ad-mobile-card-row"><span>{{ 'theaters.rooms.capacity' | translate }}</span><span>{{ row.totalRows }} × {{ row.totalColumns }} = {{ (row.totalRows ?? 0) * (row.totalColumns ?? 0) }} ghế</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'theaters.rooms.capacity' | translate }}</span><span>{{ row.totalRows }} × {{ row.totalColumns }} = {{ row.seatCount ?? 0 }} ghế</span></div>
           <div class="ad-mobile-card-row"><span>{{ 'common.status' | translate }}</span><span>{{ statusLabel(row.status) | translate }}</span></div>
           <div class="ad-mobile-card-actions">
             <button mat-icon-button type="button" (click)="openSeatMap(row)" [matTooltip]="'theaters.rooms.seatMapTitle' | translate"><mat-icon>event_seat</mat-icon></button>
