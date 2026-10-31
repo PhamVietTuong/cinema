@@ -302,6 +302,7 @@ CREATE TABLE [Movie] (
     [Cast] nvarchar(1000) NULL,
     [Language] nvarchar(100) NULL,
     [Subtitle] nvarchar(max) NULL,
+    [ImdbId] nvarchar(20) NULL,
     [IsActive] bit NOT NULL,
     [AgeRestrictionId] uniqueidentifier NOT NULL,
     [CreationTime] datetime NOT NULL,

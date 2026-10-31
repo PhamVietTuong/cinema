@@ -65,6 +65,7 @@ export class MovieDialog implements OnInit {
       cast: [data.movie?.cast ?? ''],
       language: [data.movie?.language ?? ''],
       subtitle: [data.movie?.subtitle ?? ''],
+      imdbId: [data.movie?.imdbId ?? '', Validators.pattern(/^\s*tt\d{7,10}\s*$/)],
       trailerUrl: [data.movie?.trailerUrl ?? ''],
       posterUrl: [data.movie?.posterUrl ?? ''],
       ageRestrictionId: [data.movie?.ageRestrictionId ?? '', Validators.required],
@@ -290,7 +291,7 @@ export class MovieDialog implements OnInit {
       return;
     }
     const { credits: creditRowValues, ...v } = this.form.value;
-    const payload: Record<string, unknown> = { ...v, endDate: v.endDate || undefined };
+    const payload: Record<string, unknown> = { ...v, endDate: v.endDate || undefined, imdbId: v.imdbId?.trim() || undefined };
     // Reached only once creditsLoaded is true (either a new movie with none yet, or an existing
     // movie whose credits have finished loading), so the current rows are always safe to send.
     payload['credits'] = creditRowValues.map((r: any, i: number) => ({

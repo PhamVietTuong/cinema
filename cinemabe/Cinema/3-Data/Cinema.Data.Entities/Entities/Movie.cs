@@ -13,6 +13,7 @@ public class Movie : BaseEntity
     public string? Cast { get; set; }
     public string? Language { get; set; }
     public string? Subtitle { get; set; }
+    public string? ImdbId { get; set; }
     public bool IsActive { get; set; } = true;
     public Guid AgeRestrictionId { get; set; }
     public AgeRestriction AgeRestriction { get; set; } = null!;

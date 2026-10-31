@@ -16,6 +16,7 @@ public class MovieConfiguration : IEntityTypeConfiguration<Movie>
         b.Property(m => m.Director).HasMaxLength(200);
         b.Property(m => m.Cast).HasMaxLength(1000);
         b.Property(m => m.Language).HasMaxLength(100);
+        b.Property(m => m.ImdbId).HasMaxLength(20);
         b.HasOne(m => m.AgeRestriction).WithMany(a => a.Movies).HasForeignKey(m => m.AgeRestrictionId).OnDelete(DeleteBehavior.Restrict);
     }
 }

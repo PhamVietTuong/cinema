@@ -18,6 +18,9 @@ public class UpdateMovieRequest
     public string? Cast { get; set; }
     public string? Language { get; set; }
     public string? Subtitle { get; set; }
+
+    [RegularExpression(@"^\s*tt\d{7,10}\s*$", ErrorMessage = "IMDb ID must look like tt1234567.")]
+    public string? ImdbId { get; set; }
     public Guid AgeRestrictionId { get; set; }
     public List<Guid> MovieTypeIds { get; set; } = new();
     /// <summary>null = leave existing credits untouched; [] = clear all credits.</summary>

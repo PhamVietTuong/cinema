@@ -6305,6 +6305,10 @@
             "type": "string",
             "nullable": true
           },
+          "imdbId": {
+            "type": "string",
+            "nullable": true
+          },
           "ageRestrictionId": {
             "type": "string",
             "format": "guid"
@@ -6677,6 +6681,11 @@
             "type": "string",
             "nullable": true
           },
+          "imdbId": {
+            "type": "string",
+            "pattern": "^\\s*tt\\d{7,10}\\s*$",
+            "nullable": true
+          },
           "ageRestrictionId": {
             "type": "string",
             "format": "guid"
@@ -6786,6 +6795,11 @@
           },
           "subtitle": {
             "type": "string",
+            "nullable": true
+          },
+          "imdbId": {
+            "type": "string",
+            "pattern": "^\\s*tt\\d{7,10}\\s*$",
             "nullable": true
           },
           "ageRestrictionId": {

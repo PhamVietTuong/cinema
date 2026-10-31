@@ -842,6 +842,15 @@ END
 -- ===== end movie credit =====
 
 -- ============================================================
+-- Movie.ImdbId: optional IMDb id used for the OMDb ratings lookup
+-- ============================================================
+IF COL_LENGTH('dbo.Movie', 'ImdbId') IS NULL
+BEGIN
+    ALTER TABLE [Movie] ADD [ImdbId] nvarchar(20) NULL;
+END
+-- ===== end movie imdb id =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

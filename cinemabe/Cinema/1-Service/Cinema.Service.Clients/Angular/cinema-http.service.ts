@@ -8905,6 +8905,7 @@ export class MovieDTO implements IMovieDTO {
     cast?: string | undefined;
     subtitle?: string | undefined;
     language?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     ageRestrictionCode?: string;
     movieTypeIds?: string[];
@@ -8939,6 +8940,7 @@ export class MovieDTO implements IMovieDTO {
             this.cast = _data["cast"];
             this.subtitle = _data["subtitle"];
             this.language = _data["language"];
+            this.imdbId = _data["imdbId"];
             this.ageRestrictionId = _data["ageRestrictionId"];
             this.ageRestrictionCode = _data["ageRestrictionCode"];
             if (Array.isArray(_data["movieTypeIds"])) {
@@ -8981,6 +8983,7 @@ export class MovieDTO implements IMovieDTO {
         data["cast"] = this.cast;
         data["subtitle"] = this.subtitle;
         data["language"] = this.language;
+        data["imdbId"] = this.imdbId;
         data["ageRestrictionId"] = this.ageRestrictionId;
         data["ageRestrictionCode"] = this.ageRestrictionCode;
         if (Array.isArray(this.movieTypeIds)) {
@@ -9016,6 +9019,7 @@ export interface IMovieDTO {
     cast?: string | undefined;
     subtitle?: string | undefined;
     language?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     ageRestrictionCode?: string;
     movieTypeIds?: string[];
@@ -9559,6 +9563,7 @@ export class CreateMovieRequest implements ICreateMovieRequest {
     cast?: string | undefined;
     language?: string | undefined;
     subtitle?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
     credits?: MovieCreditRequest[] | undefined;
@@ -9585,6 +9590,7 @@ export class CreateMovieRequest implements ICreateMovieRequest {
             this.cast = _data["cast"];
             this.language = _data["language"];
             this.subtitle = _data["subtitle"];
+            this.imdbId = _data["imdbId"];
             this.ageRestrictionId = _data["ageRestrictionId"];
             if (Array.isArray(_data["movieTypeIds"])) {
                 this.movieTypeIds = [] as any;
@@ -9619,6 +9625,7 @@ export class CreateMovieRequest implements ICreateMovieRequest {
         data["cast"] = this.cast;
         data["language"] = this.language;
         data["subtitle"] = this.subtitle;
+        data["imdbId"] = this.imdbId;
         data["ageRestrictionId"] = this.ageRestrictionId;
         if (Array.isArray(this.movieTypeIds)) {
             data["movieTypeIds"] = [];
@@ -9646,6 +9653,7 @@ export interface ICreateMovieRequest {
     cast?: string | undefined;
     language?: string | undefined;
     subtitle?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
     credits?: MovieCreditRequest[] | undefined;
@@ -9720,6 +9728,7 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
     cast?: string | undefined;
     language?: string | undefined;
     subtitle?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
     credits?: MovieCreditRequest[] | undefined;
@@ -9747,6 +9756,7 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
             this.cast = _data["cast"];
             this.language = _data["language"];
             this.subtitle = _data["subtitle"];
+            this.imdbId = _data["imdbId"];
             this.ageRestrictionId = _data["ageRestrictionId"];
             if (Array.isArray(_data["movieTypeIds"])) {
                 this.movieTypeIds = [] as any;
@@ -9782,6 +9792,7 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
         data["cast"] = this.cast;
         data["language"] = this.language;
         data["subtitle"] = this.subtitle;
+        data["imdbId"] = this.imdbId;
         data["ageRestrictionId"] = this.ageRestrictionId;
         if (Array.isArray(this.movieTypeIds)) {
             data["movieTypeIds"] = [];
@@ -9810,6 +9821,7 @@ export interface IUpdateMovieRequest {
     cast?: string | undefined;
     language?: string | undefined;
     subtitle?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
     credits?: MovieCreditRequest[] | undefined;

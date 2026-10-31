@@ -126,7 +126,7 @@ public class MovieManager : IMovieManager
     {
         var id = movie.Id;
         // Started first so it overlaps the DB queries below; the provider never touches the DbContext.
-        var externalRatingsTask = _externalRatings.GetRatingsAsync(movie.Title, movie.ReleaseDate.Year);
+        var externalRatingsTask = _externalRatings.GetRatingsAsync(movie.Title, movie.ReleaseDate.Year, movie.ImdbId);
         var dto = movie.ToDTO<Movie, MovieDetailDTO>();
         ApplyMovieComputedFields(movie, dto);
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
@@ -180,6 +180,7 @@ public class MovieManager : IMovieManager
     {
         var movie = request.ToNewEntity<CreateMovieRequest, Movie>();
         movie.Slug = await GenerateUniqueSlugAsync(request.Title);
+        movie.ImdbId = NormalizeImdbId(request.ImdbId);
         movie.MovieTypeDetails = request.MovieTypeIds.Select(id => new MovieTypeDetail { MovieTypeId = id }).ToList();
         if (request.Credits is { Count: > 0 })
         {
@@ -213,6 +214,7 @@ public class MovieManager : IMovieManager
         // across title edits so shared links and bookmarks keep working.
         movie.PatchEntity<Movie, UpdateMovieRequest>(request);
         movie.EndDate = request.EndDate;
+        movie.ImdbId = NormalizeImdbId(request.ImdbId);
 
         // Reconcile genre links against the requested set on the tracked collection.
         movie.MovieTypeDetails.Clear();
@@ -584,6 +586,11 @@ public class MovieManager : IMovieManager
     private static string? NormalizePhotoUrl(string? photoUrl)
     {
         return string.IsNullOrWhiteSpace(photoUrl) ? null : photoUrl.Trim();
+    }
+
+    private static string? NormalizeImdbId(string? imdbId)
+    {
+        return string.IsNullOrWhiteSpace(imdbId) ? null : imdbId.Trim();
     }
 
     /// <summary>Reconciles the movie's tracked MovieCredits collection against the requested list by

@@ -14,6 +14,7 @@ public class MovieDTO
     public string? Cast { get; set; }
     public string? Subtitle { get; set; }
     public string? Language { get; set; }
+    public string? ImdbId { get; set; }
     public Guid AgeRestrictionId { get; set; }
     public string AgeRestrictionCode { get; set; } = string.Empty;
     public List<Guid> MovieTypeIds { get; set; } = new();
