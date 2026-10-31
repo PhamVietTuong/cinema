@@ -13,6 +13,10 @@ public interface ISeatStore : IGenericStore<Seat>
     Task<IReadOnlyDictionary<Guid, Seat>> GetByIdsAsync(IReadOnlyCollection<Guid> ids);
     Task<IEnumerable<Guid>> GetBookedSeatIdsAsync(Guid showTimeId, Guid roomId);
 
+    /// <summary>Bookable seat counts (active, non-aisle) for the given rooms, keyed by RoomId. One grouped
+    /// query for the whole page of rooms — callers rendering a room list must not loop per room.</summary>
+    Task<IReadOnlyDictionary<Guid, int>> GetBookableSeatCountsAsync(IReadOnlyCollection<Guid> roomIds);
+
     /// <summary>Booked-seat counts for every showtime of a movie, keyed by (ShowTimeId, RoomId).
     /// One query for the whole movie — callers rendering a schedule must not loop per showtime.</summary>
     Task<IReadOnlyDictionary<(Guid ShowTimeId, Guid RoomId), int>> GetBookedSeatCountsByMovieAsync(Guid movieId);

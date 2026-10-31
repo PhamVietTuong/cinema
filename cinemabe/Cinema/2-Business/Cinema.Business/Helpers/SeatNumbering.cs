@@ -5,15 +5,15 @@ namespace Cinema.Business.Helpers;
 /// <summary>
 /// Row-position seat numbering: within a row, a double/couple seat (two seats sharing a SeatGroupId,
 /// column-adjacent, exactly 2 members in that row) counts as ONE numbered slot, so the seat after it
-/// doesn't jump by two. Mirrors the frontend's seatCellsByRow grouping rule and the SQL backfill in
-/// upgrade_db.sql — all three must stay in lockstep.
+/// doesn't jump by two. An aisle cell takes no slot at all. Mirrors the frontend's seatCellsByRow
+/// grouping rule and the SQL backfill in upgrade_db.sql — all three must stay in lockstep.
 /// </summary>
 public static class SeatNumbering
 {
     /// <summary>
     /// Computes the 1-based display number of every seat, keyed by Seat.Id. The input must be ALL seats
     /// of the room(s) involved — active and inactive — since a blocked seat still occupies a slot and
-    /// leaving it out would wrongly shift its neighbours.
+    /// leaving it out would wrongly shift its neighbours. An aisle seat is mapped to 0.
     /// </summary>
     public static IReadOnlyDictionary<Guid, int> Compute(IEnumerable<Seat> roomSeats)
     {
@@ -23,7 +23,7 @@ public static class SeatNumbering
         {
             var ordered = rowGroup.OrderBy(s => s.ColIndex).ToList();
             var groupSizes = ordered
-                .Where(s => s.SeatGroupId.HasValue)
+                .Where(s => !s.IsAisle() && s.SeatGroupId.HasValue)
                 .GroupBy(s => s.SeatGroupId!.Value)
                 .ToDictionary(g => g.Key, g => g.Count());
 
@@ -31,6 +31,13 @@ public static class SeatNumbering
             Guid? previousGroupId = null;
             foreach (var seat in ordered)
             {
+                if (seat.IsAisle())
+                {
+                    result[seat.Id] = 0;
+                    previousGroupId = null;
+                    continue;
+                }
+
                 var joinsPrevious = seat.SeatGroupId.HasValue
                     && previousGroupId == seat.SeatGroupId
                     && groupSizes[seat.SeatGroupId.Value] == 2;

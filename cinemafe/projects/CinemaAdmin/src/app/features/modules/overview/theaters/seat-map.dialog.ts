@@ -10,12 +10,13 @@ export interface SeatMapDialogData {
 }
 
 /** Which action clicking a seat currently applies, picked from the palette at the top. */
-type SeatTool = 'standard' | 'double' | 'remove';
+type SeatTool = 'standard' | 'double' | 'aisle' | 'remove';
 
 /** Seat-map editor for a room: grid resize, set each seat's type by picking a seat type at the top
  * (paint mode) then clicking seats to apply it. A seat has no stored kind of its own — Standard vs
  * Double is derived from whether it's paired: applying Double auto-pairs the seat with an adjacent
- * unpaired seat in the same row; applying Standard on a paired seat unpairs the whole group.
+ * unpaired seat in the same row; applying Standard on a paired seat unpairs the whole group. Aisle
+ * paints a non-bookable gap cell: it unpairs a double, and a double can never pair with an aisle.
  * Resolves `true` if the map was saved. */
 @Component({
   selector: 'app-seat-map-dialog',
@@ -83,9 +84,18 @@ export class SeatMapDialog {
   }
 
   /** A double seat's two halves share one number (row-position numbering), computed live from the full
-   * in-memory seat list so unsaved pairing edits renumber immediately, before Save. */
+   * in-memory seat list so unsaved pairing edits renumber immediately, before Save. An aisle cell has
+   * no number. */
   cellLabel(cell: SeatCell<CinemaServiceAgent.RoomSeatDTO>): string {
+    if (cell.isAisle) {
+      return '';
+    }
     return `${cell.seats[0].rowName}${cell.position}`;
+  }
+
+  /** Seat count for the header, excluding aisle cells (they're not bookable seats). */
+  get seatCount(): number {
+    return this.seats.filter(s => !s.isAisle).length;
   }
 
   /** The theater's actual SeatType name for a kind (e.g. renamed to "Ghế VIP"), not a hardcoded
@@ -129,15 +139,30 @@ export class SeatMapDialog {
       this.confirmRemoveSeat(seat);
       return;
     }
+    if (this.activeTool === 'aisle') {
+      this.setAisle(seat);
+      return;
+    }
     this.setSeatKind(seat, this.activeTool === 'double');
   }
 
-  /** Sets a seat's type. Setting Double auto-pairs the seat with an adjacent unpaired seat in the
-   * same row (prefers the seat to the right, else the left); setting Standard on a paired seat
-   * unpairs the whole group. */
+  /** Paints a cell as a non-bookable aisle: unpairs it from any double partner first. */
+  private setAisle(seat: CinemaServiceAgent.RoomSeatDTO): void {
+    this.pairError = false;
+    if (seat.seatGroupId) {
+      const gid = seat.seatGroupId;
+      this.seats.filter(s => s.seatGroupId === gid).forEach(s => { s.seatGroupId = undefined; s.isDouble = false; });
+    }
+    seat.isAisle = true;
+  }
+
+  /** Sets a seat's type. Setting Double auto-pairs the seat with an adjacent unpaired, non-aisle seat
+   * in the same row (prefers the seat to the right, else the left); setting Standard on a paired seat
+   * unpairs the whole group. Either clears isAisle on the clicked cell. */
   private setSeatKind(seat: CinemaServiceAgent.RoomSeatDTO, isDouble: boolean): void {
     this.pairError = false;
     if (!isDouble) {
+      seat.isAisle = false;
       if (seat.seatGroupId) {
         const gid = seat.seatGroupId;
         this.seats.filter(s => s.seatGroupId === gid).forEach(s => { s.seatGroupId = undefined; s.isDouble = false; });
@@ -152,11 +177,13 @@ export class SeatMapDialog {
     const index = rowSeats.indexOf(seat);
     const right = rowSeats[index + 1];
     const left = rowSeats[index - 1];
-    const partner = (right && !right.seatGroupId) ? right : (left && !left.seatGroupId) ? left : undefined;
+    const partner = (right && !right.seatGroupId && !right.isAisle) ? right
+      : (left && !left.seatGroupId && !left.isAisle) ? left : undefined;
     if (!partner) {
       this.pairError = true;
       return;
     }
+    seat.isAisle = false;
     const gid = crypto.randomUUID();
     seat.seatGroupId = gid;
     seat.isDouble = true;
@@ -172,6 +199,7 @@ export class SeatMapDialog {
         seatId: s.id,
         seatGroupId: s.seatGroupId,
         isActive: s.isActive,
+        isAisle: s.isAisle,
       })),
     });
     this._svc.saveRoomSeatMap(request).subscribe({
@@ -214,7 +242,7 @@ export class SeatMapDialog {
     this._cdr.detectChanges();
     // Preserve unsaved pairing edits made before this removal, by seat id, so "Save" afterward still
     // persists them — the server only knows about the last-saved grouping.
-    const localGroups = new Map(this.seats.map(s => [s.id!, { seatGroupId: s.seatGroupId, isDouble: s.isDouble }]));
+    const localGroups = new Map(this.seats.map(s => [s.id!, { seatGroupId: s.seatGroupId, isDouble: s.isDouble, isAisle: s.isAisle }]));
 
     this._svc.removeRoomSeat(CinemaServiceAgent.RemoveSeatRequest.fromJS({ roomId: this.room.id, seatId: seat.id }))
       .subscribe({
@@ -225,6 +253,7 @@ export class SeatMapDialog {
             if (edit) {
               s.seatGroupId = edit.seatGroupId;
               s.isDouble = edit.isDouble;
+              s.isAisle = edit.isAisle;
             }
           }
           // A group that lost its other half (its partner was the seat just removed) is no longer

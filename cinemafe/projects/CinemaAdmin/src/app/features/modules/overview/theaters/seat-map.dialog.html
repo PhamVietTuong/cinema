@@ -1,6 +1,6 @@
 <div mat-dialog-title class="dialog-title">
   {{ 'theaters.rooms.seatMapHeading' | translate }} · {{ room.name }}
-  <p class="ad-sub">{{ room.totalRows }} × {{ room.totalColumns }} · {{ seats.length }} ghế</p>
+  <p class="ad-sub">{{ room.totalRows }} × {{ room.totalColumns }} · {{ seatCount }} ghế</p>
 </div>
 
 <mat-dialog-content>
@@ -28,12 +28,16 @@
         <span class="palette-chip" [class.is-active]="activeTool === 'double'" [style.--sc]="colorForKind(true)" (click)="activeTool = 'double'">
           <span class="palette-dot"></span> {{ seatTypeName(true) }}
         </span>
+        <span class="palette-chip is-aisle" [class.is-active]="activeTool === 'aisle'" (click)="activeTool = 'aisle'">
+          <mat-icon>space_bar</mat-icon> {{ 'theaters.rooms.aisle' | translate }}
+        </span>
         <span class="palette-chip is-remove" [class.is-active]="activeTool === 'remove'" (click)="activeTool = 'remove'">
           <mat-icon>delete</mat-icon> {{ 'theaters.rooms.removeSeat' | translate }}
         </span>
       </div>
       <p class="ad-sub seatmap-error" *ngIf="pairError">{{ 'theaters.rooms.noAdjacentSeat' | translate }}</p>
       <p class="ad-sub" *ngIf="activeTool === 'remove'">{{ 'theaters.rooms.removeHint' | translate }}</p>
+      <p class="ad-sub" *ngIf="activeTool === 'aisle'">{{ 'theaters.rooms.aisleHint' | translate }}</p>
     </div>
 
     <div class="screen-wrap">
@@ -48,10 +52,11 @@
              class="seat editable"
              [class.double-wide]="cell.isDouble"
              [class.busy]="removing || resizing"
-             [style.--sc]="colorFor(cell.seats[0])"
+             [class.aisle]="cell.isAisle"
+             [style.--sc]="cell.isAisle ? null : colorFor(cell.seats[0])"
              [class.paired]="cell.seats[0].seatGroupId"
              (click)="!(removing || resizing) && onSeatClick(cell.seats[0])"
-             [title]="cellLabel(cell) + ' · ' + nameFor(cell.seats[0]) + (cell.seats[0].seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : '')">{{ cellLabel(cell) }}<mat-icon *ngIf="cell.seats[0].seatGroupId" class="pair-badge">link</mat-icon></div>
+             [title]="cell.isAisle ? ('theaters.rooms.aisle' | translate) : (cellLabel(cell) + ' · ' + nameFor(cell.seats[0]) + (cell.seats[0].seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : ''))">{{ cellLabel(cell) }}<mat-icon *ngIf="cell.seats[0].seatGroupId" class="pair-badge">link</mat-icon></div>
       </div>
     </div>
     <ng-template #noSeats>

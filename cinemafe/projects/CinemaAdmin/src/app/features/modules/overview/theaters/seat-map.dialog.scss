@@ -60,6 +60,13 @@ $ad-seat-gap: 6px;
   }
   &.busy { cursor: default; &:hover { transform: none; } }
 
+  /* Non-bookable gap cell (aisle/walkway): no fill, no label, dashed outline. */
+  &.aisle {
+    background: transparent;
+    border: 1.5px dashed var(--ad-glass-border-strong);
+    color: transparent;
+  }
+
   .pair-badge {
     position: absolute;
     top: -7px; right: -7px;
@@ -92,6 +99,10 @@ $ad-seat-gap: 6px;
   &.is-remove {
     color: var(--ml-warn-ink);
     &.is-active { border-color: var(--ml-warn); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ml-warn) 40%, transparent); }
+  }
+  &.is-aisle {
+    color: var(--ad-muted);
+    &.is-active { border-color: var(--ad-muted); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ad-muted) 40%, transparent); }
   }
 }
 

@@ -8,8 +8,8 @@ public class SeatNumberingTests
 {
     private static readonly Guid RoomId = Guid.NewGuid();
 
-    private static Seat Seat(string row, int col, Guid? groupId = null, bool isActive = true)
-        => new() { Id = Guid.NewGuid(), RoomId = RoomId, RowName = row, ColIndex = col, SeatGroupId = groupId, IsActive = isActive };
+    private static Seat Seat(string row, int col, Guid? groupId = null, bool isActive = true, SeatKind kind = SeatKind.Standard)
+        => new() { Id = Guid.NewGuid(), RoomId = RoomId, RowName = row, ColIndex = col, SeatGroupId = groupId, IsActive = isActive, Kind = kind };
 
     [Fact]
     public void SingleThenPairThenSingle_GivesOneTwoTwoThree()
@@ -129,6 +129,35 @@ public class SeatNumberingTests
         numbers[a1.Id].Should().Be(1);
         numbers[a2.Id].Should().Be(2);
         numbers[a3.Id].Should().Be(3);
+    }
+
+    [Fact]
+    public void AnAisle_TakesNoNumber()
+    {
+        var a1 = Seat("A", 1);
+        var aisle = Seat("A", 2, kind: SeatKind.Aisle);
+        var a3 = Seat("A", 3);
+
+        var numbers = SeatNumbering.Compute([a1, aisle, a3]);
+
+        numbers[a1.Id].Should().Be(1);
+        numbers[aisle.Id].Should().Be(0);
+        numbers[a3.Id].Should().Be(2);
+    }
+
+    [Fact]
+    public void APairSplitByAnAisle_IsStandalone()
+    {
+        var gid = Guid.NewGuid();
+        var a = Seat("A", 1, gid);
+        var aisle = Seat("A", 2, kind: SeatKind.Aisle);
+        var b = Seat("A", 3, gid);
+
+        var numbers = SeatNumbering.Compute([a, aisle, b]);
+
+        numbers[a.Id].Should().Be(1);
+        numbers[aisle.Id].Should().Be(0);
+        numbers[b.Id].Should().Be(2);
     }
 
     [Fact]

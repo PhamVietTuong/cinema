@@ -147,6 +147,30 @@ public class BookingServiceTests
         result.Results.Single(s => s.Id == SeatId10).DisplayNumber.Should().Be(3);
     }
 
+    [Fact]
+    public async Task GetSeatsAsync_AisleCell_IsAisleTrueWithNoNumberOrPrice_AndFollowingSeatNumberedCorrectly()
+    {
+        var aisleId = Guid.NewGuid();
+        var seats = new List<Seat>
+        {
+            new() { Id = SeatId1, RowName = "C", ColIndex = 1 },
+            new() { Id = aisleId, RowName = "C", ColIndex = 2, Kind = SeatKind.Aisle },
+            new() { Id = SeatId5, RowName = "C", ColIndex = 3 },
+        };
+        _uowMock.Setup(u => u.SeatStore.GetSeatMapByRoomNoTrackingAsync(RoomId1)).ReturnsAsync(seats);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1)).ReturnsAsync((ShowTimeRoom?)null);
+
+        var result = await _sut.GetSeatsAsync(SeatSearch(ShowTimeId1, RoomId1));
+
+        var aisle = result.Results.Single(s => s.Id == aisleId);
+        aisle.IsAisle.Should().BeTrue();
+        aisle.DisplayNumber.Should().Be(0);
+        aisle.Price.Should().Be(0);
+        aisle.IsDouble.Should().BeFalse();
+        result.Results.Single(s => s.Id == SeatId5).DisplayNumber.Should().Be(2);
+    }
+
     // ── Full pricing formula (via GetShowTimePricesAsync) ───────────────────────
 
     /// <summary>RoomTypePatronCategoryPrice is now the RoomType's allow-list: a category with no row
@@ -551,6 +575,26 @@ public class BookingServiceTests
 
         await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*blocked*");
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_RejectsAisleSeat()
+    {
+        var seat = Guid.NewGuid();
+        SetupBaselineBookingMocks(Guid.NewGuid(), Guid.NewGuid(), ShowTimeId1, RoomId1, 100);
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seat] = new() { Id = seat, RoomId = RoomId1, RowName = "Z", ColIndex = 1, Kind = SeatKind.Aisle } });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId = ShowTimeId1,
+            RoomId = RoomId1,
+            Seats = new List<BookingSeatItem> { new() { SeatId = seat, PatronCategoryId = Guid.NewGuid() } },
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*aisle*");
         _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
     }
 

@@ -10,6 +10,8 @@ public class RoomSeatDTO
     public int ColIndex { get; set; }
     /// <summary>Derived from SeatGroupId being set — a seat has no stored kind of its own.</summary>
     public bool IsDouble { get; set; }
+    /// <summary>A non-bookable gap cell (aisle/walkway). Never true together with IsDouble.</summary>
+    public bool IsAisle { get; set; }
     public Guid? SeatGroupId { get; set; }
     public bool IsActive { get; set; } = true;
 }

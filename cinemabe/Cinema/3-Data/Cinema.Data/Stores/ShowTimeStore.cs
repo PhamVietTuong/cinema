@@ -41,7 +41,7 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
                 sr.Room.TheaterId,
                 sr.Room.Theater.Name,
                 sr.Room.Theater.Address,
-                sr.Room.TotalRows * sr.Room.TotalColumns))
+                sr.Room.Seats.Count(s => s.IsActive && s.Kind != SeatKind.Aisle)))
             .ToListAsync();
 
     public async Task<ShowTimeRoom?> GetShowTimeRoomAsync(Guid showTimeId, Guid roomId)

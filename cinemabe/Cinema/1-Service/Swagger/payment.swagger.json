@@ -932,6 +932,9 @@
           "isDouble": {
             "type": "boolean"
           },
+          "isAisle": {
+            "type": "boolean"
+          },
           "status": {
             "$ref": "#/components/schemas/SeatStatus"
           },
@@ -1047,11 +1050,13 @@
         "description": "",
         "x-enumNames": [
           "Standard",
-          "Double"
+          "Double",
+          "Aisle"
         ],
         "enum": [
           0,
-          1
+          1,
+          2
         ]
       },
       "BookingResultDTO": {

@@ -68,9 +68,9 @@ public class OperationsBoardAndIncidentTests
         return user;
     }
 
-    private Seat GivenSeat(Guid? groupId = null, string row = "A", int col = 1)
+    private Seat GivenSeat(Guid? groupId = null, string row = "A", int col = 1, SeatKind kind = SeatKind.Standard)
     {
-        var seat = new Seat { Id = Guid.NewGuid(), RoomId = _room.Id, RowName = row, ColIndex = col, SeatGroupId = groupId };
+        var seat = new Seat { Id = Guid.NewGuid(), RoomId = _room.Id, RowName = row, ColIndex = col, SeatGroupId = groupId, Kind = kind };
         _uowMock.Setup(u => u.SeatStore.GetByIdAsync(seat.Id)).ReturnsAsync(seat);
         return seat;
     }
@@ -133,6 +133,17 @@ public class OperationsBoardAndIncidentTests
         // Nothing is cancelled: the invoice store is never touched.
         _uowMock.VerifyGet(u => u.InvoiceStore, Times.Never);
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task BlockSeat_AnAisle_Throws()
+    {
+        var seat = GivenSeat(kind: SeatKind.Aisle);
+
+        var act = () => _incidents.BlockSeatAsync(_theaterId, _manager.Id, new BlockSeatRequest { SeatId = seat.Id });
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*aisle*");
+        _uowMock.Verify(u => u.BeginTransactionAsync(), Times.Never);
     }
 
     [Fact]

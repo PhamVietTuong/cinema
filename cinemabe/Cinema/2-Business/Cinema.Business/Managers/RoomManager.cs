@@ -94,7 +94,16 @@ public class RoomManager : IRoomManager
         query = ApplySort(query, search.Sort);
         var total = await _uow.RoomStore.CountAsync(query);
         var items = await _uow.RoomStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<Room, RoomDTO>(items, total, page, pageSize);
+        var result = PagingHelper.ToPagedResult<Room, RoomDTO>(items, total, page, pageSize);
+
+        // One grouped query for the whole page of rooms, not one count per room.
+        var seatCounts = await _uow.SeatStore.GetBookableSeatCountsAsync(items.Select(r => r.Id).ToList());
+        foreach (var dto in result.Results)
+        {
+            seatCounts.TryGetValue(dto.Id, out var count);
+            dto.SeatCount = count;
+        }
+        return result;
     }
 
     public async Task<RoomDTO> GetByIdAsync(Guid id)
@@ -104,7 +113,11 @@ public class RoomManager : IRoomManager
         {
             throw new KeyNotFoundException($"Room {id} not found.");
         }
-        return entity.ToDTO<Room, RoomDTO>();
+        var dto = entity.ToDTO<Room, RoomDTO>();
+        var seatCounts = await _uow.SeatStore.GetBookableSeatCountsAsync([id]);
+        seatCounts.TryGetValue(id, out var count);
+        dto.SeatCount = count;
+        return dto;
     }
 
     public async Task<RoomDTO> CreateAsync(CreateRoomRequest request)
@@ -112,7 +125,10 @@ public class RoomManager : IRoomManager
         var entity = request.ToNewEntity<CreateRoomRequest, Room>();
         await _uow.RoomStore.CreateAsync(entity);
         await GenerateSeatsAsync(entity.Id, entity.TotalRows, entity.TotalColumns);
-        return entity.ToDTO<Room, RoomDTO>();
+        // A freshly generated grid has no aisles, so every cell is bookable.
+        var dto = entity.ToDTO<Room, RoomDTO>();
+        dto.SeatCount = entity.TotalRows * entity.TotalColumns;
+        return dto;
     }
 
     public async Task<RoomDTO> UpdateAsync(UpdateRoomRequest request)
@@ -126,14 +142,23 @@ public class RoomManager : IRoomManager
         entity.PatchEntity<Room, UpdateRoomRequest>(request);
         await _uow.RoomStore.UpdateAsync(entity);
 
-        // Rebuild the seat map only when the grid size actually changes.
+        var dto = entity.ToDTO<Room, RoomDTO>();
         if (dimensionsChanged)
         {
+            // Rebuild the seat map only when the grid size actually changes.
             // Single bulk delete instead of one round trip per seat (avoids an N+1 query pattern).
             await _uow.SeatStore.DeleteAsync(s => s.RoomId == entity.Id);
             await GenerateSeatsAsync(entity.Id, request.TotalRows, request.TotalColumns);
+            // The rebuilt grid has no aisles, so every cell is bookable.
+            dto.SeatCount = request.TotalRows * request.TotalColumns;
         }
-        return entity.ToDTO<Room, RoomDTO>();
+        else
+        {
+            var seatCounts = await _uow.SeatStore.GetBookableSeatCountsAsync([entity.Id]);
+            seatCounts.TryGetValue(entity.Id, out var count);
+            dto.SeatCount = count;
+        }
+        return dto;
     }
 
     public async Task DeleteAsync(Guid id)
@@ -192,20 +217,21 @@ public class RoomManager : IRoomManager
         // group has 1 or 3+ members, left over from before that validation existed, or from a removal
         // that couldn't find its partner — must read back as a plain Standard seat, not a broken double.
         var groupSizes = seats
-            .Where(s => s.SeatGroupId.HasValue)
+            .Where(s => !s.IsAisle() && s.SeatGroupId.HasValue)
             .GroupBy(s => s.SeatGroupId!.Value)
             .ToDictionary(g => g.Key, g => g.Count());
 
         return seats
             .Select(s =>
             {
-                var isValidPair = s.SeatGroupId.HasValue && groupSizes[s.SeatGroupId.Value] == 2;
+                var isValidPair = !s.IsAisle() && s.SeatGroupId.HasValue && groupSizes[s.SeatGroupId.Value] == 2;
                 return new RoomSeatDTO
                 {
                     Id          = s.Id,
                     RowName     = s.RowName,
                     ColIndex    = s.ColIndex,
                     IsDouble    = isValidPair,
+                    IsAisle     = s.IsAisle(),
                     SeatGroupId = isValidPair ? s.SeatGroupId : null,
                     IsActive    = s.IsActive,
                 };
@@ -222,10 +248,25 @@ public class RoomManager : IRoomManager
 
         // A SeatGroupId links exactly two seats into a double seat. Anything else
         // (an orphan or a group of 3+) is invalid data and must not be persisted.
+        // Aisle cells never pair, so they're excluded from the group-size tally.
         var groupSizes = request.Seats
-            .Where(item => item.SeatGroupId.HasValue)
+            .Where(item => !item.IsAisle && item.SeatGroupId.HasValue)
             .GroupBy(item => item.SeatGroupId!.Value)
             .ToDictionary(g => g.Key, g => g.Count());
+
+        var turningIntoAisle = request.Seats
+            .Where(item => item.IsAisle)
+            .Select(item => item.SeatId)
+            .Where(id => seats.TryGetValue(id, out var seat) && !seat.IsAisle())
+            .ToList();
+        if (turningIntoAisle.Count > 0)
+        {
+            var affected = await _uow.IncidentStore.GetUpcomingTicketsAsync(request.RoomId, turningIntoAisle, DateTime.Now);
+            if (affected.Count > 0)
+            {
+                throw new InvalidOperationException("Cannot turn a seat with upcoming tickets into an aisle.");
+            }
+        }
 
         foreach (var item in request.Seats)
         {
@@ -233,6 +274,14 @@ public class RoomManager : IRoomManager
             {
                 continue;
             }
+            if (item.IsAisle)
+            {
+                seat.Kind        = SeatKind.Aisle;
+                seat.SeatGroupId = null;
+                seat.IsActive    = true;
+                continue;
+            }
+            seat.Kind        = SeatKind.Standard;
             seat.SeatGroupId = item.SeatGroupId.HasValue && groupSizes[item.SeatGroupId.Value] == 2
                 ? item.SeatGroupId
                 : null;

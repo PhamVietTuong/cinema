@@ -243,7 +243,7 @@ public class StaffReportStore : IStaffReportStore
         var soldTickets = _db.InvoiceTicket
             .Where(t => t.IsActive && t.Invoice.Status == InvoiceStatus.Paid
                 && t.ShowTimeRoom.ShowTime.StartTime >= from && t.ShowTimeRoom.ShowTime.StartTime < to);
-        var seats = _db.Seat.Where(s => s.IsActive);
+        var seats = _db.Seat.Where(s => s.IsActive && s.Kind != SeatKind.Aisle);
         if (query.TheaterIds != null)
         {
             var theaterIds = query.TheaterIds;

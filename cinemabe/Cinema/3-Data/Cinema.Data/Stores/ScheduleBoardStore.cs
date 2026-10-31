@@ -1,5 +1,6 @@
 using Cinema.Data.Contexts;
 using Cinema.Data.Contracts;
+using Cinema.Data.Entities;
 using Cinema.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ public class ScheduleBoardStore : IScheduleBoardStore
                 r.RoomType.Name,
                 r.Status,
                 r.RoomType.TurnoverBufferMinutes,
-                r.Seats.Count(s => s.IsActive)))
+                r.Seats.Count(s => s.IsActive && s.Kind != SeatKind.Aisle)))
             .ToListAsync();
     }
 

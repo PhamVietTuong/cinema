@@ -358,6 +358,8 @@
       "statusMaintenance": "Maintenance",
       "statusInactive": "Inactive",
       "coupleSeat": "couple seat",
+      "aisle": "Aisle",
+      "aisleHint": "Click a seat to turn it into a non-bookable aisle/walkway gap. Click an aisle again with Single or Double to turn it back into a seat.",
       "removeSeat": "Remove seat",
       "removeHint": "Click a seat to remove it. The remaining seats in its row shift down so there's no gap in the numbering.",
       "confirmRemoveSeat": "Remove this seat? Seats after it in the same row will shift down by one.",
