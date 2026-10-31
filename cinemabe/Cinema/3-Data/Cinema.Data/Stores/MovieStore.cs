@@ -13,6 +13,7 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
         string? search, string? director, Guid? movieTypeId, int page, int pageSize)
     {
         var q = DbSet
+            .AsNoTracking()
             .Include(m => m.AgeRestriction)
             .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
             .Where(m => m.IsActive);

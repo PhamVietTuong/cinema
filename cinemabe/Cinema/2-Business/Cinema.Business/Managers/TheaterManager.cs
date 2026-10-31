@@ -23,27 +23,25 @@ public class TheaterManager : ITheaterManager
     {
         var name = search.Filters.GetString("name");
         var city = search.Filters.GetString("city");
+        var page = search.PageIndex > 0 ? search.PageIndex : 1;
 
-        var theaters = (await _uow.TheaterStore.GetTheatersWithRoomsAsync()).Select(ToTheaterDTO).ToList();
+        var (items, total) = await _uow.TheaterStore.SearchAsync(name, city, page, search.PageSize);
 
-        if (!string.IsNullOrWhiteSpace(name))
+        int countPerPage;
+        if (search.PageSize > 0)
         {
-            theaters = theaters.Where(t => t.Name != null && t.Name.Contains(name, StringComparison.OrdinalIgnoreCase)).ToList();
+            countPerPage = search.PageSize;
+        }
+        else
+        {
+            countPerPage = total;
         }
 
-        if (!string.IsNullOrWhiteSpace(city))
-        {
-            theaters = theaters.Where(t => t.City != null && t.City.Contains(city, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
-        var page     = search.PageIndex > 0 ? search.PageIndex : 1;
-        var pageSize = search.PageSize  > 0 ? search.PageSize  : theaters.Count;
-        var paged    = theaters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         return new DefaultSearchResults<TheaterDTO>
         {
-            Results      = paged,
-            TotalCount   = theaters.Count,
-            CountPerPage = pageSize,
+            Results      = items.Select(r => ToTheaterDTO(r.Theater, r.RoomCount)).ToList(),
+            TotalCount   = total,
+            CountPerPage = countPerPage,
             Page         = page
         };
     }
@@ -53,7 +51,7 @@ public class TheaterManager : ITheaterManager
         var movieId = search.Filters.GetGuid("movieId") ?? Guid.Empty;
         var date    = search.Filters.GetDateTime("date") ?? DateTime.Today;
 
-        var theaters = (await _uow.TheaterStore.GetByMovieAsync(movieId, date)).Select(ToTheaterDTO).ToList();
+        var theaters = (await _uow.TheaterStore.GetByMovieAsync(movieId, date)).Select(t => ToTheaterDTO(t)).ToList();
         return new DefaultSearchResults<TheaterDTO>
         {
             Results      = theaters,
@@ -108,8 +106,18 @@ public class TheaterManager : ITheaterManager
 
     private static TheaterDTO ToTheaterDTO(Theater theater)
     {
+        var roomCount = 0;
+        if (theater.Rooms != null)
+        {
+            roomCount = theater.Rooms.Count;
+        }
+        return ToTheaterDTO(theater, roomCount);
+    }
+
+    private static TheaterDTO ToTheaterDTO(Theater theater, int roomCount)
+    {
         var dto = theater.ToDTO<Theater, TheaterDTO>();
-        dto.RoomCount = theater.Rooms?.Count ?? 0;
+        dto.RoomCount = roomCount;
         return dto;
     }
 }
