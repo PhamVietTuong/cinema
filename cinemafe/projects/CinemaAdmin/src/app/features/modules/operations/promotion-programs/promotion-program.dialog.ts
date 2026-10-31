@@ -202,6 +202,10 @@ export class PromotionProgramDialog implements OnInit {
     );
   }
 
+  clearBanner(): void {
+    this.form.patchValue({ bannerUrl: '' });
+  }
+
   private _uploadImage(event: Event, onUrl: (url: string) => void, setState: (uploading: boolean, error: string) => void): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) {
