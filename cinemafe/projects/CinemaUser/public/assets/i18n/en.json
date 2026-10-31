@@ -26,7 +26,16 @@
     "no": "No",
     "all": "All",
     "noResults": "No results",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "days": {
+      "sunShort": "Sun",
+      "monShort": "Mon",
+      "tueShort": "Tue",
+      "wedShort": "Wed",
+      "thuShort": "Thu",
+      "friShort": "Fri",
+      "satShort": "Sat"
+    }
   },
   "auth": {
     "backToLogin": "Back to sign in",

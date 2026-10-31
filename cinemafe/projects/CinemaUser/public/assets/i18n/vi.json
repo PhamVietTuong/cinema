@@ -26,7 +26,16 @@
     "no": "Không",
     "all": "Tất Cả",
     "noResults": "Không có kết quả",
-    "error": "Đã xảy ra lỗi"
+    "error": "Đã xảy ra lỗi",
+    "days": {
+      "sunShort": "CN",
+      "monShort": "T2",
+      "tueShort": "T3",
+      "wedShort": "T4",
+      "thuShort": "T5",
+      "friShort": "T6",
+      "satShort": "T7"
+    }
   },
   "auth": {
     "backToLogin": "Quay lại đăng nhập",
