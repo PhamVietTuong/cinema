@@ -213,8 +213,12 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     public async Task<List<Entity>> AllPageAsync(int pageIndex, int pageSize)
         => await DbSet.Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
 
+    // Read-only paged list path; callers map results to DTOs and never save through them. A write
+    // always re-fetches a tracked instance via GetByIdAsync, so this can stay untracked.
     public async Task<List<Entity>> AllPageAsync(IQueryable<Entity> query, int pageIndex, int pageSize)
-        => await query.Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+    {
+        return await query.AsNoTracking().Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+    }
 
     public async Task<int> CountAsync(Expression<Func<Entity, bool>> whereExpression)
         => await DbSet.Where(whereExpression).CountAsync();
