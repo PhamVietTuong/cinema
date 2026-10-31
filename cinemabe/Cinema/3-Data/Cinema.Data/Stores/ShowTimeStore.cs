@@ -88,6 +88,7 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
         var total = await query.CountAsync();
         var items = await query
             .OrderBy(s => s.StartTime)
+            .ThenBy(s => s.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
