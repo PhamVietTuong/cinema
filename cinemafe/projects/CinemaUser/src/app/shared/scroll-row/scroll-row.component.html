@@ -1,0 +1,11 @@
+<div class="sr-wrap">
+  <button type="button" class="sr-chevron sr-chevron--left" [attr.aria-label]="'home.scrollRow.prev' | translate" (click)="scroll(-1)">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+  <div class="sr-track" #track>
+    <ng-content></ng-content>
+  </div>
+  <button type="button" class="sr-chevron sr-chevron--right" [attr.aria-label]="'home.scrollRow.next' | translate" (click)="scroll(1)">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+</div>

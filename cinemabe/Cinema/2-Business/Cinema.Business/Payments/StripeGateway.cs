@@ -34,7 +34,7 @@ public class StripeGateway : IPaymentGateway
     private string SecretKey     => _config["Payments:Stripe:SecretKey"]     ?? "";
     private string WebhookSecret => _config["Payments:Stripe:WebhookSecret"] ?? "";
 
-    public async Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl)
+    public async Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl, string? clientIp)
     {
         if (string.IsNullOrWhiteSpace(SecretKey))
         {

@@ -26,7 +26,16 @@
     "no": "No",
     "all": "All",
     "noResults": "No results",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "days": {
+      "sunShort": "Sun",
+      "monShort": "Mon",
+      "tueShort": "Tue",
+      "wedShort": "Wed",
+      "thuShort": "Thu",
+      "friShort": "Fri",
+      "satShort": "Sat"
+    }
   },
   "auth": {
     "backToLogin": "Back to sign in",
@@ -230,15 +239,9 @@
       "title": "Payment",
       "paymentMethod": "Payment Method",
       "momoWallet": "MoMo Wallet",
-      "domesticCard": "Domestic ATM Card",
+      "vnpay": "Pay with VNPAY",
       "concessions": "Snacks & Combos",
       "concessionsShort": "Snacks",
-      "applePay": "Pay with Apple Pay",
-      "googlePay": "Pay with Google Pay",
-      "creditDebit": "Credit / Debit Card",
-      "cardNumber": "Card Number",
-      "expiry": "Expiry Date",
-      "cardName": "Name on Card",
       "qrNote": "Scan the QR code with the {{app}} app to complete payment.",
       "payCta": "CONFIRM & PAY",
       "secureNote": "Payment secured with 256-bit SSL"
@@ -282,11 +285,25 @@
       "recommended": "Recommended For You",
       "nowShowing": "Now Showing",
       "comingSoon": "Coming Soon",
+      "promotions": "Promotions",
       "viewAll": "View All"
     },
     "card": {
       "book": "Book",
-      "comingSoonBadge": "Coming Soon"
+      "comingSoonBadge": "Coming Soon",
+      "trailer": "Trailer",
+      "bookTickets": "Book Tickets",
+      "notifyMe": "Notify Me",
+      "info": {
+        "genre": "Genre:",
+        "duration": "Duration:",
+        "subtitles": "Subtitles:",
+        "language": "Language:"
+      }
+    },
+    "scrollRow": {
+      "prev": "Scroll left",
+      "next": "Scroll right"
     },
     "membership": {
       "titleLine1": "Elevate Your Cinema",
@@ -367,6 +384,7 @@
       "language": "Language:",
       "showtimesTitle": "Showtimes & Sessions",
       "castTitle": "Cast & Crew",
+      "directorRole": "Director",
       "commentsTitle": "Comments",
       "commentPlaceholder": "Join the discussion...",
       "submitComment": "Post Comment",
@@ -376,7 +394,13 @@
       "ratingSaved": "Thanks! Your rating was saved.",
       "commentPosted": "Comment posted.",
       "rateThisMovie": "Rate this movie",
-      "watchFirstToReview": "Watch this movie first to rate or comment."
+      "watchFirstToReview": "Watch this movie first to rate or comment.",
+      "notFound": "We couldn't find this movie.",
+      "backToMovies": "Back to Movies",
+      "rottenTomatoes": "Rotten Tomatoes",
+      "imdbRating": "IMDb",
+      "metascore": "Metascore",
+      "externalRatingsSource": "Scores via OMDb"
     },
     "showtimes": {
       "seats": "{{count}} seats",
@@ -411,6 +435,8 @@
     "colStatus": "Status",
     "noTickets": "You don't have any tickets yet.",
     "bookingHistory": "Booking History",
+    "pagerRange": "Showing {{from}}–{{to}} of {{total}}",
+    "pagerLabel": "Booking history pages",
     "totalTicketsBought": "Total tickets bought",
     "upcoming": "Upcoming",
     "totalSpent": "Total spent",
@@ -477,14 +503,36 @@
     "answerCancel": "You can cancel a ticket while the order is still in \"Pending Payment\" status under Booking History.",
     "answerMembership": "You earn points on every payment (the rate is shown at checkout and can vary by theater); your membership tier upgrades automatically with points. Enter a discount code at the payment step.",
     "answerNearby": "Go to the \"Theaters\" page and tap \"Find nearest theater\" to sort by distance to you.",
-    "answerPayment": "We support domestic cards and e-wallets (MoMo / Apple Pay / Google Pay) at the payment step.",
+    "answerPayment": "We support MoMo and VNPAY at the payment step.",
     "answerCombo": "You can add popcorn, drinks & combos right at the payment step, bundled into your order.",
     "fallback": "I didn't quite get that. Try asking about: booking, showtimes, cancel, membership, payment, or theaters near you."
   },
   "promotions": {
+    "eyebrow": "Offers",
     "pageTitle": "Promotions",
     "pageSubtitle": "Discover exclusive offers reserved for Midnight Premium members. Enjoy a premium cinema experience at an optimal cost.",
     "empty": "There are no promotions available at the moment.",
+    "emptyFiltered": "No promotions in this category.",
+    "pricesTitle": "Price list",
+    "tabs": {
+      "all": "All",
+      "auto": "Auto-applied",
+      "code": "Code required",
+      "members": "Members",
+      "students": "Students"
+    },
+    "ledger": {
+      "eligibility": "Eligibility",
+      "period": "Valid",
+      "timeWindow": "Hours",
+      "theaters": "Theaters"
+    },
+    "stubCaption": {
+      "everyone": "Everyone",
+      "members": "Members",
+      "studentOrTeacher": "Students",
+      "ageLimit": "Age limit"
+    },
     "details": "Details",
     "hideDetails": "Hide details",
     "startsOn": "Starts {{date}}",

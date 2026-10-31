@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Net;
+using System.Net.Mime;
 using System.Text.Json;
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Exceptions;
@@ -969,7 +971,7 @@ public class BookingManager : IBookingManager
         }
     }
 
-    public async Task<PaymentInitiationDTO?> InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl)
+    public async Task<PaymentInitiationDTO?> InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl, string? clientIp)
     {
         var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
         if (invoice == null)
@@ -1001,7 +1003,7 @@ public class BookingManager : IBookingManager
         }
 
         var gateway = _gateways.Resolve(provider);
-        var initiation = await gateway.CreatePaymentAsync(invoice.Id, invoice.FinalAmount, returnUrl);
+        var initiation = await gateway.CreatePaymentAsync(invoice.Id, invoice.FinalAmount, returnUrl, clientIp);
 
         // Remember which provider owns this invoice so ConfirmPayment/HandlePaymentCallback resolve the same one.
         invoice.PaymentMethod    = gateway.Name;
@@ -1053,32 +1055,60 @@ public class BookingManager : IBookingManager
         return true;
     }
 
-    public async Task<bool> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData)
+    public async Task<PaymentCallbackHandlingResult> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData)
     {
-        // Signature-verify the provider callback first; this is the authoritative "money moved" signal.
-        var result = _gateways.Resolve(provider).ParseCallback(callbackData);
-        if (!result.Success)
+        var gateway = _gateways.Resolve(provider);
+        var result = gateway.ParseCallback(callbackData);
+
+        switch (result.Status)
         {
-            return false;
+            case PaymentCallbackStatus.InvalidSignature:
+                LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: invalid signature from {gateway.Name}. {result.FailureReason}");
+                return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.InvalidSignature);
+            case PaymentCallbackStatus.InvalidOrderReference:
+                LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: invalid order reference from {gateway.Name}. {result.FailureReason}");
+                return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
+            case PaymentCallbackStatus.InvalidAmount:
+                LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: invalid amount from {gateway.Name}. {result.FailureReason}");
+                return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.InvalidAmount);
+            case PaymentCallbackStatus.Rejected:
+                return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.Rejected);
         }
 
         var invoice = await _uow.InvoiceStore.GetByIdAsync(result.InvoiceId);
         if (invoice == null)
         {
-            return false;
+            LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: no invoice for callback reference from {gateway.Name}. InvoiceId={result.InvoiceId}");
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
         }
+
+        // Matches VnPayGateway.CreatePaymentAsync's own rounding ((long)Math.Round(amount)) so a genuine
+        // payment can't be rejected by a decimal-vs-double rounding mismatch between the two sides.
+        var expectedAmount = (decimal)(long)Math.Round(invoice.FinalAmount);
+        if (result.ReceivedAmount.HasValue && result.ReceivedAmount.Value != expectedAmount)
+        {
+            LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: amount mismatch for invoice {invoice.Id}. Expected={invoice.FinalAmount}, Received={result.ReceivedAmount}");
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.InvalidAmount);
+        }
+
         // Idempotency: a provider may deliver the callback more than once.
         if (invoice.Status == InvoiceStatus.Paid)
         {
-            return true;
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.AlreadyConfirmed);
         }
         if (invoice.Status != InvoiceStatus.Pending)
         {
-            return false;
+            LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: callback for invoice {invoice.Id} in unexpected status {invoice.Status}.");
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.NotPending);
+        }
+
+        if (result.Status == PaymentCallbackStatus.PaymentFailed)
+        {
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.PaymentFailedAcknowledged);
         }
 
         await FinalizePaidInvoiceAsync(invoice, result.PaymentReference);
-        return true;
+        return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.Confirmed);
     }
 
     /// <summary>Marks the invoice Paid and applies the side effects: loyalty accrual, tier re-eval,
@@ -1170,6 +1200,7 @@ public class BookingManager : IBookingManager
         var emailSubject = fallbackSubject;
         var emailBody = fallbackBody;
         var smsBody = fallbackSms;
+        var inlineImages = new List<EmailInlineImage>();
 
         try
         {
@@ -1194,7 +1225,12 @@ public class BookingManager : IBookingManager
                     {
                         emailSubject = renderedSubject;
                     }
-                    emailBody = TemplateRenderer.Render(emailTemplate.Body, values);
+                    emailBody = TemplateRenderer.Render(emailTemplate.Body, values, rawKeys: QrImageKeys);
+
+                    var qrTickets = GetQrTickets(row?.Tickets ?? new List<BookingConfirmationTicketRow>());
+                    inlineImages = BuildQrImages(qrTickets)
+                        .Where(image => emailBody.Contains($"cid:{image.ContentId}", StringComparison.Ordinal))
+                        .ToList();
                 }
 
                 if (templates.TryGetValue(TemplateCodes.BookingConfirmationSms, out var smsTemplate)
@@ -1207,11 +1243,12 @@ public class BookingManager : IBookingManager
         catch (Exception e)
         {
             LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(SendConfirmationAsync)} template lookup/render failed for {invoice.Code}: {e.Message}");
+            inlineImages = new List<EmailInlineImage>();
         }
 
         if (hasEmail)
         {
-            await _notifications.SendAsync(user.Email, emailSubject, emailBody);
+            await _notifications.SendAsync(user.Email, emailSubject, emailBody, inlineImages);
         }
 
         // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
@@ -1272,6 +1309,7 @@ public class BookingManager : IBookingManager
             ["DiscountAmount"] = Money(invoice.DiscountAmount),
             ["TotalAmount"] = Money(invoice.FinalAmount),
             ["QrCodes"] = JoinOrDash(tickets.Select(t => t.QrCode ?? string.Empty)),
+            [QrImagesKey] = BuildQrImagesHtml(GetQrTickets(tickets)),
         };
     }
 
@@ -1288,6 +1326,45 @@ public class BookingManager : IBookingManager
             return string.Join(", ", list);
         }
         return "-";
+    }
+
+    private const string QrImagesKey = "QrImages";
+    private static readonly HashSet<string> QrImageKeys = new() { QrImagesKey };
+
+    private static string QrContentId(int index)
+    {
+        return $"qr-{index}@cinema";
+    }
+
+    private static List<BookingConfirmationTicketRow> GetQrTickets(IReadOnlyList<BookingConfirmationTicketRow> tickets)
+    {
+        return tickets.Where(t => !string.IsNullOrWhiteSpace(t.QrCode)).ToList();
+    }
+
+    private static string BuildQrImagesHtml(IReadOnlyList<BookingConfirmationTicketRow> qrTickets)
+    {
+        if (qrTickets.Count == 0)
+        {
+            return "-";
+        }
+
+        var blocks = qrTickets.Select((t, i) =>
+            $"<div style=\"display:inline-block;margin:4px 8px;text-align:center;\">" +
+            $"<img src=\"cid:{QrContentId(i)}\" width=\"160\" height=\"160\" alt=\"QR {WebUtility.HtmlEncode(t.SeatLabel)}\" />" +
+            $"<div style=\"font-size:12px;color:#6b6258;margin-top:4px;\">{WebUtility.HtmlEncode(t.SeatLabel)}</div>" +
+            "</div>");
+        return string.Join(string.Empty, blocks);
+    }
+
+    private static List<EmailInlineImage> BuildQrImages(IReadOnlyList<BookingConfirmationTicketRow> qrTickets)
+    {
+        var images = new List<EmailInlineImage>();
+        for (var i = 0; i < qrTickets.Count; i++)
+        {
+            var ticket = qrTickets[i];
+            images.Add(new EmailInlineImage(QrContentId(i), QrCodeImage.ToPng(ticket.QrCode!), MediaTypeNames.Image.Png, $"qr-{ticket.SeatLabel}.png"));
+        }
+        return images;
     }
 
     // ── Seat pricing ────────────────────────────────────────────────────────────

@@ -55,10 +55,31 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id);
 
-    public async Task<Movie?> GetForUpdateAsync(Guid id)
+    public async Task<Movie?> GetDetailBySlugAsync(string slug)
         => await DbSet
+            .AsNoTracking()
+            .Include(m => m.AgeRestriction)
+            .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
+            .Include(m => m.Evaluations)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(m => m.Slug == slug);
+
+    public async Task<Movie?> GetForUpdateAsync(Guid id)
+    {
+        // MovieTypeDetails and MovieCredits are independent collections: including both in one query
+        // produces a cartesian result (rows = genres x credits), per this repo's own guidance against
+        // including a collection navigation alongside other includes. Load the credits in a second
+        // query instead; EF tracks and attaches them to the same Movie instance via the FK, since both
+        // come from this store's single DbContext.
+        var movie = await DbSet
             .Include(m => m.MovieTypeDetails)
             .FirstOrDefaultAsync(m => m.Id == id);
+        if (movie != null)
+        {
+            await Context.Set<MovieCredit>().Where(c => c.MovieId == id).LoadAsync();
+        }
+        return movie;
+    }
 
     public async Task<IEnumerable<Movie>> GetNowShowingAsync()
     {
@@ -109,4 +130,11 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
 
         return rows.ToDictionary(r => r.MovieId, r => r.Average);
     }
+
+    public async Task<IReadOnlyList<string>> GetSlugsStartingWithAsync(string baseSlug)
+        => await DbSet
+            .AsNoTracking()
+            .Where(m => m.Slug == baseSlug || m.Slug.StartsWith(baseSlug + "-"))
+            .Select(m => m.Slug)
+            .ToListAsync();
 }

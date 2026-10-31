@@ -2,6 +2,7 @@
 public class Movie : BaseEntity
 {
     public string Title { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public int Duration { get; set; }
     public DateOnly ReleaseDate { get; set; }
@@ -12,6 +13,7 @@ public class Movie : BaseEntity
     public string? Cast { get; set; }
     public string? Language { get; set; }
     public string? Subtitle { get; set; }
+    public string? ImdbId { get; set; }
     public bool IsActive { get; set; } = true;
     public Guid AgeRestrictionId { get; set; }
     public AgeRestriction AgeRestriction { get; set; } = null!;
@@ -19,4 +21,5 @@ public class Movie : BaseEntity
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public ICollection<Evaluation> Evaluations { get; set; } = new List<Evaluation>();
+    public ICollection<MovieCredit> MovieCredits { get; set; } = new List<MovieCredit>();
 }

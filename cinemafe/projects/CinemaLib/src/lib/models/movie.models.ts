@@ -4,6 +4,7 @@ export const MOVIE_PAGE_SIZE = 15;
 export interface Movie {
   id: number;
   title: string;
+  slug: string;
   description: string;
   duration: number;
   releaseDate: string;

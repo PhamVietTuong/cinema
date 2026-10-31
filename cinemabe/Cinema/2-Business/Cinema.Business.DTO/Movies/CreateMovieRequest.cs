@@ -16,6 +16,10 @@ public class CreateMovieRequest
     public string? Cast { get; set; }
     public string? Language { get; set; }
     public string? Subtitle { get; set; }
+
+    [RegularExpression(@"^\s*tt\d{7,10}\s*$", ErrorMessage = "IMDb ID must look like tt1234567.")]
+    public string? ImdbId { get; set; }
     public Guid AgeRestrictionId { get; set; }
     public List<Guid> MovieTypeIds { get; set; } = new();
+    public List<MovieCreditRequest>? Credits { get; set; }
 }

@@ -34,6 +34,8 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IMemberShipStore MemberShipStore { get; }
     public IHolidayStore HolidayStore { get; }
     public INewsStore NewsStore { get; }
+    public IPersonStore PersonStore { get; }
+    public IMovieCreditStore MovieCreditStore { get; }
     public ITimeSlotStore TimeSlotStore { get; }
     public ITicketPriceStore TicketPriceStore { get; }
     public IReminderLogStore ReminderLogStore { get; }
@@ -75,6 +77,8 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         MemberShipStore = new MemberShipStore(db);
         HolidayStore = new HolidayStore(db);
         NewsStore = new NewsStore(db);
+        PersonStore = new PersonStore(db);
+        MovieCreditStore = new MovieCreditStore(db);
         TimeSlotStore = new TimeSlotStore(db);
         TicketPriceStore = new TicketPriceStore(db);
         ReminderLogStore = new ReminderLogStore(db);

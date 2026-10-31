@@ -4,14 +4,17 @@ using Cinema.Business.DTO;
 using Cinema.Business.DTO.Movies;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
+using Cinema.Business.Helpers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 
 namespace Cinema.Business.Managers;
 
 public class MovieManager : IMovieManager
 {
     private readonly IApplicationUnitOfWork _uow;
+    private readonly IExternalRatingsProvider _externalRatings;
 
     /// <summary>The movie-detail page shows today + the next 3 days; its date tabs slice this window
     /// entirely client-side (no re-fetch per tab), so the response must cover exactly it.</summary>
@@ -19,9 +22,10 @@ public class MovieManager : IMovieManager
 
     private const string ReviewNotAllowedMessage = "You can only rate or comment on a movie after watching it.";
 
-    public MovieManager(IApplicationUnitOfWork uow)
+    public MovieManager(IApplicationUnitOfWork uow, IExternalRatingsProvider externalRatings)
     {
         _uow = uow;
+        _externalRatings = externalRatings;
     }
 
     public async Task<DefaultSearchResults<MovieDTO>> GetMoviesAsync(PagingSearchDTO search)
@@ -104,6 +108,25 @@ public class MovieManager : IMovieManager
         {
             throw new KeyNotFoundException($"Movie {id} not found.");
         }
+        return await BuildDetailAsync(movie, userId);
+    }
+
+    public async Task<MovieDetailDTO> GetDetailBySlugAsync(string slug, Guid? userId)
+    {
+        var normalizedSlug = slug?.Trim().ToLowerInvariant() ?? string.Empty;
+        var movie = normalizedSlug.Length > 0 ? await _uow.MovieStore.GetDetailBySlugAsync(normalizedSlug) : null;
+        if (movie == null)
+        {
+            throw new KeyNotFoundException($"Movie '{slug}' not found.");
+        }
+        return await BuildDetailAsync(movie, userId);
+    }
+
+    private async Task<MovieDetailDTO> BuildDetailAsync(Movie movie, Guid? userId)
+    {
+        var id = movie.Id;
+        // Started first so it overlaps the DB queries below; the provider never touches the DbContext.
+        var externalRatingsTask = _externalRatings.GetRatingsAsync(movie.Title, movie.ReleaseDate.Year, movie.ImdbId);
         var dto = movie.ToDTO<Movie, MovieDetailDTO>();
         ApplyMovieComputedFields(movie, dto);
         dto.AgeRestrictionDescription = movie.AgeRestriction?.Description ?? string.Empty;
@@ -148,13 +171,30 @@ public class MovieManager : IMovieManager
         {
             dto.CanReview = await CanReviewAsync(id, uid);
         }
+        dto.Credits = (await _uow.MovieCreditStore.GetByMovieAsync(id)).Select(ToCreditDTO).ToList();
+        dto.ExternalRatings = await externalRatingsTask;
         return dto;
     }
 
     public async Task<MovieDTO> CreateAsync(CreateMovieRequest request)
     {
         var movie = request.ToNewEntity<CreateMovieRequest, Movie>();
+        movie.Slug = await GenerateUniqueSlugAsync(request.Title);
+        movie.ImdbId = NormalizeImdbId(request.ImdbId);
         movie.MovieTypeDetails = request.MovieTypeIds.Select(id => new MovieTypeDetail { MovieTypeId = id }).ToList();
+        if (request.Credits is { Count: > 0 })
+        {
+            var normalized = await NormalizeCreditsAsync(request.Credits);
+            movie.MovieCredits = normalized.Select(c => new MovieCredit
+            {
+                PersonId      = c.PersonId,
+                CreditType    = c.CreditType,
+                CharacterName = c.CharacterName,
+                DisplayOrder  = c.DisplayOrder,
+            }).ToList();
+        }
+        // Any Person created or edited by NormalizeCreditsAsync (staged via PersonStore.TrackNew, or
+        // mutated on an already-tracked/loaded entity) commits here, atomically with the movie.
         await _uow.MovieStore.CreateAsync(movie);
         return await GetBasicDTOAsync(movie.Id);
     }
@@ -166,14 +206,26 @@ public class MovieManager : IMovieManager
         {
             throw new KeyNotFoundException($"Movie {request.Id} not found.");
         }
+
+        // Validate before mutating anything, so a bad request leaves the movie untouched.
+        var normalizedCredits = request.Credits != null ? await NormalizeCreditsAsync(request.Credits) : null;
+
+        // Slug is deliberately not patched here: it is generated once at creation and stays stable
+        // across title edits so shared links and bookmarks keep working.
         movie.PatchEntity<Movie, UpdateMovieRequest>(request);
         movie.EndDate = request.EndDate;
+        movie.ImdbId = NormalizeImdbId(request.ImdbId);
 
         // Reconcile genre links against the requested set on the tracked collection.
         movie.MovieTypeDetails.Clear();
         foreach (var typeId in request.MovieTypeIds.Distinct())
         {
             movie.MovieTypeDetails.Add(new MovieTypeDetail { MovieId = movie.Id, MovieTypeId = typeId });
+        }
+
+        if (normalizedCredits != null)
+        {
+            SyncCredits(movie, normalizedCredits, _uow.MovieCreditStore);
         }
 
         movie.LastUpdatedTime = DateTime.UtcNow;
@@ -316,6 +368,292 @@ public class MovieManager : IMovieManager
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>A credit row after validation/resolution: PersonId is always a real, resolved Guid.</summary>
+    private sealed record NormalizedCredit(Guid PersonId, CreditType CreditType, string? CharacterName, int DisplayOrder);
+
+    /// <summary>Validates and resolves a requested credit list. Every row always carries a PersonName
+    /// (and optional PersonPhotoUrl): when PersonId is set, these edit that Person in place (applies to
+    /// every movie they're credited on); when absent, they match-or-create by name. Phases 1-5 are
+    /// read-only; phase 6 is the only mutation, reached only once every row has validated.
+    /// 1. Per row, no DB access: a defined CreditType, a non-blank PersonName, and an explicit-id
+    ///    (PersonId, CreditType) duplicate check — so a request using only explicit picks never
+    ///    touches PersonStore.
+    /// 2. One query loads every Person referenced by an explicit PersonId or by any row's PersonName
+    ///    (tracked — a row with an id may edit that Person).
+    /// 3. Every explicit PersonId must resolve to a loaded Person.
+    /// 4. Computes the desired (Name, PhotoUrl) per explicit id (rows disagreeing about the same
+    ///    person are rejected), then validates each resulting rename against every other loaded
+    ///    person's current name and every other rename in this request — this also rejects a two-way
+    ///    name swap, since each side's target name is still "currently taken" by the other.
+    /// 5. Resolves every row, in request order, to a real PersonId: explicit; a name matching a phase-4
+    ///    rename target; an existing Person matched by name (a non-blank photo here replaces theirs,
+    ///    unless that person already has an explicit edit in this request, which wins); or a brand-new,
+    ///    not-yet-saved Person (first non-blank photo among same-named new rows wins) — then checks the
+    ///    resulting (PersonId, CreditType) pair for duplicates.
+    /// 6. Applies every Person edit and stages every new Person via PersonStore.TrackNew.
+    /// Throws InvalidOperationException (-> 400) on any violation.</summary>
+    private async Task<List<NormalizedCredit>> NormalizeCreditsAsync(List<MovieCreditRequest> credits)
+    {
+        if (credits.Count == 0)
+        {
+            return new List<NormalizedCredit>();
+        }
+
+        var trimmedNames = new string[credits.Count];
+        var explicitIds = new List<Guid>();
+        var allNames = new List<string>();
+        var seenKeys = new HashSet<(Guid PersonId, CreditType CreditType)>();
+
+        for (var i = 0; i < credits.Count; i++)
+        {
+            var c = credits[i];
+            if (!Enum.IsDefined(c.CreditType))
+            {
+                throw new InvalidOperationException("Invalid credit type.");
+            }
+
+            var name = c.PersonName.Trim();
+            if (name.Length == 0)
+            {
+                throw new InvalidOperationException("Each credit must name a person.");
+            }
+            trimmedNames[i] = name;
+            allNames.Add(name);
+
+            if (c.PersonId is { } id && id != Guid.Empty)
+            {
+                explicitIds.Add(id);
+                if (!seenKeys.Add((id, c.CreditType)))
+                {
+                    throw new InvalidOperationException("The same person cannot be credited twice in the same role.");
+                }
+            }
+        }
+
+        var distinctExplicitIds = explicitIds.Distinct().ToList();
+        var distinctNames = allNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        var loaded = distinctExplicitIds.Count > 0 || distinctNames.Count > 0
+            ? (await _uow.PersonStore.FindAllAsync(p => distinctExplicitIds.Contains(p.Id) || distinctNames.Contains(p.Name))).ToList()
+            : new List<Person>();
+
+        var byId = loaded.ToDictionary(p => p.Id);
+        var byName = new Dictionary<string, Person>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in loaded)
+        {
+            byName[p.Name] = p;
+        }
+
+        if (distinctExplicitIds.Any(id => !byId.ContainsKey(id)))
+        {
+            throw new InvalidOperationException("One or more credited people no longer exist.");
+        }
+
+        // Phase 4: the desired Name/PhotoUrl per explicit id, and the renames that result.
+        var desiredById = new Dictionary<Guid, (string Name, string? Photo)>();
+        for (var i = 0; i < credits.Count; i++)
+        {
+            if (credits[i].PersonId is not { } id || id == Guid.Empty)
+            {
+                continue;
+            }
+            var desired = (Name: trimmedNames[i], Photo: NormalizePhotoUrl(credits[i].PersonPhotoUrl));
+            if (desiredById.TryGetValue(id, out var already) &&
+                (!string.Equals(already.Name, desired.Name, StringComparison.Ordinal) || already.Photo != desired.Photo))
+            {
+                throw new InvalidOperationException("Conflicting name/photo for the same person in this save.");
+            }
+            desiredById[id] = desired;
+        }
+
+        var renameTargets = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (id, desired) in desiredById)
+        {
+            if (string.Equals(byId[id].Name, desired.Name, StringComparison.Ordinal))
+            {
+                continue;
+            }
+            if (byName.TryGetValue(desired.Name, out var clash) && clash.Id != id)
+            {
+                throw new InvalidOperationException("A person with this name already exists.");
+            }
+            if (renameTargets.TryGetValue(desired.Name, out var claimedBy) && claimedBy != id)
+            {
+                throw new InvalidOperationException("A person with this name already exists.");
+            }
+            renameTargets[desired.Name] = id;
+        }
+
+        // Phase 5: resolve every row to a real PersonId, in request order.
+        var pendingByName = new Dictionary<string, Person>(StringComparer.OrdinalIgnoreCase);
+        var matchedPhotoById = new Dictionary<Guid, string?>();
+        var normalized = new List<NormalizedCredit>(credits.Count);
+
+        for (var i = 0; i < credits.Count; i++)
+        {
+            var c = credits[i];
+            var name = trimmedNames[i];
+            var hasId = c.PersonId is { } pid && pid != Guid.Empty;
+            Guid personId;
+
+            if (hasId)
+            {
+                personId = c.PersonId!.Value;
+            }
+            else if (renameTargets.TryGetValue(name, out var renamedId))
+            {
+                personId = renamedId;
+            }
+            else if (byName.TryGetValue(name, out var existing))
+            {
+                if (desiredById.TryGetValue(existing.Id, out var existingDesired) &&
+                    !string.Equals(existingDesired.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException($"'{name}' conflicts with a person being renamed in this save.");
+                }
+                personId = existing.Id;
+                // An explicit edit elsewhere in this request already governs this person's final
+                // photo (applied in phase 6); only track a name-matched photo when there isn't one.
+                var photo = NormalizePhotoUrl(c.PersonPhotoUrl);
+                if (photo != null && !desiredById.ContainsKey(existing.Id))
+                {
+                    if (matchedPhotoById.TryGetValue(existing.Id, out var already) && already != photo)
+                    {
+                        throw new InvalidOperationException("Conflicting name/photo for the same person in this save.");
+                    }
+                    matchedPhotoById[existing.Id] = photo;
+                }
+            }
+            else if (pendingByName.TryGetValue(name, out var pending))
+            {
+                personId = pending.Id;
+                var photo = NormalizePhotoUrl(c.PersonPhotoUrl);
+                if (pending.PhotoUrl == null && photo != null)
+                {
+                    pending.PhotoUrl = photo;
+                }
+            }
+            else
+            {
+                var created = new Person { Name = name, PhotoUrl = NormalizePhotoUrl(c.PersonPhotoUrl) };
+                pendingByName[name] = created;
+                personId = created.Id;
+            }
+
+            if (!hasId && !seenKeys.Add((personId, c.CreditType)))
+            {
+                throw new InvalidOperationException("The same person cannot be credited twice in the same role.");
+            }
+
+            var characterName = c.CreditType == CreditType.Director ? null : NormalizeCharacterName(c.CharacterName);
+            normalized.Add(new NormalizedCredit(personId, c.CreditType, characterName, c.DisplayOrder));
+        }
+
+        // Phase 6: the only mutation, reached only once every row above has validated.
+        foreach (var (id, desired) in desiredById)
+        {
+            var person = byId[id];
+            if (!string.Equals(person.Name, desired.Name, StringComparison.Ordinal) || person.PhotoUrl != desired.Photo)
+            {
+                person.Name = desired.Name;
+                person.PhotoUrl = desired.Photo;
+                person.LastUpdatedTime = DateTime.UtcNow;
+            }
+        }
+        foreach (var (id, photo) in matchedPhotoById)
+        {
+            var person = byId[id];
+            if (person.PhotoUrl != photo)
+            {
+                person.PhotoUrl = photo;
+                person.LastUpdatedTime = DateTime.UtcNow;
+            }
+        }
+        foreach (var person in pendingByName.Values)
+        {
+            _uow.PersonStore.TrackNew(person);
+        }
+
+        return normalized;
+    }
+
+    private static string? NormalizeCharacterName(string? characterName)
+    {
+        return string.IsNullOrWhiteSpace(characterName) ? null : characterName.Trim();
+    }
+
+    private static string? NormalizePhotoUrl(string? photoUrl)
+    {
+        return string.IsNullOrWhiteSpace(photoUrl) ? null : photoUrl.Trim();
+    }
+
+    private static string? NormalizeImdbId(string? imdbId)
+    {
+        return string.IsNullOrWhiteSpace(imdbId) ? null : imdbId.Trim();
+    }
+
+    /// <summary>Reconciles the movie's tracked MovieCredits collection against the requested list by
+    /// key (PersonId, CreditType): updates matches in place, adds new rows, removes rows no longer
+    /// requested. Keeps Ids stable instead of clearing and re-adding everything.</summary>
+    private static void SyncCredits(Movie movie, List<NormalizedCredit> requested, IMovieCreditStore creditStore)
+    {
+        var existingByKey = movie.MovieCredits.ToDictionary(c => (c.PersonId, c.CreditType));
+        var requestedKeys = new HashSet<(Guid PersonId, CreditType CreditType)>();
+
+        foreach (var r in requested)
+        {
+            var key = (r.PersonId, r.CreditType);
+            requestedKeys.Add(key);
+            if (existingByKey.TryGetValue(key, out var existing))
+            {
+                existing.CharacterName   = r.CharacterName;
+                existing.DisplayOrder    = r.DisplayOrder;
+                existing.LastUpdatedTime = DateTime.UtcNow;
+            }
+            else
+            {
+                // Appending to the tracked Movie's collection isn't enough here: BaseEntity.Id already
+                // has a non-default Guid by the time EF sees this object, so the change tracker's
+                // fixup would mark it Modified (-> a no-op UPDATE) instead of Added. TrackNew makes
+                // the Add explicit.
+                creditStore.TrackNew(new MovieCredit
+                {
+                    MovieId       = movie.Id,
+                    PersonId      = r.PersonId,
+                    CreditType    = r.CreditType,
+                    CharacterName = r.CharacterName,
+                    DisplayOrder  = r.DisplayOrder,
+                });
+            }
+        }
+
+        foreach (var stale in existingByKey.Where(kv => !requestedKeys.Contains(kv.Key)).Select(kv => kv.Value).ToList())
+        {
+            movie.MovieCredits.Remove(stale);
+        }
+    }
+
+    private static MovieCreditDTO ToCreditDTO(MovieCreditRow r)
+    {
+        return new MovieCreditDTO
+        {
+            Id              = r.Id,
+            PersonId        = r.PersonId,
+            PersonName      = r.PersonName,
+            PersonPhotoUrl  = r.PersonPhotoUrl,
+            CreditType      = r.CreditType,
+            CharacterName   = r.CharacterName,
+            DisplayOrder    = r.DisplayOrder,
+        };
+    }
+
+    private async Task<string> GenerateUniqueSlugAsync(string title)
+    {
+        var baseSlug = SlugHelper.ToBaseSlug(title);
+        var taken = await _uow.MovieStore.GetSlugsStartingWithAsync(baseSlug);
+        return SlugHelper.PickUnique(baseSlug, taken);
+    }
 
     private Task<bool> CanReviewAsync(Guid movieId, Guid userId)
     {

@@ -26,6 +26,7 @@ export interface IHttpService {
     getNowShowingMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO>;
     getComingSoonMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO>;
     getMovie(id?: string | undefined): Observable<MovieDetailDTO>;
+    getMovieBySlug(slug?: string | undefined): Observable<MovieDetailDTO>;
     createMovie(request: CreateMovieRequest): Observable<MovieDetailDTO>;
     updateMovie(request: UpdateMovieRequest): Observable<MovieDetailDTO>;
     deleteMovie(id?: string | undefined): Observable<void>;
@@ -101,6 +102,12 @@ export interface IHttpService {
     createNews(request: CreateNewsRequest): Observable<NewsDTO>;
     updateNews(request: UpdateNewsRequest): Observable<NewsDTO>;
     deleteNews(id?: string | undefined): Observable<void>;
+    getPeople(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPersonDTO>;
+    getPerson(id?: string | undefined): Observable<PersonDTO>;
+    createPerson(request: CreatePersonRequest): Observable<PersonDTO>;
+    updatePerson(request: UpdatePersonRequest): Observable<PersonDTO>;
+    deletePerson(id?: string | undefined): Observable<void>;
+    getPeopleByNames(names: string[]): Observable<PersonDTO[]>;
     getDiscounts(search: PagingSearchDTO): Observable<DefaultSearchResultsOfDiscountDTO>;
     getDiscount(id?: string | undefined): Observable<DiscountDTO>;
     createDiscount(request: CreateDiscountRequest): Observable<DiscountDTO>;
@@ -491,6 +498,58 @@ export class HttpService implements IHttpService {
     }
 
     protected processGetMovie(response: HttpResponseBase): Observable<MovieDetailDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MovieDetailDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMovieBySlug(slug?: string | undefined): Observable<MovieDetailDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMovieBySlug?";
+        if (slug === null)
+            throw new Error("The parameter 'slug' cannot be null.");
+        else if (slug !== undefined)
+            url_ += "slug=" + encodeURIComponent("" + slug) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMovieBySlug(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMovieBySlug(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MovieDetailDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MovieDetailDTO>;
+        }));
+    }
+
+    protected processGetMovieBySlug(response: HttpResponseBase): Observable<MovieDetailDTO> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -4375,6 +4434,321 @@ export class HttpService implements IHttpService {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPeople(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPersonDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPeople";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPeople(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPeople(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfPersonDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfPersonDTO>;
+        }));
+    }
+
+    protected processGetPeople(response: HttpResponseBase): Observable<DefaultSearchResultsOfPersonDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfPersonDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPerson(id?: string | undefined): Observable<PersonDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPerson?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPerson(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPerson(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PersonDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PersonDTO>;
+        }));
+    }
+
+    protected processGetPerson(response: HttpResponseBase): Observable<PersonDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PersonDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createPerson(request: CreatePersonRequest): Observable<PersonDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreatePerson";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreatePerson(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreatePerson(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PersonDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PersonDTO>;
+        }));
+    }
+
+    protected processCreatePerson(response: HttpResponseBase): Observable<PersonDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PersonDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updatePerson(request: UpdatePersonRequest): Observable<PersonDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdatePerson";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdatePerson(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdatePerson(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PersonDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PersonDTO>;
+        }));
+    }
+
+    protected processUpdatePerson(response: HttpResponseBase): Observable<PersonDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PersonDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deletePerson(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeletePerson?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeletePerson(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeletePerson(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeletePerson(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPeopleByNames(names: string[]): Observable<PersonDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPeopleByNames";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(names);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPeopleByNames(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPeopleByNames(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PersonDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PersonDTO[]>;
+        }));
+    }
+
+    protected processGetPeopleByNames(response: HttpResponseBase): Observable<PersonDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(PersonDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -8520,6 +8894,7 @@ export interface IUploadResultDTO {
 export class MovieDTO implements IMovieDTO {
     id?: string;
     title?: string;
+    slug?: string;
     description?: string;
     duration?: number;
     releaseDate?: Date;
@@ -8530,6 +8905,7 @@ export class MovieDTO implements IMovieDTO {
     cast?: string | undefined;
     subtitle?: string | undefined;
     language?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     ageRestrictionCode?: string;
     movieTypeIds?: string[];
@@ -8553,6 +8929,7 @@ export class MovieDTO implements IMovieDTO {
         if (_data) {
             this.id = _data["id"];
             this.title = _data["title"];
+            this.slug = _data["slug"];
             this.description = _data["description"];
             this.duration = _data["duration"];
             this.releaseDate = _data["releaseDate"] ? new Date(_data["releaseDate"].toString()) : <any>undefined;
@@ -8563,6 +8940,7 @@ export class MovieDTO implements IMovieDTO {
             this.cast = _data["cast"];
             this.subtitle = _data["subtitle"];
             this.language = _data["language"];
+            this.imdbId = _data["imdbId"];
             this.ageRestrictionId = _data["ageRestrictionId"];
             this.ageRestrictionCode = _data["ageRestrictionCode"];
             if (Array.isArray(_data["movieTypeIds"])) {
@@ -8594,6 +8972,7 @@ export class MovieDTO implements IMovieDTO {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["title"] = this.title;
+        data["slug"] = this.slug;
         data["description"] = this.description;
         data["duration"] = this.duration;
         data["releaseDate"] = this.releaseDate ? formatDate(this.releaseDate) : <any>undefined;
@@ -8604,6 +8983,7 @@ export class MovieDTO implements IMovieDTO {
         data["cast"] = this.cast;
         data["subtitle"] = this.subtitle;
         data["language"] = this.language;
+        data["imdbId"] = this.imdbId;
         data["ageRestrictionId"] = this.ageRestrictionId;
         data["ageRestrictionCode"] = this.ageRestrictionCode;
         if (Array.isArray(this.movieTypeIds)) {
@@ -8628,6 +9008,7 @@ export class MovieDTO implements IMovieDTO {
 export interface IMovieDTO {
     id?: string;
     title?: string;
+    slug?: string;
     description?: string;
     duration?: number;
     releaseDate?: Date;
@@ -8638,6 +9019,7 @@ export interface IMovieDTO {
     cast?: string | undefined;
     subtitle?: string | undefined;
     language?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     ageRestrictionCode?: string;
     movieTypeIds?: string[];
@@ -8836,6 +9218,8 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
     showTimes?: ShowTimeSummaryDTO[];
     recentComments?: CommentDTO[];
     canReview?: boolean;
+    credits?: MovieCreditDTO[];
+    externalRatings?: ExternalRatingsDTO | undefined;
 
     constructor(data?: IMovieDetailDTO) {
         super(data);
@@ -8857,6 +9241,12 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
                     this.recentComments!.push(CommentDTO.fromJS(item));
             }
             this.canReview = _data["canReview"];
+            if (Array.isArray(_data["credits"])) {
+                this.credits = [] as any;
+                for (let item of _data["credits"])
+                    this.credits!.push(MovieCreditDTO.fromJS(item));
+            }
+            this.externalRatings = _data["externalRatings"] ? ExternalRatingsDTO.fromJS(_data["externalRatings"]) : <any>undefined;
         }
     }
 
@@ -8882,6 +9272,12 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
                 data["recentComments"].push(item.toJSON());
         }
         data["canReview"] = this.canReview;
+        if (Array.isArray(this.credits)) {
+            data["credits"] = [];
+            for (let item of this.credits)
+                data["credits"].push(item.toJSON());
+        }
+        data["externalRatings"] = this.externalRatings ? this.externalRatings.toJSON() : <any>undefined;
         super.toJSON(data);
         return data;
     }
@@ -8893,6 +9289,8 @@ export interface IMovieDetailDTO extends IMovieDTO {
     showTimes?: ShowTimeSummaryDTO[];
     recentComments?: CommentDTO[];
     canReview?: boolean;
+    credits?: MovieCreditDTO[];
+    externalRatings?: ExternalRatingsDTO | undefined;
 }
 
 export class ShowTimeSummaryDTO implements IShowTimeSummaryDTO {
@@ -9044,6 +9442,115 @@ export interface ICommentDTO {
     replies?: CommentDTO[];
 }
 
+export class MovieCreditDTO implements IMovieCreditDTO {
+    id?: string;
+    personId?: string;
+    personName?: string;
+    personPhotoUrl?: string | undefined;
+    creditType?: CreditType;
+    characterName?: string | undefined;
+    displayOrder?: number;
+
+    constructor(data?: IMovieCreditDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.personId = _data["personId"];
+            this.personName = _data["personName"];
+            this.personPhotoUrl = _data["personPhotoUrl"];
+            this.creditType = _data["creditType"];
+            this.characterName = _data["characterName"];
+            this.displayOrder = _data["displayOrder"];
+        }
+    }
+
+    static fromJS(data: any): MovieCreditDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new MovieCreditDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["personId"] = this.personId;
+        data["personName"] = this.personName;
+        data["personPhotoUrl"] = this.personPhotoUrl;
+        data["creditType"] = this.creditType;
+        data["characterName"] = this.characterName;
+        data["displayOrder"] = this.displayOrder;
+        return data;
+    }
+}
+
+export interface IMovieCreditDTO {
+    id?: string;
+    personId?: string;
+    personName?: string;
+    personPhotoUrl?: string | undefined;
+    creditType?: CreditType;
+    characterName?: string | undefined;
+    displayOrder?: number;
+}
+
+export enum CreditType {
+    Director = 1,
+    Actor = 2,
+}
+
+export class ExternalRatingsDTO implements IExternalRatingsDTO {
+    rottenTomatoes?: string | undefined;
+    imdbRating?: string | undefined;
+    metascore?: string | undefined;
+
+    constructor(data?: IExternalRatingsDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rottenTomatoes = _data["rottenTomatoes"];
+            this.imdbRating = _data["imdbRating"];
+            this.metascore = _data["metascore"];
+        }
+    }
+
+    static fromJS(data: any): ExternalRatingsDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ExternalRatingsDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rottenTomatoes"] = this.rottenTomatoes;
+        data["imdbRating"] = this.imdbRating;
+        data["metascore"] = this.metascore;
+        return data;
+    }
+}
+
+export interface IExternalRatingsDTO {
+    rottenTomatoes?: string | undefined;
+    imdbRating?: string | undefined;
+    metascore?: string | undefined;
+}
+
 export class CreateMovieRequest implements ICreateMovieRequest {
     title?: string;
     description?: string;
@@ -9056,8 +9563,10 @@ export class CreateMovieRequest implements ICreateMovieRequest {
     cast?: string | undefined;
     language?: string | undefined;
     subtitle?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
+    credits?: MovieCreditRequest[] | undefined;
 
     constructor(data?: ICreateMovieRequest) {
         if (data) {
@@ -9081,11 +9590,17 @@ export class CreateMovieRequest implements ICreateMovieRequest {
             this.cast = _data["cast"];
             this.language = _data["language"];
             this.subtitle = _data["subtitle"];
+            this.imdbId = _data["imdbId"];
             this.ageRestrictionId = _data["ageRestrictionId"];
             if (Array.isArray(_data["movieTypeIds"])) {
                 this.movieTypeIds = [] as any;
                 for (let item of _data["movieTypeIds"])
                     this.movieTypeIds!.push(item);
+            }
+            if (Array.isArray(_data["credits"])) {
+                this.credits = [] as any;
+                for (let item of _data["credits"])
+                    this.credits!.push(MovieCreditRequest.fromJS(item));
             }
         }
     }
@@ -9110,11 +9625,17 @@ export class CreateMovieRequest implements ICreateMovieRequest {
         data["cast"] = this.cast;
         data["language"] = this.language;
         data["subtitle"] = this.subtitle;
+        data["imdbId"] = this.imdbId;
         data["ageRestrictionId"] = this.ageRestrictionId;
         if (Array.isArray(this.movieTypeIds)) {
             data["movieTypeIds"] = [];
             for (let item of this.movieTypeIds)
                 data["movieTypeIds"].push(item);
+        }
+        if (Array.isArray(this.credits)) {
+            data["credits"] = [];
+            for (let item of this.credits)
+                data["credits"].push(item.toJSON());
         }
         return data;
     }
@@ -9132,8 +9653,66 @@ export interface ICreateMovieRequest {
     cast?: string | undefined;
     language?: string | undefined;
     subtitle?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
+    credits?: MovieCreditRequest[] | undefined;
+}
+
+export class MovieCreditRequest implements IMovieCreditRequest {
+    personId?: string | undefined;
+    personName!: string;
+    personPhotoUrl?: string | undefined;
+    creditType?: CreditType;
+    characterName?: string | undefined;
+    displayOrder?: number;
+
+    constructor(data?: IMovieCreditRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.personId = _data["personId"];
+            this.personName = _data["personName"];
+            this.personPhotoUrl = _data["personPhotoUrl"];
+            this.creditType = _data["creditType"];
+            this.characterName = _data["characterName"];
+            this.displayOrder = _data["displayOrder"];
+        }
+    }
+
+    static fromJS(data: any): MovieCreditRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new MovieCreditRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["personId"] = this.personId;
+        data["personName"] = this.personName;
+        data["personPhotoUrl"] = this.personPhotoUrl;
+        data["creditType"] = this.creditType;
+        data["characterName"] = this.characterName;
+        data["displayOrder"] = this.displayOrder;
+        return data;
+    }
+}
+
+export interface IMovieCreditRequest {
+    personId?: string | undefined;
+    personName: string;
+    personPhotoUrl?: string | undefined;
+    creditType?: CreditType;
+    characterName?: string | undefined;
+    displayOrder?: number;
 }
 
 export class UpdateMovieRequest implements IUpdateMovieRequest {
@@ -9149,8 +9728,10 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
     cast?: string | undefined;
     language?: string | undefined;
     subtitle?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
+    credits?: MovieCreditRequest[] | undefined;
 
     constructor(data?: IUpdateMovieRequest) {
         if (data) {
@@ -9175,11 +9756,17 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
             this.cast = _data["cast"];
             this.language = _data["language"];
             this.subtitle = _data["subtitle"];
+            this.imdbId = _data["imdbId"];
             this.ageRestrictionId = _data["ageRestrictionId"];
             if (Array.isArray(_data["movieTypeIds"])) {
                 this.movieTypeIds = [] as any;
                 for (let item of _data["movieTypeIds"])
                     this.movieTypeIds!.push(item);
+            }
+            if (Array.isArray(_data["credits"])) {
+                this.credits = [] as any;
+                for (let item of _data["credits"])
+                    this.credits!.push(MovieCreditRequest.fromJS(item));
             }
         }
     }
@@ -9205,11 +9792,17 @@ export class UpdateMovieRequest implements IUpdateMovieRequest {
         data["cast"] = this.cast;
         data["language"] = this.language;
         data["subtitle"] = this.subtitle;
+        data["imdbId"] = this.imdbId;
         data["ageRestrictionId"] = this.ageRestrictionId;
         if (Array.isArray(this.movieTypeIds)) {
             data["movieTypeIds"] = [];
             for (let item of this.movieTypeIds)
                 data["movieTypeIds"].push(item);
+        }
+        if (Array.isArray(this.credits)) {
+            data["credits"] = [];
+            for (let item of this.credits)
+                data["credits"].push(item.toJSON());
         }
         return data;
     }
@@ -9228,8 +9821,10 @@ export interface IUpdateMovieRequest {
     cast?: string | undefined;
     language?: string | undefined;
     subtitle?: string | undefined;
+    imdbId?: string | undefined;
     ageRestrictionId?: string;
     movieTypeIds?: string[];
+    credits?: MovieCreditRequest[] | undefined;
 }
 
 export class AddCommentRequest implements IAddCommentRequest {
@@ -12896,6 +13491,215 @@ export interface IUpdateNewsRequest {
     author?: string | undefined;
     isPublished?: boolean;
     publishedAt?: Date | undefined;
+}
+
+export abstract class BaseSearchResultsOfPersonDTO implements IBaseSearchResultsOfPersonDTO {
+    results?: PersonDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfPersonDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(PersonDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfPersonDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfPersonDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfPersonDTO {
+    results?: PersonDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfPersonDTO extends BaseSearchResultsOfPersonDTO implements IDefaultSearchResultsOfPersonDTO {
+
+    constructor(data?: IDefaultSearchResultsOfPersonDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfPersonDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfPersonDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfPersonDTO extends IBaseSearchResultsOfPersonDTO {
+}
+
+export class PersonDTO implements IPersonDTO {
+    id?: string;
+    name?: string;
+    photoUrl?: string | undefined;
+
+    constructor(data?: IPersonDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.photoUrl = _data["photoUrl"];
+        }
+    }
+
+    static fromJS(data: any): PersonDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PersonDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["photoUrl"] = this.photoUrl;
+        return data;
+    }
+}
+
+export interface IPersonDTO {
+    id?: string;
+    name?: string;
+    photoUrl?: string | undefined;
+}
+
+export class CreatePersonRequest implements ICreatePersonRequest {
+    name?: string;
+    photoUrl?: string | undefined;
+
+    constructor(data?: ICreatePersonRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.photoUrl = _data["photoUrl"];
+        }
+    }
+
+    static fromJS(data: any): CreatePersonRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreatePersonRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["photoUrl"] = this.photoUrl;
+        return data;
+    }
+}
+
+export interface ICreatePersonRequest {
+    name?: string;
+    photoUrl?: string | undefined;
+}
+
+export class UpdatePersonRequest implements IUpdatePersonRequest {
+    id?: string;
+    name?: string;
+    photoUrl?: string | undefined;
+
+    constructor(data?: IUpdatePersonRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.photoUrl = _data["photoUrl"];
+        }
+    }
+
+    static fromJS(data: any): UpdatePersonRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdatePersonRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["photoUrl"] = this.photoUrl;
+        return data;
+    }
+}
+
+export interface IUpdatePersonRequest {
+    id?: string;
+    name?: string;
+    photoUrl?: string | undefined;
 }
 
 export abstract class BaseSearchResultsOfDiscountDTO implements IBaseSearchResultsOfDiscountDTO {

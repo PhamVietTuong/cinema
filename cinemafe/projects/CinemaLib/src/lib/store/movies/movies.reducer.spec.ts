@@ -6,6 +6,7 @@ import { Movie, PagedResult } from '../../models/movie.models';
 const movie = (id: number, title: string): Movie => ({
   id,
   title,
+  slug: `movie-${id}`,
   description: '',
   duration: 120,
   releaseDate: '2026-07-01',
@@ -27,6 +28,7 @@ describe('moviesReducer', () => {
       MoviesActions.loadComingSoon({ page: 1, pageSize: 15 }),
       MoviesActions.loadMovies({ page: 1, pageSize: 20 }),
       MoviesActions.loadMovieDetail({ id: '1' }),
+      MoviesActions.loadMovieDetailBySlug({ slug: 'movie-1' }),
     ]) {
       const state = moviesReducer(from, action);
       expect(state.loading).toBe(true);
@@ -98,6 +100,15 @@ describe('moviesReducer', () => {
       expect(state.error).toBe('network');
       expect(state.loading).toBe(false);
     }
+  });
+
+  it('loadMovieDetailFailure clears the previously selected movie', () => {
+    const from: MoviesState = { ...initialMoviesState, selectedMovie: movie(1, 'Wicked') as never };
+
+    const state = moviesReducer(from, MoviesActions.loadMovieDetailFailure({ error: 'not found' }));
+
+    expect(state.selectedMovie).toBeNull();
+    expect(state.error).toBe('not found');
   });
 
   it('an unrelated action returns the same state reference', () => {

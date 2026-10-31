@@ -317,7 +317,7 @@ public class BoxOfficeTests
 
         _created.Single().UserId.Should().BeNull();
         _uowMock.Verify(u => u.UserStore.UpdateAsync(It.IsAny<User>()), Times.Never);
-        _notifications.Verify(n => n.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _notifications.Verify(n => n.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<EmailInlineImage>>()), Times.Never);
         _sms.Verify(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -335,7 +335,7 @@ public class BoxOfficeTests
 
         _created.Single().UserId.Should().Be(member.Id);
         member.Points.Should().Be(3 + 100);   // default rate: 1 point per 1,000 VND
-        _notifications.Verify(n => n.SendAsync("member@cinema.vn", It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _notifications.Verify(n => n.SendAsync("member@cinema.vn", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<EmailInlineImage>>()), Times.Once);
     }
 
     [Fact]

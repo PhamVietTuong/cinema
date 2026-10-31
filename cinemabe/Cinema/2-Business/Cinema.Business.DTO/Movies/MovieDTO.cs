@@ -3,6 +3,7 @@ public class MovieDTO
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public int Duration { get; set; }
     public DateOnly ReleaseDate { get; set; }
@@ -13,6 +14,7 @@ public class MovieDTO
     public string? Cast { get; set; }
     public string? Subtitle { get; set; }
     public string? Language { get; set; }
+    public string? ImdbId { get; set; }
     public Guid AgeRestrictionId { get; set; }
     public string AgeRestrictionCode { get; set; } = string.Empty;
     public List<Guid> MovieTypeIds { get; set; } = new();

@@ -115,9 +115,11 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 180px));
   justify-content: center;
 }
-// Snack/combo tiles: wider tracks to fit the image + text row layout.
+// Snack/combo tiles: wider tracks to fit the image + text row layout, capped and centered like
+// ticket-grid instead of stretching edge-to-edge across the card.
 .option-grid.food-grid {
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 280px));
+  justify-content: center;
 }
 .option-card {
   position: relative; overflow: hidden;

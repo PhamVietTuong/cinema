@@ -1,3 +1,4 @@
+using Cinema.Business.Contracts.Payments;
 using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.BoxOffice;
 using Cinema.Business.DTO.Invoices;
@@ -20,10 +21,12 @@ public interface IBookingManager
     /// what it would take off <paramref name="total"/>. Never throws for an unusable code.</summary>
     Task<DiscountCodeValidationDTO>     ValidateDiscountCodeAsync(Guid userId, string code, Guid roomId, Guid showTimeId, double total);
     /// <summary>Starts a payment for the owner's Pending invoice via the chosen provider; returns the redirect/checkout info.</summary>
-    Task<PaymentInitiationDTO?>         InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl);
+    Task<PaymentInitiationDTO?>         InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl, string? clientIp);
     Task<bool>                          ConfirmPaymentAsync(Guid userId, Guid invoiceId, string paymentReference);
-    /// <summary>Server-to-server gateway callback (IPN/webhook): signature-verifies and finalizes payment. No owner check.</summary>
-    Task<bool>                          HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData);
+    /// <summary>Server-to-server gateway callback (IPN/webhook): signature-verifies and finalizes payment. No owner check.
+    /// Returns which gateway resolved the callback and what was decided, so the caller can build the right
+    /// provider-specific acknowledgement (e.g. VNPay's required {RspCode, Message} IPN response).</summary>
+    Task<PaymentCallbackHandlingResult> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData);
     /// <summary>Gate check-in: validates a ticket QR, marks it used (once), returns its details.</summary>
     Task<TicketValidationDTO>           ValidateTicketAsync(string qrCode);
     Task<bool>                          CancelBookingAsync(Guid userId, Guid invoiceId);

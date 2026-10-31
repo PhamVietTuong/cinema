@@ -60,6 +60,17 @@ export const TemplateChannelValues: { value: CinemaServiceAgent.TemplateChannel;
   { value: CinemaServiceAgent.TemplateChannel.Sms, name: 'templates.channelSms' },
 ];
 
+/** i18n-key label for each MovieCredit.CreditType value. */
+export const CreditTypeValues: { value: CinemaServiceAgent.CreditType; name: string }[] = [
+  { value: CinemaServiceAgent.CreditType.Director, name: 'movies.form.creditDirector' },
+  { value: CinemaServiceAgent.CreditType.Actor, name: 'movies.form.creditActor' },
+];
+
+/** i18n key for a CreditType value (falls back to Director). */
+export function creditTypeLabel(c?: CinemaServiceAgent.CreditType): string {
+  return CreditTypeValues.find(v => v.value === c)?.name ?? CreditTypeValues[0].name;
+}
+
 /** i18n-key label for each Invoice.InvoiceStatus value. */
 export const InvoiceStatusValues = [
   { value: CinemaServiceAgent.InvoiceStatus.Pending, name: 'invoices.statusPending' },
@@ -390,4 +401,21 @@ export function channelsMaskToList(mask?: number | null): CinemaServiceAgent.Sal
 /** Encodes a channel list back into an AllowedChannelsMask bitmask; empty means "all channels" (null). */
 export function channelsListToMask(channels: CinemaServiceAgent.SalesChannel[]): number | null {
   return channels.length ? channels.reduce((mask, c) => mask | (1 << c), 0) : null;
+}
+
+/** Rotten Tomatoes' own "fresh" cut-off: scores at or above this percentage are fresh, below is rotten. */
+const ROTTEN_TOMATOES_FRESH_THRESHOLD = 60;
+
+export type RottenTomatoesTier = 'fresh' | 'rotten';
+
+/** Classifies a Rotten Tomatoes score string (e.g. "93%") as fresh/rotten; null when unparsable. */
+export function rottenTomatoesTier(score?: string | null): RottenTomatoesTier | null {
+  if (!score) {
+    return null;
+  }
+  const match = score.match(/\d+/);
+  if (!match) {
+    return null;
+  }
+  return Number(match[0]) >= ROTTEN_TOMATOES_FRESH_THRESHOLD ? 'fresh' : 'rotten';
 }

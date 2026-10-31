@@ -1,77 +1,140 @@
-// "Night Screening" — Promotions Page
-// Tokens (from styles.scss): ground #07080b · panel #101319 · ink #e9edf3 · beam #59d9d2 (action) · gel #ff4e8a (premium)
+// "Marquee Ledger" — Promotions Page — Ticket Stub List
+// Tokens come from CinemaLib's ledger theme (_ledger-tokens.scss), exposed here as --mp-* / --ml-* / --ns-*.
+// Headings/body: Oswald (--mp-font-display). Stub numerals only: Bebas Neue (--ml-font-display, ASCII-safe).
+// Ledger values & codes: IBM Plex Mono (--ns-font-data).
 
 .page-header { background: var(--mp-paper-2); border-bottom: 1px solid var(--mp-line-2); padding: 40px 0; }
 .ph-inner { max-width: 900px; margin: 0 auto; padding: 0 40px; }
-.page-title { font-family: var(--mp-font-display); font-size: 2.2rem; font-weight: 700; color: var(--mp-ink); margin: 0; }
+.ph-eyebrow { font-family: var(--mp-font-display); font-size: .78rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mp-gold-deep); }
+.page-title { font-family: var(--mp-font-display); font-size: 2.2rem; font-weight: 700; color: var(--mp-ink); margin: 8px 0 0; }
 .page-sub { color: var(--mp-muted); margin: 10px 0 0; max-width: 680px; }
 
-.promo-page { max-width: 900px; margin: 0 auto; padding: 40px; }
+.promo-page { max-width: 900px; margin: 0 auto; padding: 32px 40px 40px; }
 .spinner-wrap { display: flex; justify-content: center; padding: 60px; ::ng-deep circle { stroke: var(--mp-red) !important; } }
 .empty { text-align: center; color: var(--mp-muted); padding: 60px 0; mat-icon { font-size: 2.4rem; width: 2.4rem; height: 2.4rem; opacity: 0.3; display: block; margin: 0 auto 10px; } }
 
-.promo-list { display: flex; flex-direction: column; gap: 20px; }
-
-.promo-card {
-  background: var(--mp-card);
-  border: 1px solid var(--mp-line-2);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--mp-shadow-sm);
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+.promo-tabs {
+  display: flex; gap: 24px; margin-bottom: 28px; border-bottom: 1px solid var(--mp-line-2);
+  overflow-x: auto; white-space: nowrap;
+}
+.promo-tab {
+  font-family: var(--mp-font-display); font-size: .84rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase;
+  color: var(--mp-muted); background: none; border: none; cursor: pointer;
+  padding: 0 2px 12px; border-bottom: 2px solid transparent; flex: 0 0 auto;
+  &.is-active { color: var(--mp-ink); border-color: var(--mp-red); }
+  &:focus-visible { outline: 2px solid var(--mp-gold-deep); outline-offset: 2px; }
 }
 
-.promo-banner {
-  height: 160px; overflow: hidden;
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+// ── Ticket list ──────────────────────────────────────────────────────────────
+.ticket-list { display: flex; flex-direction: column; gap: 20px; }
+
+.ticket {
+  display: grid; grid-template-columns: 112px 1fr;
+  background: var(--mp-card); border: 1px solid var(--mp-line-2); border-radius: var(--mp-r-lg, 8px);
+  overflow: hidden; position: relative;
 }
-.promo-banner--placeholder {
-  display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, var(--mp-red) 0%, var(--mp-red-strong) 100%);
-  mat-icon { color: #fff; opacity: 0.85; font-size: 2.6rem; width: 2.6rem; height: 2.6rem; }
+
+.ticket-stub {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  padding: 18px 8px; text-align: center;
+  border-right: 1px dashed var(--mp-line-3, var(--mp-line-2));
+}
+.notch {
+  position: absolute; left: 100%; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--mp-paper); border: 1px solid var(--mp-line-2); transform: translate(-50%, -50%);
+}
+.notch--top { top: 0; }
+.notch--bottom { top: 100%; }
+.stub-value { font-family: var(--ml-font-display); font-size: 2.1rem; line-height: .9; color: var(--mp-gold-deep); }
+.stub-icon { color: var(--mp-gold-deep); opacity: .8; font-size: 1.8rem; width: 1.8rem; height: 1.8rem; }
+.stub-caption { font-family: var(--mp-font-display); font-size: .66rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--mp-muted); }
+
+.ticket-body { padding: 18px 22px 20px; min-width: 0; }
+
+.ticket-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 10px; }
+.ticket-title { font-family: var(--mp-font-display); font-size: 1.14rem; font-weight: 700; color: var(--mp-ink); margin: 0; }
+.pill { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
+.pill--auto { border: 1px solid var(--ns-beam-line); color: var(--mp-ink-2); }
+.pill--starts { color: var(--mp-gold-deep); }
+
+.ticket-mechanic { display: block; font-family: var(--mp-font-display); font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--mp-gold-deep); margin-top: 6px; }
+.ticket-summary { font-size: .88rem; color: var(--mp-muted); margin: 8px 0 0; line-height: 1.5; }
+
+.ledger { display: flex; flex-direction: column; gap: 5px; margin: 14px 0; }
+.ledger-row { display: flex; gap: 10px; font-size: .84rem; }
+.ledger-row dt { flex: 0 0 120px; margin: 0; padding-top: 1px; font-family: var(--mp-font-display); font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--mp-muted); }
+.ledger-row dd { flex: 1 1 auto; min-width: 0; margin: 0; font-family: var(--ns-font-data); color: var(--mp-ink-2); }
+
+.ticket-foot {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  padding-top: 14px; border-top: 1px dashed var(--mp-line-2);
+  > .promo-toggle { margin-right: auto; }
 }
 
-.promo-body { padding: 18px 22px 22px; }
-
-.promo-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.promo-title { font-family: var(--mp-font-display); font-size: 1.2rem; font-weight: 700; color: var(--mp-ink); margin: 0; }
-.promo-starts { font-size: 0.75rem; color: var(--mp-gold-deep); font-weight: 600; white-space: nowrap; }
-
-.promo-summary { font-size: 0.9rem; color: var(--mp-muted); margin: 8px 0 0; }
-
-.promo-chips, .promo-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.promo-chip {
-  display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px;
-  background: var(--mp-red); color: #fff; font-size: 0.8rem; font-weight: 700;
-}
-.promo-chip--deal { background: var(--ns-beam, var(--mp-gold-deep)); color: var(--mp-ink); }
-.promo-chip--auto { background: transparent; border: 1px solid var(--ns-beam-line); color: var(--mp-muted); font-weight: 600; }
-
-.promo-badge {
-  display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 8px;
-  border: 1px solid var(--mp-line-2); color: var(--mp-muted); font-size: 0.78rem;
+.ticket-code {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px dashed var(--ns-beam-line); border-radius: var(--mp-r-sm, 4px); padding: 5px 12px;
+  .code-label { font-size: .7rem; color: var(--mp-muted); text-transform: uppercase; letter-spacing: .08em; }
+  .code-val { font-family: var(--ns-font-data); font-weight: 700; color: var(--mp-ink); letter-spacing: .03em; }
 }
 
 .promo-toggle {
-  display: inline-flex; align-items: center; gap: 4px; margin-top: 14px;
+  display: inline-flex; align-items: center; gap: 4px;
   background: none; border: none; cursor: pointer; padding: 0;
-  color: var(--mp-gold-deep); font-size: 0.85rem; font-weight: 700;
+  color: var(--mp-gold-deep); font-size: .85rem; font-weight: 700;
   mat-icon { font-size: 1.1rem; width: 1.1rem; height: 1.1rem; }
   &:focus-visible { outline: 2px solid var(--mp-gold-deep); outline-offset: 2px; }
+}
+
+.ticket-cta {
+  // mat-raised-button carries its own M3 theme colors that otherwise win over the
+  // tokens below — same fix as .btn-primary-cta in styles.scss.
+  --mdc-protected-button-container-color: var(--ml-ink);
+  --mdc-protected-button-label-text-color: var(--ml-paper);
+  --mdc-protected-button-disabled-container-color: var(--ml-ink);
+  --mdc-protected-button-disabled-label-text-color: var(--ml-paper);
+  --mat-protected-button-state-layer-color: var(--ml-paper);
+  background-color: var(--ml-ink) !important;
+  color: var(--ml-paper) !important;
+  box-shadow: none !important;
 }
 
 .promo-details {
   margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--mp-line-2);
   display: flex; flex-direction: column; gap: 16px;
 
-  h4 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mp-muted); margin: 0 0 6px; }
-  ul { margin: 0; padding-left: 18px; color: var(--mp-ink); font-size: 0.88rem; line-height: 1.6; }
+  h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--mp-muted); margin: 0 0 6px; }
+  ul { margin: 0; padding-left: 18px; color: var(--mp-ink); font-size: .88rem; line-height: 1.6; }
 }
 
-.promo-code-row {
-  display: inline-flex; align-items: center; gap: 10px;
-  border: 1px dashed var(--ns-beam-line); border-radius: 8px; padding: 8px 14px; align-self: flex-start;
-  .code-label { font-size: 0.72rem; color: var(--mp-muted); text-transform: uppercase; letter-spacing: 0.08em; }
-  .code-val { font-weight: 700; color: var(--mp-ink); letter-spacing: 0.04em; }
+.promo-banner {
+  border-radius: var(--mp-r-md, 6px); overflow: hidden; height: 140px;
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
 }
 
-.promo-book-btn { align-self: flex-start; }
+.price-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; padding: 4px 11px; border-radius: 999px;
+  background: var(--mp-surface-2, var(--mp-line-2)); color: var(--mp-ink-2); font-size: .78rem; font-weight: 600;
+}
+
+// ── Phone width ──────────────────────────────────────────────────────────────
+@media (max-width: 480px) {
+  .ph-inner, .promo-page { padding-left: 20px; padding-right: 20px; }
+  .page-header { padding: 28px 0; }
+  .promo-page { padding-top: 24px; }
+
+  .ticket { grid-template-columns: 84px 1fr; }
+  .ticket-stub { padding: 14px 6px; }
+  .stub-value { font-size: 1.6rem; }
+  .ticket-body { padding: 14px 16px 16px; }
+
+  .ledger-row dt { flex-basis: 96px; }
+
+  .ticket-foot {
+    > .ticket-code { order: 1; flex: 1 1 100%; }
+    > .promo-toggle { order: 2; margin-right: 0; }
+    > .ticket-cta { order: 3; margin-left: auto; }
+  }
+}

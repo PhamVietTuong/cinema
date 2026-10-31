@@ -17,6 +17,18 @@ $seat-gap: 7px;
   color: var(--ml-muted); text-transform: uppercase;
 }
 
+.seat-grid-wrap { position: relative; }
+
+.seat-grid-hint {
+  position: absolute; top: var(--cx-space-5, 20px); left: 50%; transform: translateX(-50%);
+  z-index: 1;
+  padding: var(--cx-space-2, 8px) var(--cx-space-4, 16px);
+  border-radius: var(--ml-r-sm);
+  background: var(--ml-warn-soft); border: 1px solid var(--ml-warn); color: var(--ml-warn-ink);
+  font-size: var(--cx-text-xs); font-weight: var(--cx-weight-medium);
+  white-space: nowrap;
+}
+
 .seat-grid {
   // align-items: flex-start, not center — rows can have different widths (a merged double-wide seat, or a
   // row shortened by removing a seat), and centering each row individually would misalign the row letters.
@@ -25,9 +37,9 @@ $seat-gap: 7px;
   margin: 0 auto var(--cx-space-5, 20px);
   width: fit-content; max-width: 100%;
   overflow-x: auto;
-  transition: opacity var(--cx-dur) var(--cx-ease);
-  /* Not selectable yet (e.g. no ticket type chosen): still visible so the layout doesn't jump. */
-  &.not-ready { opacity: 0.45; pointer-events: none; }
+  /* Not selectable yet (e.g. no ticket type chosen): seat labels stay fully legible, the hint banner
+     above explains why, and pointer-events keeps clicks from doing anything. */
+  &.not-ready { pointer-events: none; }
 }
 .seat-row { display: flex; align-items: center; gap: $seat-gap; }
 .row-label {

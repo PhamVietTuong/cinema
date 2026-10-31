@@ -2,6 +2,11 @@
   <mat-spinner diameter="48"></mat-spinner>
 </div>
 
+<div *ngIf="!(loading$ | async) && !(movie$ | async)" class="not-found">
+  <p>{{ 'movies.detail.notFound' | translate }}</p>
+  <a mat-stroked-button routerLink="/movies">{{ 'movies.detail.backToMovies' | translate }}</a>
+</div>
+
 <ng-container *ngIf="movie$ | async as movie">
 
   <!-- ── HERO ──────────────────────────────────────────────────────────────── -->
@@ -55,6 +60,19 @@
         <span class="score-count" *ngIf="movie.ratingCount > 0; else noRatingsYet">{{ 'movies.detail.ratingCount' | translate:{ count: (movie.ratingCount | number) } }}</span>
         <ng-template #noRatingsYet><span class="score-count">{{ 'movies.detail.noRatingsYet' | translate }}</span></ng-template>
         <span class="score-hint" *ngIf="(isAuthenticated$ | async) && !canReview(movie)">{{ 'movies.detail.watchFirstToReview' | translate }}</span>
+
+        <div class="external-ratings" *ngIf="movie.externalRatings?.rottenTomatoes || movie.externalRatings?.imdbRating || movie.externalRatings?.metascore">
+          <span class="ext-rating ext-rating--rt" [class.rt-fresh]="rtTier(movie.externalRatings.rottenTomatoes) === 'fresh'" [class.rt-rotten]="rtTier(movie.externalRatings.rottenTomatoes) === 'rotten'" *ngIf="movie.externalRatings.rottenTomatoes">
+            {{ movie.externalRatings.rottenTomatoes }} {{ 'movies.detail.rottenTomatoes' | translate }}
+          </span>
+          <span class="ext-rating ext-rating--secondary" *ngIf="movie.externalRatings.imdbRating">
+            {{ 'movies.detail.imdbRating' | translate }} {{ movie.externalRatings.imdbRating }}/10
+          </span>
+          <span class="ext-rating ext-rating--secondary" *ngIf="movie.externalRatings.metascore">
+            {{ 'movies.detail.metascore' | translate }} {{ movie.externalRatings.metascore }}
+          </span>
+          <span class="ext-rating-source">{{ 'movies.detail.externalRatingsSource' | translate }}</span>
+        </div>
       </div>
     </div>
   </section>
@@ -134,14 +152,45 @@
     </section>
 
     <!-- Cast -->
-    <section class="md-section" *ngIf="getCastMembers(movie.cast).length">
+    <section class="md-section" *ngIf="hasCredits(movie) || getDirectors(movie.director).length || getCastMembers(movie.cast).length">
       <h2 class="md-title">{{ 'movies.detail.castTitle' | translate }}</h2>
-      <div class="cast-row">
-        <div class="cast-item" *ngFor="let name of getCastMembers(movie.cast)">
-          <div class="cast-avatar">{{ getInitials(name) }}</div>
-          <p class="cast-name">{{ name }}</p>
+      <div class="cast-row" *ngIf="hasCredits(movie); else legacyCast">
+        <div class="cast-item" *ngFor="let c of creditDirectors(movie)">
+          <div class="cast-avatar">
+            <img *ngIf="c.personPhotoUrl" [src]="c.personPhotoUrl" [alt]="c.personName">
+            <span *ngIf="!c.personPhotoUrl">{{ getInitials(c.personName) }}</span>
+          </div>
+          <p class="cast-name">{{ c.personName }}</p>
+          <p class="cast-role">{{ 'movies.detail.directorRole' | translate }}</p>
+        </div>
+        <div class="cast-item" *ngFor="let c of creditActors(movie)">
+          <div class="cast-avatar">
+            <img *ngIf="c.personPhotoUrl" [src]="c.personPhotoUrl" [alt]="c.personName">
+            <span *ngIf="!c.personPhotoUrl">{{ getInitials(c.personName) }}</span>
+          </div>
+          <p class="cast-name">{{ c.personName }}</p>
+          <p class="cast-role" *ngIf="c.characterName">{{ c.characterName }}</p>
         </div>
       </div>
+      <ng-template #legacyCast>
+        <div class="cast-row">
+          <div class="cast-item" *ngFor="let name of getDirectors(movie.director)">
+            <div class="cast-avatar">
+              <img *ngIf="photoFor(name)" [src]="photoFor(name)" [alt]="name">
+              <span *ngIf="!photoFor(name)">{{ getInitials(name) }}</span>
+            </div>
+            <p class="cast-name">{{ name }}</p>
+            <p class="cast-role">{{ 'movies.detail.directorRole' | translate }}</p>
+          </div>
+          <div class="cast-item" *ngFor="let name of getCastMembers(movie.cast)">
+            <div class="cast-avatar">
+              <img *ngIf="photoFor(name)" [src]="photoFor(name)" [alt]="name">
+              <span *ngIf="!photoFor(name)">{{ getInitials(name) }}</span>
+            </div>
+            <p class="cast-name">{{ name }}</p>
+          </div>
+        </div>
+      </ng-template>
     </section>
 
     <!-- Comments -->

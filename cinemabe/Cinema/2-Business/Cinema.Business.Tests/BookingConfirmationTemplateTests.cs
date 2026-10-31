@@ -52,7 +52,7 @@ public class BookingConfirmationTemplateTests
             {
                 new() { Code = TemplateCodes.BookingConfirmationEmail, Channel = TemplateChannel.Email,
                         Subject = "Subj {{BookingCode}}",
-                        Body = "Hi {{CustomerName}}, movie {{MovieTitle}}, {{ShowTime}} seats {{SeatLabels}} total {{TotalAmount}}" },
+                        Body = "Hi {{CustomerName}}, movie {{MovieTitle}}, {{ShowTime}} seats {{SeatLabels}} total {{TotalAmount}} {{QrImages}}" },
                 new() { Code = TemplateCodes.BookingConfirmationSms, Channel = TemplateChannel.Sms, Subject = null,
                         Body = "SMS {{BookingCode}} {{MovieTitle}} {{SeatLabels}} {{TotalAmount}}" },
             });
@@ -64,7 +64,11 @@ public class BookingConfirmationTemplateTests
             RoomTypeName = "Midnight Premium",
             ShowStartTime = new DateTime(2026, 10, 18, 6, 45, 0),
             ProjectionForm = ProjectionForm.TwoD,
-            Tickets = new List<BookingConfirmationTicketRow> { new() { SeatLabel = "B3", PatronCategoryName = "Người Cao Tuổi", QrCode = "QR-1" } },
+            Tickets = new List<BookingConfirmationTicketRow>
+            {
+                new() { SeatLabel = "B3", PatronCategoryName = "Người Cao Tuổi", QrCode = "QR-1" },
+                new() { SeatLabel = "B4", PatronCategoryName = "Người Cao Tuổi", QrCode = "QR-2" },
+            },
             Foods = new List<BookingConfirmationFoodRow> { new() { Name = "Kẹo Dẻo Trái Cây", Quantity = 1 } },
         });
 
@@ -73,7 +77,14 @@ public class BookingConfirmationTemplateTests
         result.Should().BeTrue();
         _notifications.Verify(n => n.SendAsync("user@cinema.vn",
             It.Is<string>(s => s.Contains(invoice.Code)),
-            It.Is<string>(b => b.Contains("Deadpool &amp; Wolverine") && b.Contains("B3") && b.Contains("160,000"))), Times.Once);
+            It.Is<string>(b => b.Contains("Deadpool &amp; Wolverine") && b.Contains("B3") && b.Contains("160,000")
+                && b.Contains("cid:qr-0@cinema") && b.Contains("cid:qr-1@cinema")),
+            It.Is<IReadOnlyList<EmailInlineImage>>(images =>
+                images.Count == 2
+                && images[0].ContentId == "qr-0@cinema" && images[0].MediaType == "image/png"
+                && images[0].Content.SequenceEqual(QrCodeImage.ToPng("QR-1", 6))
+                && images[1].ContentId == "qr-1@cinema"
+                && images[1].Content.SequenceEqual(QrCodeImage.ToPng("QR-2", 6)))), Times.Once);
         _sms.Verify(s => s.SendSmsAsync("0900000000",
             It.Is<string>(b => b.Contains("Deadpool & Wolverine") && b.Contains("B3"))), Times.Once);
     }
@@ -93,7 +104,8 @@ public class BookingConfirmationTemplateTests
         var result = await _sut.ConfirmPaymentAsync(userId, invoice.Id, "REF-1");
 
         result.Should().BeTrue();
-        _notifications.Verify(n => n.SendAsync("user@cinema.vn", $"Booking confirmed — {invoice.Code}", It.IsAny<string>()), Times.Once);
+        _notifications.Verify(n => n.SendAsync("user@cinema.vn", $"Booking confirmed — {invoice.Code}", It.IsAny<string>(),
+            It.Is<IReadOnlyList<EmailInlineImage>>(images => images.Count == 0)), Times.Once);
         _sms.Verify(s => s.SendSmsAsync("0900000000", It.IsAny<string>()), Times.Once);
     }
 
@@ -112,6 +124,7 @@ public class BookingConfirmationTemplateTests
         var result = await _sut.ConfirmPaymentAsync(userId, invoice.Id, "REF-1");
 
         result.Should().BeTrue();
-        _notifications.Verify(n => n.SendAsync("user@cinema.vn", $"Booking confirmed — {invoice.Code}", It.IsAny<string>()), Times.Once);
+        _notifications.Verify(n => n.SendAsync("user@cinema.vn", $"Booking confirmed — {invoice.Code}", It.IsAny<string>(),
+            It.Is<IReadOnlyList<EmailInlineImage>>(images => images.Count == 0)), Times.Once);
     }
 }

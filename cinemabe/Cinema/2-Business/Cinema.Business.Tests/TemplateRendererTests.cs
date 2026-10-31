@@ -51,4 +51,22 @@ public class TemplateRendererTests
 
         result.Should().Be("A & B");
     }
+
+    [Fact]
+    public void Render_RawKey_IsNotHtmlEncoded()
+    {
+        var result = TemplateRenderer.Render("{{Name}} {{Images}}",
+            new Dictionary<string, string> { ["Name"] = "A & B", ["Images"] = "<img src=\"cid:x\">" },
+            rawKeys: new HashSet<string> { "Images" });
+
+        result.Should().Be("A &amp; B <img src=\"cid:x\">");
+    }
+
+    [Fact]
+    public void Render_RawKeysNull_EncodesAsBefore()
+    {
+        var result = TemplateRenderer.Render("{{Name}}", new Dictionary<string, string> { ["Name"] = "A & B" }, rawKeys: null);
+
+        result.Should().Be("A &amp; B");
+    }
 }

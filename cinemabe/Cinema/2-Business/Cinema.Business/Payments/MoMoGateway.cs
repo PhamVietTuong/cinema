@@ -34,7 +34,7 @@ public class MoMoGateway : IPaymentGateway
     private string SecretKey   => _config["Payments:MoMo:SecretKey"]   ?? "";
     private string Endpoint    => _config["Payments:MoMo:Endpoint"]    ?? "https://test-payment.momo.vn/v2/gateway/api/create";
 
-    public async Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl)
+    public async Task<PaymentInitiation> CreatePaymentAsync(Guid invoiceId, double amount, string? returnUrl, string? clientIp)
     {
         if (string.IsNullOrWhiteSpace(PartnerCode) || string.IsNullOrWhiteSpace(AccessKey) || string.IsNullOrWhiteSpace(SecretKey))
         {

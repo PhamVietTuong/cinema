@@ -26,7 +26,16 @@
     "no": "Không",
     "all": "Tất Cả",
     "noResults": "Không có kết quả",
-    "error": "Đã xảy ra lỗi"
+    "error": "Đã xảy ra lỗi",
+    "days": {
+      "sunShort": "CN",
+      "monShort": "T2",
+      "tueShort": "T3",
+      "wedShort": "T4",
+      "thuShort": "T5",
+      "friShort": "T6",
+      "satShort": "T7"
+    }
   },
   "auth": {
     "backToLogin": "Quay lại đăng nhập",
@@ -230,15 +239,9 @@
       "title": "Thanh Toán",
       "paymentMethod": "Phương Thức Thanh Toán",
       "momoWallet": "Ví MoMo",
-      "domesticCard": "Thẻ ATM nội địa",
+      "vnpay": "Thanh toán qua VNPAY",
       "concessions": "Bắp Nước & Combo",
       "concessionsShort": "Bắp nước",
-      "applePay": "Thanh toán qua Apple Pay",
-      "googlePay": "Thanh toán qua Google Pay",
-      "creditDebit": "Thẻ Tín Dụng / Ghi Nợ",
-      "cardNumber": "Số Thẻ",
-      "expiry": "Ngày Hết Hạn",
-      "cardName": "Tên Trên Thẻ",
       "qrNote": "Quét mã QR bằng ứng dụng {{app}} để hoàn tất thanh toán.",
       "payCta": "XÁC NHẬN & THANH TOÁN",
       "secureNote": "Thanh toán được bảo mật 256-bit SSL"
@@ -282,11 +285,25 @@
       "recommended": "Đề Xuất Cho Bạn",
       "nowShowing": "Phim Đang Chiếu",
       "comingSoon": "Phim Sắp Chiếu",
+      "promotions": "Khuyến Mãi",
       "viewAll": "Xem Tất Cả"
     },
     "card": {
       "book": "Đặt Vé",
-      "comingSoonBadge": "Sắp Chiếu"
+      "comingSoonBadge": "Sắp Chiếu",
+      "trailer": "Trailer",
+      "bookTickets": "Đặt Vé",
+      "notifyMe": "Nhắc Tôi",
+      "info": {
+        "genre": "Thể loại:",
+        "duration": "Thời lượng:",
+        "subtitles": "Phụ đề:",
+        "language": "Ngôn ngữ:"
+      }
+    },
+    "scrollRow": {
+      "prev": "Cuộn sang trái",
+      "next": "Cuộn sang phải"
     },
     "membership": {
       "titleLine1": "Nâng Tầm Trải Nghiệm",
@@ -367,6 +384,7 @@
       "language": "Ngôn ngữ:",
       "showtimesTitle": "Lịch Chiếu & Suất Diễn",
       "castTitle": "Diễn Viên & Đoàn Phim",
+      "directorRole": "Đạo diễn",
       "commentsTitle": "Bình Luận",
       "commentPlaceholder": "Tham gia cuộc thảo luận...",
       "submitComment": "Gửi Bình Luận",
@@ -376,7 +394,13 @@
       "ratingSaved": "Cảm ơn! Đánh giá của bạn đã được lưu.",
       "commentPosted": "Đã đăng bình luận.",
       "rateThisMovie": "Đánh giá phim này",
-      "watchFirstToReview": "Hãy xem phim này trước khi đánh giá hoặc bình luận."
+      "watchFirstToReview": "Hãy xem phim này trước khi đánh giá hoặc bình luận.",
+      "notFound": "Không tìm thấy phim này.",
+      "backToMovies": "Quay lại danh sách phim",
+      "rottenTomatoes": "Rotten Tomatoes",
+      "imdbRating": "IMDb",
+      "metascore": "Metascore",
+      "externalRatingsSource": "Điểm số từ OMDb"
     },
     "showtimes": {
       "seats": "{{count}} ghế",
@@ -411,6 +435,8 @@
     "colStatus": "Trạng Thái",
     "noTickets": "Bạn chưa có vé nào.",
     "bookingHistory": "Lịch Sử Đặt Vé",
+    "pagerRange": "Hiển thị {{from}}–{{to}} trên {{total}}",
+    "pagerLabel": "Phân trang lịch sử đặt vé",
     "totalTicketsBought": "Tổng vé đã mua",
     "upcoming": "Sắp tới",
     "totalSpent": "Tổng chi tiêu",
@@ -477,14 +503,36 @@
     "answerCancel": "Bạn có thể hủy vé khi đơn còn ở trạng thái \"Chờ Thanh Toán\" trong mục Lịch Sử Đặt Vé.",
     "answerMembership": "Bạn tích điểm trên mỗi lần thanh toán (tỷ lệ hiển thị khi thanh toán và có thể khác nhau theo rạp); hạng thành viên tự nâng theo điểm. Nhập mã giảm giá ở bước thanh toán.",
     "answerNearby": "Vào trang \"Rạp Chiếu\" và bấm \"Tìm rạp gần nhất\" để sắp xếp theo khoảng cách tới bạn.",
-    "answerPayment": "Hỗ trợ thẻ nội địa và ví điện tử (MoMo / Apple Pay / Google Pay) ở bước thanh toán.",
+    "answerPayment": "Hỗ trợ thanh toán qua MoMo và VNPAY ở bước thanh toán.",
     "answerCombo": "Bạn có thể thêm bắp nước & combo ngay ở bước thanh toán, tính gộp vào đơn.",
     "fallback": "Mình chưa hiểu ý bạn. Thử hỏi về: đặt vé, giờ chiếu, hủy vé, thành viên, thanh toán, hoặc rạp gần bạn nhé."
   },
   "promotions": {
+    "eyebrow": "Ưu đãi",
     "pageTitle": "Khuyến Mãi",
     "pageSubtitle": "Khám phá những ưu đãi đặc quyền dành riêng cho thành viên Midnight Premium. Tận hưởng trải nghiệm điện ảnh đẳng cấp với chi phí tối ưu.",
     "empty": "Hiện chưa có chương trình khuyến mãi nào.",
+    "emptyFiltered": "Không có ưu đãi nào trong mục này.",
+    "pricesTitle": "Bảng giá",
+    "tabs": {
+      "all": "Tất cả",
+      "auto": "Tự động áp dụng",
+      "code": "Cần mã",
+      "members": "Thành viên",
+      "students": "HSSV"
+    },
+    "ledger": {
+      "eligibility": "Đối tượng",
+      "period": "Thời gian",
+      "timeWindow": "Khung giờ",
+      "theaters": "Rạp áp dụng"
+    },
+    "stubCaption": {
+      "everyone": "Mọi khách hàng",
+      "members": "Thành viên",
+      "studentOrTeacher": "HSSV",
+      "ageLimit": "Giới hạn tuổi"
+    },
     "details": "Chi tiết",
     "hideDetails": "Ẩn chi tiết",
     "startsOn": "Bắt đầu {{date}}",

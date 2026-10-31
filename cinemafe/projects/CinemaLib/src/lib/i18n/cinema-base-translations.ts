@@ -27,6 +27,7 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       legendDouble: 'Ghế Đôi',
       notAvailableForCategory: 'Không khả dụng cho loại vé này',
       capReached: 'Bạn đã chọn đủ số vé — tăng số lượng để chọn thêm',
+      selectTicketTypeFirst: 'Vui lòng chọn loại vé trước khi chọn ghế',
     },
     ticket: {
       showTime: 'Suất chiếu',
@@ -99,6 +100,12 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       forgotPassword: 'Quên mật khẩu?',
       submit: 'Đăng Nhập',
     },
+    trailerDialog: {
+      officialTrailer: 'Trailer Chính Thức',
+      close: 'Đóng',
+      unavailable: 'Không thể phát trailer này.',
+      openExternal: 'Mở trên YouTube',
+    },
   },
   en: {
     apiErrors: API_ERRORS_EN,
@@ -117,6 +124,7 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       legendDouble: 'Double Seat',
       notAvailableForCategory: 'Not available for this ticket type',
       capReached: "You've selected all your tickets — increase a quantity to add more",
+      selectTicketTypeFirst: 'Please select a ticket type first to pick your seats',
     },
     ticket: {
       showTime: 'Showtime',
@@ -188,6 +196,12 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       rememberMe: 'Remember me',
       forgotPassword: 'Forgot password?',
       submit: 'Sign In',
+    },
+    trailerDialog: {
+      officialTrailer: 'Official Trailer',
+      close: 'Close',
+      unavailable: 'This trailer can\'t be played here.',
+      openExternal: 'Open on YouTube',
     },
   },
 };

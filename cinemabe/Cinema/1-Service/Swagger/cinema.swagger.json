@@ -236,6 +236,41 @@
         ]
       }
     },
+    "/api/Cinema/GetMovieBySlug": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetMovieBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieDetailDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Cinema/CreateMovie": {
       "post": {
         "tags": [
@@ -3008,6 +3043,235 @@
             "Bearer": [
               "Admin"
             ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetPeople": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPeople",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfPersonDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetPerson": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPerson",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/CreatePerson": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_CreatePerson",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePersonRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/UpdatePerson": {
+      "put": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpdatePerson",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePersonRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/DeletePerson": {
+      "delete": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_DeletePerson",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetPeopleByNames": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPeopleByNames",
+        "requestBody": {
+          "x-name": "names",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PersonDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
           }
         ]
       }
@@ -5998,6 +6262,9 @@
           "title": {
             "type": "string"
           },
+          "slug": {
+            "type": "string"
+          },
           "description": {
             "type": "string"
           },
@@ -6035,6 +6302,10 @@
             "nullable": true
           },
           "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "imdbId": {
             "type": "string",
             "nullable": true
           },
@@ -6188,6 +6459,20 @@
               },
               "canReview": {
                 "type": "boolean"
+              },
+              "credits": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MovieCreditDTO"
+                }
+              },
+              "externalRatings": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ExternalRatingsDTO"
+                  }
+                ]
               }
             }
           }
@@ -6285,6 +6570,68 @@
           }
         }
       },
+      "MovieCreditDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "personId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "personName": {
+            "type": "string"
+          },
+          "personPhotoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditType": {
+            "$ref": "#/components/schemas/CreditType"
+          },
+          "characterName": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreditType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Director",
+          "Actor"
+        ],
+        "enum": [
+          1,
+          2
+        ]
+      },
+      "ExternalRatingsDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rottenTomatoes": {
+            "type": "string",
+            "nullable": true
+          },
+          "imdbRating": {
+            "type": "string",
+            "nullable": true
+          },
+          "metascore": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CreateMovieRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -6334,6 +6681,11 @@
             "type": "string",
             "nullable": true
           },
+          "imdbId": {
+            "type": "string",
+            "pattern": "^\\s*tt\\d{7,10}\\s*$",
+            "nullable": true
+          },
           "ageRestrictionId": {
             "type": "string",
             "format": "guid"
@@ -6344,6 +6696,51 @@
               "type": "string",
               "format": "guid"
             }
+          },
+          "credits": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/MovieCreditRequest"
+            }
+          }
+        }
+      },
+      "MovieCreditRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "personName"
+        ],
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "personName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          },
+          "personPhotoUrl": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "creditType": {
+            "$ref": "#/components/schemas/CreditType"
+          },
+          "characterName": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 10000.0,
+            "minimum": 0.0
           }
         }
       },
@@ -6400,6 +6797,11 @@
             "type": "string",
             "nullable": true
           },
+          "imdbId": {
+            "type": "string",
+            "pattern": "^\\s*tt\\d{7,10}\\s*$",
+            "nullable": true
+          },
           "ageRestrictionId": {
             "type": "string",
             "format": "guid"
@@ -6409,6 +6811,13 @@
             "items": {
               "type": "string",
               "format": "guid"
+            }
+          },
+          "credits": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/MovieCreditRequest"
             }
           }
         }
@@ -8151,6 +8560,89 @@
           "publishedAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "DefaultSearchResultsOfPersonDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfPersonDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfPersonDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PersonDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreatePersonRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdatePersonRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "photoUrl": {
+            "type": "string",
             "nullable": true
           }
         }

@@ -25,6 +25,8 @@ public interface IApplicationUnitOfWork : IDisposable
     IMemberShipStore MemberShipStore { get; }
     IHolidayStore HolidayStore { get; }
     INewsStore NewsStore { get; }
+    IPersonStore PersonStore { get; }
+    IMovieCreditStore MovieCreditStore { get; }
     ITimeSlotStore TimeSlotStore { get; }
     ITicketPriceStore TicketPriceStore { get; }
     IReminderLogStore ReminderLogStore { get; }

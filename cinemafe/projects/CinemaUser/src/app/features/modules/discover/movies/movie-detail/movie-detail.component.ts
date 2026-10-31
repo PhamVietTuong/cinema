@@ -7,10 +7,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, loadMovieDetail, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, slugify, ToastService } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, rottenTomatoesTier, ToastService, CinemaServiceAgent } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
-import { movieDetailUrl } from '../../../../../shared/movie-route';
+import { movieDetailUrl, isLegacyMovieId } from '../../../../../shared/movie-route';
 
 @Component({
   selector: 'app-movie-detail',
@@ -25,18 +25,20 @@ export class MovieDetailComponent implements OnInit {
   isAuthenticated$: Observable<boolean>;
 
   movieId = '';
-  /** Canonical `/movies/:id/:slug` URL for the loaded movie; falls back to the slugless URL until it
-   * loads. Used for the login `returnUrl` so it always points at the friendly URL, not the raw path. */
+  /** Canonical `/movies/:slug` URL for the loaded movie. Used for the login `returnUrl` so it always
+   * points at the friendly URL, not the raw path. */
   detailUrl = '';
-  /** Slug currently written into the address bar (kept separately because `Location.replaceState`
-   * does not update the router's snapshot/url). */
-  private _urlSlug = '';
+  /** The route param as last written into the address bar: either the slug, or (until resolved) a
+   * legacy GUID. Kept separately because `Location.replaceState` does not update the router's
+   * snapshot/url. */
+  private _routeParam = '';
   /** The current user's rating, once submitted (1–10; 0 = none submitted yet this session). */
   myScore = 0;
   /** Hovered star while picking a rating in the hero widget; 0 when not hovering. */
   hoverScore = 0;
   newComment = '';
   readonly heroStars = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  readonly rtTier = rottenTomatoesTier;
 
   /** Today + the next 3 days — the movie-detail response already covers exactly this window
    * (MovieManager.GetDetailAsync), so switching tabs is a client-side filter, no re-fetch. */
@@ -53,6 +55,13 @@ export class MovieDetailComponent implements OnInit {
    * replays it. */
   pendingRestore?: BookingCheckoutState;
 
+  /** Name (lower-cased, trimmed) -> photo URL, resolved from the Person directory for the current
+   * movie's director(s) and cast. Looked up once per movie load; a cache-miss name just keeps the
+   * initials fallback in the template. */
+  private _photoByName = new Map<string, string>();
+  /** Guards against re-fetching on every movie$ re-emission (e.g. after rating/commenting). */
+  private _photoLookupKey = '';
+
   constructor(
     private _store: Store,
     private _route: ActivatedRoute,
@@ -63,6 +72,7 @@ export class MovieDetailComponent implements OnInit {
     private _translate: TranslateService,
     private _toast: ToastService,
     private _actions$: Actions,
+    private _cinemaSvc: CinemaServiceAgent.HttpService,
   ) {
     this.movie$ = this._store.select(selectSelectedMovie);
     this.loading$ = this._store.select(selectMoviesLoading);
@@ -70,9 +80,7 @@ export class MovieDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.movieId = this._route.snapshot.paramMap.get('id') ?? '';
-    this._urlSlug = this._route.snapshot.paramMap.get('slug') ?? '';
-    this.detailUrl = movieDetailUrl(this.movieId);
+    this._routeParam = this._route.snapshot.paramMap.get('slug') ?? '';
 
     // Must be set up before subscribing to movie$ below: when this movie is already cached in the
     // store (e.g. navigating straight back from checkout), that subscription emits SYNCHRONOUSLY,
@@ -81,15 +89,35 @@ export class MovieDetailComponent implements OnInit {
     this.dateTabs.push(...this.buildDateTabs());
     this.selectedDateKey = this.dateTabs[0].key;
 
-    this._store.dispatch(loadMovieDetail({ id: this.movieId }));
+    // Lowercase up front (backend GUIDs and slugs are both always lowercase) so a differently-cased
+    // legacy link still matches movie.id/movie.slug in the filter below and gets healed.
+    this._routeParam = this._routeParam.toLowerCase();
+
+    // Provisional until the real movie loads (corrected to movie.id in the subscription below): for
+    // a legacy GUID route this is already the real id; for a slug route it lets callers that fire
+    // before load (there are none in production — rating/commenting require the loaded movie anyway)
+    // still have a stable, non-empty value.
+    this.movieId = this._routeParam;
+
+    if (isLegacyMovieId(this._routeParam)) {
+      this._store.dispatch(loadMovieDetail({ id: this._routeParam }));
+    } else {
+      this.detailUrl = movieDetailUrl(this._routeParam);
+      this._store.dispatch(loadMovieDetailBySlug({ slug: this._routeParam }));
+    }
 
     const restore = (history.state as { restore?: BookingCheckoutState } | undefined)?.restore;
     let restoreApplied = false;
 
     this.movie$
-      .pipe(filter(movie => !!movie && movie.id === this.movieId), takeUntilDestroyed(this._destroyRef))
+      .pipe(
+        filter(movie => !!movie && (movie.id === this._routeParam || movie.slug === this._routeParam)),
+        takeUntilDestroyed(this._destroyRef),
+      )
       .subscribe(movie => {
+        this.movieId = movie.id;
         this._syncCanonicalUrl(movie);
+        this._loadPhotos(movie);
         if (restore && !restoreApplied) {
           restoreApplied = true;
           this._applyRestore(movie, restore);
@@ -127,13 +155,13 @@ export class MovieDetailComponent implements OnInit {
     });
   }
 
-  /** Keeps the address bar on `/movies/:id/:slug` without re-navigating (which would recreate this
-   * component and re-dispatch loadMovieDetail): corrects a missing, wrong or now-outdated slug in place. */
+  /** Keeps the address bar on `/movies/:slug` without re-navigating (which would recreate this
+   * component and re-dispatch loadMovieDetail): replaces a legacy GUID, or a differently-cased
+   * slug, with the movie's real slug in place. */
   private _syncCanonicalUrl(movie: any): void {
-    this.detailUrl = movieDetailUrl(this.movieId, movie.title);
-    const expectedSlug = slugify(movie.title);
-    if (this._urlSlug !== expectedSlug) {
-      this._urlSlug = expectedSlug;
+    this.detailUrl = movieDetailUrl(movie.slug);
+    if (this._routeParam !== movie.slug) {
+      this._routeParam = movie.slug;
       this._location.replaceState(this.detailUrl);
     }
   }
@@ -310,12 +338,84 @@ export class MovieDetailComponent implements OnInit {
     });
   }
 
+  private _splitNames(value: string | undefined): string[] {
+    return value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }
+
   getCastMembers(cast: string | undefined): string[] {
-    return cast ? cast.split(',').map(s => s.trim()).filter(Boolean).slice(0, 6) : [];
+    return this._splitNames(cast).slice(0, 6);
+  }
+
+  getDirectors(director: string | undefined): string[] {
+    return this._splitNames(director);
   }
 
   getInitials(name: string): string {
     return name.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  /** Photo URL for a Cast & Crew tile name, resolved from the Person directory; undefined falls
+   * back to the initials tile in the template. */
+  photoFor(name: string): string | undefined {
+    return this._photoByName.get(name.trim().toLocaleLowerCase());
+  }
+
+  /** True when the movie has explicit MovieCredit rows — the Cast & Crew section then renders those
+   * (with real linked photos and character names) instead of splitting Director/Cast strings. */
+  hasCredits(movie: any): boolean {
+    return (movie?.credits?.length ?? 0) > 0;
+  }
+
+  creditDirectors(movie: any): any[] {
+    return (movie?.credits ?? [])
+      .filter((c: any) => c.creditType === CinemaServiceAgent.CreditType.Director)
+      .sort((a: any, b: any) => a.displayOrder - b.displayOrder);
+  }
+
+  creditActors(movie: any): any[] {
+    return (movie?.credits ?? [])
+      .filter((c: any) => c.creditType === CinemaServiceAgent.CreditType.Actor)
+      .sort((a: any, b: any) => a.displayOrder - b.displayOrder);
+  }
+
+  /** Batch-resolves photos for this movie's director(s) + cast in a single request, once per
+   * distinct name set — later movie$ re-emissions (rating/comment reloads) don't re-fetch. Skipped
+   * entirely when the movie has explicit MovieCredit rows, since those already carry their photo. */
+  private _loadPhotos(movie: any): void {
+    if (this.hasCredits(movie)) {
+      this._photoByName = new Map<string, string>();
+      this._photoLookupKey = 'credits:' + movie.id;
+      return;
+    }
+
+    const names = [...this.getDirectors(movie.director), ...this.getCastMembers(movie.cast)];
+    const key = names.join('|').toLocaleLowerCase();
+    if (key === this._photoLookupKey) {
+      return;
+    }
+    this._photoLookupKey = key;
+
+    if (names.length === 0) {
+      this._photoByName = new Map<string, string>();
+      return;
+    }
+
+    this._cinemaSvc.getPeopleByNames(names)
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: people => {
+          const map = new Map<string, string>();
+          for (const p of people) {
+            if (p.name && p.photoUrl) {
+              map.set(p.name.trim().toLocaleLowerCase(), p.photoUrl);
+            }
+          }
+          this._photoByName = map;
+          this._cdr.markForCheck();
+        },
+        // Lookup failure just keeps the initials fallback — no toast, not worth interrupting the page.
+        error: () => {},
+      });
   }
 
   scrollToShowtimes(): void {

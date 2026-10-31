@@ -1,3 +1,4 @@
 export * from './date-range';
+export * from './paging';
 export * from './server-time';
-export * from './slugify';
+export * from './video-embed';

@@ -34,12 +34,6 @@
   margin-bottom: 20px;
   &.center { text-align: center; padding: 40px 24px; }
 }
-.card-title {
-  font-family: var(--ml-font-head); font-size: 1rem;
-  font-weight: 600; color: var(--ml-ink); margin: 0 0 20px;
-  mat-icon { margin-right: 8px; color: var(--ml-action-strong); vertical-align: -5px; }
-}
-
 // ── Payment methods: one full-width row each ─────────────────────────────────
 .method-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 .method-row {
@@ -58,9 +52,6 @@
   mat-icon { font-size: 26px; width: 26px; height: 26px; }
   svg-icon { width: 24px; height: 24px; display: inline-flex; }
 }
-
-.field-group { margin-bottom: 12px; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
 .qr-placeholder {
   width: 120px; height: 120px; margin: 0 auto 16px;

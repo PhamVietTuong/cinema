@@ -100,6 +100,11 @@ export const tiktokIcon = {
     name: 'tiktok' as const
 };
 
+export const vnpayIcon = {
+    data: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20M6 15h4"/></svg>`,
+    name: 'vnpay' as const
+};
+
 export const youtubeIcon = {
     data: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24"><path d="M22 12s0-3.2-.4-4.7c-.3-.9-1-1.6-1.9-1.9C18.1 5 12 5 12 5s-6.1 0-7.7.4c-.9.3-1.6 1-1.9 1.9C2 8.8 2 12 2 12s0 3.2.4 4.7c.3.9 1 1.6 1.9 1.9 1.6.4 7.7.4 7.7.4s6.1 0 7.7-.4c.9-.3 1.6-1 1.9-1.9.4-1.5.4-4.7.4-4.7m-12 3.5v-7l6 3.5z"/></svg>`,
     name: 'youtube' as const

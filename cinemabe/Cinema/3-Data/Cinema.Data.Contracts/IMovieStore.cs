@@ -6,6 +6,7 @@ public interface IMovieStore : IGenericStore<Movie>
 {
     Task<(IEnumerable<Movie> Items, int Total)> GetPagedAsync(string? search, string? director, Guid? movieTypeId, int page, int pageSize);
     Task<Movie?> GetDetailAsync(Guid id);
+    Task<Movie?> GetDetailBySlugAsync(string slug);
     Task<Movie?> GetForUpdateAsync(Guid id);
     Task<IEnumerable<Movie>> GetNowShowingAsync();
     Task<IEnumerable<Movie>> GetComingSoonAsync();
@@ -14,4 +15,8 @@ public interface IMovieStore : IGenericStore<Movie>
     /// <summary>Average rating for many movies in one grouped query. Movies with no ratings are absent
     /// from the result. Use this instead of calling <see cref="GetAverageRatingAsync"/> in a loop.</summary>
     Task<IReadOnlyDictionary<Guid, double>> GetAverageRatingsAsync(IReadOnlyCollection<Guid> movieIds);
+
+    /// <summary>Slugs equal to <paramref name="baseSlug"/> or starting with "<paramref name="baseSlug"/>-",
+    /// used to pick a free slug without loading every movie into memory.</summary>
+    Task<IReadOnlyList<string>> GetSlugsStartingWithAsync(string baseSlug);
 }
