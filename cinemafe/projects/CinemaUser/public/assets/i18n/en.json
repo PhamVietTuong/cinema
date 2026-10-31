@@ -412,6 +412,8 @@
     "colStatus": "Status",
     "noTickets": "You don't have any tickets yet.",
     "bookingHistory": "Booking History",
+    "pagerRange": "Showing {{from}}–{{to}} of {{total}}",
+    "pagerLabel": "Booking history pages",
     "totalTicketsBought": "Total tickets bought",
     "upcoming": "Upcoming",
     "totalSpent": "Total spent",

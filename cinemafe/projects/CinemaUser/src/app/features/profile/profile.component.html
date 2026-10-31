@@ -102,8 +102,12 @@
           <div class="pl-stat"><span class="pl-stat-val pl-mono">{{ totalSpent | number:'1.0-0' }}đ</span><span class="pl-stat-label">{{ 'profile.totalSpent' | translate }}</span></div>
           <div class="pl-stat"><span class="pl-stat-val pl-stat-val--gold">{{ user?.points ?? 0 | number }}</span><span class="pl-stat-label">{{ 'profile.pointsAccrued' | translate }}</span></div>
         </div>
+      </ng-container>
 
-        <div class="pl-card pl-card--flush" *ngIf="bookingRows.length; else noBk">
+      <div *ngIf="historyLoading && !historyInvoices.length" class="pl-empty"><mat-spinner diameter="34"></mat-spinner></div>
+
+      <ng-container *ngIf="!(historyLoading && !historyInvoices.length)">
+        <div class="pl-card pl-card--flush" [class.is-loading]="historyLoading" *ngIf="historyTotal; else noBk">
           <div class="pl-table-wrap">
             <table class="pl-table">
               <thead>
@@ -157,6 +161,17 @@
               </tbody>
             </table>
           </div>
+          <nav class="pl-pager" [attr.aria-label]="'profile.pagerLabel' | translate">
+            <span class="pl-pager-info">{{ 'profile.pagerRange' | translate:{ from: historyRangeFrom, to: historyRangeTo, total: historyTotal } }}</span>
+            <div class="pl-pager-nav">
+              <button type="button" class="pl-pager-btn" [disabled]="historyPage <= 1 || historyLoading" [attr.aria-label]="'common.previous' | translate" (click)="goToHistoryPage(historyPage - 1)"><mat-icon>chevron_left</mat-icon></button>
+              <ng-container *ngFor="let p of historyPageItems">
+                <button *ngIf="p !== null" type="button" class="pl-pager-btn" [class.is-active]="p === historyPage" [attr.aria-current]="p === historyPage ? 'page' : null" [disabled]="historyLoading" (click)="goToHistoryPage(p)">{{ p }}</button>
+                <span *ngIf="p === null" class="pl-pager-gap" aria-hidden="true">…</span>
+              </ng-container>
+              <button type="button" class="pl-pager-btn" [disabled]="historyPage >= historyTotalPages || historyLoading" [attr.aria-label]="'common.next' | translate" (click)="goToHistoryPage(historyPage + 1)"><mat-icon>chevron_right</mat-icon></button>
+            </div>
+          </nav>
         </div>
         <ng-template #noBk><div class="pl-empty"><mat-icon>confirmation_number</mat-icon><p>{{ 'profile.noTickets' | translate }}</p></div></ng-template>
       </ng-container>

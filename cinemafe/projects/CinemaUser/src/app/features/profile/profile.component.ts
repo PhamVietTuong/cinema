@@ -1,10 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase, joinSeatLabels } from 'CinemaLib';
 import * as QRCode from 'qrcode';
 
 /** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
 const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
+const HISTORY_PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-profile',
@@ -40,9 +42,18 @@ export class ProfileComponent extends ProfileFormBase {
   /** Per-ticket e-ticket QR data URLs, keyed by the ticket's QR token. */
   qrMap: Record<string, string> = {};
 
+  /** One page of the booking history table; separate from the `invoices` summary load. */
+  historyInvoices: PaymentServiceAgent.InvoiceDTO[] = [];
+  historyPage = 1;
+  historyTotal = 0;
+  historyLoading = false;
+  readonly historyPageSize = HISTORY_PAGE_SIZE;
+  private _historySub?: Subscription;
+
   override ngOnInit(): void {
     super.ngOnInit();
     this.loadInvoices();
+    this.loadHistoryPage(1);
   }
 
   protected override _phoneValidators(): ValidatorFn[] {
@@ -65,18 +76,77 @@ export class ProfileComponent extends ProfileFormBase {
     };
   }
 
+  /** Feeds the Overview tab and the Bookings-tab stat tiles — not the paged history table. */
   loadInvoices(): void {
     this.invoicesLoading = true;
     this._payment.getMyInvoices(PaymentServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 50 }))
       .subscribe({
-        next: r => { this.invoices = r.results ?? []; this.invoicesLoading = false; this._buildQrCodes(); this._cdr.markForCheck(); },
+        next: r => { this.invoices = r.results ?? []; this.invoicesLoading = false; this._cdr.markForCheck(); },
         error: () => { this.invoicesLoading = false; this._cdr.markForCheck(); },
       });
   }
 
+  /** Loads one page of the booking history table. */
+  loadHistoryPage(page: number): void {
+    const target = Math.max(1, page);
+    this._historySub?.unsubscribe();
+    this.historyLoading = true;
+    this.expandedId = null;
+    this._historySub = this._payment.getMyInvoices(PaymentServiceAgent.PagingSearchDTO.fromJS({ pageIndex: target, pageSize: HISTORY_PAGE_SIZE }))
+      .subscribe({
+        next: r => {
+          const results = r.results ?? [];
+          this.historyTotal = r.totalCount ?? 0;
+          if (!results.length && this.historyTotal > 0 && target > 1) {
+            this.loadHistoryPage(this.historyTotalPages);
+            return;
+          }
+          this.historyInvoices = results;
+          this.historyPage = target;
+          this.historyLoading = false;
+          this._buildQrCodes(this.historyInvoices);
+          this._cdr.markForCheck();
+        },
+        error: () => { this.historyLoading = false; this._cdr.markForCheck(); },
+      });
+  }
+
+  goToHistoryPage(page: number): void {
+    if (page < 1 || page > this.historyTotalPages || page === this.historyPage || this.historyLoading) { return; }
+    this.loadHistoryPage(page);
+  }
+
+  get historyTotalPages(): number {
+    return Math.max(1, Math.ceil(this.historyTotal / this.historyPageSize));
+  }
+  get historyRangeFrom(): number {
+    return this.historyTotal === 0 ? 0 : (this.historyPage - 1) * this.historyPageSize + 1;
+  }
+  get historyRangeTo(): number {
+    return Math.min(this.historyPage * this.historyPageSize, this.historyTotal);
+  }
+  /** Windowed page numbers for the pager, with `null` marking an ellipsis gap. */
+  get historyPageItems(): (number | null)[] {
+    const total = this.historyTotalPages;
+    const current = this.historyPage;
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    let from = Math.max(2, current - 1);
+    let to = Math.min(total - 1, current + 1);
+    if (current <= 4) { from = 2; to = 5; }
+    if (current >= total - 3) { from = total - 4; to = total - 1; }
+    const items: (number | null)[] = [1];
+    if (from > 2) { items.push(null); }
+    for (let p = from; p <= to; p++) { items.push(p); }
+    if (to < total - 1) { items.push(null); }
+    items.push(total);
+    return items;
+  }
+
   /** Renders each paid ticket's QR token into a scannable image (one per seat). */
-  private _buildQrCodes(): void {
-    for (const inv of this.invoices) {
+  private _buildQrCodes(list: PaymentServiceAgent.InvoiceDTO[]): void {
+    for (const inv of list) {
       if (inv.status !== this.InvoiceStatus.Paid) { continue; }
       for (const t of inv.tickets ?? []) {
         const code = t.qrCode;
@@ -90,10 +160,10 @@ export class ProfileComponent extends ProfileFormBase {
 
   /** The full ticket list for an invoice id (for the expanded e-ticket panel). */
   ticketsOf(id?: string): PaymentServiceAgent.InvoiceTicketDTO[] {
-    return this.invoices.find(i => i.id === id)?.tickets ?? [];
+    return this.historyInvoices.find(i => i.id === id)?.tickets ?? [];
   }
   foodsOf(id?: string): PaymentServiceAgent.InvoiceFoodDTO[] {
-    return this.invoices.find(i => i.id === id)?.foods ?? [];
+    return this.historyInvoices.find(i => i.id === id)?.foods ?? [];
   }
   isPaid(status?: PaymentServiceAgent.InvoiceStatus): boolean {
     return status === this.InvoiceStatus.Paid;
@@ -149,9 +219,9 @@ export class ProfileComponent extends ProfileFormBase {
     const now = Date.now();
     return this.invoices.filter(i => (i.tickets ?? []).some(t => t.showTime && new Date(t.showTime).getTime() > now)).length;
   }
-  /** All bookings flattened into table rows. */
+  /** The current history page flattened into table rows. */
   get bookingRows(): { id?: string; movie: string; date?: Date; seats: string; foods: string; total?: number; status?: PaymentServiceAgent.InvoiceStatus }[] {
-    return this.invoices.map(inv => ({
+    return this.historyInvoices.map(inv => ({
       id: inv.id,
       movie: inv.tickets?.[0]?.movieTitle ?? '—',
       date: inv.tickets?.[0]?.showTime,
@@ -162,7 +232,7 @@ export class ProfileComponent extends ProfileFormBase {
     }));
   }
   cancelById(id?: string): void {
-    const inv = this.invoices.find(i => i.id === id);
+    const inv = this.historyInvoices.find(i => i.id === id);
     if (inv) { this.cancelBooking(inv); }
   }
 
@@ -171,7 +241,10 @@ export class ProfileComponent extends ProfileFormBase {
   cancelBooking(inv: PaymentServiceAgent.InvoiceDTO): void {
     if (!inv.id || !confirm(this._translate.instant('profile.confirmCancelBooking'))) { return; }
     this._payment.cancelBooking(PaymentServiceAgent.CancelBookingRequest.fromJS({ invoiceId: inv.id }))
-      .subscribe({ next: () => this.loadInvoices(), error: () => this.loadInvoices() });
+      .subscribe({
+        next: () => { this.loadInvoices(); this.loadHistoryPage(this.historyPage); },
+        error: () => { this.loadInvoices(); this.loadHistoryPage(this.historyPage); },
+      });
   }
 
   statusLabel(s?: PaymentServiceAgent.InvoiceStatus): string {

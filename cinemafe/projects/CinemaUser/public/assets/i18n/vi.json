@@ -412,6 +412,8 @@
     "colStatus": "Trạng Thái",
     "noTickets": "Bạn chưa có vé nào.",
     "bookingHistory": "Lịch Sử Đặt Vé",
+    "pagerRange": "Hiển thị {{from}}–{{to}} trên {{total}}",
+    "pagerLabel": "Phân trang lịch sử đặt vé",
     "totalTicketsBought": "Tổng vé đã mua",
     "upcoming": "Sắp tới",
     "totalSpent": "Tổng chi tiêu",
