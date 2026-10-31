@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Subject, takeUntil } from 'rxjs';
-import { CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues } from 'CinemaLib';
+import { Subject, merge, takeUntil } from 'rxjs';
+import { CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues, fetchAllPages } from 'CinemaLib';
 import { ShowTimeDialog } from './show-time.dialog';
 
 type Dto = CinemaServiceAgent.ShowTimeDTO;
@@ -39,6 +39,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _cdr = inject(ChangeDetectorRef);
   private _dialog = inject(MatDialog);
   private _destroy$ = new Subject<void>();
+  private _reload$ = new Subject<void>();
 
   // ── Grid geometry ───────────────────────────────────────────────────────────
   readonly startHour = 8;          // first row label
@@ -65,36 +66,59 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.weekStart = this._mondayOf(new Date());
-    const wide = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 });
-    this._svc.getMovies(wide).pipe(takeUntil(this._destroy$))
-      .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });
-    this._svc.getTheaters(wide).pipe(takeUntil(this._destroy$))
-      .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
-    this._svc.getRooms(wide).pipe(takeUntil(this._destroy$))
-      .subscribe(r => { this.rooms = r.results ?? []; this._rebuild(); });
+    const lookupPageSize = 200;
+
+    fetchAllPages<CinemaServiceAgent.MovieDTO>(
+      pageIndex => this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize: lookupPageSize })),
+      lookupPageSize,
+      m => m.id,
+    ).pipe(takeUntil(this._destroy$))
+      .subscribe(movies => { this.movies = movies; this._cdr.markForCheck(); });
+
+    fetchAllPages<CinemaServiceAgent.TheaterDTO>(
+      pageIndex => this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize: lookupPageSize })),
+      lookupPageSize,
+      t => t.id,
+    ).pipe(takeUntil(this._destroy$))
+      .subscribe(theaters => { this.theaters = theaters; this._cdr.markForCheck(); });
+
+    fetchAllPages<CinemaServiceAgent.RoomDTO>(
+      pageIndex => this._svc.getRooms(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize: lookupPageSize })),
+      lookupPageSize,
+      r => r.id,
+    ).pipe(takeUntil(this._destroy$))
+      .subscribe(rooms => { this.rooms = rooms; this._rebuild(); });
+
     this.load();
   }
 
   ngOnDestroy(): void {
     this._destroy$.next();
     this._destroy$.complete();
+    this._reload$.complete();
   }
 
   // ── Data ────────────────────────────────────────────────────────────────────
   load(): void {
-    // Fetch only the visible week; the backend filters on StartTime so the page stays
-    // small no matter how many showtimes exist overall.
-    this._svc.getShowTimeList(CinemaServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: 1,
-      pageSize: 200,
-      filters: {
-        from: this._isoLocal(this.weekStart),
-        to: this._isoLocal(this._addDays(this.weekStart, 7)),
-      },
-    }))
-      .pipe(takeUntil(this._destroy$))
-      .subscribe(r => {
-        this._showtimes = r.results ?? [];
+    // The visible week can hold far more showtimes than a single page (e.g. hundreds per day), so
+    // fetch every page in sequence and rebuild once with the complete set.
+    this._reload$.next();
+    const pageSize = 200;
+    const from = this._isoLocal(this.weekStart);
+    const to = this._isoLocal(this._addDays(this.weekStart, 7));
+
+    fetchAllPages<Dto>(
+      pageIndex => this._svc.getShowTimeList(CinemaServiceAgent.PagingSearchDTO.fromJS({
+        pageIndex,
+        pageSize,
+        filters: { from, to },
+      })),
+      pageSize,
+      st => st.id,
+    )
+      .pipe(takeUntil(merge(this._reload$, this._destroy$)))
+      .subscribe(all => {
+        this._showtimes = all;
         this._rebuild();
       });
   }
