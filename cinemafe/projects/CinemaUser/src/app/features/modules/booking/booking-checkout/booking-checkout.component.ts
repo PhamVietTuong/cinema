@@ -66,7 +66,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
 
   /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
   readonly methods: { value: string; labelKey: string; svg?: string; icon?: string }[] = [
-    { value: 'Momo', labelKey: 'booking.confirm.momoWallet', icon: 'account_balance_wallet' },
+    { value: 'Momo', labelKey: 'booking.confirm.momoWallet', svg: 'momo' },
     { value: 'VNPay', labelKey: 'booking.confirm.vnpay', svg: 'vnpay' },
   ];
 
