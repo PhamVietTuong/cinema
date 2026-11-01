@@ -2,6 +2,61 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project summary
+- **What it is:** A full-stack cinema booking platform — customers browse movies/theaters/showtimes, select seats in real time, pay, and manage tickets; theater staff run box-office/gate/POS/roster operations; admins manage the catalog, pricing, promotions, and reporting.
+- **Main domains/modules:** Auth (JWT + Google/Facebook OAuth), Catalog (movies/theaters/rooms/seats/showtimes/pricing), Booking (seat locking + checkout), Payments (VNPay/MoMo/Stripe gateways, callback-authoritative), Promotions/Loyalty/Gift cards, Admin operations, Staff operations (gate/POS/roster/incidents).
+- **Key entities:** Invoice, InvoiceTicket, SeatLock, PatronCategory, MemberShip, Discount, PromotionProgram, GiftCard, AuditLog — see `docs/00-overview/glossary.md`.
+- **Stack:** .NET 9 / ASP.NET Core / EF Core / SQL Server / SignalR backend; Angular 21 / NgRx frontend (3 apps + shared library) — see `docs/03-technical/tech-stack.md`.
+- **Start here:** `docs/README.md` → `docs/03-technical/codebase-map.md` → `docs/01-business/business-rules.md`
+
+## 📁 Project Documentation (docs/)
+
+`docs/` is the knowledge base for this project's business, product, and technical details. Follow these rules in every session.
+
+### Before starting any task (mandatory)
+1. Read `docs/README.md` and `docs/03-technical/codebase-map.md` to locate the area the task touches.
+2. Read the docs relevant to that area — always `docs/01-business/business-rules.md` for anything touching business logic, plus the matching API/schema/feature/permission docs. (`docs/01-business/*.md` condenses and cites the fuller `business/*.md` reference — read the linked `business/` file too when the task needs deep detail on auth/booking/payments/catalog/staff flows.)
+3. Briefly state which docs you read before proposing changes. For trivial tasks (typo, styling, formatting) you may skip this, but say that you skipped it and why.
+4. If the task conflicts with a documented business rule or ADR, point out the conflict and ask before proceeding.
+
+### If docs and code disagree
+Code is the source of truth for **current behavior**. Tell the user about the mismatch, update the docs to match reality (or record it in `docs/00-overview/open-questions.md` if intent is unclear). Do not change code to match docs unless asked.
+
+### When to UPDATE or CREATE docs
+| Change | Update |
+|---|---|
+| New or changed business rule, validation, calculation, status flow | `01-business/business-rules.md` (and the relevant `business/*.md` file) |
+| New or changed role/permission | `01-business/roles-permissions.md` |
+| New or changed feature | `02-product/features.md` (+ `roadmap.md` if relevant) |
+| New/changed endpoint | `03-technical/api-spec.md` |
+| New/changed table, field, relation | `03-technical/database-schema.md` |
+| New external service | `03-technical/integrations.md` |
+| New env variable / config | `03-technical/configuration.md` |
+| New/moved module or folder | `03-technical/codebase-map.md` (+ `architecture.md` if structural) |
+| New dependency or version change | `03-technical/tech-stack.md` |
+| Significant technical decision | New ADR in `04-decisions/` from `template.md`, numbered sequentially |
+| New domain term | `00-overview/glossary.md` |
+| Question answered by the user | Apply the answer to the relevant doc, remove it from `open-questions.md` |
+| Meeting/discussion summarized by the user | New file in `06-meeting-notes/` |
+
+**Create a new doc file** when a new domain or module doesn't fit any existing file (e.g. `01-business/billing-rules.md`). Use the standard header and add it to `docs/README.md`.
+
+### Mandatory docs update in every session (non-negotiable)
+Docs are part of the deliverable, not an optional extra. A task is **not done** until its docs are updated.
+1. **Update as you go:** whenever you change code, or the user explains/decides something new (a business rule, a requirement, a term, a decision), update the matching docs in the same step — don't postpone it to "later".
+2. **Check before finishing:** before saying a task is done, ask: "did this session change or reveal anything about business logic, permissions, features, API, schema, integrations, config, structure, or dependencies?" If yes, make sure every matching doc is updated, with its `Sources` and `Last reviewed` lines refreshed.
+3. **Always end your final message with a docs line**, exactly one of:
+   - `📄 Docs updated: <list of files and what changed>`
+   - `📄 Docs: no update needed — <one-line reason>`
+   Never end a task without this line. If you notice you forgot to update docs earlier in the session, do it now before finishing.
+
+### Principles
+- Only document what is verifiable; mark uncertainty with `<!-- TODO: confirm with team -->` and add it to `open-questions.md`.
+- Don't delete still-accurate content; correct what is outdated.
+- Keep `docs/README.md` in sync with the files in `docs/`.
+- The user can run `/update-docs` at any time to force a review of everything done in the current session.
+- `docs/` is NOT committed to git (see `.gitignore`). Never `git add` or commit files in `docs/`.
+
 ## Repository layout
 
 Monorepo with two siblings:
