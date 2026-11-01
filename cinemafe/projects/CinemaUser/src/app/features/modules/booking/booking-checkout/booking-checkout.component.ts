@@ -9,6 +9,7 @@ import { DiscountCodeDialog, DiscountCheckResult, DiscountCodeDialogResult } fro
 import { PointsRedeemDialog } from './points-redeem.dialog';
 import { GiftCardDialog, GiftCardCheckResult, GiftCardDialogResult } from './gift-card.dialog';
 import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState, takePendingCheckout } from './booking-checkout.state';
+import { movieDetailUrl } from '../../../../shared/movie-route';
 
 /**
  * Second page of the booking flow: payment. Reached via BookingSelectionComponent's
@@ -36,6 +37,11 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   /** Where "Quay lại chọn ghế" returns to — the movie-detail page when the booking panel was
    * embedded there, or unset to fall back to the standalone `/booking/seats` page. */
   private _backUrl = '';
+  /** The movie's slug, captured once `_loadOrderContext` resolves it — used to route back to its
+   * detail page once the hold expires, when `_backUrl` wasn't supplied (standalone `/booking/seats`
+   * entry). */
+  private _movieSlug = '';
+  private _holdExpiredRedirectTimer: any;
 
   // Mirrors PendingBookingReaper's hold window server-side.
   private static readonly HOLD_SECONDS = 15 * 60;
@@ -290,6 +296,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
               this.movieDuration = m.duration ?? 0;
               this.movieGenres = (m.genres ?? []).join(', ');
               this.movieLanguage = [m.language, m.subtitle].filter(x => !!x).join(' · ');
+              this._movieSlug = m.slug ?? '';
               this._cdr.markForCheck();
             },
             error: () => { /* summary stays without a title */ },
@@ -336,6 +343,9 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     if (this._holdTimer) {
       clearInterval(this._holdTimer);
     }
+    if (this._holdExpiredRedirectTimer) {
+      clearTimeout(this._holdExpiredRedirectTimer);
+    }
     // Always release the hub connection (and the seat locks it holds) on the way out — including
     // "Back to seats", since BookingHubService.startConnection always opens a NEW connection rather
     // than reusing one, so a kept-alive connection here would never be released (its locks would
@@ -361,9 +371,24 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       } else {
         this.holdExpired = true;
         clearInterval(this._holdTimer);
+        this._redirectAfterHoldExpired();
       }
       this._cdr.markForCheck();
     }, 1000);
+  }
+
+  /** Once the hold lapses there's nothing left to pay for — the seats are no longer guaranteed —
+   * so after a few seconds to let the "hold expired" note register, send the customer back to the
+   * movie's detail page to restart the flow. Skipped if a payment is already in flight or already
+   * succeeded, so this never yanks the user away mid-payment or off the success screen. */
+  private _redirectAfterHoldExpired(): void {
+    this._holdExpiredRedirectTimer = setTimeout(() => {
+      if (this.loading || this.bookingSuccess) {
+        return;
+      }
+      const url = this._backUrl || (this._movieSlug ? movieDetailUrl(this._movieSlug) : '/');
+      this._router.navigateByUrl(url);
+    }, 4000);
   }
 
   get holdCountdown(): string {

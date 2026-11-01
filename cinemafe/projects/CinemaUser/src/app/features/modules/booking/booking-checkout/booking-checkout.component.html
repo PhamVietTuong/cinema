@@ -81,7 +81,7 @@
 
       <div class="action-row">
         <button type="button" class="btn-back" (click)="backToSeats()">{{ 'booking.checkout.backToSeats' | translate }}</button>
-        <button mat-raised-button class="btn-primary-cta confirm-btn" (click)="confirmBooking()" [disabled]="loading">
+        <button mat-raised-button class="btn-primary-cta confirm-btn" (click)="confirmBooking()" [disabled]="loading || holdExpired">
           <mat-spinner diameter="18" *ngIf="loading"></mat-spinner>
           <ng-container *ngIf="!loading">
             <mat-icon>lock</mat-icon> {{ 'booking.confirm.payCta' | translate }}

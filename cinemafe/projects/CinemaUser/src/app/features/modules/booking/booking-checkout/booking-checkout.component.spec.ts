@@ -34,7 +34,7 @@ describe('BookingCheckoutComponent', () => {
     cdr = { markForCheck: vi.fn() };
     const cinema = {
       getShowTime: vi.fn().mockReturnValue(of({ startTime: new Date(), roomName: '03', movieId: 'm1' })),
-      getMovie: vi.fn().mockReturnValue(of({ title: 'Test Movie', ageRestrictionCode: 'T13' })),
+      getMovie: vi.fn().mockReturnValue(of({ title: 'Test Movie', ageRestrictionCode: 'T13', slug: 'test-movie' })),
       getRoom: vi.fn().mockReturnValue(of({ name: '03', theaterId: 't1' })),
       getTheater: vi.fn().mockReturnValue(of({ name: 'Cinema 1', address: 'Addr' })),
       getEffectiveLoyaltyRate: vi.fn().mockReturnValue(
@@ -65,6 +65,45 @@ describe('BookingCheckoutComponent', () => {
 
     expect(c.holdSecondsLeft).toBe(15 * 60);
     expect(c.holdExpired).toBe(false);
+  });
+
+  it('disables payment and schedules redirect once the hold countdown reaches zero', () => {
+    vi.useFakeTimers();
+    try {
+      const c = build(state);
+
+      vi.advanceTimersByTime(15 * 60 * 1000);
+
+      expect(c.holdSecondsLeft).toBe(0);
+      expect(c.holdExpired).toBe(true);
+
+      // Not yet redirected — the 4s grace period to let the expired note register hasn't elapsed.
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(4000);
+
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/movies/test-movie');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not redirect after hold expiry if a payment is already in flight', () => {
+    vi.useFakeTimers();
+    try {
+      const c = build(state);
+      c.confirmBooking();
+      // createBooking/initiatePayment resolve synchronously via of(...), which would normally
+      // clear loading once _showSuccess runs — force it back on to simulate a payment still in flight.
+      c.loading = true;
+
+      vi.advanceTimersByTime(15 * 60 * 1000 + 4000);
+
+      expect(c.holdExpired).toBe(true);
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('redirects back to seat selection when navigation state is missing', () => {
