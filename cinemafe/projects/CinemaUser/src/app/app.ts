@@ -4,6 +4,7 @@ import { filter } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { Router, NavigationEnd } from '@angular/router';
 import { selectIsAuthenticated, selectCurrentUser, loadUserFromStorage, logout, ThemeService } from 'CinemaLib';
+import { SplashBannerService } from './shared/splash-banner/splash-banner.service';
 
 @Component({
   selector: 'app-root',
@@ -21,7 +22,7 @@ export class App implements OnInit {
   /** Dark/light state — persisted and applied to <html data-theme> by the service. */
   readonly theme = inject(ThemeService);
 
-  constructor(private _store: Store, private _router: Router) {
+  constructor(private _store: Store, private _router: Router, private _splashBanner: SplashBannerService) {
     this.isAuth$ = this._store.select(selectIsAuthenticated);
     this.user$ = this._store.select(selectCurrentUser);
     // Close the mobile menu after navigating.
@@ -30,6 +31,7 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this._store.dispatch(loadUserFromStorage());
+    this._splashBanner.init();
   }
 
   toggleMenu(): void { this.menuOpen = !this.menuOpen; }

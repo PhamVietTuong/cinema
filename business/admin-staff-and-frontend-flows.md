@@ -108,6 +108,9 @@ Feature folders: `features/modules/discover` (home, movies, theaters, promotions
 ### B.1.1 Browse → book → pay (numbered flow)
 
 1. **Home / Discover** (`discover/home`) — lists now-showing/coming-soon movies, promotions banner, theaters.
+   - **Splash banner popup**: on the first navigation that does not start with `/booking` or `/auth`, the app
+     fetches the active `SplashBanner` (`catalog.md` §7) and, unless already shown this browser session
+     (`sessionStorage` key keyed by banner `Id`), shows it as a dismissible popup.
 2. **Movie detail** — reached via a friendly slug route. `CinemaUser/shared/movie-route.ts` builds/parses the slug (title-derived, human-readable) used by `discover.routes.ts` and `movie-card.component.ts`; `movie-detail.component.ts` resolves the slug back to a movie id for the API call. → verify: navigating to a movie's card link lands on a `/movies/<slug>` URL, not a raw GUID route.
 3. **Showtime selection** (`booking/booking-page`) — pick theater/date/showtime for the resolved movie.
 4. **Seat selection** (`booking/booking-selection`) — seat map shared via `CinemaLib`'s `seat-lock-session.service.ts`, which calls the backend's process-local seat-lock (`BookingManager`'s static `ConcurrentDictionary`) over SignalR (`/hubs/booking`) so concurrent shoppers see live seat state.
@@ -119,13 +122,18 @@ Feature folders: `features/modules/discover` (home, movies, theaters, promotions
 
 ## B.2 CinemaAdmin — admin journeys
 
-Feature tree: `features/modules/categories/*` (reference-data CRUD: age-restrictions, discount-types, holidays, memberships, movie-types, news, templates, user-types) and `features/modules/operations/*` (audit-log, comments, discounts, gift-cards, invoices, loyalty-settings, promotion-programs), plus `features/modules/overview/*` (dashboard, movies, reports, show-times, theaters, users).
+Feature tree: `features/modules/categories/*` (reference-data CRUD: age-restrictions, discount-types, holidays, memberships, movie-types, news, templates, user-types) and `features/modules/operations/*` (audit-log, comments, discounts, gift-cards, invoices, loyalty-settings, promotion-programs, splash-banners), plus `features/modules/overview/*` (dashboard, movies, reports, show-times, theaters, users).
 
 ### B.2.1 Catalog & theater/showtime/pricing management
 Standard CRUD screens under `overview/movies`, `overview/theaters`, `overview/show-times`, plus pricing-adjacent categories (`discount-types`, `age-restrictions`, `user-types`, `memberships`). Each talks to the generic catalog endpoints noted in root `CLAUDE.md` (POST-everywhere, `PagingSearchDTO`/`DefaultSearchResults<T>`); the "catalog-crud-base-removal" refactor is reflected in there being no shared generic `CatalogManager<>`-driven admin component abstraction left in the frontend — each admin feature folder has its own component, not a shared base (confirm by diffing two category components if you need the exact shared/non-shared boundary before changing one).
 
 ### B.2.2 Promotion program management
 `operations/promotion-programs` — CRUD + banner image upload (per recent commits `930f2f1`, `a9c7977`), backed by `CinemaController`'s `#region PromotionProgram`.
+
+### B.2.2b Splash banner management
+`operations/splash-banners` — CRUD for the single-image popup shown to CinemaUser visitors once per
+browser session (see `catalog.md` §7 for the active-banner rule), reusing the generic
+`CinemaController.UploadImage` endpoint for the banner image.
 
 ### B.2.3 Comment moderation
 `operations/comments` → `GetCommentsForModeration` (paged), `ModerateComment` (approve/reject a single comment), `DeleteComment`. Admin-only (`_adminRole`).

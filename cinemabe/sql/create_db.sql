@@ -89,6 +89,8 @@ IF OBJECT_ID('dbo.ShowTime', 'U') IS NOT NULL
 DROP TABLE dbo.ShowTime;
 IF OBJECT_ID('dbo.MovieCredit', 'U') IS NOT NULL
 DROP TABLE dbo.MovieCredit;
+IF OBJECT_ID('dbo.SplashBanner', 'U') IS NOT NULL
+DROP TABLE dbo.SplashBanner;
 IF OBJECT_ID('dbo.MovieTypeDetail', 'U') IS NOT NULL
 DROP TABLE dbo.MovieTypeDetail;
 IF OBJECT_ID('dbo.User', 'U') IS NOT NULL
@@ -1194,6 +1196,28 @@ BEGIN
     CREATE INDEX [IX_MovieCredit_PersonId] ON [MovieCredit] ([PersonId]);
 END
 -- ===== end movie credit =====
+
+-- ============================================================
+-- SplashBanner: single-image popup promo shown once per browser session on CinemaUser (no FKs)
+-- ============================================================
+-- Identical in create_db.sql and upgrade_db.sql (idempotent).
+IF OBJECT_ID('dbo.SplashBanner', 'U') IS NULL
+BEGIN
+    CREATE TABLE [SplashBanner] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [Title] nvarchar(200) NOT NULL,
+        [ImageUrl] nvarchar(500) NOT NULL,
+        [LinkUrl] nvarchar(500) NULL,
+        [StartDate] datetime NOT NULL,
+        [EndDate] datetime NOT NULL,
+        [IsPublished] bit NOT NULL DEFAULT 0,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_SplashBanner] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_SplashBanner_IsPublished_EndDate] ON [SplashBanner] ([IsPublished], [EndDate]);
+END
+-- ===== end splash banner =====
 
 -- ============================================================
 -- EF Core migrations baseline

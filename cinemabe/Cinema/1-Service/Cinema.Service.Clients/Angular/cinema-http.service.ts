@@ -119,6 +119,12 @@ export interface IHttpService {
     createPromotionProgram(request: CreatePromotionProgramRequest): Observable<PromotionProgramDTO>;
     updatePromotionProgram(request: UpdatePromotionProgramRequest): Observable<PromotionProgramDTO>;
     deletePromotionProgram(id?: string | undefined): Observable<void>;
+    getActiveSplashBanner(): Observable<SplashBannerDTO[]>;
+    getSplashBanners(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSplashBannerDTO>;
+    getSplashBanner(id?: string | undefined): Observable<SplashBannerDTO>;
+    createSplashBanner(request: CreateSplashBannerRequest): Observable<SplashBannerDTO>;
+    updateSplashBanner(request: UpdateSplashBannerRequest): Observable<SplashBannerDTO>;
+    deleteSplashBanner(id?: string | undefined): Observable<void>;
     getFoodAndDrinks(search: PagingSearchDTO): Observable<DefaultSearchResultsOfFoodAndDrinkDTO>;
     getFoodAndDrink(id?: string | undefined): Observable<FoodAndDrinkDTO>;
     createFoodAndDrink(request: CreateFoodAndDrinkRequest): Observable<FoodAndDrinkDTO>;
@@ -5304,6 +5310,317 @@ export class HttpService implements IHttpService {
     }
 
     protected processDeletePromotionProgram(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getActiveSplashBanner(): Observable<SplashBannerDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/GetActiveSplashBanner";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetActiveSplashBanner(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetActiveSplashBanner(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SplashBannerDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SplashBannerDTO[]>;
+        }));
+    }
+
+    protected processGetActiveSplashBanner(response: HttpResponseBase): Observable<SplashBannerDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(SplashBannerDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getSplashBanners(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSplashBannerDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetSplashBanners";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetSplashBanners(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetSplashBanners(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfSplashBannerDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfSplashBannerDTO>;
+        }));
+    }
+
+    protected processGetSplashBanners(response: HttpResponseBase): Observable<DefaultSearchResultsOfSplashBannerDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfSplashBannerDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getSplashBanner(id?: string | undefined): Observable<SplashBannerDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetSplashBanner?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetSplashBanner(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetSplashBanner(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SplashBannerDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SplashBannerDTO>;
+        }));
+    }
+
+    protected processGetSplashBanner(response: HttpResponseBase): Observable<SplashBannerDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SplashBannerDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createSplashBanner(request: CreateSplashBannerRequest): Observable<SplashBannerDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreateSplashBanner";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateSplashBanner(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateSplashBanner(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SplashBannerDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SplashBannerDTO>;
+        }));
+    }
+
+    protected processCreateSplashBanner(response: HttpResponseBase): Observable<SplashBannerDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SplashBannerDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateSplashBanner(request: UpdateSplashBannerRequest): Observable<SplashBannerDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateSplashBanner";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateSplashBanner(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateSplashBanner(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SplashBannerDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SplashBannerDTO>;
+        }));
+    }
+
+    protected processUpdateSplashBanner(response: HttpResponseBase): Observable<SplashBannerDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SplashBannerDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteSplashBanner(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteSplashBanner?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteSplashBanner(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteSplashBanner(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteSplashBanner(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -14703,6 +15020,263 @@ export interface IUpdatePromotionProgramRequest {
     linkedDiscountId?: string | undefined;
     prices?: PromotionProgramPriceDTO[];
     schedules?: PromotionProgramScheduleDTO[];
+}
+
+export class SplashBannerDTO implements ISplashBannerDTO {
+    id?: string;
+    title?: string;
+    imageUrl?: string;
+    linkUrl?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    isPublished?: boolean;
+
+    constructor(data?: ISplashBannerDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.imageUrl = _data["imageUrl"];
+            this.linkUrl = _data["linkUrl"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.isPublished = _data["isPublished"];
+        }
+    }
+
+    static fromJS(data: any): SplashBannerDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new SplashBannerDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["imageUrl"] = this.imageUrl;
+        data["linkUrl"] = this.linkUrl;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["isPublished"] = this.isPublished;
+        return data;
+    }
+}
+
+export interface ISplashBannerDTO {
+    id?: string;
+    title?: string;
+    imageUrl?: string;
+    linkUrl?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    isPublished?: boolean;
+}
+
+export abstract class BaseSearchResultsOfSplashBannerDTO implements IBaseSearchResultsOfSplashBannerDTO {
+    results?: SplashBannerDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfSplashBannerDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(SplashBannerDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfSplashBannerDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfSplashBannerDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfSplashBannerDTO {
+    results?: SplashBannerDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfSplashBannerDTO extends BaseSearchResultsOfSplashBannerDTO implements IDefaultSearchResultsOfSplashBannerDTO {
+
+    constructor(data?: IDefaultSearchResultsOfSplashBannerDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfSplashBannerDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfSplashBannerDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfSplashBannerDTO extends IBaseSearchResultsOfSplashBannerDTO {
+}
+
+export class CreateSplashBannerRequest implements ICreateSplashBannerRequest {
+    title!: string;
+    imageUrl!: string;
+    linkUrl?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    isPublished?: boolean;
+
+    constructor(data?: ICreateSplashBannerRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.title = _data["title"];
+            this.imageUrl = _data["imageUrl"];
+            this.linkUrl = _data["linkUrl"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.isPublished = _data["isPublished"];
+        }
+    }
+
+    static fromJS(data: any): CreateSplashBannerRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateSplashBannerRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["title"] = this.title;
+        data["imageUrl"] = this.imageUrl;
+        data["linkUrl"] = this.linkUrl;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["isPublished"] = this.isPublished;
+        return data;
+    }
+}
+
+export interface ICreateSplashBannerRequest {
+    title: string;
+    imageUrl: string;
+    linkUrl?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    isPublished?: boolean;
+}
+
+export class UpdateSplashBannerRequest implements IUpdateSplashBannerRequest {
+    id?: string;
+    title!: string;
+    imageUrl!: string;
+    linkUrl?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    isPublished?: boolean;
+
+    constructor(data?: IUpdateSplashBannerRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.imageUrl = _data["imageUrl"];
+            this.linkUrl = _data["linkUrl"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.isPublished = _data["isPublished"];
+        }
+    }
+
+    static fromJS(data: any): UpdateSplashBannerRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateSplashBannerRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["imageUrl"] = this.imageUrl;
+        data["linkUrl"] = this.linkUrl;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["isPublished"] = this.isPublished;
+        return data;
+    }
+}
+
+export interface IUpdateSplashBannerRequest {
+    id?: string;
+    title: string;
+    imageUrl: string;
+    linkUrl?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    isPublished?: boolean;
 }
 
 export abstract class BaseSearchResultsOfFoodAndDrinkDTO implements IBaseSearchResultsOfFoodAndDrinkDTO {

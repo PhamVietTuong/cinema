@@ -40,6 +40,7 @@ public class CinemaController : ApiControllerBase
     private readonly IPersonManager         _people;
     private readonly IDiscountManager       _discounts;
     private readonly IPromotionProgramManager _promotionPrograms;
+    private readonly ISplashBannerManager _splashBanners;
     private readonly IFoodAndDrinkManager   _foodAndDrinks;
     private readonly IRoomManager           _rooms;
     private readonly IRoomTypeManager       _roomTypes;
@@ -79,6 +80,7 @@ public class CinemaController : ApiControllerBase
         IPersonManager people,
         IDiscountManager discounts,
         IPromotionProgramManager promotionPrograms,
+        ISplashBannerManager splashBanners,
         IFoodAndDrinkManager foodAndDrinks,
         IRoomManager rooms,
         IRoomTypeManager roomTypes,
@@ -125,6 +127,7 @@ public class CinemaController : ApiControllerBase
         _people          = people;
         _discounts       = discounts;
         _promotionPrograms = promotionPrograms;
+        _splashBanners   = splashBanners;
         _foodAndDrinks   = foodAndDrinks;
         _rooms           = rooms;
         _roomTypes       = roomTypes;
@@ -1395,6 +1398,71 @@ public class CinemaController : ApiControllerBase
             return notFound;
         }
         return await RunNoContent(nameof(DeletePromotionProgram), () => _promotionPrograms.DeleteAsync(id));
+    }
+    #endregion
+
+    #region SplashBanner
+    [AllowAnonymous]
+    [HttpGet]
+    [ProducesResponseType(typeof(List<SplashBannerDTO>), 200)]
+    public Task<IActionResult> GetActiveSplashBanner()
+    {
+        return Run(nameof(GetActiveSplashBanner), () => _splashBanners.GetActiveAsync());
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<SplashBannerDTO>), 200)]
+    public Task<IActionResult> GetSplashBanners([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetSplashBanners), () => _splashBanners.GetAsync(search));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpGet]
+    [ProducesResponseType(typeof(SplashBannerDTO), 200)]
+    public async Task<IActionResult> GetSplashBanner([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _splashBanners.ExistsAsync(id), nameof(GetSplashBanner), nameof(SplashBanner), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(GetSplashBanner), () => _splashBanners.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(SplashBannerDTO), 200)]
+    public Task<IActionResult> CreateSplashBanner([FromBody] CreateSplashBannerRequest request)
+    {
+        return Run(nameof(CreateSplashBanner), () => _splashBanners.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(SplashBannerDTO), 200)]
+    public async Task<IActionResult> UpdateSplashBanner([FromBody] UpdateSplashBannerRequest request)
+    {
+        var notFound = await EnsureExistsAsync(() => _splashBanners.ExistsAsync(request.Id), nameof(UpdateSplashBanner), nameof(SplashBanner), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(UpdateSplashBanner), () => _splashBanners.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeleteSplashBanner([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _splashBanners.ExistsAsync(id), nameof(DeleteSplashBanner), nameof(SplashBanner), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await RunNoContent(nameof(DeleteSplashBanner), () => _splashBanners.DeleteAsync(id));
     }
     #endregion
 

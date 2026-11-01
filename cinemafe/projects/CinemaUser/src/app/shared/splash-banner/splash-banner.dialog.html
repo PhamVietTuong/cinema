@@ -1,0 +1,10 @@
+<button mat-icon-button type="button" class="sb-close" (click)="close()" [attr.aria-label]="'splashBanner.close' | translate">
+  <mat-icon>close</mat-icon>
+</button>
+<img
+  class="sb-image"
+  [src]="data.imageUrl"
+  [alt]="'splashBanner.imageAlt' | translate"
+  [class.sb-image--clickable]="!!data.linkUrl"
+  [attr.role]="data.linkUrl ? 'link' : null"
+  (click)="onImageClick()">

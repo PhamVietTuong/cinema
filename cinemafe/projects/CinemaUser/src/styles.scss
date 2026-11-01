@@ -481,3 +481,11 @@ a {
   background: transparent !important;
   color: var(--ml-muted);
 }
+
+// The splash-banner popup is a bare image, not a card — strip the dialog chrome around it.
+.splash-banner-panel .mat-mdc-dialog-surface {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}

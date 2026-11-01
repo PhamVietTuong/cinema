@@ -3,7 +3,8 @@ import { provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideMockStore } from '@ngrx/store/testing';
 import { provideTranslateService } from '@ngx-translate/core';
-import { SharedModule } from 'CinemaLib';
+import { of } from 'rxjs';
+import { CinemaServiceAgent, SharedModule } from 'CinemaLib';
 import { App } from './app';
 import { ChatbotComponent } from './shared/chatbot/chatbot.component';
 
@@ -21,6 +22,9 @@ describe('App', () => {
         // /assets/i18n/*.json over HTTP, which has no place in a unit test. Missing keys fall
         // through to the key itself.
         provideTranslateService({ fallbackLang: 'vi' }),
+        // SplashBannerService (started from App.ngOnInit) calls getActiveSplashBanner() — stub it
+        // rather than hitting a real backend.
+        { provide: CinemaServiceAgent.HttpService, useValue: { getActiveSplashBanner: () => of([]) } },
       ],
     }).compileComponents();
   });

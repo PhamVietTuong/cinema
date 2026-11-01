@@ -1,4 +1,8 @@
 {
+  "splashBanner": {
+    "close": "Đóng",
+    "imageAlt": "Khuyến mãi"
+  },
   "nav": {
     "movies": "Phim",
     "theaters": "Rạp Chiếu",

@@ -35,6 +35,7 @@ export const ADMIN_MENU: NavSection[] = [
     items: [
       { icon: 'local_offer', labelKey: 'nav.discounts', route: '/discounts', titleKey: 'pageTitle.discounts', roles: ADMIN_ONLY },
       { icon: 'campaign', labelKey: 'nav.promotionPrograms', route: '/promotion-programs', titleKey: 'pageTitle.promotionPrograms', roles: ADMIN_ONLY },
+      { icon: 'wallpaper', labelKey: 'nav.splashBanners', route: '/splash-banners', titleKey: 'pageTitle.splashBanners', roles: ADMIN_ONLY },
       { icon: 'receipt_long', labelKey: 'nav.invoices', route: '/invoices', titleKey: 'pageTitle.invoices', roles: ADMIN_ONLY },
       { icon: 'forum', labelKey: 'nav.comments', route: '/comments', roles: ADMIN_ONLY },
       { icon: 'card_giftcard', labelKey: 'nav.giftCards', route: '/gift-cards', roles: ADMIN_ONLY },
