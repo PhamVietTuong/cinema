@@ -11,11 +11,12 @@ import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMo
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
 import { movieDetailUrl, isLegacyMovieId } from '../../../../../shared/movie-route';
+import { ScrollRowComponent } from '../../../../../shared/scroll-row/scroll-row.component';
 
 @Component({
   selector: 'app-movie-detail',
   standalone: true,
-  imports: [SharedModule, BookingSelectionComponent],
+  imports: [SharedModule, BookingSelectionComponent, ScrollRowComponent],
   templateUrl: './movie-detail.component.html',
   styleUrl: './movie-detail.component.scss',
 })

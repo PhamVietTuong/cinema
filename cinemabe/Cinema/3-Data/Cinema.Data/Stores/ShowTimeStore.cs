@@ -76,6 +76,7 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
         Guid? movieId, Guid? roomId, bool? isActive, DateTime? from, DateTime? to, int page, int pageSize)
     {
         var query = DbSet
+            .AsNoTracking()
             .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.RoomType)
             .AsQueryable();
 

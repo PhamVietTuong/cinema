@@ -109,11 +109,12 @@
 .option-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--cx-space-3);
 }
-// Ticket-type tiles: cap the track width and center the row instead of letting a handful of
-// categories (Adult/Student/...) stretch edge-to-edge across the card.
+// Ticket-type tiles: flex-wrap instead of grid so a partial last row (e.g. 6 categories = 5 + 1)
+// centers on its own instead of staying left-aligned under the grid's fixed column tracks.
 .option-grid.ticket-grid {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 180px));
-  justify-content: center;
+  display: flex; flex-wrap: wrap; justify-content: center;
+
+  .option-card { flex: 0 1 180px; min-width: 150px; }
 }
 // Snack/combo tiles: wider tracks to fit the image + text row layout, capped and centered like
 // ticket-grid instead of stretching edge-to-edge across the card.

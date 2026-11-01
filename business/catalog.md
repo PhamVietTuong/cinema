@@ -38,8 +38,10 @@ Every simple-lookup manager (`AgeRestrictionManager`, `MovieTypeManager`, `SeatT
    `entity.PatchEntity<TEntity,TReq>(request)` (reflection/AutoMapper-style generic copy — not hand-written
    per-field mapping) for simple 1:1 shapes; hand-written mapping is used whenever a DTO needs joined/computed
    fields (Movie, ShowTime, PromotionProgram, PatronCategory's `SeatTypeName`/`Kind`).
-5. Reads are `AsNoTracking`-friendly via `GetQuery()`; writes always re-fetch the tracked entity with
-   `GetByIdAsync` before mutating (never patch a projection).
+5. `GetQuery()` itself stays tracked — it's a composable `IQueryable` that may also feed a write path —
+   but `AllPageAsync(query, page, pageSize)` applies `.AsNoTracking()` when it materializes a page, since
+   every paged list read only maps to DTOs. Writes always re-fetch the tracked entity with `GetByIdAsync`
+   before mutating (never patch a projection).
 6. `ExistsAsync(Guid id)` is used by the controller's `EnsureExistsAsync` helper to return 404 before calling
    `GetByIdAsync`/`UpdateAsync`/`DeleteAsync` — the manager itself still re-validates existence internally where
    relevant (defense in depth, not redundant given concurrent deletes).

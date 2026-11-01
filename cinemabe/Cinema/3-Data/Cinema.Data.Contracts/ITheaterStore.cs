@@ -4,7 +4,10 @@ namespace Cinema.Data.Contracts;
 
 public interface ITheaterStore : IGenericStore<Theater>
 {
-    Task<IEnumerable<Theater>> GetTheatersWithRoomsAsync();
+    /// <summary>Active theaters matching the optional name/city filters, filtered, counted and paged
+    /// in SQL (untracked). <paramref name="pageSize"/> &lt;= 0 returns every match, unpaged.</summary>
+    Task<(IReadOnlyList<(Theater Theater, int RoomCount)> Items, int Total)> SearchAsync(
+        string? name, string? city, int page, int pageSize);
     Task<Theater?> GetDetailAsync(Guid id);
     Task<IEnumerable<Theater>> GetByMovieAsync(Guid movieId, DateTime date);
 

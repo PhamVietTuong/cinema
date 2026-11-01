@@ -198,6 +198,15 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/uploads"
 });
+// Serve committed demo/seed images (e.g. promotion program banners) at /seed-assets/* — unlike
+// wwwroot/uploads, this folder is checked into git so seed data resolves on every app, not just
+// whichever frontend happens to bundle the same file under its own /assets.
+var seedAssetsPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "seed-assets");
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(seedAssetsPath),
+    RequestPath = "/seed-assets"
+});
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
