@@ -37,6 +37,9 @@
   top: -16px;
   right: -16px;
   background: rgba(0, 0, 0, 0.6);
+  // Material doesn't round an icon-button's own box — our custom background fills its square
+  // bounding box unless we round it ourselves.
+  border-radius: 50%;
   color: #fff;
   z-index: 1;
   animation: sb-fade-in 280ms ease-out 180ms both;
