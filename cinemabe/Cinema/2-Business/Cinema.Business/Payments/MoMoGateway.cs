@@ -107,20 +107,26 @@ public class MoMoGateway : IPaymentGateway
         var expected = HmacSha256(SecretKey, raw);
         if (!string.Equals(expected, G("signature"), StringComparison.OrdinalIgnoreCase))
         {
-            return new PaymentCallbackResult(false, Guid.Empty, "", "MoMo signature mismatch.");
+            return new PaymentCallbackResult(false, Guid.Empty, "", "MoMo signature mismatch.") { Status = PaymentCallbackStatus.InvalidSignature };
         }
 
         var reference = G("transId");
         if (!Guid.TryParseExact(G("orderId"), "N", out var invoiceId))
         {
-            return new PaymentCallbackResult(false, Guid.Empty, reference, "Missing/invalid MoMo orderId.");
+            return new PaymentCallbackResult(false, Guid.Empty, reference, "Missing/invalid MoMo orderId.") { Status = PaymentCallbackStatus.InvalidOrderReference };
         }
+
+        if (!long.TryParse(G("amount"), out var momoAmount))
+        {
+            return new PaymentCallbackResult(false, invoiceId, reference, "Missing/invalid MoMo amount.") { Status = PaymentCallbackStatus.InvalidAmount };
+        }
+        var receivedAmount = (decimal)momoAmount;
 
         if (G("resultCode") == "0")
         {
-            return new PaymentCallbackResult(true, invoiceId, reference);
+            return new PaymentCallbackResult(true, invoiceId, reference) { Status = PaymentCallbackStatus.Paid, ReceivedAmount = receivedAmount };
         }
-        return new PaymentCallbackResult(false, invoiceId, reference, $"MoMo resultCode {G("resultCode")}.");
+        return new PaymentCallbackResult(false, invoiceId, reference, $"MoMo resultCode {G("resultCode")}.") { Status = PaymentCallbackStatus.PaymentFailed, ReceivedAmount = receivedAmount };
     }
 
     private static string HmacSha256(string key, string data)
