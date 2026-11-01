@@ -40,10 +40,27 @@
   color: #fff;
   z-index: 1;
   animation: sb-fade-in 280ms ease-out 180ms both;
+  // A plain "X" glyph is point-symmetric under a 90deg turn, so rotation alone would be
+  // invisible — pairing it with a scale + brand-gold fill is what actually reads as dynamic.
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 220ms ease;
+
+  &:hover, &:focus-visible {
+    transform: rotate(90deg) scale(1.12);
+    background: var(--ml-action, #e3a53a);
+    color: var(--ml-on-action, #1b1610);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .sb-image, .sb-close {
     animation: none;
+  }
+
+  .sb-close {
+    transition: none;
+
+    &:hover, &:focus-visible {
+      transform: none;
+    }
   }
 }
