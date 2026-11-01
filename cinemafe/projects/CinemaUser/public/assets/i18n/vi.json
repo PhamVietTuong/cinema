@@ -149,7 +149,7 @@
     "holdTimer": "Đang giữ ghế — vui lòng hoàn tất đặt vé trong {{time}}",
     "holdLabel": "Thời gian giữ ghế",
     "holdExpiredShort": "Hết thời gian giữ",
-    "holdExpired": "Thời gian giữ ghế đã hết. Bạn vẫn có thể thanh toán, nhưng ghế có thể đã bị người khác đặt.",
+    "holdExpired": "Thời gian giữ ghế đã hết. Đang chuyển về trang phim...",
     "breadcrumb": {
       "home": "Trang Chủ",
       "movies": "Phim"
