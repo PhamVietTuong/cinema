@@ -15598,3 +15598,9 @@ INSERT INTO [PromotionProgramPrice] ([Id], [PromotionProgramId], [ProjectionForm
 -- Weekend evening schedule window (all theaters); DaysOfWeekMask 65 = Sunday (bit0) + Saturday (bit6)
 INSERT INTO [PromotionProgramSchedule] ([Id], [PromotionProgramId], [TheaterId], [DaysOfWeekMask], [StartTimeOfDay], [EndTimeOfDay], [CreationTime]) VALUES
 (NEWID(), @PromoWeekend, NULL, 65, '18:00:00', '23:00:00', GETUTCDATE());
+
+-- ── Part G: Splash Banner (CinemaUser once-per-session popup) ───────────────
+INSERT INTO [SplashBanner] ([Id], [Title], [ImageUrl], [LinkUrl], [StartDate], [EndDate], [IsPublished], [CreationTime])
+VALUES
+(NEWID(), N'Grand Opening', N'assets/splash-banner-grand-opening.png', N'/',
+    GETUTCDATE(), DATEADD(month, 1, GETUTCDATE()), 1, GETUTCDATE());
