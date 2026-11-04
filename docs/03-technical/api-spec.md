@@ -1,8 +1,8 @@
 # API Specification
 
 > Purpose: Enumerate every endpoint on the three backend controllers, with route, auth, request/response shape, and notable error cases.
-> Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/{CinemaController,IdentityController,PaymentController,ApiControllerBase}.cs`; `business/auth.md`, `business/booking.md`, `business/payments.md`, `business/catalog.md`, `business/admin-staff-and-frontend-flows.md`, `business/domain-model.md` §11 (entity→DTO mapping)
-> Last reviewed: 2026-11-01
+> Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/{CinemaController,IdentityController,PaymentController,ApiControllerBase}.cs`, `cinemabe/Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs`, `cinemabe/Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs`, `cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs`
+> Last reviewed: 2026-11-04
 
 ## Conventions (verified against code)
 
@@ -64,7 +64,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 |---|---|---|---|---|---|
 | `GetSeats` | POST | `[AllowAnonymous]` | `PagingSearchDTO` (filters: showTimeId, roomId) | `DefaultSearchResults<SeatDTO>` — `Status` Available/Reserved/Occupied | |
 | `GetShowTimePrices` | POST | `[AllowAnonymous]` | `showTimeId`, `roomId` (query) | per-PatronCategory resolved price list | |
-| `CreateBooking` | POST | `[Authorize]` (owner = caller) | `CreateBookingRequest{ShowTimeId, RoomId, Seats[], ConnectionId?, DiscountCode?, GiftCardCode?, PointsToRedeem?, Foods[], DryRun?}` | invoice/pricing result | 400 seat already booked/locked/double-seat-partner/patron-category mismatch; see `business/booking.md` §5 for exact strings |
+| `CreateBooking` | POST | `[Authorize]` (owner = caller) | `CreateBookingRequest{ShowTimeId, RoomId, Seats[], ConnectionId?, DiscountCode?, GiftCardCode?, PointsToRedeem?, Foods[], DryRun?}` | invoice/pricing result | 400 with one of the exact strings: `"Seat {id} is already booked."`, `"Seat {id} is being held by another user."` (only checked when `ConnectionId` is supplied), `"A double seat must be booked together with its partner."`, `"A patron category is required for every seat."` / `"Seat {id} is not available for the selected patron category."`, `"Invalid or expired gift card."`, `"Discount code is invalid or no longer available."`; a DB unique-index race surfaces as `"One or more selected seats were just booked by someone else."` |
 | `ConfirmPayment` | POST | `[Authorize]` (owner) | `ConfirmPaymentRequest{InvoiceId, PaymentReference}` | bool/invoice result | only succeeds for Sandbox gateway — VNPay/MoMo/Stripe always return false (callback-authoritative) |
 | `CancelBooking` | POST | `[Authorize]` (owner) | `CancelBookingRequest{InvoiceId}` | bool | only a `Pending` invoice owned by caller; no-op otherwise |
 | `InitiatePayment` | POST | `[Authorize]` (owner) | `InitiatePaymentRequest{InvoiceId, Provider?}` | `PaymentInitiationDTO{Provider, PaymentReference, RedirectUrl?}` | `FinalAmount<=0` (gift card/points fully cover) finalizes immediately, no gateway call, `Provider="None"`, `PaymentReference="GIFTCARD-FULL"` |
@@ -93,7 +93,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `GetRevenueByMovie` | GET | Admin | `from`, `to` | |
 | `GetRevenueByTheater` | GET | Admin | `from`, `to` | |
 
-<!-- TODO: confirm with team — PaymentController has its own GetRevenue*/GetInvoices(Admin) family that overlaps with CinemaController's StaffReport (GetSales/GetOccupancy/GetKpis) and Invoice-admin regions; business/ docs don't call out this overlap explicitly. -->
+<!-- TODO: confirm with team — PaymentController has its own GetRevenue*/GetInvoices(Admin) family that overlaps with CinemaController's StaffReport (GetSales/GetOccupancy/GetKpis) and Invoice-admin regions; not yet resolved whether one is canonical. -->
 
 ---
 
@@ -169,7 +169,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `Gate` | `RoleNames.GateKeepers` (`Admin,TheaterStaff`) | `Scan` (QR scan — a refused scan is still HTTP 200 with `Outcome` field; only auth failures are 403), `Lookup` (find today's paid tickets by invoice code/phone) |
 | `BoxOffice` | `RoleNames.Sellers` (`Admin,TheaterStaff`) | `Quote` (dry-run price), `Sell` (creates `Paid` invoice directly), `GetShowtimesToday`, `FindCustomer` (by exact phone) |
 | `StaffReport` | `RoleNames.Reporting` (`Admin` only) | `GetAuditLog`, `GetSales`, `GetOccupancy`, `GetKpis` — date range capped at 92 days, theater-scoped |
-| `Operations` | `RoleNames.StaffApp` (`Admin,TheaterStaff`) | `GetScheduleBoard`, `ReportIncident`, `GetIncidents`, `GetIncident`, `ResolveIncident`, `BlockSeat`, `BlockRoom` (block/resolve-with-unblock need `Approvers` role or manager-override PIN — 403 otherwise, per `business/admin-staff-and-frontend-flows.md`) |
+| `Operations` | `RoleNames.StaffApp` (`Admin,TheaterStaff`) | `GetScheduleBoard`, `ReportIncident`, `GetIncidents`, `GetIncident`, `ResolveIncident`, `BlockSeat`, `BlockRoom` (block/resolve-with-unblock need the `Approvers` role or a manager-override PIN — 403 otherwise; `BlockSeat`/`BlockRoom` set `Incident.BlocksSeat`/`BlocksRoom`, and `ResolveIncident`'s optional `Unblock` flag reopens the seat/room) |
 | `Workforce` | `RoleNames.Approvers` (`Admin`) for roster CRUD + PIN set; `RoleNames.StaffApp` for self-service reads | `SetMyOverridePin` (Approvers), `GetOverrideApprovers` (StaffApp), `GetTheaterStaff`/`GetRoster`/`SaveShift`/`DeleteShift` (Approvers), `GetMyShifts` (StaffApp) |
 
 ---
@@ -187,5 +187,5 @@ JWT for both is read from the `access_token` query string for any path starting 
 
 ## Discrepancies / things to verify further
 
-- `PaymentController.ValidateTicket` is gated plain `[Authorize(Roles="Admin")]` (local const), while `CinemaController`'s `Gate/Scan` region (the apparent gate-scan flow used by staff) is gated `RoleNames.GateKeepers` (`Admin,TheaterStaff`). `business/booking.md` step 13 describes ticket validation as `[Authorize(Roles=Admin)]` only — if `TheaterStaff` is meant to do gate check-in in practice, confirm whether `ValidateTicket` and `Gate/Scan` are the same logical operation exposed twice with different role gates, or two distinct code paths (admin manual override vs. staff gate terminal). <!-- TODO: confirm with team -->
+- `PaymentController.ValidateTicket` is gated plain `[Authorize(Roles="Admin")]` (local const), while `CinemaController`'s `Gate/Scan` region (the apparent gate-scan flow used by staff) is gated `RoleNames.GateKeepers` (`Admin,TheaterStaff`). If `TheaterStaff` is meant to do gate check-in in practice (the CinemaStaff app's gate-scan UI calls `Gate/Scan`, not `PaymentController.ValidateTicket`), confirm whether the two are the same logical operation exposed twice with different role gates, or two distinct code paths (admin manual override vs. staff gate terminal). <!-- TODO: confirm with team -->
 - `PaymentController` has its own `GetInvoices`(Admin)/`GetRevenue*` family that overlaps in purpose with `CinemaController`'s `Invoice (admin)` region and `StaffReport.GetSales`. Not necessarily a bug (different DTOs/scopes), but worth a deliberate check before assuming one is canonical. <!-- TODO: confirm with team -->

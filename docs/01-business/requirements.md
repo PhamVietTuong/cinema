@@ -1,8 +1,8 @@
 # Requirements
 
 > Purpose: What the system currently lets each user type do, derived from the live API surface and role model.
-> Sources: `docs/03-technical/api-spec.md`, `docs/01-business/roles-permissions.md`, `business/*.md`
-> Last reviewed: 2026-11-01
+> Sources: `docs/03-technical/api-spec.md`, `docs/01-business/roles-permissions.md`, `docs/01-business/business-rules.md`, `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs`
+> Last reviewed: 2026-11-04
 
 This is a capability inventory of what exists today (verified against code), not a product backlog. Items the business docs call out as removed are listed under "Explicitly not supported" so they aren't mistaken for gaps to fill.
 
@@ -34,7 +34,7 @@ This is a capability inventory of what exists today (verified against code), not
 | Seat map | View (not edit) the room seat map | `RoleNames.StaffApp` |
 
 ### Explicitly not supported (TheaterStaff)
-- Cash drawer close / daily close, time clock, tasks/checklists, inventory/storage-plan management, customer-service/after-sales desk, refund/exchange UI (exchange field `ExchangedFromInvoiceId` still exists on `Invoice`, but no exchange workflow UI was found) — all removed per `business/admin-staff-and-frontend-flows.md`.
+- Cash drawer close / daily close, time clock, tasks/checklists, inventory/storage-plan management, customer-service/after-sales desk, refund/exchange UI (exchange field `ExchangedFromInvoiceId` still exists on `Invoice`, but no exchange workflow UI was found) — all confirmed removed from `CinemaStaff`'s current feature tree and sidebar.
 - Managing the roster for other staff, setting/approving override PINs (Approver/Admin only), running sales/occupancy/KPI reports (`StaffReport` region is Admin-only despite the name).
 - Any catalog/pricing/theater/movie/promotion write — all gated `Admin` literal, not `TheaterStaff`.
 

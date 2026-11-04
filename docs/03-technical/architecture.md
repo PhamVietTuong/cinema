@@ -1,8 +1,8 @@
 # Backend Architecture
 
 > Purpose: How `cinemabe` is layered, how a request flows end to end, and how auth/realtime/error-handling are wired.
-> Sources: `cinemabe/Cinema/**/*.csproj`, `1-Service/Cinema.Service.WebApiHost/Program.cs`, `2-Business/Cinema.Business/DependencyInjection.cs`, `3-Data/Cinema.Data/DependencyInjection.cs`, `3-Data/Cinema.Data/ApplicationUnitOfWork.cs`, `3-Data/Cinema.Data/Contexts/CinemaContext.cs`, `1-Service/Cinema.Service.WebApiHost/{Controllers,Hubs,Middlewares,Services}/*`, `E:\cinema\CLAUDE.md`
-> Last reviewed: 2026-11-01
+> Sources: `cinemabe/Cinema/**/*.csproj`, `1-Service/Cinema.Service.WebApiHost/Program.cs`, `2-Business/Cinema.Business/DependencyInjection.cs`, `2-Business/Cinema.Business/Managers/BookingManager.cs`, `3-Data/Cinema.Data/DependencyInjection.cs`, `3-Data/Cinema.Data/ApplicationUnitOfWork.cs`, `3-Data/Cinema.Data/Contexts/CinemaContext.cs`, `3-Data/Cinema.Data/Services/JwtTokenService.cs`, `1-Service/Cinema.Service.WebApiHost/{Controllers,Hubs,Middlewares,Services}/*`, `E:\cinema\CLAUDE.md`
+> Last reviewed: 2026-11-04
 
 ## 1. The 4 numbered layers
 
@@ -79,20 +79,20 @@ Two hubs, both mapped in `Program.cs` (`app.MapHub<BookingHub>("/hubs/booking")`
 
 | Hub | Route | Authorize | Purpose |
 |---|---|---|---|
-| `BookingHub` | `/hubs/booking` | `[Authorize]` (any role) | Live seat-lock broadcast during checkout. Methods: `JoinRoom`, `LockSeat`, `UnlockSeat`; auto-releases a connection's locks `OnDisconnectedAsync`. Backed by `IBookingManager.LockSeat/UnlockSeat/IsSeatLocked/ReleaseConnectionLocks` (in-process `ConcurrentDictionary` state inside `BookingManager` — not distributed; see `business/domain-model.md` §10). |
-| `StaffHub` | `/hubs/staff` | `[Authorize(Roles = RoleNames.StaffApp)]` | Staff-app events (`FoodOrderQueued`, `FoodOrderUpdated`, `StockLow`, `IncidentRaised`) broadcast per `theater:{id}` group; see `business/auth.md` §5. |
+| `BookingHub` | `/hubs/booking` | `[Authorize]` (any role) | Live seat-lock broadcast during checkout. Methods: `JoinRoom`, `LockSeat`, `UnlockSeat`; auto-releases a connection's locks `OnDisconnectedAsync`. Backed by `IBookingManager.LockSeat/UnlockSeat/IsSeatLocked/ReleaseConnectionLocks` — two static, process-local `ConcurrentDictionary`s inside `BookingManager` (`_lockedSeats` keyed `"{showTimeId}:{roomId}:{seatId}"`, `_bookingGates` keyed `"{showTimeId}:{roomId}"`). Not distributed: a multi-instance deployment relies on the DB-level filtered unique index on `InvoiceTicket(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1`, not this dictionary, to prevent double-booking. |
+| `StaffHub` | `/hubs/staff` | `[Authorize(Roles = RoleNames.StaffApp)]` | Staff-app events (`FoodOrderQueued`, `FoodOrderUpdated`, `StockLow`, `IncidentRaised`) broadcast per `theater:{id}` group. On connect, a client auto-joins the group for every `theaterId` claim its token carries (Admin has none, joins none automatically); `JoinTheater(theaterId)` lets a client join explicitly, throwing `HubException` if the caller isn't Admin and the theater isn't already in their claims. |
 
 `ISeatNotificationService`/`IStaffNotificationService` are no-op implementations registered by `AddBusiness()`; `Program.cs` overrides both with real `SignalR*NotificationService` implementations (`Hubs/SignalRSeatNotificationService.cs`, `Hubs/SignalRStaffNotificationService.cs`) so the business layer stays SignalR-agnostic (depends only on the interface).
 
 ## 5. Controllers (exactly 3 — enforced, never add a 4th)
 
-`1-Service/Cinema.Service.WebApiHost/Controllers/`: `ApiControllerBase.cs` (shared `HandleException`), `CinemaController.cs` (catalog/booking/staff — 86+ `[Authorize(Roles="Admin")]` actions plus role-composite-gated `#region`s for Concession/Gate/BoxOffice/StaffReport/Operations/Workforce), `IdentityController.cs` (auth/profile), `PaymentController.cs` (gateway initiate/callback/admin). All routes: `api/[controller]/[action]`, HTTP verb POST even for queries. `ControllerArchitectureTests.OnlyThreeControllersExist` enforces the count. See `business/auth.md` for the full role/authorization matrix.
+`1-Service/Cinema.Service.WebApiHost/Controllers/`: `ApiControllerBase.cs` (shared `HandleException`), `CinemaController.cs` (catalog/booking/staff — 86+ `[Authorize(Roles="Admin")]` actions plus role-composite-gated `#region`s for Concession/Gate/BoxOffice/StaffReport/Operations/Workforce), `IdentityController.cs` (auth/profile), `PaymentController.cs` (gateway initiate/callback/admin). All routes: `api/[controller]/[action]`, HTTP verb POST even for queries. `ControllerArchitectureTests.OnlyThreeControllersExist` enforces the count. See `api-spec.md` for the full role/authorization matrix and `01-business/roles-permissions.md` for the role model.
 
 NSwag emits one OpenAPI document per `[ApiExplorerSettings(GroupName=...)]` group (`cinema`, `identity`, `payment` — configured in `Program.cs`), surfaced at `/swagger/{group}/swagger.json`; Swagger UI (`/swagger`) and ReDoc (`/redoc`) are dev-only (`app.Environment.IsDevelopment()`).
 
 ## 6. JWT auth pipeline
 
-See `business/auth.md` for the full login/role/claims model. Wiring in `Program.cs`:
+See `01-business/roles-permissions.md` for the full login/role/claims model. Wiring in `Program.cs`:
 - `AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(...)` validates issuer/audience/lifetime/signing key from `JWT:Issuer`/`JWT:Audience`/`JWT:Secret`, `ClockSkew = TimeSpan.Zero`.
 - The host **refuses to start** if `JWT:Secret` is blank or equals the old committed insecure default (`Program.cs` lines 82-91).
 - `OnMessageReceived`: for any request path starting with `/hubs`, a non-empty `access_token` query-string value is used as the bearer token (SignalR can't set custom headers on the handshake).
@@ -102,7 +102,7 @@ See `business/auth.md` for the full login/role/claims model. Wiring in `Program.
 ## 7. Error handling
 
 Two overlapping mechanisms, both producing `{ error, statusCode }` camelCase JSON:
-- **`ApiControllerBase.HandleException`** — called from each controller's own try/catch; maps `KeyNotFoundException`→404, `AccessDeniedException`→403 (never 401, deliberately — see `business/auth.md` §4/§7), `UnauthorizedAccessException`→401, `InvalidOperationException`→400, else→500.
+- **`ApiControllerBase.HandleException`** — called from each controller's own try/catch; maps `KeyNotFoundException`→404, `AccessDeniedException`→403 (never 401 — deliberate, because the frontend's `errorInterceptor` force-logs-out on any 401, so a role/scope mismatch on an otherwise-valid token must not trigger that), `UnauthorizedAccessException`→401, `InvalidOperationException`→400, else→500.
 - **`ExceptionMiddleware`** (`Middlewares/ExceptionMiddleware.cs`, registered via `app.UseMiddleware<ExceptionMiddleware>()` after `UseAuthentication`/`UseAuthorization`) — a backstop for exceptions that bypass controller try/catch (e.g. thrown from middleware/filters/hub code). Same exception-type-to-status mapping, same JSON shape, logs via `ILogger<ExceptionMiddleware>` (not `LogProvider` directly).
 - Pure `[Authorize]`/`[Authorize(Roles=...)]` pipeline failures (no token vs. wrong role) return ASP.NET's own 401/403 with an empty body — they never reach either handler.
 
@@ -113,13 +113,13 @@ Registered via `AddHostedService<T>()` in `Program.cs`:
 | Service | File | Interval | Purpose |
 |---|---|---|---|
 | `PendingBookingReaper` | `Services/PendingBookingReaper.cs` | every 1 minute, `_holdWindow = 15 minutes` | Calls `IBookingManager.ExpireStalePendingBookingsAsync(15min)` to cancel stale `Pending` invoices and free their seats — the cross-instance complement to `BookingHub`'s in-process lock expiry. |
-| `ShowtimeReminderService` | `Services/ShowtimeReminderService.cs` | — <!-- TODO: confirm exact interval/lookahead from file if needed --> | Emails showtime reminders ~1h before start (per CLAUDE.md); dedup via the `ReminderLog` table (`business/domain-model.md` §8). |
+| `ShowtimeReminderService` | `Services/ShowtimeReminderService.cs` | — <!-- TODO: confirm exact interval/lookahead from file if needed --> | Emails showtime reminders ~1h before start (per CLAUDE.md); dedup via the `ReminderLog` table (unique `(UserId, ShowTimeId)` index — see `database-schema.md` §8), which replaces an in-memory dedup set so a reminder isn't resent after a process restart. |
 
 ## 9. Other host-level wiring (verified in `Program.cs`, not all mentioned in CLAUDE.md)
 
 - **CORS**: policy `AllowFrontend`, origins from config key `AllowedOrigins` (array), `AllowAnyHeader/AllowAnyMethod/AllowCredentials`.
-- **Rate limiting**: `AddCinemaRateLimiting()` (`Helpers/RateLimitPolicies.cs`) — policies `Auth` (10 req/min/IP) and `AuthEmail` (3/15min/IP) gate `IdentityController` endpoints; see `business/auth.md` §1/§6.
+- **Rate limiting**: `AddCinemaRateLimiting()` (`Helpers/RateLimitPolicies.cs`) — policies `Auth` (10 req/min/IP, fixed window, `QueueLimit=0` → 429 `"Too many requests. Please wait and try again."` + `Retry-After` header on overflow) and `AuthEmail` (3/15min/IP) gate `IdentityController` endpoints.
 - **Health checks**: `/health` (liveness) and `/health/ready` (readiness, includes `AddDbContextCheck<CinemaContext>`, tag `ready`).
 - **Static files**: `/uploads/*` (on-disk, git-ignored, `wwwroot/uploads`) and `/seed-assets/*` (committed, `wwwroot/seed-assets`, e.g. promotion banners).
-- **Payment gateways**: all four `IPaymentGateway` implementations (`Sandbox`, `VnPay`, `MoMo`, `Stripe`) and `IPaymentGatewayResolver` are registered directly in `Program.cs` (not `AddBusiness()`) because the resolver needs `IConfiguration`. See `integrations.md` and `business/payments.md`.
+- **Payment gateways**: all four `IPaymentGateway` implementations (`Sandbox`, `VnPay`, `MoMo`, `Stripe`) and `IPaymentGatewayResolver` are registered directly in `Program.cs` (not `AddBusiness()`) because the resolver needs `IConfiguration`. See `integrations.md` for the full callback-authoritative flow and signature rules.
 - **Conditional notification overrides**: `AddBusiness()` registers dev-log/no-op `INotificationService`/`ISmsNotificationService` by default; `Program.cs` swaps in `SmtpNotificationService`/`TwilioSmsNotificationService` only if `Smtp:Host`/`Sms:Twilio:AccountSid` are non-blank.

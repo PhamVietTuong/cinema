@@ -2,7 +2,7 @@
 
 > Purpose: Folder/module → responsibility, plus a "where to change X" guide.
 > Sources: cinemabe/Cinema/**, cinemafe/projects/**, CLAUDE.md
-> Last reviewed: 2026-11-01
+> Last reviewed: 2026-11-04
 
 ## Backend (`cinemabe/`)
 
@@ -25,10 +25,10 @@
 | `Cinema/4-Foundation/Cinema.Foundation/` | Serilog-backed `ILog`/`LogProvider` abstraction. |
 
 **To change X (backend):**
-- Pricing formula → `Cinema.Business/Managers/` (catalog/showtime managers) — see `business/catalog.md` §5.
-- Seat-lock behavior → `BookingManager` (static `ConcurrentDictionary`) + `BookingHub` + `PendingBookingReaper` — see `business/booking.md`.
-- Payment callback handling → `PaymentController.PaymentCallback` + `Cinema.Business/Payments/*Gateway.cs` — see `business/payments.md`.
-- Auth/roles → `Cinema.Business/Managers/Auth/`, `RoleNames.cs`, `IdentityController` — see `business/auth.md`.
+- Pricing formula → `Cinema.Business/Managers/` (catalog/showtime managers), specifically `BookingManager.BuildSeatPricingContextAsync` — see `01-business/business-rules.md` for the exact `price = roomTypePrice * priceFactor + threeDSurcharge + showTimeRoom.BasePrice` formula and precedence.
+- Seat-lock behavior → `BookingManager` (static `ConcurrentDictionary`) + `BookingHub` + `PendingBookingReaper` — see `01-business/business-rules.md` for the seat-lock state machine (5-min advisory lock vs. 15-min pending-invoice hold).
+- Payment callback handling → `PaymentController.PaymentCallback` + `Cinema.Business/Payments/*Gateway.cs` — see `integrations.md` §1 and `01-business/business-rules.md` for the callback-authoritative rule.
+- Auth/roles → `Cinema.Business/Managers/Auth/`, `RoleNames.cs`, `IdentityController` — see `01-business/roles-permissions.md`.
 - A new endpoint → `CinemaController` only, in the matching `#region`. Never a new controller.
 - Schema change → entity in `Cinema.Data.Entities`, Fluent config in `Cinema.Data/Configurations/`, then hand-edit `cinemabe/sql/create_db.sql` + `upgrade_db.sql` (no EF migrations — see [[../../feedback-schema-via-sql-scripts-not-ef-migrations.md|project convention]]).
 

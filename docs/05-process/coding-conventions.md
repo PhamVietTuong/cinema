@@ -2,7 +2,7 @@
 
 > Purpose: Enforced and observed coding conventions for the backend and frontend.
 > Sources: E:\cinema\CLAUDE.md, E:\cinema\cinemabe\.editorconfig, E:\cinema\cinemafe\eslint.config.js
-> Last reviewed: 2026-11-01
+> Last reviewed: 2026-11-04
 
 Most conventions in this repo are documented in `CLAUDE.md` at the repo root. This page cites
 those directly and adds what's enforced by config files that `CLAUDE.md` doesn't spell out.
@@ -20,11 +20,11 @@ those directly and adds what's enforced by config files that `CLAUDE.md` doesn't
 | Query efficiency: `AsNoTracking()` on reads, avoid N+1, project columns, filter/count/page at the DB | "Query Efficiency" section (5.1/5.2) |
 | Don't hand-edit NSwag-generated files (`Cinema.Service.Clients/**`, `*-http.service.ts`) | "Working conventions to preserve" |
 | Datetime mapping — new entities pick up SQL `datetime` (not `datetime2`) automatically | "Working conventions to preserve" / "EF Core quirk" |
-| Schema changes go through hand-edited `create_db.sql`/`upgrade_db.sql`, never `dotnet ef migrations add` (user memory rule, consistent with current repo practice — see `business/domain-model.md` line 3) | — (memory rule; also noted in `business/domain-model.md`) |
+| Schema changes go through hand-edited `create_db.sql`/`upgrade_db.sql`, never `dotnet ef migrations add` (user memory rule, consistent with current repo practice) | — (memory rule; also noted in root `CLAUDE.md`) |
 | Use `nameof(X)` instead of a hand-typed string literal when the string is meant to match a type/class/method name (user memory rule) | — |
 | NSwag enum→label lookups belong in `CinemaLib`'s `cinema.model.ts`, never inline in a feature component (user memory rule) | — |
 | Shared UI used by 2+ Angular apps belongs in one configurable `CinemaLib` component, never copy-pasted (user memory rule) | — |
-| Single shared `AuditLog` table for all logging needs, never a new table per feature | "Working conventions to preserve" (also `business/README.md`) |
+| Single shared `AuditLog` table for all logging needs, never a new table per feature | "Working conventions to preserve" |
 
 ## From `.editorconfig` (`cinemabe/.editorconfig`) — not mentioned in CLAUDE.md
 

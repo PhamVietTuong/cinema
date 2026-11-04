@@ -1,8 +1,8 @@
 # Roles & Permissions
 
 > Purpose: Describe the current role model, capability composites, and how each is enforced in code.
-> Sources: `business/auth.md` §4, `business/admin-staff-and-frontend-flows.md`; `cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs`; controller `[Authorize]` attributes in `CinemaController.cs`/`IdentityController.cs`/`PaymentController.cs`
-> Last reviewed: 2026-11-01
+> Sources: `cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs`; `cinemabe/Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs`; `cinemabe/Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs`; controller `[Authorize]` attributes in `CinemaController.cs`/`IdentityController.cs`/`PaymentController.cs`; `cinemafe/projects/CinemaLib/src/lib/models/roles.models.ts`
+> Last reviewed: 2026-11-04
 
 ## 1. The role model
 
@@ -28,7 +28,7 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 | `RoleNames.GateKeepers` | `Admin,TheaterStaff` | `Gate` region: `Scan`, `Lookup` |
 | `RoleNames.Concession` | `Admin,TheaterStaff` | `Concession` region: `GetPickupQueue`, `SetFoodStatus`, `GetLowStock`, `LookupPickup` |
 | `RoleNames.BackOffice` | `Admin,TheaterStaff` | Documented intent for warehouse/inventory staff-app access; narrowed to the caller's own theater in code — no endpoint in the current controller is gated by this constant as of this review |
-| `RoleNames.StockApprovers` | `Admin` only | Documented intent: approve/reject storage plans, change inventory tracking — storage-plan management was removed from the current feature set (`business/admin-staff-and-frontend-flows.md`); no live endpoint uses this constant currently |
+| `RoleNames.StockApprovers` | `Admin` only | Documented intent: approve/reject storage plans, change inventory tracking — storage-plan/inventory management was removed from `CinemaStaff`'s current feature set (confirmed absent from the controller and the staff sidebar); no live endpoint uses this constant currently |
 | `RoleNames.Approvers` | `Admin` only | `Workforce` region: `SetMyOverridePin`, `GetTheaterStaff`, `GetRoster`, `SaveShift`, `DeleteShift`; `Operations` region: `BlockSeat`/`BlockRoom`/incident resolve-with-unblock also require this role or a manager-override PIN |
 | `RoleNames.Reporting` | `Admin` only | `StaffReport` region: `GetAuditLog`, `GetSales`, `GetOccupancy`, `GetKpis` |
 | `RoleNames.TheaterScopedRoles` | `TheaterStaff` | Not an authz filter — used by `AuthManager.ResolveTheaterIdAsync` to decide which `UserType`s *require* a non-null `TheaterId` on create/update |

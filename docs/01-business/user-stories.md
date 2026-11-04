@@ -1,8 +1,8 @@
 # User Stories
 
 > Purpose: Capabilities of `docs/01-business/requirements.md` restated as user stories, grouped by role.
-> Sources: `docs/03-technical/api-spec.md`, `docs/01-business/roles-permissions.md`, `docs/01-business/requirements.md`, `business/*.md`
-> Last reviewed: 2026-11-01
+> Sources: `docs/03-technical/api-spec.md`, `docs/01-business/roles-permissions.md`, `docs/01-business/requirements.md`, `docs/01-business/business-rules.md`
+> Last reviewed: 2026-11-04
 
 Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps to a capability that already exists in the current system (verified against code) — this is a description of current behavior, not a backlog of unbuilt features.
 

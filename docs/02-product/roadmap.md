@@ -2,7 +2,7 @@
 
 > Purpose: Feature backlog and status for the multi-theater cinema platform, restructured from the repo-root roadmap.
 > Sources: E:\cinema\ROADMAP.md
-> Last reviewed: 2026-11-01
+> Last reviewed: 2026-11-04
 
 Status reflects the codebase as of the `feature/multi-theater-catalog-pricing` branch (per
 `ROADMAP.md`). See `docs/00-overview/open-questions.md` for a note on this roadmap possibly being
@@ -28,7 +28,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 |---|---|---|---|
 | Google login | Done | - | `AuthManager` + `GoogleTokenValidator`; OTP/2FA, email verify, lockout also done. |
 | Facebook login | New | S | Mirror the Google flow: add a Facebook token validator + `AuthManager` path + FE button. Needs a Facebook App ID/secret. |
-| Role-based access (admin / theater staff / customer) | Partial | M | Admin + Customer roles exist per this roadmap entry; decide staff permissions (which theater(s) they manage, which tabs they see). **Note**: `business/auth.md` describes `TheaterStaff` as already a live third role — cross-check before treating this as unstarted (see open questions). |
+| Role-based access (admin / theater staff / customer) | Done | - | **Note**: this roadmap entry is stale — `TheaterStaff` is already a live third role (`RoleNames.cs`, `UserType.Name`), always theater-scoped via a `theaterId` JWT claim, with a full box-office/gate/concession/workforce feature set wired into `CinemaController` and the `CinemaStaff` app. See `docs/01-business/roles-permissions.md` for the full role model and capability composites (see open questions for the stale-roadmap discrepancy). |
 
 ## Booking & tickets
 

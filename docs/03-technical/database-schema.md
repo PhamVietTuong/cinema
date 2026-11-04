@@ -1,8 +1,8 @@
 # Database Schema
 
 > Purpose: Every EF Core entity/table — fields, types, constraints, relationships, indexes, and business meaning of non-obvious fields.
-> Sources: `cinemabe/Cinema/3-Data/Cinema.Data.Entities/Entities/*.cs`, `.../Enums/*.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Configurations/*.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Contexts/CinemaContext.cs`; cross-checked against `business/domain-model.md` (verified 2026-10-31) — sampled entity/config files (`Invoice`, `InvoiceTicket`, `User`, their configs, `CinemaContext.OnModelCreating`) read directly and found to match that doc exactly as of this review.
-> Last reviewed: 2026-11-01
+> Sources: `cinemabe/Cinema/3-Data/Cinema.Data.Entities/Entities/*.cs`, `.../Enums/*.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Configurations/*.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Contexts/CinemaContext.cs`, `cinemabe/Cinema/3-Data/Cinema.Data.Entities/Entities/AuditLog.cs`
+> Last reviewed: 2026-11-04
 
 ## EF Core quirk — `datetime`, not `datetime2`
 
@@ -259,7 +259,7 @@ Code (max 50, **unique**), InitialBalance (double), Balance (double), IsActive, 
 
 Index: (TheaterId, PaidAt). Nav `InvoiceTickets`, `InvoiceFoodAndDrinks`, `Payments`.
 
-**No Refund entity exists.** `InvoiceStatus` value 4 and `AuditAction.Refund` are reserved/retired — see `business/payments.md` §6 for the full history (a refund feature was built, then fully reverted).
+**No Refund entity exists.** `InvoiceStatus` value 4 and `AuditAction.Refund` (value 4) are reserved/retired — a refund system (customer/staff-initiated, gateway-side refund calls, `Refunded`/`PartiallyRefunded` invoice states) was built across several commits and then fully reverted (`9660958 feat(cinemabe): remove online refund feature`, `f0e4fe7 feat(cinemafe): remove refund UI, shared enum labels and error-catalog entries`). No `Refund` symbol exists anywhere in `cinemabe` today; a cancelled/expired invoice only reverses points/gift-card/food-stock via `InvoiceStatus.Cancelled`, never a dedicated refund row. If refund work is requested again it needs to be designed fresh — see `01-business/business-rules.md` and `02-product/roadmap.md`.
 
 ### InvoiceTicket (one sold seat; no own Id)
 PK: composite (InvoiceId, ShowTimeId, RoomId, SeatId). Price (double), PatronCategoryId (Guid?, **no FK**, snapshot), PatronCategoryName (max 100, snapshot), PatronDiscountPercent (double), QrCode?, IsUsed (bool, default false) + UsedAt (DateTime?) + UsedByUserId (Guid?, no FK), IsActive (bool, default true), SeatLabel (max 16, frozen at sale time, never recomputed).
@@ -307,7 +307,33 @@ Title, Content, ThumbnailUrl?, Author?, IsPublished (default false), PublishedAt
 
 ## 9. Enums reference
 
-See `business/domain-model.md` §9 for the full enum table (23 enums with every member and numeric value). Key rule: several enums are explicitly append-only with reserved/retired gaps that must never be renumbered or reused — `AuditAction` (4 retired, was Refund), `InvoiceStatus` (4 retired, was Refunded), plus `FoodOrderStatus`, `IncidentCategory/Severity/Status`, `PaymentTender`, `SalesChannel`, `SalesGroupBy`, `ScanOutcome`, `StockMovementType/ReasonCode`. `SeatKind` is namespaced under `Cinema.Data.Entities`, not `Cinema.Data.Enums` like its siblings.
+All enums below are stored as `int`. Several are explicitly append-only with reserved/retired gaps that must never be renumbered or reused.
+
+| Enum | Values | Notes |
+|---|---|---|
+| `AuditAction` | Other=0, OverrideFailed=1, OverridePinChanged=2, PriceOverride=3, (4 reserved, was Refund), Exchange=5, Reprint=6, VoidSale=7, CashPayOut=8, DrawerReconcile=9, Compensation=10, PointsAdjust=11, ResendTicket=12, BlockSeat=13, BlockRoom=14, TicketAdmitOverride=15, (16 reserved, was UserTheatersChanged), GateScan=17 | Append-only; never renumber; gaps are intentional |
+| `CreditType` | Director=1, Actor=2 | role on a MovieCredit |
+| `FoodOrderStatus` | None=0, Pending=1, Preparing=2, Ready=3, HandedOver=4, Cancelled=5 | allowed moves: Pending→Preparing→Ready→HandedOver, or Ready→HandedOver directly |
+| `IncidentCategory` | Other=0, Seat=1, Room=2, Projection=3, Sound=4, Safety=5, Customer=6, Cleanliness=7 | |
+| `IncidentSeverity` | Low=0, Medium=1, High=2, Critical=3 | |
+| `IncidentStatus` | Open=0, Resolved=1 | |
+| `InvoiceStatus` | Pending=0, Paid=1, Cancelled=2, Failed=3 | (4 reserved, was Refunded) |
+| `PaymentTender` | Cash=0, Card=1, QrWallet=2, GiftCard=3, Points=4, Online=5 | never renumber |
+| `ProjectionForm` | TwoD=1, ThreeD=2 | property of screening, not room |
+| `PromotionEligibility` | Everyone=0, Members=1, StudentOrTeacher=2, AgeLimit=3 | only Everyone/Members are safe to AutoApply (system can't verify the other two online) |
+| `PromotionMechanic` | Info=0, FixedPrice=1, PercentOff=2 | Info never affects price |
+| `RoomStatus` | Active=0, Maintenance=1, Inactive=2 | |
+| `SalesChannel` | Online=0, Counter=1 | |
+| `SalesGroupBy` | Day=0, Movie=1, Theater=2, PaymentMethod=3, Staff=4, Channel=5 | staff report API contract; never renumber |
+| `ScanOutcome` | Admitted=0, NotFound=1, NotPaid=2, AlreadyUsed=3, WrongTheater=4, WrongShowTime=5, TooEarly=6, Expired=7, AgeCheckRequired=8 | every value != Admitted means deny entry; AgeCheckRequired does NOT mark the ticket used |
+| `SeatKind` | Standard=0, Double=1 | namespace is `Cinema.Data.Entities`, not `...Enums` (inconsistent with sibling enums) |
+| `SeatStatus` | Available=0, Reserved=1, Occupied=2 | |
+| `ShowTimeType` | Normal=0, Premiere=1, Special=2 | |
+| `StaffReasonCode` | Other=0, CustomerRequest=1, WrongShowtime=2, DuplicateSale=3, ServiceFailure=4, TechnicalIssue=5, PriceMatch=6, Compensation=7 | |
+| `StockMovementType` | Receive=0, Sale=1, SaleReversal=2, Adjust=3, Waste=4 | direction carried by signed Quantity |
+| `StockReasonCode` | Other=0, Expired=1, Damaged=2, Spilled=3, TheftOrLoss=4, StockCountCorrection=5, OpeningBalance=6 | |
+| `TemplateChannel` | Email=1, Sms=2 | |
+| `UserStatus` | Active=0, Inactive=1, Banned=2 | |
 
 ## 10. Composite-key entities (no own `Id`)
 

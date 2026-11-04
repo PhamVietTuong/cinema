@@ -1,8 +1,8 @@
 # Documentation Index
 
 > Purpose: Index of this project's knowledge base — business, product, and technical.
-> Sources: generated 2026-11-01 from `cinemabe/`, `cinemafe/`, `business/`, `ROADMAP.md`, `CLAUDE.md`, `.github/workflows/ci.yml`, `docker-compose.yml`.
-> Last reviewed: 2026-11-01
+> Sources: generated 2026-11-01 from `cinemabe/`, `cinemafe/`, `ROADMAP.md`, `CLAUDE.md`, `.github/workflows/ci.yml`, `docker-compose.yml`.
+> Last reviewed: 2026-11-04
 
 ## Start here
 
@@ -12,7 +12,7 @@ New to this project (human or AI)? Read, in order:
 3. [`03-technical/architecture.md`](03-technical/architecture.md) — how the backend is wired.
 4. [`00-overview/open-questions.md`](00-overview/open-questions.md) — known gaps/discrepancies, so you don't rediscover them.
 
-Business-rule detail beyond what's summarized here lives in [`../business/`](../business/README.md) (domain model, auth, booking, payments, catalog, admin/staff flows) — already a committed, up-to-date reference; the `01-business/` docs here condense and cite it rather than duplicate it.
+The `01-business/` docs are the complete business-rule reference for this project — not a summary pointing elsewhere.
 
 ## 00-overview
 

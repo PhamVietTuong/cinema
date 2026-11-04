@@ -2,7 +2,7 @@
 
 > Purpose: Every environment variable / config key used by the backend and frontend apps — purpose, required/optional, default.
 > Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/appsettings.json` (key names only — `appsettings.Development.json`/`appsettings.Production.json` exist but are git-ignored and were not read for values), `Program.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Contexts/CinemaContextDesignTimeFactory.cs`, `cinemafe/projects/*/src/environments/environment*.ts`
-> Last reviewed: 2026-11-01
+> Last reviewed: 2026-11-04
 
 No secret values are reproduced anywhere below — only key names, defaults as committed in `appsettings.json`, and whether the app fails/falls back when a key is blank.
 
@@ -55,7 +55,7 @@ No secret values are reproduced anywhere below — only key names, defaults as c
 | `Payments:VnPay:TmnCode` | VNPay terminal code | optional — gateway reports `IsConfigured=false` if blank | `""` |
 | `Payments:VnPay:HashSecret` | VNPay HMAC-SHA512 signing secret | optional (see above) | `""` |
 | `Payments:VnPay:PayUrl` | VNPay hosted payment page | optional | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html` |
-| `Payments:VnPay:ReturnUrl` | Browser redirect target after payment (display-only — see `business/payments.md` §3) | optional | `http://localhost:4202/booking/payment-return` |
+| `Payments:VnPay:ReturnUrl` | Browser redirect target after payment (display-only — VNPay is callback-authoritative, so this URL is never trusted to confirm payment; see `integrations.md` §1) | optional | `http://localhost:4202/booking/payment-return` |
 | `Payments:MoMo:PartnerCode`, `Payments:MoMo:AccessKey`, `Payments:MoMo:SecretKey` | MoMo credentials | optional — gateway unconfigured if blank | `""` |
 | `Payments:MoMo:Endpoint` | MoMo `captureWallet` create-order endpoint | optional | `https://test-payment.momo.vn/v2/gateway/api/create` |
 | `Payments:MoMo:ReturnUrl` | Browser redirect target | optional | `http://localhost:4202/booking/payment-return` |

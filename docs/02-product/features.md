@@ -1,8 +1,8 @@
 # Implemented Features
 
 > Purpose: Inventory of features actually implemented across CinemaUser, CinemaAdmin, and CinemaStaff, with code locations and status.
-> Sources: cinemafe/projects/{CinemaUser,CinemaAdmin,CinemaStaff,CinemaLib}, E:\cinema\ROADMAP.md, E:\cinema\business\admin-staff-and-frontend-flows.md
-> Last reviewed: 2026-11-01
+> Sources: cinemafe/projects/{CinemaUser,CinemaAdmin,CinemaStaff,CinemaLib}, E:\cinema\ROADMAP.md, cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs (`#region`s Gate/BoxOffice/Concession/StaffReport/Operations/Workforce), cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs
+> Last reviewed: 2026-11-04
 
 Status legend: **complete** (wired end-to-end, used in production routes) · **partial** (data/API exists but UI/flow incomplete, or vice versa) · **stubbed** (code present but hidden/unused). Roadmap status (`E:\cinema\ROADMAP.md`, ✅/🟡/🆕) is cited where it adds context — in a few places the code is further along than the roadmap entry suggests (noted below).
 
@@ -11,7 +11,7 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | Feature | Code path | Status | Notes |
 |---|---|---|---|
 | Home / discover | `features/modules/discover/home` | complete | Now-showing/coming-soon, promotions banner, theaters list. |
-| Splash banner popup | `discover/home` + `catalog.md` §7 (business doc) | complete | Shown once per browser session via `sessionStorage`. |
+| Splash banner popup | `discover/home` | complete | `SplashBanner` entity, no FKs; active banner = `IsPublished` and today (Vietnam-local date) within `[StartDate, EndDate]`, newest `StartDate` wins on overlap. Shown once per browser session via `sessionStorage` keyed by banner `Id`. |
 | Movie browse & detail | `discover/movies/movie-list`, `discover/movies/movie-detail` | complete | Friendly slug routing (`movie-route.ts`); legacy `:legacyId/:legacySlug` route redirects to `:slug`. |
 | Ratings & reviews | `movie-detail.component.ts` (`rateMovie`, `addComment` actions) | complete | ROADMAP.md marks this 🟡 ("not surfaced") — code shows it **is** surfaced: star rating widget, threaded comments (`recentComments`, `replies`), `canReview` gate. Comments go through admin moderation (see CinemaAdmin). |
 | Theaters listing | `discover/theaters` | complete | |
@@ -36,7 +36,7 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | Theaters management (+ tabs: info, rooms, room types, seat types, food, combos, time slots, ticket prices, loyalty, patron categories, holidays) | `modules/overview/theaters/*` (`theater-detail.component.ts` + per-tab components/dialogs) | complete | Matches ROADMAP "Recently shipped": multi-theater catalog, seat-map editor, per-theater pricing. |
 | Showtimes management | `modules/overview/show-times` | complete | |
 | Users management | `modules/overview/users` | complete | |
-| Reports (sales/occupancy/KPIs) + CSV export | `modules/overview/reports` | complete | CSV built client-side (`_downloadCsv`), no backend export endpoint (see business doc A.4). |
+| Reports (sales/occupancy/KPIs) + CSV export | `modules/overview/reports` | complete | `GetSales`/`GetOccupancy`/`GetKpis` return structured DTOs; CSV built client-side (`_downloadCsv`, UTF-8 BOM, `Blob`/`a.download`) — there is no backend CSV-generation endpoint. |
 | Reference-data CRUD: age-restrictions, discount-types, holidays, memberships, movie-types, news, user-types | `modules/categories/*` | complete | Each feature folder has its own component (no shared generic admin CRUD base). |
 | Notification templates | `modules/categories/templates` | complete | Booking-confirmation message content, distinct from user notification preferences. |
 | Comment moderation | `modules/operations/comments` | complete | Approve/reject/delete, admin-only. |
@@ -51,13 +51,13 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 
 ## CinemaStaff (staff app, port 4203)
 
-Per `business/admin-staff-and-frontend-flows.md`, the staff app and `TheaterStaff` role still exist; several sub-features (refund/exchange, drawer close, customer-service desk, time-clock, tasks, checklists, inventory/storage-plan) were removed, and five granular roles were collapsed into one (`TheaterStaff`).
+The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified directly against `cinemafe/angular.json` and `CinemaController.cs`); several sub-features (refund/exchange, drawer close, customer-service desk, time-clock, tasks, checklists, inventory/storage-plan) were removed, and five granular roles (`TheaterManager`, `BoxOfficeStaff`, `GateStaff`, `KitchenStaff`, `RegionalManager`) were collapsed into one (`TheaterStaff`).
 
 | Feature | Code path | Status | Notes |
 |---|---|---|---|
 | Login | `features/auth/login` | complete | |
 | Home | `features/home` | complete | Role-based landing page (all current roles → `/home`). |
-| Gate: ticket scan | `features/gate/gate-scan*` | complete | A refused scan is HTTP 200 with `Outcome` detail (per business doc). |
+| Gate: ticket scan | `features/gate/gate-scan*` | complete | `CinemaController.Scan`: a refused scan is still HTTP 200 with `Outcome` carrying the reason (`NotFound`/`NotPaid`/`AlreadyUsed`/`WrongTheater`/`WrongShowTime`/`TooEarly`/`Expired`/`AgeCheckRequired`) — only an auth failure is a non-200 response. |
 | Gate: lookup | `features/gate/gate-lookup*` | complete | Find paid tickets by invoice code or phone. |
 | Counter sale (POS) | `features/pos` | complete | Quote/sell flow backed by `#region BoxOffice`. |
 | Schedule board | `features/schedule` | complete | Rooms + today's showtimes + status. |
@@ -82,6 +82,6 @@ Per `business/admin-staff-and-frontend-flows.md`, the staff app and `TheaterStaf
 | Nearest theater by location | 🆕 not started | |
 | Promotions scoped per-theater | 🆕 not started | |
 | Revenue/advanced stats dashboard | 🆕 partial | Basic reports exist (`modules/overview/reports`); advanced charts not confirmed. |
-| Messaging infra (real email/SMS providers) | 🟡 | `SmtpNotificationService`, `TwilioSmsNotificationService`/`DevLogSmsNotificationService` exist per business doc — may be further along than ROADMAP's 🆕. |
+| Messaging infra (real email/SMS providers) | 🟡 | `SmtpNotificationService` (email), `TwilioSmsNotificationService`/`DevLogSmsNotificationService` (SMS, dev fallback logs instead of sending) exist in `Cinema.Business/Notifications/*` — may be further along than ROADMAP's 🆕. |
 | Multilingual (i18n) | partial | `@ngx-translate/core` is a dependency and used in components (e.g. `movie-detail.component.ts` uses `_translate.instant`) — <!-- TODO: confirm with team how many languages are actually translated -->. |
 | Support chatbot | 🆕 not started | |
