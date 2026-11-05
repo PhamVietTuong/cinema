@@ -27,3 +27,5 @@ pagelist.txt
 /QA-tests/
 /.playwright-mcp/
 logs/
+_bmad/
+_bmad-output/
