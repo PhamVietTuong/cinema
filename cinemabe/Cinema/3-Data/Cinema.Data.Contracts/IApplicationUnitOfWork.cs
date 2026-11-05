@@ -40,7 +40,6 @@ public interface IApplicationUnitOfWork : IDisposable
     IAuditLogStore AuditLogStore { get; }
     IIncidentStore IncidentStore { get; }
     IScheduleBoardStore ScheduleBoardStore { get; }
-    IWorkforceStore WorkforceStore { get; }
     IStaffReportStore StaffReportStore { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();

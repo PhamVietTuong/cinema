@@ -137,16 +137,6 @@
     "subtitle": "Tài khoản và cài đặt bảo mật của bạn.",
     "account": "Tài khoản"
   },
-  "pinSettings": {
-    "title": "Mã PIN xác nhận của quản lý",
-    "hint": "Nhân viên quầy có thể nhờ bạn duyệt các thao tác nhạy cảm bằng cách nhập mã PIN này. Chọn 4 đến 8 chữ số và giữ bí mật.",
-    "pin": "Mã PIN mới",
-    "confirmPin": "Nhập lại mã PIN",
-    "pinInvalid": "Mã PIN gồm 4 đến 8 chữ số.",
-    "mismatch": "Hai mã PIN không khớp.",
-    "save": "Lưu mã PIN",
-    "saved": "Đã lưu mã PIN."
-  },
   "pos": {
     "section": "Quầy vé",
     "nav": {
@@ -225,7 +215,7 @@
       "title": "Đổi giá",
       "newPrice": "Giá mới (VND)",
       "invalid": "Nhập giá từ 0 trở lên.",
-      "hint": "Đổi giá cần quản lý xác nhận.",
+      "hint": "Chỉ quản lý mới có thể đổi giá.",
       "apply": "Áp dụng",
       "reset": "Về giá niêm yết",
       "action": "Đổi giá",
@@ -299,7 +289,6 @@
     "block": {
       "title": "Chặn bán",
       "hintApprover": "Ghế và phòng bị chặn sẽ không bán được. Các vé sắp tới được liệt kê để bạn chuyển khách; hệ thống không tự hủy vé.",
-      "hintOverride": "Chặn bán cần quản lý xác nhận: bạn sẽ được yêu cầu chọn người duyệt và nhập mã PIN. Các vé sắp tới sẽ được liệt kê sau đó; hệ thống không tự hủy vé.",
       "seat": "Chặn ghế",
       "room": "Chặn phòng"
     },
@@ -323,32 +312,6 @@
       "reported": "Đã báo cáo sự cố.",
       "resolved": "Đã xử lý sự cố.",
       "blocked": "Đã chặn bán."
-    }
-  },
-  "roster": {
-    "section": "Nhân sự",
-    "nav": "Lịch làm việc",
-    "title": "Lịch làm việc",
-    "subtitle": "Ca làm theo tuần. Bấm vào ngày để thêm ca, bấm vào ca để sửa.",
-    "prevWeek": "Tuần trước",
-    "nextWeek": "Tuần sau",
-    "thisWeek": "Tuần này",
-    "staff": "Nhân viên",
-    "hours": "Giờ",
-    "empty": "Rạp chưa có nhân viên.",
-    "dialog": {
-      "new": "Ca làm mới",
-      "edit": "Sửa ca làm",
-      "start": "Bắt đầu",
-      "end": "Kết thúc",
-      "overnightHint": "Giờ kết thúc bằng hoặc trước giờ bắt đầu nghĩa là ca kết thúc vào ngày hôm sau."
-    },
-    "errors": {
-      "invalidTime": "Nhập ngày và giờ hợp lệ."
-    },
-    "toast": {
-      "saved": "Đã lưu ca làm.",
-      "deleted": "Đã xóa ca làm."
     }
   },
   "kitchen": {

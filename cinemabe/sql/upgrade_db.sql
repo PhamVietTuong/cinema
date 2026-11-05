@@ -885,6 +885,45 @@ END
 -- ===== end splash banner =====
 
 -- ============================================================
+-- Removed: Roster / shift scheduling (StaffShift) and the manager-override PIN
+-- ============================================================
+-- Both features were removed outright; blocking/unblocking seats and rooms, and POS price
+-- overrides, now require the Approvers role (Admin) directly — no PIN-based alternate path.
+
+IF OBJECT_ID('dbo.StaffShift', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE [StaffShift];
+END
+
+IF COL_LENGTH('dbo.User', 'OverridePinLockoutEndUtc') IS NOT NULL
+BEGIN
+    ALTER TABLE [User] DROP COLUMN [OverridePinLockoutEndUtc];
+END
+
+IF COL_LENGTH('dbo.User', 'OverridePinFailedCount') IS NOT NULL
+BEGIN
+    DECLARE @df sysname = (SELECT d.name FROM sys.default_constraints d
+        JOIN sys.columns c ON c.object_id = d.parent_object_id AND c.column_id = d.parent_column_id
+        WHERE d.parent_object_id = OBJECT_ID('dbo.User') AND c.name = 'OverridePinFailedCount');
+    IF @df IS NOT NULL
+    BEGIN
+        EXEC('ALTER TABLE [User] DROP CONSTRAINT [' + @df + ']');
+    END
+    ALTER TABLE [User] DROP COLUMN [OverridePinFailedCount];
+END
+
+IF COL_LENGTH('dbo.User', 'OverridePinSalt') IS NOT NULL
+BEGIN
+    ALTER TABLE [User] DROP COLUMN [OverridePinSalt];
+END
+
+IF COL_LENGTH('dbo.User', 'OverridePinHash') IS NOT NULL
+BEGIN
+    ALTER TABLE [User] DROP COLUMN [OverridePinHash];
+END
+-- ===== end removed roster / manager-override PIN =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

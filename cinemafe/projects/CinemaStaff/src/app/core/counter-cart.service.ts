@@ -8,7 +8,6 @@ import {
   CinemaServiceAgent, PaymentServiceAgent, PriceBreakdownAdjustment, PriceBreakdownLine, SeatLockSessionService, SelectableSeat,
   apiErrorMessage, foodOrderCap, isGroupBlocked, seatGroupOf, seatLabel, joinSeatLabels,
 } from 'CinemaLib';
-import { ManagerApprovalService } from './manager-approval.service';
 import { PosFoodLine, PosTicket, defaultPriceRow, foodItems, foodUnitPrice, seatItems, ticketPrice } from './pos-calc';
 import { PriceOverrideDialog } from './price-override.dialog';
 import { TheaterContextService } from './theater-context.service';
@@ -28,12 +27,13 @@ export class CounterCartService implements OnDestroy {
   private readonly _payment = inject(PaymentServiceAgent.HttpService);
   private readonly _cinema = inject(CinemaServiceAgent.HttpService);
   private readonly _session = inject(SeatLockSessionService);
-  private readonly _approval = inject(ManagerApprovalService);
   private readonly _dialog = inject(MatDialog);
   private readonly _translate = inject(TranslateService);
   readonly theaterCtx = inject(TheaterContextService);
 
   readonly theaterId = computed(() => this.theaterCtx.currentTheaterId() ?? '');
+  /** A price override needs the Approvers role (Admin only); the override UI is hidden for everyone else. */
+  readonly isApprover = this.theaterCtx.isAdmin;
 
   // ---- showtime and seats
   readonly showtimes = signal<CounterShowtime[]>([]);
@@ -66,8 +66,6 @@ export class CounterCartService implements OnDestroy {
   readonly points = signal(0);
   readonly discountCode = signal('');
   readonly giftCardCode = signal('');
-  /** Manager approval kept while any price override is in force; absent for an approver. */
-  private readonly _override = signal<CinemaServiceAgent.ManagerOverrideDTO | undefined>(undefined);
 
   // ---- quote
   readonly quote = signal<CinemaServiceAgent.CounterQuoteDTO | null>(null);
@@ -112,7 +110,6 @@ export class CounterCartService implements OnDestroy {
       discountCode: this.discountCode().trim() || undefined,
       giftCardCode: this.giftCardCode().trim() || undefined,
       pointsToRedeem: this.customer() ? this.points() : 0,
-      override: this._override(),
     };
   });
 
@@ -253,7 +250,6 @@ export class CounterCartService implements OnDestroy {
     this.seatWarning.set('');
     this._session.forgetAll();
     void this._session.stop();
-    this._clearOverrideIfUnused();
   }
 
   // ---- seats
@@ -318,12 +314,10 @@ export class CounterCartService implements OnDestroy {
       }
     }
     this.tickets.update(list => list.filter(t => t !== ticket));
-    this._clearOverrideIfUnused();
   }
 
   setCategory(ticket: PosTicket, patronCategoryId: string): void {
     this.tickets.update(list => list.map(t => (t === ticket ? { ...t, patronCategoryId, overridePrice: undefined } : t)));
-    this._clearOverrideIfUnused();
   }
 
   priceOf(ticket: PosTicket): number {
@@ -403,7 +397,6 @@ export class CounterCartService implements OnDestroy {
         const { [f.id!]: _removed, ...rest } = o;
         return rest;
       });
-      this._clearOverrideIfUnused();
     }
   }
 
@@ -446,36 +439,16 @@ export class CounterCartService implements OnDestroy {
     });
   }
 
-  /** Asks for the new price, then (unless restoring the list price) for manager approval, then applies it. */
+  /** Asks for the new price and applies it. The override button is only shown to approvers (see `isApprover`); the
+   * server still enforces the Approvers role on the sale itself. */
   private _askPrice(label: string, current: number, hasOverride: boolean, apply: (price: number | null) => void): void {
     this._dialog.open(PriceOverrideDialog, { width: '420px', maxWidth: '95vw', data: { label, current, hasOverride } })
       .afterClosed().subscribe(price => {
         if (price === undefined) {
           return;
         }
-        if (price === null) {
-          apply(null);
-          this._clearOverrideIfUnused();
-          return;
-        }
-        this._approval.request().subscribe(approval => {
-          if (!approval) {
-            return;
-          }
-          if (approval.override) {
-            this._override.set(approval.override);
-          }
-          apply(price);
-        });
+        apply(price);
       });
-  }
-
-  /** Drops the stored manager approval once no line carries an override any more. */
-  private _clearOverrideIfUnused(): void {
-    const any = this.tickets().some(t => t.overridePrice !== undefined) || Object.keys(this._foodOverrides()).length > 0;
-    if (!any) {
-      this._override.set(undefined);
-    }
   }
 
   // ---- member and codes
@@ -539,7 +512,6 @@ export class CounterCartService implements OnDestroy {
     this.tickets.set([]);
     this.foodQty.set({});
     this._foodOverrides.set({});
-    this._override.set(undefined);
     this.detachMember();
     this.discountCode.set('');
     this.giftCardCode.set('');

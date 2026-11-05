@@ -1,8 +1,8 @@
 using Cinema.Business.Contracts;
+using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.BoxOffice;
 using Cinema.Data.Contracts;
-using Cinema.Data.Enums;
 
 namespace Cinema.Business.Managers;
 
@@ -10,13 +10,11 @@ public class BoxOfficeManager : IBoxOfficeManager
 {
     private readonly IApplicationUnitOfWork _uow;
     private readonly IBookingManager _booking;
-    private readonly IManagerOverrideService _overrides;
 
-    public BoxOfficeManager(IApplicationUnitOfWork uow, IBookingManager booking, IManagerOverrideService overrides)
+    public BoxOfficeManager(IApplicationUnitOfWork uow, IBookingManager booking)
     {
         _uow = uow;
         _booking = booking;
-        _overrides = overrides;
     }
 
     public async Task<CounterQuoteDTO> QuoteAsync(Guid theaterId, CounterSaleRequest request)
@@ -25,16 +23,18 @@ public class BoxOfficeManager : IBoxOfficeManager
         return await _booking.QuoteCounterAsync(new CounterSaleContext { TheaterId = theaterId, Request = request });
     }
 
-    public async Task<CounterSaleResultDTO> SellAsync(Guid theaterId, Guid staffUserId, CounterSaleRequest request)
+    public async Task<CounterSaleResultDTO> SellAsync(Guid theaterId, Guid staffUserId, bool isApprover, CounterSaleRequest request)
     {
         await ValidateRequestAsync(request);
 
-        // The approval is verified BEFORE the sale's own transaction opens: a failed PIN attempt is persisted by the
-        // override service and must survive even though the sale is rejected.
         Guid? approverUserId = null;
         if (request.Seats.Any(s => s.OverrideUnitPrice.HasValue) || request.Foods.Any(f => f.OverrideUnitPrice.HasValue))
         {
-            approverUserId = await _overrides.VerifyAsync(theaterId, staffUserId, request.Override, AuditAction.PriceOverride);
+            if (!isApprover)
+            {
+                throw new AccessDeniedException("Manager approval is required for this action.");
+            }
+            approverUserId = staffUserId;
         }
 
         return await _booking.SellAtCounterAsync(new CounterSaleContext

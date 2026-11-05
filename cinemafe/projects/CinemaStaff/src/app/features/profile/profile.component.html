@@ -12,32 +12,4 @@
     <p class="muted">{{ user()?.email }}</p>
     <p class="muted">{{ user()?.userTypeName }}</p>
   </mat-card>
-
-  @if (isApprover()) {
-    <mat-card class="ad-card section">
-      <h3 class="ad-card-title">{{ 'pinSettings.title' | translate }}</h3>
-      <p class="muted">{{ 'pinSettings.hint' | translate }}</p>
-      <form [formGroup]="form" (ngSubmit)="save()" class="pin-form">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'pinSettings.pin' | translate }}</mat-label>
-          <input matInput type="password" inputmode="numeric" maxlength="8" autocomplete="new-password" formControlName="pin">
-          @if (form.controls.pin.invalid && form.controls.pin.touched) {
-            <mat-error>{{ 'pinSettings.pinInvalid' | translate }}</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'pinSettings.confirmPin' | translate }}</mat-label>
-          <input matInput type="password" inputmode="numeric" maxlength="8" autocomplete="new-password" formControlName="confirmPin">
-          @if (form.hasError('pinMismatch') && form.controls.confirmPin.touched) {
-            <mat-error>{{ 'pinSettings.mismatch' | translate }}</mat-error>
-          }
-        </mat-form-field>
-        <div>
-          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving()">
-            <mat-icon>lock</mat-icon> {{ 'pinSettings.save' | translate }}
-          </button>
-        </div>
-      </form>
-    </mat-card>
-  }
 </div>

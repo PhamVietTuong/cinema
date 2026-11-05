@@ -14,7 +14,7 @@ public interface IIncidentManager
     Task<IncidentDTO> ReportAsync(Guid theaterId, Guid actorUserId, ReportIncidentRequest request);
 
     /// <summary>Closes an incident. With <c>Unblock</c> it also reopens the blocked seat/room (approver or override only).</summary>
-    Task<IncidentDTO> ResolveAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, Guid actorUserId, ResolveIncidentRequest request);
+    Task<IncidentDTO> ResolveAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, Guid actorUserId, bool isApprover, ResolveIncidentRequest request);
 
     Task<IncidentDTO> GetAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, Guid incidentId);
 

@@ -8,13 +8,13 @@ import {
   DialogService, EmptyStateComponent, SharedModule, CinemaServiceAgent, StatusPillComponent, incidentCategoryLabel,
   hideLoading, showException, showLoading, showSuccess,
 } from 'CinemaLib';
-import { OverrideFlowService } from '../../core/override-flow.service';
 import { RoomSeatPickerComponent } from '../../core/room-seat-picker.component';
+import { TheaterContextService } from '../../core/theater-context.service';
 
 /**
  * One incident: details, resolve (optionally unblocking what it blocked), and the block-seat / block-room actions.
- * Blocking needs an approver or a manager PIN override; the affected upcoming tickets are listed afterwards so staff
- * can relocate them (nothing is cancelled automatically).
+ * Blocking and resolve-with-unblock need the Approvers role (Admin only); the affected upcoming tickets are listed
+ * afterwards so staff can relocate them (nothing is cancelled automatically).
  */
 @Component({
   selector: 'staff-incident-detail',
@@ -31,7 +31,7 @@ export class IncidentDetailComponent implements OnInit {
   busy = false;
   notFound = false;
 
-  readonly overrides = inject(OverrideFlowService);
+  readonly isApprover = inject(TheaterContextService).isAdmin;
   readonly categoryLabel = incidentCategoryLabel;
 
   private readonly _ops = inject(CinemaServiceAgent.HttpService);
@@ -66,8 +66,8 @@ export class IncidentDetailComponent implements OnInit {
     if (!incident || !seatId) {
       return;
     }
-    this._block(incident, override => this._ops.blockSeat(CinemaServiceAgent.BlockSeatRequest.fromJS({
-      theaterId: incident.theaterId, seatId, incidentId: incident.id, override,
+    this._block(incident, this._ops.blockSeat(CinemaServiceAgent.BlockSeatRequest.fromJS({
+      theaterId: incident.theaterId, seatId, incidentId: incident.id,
     })));
   }
 
@@ -77,8 +77,8 @@ export class IncidentDetailComponent implements OnInit {
     if (!incident || !roomId) {
       return;
     }
-    this._block(incident, override => this._ops.blockRoom(CinemaServiceAgent.BlockRoomRequest.fromJS({
-      theaterId: incident.theaterId, roomId, incidentId: incident.id, override,
+    this._block(incident, this._ops.blockRoom(CinemaServiceAgent.BlockRoomRequest.fromJS({
+      theaterId: incident.theaterId, roomId, incidentId: incident.id,
     })));
   }
 
@@ -96,11 +96,9 @@ export class IncidentDetailComponent implements OnInit {
         return;
       }
       const unblock = this.unblock && !!(incident.blocksSeat || incident.blocksRoom);
-      const call = (override?: CinemaServiceAgent.ManagerOverrideDTO) => this._ops.resolveIncident(CinemaServiceAgent.ResolveIncidentRequest.fromJS({
-        incidentId: incident.id, resolutionNote: result.note || undefined, unblock, override,
+      const request$ = this._ops.resolveIncident(CinemaServiceAgent.ResolveIncidentRequest.fromJS({
+        incidentId: incident.id, resolutionNote: result.note || undefined, unblock,
       }));
-      // Unblocking re-opens seats for sale, so it needs an approver (or PIN); a plain resolve does not.
-      const request$: Observable<CinemaServiceAgent.IncidentDTO> = unblock ? this.overrides.run(incident.theaterId, call) : call();
       this._run(request$, () => {
         this._store.dispatch(showSuccess({ message: this._translate.instant('incidents.toast.resolved') }));
         this.blockResult = null;
@@ -109,8 +107,8 @@ export class IncidentDetailComponent implements OnInit {
     });
   }
 
-  private _block(incident: CinemaServiceAgent.IncidentDTO, call: (override?: CinemaServiceAgent.ManagerOverrideDTO) => Observable<CinemaServiceAgent.BlockResultDTO>): void {
-    this._run(this.overrides.run(incident.theaterId, call), result => {
+  private _block(incident: CinemaServiceAgent.IncidentDTO, request$: Observable<CinemaServiceAgent.BlockResultDTO>): void {
+    this._run(request$, result => {
       this.blockResult = result;
       this._store.dispatch(showSuccess({ message: this._translate.instant('incidents.toast.blocked') }));
       this._load(incident.id!, false);

@@ -62,8 +62,6 @@ public class CinemaController : ApiControllerBase
     private readonly IStaffReportManager _reports;
     private readonly IScheduleBoardManager _board;
     private readonly IIncidentManager _incidents;
-    private readonly IManagerOverrideService _overrides;
-    private readonly IWorkforceManager _workforce;
 
     public CinemaController(
         IMovieManager movieManager,
@@ -100,9 +98,7 @@ public class CinemaController : ApiControllerBase
         IBoxOfficeManager boxOffice,
         IStaffReportManager reports,
         IScheduleBoardManager board,
-        IIncidentManager incidents,
-        IManagerOverrideService overrides,
-        IWorkforceManager workforce)
+        IIncidentManager incidents)
     {
         _combos              = combos;
         _concessions         = concessions;
@@ -111,8 +107,6 @@ public class CinemaController : ApiControllerBase
         _reports             = reports;
         _board               = board;
         _incidents           = incidents;
-        _overrides           = overrides;
-        _workforce           = workforce;
         _movieManager    = movieManager;
         _theaterManager  = theaterManager;
         _ageRestrictions = ageRestrictions;
@@ -2073,7 +2067,7 @@ public class CinemaController : ApiControllerBase
                 return Forbid();
             }
             var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _boxOffice.SellAsync(theaterId, User.GetUserId(), request));
+            return Ok(await _boxOffice.SellAsync(theaterId, User.GetUserId(), User.IsAdmin(), request));
         }
         catch (Exception e)
         {
@@ -2323,7 +2317,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    /// <summary>Closes an incident; with Unblock it also reopens the blocked seat/room (approver or manager override).</summary>
+    /// <summary>Closes an incident; with Unblock it also reopens the blocked seat/room (Approvers only).</summary>
     [Authorize(Roles = RoleNames.StaffApp)]
     [HttpPost]
     [ProducesResponseType(typeof(IncidentDTO), 200)]
@@ -2336,7 +2330,7 @@ public class CinemaController : ApiControllerBase
             {
                 return Forbid();
             }
-            return Ok(await _incidents.ResolveAsync(scope.ToTheaterFilter(), User.GetUserId(), request));
+            return Ok(await _incidents.ResolveAsync(scope.ToTheaterFilter(), User.GetUserId(), User.IsAdmin(), request));
         }
         catch (Exception e)
         {
@@ -2345,10 +2339,10 @@ public class CinemaController : ApiControllerBase
     }
 
     /// <summary>
-    /// Takes a seat (and its double-seat partner) out of sale. Approvers, or any staff with a manager override (403
-    /// without one). Returns the upcoming tickets on the seat; nothing is cancelled.
+    /// Takes a seat (and its double-seat partner) out of sale (Approvers only). Returns the upcoming tickets on the
+    /// seat; nothing is cancelled.
     /// </summary>
-    [Authorize(Roles = RoleNames.StaffApp)]
+    [Authorize(Roles = RoleNames.Approvers)]
     [HttpPost]
     [ProducesResponseType(typeof(BlockResultDTO), 200)]
     public async Task<IActionResult> BlockSeat([FromBody] BlockSeatRequest request)
@@ -2370,10 +2364,10 @@ public class CinemaController : ApiControllerBase
     }
 
     /// <summary>
-    /// Puts a room into maintenance. Approvers, or any staff with a manager override (403 without one). Returns the
-    /// upcoming tickets in the room; nothing is cancelled.
+    /// Puts a room into maintenance (Approvers only). Returns the upcoming tickets in the room; nothing is
+    /// cancelled.
     /// </summary>
-    [Authorize(Roles = RoleNames.StaffApp)]
+    [Authorize(Roles = RoleNames.Approvers)]
     [HttpPost]
     [ProducesResponseType(typeof(BlockResultDTO), 200)]
     public async Task<IActionResult> BlockRoom([FromBody] BlockRoomRequest request)
@@ -2391,157 +2385,6 @@ public class CinemaController : ApiControllerBase
         catch (Exception e)
         {
             return HandleException(e, nameof(BlockRoom));
-        }
-    }
-
-    #endregion
-
-    #region Workforce
-
-    /// <summary>Sets the caller's own manager-override PIN (approver roles only).</summary>
-    [Authorize(Roles = RoleNames.Approvers)]
-    [HttpPost]
-    [ProducesResponseType(204)]
-    public async Task<IActionResult> SetMyOverridePin([FromBody] SetOverridePinRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(SetMyOverridePin)} being awakened to process request...");
-        try
-        {
-            await _overrides.SetPinAsync(User.GetUserId(), request.Pin);
-            return NoContent();
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(SetMyOverridePin));
-        }
-    }
-
-    /// <summary>Active approvers (Id, Name) who can authorise an override in the theater.</summary>
-    [Authorize(Roles = RoleNames.StaffApp)]
-    [HttpPost]
-    [ProducesResponseType(typeof(List<OverrideApproverDTO>), 200)]
-    public async Task<IActionResult> GetOverrideApprovers([FromBody] OverrideApproversRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetOverrideApprovers)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _overrides.GetApproversAsync(theaterId));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetOverrideApprovers));
-        }
-    }
-
-    // ── Roster (approvers manage it; every staff member reads their own shifts) ─
-
-    /// <summary>Active staff of the theater, for the roster and task pickers (approvers only).</summary>
-    [Authorize(Roles = RoleNames.Approvers)]
-    [HttpPost]
-    [ProducesResponseType(typeof(List<TheaterStaffDTO>), 200)]
-    public async Task<IActionResult> GetTheaterStaff([FromBody] GetTheaterStaffRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetTheaterStaff)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _workforce.GetTheaterStaffAsync(theaterId));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetTheaterStaff));
-        }
-    }
-
-    /// <summary>Shifts of a theater in a range of at most 31 days (approvers only).</summary>
-    [Authorize(Roles = RoleNames.Approvers)]
-    [HttpPost]
-    [ProducesResponseType(typeof(List<StaffShiftDTO>), 200)]
-    public async Task<IActionResult> GetRoster([FromBody] RosterRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetRoster)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _workforce.GetRosterAsync(theaterId, request));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetRoster));
-        }
-    }
-
-    /// <summary>Creates or edits a roster shift (approvers only: 403 for every other staff role).</summary>
-    [Authorize(Roles = RoleNames.Approvers)]
-    [HttpPost]
-    [ProducesResponseType(typeof(StaffShiftDTO), 200)]
-    public async Task<IActionResult> SaveShift([FromBody] SaveStaffShiftRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(SaveShift)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _workforce.SaveShiftAsync(scope.ToTheaterFilter(), theaterId, request));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(SaveShift));
-        }
-    }
-
-    /// <summary>Deletes a roster shift (approvers only).</summary>
-    [Authorize(Roles = RoleNames.Approvers)]
-    [HttpPost]
-    [ProducesResponseType(204)]
-    public async Task<IActionResult> DeleteShift([FromBody] DeleteStaffShiftRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(DeleteShift)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            await _workforce.DeleteShiftAsync(scope.ToTheaterFilter(), request);
-            return NoContent();
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(DeleteShift));
-        }
-    }
-
-    /// <summary>The caller's own shifts in a range of at most 31 days (every staff role).</summary>
-    [Authorize(Roles = RoleNames.StaffApp)]
-    [HttpPost]
-    [ProducesResponseType(typeof(List<StaffShiftDTO>), 200)]
-    public async Task<IActionResult> GetMyShifts([FromBody] MyShiftsRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetMyShifts)} being awakened to process request...");
-        try
-        {
-            return Ok(await _workforce.GetMyShiftsAsync(User.GetUserId(), request));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetMyShifts));
         }
     }
 

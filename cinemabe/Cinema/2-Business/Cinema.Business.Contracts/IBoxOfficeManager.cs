@@ -14,7 +14,7 @@ public interface IBoxOfficeManager
     Task<CounterQuoteDTO> QuoteAsync(Guid theaterId, CounterSaleRequest request);
 
     /// <summary>Rings up a counter sale: always creates a Paid invoice (never Pending) in one transaction.</summary>
-    Task<CounterSaleResultDTO> SellAsync(Guid theaterId, Guid staffUserId, CounterSaleRequest request);
+    Task<CounterSaleResultDTO> SellAsync(Guid theaterId, Guid staffUserId, bool isApprover, CounterSaleRequest request);
 
     Task<List<CounterShowtimeDTO>> GetShowtimesTodayAsync(Guid theaterId, DateTime? date);
 

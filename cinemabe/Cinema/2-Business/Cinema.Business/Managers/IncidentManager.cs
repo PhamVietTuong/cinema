@@ -18,15 +18,13 @@ public class IncidentManager : IIncidentManager
 {
     private readonly IApplicationUnitOfWork _uow;
     private readonly IAuditLogger _audit;
-    private readonly IManagerOverrideService _overrides;
 
     private readonly IStaffNotificationService _staffNotifications;
 
-    public IncidentManager(IApplicationUnitOfWork uow, IAuditLogger audit, IManagerOverrideService overrides, IStaffNotificationService? staffNotifications = null)
+    public IncidentManager(IApplicationUnitOfWork uow, IAuditLogger audit, IStaffNotificationService? staffNotifications = null)
     {
         _uow = uow;
         _audit = audit;
-        _overrides = overrides;
         _staffNotifications = staffNotifications ?? new NoOpStaffNotificationService();
     }
 
@@ -75,7 +73,7 @@ public class IncidentManager : IIncidentManager
         return dto;
     }
 
-    public async Task<IncidentDTO> ResolveAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, Guid actorUserId, ResolveIncidentRequest request)
+    public async Task<IncidentDTO> ResolveAsync(IReadOnlyCollection<Guid>? scopeTheaterIds, Guid actorUserId, bool isApprover, ResolveIncidentRequest request)
     {
         var incident = await _uow.IncidentStore.GetByIdAsync(request.IncidentId);
         if (incident == null)
@@ -98,16 +96,20 @@ public class IncidentManager : IIncidentManager
         List<Seat> seatsToOpen = new();
         Room? roomToOpen = null;
         Guid? approverId = null;
+        if ((unblockSeat || unblockRoom) && !isApprover)
+        {
+            throw new AccessDeniedException("Manager approval is required for this action.");
+        }
         if (unblockSeat)
         {
             var seat = await LoadSeatAsync(incident.SeatId!.Value);
             seatsToOpen = await LoadSeatGroupAsync(seat);
-            approverId = await _overrides.VerifyAsync(incident.TheaterId, actorUserId, request.Override, AuditAction.BlockSeat);
+            approverId = actorUserId;
         }
         if (unblockRoom)
         {
             roomToOpen = await LoadRoomInTheaterAsync(incident.TheaterId, incident.RoomId!.Value);
-            approverId = await _overrides.VerifyAsync(incident.TheaterId, actorUserId, request.Override, AuditAction.BlockRoom);
+            approverId = actorUserId;
         }
 
         await _uow.BeginTransactionAsync();
@@ -221,7 +223,7 @@ public class IncidentManager : IIncidentManager
             throw new InvalidOperationException("The seat is already blocked.");
         }
 
-        var approverId = await _overrides.VerifyAsync(theaterId, actorUserId, request.Override, AuditAction.BlockSeat);
+        var approverId = actorUserId;
 
         var seatIds = seats.Select(s => s.Id).ToList();
         var affected = await _uow.IncidentStore.GetUpcomingTicketsAsync(room.Id, seatIds, DateTime.Now);
@@ -283,7 +285,7 @@ public class IncidentManager : IIncidentManager
             throw new InvalidOperationException("Only a room that is open for sale can be blocked.");
         }
 
-        var approverId = await _overrides.VerifyAsync(theaterId, actorUserId, request.Override, AuditAction.BlockRoom);
+        var approverId = actorUserId;
 
         var affected = await _uow.IncidentStore.GetUpcomingTicketsAsync(room.Id, null, DateTime.Now);
 

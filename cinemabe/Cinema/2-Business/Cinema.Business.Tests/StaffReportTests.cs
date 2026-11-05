@@ -263,20 +263,4 @@ public class StaffReportTests
         kpis.AverageSpendPerHead.Should().Be(0);
     }
 
-    [Fact]
-    public async Task GetApprovers_PassesAdminAsGlobalRole()
-    {
-        _uowMock.Setup(u => u.UserStore.GetApproversAsync(
-                _theaterA, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>()))
-            .ReturnsAsync(new List<(Guid, string)> { (Guid.NewGuid(), "Admin") });
-        var sut = new ManagerOverrideService(_uowMock.Object, new AuditLogger(_uowMock.Object));
-
-        var approvers = await sut.GetApproversAsync(_theaterA);
-
-        approvers.Should().ContainSingle();
-        _uowMock.Verify(u => u.UserStore.GetApproversAsync(
-            _theaterA,
-            It.IsAny<IReadOnlyCollection<string>>(),
-            It.Is<IReadOnlyCollection<string>>(r => r.Contains(RoleNames.Admin))), Times.Once);
-    }
 }
