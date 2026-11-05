@@ -4,6 +4,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { IdentityServiceAgent } from '../../services/identity-http.service';
+import { StaffHubService } from '../../services/staff-hub.service';
 import { TokenStorage } from './token-storage';
 import * as AuthActions from './auth.actions';
 
@@ -12,6 +13,7 @@ export class AuthEffects {
   private actions$ = inject(Actions);
   private _identityService = inject(IdentityServiceAgent.HttpService);
   private _router = inject(Router);
+  private _staffHub = inject(StaffHubService);
 
   login$ = createEffect(() =>
     this.actions$.pipe(
@@ -57,6 +59,12 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.logout),
       tap(() => {
+        // The staff hub's connection is authenticated once, at connect, and never re-evaluated per
+        // invoke — without this, a stale connection from the previous account stays open and a
+        // subsequent action (e.g. an Admin joining a theater group) is authorized against the OLD
+        // user's claims, not the one now logged in. Stopping it here forces a fresh, correctly
+        // authenticated connection on the next login. A no-op when no staff hub was ever started.
+        void this._staffHub.stop();
         TokenStorage.clear();
         this._router.navigate(['/auth/login']);
       })
