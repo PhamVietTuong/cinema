@@ -29,7 +29,7 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 | `RoleNames.Concession` | `Admin,TheaterStaff` | `Concession` region: `GetPickupQueue`, `SetFoodStatus`, `GetLowStock`, `LookupPickup` |
 | `RoleNames.BackOffice` | `Admin,TheaterStaff` | Documented intent for warehouse/inventory staff-app access; narrowed to the caller's own theater in code — no endpoint in the current controller is gated by this constant as of this review |
 | `RoleNames.StockApprovers` | `Admin` only | Documented intent: approve/reject storage plans, change inventory tracking — storage-plan/inventory management was removed from `CinemaStaff`'s current feature set (confirmed absent from the controller and the staff sidebar); no live endpoint uses this constant currently |
-| `RoleNames.Approvers` | `Admin` only | `Workforce` region: `SetMyOverridePin`, `GetTheaterStaff`, `GetRoster`, `SaveShift`, `DeleteShift`; `Operations` region: `BlockSeat`/`BlockRoom`/incident resolve-with-unblock also require this role or a manager-override PIN |
+| `RoleNames.Approvers` | `Admin` only | `Operations` region: `BlockSeat`/`BlockRoom`/incident resolve-with-unblock require this role outright (no PIN-based alternate path); POS price overrides (`Sell`) also require it when any line carries an `OverrideUnitPrice` |
 | `RoleNames.Reporting` | `Admin` only | `StaffReport` region: `GetAuditLog`, `GetSales`, `GetOccupancy`, `GetKpis` |
 | `RoleNames.TheaterScopedRoles` | `TheaterStaff` | Not an authz filter — used by `AuthManager.ResolveTheaterIdAsync` to decide which `UserType`s *require* a non-null `TheaterId` on create/update |
 
@@ -38,13 +38,13 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 ## 3. What each role can / cannot do
 
 ### Admin
-- Everything: all catalog/theater/pricing/promotion CRUD, user management, invoice admin (list/status-override/delete), all staff-area actions (reporting, approvers, workforce roster), audit log.
+- Everything: all catalog/theater/pricing/promotion CRUD, user management, invoice admin (list/status-override/delete), all staff-area actions (reporting, approvers), audit log.
 - Only role that can access `RoleNames.StockApprovers`/`Approvers`/`Reporting`-gated actions.
 - Not theater-scoped — can act across all theaters.
 
 ### TheaterStaff
-- Box office counter sale (`Quote`/`Sell`), gate ticket scan/lookup, concession pickup queue/food status/low-stock, schedule board, incident reporting (not resolving with unblock, which needs Approvers/PIN), own shift lookup (`GetMyShifts`), seat-map read (`GetRoomSeatMap`).
-- Cannot: manage the roster for others, set/approve override PINs as an approver, run staff reports (`StaffReport` region is `Admin`-only despite the staff-sounding name), write any catalog/pricing/theater/movie data (all gated `_adminRole`="Admin" literal, not `RoleNames.TheaterStaff`).
+- Box office counter sale (`Quote`/`Sell`), gate ticket scan/lookup, concession pickup queue/food status/low-stock, schedule board, incident reporting (not resolving with unblock, which needs `Approvers`), seat-map read (`GetRoomSeatMap`).
+- Cannot: block/unblock a seat or room, apply a POS price override, run staff reports (`StaffReport` region is `Admin`-only despite the staff-sounding name), write any catalog/pricing/theater/movie data (all gated `_adminRole`="Admin" literal, not `RoleNames.TheaterStaff`).
 - Always theater-scoped — JWT carries exactly one `theaterId` claim; `TryGetBackOfficeScope`/`TryGetStaffScope` pin the caller to that theater, 403 if attempting cross-theater access.
 
 ### Customer

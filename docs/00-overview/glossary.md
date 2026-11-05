@@ -26,7 +26,6 @@
 | StockMovement | Insert-only signed-quantity ledger for food/drink inventory; `FoodAndDrink.QuantityOnHand` is only ever changed together with a StockMovement row (app-level invariant). | `Cinema.Data.Entities/Entities/StockMovement.cs` |
 | AuditLog | Single shared log table for every audit/log need, discriminated by `AuditAction` enum. No FKs by design — survives deletion of what it references. | `Cinema.Data.Entities/Entities/AuditLog.cs` |
 | Incident | Operational incident report (seat/room/projection/sound/safety/etc.), no FKs by design (like AuditLog). Can flag a seat or room out of sale (`BlocksSeat`/`BlocksRoom`). | `Cinema.Data.Entities/Entities/Incident.cs` |
-| StaffShift | A theater-staff work shift (TheaterId, UserId, StartTime/EndTime). Confirmed still live/wired, not removed despite a past "remove staff features" effort. | `Cinema.Data.Entities/Entities/StaffShift.cs` |
 | ReminderLog | Dedup table (`Unique(UserId, ShowTimeId)`) so a showtime reminder job doesn't resend after a process restart. | `Cinema.Data.Entities/Entities/ReminderLog.cs` |
 | Template | Email/SMS notification template, looked up by an immutable `Code`, rendered via `{{Token}}` placeholders. | `Cinema.Data.Entities/Entities/Template.cs`; `TemplateRenderer` |
 | RoomType | Per-theater commercial screening class (Standard/IMAX/4DX/etc.), carries 3D surcharge and turnover buffer. | `Cinema.Data.Entities/Entities/RoomType.cs` |

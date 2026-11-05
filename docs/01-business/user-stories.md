@@ -33,8 +33,6 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - As a concession staff member, I want to see low-stock alerts, so that I can flag items for restocking before they run out mid-shift.
 - As a staff member, I want to view the day's schedule board for my theater, so that I know which rooms/showtimes are running.
 - As a staff member, I want to report an incident (seat/room/projection/sound/safety/customer/cleanliness issue), so that it's tracked and can be resolved before it affects more customers.
-- As a staff member, I want to see my own upcoming shifts, so that I know when I'm scheduled to work.
-- As a manager-approver, I want to require my PIN before a staff member can block a seat/room or resolve certain incidents, so that disruptive actions get a second check.
 
 ## Admin
 
@@ -45,8 +43,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - As an Admin, I want to issue and deactivate gift cards, so that I can run promotions or compensate customers without a refund feature.
 - As an Admin, I want to view and override an invoice's status when something goes wrong operationally, so that I can correct bookings outside the normal customer/gateway flow (being aware this path isn't validated against a transition allow-list).
 - As an Admin, I want to view revenue and sales/occupancy/KPI reports, so that I can track theater performance.
-- As an Admin, I want to view the audit log, so that I can trace who performed sensitive actions (price overrides, voids, compensation, PIN changes, gate scans, etc.).
-- As an Admin, I want to manage the workforce roster and set which staff can approve manager-override actions, so that I control who can authorize sensitive staff actions.
+- As an Admin, I want to view the audit log, so that I can trace who performed sensitive actions (price overrides, voids, compensation, gate scans, etc.).
 - As an Admin, I want to manage splash banners and notification templates, so that I can control customer-facing messaging without a code deploy.
 - As an Admin, I want to create and manage staff/customer user accounts and assign roles, so that I control who has access to what.
 
@@ -54,3 +51,4 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 
 - Nobody — Customer, TheaterStaff, or Admin — can issue a refund or reverse a `Paid` invoice's financial state today; this was built, then fully reverted. A `Paid` invoice can only be cancelled/overridden via the unconstrained admin status update, which does not reverse points/gift-card/stock or touch any payment gateway.
 - No role can export a report as a server-generated file — CSV generation happens client-side in the Admin UI from the same JSON the reports endpoints return.
+- Roster/shift scheduling and the manager-override-PIN mechanism were both removed outright (not just hidden) — blocking/unblocking a seat or room, and POS price overrides, now require the `Approvers` role (Admin) directly, with no self-service PIN or roster screen of any kind.

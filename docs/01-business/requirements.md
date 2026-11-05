@@ -29,13 +29,12 @@ This is a capability inventory of what exists today (verified against code), not
 | Box office | Quote and ring up a counter sale (always `Paid` at creation), look up a customer by phone, see today's showtimes for the theater | `RoleNames.Sellers` |
 | Gate | Scan a QR ticket for admission, look up today's paid tickets by invoice code/phone | `RoleNames.GateKeepers` |
 | Concession | View pickup queue, update a food order's status, check low-stock items, look up a pickup by reference | `RoleNames.Concession` |
-| Operations | View the schedule board, report an incident, view/resolve incidents (resolve-with-unblock needs Approver/PIN) | `RoleNames.StaffApp` (+`Approvers` for unblock) |
-| Workforce (self) | View own shifts, request an override-approver list | `RoleNames.StaffApp` |
+| Operations | View the schedule board, report an incident, view/resolve incidents (resolve-with-unblock needs `Approvers`) | `RoleNames.StaffApp` (+`Approvers` for unblock) |
 | Seat map | View (not edit) the room seat map | `RoleNames.StaffApp` |
 
 ### Explicitly not supported (TheaterStaff)
 - Cash drawer close / daily close, time clock, tasks/checklists, inventory/storage-plan management, customer-service/after-sales desk, refund/exchange UI (exchange field `ExchangedFromInvoiceId` still exists on `Invoice`, but no exchange workflow UI was found) — all confirmed removed from `CinemaStaff`'s current feature tree and sidebar.
-- Managing the roster for other staff, setting/approving override PINs (Approver/Admin only), running sales/occupancy/KPI reports (`StaffReport` region is Admin-only despite the name).
+- Running sales/occupancy/KPI reports (`StaffReport` region is Admin-only despite the name).
 - Any catalog/pricing/theater/movie/promotion write — all gated `Admin` literal, not `TheaterStaff`.
 
 ## 3. Admin capabilities (CinemaAdmin)
@@ -48,7 +47,7 @@ This is a capability inventory of what exists today (verified against code), not
 | Users | List/create/update/delete users, assign roles (theater-scoped roles require a valid theater) |
 | Invoices | List invoices, override invoice status (no allow-list enforced), delete an invoice (restores food stock if it was Pending), view revenue reports (by day/movie/theater) |
 | Gift cards | Issue, list, activate/deactivate gift cards |
-| Staff/ops oversight | Everything TheaterStaff can do, plus: run sales/occupancy/KPI reports, view audit log, manage workforce roster, set override-PIN approvers, approve seat/room blocking |
+| Staff/ops oversight | Everything TheaterStaff can do, plus: run sales/occupancy/KPI reports, view audit log, approve seat/room blocking and POS price overrides |
 
 ### Explicitly not supported (Admin)
 - Issuing a refund or reversing a `Paid` invoice's financial state through any dedicated mechanism — only the unconstrained `UpdateInvoiceStatus` exists, which doesn't reverse points/gift-card/stock or touch any gateway.

@@ -53,7 +53,7 @@ Overview/Catalog/Operations are each one `NgModule` with its own internal route 
   kitchen/*        roleGuard(CONCESSION_ROLES)    — routes exist but NOT linked from staff-menu.ts (hidden)
   reports/*        roleGuard(REPORTING_ROLES)     — sales-reports
   ''  (reports.routes)  roleGuard(REPORTING_ROLES) — audit-log
-  schedule/*, incidents/*, roster/*   — no extra section guard (approver-only screens self-guard)
+  schedule/*, incidents/*   — no extra section guard (approver-only screens self-guard)
   ''  (pos.routes)      roleGuard(SELLER_ROLES)   — counter POS
 /**                -> /auth/login
 ```
@@ -78,9 +78,8 @@ Current roles are exactly `Admin`, `Customer`, `TheaterStaff` (see business doc)
 ### CinemaStaff — box office / gate flows
 - **Counter sale (POS)**: `pos.component.ts` — quote then sell a ticket (always resolves to a Paid invoice directly, never leaves a Pending one), reuses the shared seat map (`room-seat-picker`) and `counter-cart`/`counter-summary`/`counter-tender-panel` core services.
 - **Gate**: `gate-scan` (QR scan; a refused scan is still HTTP 200 with an `Outcome` reason) and `gate-lookup` (find today's paid tickets by invoice code or phone).
-- **Incidents / blocking**: report/list/detail an incident; `BlockSeat`/`BlockRoom` require the `Approvers` role or a manager-override PIN (`manager-override.dialog`, `manager-approval.service`, `override-flow.service`).
+- **Incidents / blocking**: report/list/detail an incident; `BlockSeat`/`BlockRoom`, and resolve-with-unblock, require the `Approvers` role (Admin only) — the former PIN-based alternate path for non-approvers has been removed.
 - **Schedule board**: today's rooms/showtimes + status, live via `staff-live.service` (SignalR).
-- **Roster**: shift scheduling (`shift.dialog`); approvers manage the roster, all staff read their own shifts.
 
 ## Shared components (CinemaLib) — used by 2+ apps
 
@@ -90,10 +89,10 @@ Per root `CLAUDE.md`'s rule ("menus/shell/topbar/pills/dialogs/tables/seat map u
 |---|---|---|
 | Seat map | `seat-map/` (`seat-map.component.ts`, `seat-selection.ts`) | CinemaUser (customer booking) and CinemaStaff (`room-seat-picker` wraps it for counter sales) |
 | App shell | `shell/app-shell.component.ts` | Admin + Staff (and User) shells/topbar |
-| Dialogs | `dialogs/` — `confirm.dialog`, `reason.dialog`, `trailer.dialog`, `manager-override.dialog`, `dialog.service.ts` | Shared across apps; `manager-override.dialog` specifically backs the Staff PIN-override flow |
+| Dialogs | `dialogs/` — `confirm.dialog`, `reason.dialog`, `trailer.dialog`, `dialog.service.ts` | Shared across apps |
 | Table base | `table/base-table.component.ts`, `base-reactive.component.ts` | CinemaAdmin + CinemaStaff list pages |
 | Filter bar | `filter-bar/filter-bar.component.ts` (+ `audit-log-filter-fields.ts`) | Admin audit-log + Staff audit-log views |
-| Status pill | `status-pill/status-pill.component.ts` | Admin + Staff status badges (invoice/incident/shift states) |
+| Status pill | `status-pill/status-pill.component.ts` | Admin + Staff status badges (invoice/incident states) |
 | Ticket card / QR | `ticket/ticket-card.component.ts`, `qr/qr-code.component.ts` | CinemaUser (e-ticket display) and CinemaStaff (gate scan reference) |
 | Price formatting | `price/` | Admin + User currency display |
 | Empty state | `empty-state/` | Admin + Staff + User list/empty views |
