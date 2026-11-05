@@ -185,13 +185,6 @@ export interface IHttpService {
     resolveIncident(request: ResolveIncidentRequest): Observable<IncidentDTO>;
     blockSeat(request: BlockSeatRequest): Observable<BlockResultDTO>;
     blockRoom(request: BlockRoomRequest): Observable<BlockResultDTO>;
-    setMyOverridePin(request: SetOverridePinRequest): Observable<void>;
-    getOverrideApprovers(request: OverrideApproversRequest): Observable<OverrideApproverDTO[]>;
-    getTheaterStaff(request: GetTheaterStaffRequest): Observable<TheaterStaffDTO[]>;
-    getRoster(request: RosterRequest): Observable<StaffShiftDTO[]>;
-    saveShift(request: SaveStaffShiftRequest): Observable<StaffShiftDTO>;
-    deleteShift(request: DeleteStaffShiftRequest): Observable<void>;
-    getMyShifts(request: MyShiftsRequest): Observable<StaffShiftDTO[]>;
 }
 
 @Injectable()
@@ -8777,390 +8770,6 @@ export class HttpService implements IHttpService {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = BlockResultDTO.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    setMyOverridePin(request: SetOverridePinRequest): Observable<void> {
-        let url_ = this.baseUrl + "/api/Cinema/SetMyOverridePin";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSetMyOverridePin(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processSetMyOverridePin(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processSetMyOverridePin(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    getOverrideApprovers(request: OverrideApproversRequest): Observable<OverrideApproverDTO[]> {
-        let url_ = this.baseUrl + "/api/Cinema/GetOverrideApprovers";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetOverrideApprovers(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetOverrideApprovers(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<OverrideApproverDTO[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<OverrideApproverDTO[]>;
-        }));
-    }
-
-    protected processGetOverrideApprovers(response: HttpResponseBase): Observable<OverrideApproverDTO[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(OverrideApproverDTO.fromJS(item));
-            }
-            else {
-                result200 = <any>null;
-            }
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    getTheaterStaff(request: GetTheaterStaffRequest): Observable<TheaterStaffDTO[]> {
-        let url_ = this.baseUrl + "/api/Cinema/GetTheaterStaff";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetTheaterStaff(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetTheaterStaff(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<TheaterStaffDTO[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<TheaterStaffDTO[]>;
-        }));
-    }
-
-    protected processGetTheaterStaff(response: HttpResponseBase): Observable<TheaterStaffDTO[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(TheaterStaffDTO.fromJS(item));
-            }
-            else {
-                result200 = <any>null;
-            }
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    getRoster(request: RosterRequest): Observable<StaffShiftDTO[]> {
-        let url_ = this.baseUrl + "/api/Cinema/GetRoster";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetRoster(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetRoster(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<StaffShiftDTO[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<StaffShiftDTO[]>;
-        }));
-    }
-
-    protected processGetRoster(response: HttpResponseBase): Observable<StaffShiftDTO[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(StaffShiftDTO.fromJS(item));
-            }
-            else {
-                result200 = <any>null;
-            }
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    saveShift(request: SaveStaffShiftRequest): Observable<StaffShiftDTO> {
-        let url_ = this.baseUrl + "/api/Cinema/SaveShift";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSaveShift(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processSaveShift(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<StaffShiftDTO>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<StaffShiftDTO>;
-        }));
-    }
-
-    protected processSaveShift(response: HttpResponseBase): Observable<StaffShiftDTO> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = StaffShiftDTO.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    deleteShift(request: DeleteStaffShiftRequest): Observable<void> {
-        let url_ = this.baseUrl + "/api/Cinema/DeleteShift";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processDeleteShift(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processDeleteShift(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processDeleteShift(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    getMyShifts(request: MyShiftsRequest): Observable<StaffShiftDTO[]> {
-        let url_ = this.baseUrl + "/api/Cinema/GetMyShifts";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetMyShifts(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetMyShifts(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<StaffShiftDTO[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<StaffShiftDTO[]>;
-        }));
-    }
-
-    protected processGetMyShifts(response: HttpResponseBase): Observable<StaffShiftDTO[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(StaffShiftDTO.fromJS(item));
-            }
-            else {
-                result200 = <any>null;
-            }
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -18216,7 +17825,6 @@ export class CounterSaleRequest implements ICounterSaleRequest {
     pointsToRedeem?: number;
     tenders?: TenderLine[];
     connectionId?: string | undefined;
-    override?: ManagerOverrideDTO | undefined;
     holdForPickup?: boolean;
 
     constructor(data?: ICounterSaleRequest) {
@@ -18253,7 +17861,6 @@ export class CounterSaleRequest implements ICounterSaleRequest {
                     this.tenders!.push(TenderLine.fromJS(item));
             }
             this.connectionId = _data["connectionId"];
-            this.override = _data["override"] ? ManagerOverrideDTO.fromJS(_data["override"]) : <any>undefined;
             this.holdForPickup = _data["holdForPickup"];
         }
     }
@@ -18290,7 +17897,6 @@ export class CounterSaleRequest implements ICounterSaleRequest {
                 data["tenders"].push(item.toJSON());
         }
         data["connectionId"] = this.connectionId;
-        data["override"] = this.override ? this.override.toJSON() : <any>undefined;
         data["holdForPickup"] = this.holdForPickup;
         return data;
     }
@@ -18308,7 +17914,6 @@ export interface ICounterSaleRequest {
     pointsToRedeem?: number;
     tenders?: TenderLine[];
     connectionId?: string | undefined;
-    override?: ManagerOverrideDTO | undefined;
     holdForPickup?: boolean;
 }
 
@@ -18451,46 +18056,6 @@ export enum PaymentTender {
     GiftCard = 3,
     Points = 4,
     Online = 5,
-}
-
-export class ManagerOverrideDTO implements IManagerOverrideDTO {
-    approverUserId?: string;
-    pin!: string;
-
-    constructor(data?: IManagerOverrideDTO) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.approverUserId = _data["approverUserId"];
-            this.pin = _data["pin"];
-        }
-    }
-
-    static fromJS(data: any): ManagerOverrideDTO {
-        data = typeof data === 'object' ? data : {};
-        let result = new ManagerOverrideDTO();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["approverUserId"] = this.approverUserId;
-        data["pin"] = this.pin;
-        return data;
-    }
-}
-
-export interface IManagerOverrideDTO {
-    approverUserId?: string;
-    pin: string;
 }
 
 export class CounterSaleResultDTO implements ICounterSaleResultDTO {
@@ -19973,7 +19538,6 @@ export class ResolveIncidentRequest implements IResolveIncidentRequest {
     incidentId?: string;
     resolutionNote?: string | undefined;
     unblock?: boolean;
-    override?: ManagerOverrideDTO | undefined;
 
     constructor(data?: IResolveIncidentRequest) {
         if (data) {
@@ -19989,7 +19553,6 @@ export class ResolveIncidentRequest implements IResolveIncidentRequest {
             this.incidentId = _data["incidentId"];
             this.resolutionNote = _data["resolutionNote"];
             this.unblock = _data["unblock"];
-            this.override = _data["override"] ? ManagerOverrideDTO.fromJS(_data["override"]) : <any>undefined;
         }
     }
 
@@ -20005,7 +19568,6 @@ export class ResolveIncidentRequest implements IResolveIncidentRequest {
         data["incidentId"] = this.incidentId;
         data["resolutionNote"] = this.resolutionNote;
         data["unblock"] = this.unblock;
-        data["override"] = this.override ? this.override.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -20014,7 +19576,6 @@ export interface IResolveIncidentRequest {
     incidentId?: string;
     resolutionNote?: string | undefined;
     unblock?: boolean;
-    override?: ManagerOverrideDTO | undefined;
 }
 
 export class BlockResultDTO implements IBlockResultDTO {
@@ -20163,7 +19724,6 @@ export class BlockSeatRequest implements IBlockSeatRequest {
     incidentId?: string | undefined;
     title?: string | undefined;
     description?: string | undefined;
-    override?: ManagerOverrideDTO | undefined;
 
     constructor(data?: IBlockSeatRequest) {
         if (data) {
@@ -20181,7 +19741,6 @@ export class BlockSeatRequest implements IBlockSeatRequest {
             this.incidentId = _data["incidentId"];
             this.title = _data["title"];
             this.description = _data["description"];
-            this.override = _data["override"] ? ManagerOverrideDTO.fromJS(_data["override"]) : <any>undefined;
         }
     }
 
@@ -20199,7 +19758,6 @@ export class BlockSeatRequest implements IBlockSeatRequest {
         data["incidentId"] = this.incidentId;
         data["title"] = this.title;
         data["description"] = this.description;
-        data["override"] = this.override ? this.override.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -20210,7 +19768,6 @@ export interface IBlockSeatRequest {
     incidentId?: string | undefined;
     title?: string | undefined;
     description?: string | undefined;
-    override?: ManagerOverrideDTO | undefined;
 }
 
 export class BlockRoomRequest implements IBlockRoomRequest {
@@ -20219,7 +19776,6 @@ export class BlockRoomRequest implements IBlockRoomRequest {
     incidentId?: string | undefined;
     title?: string | undefined;
     description?: string | undefined;
-    override?: ManagerOverrideDTO | undefined;
 
     constructor(data?: IBlockRoomRequest) {
         if (data) {
@@ -20237,7 +19793,6 @@ export class BlockRoomRequest implements IBlockRoomRequest {
             this.incidentId = _data["incidentId"];
             this.title = _data["title"];
             this.description = _data["description"];
-            this.override = _data["override"] ? ManagerOverrideDTO.fromJS(_data["override"]) : <any>undefined;
         }
     }
 
@@ -20255,7 +19810,6 @@ export class BlockRoomRequest implements IBlockRoomRequest {
         data["incidentId"] = this.incidentId;
         data["title"] = this.title;
         data["description"] = this.description;
-        data["override"] = this.override ? this.override.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -20266,439 +19820,6 @@ export interface IBlockRoomRequest {
     incidentId?: string | undefined;
     title?: string | undefined;
     description?: string | undefined;
-    override?: ManagerOverrideDTO | undefined;
-}
-
-export class SetOverridePinRequest implements ISetOverridePinRequest {
-    pin!: string;
-
-    constructor(data?: ISetOverridePinRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.pin = _data["pin"];
-        }
-    }
-
-    static fromJS(data: any): SetOverridePinRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new SetOverridePinRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["pin"] = this.pin;
-        return data;
-    }
-}
-
-export interface ISetOverridePinRequest {
-    pin: string;
-}
-
-export class OverrideApproverDTO implements IOverrideApproverDTO {
-    id?: string;
-    name?: string;
-
-    constructor(data?: IOverrideApproverDTO) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.name = _data["name"];
-        }
-    }
-
-    static fromJS(data: any): OverrideApproverDTO {
-        data = typeof data === 'object' ? data : {};
-        let result = new OverrideApproverDTO();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["name"] = this.name;
-        return data;
-    }
-}
-
-export interface IOverrideApproverDTO {
-    id?: string;
-    name?: string;
-}
-
-export class OverrideApproversRequest implements IOverrideApproversRequest {
-    theaterId?: string | undefined;
-
-    constructor(data?: IOverrideApproversRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.theaterId = _data["theaterId"];
-        }
-    }
-
-    static fromJS(data: any): OverrideApproversRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new OverrideApproversRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["theaterId"] = this.theaterId;
-        return data;
-    }
-}
-
-export interface IOverrideApproversRequest {
-    theaterId?: string | undefined;
-}
-
-export class TheaterStaffDTO implements ITheaterStaffDTO {
-    id?: string;
-    name?: string;
-    roleName?: string;
-
-    constructor(data?: ITheaterStaffDTO) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.name = _data["name"];
-            this.roleName = _data["roleName"];
-        }
-    }
-
-    static fromJS(data: any): TheaterStaffDTO {
-        data = typeof data === 'object' ? data : {};
-        let result = new TheaterStaffDTO();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["name"] = this.name;
-        data["roleName"] = this.roleName;
-        return data;
-    }
-}
-
-export interface ITheaterStaffDTO {
-    id?: string;
-    name?: string;
-    roleName?: string;
-}
-
-export class GetTheaterStaffRequest implements IGetTheaterStaffRequest {
-    theaterId?: string | undefined;
-
-    constructor(data?: IGetTheaterStaffRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.theaterId = _data["theaterId"];
-        }
-    }
-
-    static fromJS(data: any): GetTheaterStaffRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new GetTheaterStaffRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["theaterId"] = this.theaterId;
-        return data;
-    }
-}
-
-export interface IGetTheaterStaffRequest {
-    theaterId?: string | undefined;
-}
-
-export class StaffShiftDTO implements IStaffShiftDTO {
-    id?: string;
-    theaterId?: string;
-    userId?: string;
-    userName?: string | undefined;
-    startTime?: Date;
-    endTime?: Date;
-    note?: string | undefined;
-
-    constructor(data?: IStaffShiftDTO) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.theaterId = _data["theaterId"];
-            this.userId = _data["userId"];
-            this.userName = _data["userName"];
-            this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : <any>undefined;
-            this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : <any>undefined;
-            this.note = _data["note"];
-        }
-    }
-
-    static fromJS(data: any): StaffShiftDTO {
-        data = typeof data === 'object' ? data : {};
-        let result = new StaffShiftDTO();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["theaterId"] = this.theaterId;
-        data["userId"] = this.userId;
-        data["userName"] = this.userName;
-        data["startTime"] = this.startTime ? this.startTime.toISOString() : <any>undefined;
-        data["endTime"] = this.endTime ? this.endTime.toISOString() : <any>undefined;
-        data["note"] = this.note;
-        return data;
-    }
-}
-
-export interface IStaffShiftDTO {
-    id?: string;
-    theaterId?: string;
-    userId?: string;
-    userName?: string | undefined;
-    startTime?: Date;
-    endTime?: Date;
-    note?: string | undefined;
-}
-
-export class RosterRequest implements IRosterRequest {
-    theaterId?: string | undefined;
-    from?: Date;
-    to?: Date;
-    userId?: string | undefined;
-
-    constructor(data?: IRosterRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.theaterId = _data["theaterId"];
-            this.from = _data["from"] ? new Date(_data["from"].toString()) : <any>undefined;
-            this.to = _data["to"] ? new Date(_data["to"].toString()) : <any>undefined;
-            this.userId = _data["userId"];
-        }
-    }
-
-    static fromJS(data: any): RosterRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new RosterRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["theaterId"] = this.theaterId;
-        data["from"] = this.from ? this.from.toISOString() : <any>undefined;
-        data["to"] = this.to ? this.to.toISOString() : <any>undefined;
-        data["userId"] = this.userId;
-        return data;
-    }
-}
-
-export interface IRosterRequest {
-    theaterId?: string | undefined;
-    from?: Date;
-    to?: Date;
-    userId?: string | undefined;
-}
-
-export class SaveStaffShiftRequest implements ISaveStaffShiftRequest {
-    id?: string | undefined;
-    theaterId?: string | undefined;
-    userId?: string;
-    startTime?: Date;
-    endTime?: Date;
-    note?: string | undefined;
-
-    constructor(data?: ISaveStaffShiftRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.theaterId = _data["theaterId"];
-            this.userId = _data["userId"];
-            this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : <any>undefined;
-            this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : <any>undefined;
-            this.note = _data["note"];
-        }
-    }
-
-    static fromJS(data: any): SaveStaffShiftRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new SaveStaffShiftRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["theaterId"] = this.theaterId;
-        data["userId"] = this.userId;
-        data["startTime"] = this.startTime ? this.startTime.toISOString() : <any>undefined;
-        data["endTime"] = this.endTime ? this.endTime.toISOString() : <any>undefined;
-        data["note"] = this.note;
-        return data;
-    }
-}
-
-export interface ISaveStaffShiftRequest {
-    id?: string | undefined;
-    theaterId?: string | undefined;
-    userId?: string;
-    startTime?: Date;
-    endTime?: Date;
-    note?: string | undefined;
-}
-
-export class DeleteStaffShiftRequest implements IDeleteStaffShiftRequest {
-    shiftId?: string;
-
-    constructor(data?: IDeleteStaffShiftRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.shiftId = _data["shiftId"];
-        }
-    }
-
-    static fromJS(data: any): DeleteStaffShiftRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new DeleteStaffShiftRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["shiftId"] = this.shiftId;
-        return data;
-    }
-}
-
-export interface IDeleteStaffShiftRequest {
-    shiftId?: string;
-}
-
-export class MyShiftsRequest implements IMyShiftsRequest {
-    from?: Date;
-    to?: Date;
-
-    constructor(data?: IMyShiftsRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.from = _data["from"] ? new Date(_data["from"].toString()) : <any>undefined;
-            this.to = _data["to"] ? new Date(_data["to"].toString()) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): MyShiftsRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new MyShiftsRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["from"] = this.from ? this.from.toISOString() : <any>undefined;
-        data["to"] = this.to ? this.to.toISOString() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IMyShiftsRequest {
-    from?: Date;
-    to?: Date;
 }
 
 function formatDate(d: Date) {
