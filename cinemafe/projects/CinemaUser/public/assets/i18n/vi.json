@@ -516,13 +516,6 @@
     "empty": "Hiện chưa có chương trình khuyến mãi nào.",
     "emptyFiltered": "Không có ưu đãi nào trong mục này.",
     "pricesTitle": "Bảng giá",
-    "tabs": {
-      "all": "Tất cả",
-      "auto": "Tự động áp dụng",
-      "code": "Cần mã",
-      "members": "Thành viên",
-      "students": "HSSV"
-    },
     "categories": {
       "all": "Tất cả danh mục"
     },

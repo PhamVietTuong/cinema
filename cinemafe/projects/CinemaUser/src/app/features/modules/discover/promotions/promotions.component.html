@@ -12,19 +12,6 @@
       type="button"
       role="tab"
       class="promo-tab"
-      *ngFor="let t of tabs"
-      [class.is-active]="activeTab === t.key"
-      [attr.aria-selected]="activeTab === t.key"
-      (click)="setTab(t.key)">
-      {{ t.label | translate }}
-    </button>
-  </nav>
-
-  <nav class="promo-tabs promo-tabs--category" role="tablist" *ngIf="!loading && programs.length">
-    <button
-      type="button"
-      role="tab"
-      class="promo-tab"
       *ngFor="let c of categoryFilters"
       [class.is-active]="activeCategory === c.key"
       [attr.aria-selected]="activeCategory === c.key"

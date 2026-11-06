@@ -7,7 +7,6 @@ import {
 } from 'CinemaLib';
 
 type ProgramDTO = CinemaServiceAgent.PromotionProgramDTO;
-type PromoTab = 'all' | 'auto' | 'code' | 'members' | 'students';
 type CategoryFilter = 'all' | CinemaServiceAgent.PromotionCategory;
 
 @Component({
@@ -28,15 +27,6 @@ export class PromotionsComponent implements OnInit {
   private _expanded = new Set<string>();
   private _copiedId: string | null = null;
 
-  readonly tabs: { key: PromoTab; label: string }[] = [
-    { key: 'all', label: 'promotions.tabs.all' },
-    { key: 'auto', label: 'promotions.tabs.auto' },
-    { key: 'code', label: 'promotions.tabs.code' },
-    { key: 'members', label: 'promotions.tabs.members' },
-    { key: 'students', label: 'promotions.tabs.students' },
-  ];
-  activeTab: PromoTab = 'all';
-
   readonly categoryFilters: { key: CategoryFilter; label: string }[] = [
     { key: 'all', label: 'promotions.categories.all' },
     ...PromotionCategoryValues.map(c => ({ key: c.value as CategoryFilter, label: c.name })),
@@ -51,13 +41,7 @@ export class PromotionsComponent implements OnInit {
       });
   }
 
-  // ── Tabs ─────────────────────────────────────────────────────────────────────
-  setTab(key: PromoTab): void {
-    this.activeTab = key;
-    this.applyFilter();
-    this._cdr.markForCheck();
-  }
-
+  // ── Filter ───────────────────────────────────────────────────────────────────
   setCategory(key: CategoryFilter): void {
     this.activeCategory = key;
     this.applyFilter();
@@ -65,22 +49,7 @@ export class PromotionsComponent implements OnInit {
   }
 
   private applyFilter(): void {
-    this.visible = this.programs.filter(p => this.matchesTab(p, this.activeTab) && this.matchesCategory(p, this.activeCategory));
-  }
-
-  private matchesTab(p: ProgramDTO, tab: PromoTab): boolean {
-    switch (tab) {
-      case 'all':
-        return true;
-      case 'auto':
-        return !!p.autoApply;
-      case 'code':
-        return !!p.code;
-      case 'members':
-        return p.eligibility === CinemaServiceAgent.PromotionEligibility.Members;
-      case 'students':
-        return p.eligibility === CinemaServiceAgent.PromotionEligibility.StudentOrTeacher;
-    }
+    this.visible = this.programs.filter(p => this.matchesCategory(p, this.activeCategory));
   }
 
   private matchesCategory(p: ProgramDTO, category: CategoryFilter): boolean {
