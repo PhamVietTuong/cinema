@@ -659,6 +659,10 @@
             "format": "guid",
             "nullable": true
           },
+          "theaterName": {
+            "type": "string",
+            "nullable": true
+          },
           "points": {
             "type": "integer",
             "format": "int32"

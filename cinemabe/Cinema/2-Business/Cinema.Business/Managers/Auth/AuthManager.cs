@@ -463,13 +463,24 @@ public class AuthManager : IAuthManager
     public async Task<DefaultSearchResults<UserDTO>> GetUsersAsync(PagingSearchDTO search)
     {
         var searchText = search.Filters.GetString("search");
+        var theaterId  = search.Filters.GetGuid("theaterId");
         var page       = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize   = search.PageSize  > 0 ? search.PageSize  : 20;
 
-        var (items, total) = await _uow.UserStore.GetPagedAsync(searchText, page, pageSize);
+        var (items, total) = await _uow.UserStore.GetPagedAsync(searchText, page, pageSize, theaterId);
+        var itemsList = items.ToList();
+
+        // One batched id -> name lookup for the whole page (no per-row query).
+        var theaterIds = itemsList
+            .Where(u => u.TheaterId.HasValue)
+            .Select(u => u.TheaterId!.Value)
+            .Distinct()
+            .ToList();
+        var theaterNames = await _uow.TheaterStore.GetNamesByIdsAsync(theaterIds);
+
         return new DefaultSearchResults<UserDTO>
         {
-            Results      = items.Select(ToUserDTO),
+            Results      = itemsList.Select(u => ToUserDTO(u, theaterNames)),
             TotalCount   = total,
             CountPerPage = pageSize,
             Page         = page
@@ -602,6 +613,16 @@ public class AuthManager : IAuthManager
         var dto = user.ToDTO<User, UserDTO>();
         dto.UserTypeName = user.UserType?.Name ?? string.Empty;
         dto.MemberShipName = user.MemberShip?.Name;
+        return dto;
+    }
+
+    private static UserDTO ToUserDTO(User user, IReadOnlyDictionary<Guid, string> theaterNames)
+    {
+        var dto = ToUserDTO(user);
+        if (user.TheaterId.HasValue && theaterNames.TryGetValue(user.TheaterId.Value, out var theaterName))
+        {
+            dto.TheaterName = theaterName;
+        }
         return dto;
     }
 

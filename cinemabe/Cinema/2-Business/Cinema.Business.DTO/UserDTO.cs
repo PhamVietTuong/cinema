@@ -11,6 +11,7 @@ public class UserDTO
     public Guid UserTypeId { get; set; }
     public string UserTypeName { get; set; } = string.Empty;
     public Guid? TheaterId { get; set; }
+    public string? TheaterName { get; set; }
     public int Points { get; set; }
     public bool NotifyBookingEmails { get; set; }
     public bool NotifyPromotionEmails { get; set; }

@@ -11,6 +11,8 @@ type Dto = IdentityServiceAgent.UserDTO;
 
 export interface UserDialogData {
   user: Dto | null;
+  /** When set (e.g. opened from a cinema's Staff tab), the theater field is pre-filled and locked to this id. */
+  lockedTheaterId?: string;
 }
 
 /** Create/edit form for a user account, opened via MatDialog. Resolves `true` on save, `false` on cancel. */
@@ -21,6 +23,7 @@ export interface UserDialogData {
 })
 export class UserDialog {
   readonly editingId: string | null;
+  readonly lockedTheaterId: string | null;
   readonly statuses: { v: IdentityServiceAgent.UserStatus; label: string }[];
   userTypes: CinemaServiceAgent.UserTypeDTO[] = [];
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
@@ -37,6 +40,7 @@ export class UserDialog {
     @Inject(MAT_DIALOG_DATA) data: UserDialogData,
   ) {
     this.editingId = data.user?.id ?? null;
+    this.lockedTheaterId = data.lockedTheaterId ?? null;
     this.statuses = [
       { v: IdentityServiceAgent.UserStatus.Active, label: this._translate.instant('users.status.active') },
       { v: IdentityServiceAgent.UserStatus.Inactive, label: this._translate.instant('users.status.locked') },
@@ -49,7 +53,7 @@ export class UserDialog {
       password: [{ value: '', disabled: !!data.user }, data.user ? [] : [Validators.required, Validators.minLength(6)]],
       userTypeId: [data.user?.userTypeId ?? '', Validators.required],
       status: [data.user?.status ?? IdentityServiceAgent.UserStatus.Active, Validators.required],
-      theaterId: [data.user?.theaterId ?? ''],
+      theaterId: [{ value: data.user?.theaterId ?? this.lockedTheaterId ?? '', disabled: !!this.lockedTheaterId }],
     });
 
     this.form.controls['userTypeId'].valueChanges.subscribe(() => this._syncTheaterValidator());
@@ -80,7 +84,9 @@ export class UserDialog {
       ctrl.setValidators(Validators.required);
     } else {
       ctrl.clearValidators();
-      ctrl.setValue('', { emitEvent: false });
+      if (!this.lockedTheaterId) {
+        ctrl.setValue('', { emitEvent: false });
+      }
     }
     ctrl.updateValueAndValidity({ emitEvent: false });
   }
@@ -91,7 +97,7 @@ export class UserDialog {
       return;
     }
     const v = this.form.getRawValue();
-    const theaterId = this.needsTheater ? v.theaterId : undefined;
+    const theaterId = this.lockedTheaterId ?? (this.needsTheater ? v.theaterId : undefined);
     const save$ = this.editingId
       ? this._identity.updateUser(IdentityServiceAgent.UpdateUserRequest.fromJS({
           id: this.editingId, name: v.name, phone: v.phone, userTypeId: v.userTypeId, status: v.status, theaterId,

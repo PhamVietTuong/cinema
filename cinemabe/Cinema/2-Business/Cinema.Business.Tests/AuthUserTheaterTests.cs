@@ -1,7 +1,9 @@
 using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Auth;
+using Cinema.Business.DTO;
 using Cinema.Business.DTO.Auth;
+using Cinema.Business.DTO.Requests;
 using Cinema.Business.Managers.Auth;
 using Cinema.Business.Notifications;
 using Cinema.Data.Contracts;
@@ -168,5 +170,53 @@ public class AuthUserTheaterTests
         var act = () => _sut.UpdateUserAsync(NewUpdate(user.Id, Guid.Empty, null));
 
         await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task GetUsersAsync_MixedTheaterAndNoTheaterUsers_ResolvesNamesCorrectly()
+    {
+        var staffUser = new User { Id = Guid.NewGuid(), Name = "Staff", TheaterId = _theaterId };
+        var customerUser = new User { Id = Guid.NewGuid(), Name = "Customer", TheaterId = null };
+        _uowMock.Setup(u => u.UserStore.GetPagedAsync(null, 1, 20, null))
+            .ReturnsAsync((new[] { staffUser, customerUser }, 2));
+        _uowMock.Setup(u => u.TheaterStore.GetNamesByIdsAsync(It.Is<IReadOnlyCollection<Guid>>(ids => ids.Contains(_theaterId) && ids.Count == 1)))
+            .ReturnsAsync(new Dictionary<Guid, string> { [_theaterId] = "Cinema A" });
+
+        var result = await _sut.GetUsersAsync(new PagingSearchDTO());
+
+        var dtos = result.Results.ToList();
+        dtos.Single(d => d.Id == staffUser.Id).TheaterName.Should().Be("Cinema A");
+        dtos.Single(d => d.Id == customerUser.Id).TheaterName.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetUsersAsync_TheaterIdFilter_IsPassedThroughToStore()
+    {
+        _uowMock.Setup(u => u.UserStore.GetPagedAsync(null, 1, 20, _theaterId))
+            .ReturnsAsync((Array.Empty<User>(), 0));
+        _uowMock.Setup(u => u.TheaterStore.GetNamesByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, string>());
+
+        var search = new PagingSearchDTO { Filters = new Dictionary<string, string> { ["theaterId"] = _theaterId.ToString() } };
+        var result = await _sut.GetUsersAsync(search);
+
+        result.TotalCount.Should().Be(0);
+        _uowMock.Verify(u => u.UserStore.GetPagedAsync(null, 1, 20, _theaterId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUsersAsync_StaleTheaterId_ResolvesNullWithoutThrowing()
+    {
+        var staffUser = new User { Id = Guid.NewGuid(), Name = "Staff", TheaterId = _theaterId };
+        _uowMock.Setup(u => u.UserStore.GetPagedAsync(null, 1, 20, null))
+            .ReturnsAsync((new[] { staffUser }, 1));
+        // The theater row no longer exists (e.g. SetNull race) -- lookup dictionary misses it.
+        _uowMock.Setup(u => u.TheaterStore.GetNamesByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, string>());
+
+        var act = () => _sut.GetUsersAsync(new PagingSearchDTO());
+
+        var result = await act.Should().NotThrowAsync();
+        result.Subject.Results.Single().TheaterName.Should().BeNull();
     }
 }

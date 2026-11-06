@@ -1005,6 +1005,7 @@ export class UserDTO implements IUserDTO {
     userTypeId?: string;
     userTypeName?: string;
     theaterId?: string | undefined;
+    theaterName?: string | undefined;
     points?: number;
     notifyBookingEmails?: boolean;
     notifyPromotionEmails?: boolean;
@@ -1032,6 +1033,7 @@ export class UserDTO implements IUserDTO {
             this.userTypeId = _data["userTypeId"];
             this.userTypeName = _data["userTypeName"];
             this.theaterId = _data["theaterId"];
+            this.theaterName = _data["theaterName"];
             this.points = _data["points"];
             this.notifyBookingEmails = _data["notifyBookingEmails"];
             this.notifyPromotionEmails = _data["notifyPromotionEmails"];
@@ -1059,6 +1061,7 @@ export class UserDTO implements IUserDTO {
         data["userTypeId"] = this.userTypeId;
         data["userTypeName"] = this.userTypeName;
         data["theaterId"] = this.theaterId;
+        data["theaterName"] = this.theaterName;
         data["points"] = this.points;
         data["notifyBookingEmails"] = this.notifyBookingEmails;
         data["notifyPromotionEmails"] = this.notifyPromotionEmails;
@@ -1079,6 +1082,7 @@ export interface IUserDTO {
     userTypeId?: string;
     userTypeName?: string;
     theaterId?: string | undefined;
+    theaterName?: string | undefined;
     points?: number;
     notifyBookingEmails?: boolean;
     notifyPromotionEmails?: boolean;

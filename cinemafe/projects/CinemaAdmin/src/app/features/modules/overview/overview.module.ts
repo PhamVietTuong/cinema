@@ -22,6 +22,7 @@ import { TheaterPatronCategoriesComponent } from './theaters/theater-patron-cate
 import { PatronCategoryDialog } from './theaters/patron-category.dialog';
 import { TheaterLoyaltyComponent } from './theaters/theater-loyalty.component';
 import { TheaterFoodComponent } from './theaters/theater-food.component';
+import { TheaterStaffComponent } from './theaters/theater-staff.component';
 import { TheaterCombosComponent } from './theaters/theater-combos.component';
 import { FoodAndDrinkDialog } from './theaters/food-and-drink.dialog';
 import { TheaterTimeSlotsComponent } from './theaters/theater-time-slots.component';
@@ -76,6 +77,7 @@ const routes: Routes = [
     PatronCategoryDialog,
     TheaterLoyaltyComponent,
     TheaterFoodComponent,
+    TheaterStaffComponent,
     TheaterCombosComponent,
     FoodAndDrinkDialog,
     TheaterTimeSlotsComponent,

@@ -1,0 +1,101 @@
+<div class="tab-toolbar">
+  <p class="ad-sub">{{ 'theaters.staff.subtitle' | translate }}</p>
+  <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>person_add</mat-icon> {{ 'theaters.staff.add' | translate }}</button>
+</div>
+
+<mat-card class="ad-card--pad-0">
+  <!-- Desktop / tablet: ngx-datatable grid. -->
+  <div class="ad-table-wrap ad-desktop-only">
+    <ngx-datatable
+      class="material ad-datatable"
+      [rows]="pageRows"
+      [columnMode]="'force'"
+      [headerHeight]="44"
+      [footerHeight]="50"
+      [rowHeight]="'auto'"
+      [externalPaging]="true"
+      [externalSorting]="true"
+      [count]="total"
+      [offset]="pageOffset"
+      [limit]="pageSize"
+      [loadingIndicator]="loadingIndicator"
+      [messages]="{ emptyMessage: 'theaters.staff.empty' | translate, selectedMessage: '' }"
+      (page)="onChangePage($event)">
+
+      <ngx-datatable-column [name]="'common.name' | translate" prop="name" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="user-cell">
+            <span class="ad-avatar">{{ initials(row.name) }}</span>
+            <strong>{{ row.name }}</strong>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'users.form.email' | translate" prop="email" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.email }}</ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'users.form.phone' | translate" prop="phone" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.phone }}</ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'users.form.role' | translate" prop="role" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <span class="ad-pill no-dot" [class.ad-pill--violet]="row.role === UserRole.Admin" [class.ad-pill--neutral]="row.role !== UserRole.Admin">{{ row.role }}</span>
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'common.status' | translate" prop="active" [sortable]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <span class="ad-pill" [class.ad-pill--success]="row.active" [class.ad-pill--danger]="!row.active">{{ (row.active ? 'users.status.active' : 'users.status.locked') | translate }}</span>
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="ad-td-actions ad-td-actions--mat">
+            <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'users.list.lockAccount' | translate"><mat-icon>delete</mat-icon></button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+
+      <ngx-datatable-footer>
+        <ng-template ngx-datatable-footer-template>
+          <div class="page-count">{{ 'common.totalEntries' | translate }} {{ total }}</div>
+          <ngx-datatable-pager *ngIf="total > pageSize"></ngx-datatable-pager>
+        </ng-template>
+      </ngx-datatable-footer>
+    </ngx-datatable>
+  </div>
+
+  <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
+  <div class="ad-mobile-only">
+    <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
+      <mat-card-content>
+        <div class="ad-mobile-card-title">
+          <span class="ad-avatar">{{ initials(row.name) }}</span>
+          <strong>{{ row.name }}</strong>
+        </div>
+        <div class="ad-mobile-card-row"><span>{{ 'users.form.email' | translate }}</span><span>{{ row.email }}</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'users.form.phone' | translate }}</span><span>{{ row.phone }}</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'users.form.role' | translate }}</span><span>{{ row.role }}</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'common.status' | translate }}</span><span>{{ (row.active ? 'users.status.active' : 'users.status.locked') | translate }}</span></div>
+        <div class="ad-mobile-card-actions">
+          <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'users.list.lockAccount' | translate"><mat-icon>delete</mat-icon></button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>badge</mat-icon><p>{{ 'theaters.staff.empty' | translate }}</p></div>
+
+    <mat-paginator
+      *ngIf="total > 0"
+      [length]="total"
+      [pageSize]="pageSize"
+      [pageIndex]="pageOffset"
+      [hidePageSize]="true"
+      (page)="onChangePage({ pageSize: $event.pageSize, offset: $event.pageIndex })">
+    </mat-paginator>
+  </div>
+</mat-card>
