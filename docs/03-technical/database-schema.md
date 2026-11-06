@@ -248,7 +248,7 @@ Code (max 50, **unique**), InitialBalance (double), Balance (double), IsActive, 
 | TheaterId | Guid? | FK (shadow), Restrict; null only on rows predating the column |
 | Channel | SalesChannel | Online=0/Counter=1 |
 | SoldByUserId | Guid? | no FK |
-| CashDrawerSessionId | Guid? | no FK |
+| CashDrawerSessionId | Guid? | no FK. Vestigial — cash drawer close/daily close UI was removed from CinemaStaff (see `features.md`), same kind of leftover as `FoodStatus` below. |
 | FoodStatus | FoodOrderStatus | None=0/Pending=1/Preparing=2/Ready=3/HandedOver=4/Cancelled=5. Vestigial beyond Pending/HandedOver since the kitchen pickup queue feature was removed — a counter sale now moves it straight to HandedOver; Preparing/Ready/Cancelled are never set by any remaining code path. |
 | FoodHandedOverAt / FoodHandedOverByUserId | | Stamped on the counter-sale HandedOver transition only. |
 | ExchangedFromInvoiceId | Guid? | no FK |

@@ -1,7 +1,7 @@
 # Cinema — Feature Roadmap
 
-Backlog for the multi-theater cinema platform. Status reflects the codebase as of the
-`feature/multi-theater-catalog-pricing` branch.
+Backlog for the multi-theater cinema platform. Status verified directly against the code on
+2026-11-06.
 
 **Legend** — ✅ done · 🟡 partial (data layer exists, needs business/API/UI) · 🆕 new
 · Size: S (≈½ day) · M (1–2 days) · L (3+ days / infra)
@@ -24,34 +24,33 @@ Backlog for the multi-theater cinema platform. Status reflects the codebase as o
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
 | Google login | ✅ | — | `AuthManager` + `GoogleTokenValidator`; OTP/2FA, email verify, lockout also done. |
-| **Facebook login** | 🆕 | S | Mirror the Google flow: add a Facebook token validator + `AuthManager` path + FE button. Need a Facebook App ID/secret. |
-| **Role-based access (admin / theater staff / customer)** | 🟡 | M | Admin + Customer roles exist; **theater staff** role is new — decide staff permissions (which theater(s) they manage, which tabs they see). |
+| **Facebook login** | ✅ | - | Implemented end-to-end (`login.component.ts`'s `loginWithFacebook()`, backend `IdentityController.FacebookLogin`) but gated behind an empty `facebookAppId` in both env files, so the button stays hidden until a real App ID/secret is configured. |
+| **Role-based access (admin / theater staff / customer)** | ✅ | - | `TheaterStaff` is a fully live third role (`RoleNames.cs`), always theater-scoped via a `theaterId` JWT claim, with a full box-office/gate/workforce feature set wired into `CinemaController` and the `CinemaStaff` app. |
 
 ## Booking & tickets
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
 | Seat hold/lock during checkout | ✅ | — | Static `ConcurrentDictionary` in `BookingManager` (process-local). |
 | Real-time seat availability | ✅ | — | SignalR `BookingHub`. |
-| **Order food/drink combos with tickets** | 🟡 | M | `InvoiceFoodAndDrink` join exists; wire into the booking flow + UI (add items to a booking, sum totals). |
-| **Manage booked tickets (view / cancel)** | 🟡 | M | Invoices exist; add customer "my tickets" view + cancel flow. Depends on cancellation policy below. |
-| **E-tickets + QR codes** | 🆕 | M | `InvoiceTicket.QrCode` column exists; generate a QR (booking ref) + render on ticket + a scan/validate endpoint. |
-| **Cancellation / exchange policy** | 🆕 | M | Rules for refunds/showtime changes (time cutoffs, fees). Needs policy decisions before build. |
-| **Payment gateway (VNPay/MoMo/Stripe)** | 🟡 | L | `PaymentController` + `SandboxPaymentGateway` abstraction exist; implement a real provider. Pick provider(s); handle callbacks/webhooks + PCI scope (prefer hosted redirect). |
+| **Order food/drink combos with tickets** | ✅ | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end, including out-of-stock handling. |
+| **Manage booked tickets (view / cancel)** | ✅ | - | `profile.component.ts`'s `cancelBooking`/`cancelById` via `PaymentServiceAgent.cancelBooking`. |
+| **E-tickets + QR codes** | ✅ | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`). |
+| **Payment gateway (VNPay/MoMo/Stripe)** | 🟡 | L | VNPay and MoMo are both fully wired (backend gateway + selectable checkout option); `StripeGateway.cs` exists and is DI-registered but has no frontend entry point yet. |
 | Order confirmation email/SMS | 🆕 | M | Overlaps with reminders — see messaging infra below. |
 
 ## Discovery & engagement
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
-| **Ratings & reviews** | 🟡 | S–M | `Evaluation` (Score + Review) and threaded `Comment` entities + stores exist — **not surfaced**. Add managers/endpoints/UI. Decide: only buyers can review? moderation? |
-| **Movie recommendations by preference** | 🆕 | L | Needs a signal source (ratings, genres watched) + algorithm (start simple: by favorite genres / top-rated). |
+| **Ratings & reviews** | ✅ | - | Surfaced in `movie-detail.component.ts`: star rating widget, threaded comments, `canReview` gate; comments go through admin moderation. |
+| **Movie recommendations by preference** | ✅ | - | `CinemaController.GetRecommendedMovies` → `MovieManager.GetRecommendedAsync`, personalized for signed-in users (top-rated for anonymous), wired into CinemaUser's home page. |
 | **Search & filter movies/showtimes** (theater, date, time, genre, language) | 🟡 | M | Some search exists (`GetTheatersByMovie`); build a unified filter API + UI. Confirm "language" = movie audio/subtitle field (add if missing). |
-| **Nearest theater by location** | 🆕 | M | Theaters have address/city only — add lat/long + a distance sort (Haversine). Needs geocoding of theaters + browser geolocation. |
+| **Nearest theater by location** | ✅ | - | `Theater.Latitude`/`Longitude` (manually entered per theater in CinemaAdmin, no geocoding API) + browser geolocation + Haversine distance sort on CinemaUser's theaters list. |
 
 ## Membership & promotions
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
 | **Membership / points / vouchers** | 🟡 | M | `MemberShip` tiers + `Discount`/`DiscountType` exist; wire point accrual on purchase, tier upgrades, voucher redemption at checkout. |
-| **Promotions scoped system-wide OR per-theater** | 🆕 | M | Add an optional `TheaterId` to `Discount` (null = global). Enforce scope at redemption. |
+| **Promotions scoped system-wide OR per-theater** | 🟡 | M | `Discount` already has this (`ApplyToAllTheaters`/`DiscountTheaters`); `PromotionProgram` does not yet — easy to conflate since both live in CinemaAdmin's Operations module. |
 
 ## Admin & reporting
 | Feature | Status | Size | Notes / open questions |
@@ -59,7 +58,7 @@ Backlog for the multi-theater cinema platform. Status reflects the codebase as o
 | Dashboard | ✅ | — | Basic dashboard exists. |
 | **Revenue statistics & detailed reports** | 🆕 | M | Revenue by movie / theater / time slot, ticketing trends. Define report set + date ranges + charts. |
 | **Advanced stats dashboard** | 🆕 | M | Extends the above with richer charts. |
-| **Dark mode (admin)** | 🆕 | S | Theme toggle; admin already uses CSS variables (`--ad-*`). |
+| **Dark mode (admin)** | ✅ | - | The shared `cl-app-shell` component (CinemaAdmin's root shell) has a built-in toggle wired to `ThemeService`; `--ad-*`/`--ml-*` CSS variables already have full dark variants. |
 
 ## Platform / infra
 | Feature | Status | Size | Notes / open questions |
@@ -67,14 +66,13 @@ Backlog for the multi-theater cinema platform. Status reflects the codebase as o
 | **Messaging (email/SMS)** | 🆕 | M | Underpins order confirmation + showtime reminders. `INotificationService` (`DevLogNotificationService`) abstraction exists — implement a real email provider + SMS provider. Pick providers. |
 | **Showtime reminders** | 🆕 | M | Depends on messaging; needs a scheduler (e.g. background job) to send before showtime. |
 | **Multilingual (i18n)** | 🆕 | L | Angular i18n or a runtime translation lib across CinemaUser + CinemaAdmin. Decide languages + approach. |
-| **Support chatbot** | 🆕 | L | Decide: rule-based FAQ vs LLM-backed; scope of questions; data it can access. |
+| **Support chatbot** | ✅ | L | Rule-based (no LLM/API key), keyword-matched against a canned FAQ in `CinemaUser/shared/chatbot`. |
 
 ---
 
 ## Suggested next steps (small, high-value, low-dependency)
-1. **Ratings & reviews** (🟡 S–M) — entities already exist; fast win.
-2. **Facebook login** (🆕 S) — mirrors the done Google flow.
-3. **Order food/drink combos with tickets** (🟡 M) — completes the booking value chain.
-4. **Messaging infra** (🆕 M) — unblocks order confirmation + reminders.
+1. **Messaging infra** (🆕 M) — unblocks order confirmation + reminders.
+2. **Search & filter movies/showtimes** (🟡 M) — some search exists, build a unified filter UI.
+3. **Revenue statistics & detailed reports** (🆕 M) — basic reports exist, add the full report set.
 
-Larger tracks (payments, recommendations, i18n, chatbot) are best scheduled on their own.
+Ratings & reviews, Facebook login, food/drink combos, movie recommendations, nearest theater, and the support chatbot are all already done. Larger tracks (payments, i18n) are best scheduled on their own.

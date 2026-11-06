@@ -40,6 +40,8 @@ export class TheaterDialog {
       address: [data.theater?.address ?? '', Validators.required],
       phone: [data.theater?.phone ?? '', Validators.pattern(/^(?:\+84|0)\d{9,10}$/)],
       email: ['', Validators.email],
+      latitude: [data.theater?.latitude ?? null, [Validators.min(-90), Validators.max(90)]],
+      longitude: [data.theater?.longitude ?? null, [Validators.min(-180), Validators.max(180)]],
       imageUrl: [data.theater?.imageUrl ?? ''],
     });
   }

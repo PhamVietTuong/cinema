@@ -207,8 +207,8 @@ CREATE TABLE [Theater] (
     [Email] nvarchar(max) NULL,
     [ImageUrl] nvarchar(max) NULL,
     [IsActive] bit NOT NULL,
-    [Latitude] float NULL,
-    [Longitude] float NULL,
+    [Latitude] float NULL, -- WGS84 decimal degrees, manually entered; used by "nearest theater" search
+    [Longitude] float NULL, -- WGS84 decimal degrees, manually entered; used by "nearest theater" search
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Theater] PRIMARY KEY ([Id])
