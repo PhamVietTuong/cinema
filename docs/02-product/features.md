@@ -48,7 +48,7 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | Promotion programs (+ banner upload) | `modules/operations/promotion-programs` | complete | |
 | Splash banner management | `modules/operations/splash-banners` | complete | CRUD for the CinemaUser popup banner. |
 | Audit log viewer | `modules/operations/audit-log` | complete | Admin-only, theater-filterable. |
-| Dark mode (admin) | — | not found | ROADMAP 🆕; no theme-toggle UI found under CinemaAdmin features (shared `theme/theme.service.ts` exists in CinemaLib — <!-- TODO: confirm with team whether it's wired into CinemaAdmin's shell -->). |
+| Dark mode (admin) | `CinemaLib` `theme/theme.service.ts` + `components/shell/app-shell.component` | complete | ROADMAP marks 🆕 — code shows it's implemented: the shared `cl-app-shell` component (used as CinemaAdmin's root shell) has a built-in dark-mode toggle button wired to `ThemeService`; `CinemaAdmin/src/styles.scss` and `CinemaLib`'s `_marquee-ledger.scss` already define full `[data-theme="dark"]` variants for every `--ad-*` CSS variable, so the toggle works with zero CinemaAdmin-specific CSS. |
 
 ## CinemaStaff (staff app, port 4203)
 
