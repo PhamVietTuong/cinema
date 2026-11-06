@@ -10,8 +10,8 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 
 | Feature | Code path | Status | Notes |
 |---|---|---|---|
-| Home / discover | `features/modules/discover/home` | complete | Now-showing/coming-soon, promotions banner, theaters list. |
-| Splash banner popup | `discover/home` | complete | `SplashBanner` entity, no FKs; active banner = `IsPublished` and today (Vietnam-local date) within `[StartDate, EndDate]`, newest `StartDate` wins on overlap. Shown once per browser session via `sessionStorage` keyed by banner `Id`. |
+| Home / discover | `features/modules/discover/home` | complete | Now-showing/coming-soon, promotions banner, theaters list. ROADMAP marks "movie recommendations by preference" 🆕 — code shows it's implemented: `CinemaController.GetRecommendedMovies` → `MovieManager.GetRecommendedAsync` personalizes for a signed-in user (anonymous callers get top-rated picks), wired into this page via `home.component.ts`'s `getRecommendedMovies(8)`. |
+| Splash banner popup | `shared/splash-banner` | complete | `SplashBanner` entity, no FKs; active banner = `IsPublished` and today (Vietnam-local date) within `[StartDate, EndDate]`, newest `StartDate` wins on overlap. Shown once per browser session via `sessionStorage` keyed by banner `Id`. |
 | Movie browse & detail | `discover/movies/movie-list`, `discover/movies/movie-detail` | complete | Friendly slug routing (`movie-route.ts`); legacy `:legacyId/:legacySlug` route redirects to `:slug`. |
 | Ratings & reviews | `movie-detail.component.ts` (`rateMovie`, `addComment` actions) | complete | ROADMAP.md marks this 🟡 ("not surfaced") — code shows it **is** surfaced: star rating widget, threaded comments (`recentComments`, `replies`), `canReview` gate. Comments go through admin moderation (see CinemaAdmin). |
 | Theaters listing | `discover/theaters` | complete | ROADMAP marks "nearest theater by location" 🆕 — code shows it's implemented: `theaters.component.ts` sorts by distance via `navigator.geolocation` + an inline Haversine calc, shows a "X km" chip per theater, with a `geoNotSupported`/`geoFailed` fallback when permission is denied/unavailable. Coordinates are manually entered per theater in CinemaAdmin (`Theater.Latitude`/`Longitude`), not geocoded automatically. |
@@ -23,9 +23,9 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | Payment (VNPay sandbox) | redirect out + `modules/booking/payment-return` | complete | Polls `GetInvoice` for ~30s; IPN-authoritative per root `CLAUDE.md`. |
 | Booking history / my tickets | `features/profile` | complete | |
 | Cancel booking | `profile.component.ts` (`cancelBooking`, `cancelById`) | complete | ROADMAP marks "manage booked tickets (view/cancel)" 🟡 — code shows cancel is implemented via `PaymentServiceAgent.cancelBooking`. |
-| E-tickets + QR codes | `CinemaLib` `components/ticket` (`ticket-card`), `components/qr` (`qr-code`) | complete | ROADMAP marks 🆕 but the QR component and ticket card exist and are used; <!-- TODO: confirm with team whether server-side scan validation (CinemaStaff gate) is the same feature or a separate build --> |
+| E-tickets + QR codes | `features/profile` (`profile.component.ts`'s `qrMap`/`_buildQrCodes`) | complete | ROADMAP marks 🆕 but it's implemented — however not via the shared `CinemaLib` `ticket-card`/`qr-code` components the previous version of this row cited: those are dead code in CinemaUser (`cl-qr-code` has zero usages anywhere; `cl-ticket-card` is only used by CinemaStaff's POS receipt). CinemaUser renders its own QR images inline in the profile/booking-history view. |
 | Notification preferences | `features/profile` → `CinemaLib` `notification.actions.ts`/`notification.effects.ts` | complete | |
-| Auth (login/register/forgot/reset/verify email, Google login) | `features/auth/*` | complete | Facebook login is ROADMAP 🆕, not found in `auth/` folders — not implemented. |
+| Auth (login/register/forgot/reset/verify email, Google login, Facebook login) | `features/auth/*`, `IdentityController.FacebookLogin` | complete | ROADMAP marks Facebook login 🆕 — it's actually implemented end-to-end (`login.component.ts`'s `loginWithFacebook()`, FB JS SDK, backend `FacebookLogin` action) but gated behind `facebookEnabled = !!environment.facebookAppId`, and both environment files ship an empty `facebookAppId` — so the button is hidden in practice until a real Facebook App ID is configured, which is presumably why it reads as "not implemented". |
 | Support chatbot | `shared/chatbot` | complete | ROADMAP marks 🆕 — code shows it's implemented: rule-based, no LLM/API key, keyword-matched against a 7-topic FAQ array (booking, showtimes, cancel, membership, nearby theater, payment, combo) plus 5 quick-reply chips. Mounted globally within CinemaUser only (`app.html`), not in CinemaAdmin/CinemaStaff. Fallback re-prompts with topic suggestions rather than a literal "contact support" message, since no support email/phone/ticket endpoint exists in the app for such a CTA to target. Matching is plain Vietnamese-keyword substring matching (order-dependent, first match wins) — a user typing a question in English rather than using the pre-translated quick-reply chips will mostly hit the fallback, despite the app being bilingual. |
 
 ## CinemaAdmin (admin app, port 4201)
@@ -41,7 +41,7 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | Reference-data CRUD: age-restrictions, discount-types, holidays, memberships, movie-types, news, user-types | `modules/categories/*` | complete | Each feature folder has its own component (no shared generic admin CRUD base). |
 | Notification templates | `modules/categories/templates` | complete | Booking-confirmation message content, distinct from user notification preferences. |
 | Comment moderation | `modules/operations/comments` | complete | Approve/reject/delete, admin-only. |
-| Discounts | `modules/operations/discounts` | complete | Per-theater scoping (`TheaterId` on `Discount`) is ROADMAP 🆕 — <!-- TODO: confirm with team whether discount.dialog.ts currently exposes a theater scope field -->. |
+| Discounts | `modules/operations/discounts` | complete | Per-theater scoping is already implemented: `Discount.ApplyToAllTheaters`/`DiscountTheaters` (entity), `DiscountDTO.TheaterIds`, and `discount.dialog.ts`'s `selectedTheaterIds` multi-select. ROADMAP's "Promotions scoped per-theater" 🆕 entry refers to the separate `PromotionProgram` entity, which genuinely has no theater scoping yet — easy to conflate since both live in the Operations module. |
 | Gift cards | `modules/operations/gift-cards` | complete | |
 | Invoices (admin list/status/void) | `modules/operations/invoices` | complete | |
 | Loyalty settings | `modules/operations/loyalty-settings` | complete | |
@@ -52,7 +52,7 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 
 ## CinemaStaff (staff app, port 4203)
 
-The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified directly against `cinemafe/angular.json` and `CinemaController.cs`); several sub-features (refund/exchange, drawer close, customer-service desk, time-clock, tasks, checklists, inventory/storage-plan) were removed, and five granular roles (`TheaterManager`, `BoxOfficeStaff`, `GateStaff`, `KitchenStaff`, `RegionalManager`) were collapsed into one (`TheaterStaff`).
+The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified directly against `cinemafe/angular.json` and `CinemaController.cs`); five granular roles (`TheaterManager`, `BoxOfficeStaff`, `GateStaff`, `KitchenStaff`, `RegionalManager`) were collapsed into one (`TheaterStaff`).
 
 | Feature | Code path | Status | Notes |
 |---|---|---|---|
@@ -66,20 +66,14 @@ The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified dir
 | Sales reports | `features/sales-reports` | complete | Management-role gated (`REPORTING_ROLES`). |
 | Audit log (staff-facing) | `features/reports/audit-log` | complete | Theater-scoped, management roles. |
 | Profile | `features/profile` | complete | Account summary. |
-| Cash drawer close / daily close | — | removed | UI removed from CinemaStaff; backend `DrawerReconcile`/`CashPayOut` audit actions remain (possibly vestigial). |
-| Customer-service desk, time-clock, tasks, checklists, inventory/storage-plan | — | removed | Confirmed absent from current feature tree and sidebar. |
-| Roster / shift scheduling, manager-override PIN | — | removed | Roster (`features/roster`, `StaffShift` table) and the manager-override-PIN mechanism (`ManagerOverrideService`, `User.OverridePin*` columns) were both removed outright; blocking/unblocking and POS price overrides now require the `Approvers` role directly. |
-| Kitchen pickup queue / low-stock alerts | — | removed | `features/kitchen`, `ConcessionManager`/`IConcessionManager`, the `Concession` DTOs/endpoints, `RoleNames.Concession` and the `FoodOrderQueued`/`FoodOrderUpdated`/`StockLow` staff-push events were all removed outright. `Invoice.FoodStatus`/`FoodHandedOverAt`/`FoodHandedOverByUserId` stay as vestigial columns — a counter sale now always marks food handed over immediately (see `database-schema.md` §6). |
 
 ## Cross-cutting / not yet built (per ROADMAP.md)
 
 | Feature | Status | Notes |
 |---|---|---|
-| Facebook login | 🆕 not started | Google login exists as the pattern to mirror. |
-| Real payment gateway beyond VNPay sandbox (MoMo/Stripe) | 🟡 | `PaymentController` + gateway abstraction exist; only VNPay implemented. |
-| Movie recommendations by preference | 🆕 not started | |
+| Real payment gateway beyond VNPay sandbox (Stripe) | 🟡 partial | `StripeGateway.cs` exists and is DI-registered (`Program.cs`) alongside VNPay/MoMo, but CinemaUser's checkout UI (`booking-checkout.component.ts`) only offers VNPay and MoMo as selectable payment methods — Stripe has no frontend entry point yet. MoMo itself is fully wired (backend `MoMoGateway.cs` + a selectable `'Momo'` checkout option), not just backend-only as previously noted here. |
 | Unified search/filter (theater/date/time/genre/language) | 🟡 partial | Some search exists; no unified filter UI confirmed. |
-| Promotions scoped per-theater | 🆕 not started | |
+| Promotions scoped per-theater (`PromotionProgram`) | 🆕 not started | Separate from `Discount`, which already has working per-theater scoping (see CinemaAdmin's "Discounts" row above) — easy to conflate since both live in the Operations module. |
 | Revenue/advanced stats dashboard | 🆕 partial | Basic reports exist (`modules/overview/reports`); advanced charts not confirmed. |
 | Messaging infra (real email/SMS providers) | 🟡 | `SmtpNotificationService` (email), `TwilioSmsNotificationService`/`DevLogSmsNotificationService` (SMS, dev fallback logs instead of sending) exist in `Cinema.Business/Notifications/*` — may be further along than ROADMAP's 🆕. |
 | Multilingual (i18n) | partial | `@ngx-translate/core` is a dependency and used in components (e.g. `movie-detail.component.ts` uses `_translate.instant`) — <!-- TODO: confirm with team how many languages are actually translated -->. |
