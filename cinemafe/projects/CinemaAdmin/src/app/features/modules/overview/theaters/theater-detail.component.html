@@ -35,11 +35,13 @@
       </div>
       <div class="ad-field">
         <label class="ad-label">{{ 'theaters.detail.latitudeLabel' | translate }}</label>
-        <input class="ad-input" type="number" step="0.0001" formControlName="latitude" placeholder="10.7743">
+        <input class="ad-input" type="number" step="0.0001" min="-90" max="90" formControlName="latitude" placeholder="10.7743">
+        <span class="ad-field-err" *ngIf="form.get('latitude')?.touched && form.get('latitude')?.invalid">{{ 'theaters.detail.latitudeInvalid' | translate }}</span>
       </div>
       <div class="ad-field">
         <label class="ad-label">{{ 'theaters.detail.longitudeLabel' | translate }}</label>
-        <input class="ad-input" type="number" step="0.0001" formControlName="longitude" placeholder="106.7038">
+        <input class="ad-input" type="number" step="0.0001" min="-180" max="180" formControlName="longitude" placeholder="106.7038">
+        <span class="ad-field-err" *ngIf="form.get('longitude')?.touched && form.get('longitude')?.invalid">{{ 'theaters.detail.longitudeInvalid' | translate }}</span>
       </div>
       <div class="ad-field full-span">
         <label class="ad-label">{{ 'theaters.detail.imageLabel' | translate }}</label>

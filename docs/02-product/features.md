@@ -14,7 +14,7 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | Splash banner popup | `discover/home` | complete | `SplashBanner` entity, no FKs; active banner = `IsPublished` and today (Vietnam-local date) within `[StartDate, EndDate]`, newest `StartDate` wins on overlap. Shown once per browser session via `sessionStorage` keyed by banner `Id`. |
 | Movie browse & detail | `discover/movies/movie-list`, `discover/movies/movie-detail` | complete | Friendly slug routing (`movie-route.ts`); legacy `:legacyId/:legacySlug` route redirects to `:slug`. |
 | Ratings & reviews | `movie-detail.component.ts` (`rateMovie`, `addComment` actions) | complete | ROADMAP.md marks this 🟡 ("not surfaced") — code shows it **is** surfaced: star rating widget, threaded comments (`recentComments`, `replies`), `canReview` gate. Comments go through admin moderation (see CinemaAdmin). |
-| Theaters listing | `discover/theaters` | complete | |
+| Theaters listing | `discover/theaters` | complete | ROADMAP marks "nearest theater by location" 🆕 — code shows it's implemented: `theaters.component.ts` sorts by distance via `navigator.geolocation` + an inline Haversine calc, shows a "X km" chip per theater, with a `geoNotSupported`/`geoFailed` fallback when permission is denied/unavailable. Coordinates are manually entered per theater in CinemaAdmin (`Theater.Latitude`/`Longitude`), not geocoded automatically. |
 | Promotions | `discover/promotions` | complete | |
 | Membership / tiers | `discover/membership` | partial | Displays `MemberShipDTO` tiers (min points, highlighted middle tier); point accrual/voucher redemption logic lives in checkout, not this page. |
 | Showtime selection | `modules/booking/booking-page` | complete | |
@@ -78,7 +78,6 @@ The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified dir
 | Real payment gateway beyond VNPay sandbox (MoMo/Stripe) | 🟡 | `PaymentController` + gateway abstraction exist; only VNPay implemented. |
 | Movie recommendations by preference | 🆕 not started | |
 | Unified search/filter (theater/date/time/genre/language) | 🟡 partial | Some search exists; no unified filter UI confirmed. |
-| Nearest theater by location | 🆕 not started | |
 | Promotions scoped per-theater | 🆕 not started | |
 | Revenue/advanced stats dashboard | 🆕 partial | Basic reports exist (`modules/overview/reports`); advanced charts not confirmed. |
 | Messaging infra (real email/SMS providers) | 🟡 | `SmtpNotificationService` (email), `TwilioSmsNotificationService`/`DevLogSmsNotificationService` (SMS, dev fallback logs instead of sending) exist in `Cinema.Business/Notifications/*` — may be further along than ROADMAP's 🆕. |

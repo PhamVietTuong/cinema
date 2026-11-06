@@ -35,8 +35,8 @@ export class TheaterDetailComponent implements OnInit {
       phone: ['', Validators.pattern(/^(?:\+84|0)\d{9,10}$/)],
       email: ['', Validators.email],
       imageUrl: [''],
-      latitude: [null],
-      longitude: [null],
+      latitude: [null, [Validators.min(-90), Validators.max(90)]],
+      longitude: [null, [Validators.min(-180), Validators.max(180)]],
     });
   }
 

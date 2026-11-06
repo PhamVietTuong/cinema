@@ -924,6 +924,21 @@ END
 -- ===== end removed roster / manager-override PIN =====
 
 -- ============================================================
+-- Theater.Latitude/Longitude: manually-entered geo-coordinates (WGS84 decimal degrees) for
+-- "nearest theater" search
+-- ============================================================
+IF COL_LENGTH('dbo.Theater', 'Latitude') IS NULL
+BEGIN
+    ALTER TABLE [Theater] ADD [Latitude] float NULL;
+END
+
+IF COL_LENGTH('dbo.Theater', 'Longitude') IS NULL
+BEGIN
+    ALTER TABLE [Theater] ADD [Longitude] float NULL;
+END
+-- ===== end theater latitude/longitude =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

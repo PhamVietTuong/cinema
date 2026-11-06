@@ -49,7 +49,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Ratings & reviews | Partial | S-M | `Evaluation` (Score + Review) and threaded `Comment` entities + stores exist — not surfaced. Add managers/endpoints/UI. Decide: only buyers can review? moderation? |
 | Movie recommendations by preference | New | L | Needs a signal source (ratings, genres watched) + algorithm (start simple: by favorite genres / top-rated). |
 | Search & filter movies/showtimes (theater, date, time, genre, language) | Partial | M | Some search exists (`GetTheatersByMovie`); build a unified filter API + UI. Confirm "language" = movie audio/subtitle field (add if missing). |
-| Nearest theater by location | New | M | Theaters have address/city only — add lat/long + a distance sort (Haversine). Needs geocoding of theaters + browser geolocation. |
+| Nearest theater by location | Done | - | `Theater.Latitude`/`Longitude` (manually entered per theater in CinemaAdmin, no geocoding API) + browser geolocation + Haversine distance sort on CinemaUser's theaters list. |
 
 ## Membership & promotions
 
