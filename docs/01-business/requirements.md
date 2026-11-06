@@ -14,12 +14,13 @@ This is a capability inventory of what exists today (verified against code), not
 | Discovery | Browse now-showing/coming-soon/recommended movies, view movie detail + external ratings (OMDb), browse theaters (incl. by movie), view showtimes | `CinemaController` Movies/Theaters/ShowTimes |
 | Reviews | Rate and comment on a movie, but only after watching it (a Paid invoice for a past showtime of that movie) | `CinemaController.RateMovie`/`AddComment` |
 | Promotions | View published promotions, see the active splash banner once per browser session | `GetPublishedPromotionPrograms`, `GetActiveSplashBanner` |
-| Booking | View seat map + live seat-lock state (SignalR), view prices, lock/unlock a seat in real time, apply a discount code / gift card / loyalty points, create a booking, pay via a gateway (VNPay/MoMo/Stripe/Sandbox), poll invoice status post-redirect, cancel a still-Pending booking | `PaymentController.*`, `BookingHub` |
+| Booking | View seat map + live seat-lock state (SignalR), view prices, lock/unlock a seat in real time, apply a discount code / gift card / loyalty points, create a booking, pay via a gateway (VNPay/MoMo/Stripe/Sandbox), poll invoice status post-redirect | `PaymentController.*`, `BookingHub` |
 | Post-purchase | View own invoices/tickets, see e-ticket confirmation (email/SMS) | `GetMyInvoices`, `GetInvoice` |
 | Profile | Update profile, set notification preferences | `IdentityController.UpdateProfile`/`UpdateNotificationPreferences` |
 
 ### Explicitly not supported (Customer)
 - Self-service refund or cancellation of a `Paid` booking — no refund feature exists in current code.
+- Self-service cancellation of a still-Pending booking — `CancelBookingAsync`/`PaymentController.CancelBooking` were removed outright; a Pending booking now only clears via the 15-min stale-booking reaper (`ExpireStalePendingBookingsAsync`), not customer action.
 - Purchasing a gift card as a customer — gift cards are admin-issued only.
 
 ## 2. Theater staff capabilities (CinemaStaff)

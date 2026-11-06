@@ -6854,11 +6854,15 @@
           "latitude": {
             "type": "number",
             "format": "double",
+            "maximum": 90.0,
+            "minimum": -90.0,
             "nullable": true
           },
           "longitude": {
             "type": "number",
             "format": "double",
+            "maximum": 180.0,
+            "minimum": -180.0,
             "nullable": true
           }
         }
@@ -6895,11 +6899,15 @@
           "latitude": {
             "type": "number",
             "format": "double",
+            "maximum": 90.0,
+            "minimum": -90.0,
             "nullable": true
           },
           "longitude": {
             "type": "number",
             "format": "double",
+            "maximum": 180.0,
+            "minimum": -180.0,
             "nullable": true
           }
         }

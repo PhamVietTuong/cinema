@@ -105,25 +105,6 @@ public class PaymentController : ApiControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(400)]
-    public async Task<IActionResult> CancelBooking([FromBody] CancelBookingRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.CancelBooking being awakened to process request...");
-        try
-        {
-            var success = await _bookingManager.CancelBookingAsync(User.GetUserId(), request.InvoiceId);
-            return success
-                ? Ok(new { message = "Booking cancelled." })
-                : BadRequest(new { error = "Cannot cancel this booking." });
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(CancelBooking));
-        }
-    }
-
-    [HttpPost]
     [ProducesResponseType(typeof(PaymentInitiationDTO), 200)]
     [ProducesResponseType(400)]
     public async Task<IActionResult> InitiatePayment([FromBody] InitiatePaymentRequest request)

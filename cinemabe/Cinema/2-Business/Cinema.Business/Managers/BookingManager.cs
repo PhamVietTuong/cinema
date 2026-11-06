@@ -1785,38 +1785,6 @@ public class BookingManager : IBookingManager
         return true;
     }
 
-    public async Task<bool> CancelBookingAsync(Guid userId, Guid invoiceId)
-    {
-        var invoice = await _uow.InvoiceStore.GetByIdAsync(invoiceId);
-        if (invoice == null || invoice.UserId != userId)
-        {
-            return false;
-        }
-        if (invoice.Status != InvoiceStatus.Pending)
-        {
-            return false;
-        }
-        await _uow.BeginTransactionAsync();
-        try
-        {
-            invoice.Status = InvoiceStatus.Cancelled;
-            CancelFoodOrder(invoice);
-            await _uow.InvoiceStore.UpdateAsync(invoice);
-            await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-            await RestoreRedeemedPointsAsync(invoice);
-            await RestoreGiftCardAsync(invoice);
-            await RestoreFoodStockAsync(new[] { invoice }, "Cancelled", userId);
-            await _uow.SaveChangesAsync();
-            await _uow.CommitTransactionAsync();
-        }
-        catch
-        {
-            await _uow.RollbackTransactionAsync();
-            throw;
-        }
-        return true;
-    }
-
     // Returns the loyalty points reserved for a booking that did not complete (cancelled/expired).
     private async Task RestoreRedeemedPointsAsync(Invoice invoice)
     {

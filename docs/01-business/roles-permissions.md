@@ -48,7 +48,7 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 
 ### Customer
 - Browse movies/theaters/showtimes (all public/anonymous reads), book seats, pay, manage own profile/notification prefs/2FA, rate/comment on watched movies, view own invoices/tickets.
-- Cannot access any Admin- or staff-gated action. No ownership bypass — `InitiatePayment`/`ConfirmPayment`/`CancelBooking`/`GetMyInvoices` all filter by the caller's own `userId` from the JWT.
+- Cannot access any Admin- or staff-gated action. No ownership bypass — `InitiatePayment`/`ConfirmPayment`/`GetMyInvoices` all filter by the caller's own `userId` from the JWT.
 
 ## 4. Enforcement mechanics
 

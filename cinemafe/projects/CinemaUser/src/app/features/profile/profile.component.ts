@@ -231,21 +231,7 @@ export class ProfileComponent extends ProfileFormBase {
       status: inv.status,
     }));
   }
-  cancelById(id?: string): void {
-    const inv = this.historyInvoices.find(i => i.id === id);
-    if (inv) { this.cancelBooking(inv); }
-  }
-
   toggleInvoice(id?: string): void { this.expandedId = this.expandedId === id ? null : (id ?? null); }
-
-  cancelBooking(inv: PaymentServiceAgent.InvoiceDTO): void {
-    if (!inv.id || !confirm(this._translate.instant('profile.confirmCancelBooking'))) { return; }
-    this._payment.cancelBooking(PaymentServiceAgent.CancelBookingRequest.fromJS({ invoiceId: inv.id }))
-      .subscribe({
-        next: () => { this.loadInvoices(); this.loadHistoryPage(this.historyPage); },
-        error: () => { this.loadInvoices(); this.loadHistoryPage(this.historyPage); },
-      });
-  }
 
   statusLabel(s?: PaymentServiceAgent.InvoiceStatus): string {
     switch (s) {
