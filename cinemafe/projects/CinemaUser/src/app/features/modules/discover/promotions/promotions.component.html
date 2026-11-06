@@ -35,12 +35,22 @@
   <div class="ticket-list">
     <article class="ticket" *ngFor="let p of visible">
 
-      <div class="ticket-stub">
+      <div class="ticket-stub" [class.ticket-stub--img]="p.bannerUrl">
         <span class="notch notch--top" aria-hidden="true"></span>
         <span class="notch notch--bottom" aria-hidden="true"></span>
-        <span class="stub-value" *ngIf="stubValue(p) as sv; else stubIcon">{{ sv }}</span>
-        <ng-template #stubIcon><mat-icon class="stub-icon">local_activity</mat-icon></ng-template>
-        <span class="stub-caption">{{ stubCaption(p) }}</span>
+
+        <ng-container *ngIf="p.bannerUrl; else noImage">
+          <img [src]="p.bannerUrl" alt="" class="stub-img">
+          <span class="stub-chip">
+            <span class="chip-val" *ngIf="stubValue(p) as sv; else chipIcon">{{ sv }}</span>
+            <ng-template #chipIcon><mat-icon class="chip-icon">local_activity</mat-icon></ng-template>
+          </span>
+        </ng-container>
+        <ng-template #noImage>
+          <span class="stub-value" *ngIf="stubValue(p) as sv; else stubIcon">{{ sv }}</span>
+          <ng-template #stubIcon><mat-icon class="stub-icon">local_activity</mat-icon></ng-template>
+          <span class="stub-caption">{{ stubCaption(p) }}</span>
+        </ng-template>
       </div>
 
       <div class="ticket-body">
@@ -97,10 +107,6 @@
         </div>
 
         <div class="promo-details" *ngIf="isExpanded(p.id)">
-          <div class="promo-banner" *ngIf="p.bannerUrl">
-            <img [src]="p.bannerUrl" alt="">
-          </div>
-
           <div class="promo-prices" *ngIf="p.prices?.length">
             <h4>{{ 'promotions.pricesTitle' | translate }}</h4>
             <div class="price-chips">

@@ -50,6 +50,20 @@
 .stub-icon { color: var(--mp-gold-deep); opacity: .8; font-size: 1.8rem; width: 1.8rem; height: 1.8rem; }
 .stub-caption { font-family: var(--mp-font-display); font-size: .66rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--mp-muted); }
 
+// A promo with a BannerUrl swaps the plain stub for its image, edge-to-edge in the same column
+// (clipped to the ticket's own border-radius via .ticket's overflow:hidden) — the price/icon that
+// used to be centered text becomes a small chip riding the image's bottom-left corner instead.
+.ticket-stub--img { padding: 0; }
+.stub-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.stub-chip {
+  position: absolute; left: 8px; bottom: 8px; z-index: 1;
+  display: inline-flex; align-items: center;
+  background: var(--mp-card); border: 2px solid var(--mp-red); border-radius: var(--mp-r-full, 999px);
+  padding: 4px 9px;
+}
+.chip-val { font-family: var(--ml-font-display); font-size: 1rem; line-height: 1; color: var(--mp-gold-deep); }
+.chip-icon { color: var(--mp-gold-deep); font-size: 1rem; width: 1rem; height: 1rem; }
+
 .ticket-body { padding: 18px 22px 20px; min-width: 0; }
 
 .ticket-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 10px; }
@@ -127,7 +141,11 @@
 
   .ticket { grid-template-columns: 84px 1fr; }
   .ticket-stub { padding: 14px 6px; }
+  .ticket-stub--img { padding: 0; }
   .stub-value { font-size: 1.6rem; }
+  .stub-chip { left: 6px; bottom: 6px; padding: 3px 7px; }
+  .chip-val { font-size: .82rem; }
+  .chip-icon { font-size: .82rem; width: .82rem; height: .82rem; }
   .ticket-body { padding: 14px 16px 16px; }
 
   .ledger-row dt { flex-basis: 96px; }
