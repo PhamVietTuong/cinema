@@ -20,9 +20,6 @@ public static class RoleNames
     /// <summary>Ticket scanning / admission at the gate.</summary>
     public const string GateKeepers = Admin + "," + TheaterStaff;
 
-    /// <summary>Food and drink counter sale and the pickup queue.</summary>
-    public const string Concession = Admin + "," + TheaterStaff;
-
     /// <summary>Anyone allowed into the warehouse/inventory part of the staff app.</summary>
     public const string BackOffice = Admin + "," + TheaterStaff;
 

@@ -28,12 +28,11 @@ This is a capability inventory of what exists today (verified against code), not
 |---|---|---|
 | Box office | Quote and ring up a counter sale (always `Paid` at creation), look up a customer by phone, see today's showtimes for the theater | `RoleNames.Sellers` |
 | Gate | Scan a QR ticket for admission, look up today's paid tickets by invoice code/phone | `RoleNames.GateKeepers` |
-| Concession | View pickup queue, update a food order's status, check low-stock items, look up a pickup by reference | `RoleNames.Concession` |
 | Operations | View the schedule board, report an incident, view/resolve incidents (resolve-with-unblock needs `Approvers`) | `RoleNames.StaffApp` (+`Approvers` for unblock) |
 | Seat map | View (not edit) the room seat map | `RoleNames.StaffApp` |
 
 ### Explicitly not supported (TheaterStaff)
-- Cash drawer close / daily close, time clock, tasks/checklists, inventory/storage-plan management, customer-service/after-sales desk, refund/exchange UI (exchange field `ExchangedFromInvoiceId` still exists on `Invoice`, but no exchange workflow UI was found) — all confirmed removed from `CinemaStaff`'s current feature tree and sidebar.
+- Cash drawer close / daily close, time clock, tasks/checklists, inventory/storage-plan management, customer-service/after-sales desk, refund/exchange UI (exchange field `ExchangedFromInvoiceId` still exists on `Invoice`, but no exchange workflow UI was found), kitchen pickup queue / low-stock alerts (removed along with `RoleNames.Concession`) — all confirmed removed from `CinemaStaff`'s current feature tree and sidebar.
 - Running sales/occupancy/KPI reports (`StaffReport` region is Admin-only despite the name).
 - Any catalog/pricing/theater/movie/promotion write — all gated `Admin` literal, not `TheaterStaff`.
 

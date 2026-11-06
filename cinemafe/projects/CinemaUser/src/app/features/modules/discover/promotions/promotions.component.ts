@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  SharedModule, CinemaServiceAgent,
+  SharedModule, CinemaServiceAgent, SalesChannel,
   PromotionMechanicValues, PromotionEligibilityValues, daysMaskToList, channelsMaskToList,
 } from 'CinemaLib';
 
@@ -174,7 +174,7 @@ export class PromotionsComponent implements OnInit {
     if (channels.length === 0) {
       return [];
     }
-    return channels.map(c => c === CinemaServiceAgent.SalesChannel.Online ? 'promoProgram.channel.online' : 'promoProgram.channel.counter');
+    return channels.map(c => c === SalesChannel.Online ? 'promoProgram.channel.online' : 'promoProgram.channel.counter');
   }
 
   termsLines(p: ProgramDTO): string[] {

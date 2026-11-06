@@ -2,7 +2,6 @@ using Cinema.Business.Contracts;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.BoxOffice;
 using Cinema.Business.DTO.Catalog;
-using Cinema.Business.DTO.Concession;
 using Cinema.Business.DTO.Gate;
 using Cinema.Business.DTO.Loyalty;
 using Cinema.Business.DTO.Movies;
@@ -56,7 +55,6 @@ public class CinemaController : ApiControllerBase
     private readonly IWebHostEnvironment         _env;
 
     // Staff
-    private readonly IConcessionManager _concessions;
     private readonly IGateManager _gate;
     private readonly IBoxOfficeManager _boxOffice;
     private readonly IStaffReportManager _reports;
@@ -93,7 +91,6 @@ public class CinemaController : ApiControllerBase
         ILoyaltySettingManager loyaltySettings,
         IWebHostEnvironment env,
         // Staff
-        IConcessionManager concessions,
         IGateManager gate,
         IBoxOfficeManager boxOffice,
         IStaffReportManager reports,
@@ -101,7 +98,6 @@ public class CinemaController : ApiControllerBase
         IIncidentManager incidents)
     {
         _combos              = combos;
-        _concessions         = concessions;
         _gate                = gate;
         _boxOffice           = boxOffice;
         _reports             = reports;
@@ -1887,97 +1883,6 @@ public class CinemaController : ApiControllerBase
     // ════════════════════════════════════════════════════════════════════════════
     //  Staff
     // ════════════════════════════════════════════════════════════════════════════
-
-    #region Concession
-
-    /// <summary>Paid orders waiting to be prepared or handed over, by earliest showtime. Day null = today.</summary>
-    [Authorize(Roles = RoleNames.Concession)]
-    [HttpPost]
-    [ProducesResponseType(typeof(List<PickupOrderDTO>), 200)]
-    public async Task<IActionResult> GetPickupQueue([FromBody] GetPickupQueueRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetPickupQueue)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _concessions.GetPickupQueueAsync(theaterId, request.Day));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetPickupQueue));
-        }
-    }
-
-    /// <summary>Moves an order one step (Preparing, Ready, HandedOver). An illegal move is 400.</summary>
-    [Authorize(Roles = RoleNames.Concession)]
-    [HttpPost]
-    [ProducesResponseType(typeof(PickupOrderDTO), 200)]
-    public async Task<IActionResult> SetFoodStatus([FromBody] SetFoodStatusRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(SetFoodStatus)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _concessions.SetFoodStatusAsync(theaterId, User.GetUserId(), request.InvoiceId, request.Status));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(SetFoodStatus));
-        }
-    }
-
-    /// <summary>Tracked items at or under their low-stock threshold.</summary>
-    [Authorize(Roles = RoleNames.Concession)]
-    [HttpPost]
-    [ProducesResponseType(typeof(List<LowStockItemDTO>), 200)]
-    public async Task<IActionResult> GetLowStock([FromBody] GetLowStockRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(GetLowStock)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _concessions.GetLowStockAsync(theaterId));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetLowStock));
-        }
-    }
-
-    /// <summary>Finds an order by the invoice code the customer shows (404 when unknown or another theater's).</summary>
-    [Authorize(Roles = RoleNames.Concession)]
-    [HttpPost]
-    [ProducesResponseType(typeof(PickupOrderDTO), 200)]
-    public async Task<IActionResult> LookupPickup([FromBody] LookupPickupRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(LookupPickup)} being awakened to process request...");
-        try
-        {
-            if (!User.TryGetStaffScope(out var scope))
-            {
-                return Forbid();
-            }
-            var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _concessions.LookupPickupAsync(theaterId, request.Code));
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(LookupPickup));
-        }
-    }
-    #endregion
 
     #region Gate
 

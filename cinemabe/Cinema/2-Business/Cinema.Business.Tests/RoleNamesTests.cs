@@ -21,10 +21,9 @@ public class RoleNamesTests
     }
 
     [Fact]
-    public void GateKeepers_Concession_AndBackOffice_MatchTheMatrix()
+    public void GateKeepers_AndBackOffice_MatchTheMatrix()
     {
         Roles(RoleNames.GateKeepers).Should().BeEquivalentTo(new[] { RoleNames.Admin, RoleNames.TheaterStaff });
-        Roles(RoleNames.Concession).Should().BeEquivalentTo(new[] { RoleNames.Admin, RoleNames.TheaterStaff });
         Roles(RoleNames.BackOffice).Should().BeEquivalentTo(new[] { RoleNames.Admin, RoleNames.TheaterStaff });
     }
 

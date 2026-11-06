@@ -249,8 +249,8 @@ Code (max 50, **unique**), InitialBalance (double), Balance (double), IsActive, 
 | Channel | SalesChannel | Online=0/Counter=1 |
 | SoldByUserId | Guid? | no FK |
 | CashDrawerSessionId | Guid? | no FK |
-| FoodStatus | FoodOrderStatus | None=0/Pending=1/Preparing=2/Ready=3/HandedOver=4/Cancelled=5 |
-| FoodHandedOverAt / FoodHandedOverByUserId | | |
+| FoodStatus | FoodOrderStatus | None=0/Pending=1/Preparing=2/Ready=3/HandedOver=4/Cancelled=5. Vestigial beyond Pending/HandedOver since the kitchen pickup queue feature was removed — a counter sale now moves it straight to HandedOver; Preparing/Ready/Cancelled are never set by any remaining code path. |
+| FoodHandedOverAt / FoodHandedOverByUserId | | Stamped on the counter-sale HandedOver transition only. |
 | ExchangedFromInvoiceId | Guid? | no FK |
 
 Index: (TheaterId, PaidAt). Nav `InvoiceTickets`, `InvoiceFoodAndDrinks`, `Payments`.
@@ -268,10 +268,10 @@ PK (InvoiceId, FoodAndDrinkId). Quantity (int), UnitPrice/TotalPrice (double). I
 ### InvoicePayment (one tender line)
 InvoiceId (Cascade), Method (PaymentTender: Cash=0/Card=1/QrWallet=2/GiftCard=3/Points=4/Online=5), Amount (double), TenderedAmount/ChangeAmount (double?, cash only), Reference (string?, max 100).
 
-## 6. Concession / Inventory
+## 6. Catalog / Inventory
 
 ### FoodAndDrink
-TheaterId (Cascade), Name (200), Price (double), ImageUrl?, Description?, IsAvailable (bool, default true), TrackInventory (bool), QuantityOnHand (int, **check constraint `>= 0`**), LowStockThreshold (int), TargetStockLevel (int, 0=unset), IsCombo (bool). Nav `InvoiceFoodAndDrinks`, `ComboItems`.
+TheaterId (Cascade), Name (200), Price (double), ImageUrl?, Description?, IsAvailable (bool, default true), TrackInventory (bool), QuantityOnHand (int, **check constraint `>= 0`**), LowStockThreshold (int), TargetStockLevel (int, 0=unset), IsCombo (bool). `LowStockThreshold`/`TargetStockLevel` are vestigial since the kitchen pickup queue / low-stock alert feature was removed — no endpoint reads them today. Nav `InvoiceFoodAndDrinks`, `ComboItems`.
 
 ### ComboItem
 ComboId (Cascade, FK → FoodAndDrink "Combo"), ComponentId (NoAction, FK → FoodAndDrink "Component"), Quantity (int, default 1). **Unique** (ComboId, ComponentId). Check constraints: `Quantity > 0`, `ComboId <> ComponentId`.

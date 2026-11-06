@@ -3,9 +3,6 @@ import { GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES, SELLER_ROLES } from 'Ci
 /**
  * CinemaStaff sidebar. Each item may carry `roles` (omitted = every staff role); the shared
  * shell hides what the signed-in role may not open. Later phases append their sections here.
- *
- * Kitchen (food pickup queue, /kitchen) is intentionally not listed here for now — the feature
- * and its route stay in place, just hidden from the sidebar.
  */
 export const STAFF_MENU: NavSection[] = [
   {

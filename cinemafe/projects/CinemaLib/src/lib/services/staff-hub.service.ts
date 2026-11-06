@@ -6,15 +6,6 @@ import { selectToken } from '../store/auth/auth.selectors';
 import { HUB_BASE_URL } from '../tokens';
 import { CinemaServiceAgent } from './cinema-http.service';
 
-/** Payload of the `FoodOrderUpdated` hub event. */
-export interface FoodOrderUpdatedEvent {
-  invoiceId: string;
-  theaterId: string;
-  invoiceCode?: string;
-  foodStatus: CinemaServiceAgent.FoodOrderStatus;
-  foodHandedOverAt?: Date;
-}
-
 /**
  * Live connection to the staff hub (`/hubs/staff`). The server joins the theater groups listed in the
  * user's claims on connect; an Admin picks a theater with `setTheater`. The connection is shared by every
@@ -29,9 +20,6 @@ export class StaffHubService implements OnDestroy {
   private _starting: Promise<void> | null = null;
   private _theaterId: string | null = null;
 
-  readonly foodOrderQueued$ = new Subject<CinemaServiceAgent.PickupOrderDTO>();
-  readonly foodOrderUpdated$ = new Subject<FoodOrderUpdatedEvent>();
-  readonly stockLow$ = new Subject<CinemaServiceAgent.LowStockItemDTO[]>();
   readonly incidentRaised$ = new Subject<CinemaServiceAgent.IncidentDTO>();
   readonly connected$ = new BehaviorSubject<boolean>(false);
   /** Emits after an automatic reconnect: events may have been missed, so screens refetch. */
@@ -88,16 +76,6 @@ export class StaffHubService implements OnDestroy {
       .configureLogging(LogLevel.Warning)
       .build();
 
-    connection.on('FoodOrderQueued', (order: unknown) =>
-      this.foodOrderQueued$.next(CinemaServiceAgent.PickupOrderDTO.fromJS(order)));
-    connection.on('FoodOrderUpdated', (event: FoodOrderUpdatedEvent) => {
-      this.foodOrderUpdated$.next({
-        ...event,
-        foodHandedOverAt: event.foodHandedOverAt ? new Date(event.foodHandedOverAt) : undefined,
-      });
-    });
-    connection.on('StockLow', (items: unknown[]) =>
-      this.stockLow$.next((items ?? []).map(item => CinemaServiceAgent.LowStockItemDTO.fromJS(item))));
     connection.on('IncidentRaised', (incident: unknown) =>
       this.incidentRaised$.next(CinemaServiceAgent.IncidentDTO.fromJS(incident)));
 

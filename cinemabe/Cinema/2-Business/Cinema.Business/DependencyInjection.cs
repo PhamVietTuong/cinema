@@ -67,7 +67,6 @@ public static class DependencyInjection
         services.AddScoped<IIncidentManager, IncidentManager>();
         services.AddScoped<IBoxOfficeManager, BoxOfficeManager>();
         services.AddSingleton<IStaffNotificationService, NoOpStaffNotificationService>();
-        services.AddScoped<IConcessionManager, ConcessionManager>();
         return services;
     }
 }

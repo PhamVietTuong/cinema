@@ -89,22 +89,7 @@ export function invoiceStatusPillClass(s?: CinemaServiceAgent.InvoiceStatus): st
 }
 
 /** What `cl-status-pill` can render; each kind maps its `value` to a label key and pill class in this file. */
-export type StatusPillKind = 'invoice' | 'scanOutcome' | 'auditAction' | 'incident' | 'incidentSeverity' | 'roomStatus' | 'foodOrder';
-
-/** i18n label key (under `kitchen.status`) and pill class for each FoodOrderStatus. */
-export const FoodOrderStatusSpecs: Record<CinemaServiceAgent.FoodOrderStatus, { labelKey: string; cssClass: string }> = {
-  [CinemaServiceAgent.FoodOrderStatus.None]: { labelKey: 'kitchen.status.none', cssClass: 'ad-pill--neutral' },
-  [CinemaServiceAgent.FoodOrderStatus.Pending]: { labelKey: 'kitchen.status.pending', cssClass: 'ad-pill--warn' },
-  [CinemaServiceAgent.FoodOrderStatus.Preparing]: { labelKey: 'kitchen.status.preparing', cssClass: 'ad-pill--violet' },
-  [CinemaServiceAgent.FoodOrderStatus.Ready]: { labelKey: 'kitchen.status.ready', cssClass: 'ad-pill--success' },
-  [CinemaServiceAgent.FoodOrderStatus.HandedOver]: { labelKey: 'kitchen.status.handedOver', cssClass: 'ad-pill--neutral' },
-  [CinemaServiceAgent.FoodOrderStatus.Cancelled]: { labelKey: 'kitchen.status.cancelled', cssClass: 'ad-pill--danger' },
-};
-
-/** Label key and pill class of a food order status; an unknown value reads as "none". */
-export function foodOrderStatusSpec(status?: CinemaServiceAgent.FoodOrderStatus): { labelKey: string; cssClass: string } {
-  return FoodOrderStatusSpecs[status as CinemaServiceAgent.FoodOrderStatus] ?? FoodOrderStatusSpecs[CinemaServiceAgent.FoodOrderStatus.None];
-}
+export type StatusPillKind = 'invoice' | 'scanOutcome' | 'auditAction' | 'incident' | 'incidentSeverity' | 'roomStatus';
 
 /** i18n label key (under `salesReports.groupBy`) for each SalesGroupBy value, in display order. */
 export const SalesGroupByValues: { value: CinemaServiceAgent.SalesGroupBy; name: string }[] = [
@@ -280,9 +265,6 @@ export function statusPillSpec(kind: StatusPillKind, value: unknown): { labelKey
       const action = value as CinemaServiceAgent.AuditAction;
       return { labelKey: auditActionLabel(action), cssClass: auditActionPillClass(action) };
     }
-    case 'foodOrder': {
-      return foodOrderStatusSpec(value as CinemaServiceAgent.FoodOrderStatus);
-    }
     case 'incident': {
       const status = value as CinemaServiceAgent.IncidentStatus;
       return { labelKey: incidentStatusLabel(status), cssClass: incidentStatusPillClass(status) };
@@ -371,10 +353,20 @@ export const PromotionEligibilityValues: { value: CinemaServiceAgent.PromotionEl
   { value: CinemaServiceAgent.PromotionEligibility.AgeLimit, name: 'promoProgram.eligibility.ageLimit' },
 ];
 
+/**
+ * Where an invoice was sold. Mirrors `SalesChannel` in cinemabe/Cinema/3-Data/Cinema.Data.Entities/Enums
+ * (never renumber). Not NSwag-generated: no current endpoint exposes it as a typed DTO property, only as the
+ * `AllowedChannelsMask` bitmask below.
+ */
+export enum SalesChannel {
+  Online = 0,
+  Counter = 1,
+}
+
 /** Display label for each SalesChannel value, used by PromotionProgram.AllowedChannelsMask. */
-export const SalesChannelValues: { value: CinemaServiceAgent.SalesChannel; name: string }[] = [
-  { value: CinemaServiceAgent.SalesChannel.Online, name: 'promoProgram.channel.online' },
-  { value: CinemaServiceAgent.SalesChannel.Counter, name: 'promoProgram.channel.counter' },
+export const SalesChannelValues: { value: SalesChannel; name: string }[] = [
+  { value: SalesChannel.Online, name: 'promoProgram.channel.online' },
+  { value: SalesChannel.Counter, name: 'promoProgram.channel.counter' },
 ];
 
 /** Decodes a DaysOfWeekMask bitmask (bit n = CinemaServiceAgent.DayOfWeek value n) into a day list. */
@@ -391,7 +383,7 @@ export function daysListToMask(days: CinemaServiceAgent.DayOfWeek[]): number | n
 }
 
 /** Decodes an AllowedChannelsMask bitmask into a channel list. */
-export function channelsMaskToList(mask?: number | null): CinemaServiceAgent.SalesChannel[] {
+export function channelsMaskToList(mask?: number | null): SalesChannel[] {
   if (!mask) {
     return [];
   }
@@ -399,7 +391,7 @@ export function channelsMaskToList(mask?: number | null): CinemaServiceAgent.Sal
 }
 
 /** Encodes a channel list back into an AllowedChannelsMask bitmask; empty means "all channels" (null). */
-export function channelsListToMask(channels: CinemaServiceAgent.SalesChannel[]): number | null {
+export function channelsListToMask(channels: SalesChannel[]): number | null {
   return channels.length ? channels.reduce((mask, c) => mask | (1 << c), 0) : null;
 }
 

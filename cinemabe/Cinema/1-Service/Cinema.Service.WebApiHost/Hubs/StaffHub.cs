@@ -6,17 +6,14 @@ using Microsoft.AspNetCore.SignalR;
 namespace Cinema.Service.WebApiHost.Hubs;
 
 /// <summary>
-/// Real-time channel of the staff app (<c>/hubs/staff</c>). Server-to-client events: <c>FoodOrderQueued</c>,
-/// <c>FoodOrderUpdated</c>, <c>StockLow</c>, <c>IncidentRaised</c>, each sent to the <c>theater:{id}</c> group.
-/// A connection joins the groups of its own theater claim(s) on connect; an admin has none and joins the theaters
-/// it wants with <see cref="JoinTheater"/>. The JWT arrives in the <c>access_token</c> query string.
+/// Real-time channel of the staff app (<c>/hubs/staff</c>). Server-to-client events: <c>IncidentRaised</c>, sent to
+/// the <c>theater:{id}</c> group. A connection joins the groups of its own theater claim(s) on connect; an admin has
+/// none and joins the theaters it wants with <see cref="JoinTheater"/>. The JWT arrives in the <c>access_token</c>
+/// query string.
 /// </summary>
 [Authorize(Roles = RoleNames.StaffApp)]
 public class StaffHub : Hub
 {
-    public const string FoodOrderQueuedEvent = "FoodOrderQueued";
-    public const string FoodOrderUpdatedEvent = "FoodOrderUpdated";
-    public const string StockLowEvent = "StockLow";
     public const string IncidentRaisedEvent = "IncidentRaised";
 
     public static string TheaterGroup(Guid theaterId)

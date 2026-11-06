@@ -33,7 +33,6 @@ Verified by listing `cinemabe/Cinema/2-Business/Cinema.Business.Tests/*.cs`:
 | `BookingConfirmationTemplateTests.cs` | Booking confirmation template rendering |
 | `BoxOfficeTests.cs` | Box office / counter sale flow |
 | `ComboServiceTests.cs` | Food & drink combo logic |
-| `ConcessionTests.cs` | Concession (food & drink) catalog |
 | `DtoValidationTests.cs` | DTO validation rules |
 | `EntityTests.cs` | Entity-level behavior |
 | `GateManagerTests.cs` | Gate admission / ticket scanning |

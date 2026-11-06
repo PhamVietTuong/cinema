@@ -50,7 +50,6 @@ internal static class CinemaControllerFactory
             combos: null!,
             loyaltySettings: null!,
             env: null!,
-            concessions: null!,
             gate: gate!,
             boxOffice: boxOffice!,
             reports: reports!,

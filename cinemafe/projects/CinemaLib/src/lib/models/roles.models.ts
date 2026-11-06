@@ -44,12 +44,6 @@ export const GATE_KEEPER_ROLES: readonly string[] = [
   UserRoles.TheaterStaff,
 ];
 
-/** Food and drink counter sale and the pickup queue. */
-export const CONCESSION_ROLES: readonly string[] = [
-  UserRoles.Admin,
-  UserRoles.TheaterStaff,
-];
-
 /** Blocking/unblocking seats and rooms, price overrides, drawer reconciliation, compensation. */
 export const APPROVER_ROLES: readonly string[] = [
   UserRoles.Admin,
