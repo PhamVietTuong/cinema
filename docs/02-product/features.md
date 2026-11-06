@@ -75,7 +75,6 @@ The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified dir
 | Feature | Status | Notes |
 |---|---|---|
 | Facebook login | 🆕 not started | Google login exists as the pattern to mirror. |
-| Cancellation/exchange **policy** (cutoffs, fees) | 🟡 | Cancel action exists (see above); formal policy rules not confirmed in code — <!-- TODO: confirm with team -->. |
 | Real payment gateway beyond VNPay sandbox (MoMo/Stripe) | 🟡 | `PaymentController` + gateway abstraction exist; only VNPay implemented. |
 | Movie recommendations by preference | 🆕 not started | |
 | Unified search/filter (theater/date/time/genre/language) | 🟡 partial | Some search exists; no unified filter UI confirmed. |

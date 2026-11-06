@@ -39,7 +39,6 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Order food/drink combos with tickets | Partial | M | `InvoiceFoodAndDrink` join exists; wire into the booking flow + UI (add items to a booking, sum totals). |
 | Manage booked tickets (view / cancel) | Partial | M | Invoices exist; add customer "my tickets" view + cancel flow. Depends on cancellation policy below. |
 | E-tickets + QR codes | New | M | `InvoiceTicket.QrCode` column exists; generate a QR (booking ref) + render on ticket + a scan/validate endpoint. |
-| Cancellation / exchange policy | New | M | Rules for refunds/showtime changes (time cutoffs, fees). Needs policy decisions before build. |
 | Payment gateway (VNPay/MoMo/Stripe) | Partial | L | `PaymentController` + `SandboxPaymentGateway` abstraction exist; implement a real provider. Pick provider(s); handle callbacks/webhooks + PCI scope (prefer hosted redirect). |
 | Order confirmation email/SMS | New | M | Overlaps with reminders — see messaging infra below. |
 
