@@ -278,35 +278,54 @@ public class PromotionProgramManager : IPromotionProgramManager
     // ── Entity shaping ───────────────────────────────────────────────────────
 
     /// <summary>Clears fields that don't apply to the chosen mechanic/eligibility, and replaces the
-    /// price-row collection wholesale.</summary>
-    private static void ApplyMechanicAndEligibility(PromotionProgram entity, double? percentOff, Guid? minMemberShipId, int? maxAge, List<PromotionProgramPriceDTO> prices)
+    /// price-row collection wholesale.
+    /// A new row is created with its PromotionProgramId set explicitly and handed to
+    /// IPromotionProgramStore.AddPrice (an explicit DbSet.Add), not entity.Prices.Add(...): a child
+    /// discovered only via collection-navigation fixup, never through an explicit Add(), gets tracked
+    /// as Modified instead of Added once its Guid Id is a non-default, client-set value (BaseEntity
+    /// sets Id = Guid.NewGuid() in its property initializer) — EF's heuristic for navigation-discovered
+    /// entities with an already-set key assumes "this might reference an existing row" rather than
+    /// "this is new", which threw DbUpdateConcurrencyException ("expected 1 row, affected 0") on every
+    /// Update, even a no-op one, because the "Modified" UPDATE targeted a row that had never existed.
+    /// The old rows are explicitly removed first (RemovePrices) so they are never fixed-up against the
+    /// new ones, and entity.Prices is still kept in sync for the in-memory graph MapPageAsync reads
+    /// afterwards.</summary>
+    private void ApplyMechanicAndEligibility(PromotionProgram entity, double? percentOff, Guid? minMemberShipId, int? maxAge, List<PromotionProgramPriceDTO> prices)
     {
         entity.PercentOff = entity.Mechanic == PromotionMechanic.PercentOff ? percentOff : null;
         entity.MinMemberShipId = entity.Eligibility == PromotionEligibility.Members ? minMemberShipId : null;
         entity.MaxAge = entity.Eligibility == PromotionEligibility.AgeLimit ? maxAge : null;
 
-        entity.Prices.Clear();
+        _uow.PromotionProgramStore.RemovePrices(entity.Prices);
+        entity.Prices = new List<PromotionProgramPrice>();
         if (entity.Mechanic == PromotionMechanic.FixedPrice)
         {
             foreach (var p in prices ?? new())
             {
-                entity.Prices.Add(new PromotionProgramPrice { ProjectionForm = p.ProjectionForm, SeatKind = p.SeatKind, Price = p.Price });
+                var price = new PromotionProgramPrice { PromotionProgramId = entity.Id, ProjectionForm = p.ProjectionForm, SeatKind = p.SeatKind, Price = p.Price };
+                _uow.PromotionProgramStore.AddPrice(price);
+                entity.Prices.Add(price);
             }
         }
     }
 
-    private static void ReplaceSchedules(PromotionProgram entity, List<PromotionProgramScheduleDTO> schedules)
+    /// <summary>See the remarks on <see cref="ApplyMechanicAndEligibility"/> — same fix, for Schedules.</summary>
+    private void ReplaceSchedules(PromotionProgram entity, List<PromotionProgramScheduleDTO> schedules)
     {
-        entity.Schedules.Clear();
+        _uow.PromotionProgramStore.RemoveSchedules(entity.Schedules);
+        entity.Schedules = new List<PromotionProgramSchedule>();
         foreach (var s in schedules ?? new())
         {
-            entity.Schedules.Add(new PromotionProgramSchedule
+            var schedule = new PromotionProgramSchedule
             {
+                PromotionProgramId = entity.Id,
                 TheaterId = s.TheaterId,
                 DaysOfWeekMask = s.DaysOfWeekMask,
                 StartTimeOfDay = ParseTime(s.StartTimeOfDay),
                 EndTimeOfDay = ParseTime(s.EndTimeOfDay),
-            });
+            };
+            _uow.PromotionProgramStore.AddSchedule(schedule);
+            entity.Schedules.Add(schedule);
         }
     }
 

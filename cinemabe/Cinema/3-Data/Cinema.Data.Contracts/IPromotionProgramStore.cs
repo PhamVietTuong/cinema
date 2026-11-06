@@ -21,4 +21,21 @@ public interface IPromotionProgramStore : IGenericStore<PromotionProgram>
     /// <paramref name="showDate"/>, with Prices and Schedules loaded (split query). The caller
     /// (BookingManager) still applies eligibility, channel, holiday and schedule matching.</summary>
     Task<List<PromotionProgram>> GetAutoApplyCandidatesAsync(DateOnly showDate);
+
+    /// <summary>Explicitly marks these tracked rows Deleted (no SaveChanges) — the manager calls this
+    /// before replacing a program's Prices with a fresh list on Update, rather than relying on
+    /// collection.Clear() + Add() in place, which produced a spurious UPDATE/DELETE pairing instead of
+    /// a clean DELETE+INSERT (see PromotionProgramManager.ApplyMechanicAndEligibility).</summary>
+    void RemovePrices(IEnumerable<PromotionProgramPrice> prices);
+
+    /// <summary>Same as <see cref="RemovePrices"/>, for Schedules.</summary>
+    void RemoveSchedules(IEnumerable<PromotionProgramSchedule> schedules);
+
+    /// <summary>Explicitly marks a brand-new row Added (no SaveChanges) — see
+    /// PromotionProgramManager.ApplyMechanicAndEligibility for why this can't just be
+    /// entity.Prices.Add(...).</summary>
+    void AddPrice(PromotionProgramPrice price);
+
+    /// <summary>Same as <see cref="AddPrice"/>, for Schedules.</summary>
+    void AddSchedule(PromotionProgramSchedule schedule);
 }
