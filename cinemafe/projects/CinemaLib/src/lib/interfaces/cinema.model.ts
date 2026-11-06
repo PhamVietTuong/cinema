@@ -355,8 +355,8 @@ export const PromotionEligibilityValues: { value: CinemaServiceAgent.PromotionEl
 
 /**
  * Where an invoice was sold. Mirrors `SalesChannel` in cinemabe/Cinema/3-Data/Cinema.Data.Entities/Enums
- * (never renumber). Not NSwag-generated: no current endpoint exposes it as a typed DTO property, only as the
- * `AllowedChannelsMask` bitmask below.
+ * (never renumber). Not referenced via `CinemaServiceAgent.SalesChannel`: NSwag emits that enum outside the
+ * `CinemaServiceAgent` namespace (a generator quirk), so `CinemaServiceAgent.SalesChannel` doesn't resolve.
  */
 export enum SalesChannel {
   Online = 0,

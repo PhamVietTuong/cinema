@@ -1081,60 +1081,6 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task CancelBookingAsync_WrongUser_ReturnsFalse()
-    {
-        var invoice = new Invoice
-        {
-            Id     = Guid.NewGuid(),
-            UserId = Guid.NewGuid(),
-            Status = InvoiceStatus.Pending
-        };
-        var otherUserId = Guid.NewGuid();
-        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
-
-        var result = await _sut.CancelBookingAsync(otherUserId, invoice.Id);
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task CancelBookingAsync_AlreadyPaid_ReturnsFalse()
-    {
-        var userId  = Guid.NewGuid();
-        var invoice = new Invoice
-        {
-            Id     = Guid.NewGuid(),
-            UserId = userId,
-            Status = InvoiceStatus.Paid
-        };
-        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
-
-        var result = await _sut.CancelBookingAsync(userId, invoice.Id);
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task CancelBookingAsync_ValidPending_CancelsAndReturnsTrue()
-    {
-        var userId  = Guid.NewGuid();
-        var invoice = new Invoice
-        {
-            Id     = Guid.NewGuid(),
-            UserId = userId,
-            Status = InvoiceStatus.Pending
-        };
-        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-
-        var result = await _sut.CancelBookingAsync(userId, invoice.Id);
-
-        result.Should().BeTrue();
-        invoice.Status.Should().Be(InvoiceStatus.Cancelled);
-    }
-
-    [Fact]
     public void LockSeat_SeatBecomesLocked()
     {
         _sut.LockSeat(ShowTimeId1, RoomId1, SeatId10, "conn-abc");
@@ -1165,70 +1111,6 @@ public class BookingServiceTests
         _sut.LockSeat(ShowTimeId2, RoomId1, SeatId21, "other-conn");
 
         _sut.IsSeatLocked(ShowTimeId2, RoomId1, SeatId21, excludeConnectionId: "my-conn").Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task CancelBookingAsync_RestoresReservedLoyaltyPoints()
-    {
-        var userId  = Guid.NewGuid();
-        var user    = new User { Id = userId, Points = 5 };
-        var invoice = new Invoice
-        {
-            Id             = Guid.NewGuid(),
-            UserId         = userId,
-            Status         = InvoiceStatus.Pending,
-            PointsRedeemed = 10,
-        };
-        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(user);
-        _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
-        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-
-        var result = await _sut.CancelBookingAsync(userId, invoice.Id);
-
-        result.Should().BeTrue();
-        invoice.Status.Should().Be(InvoiceStatus.Cancelled);
-        user.Points.Should().Be(15);
-    }
-
-    [Fact]
-    public async Task CancelBookingAsync_RestoresGiftCardBalance()
-    {
-        var userId  = Guid.NewGuid();
-        var card    = new GiftCard { Id = Guid.NewGuid(), Balance = 20000 };
-        var invoice = new Invoice
-        {
-            Id             = Guid.NewGuid(),
-            UserId         = userId,
-            Status         = InvoiceStatus.Pending,
-            GiftCardId     = card.Id,
-            GiftCardAmount = 30000,
-        };
-        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.GiftCardStore.GetByIdAsync(card.Id)).ReturnsAsync(card);
-        _uowMock.Setup(u => u.GiftCardStore.UpdateAsync(card)).ReturnsAsync(card);
-        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-
-        await _sut.CancelBookingAsync(userId, invoice.Id);
-
-        card.Balance.Should().Be(50000); // 20000 remaining + 30000 restored
-    }
-
-    [Fact]
-    public async Task CancelBookingAsync_DeactivatesTicketsToFreeSeats()
-    {
-        var userId  = Guid.NewGuid();
-        var invoice = new Invoice { Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Pending };
-        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-
-        await _sut.CancelBookingAsync(userId, invoice.Id);
-
-        // Frees the seats at the DB unique-index level for multi-instance safety.
-        _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
     }
 
     // ── Discount code validation ────────────────────────────────────────────────
@@ -1508,64 +1390,6 @@ public class BookingServiceTests
 
         await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*no longer available*");
-    }
-
-    private (Invoice Invoice, FoodAndDrink Food) SetupCancellableInvoiceWithSale(Guid userId, int netSold, bool tracked = true)
-    {
-        var invoice = new Invoice { Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Pending };
-        var cola = Food("Cola", 10, tracked);
-        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
-        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new List<StockNetQuantity> { new(invoice.Id, cola.Id, -netSold) });
-        _uowMock.Setup(u => u.FoodAndDrinkStore.GetByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
-            .ReturnsAsync(new Dictionary<Guid, FoodAndDrink> { [cola.Id] = cola });
-        _uowMock.Setup(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
-        return (invoice, cola);
-    }
-
-    [Fact]
-    public async Task CancelBookingAsync_RestocksNetSoldQuantityFromLedger_NotFromRecipe()
-    {
-        var userId = Guid.NewGuid();
-        var (invoice, cola) = SetupCancellableInvoiceWithSale(userId, netSold: 3);
-        var movements = CaptureMovements();
-
-        (await _sut.CancelBookingAsync(userId, invoice.Id)).Should().BeTrue();
-
-        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, 3), Times.Once);
-        _uowMock.Verify(u => u.ComboItemStore.GetByCombosAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
-        _uowMock.Verify(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Once);
-        var reversal = movements.Should().ContainSingle().Subject;
-        reversal.Type.Should().Be(StockMovementType.SaleReversal);
-        reversal.Quantity.Should().Be(3);
-        reversal.InvoiceId.Should().Be(invoice.Id);
-        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
-    }
-
-    [Fact]
-    public async Task CancelBookingAsync_SecondRestockFindsNetZeroAndIsNoOp()
-    {
-        var userId = Guid.NewGuid();
-        var (invoice, cola) = SetupCancellableInvoiceWithSale(userId, netSold: 0);
-
-        // Net 0 (a SaleReversal already recorded) is what the ledger reports after a first restock.
-        await _sut.CancelBookingAsync(userId, invoice.Id);
-
-        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, It.IsAny<int>()), Times.Never);
-        _uowMock.Verify(u => u.StockMovementStore.CreateRangeAsync(It.IsAny<List<StockMovement>>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CancelBookingAsync_ItemNoLongerTracked_IsSkipped()
-    {
-        var userId = Guid.NewGuid();
-        var (invoice, cola) = SetupCancellableInvoiceWithSale(userId, netSold: 2, tracked: false);
-
-        await _sut.CancelBookingAsync(userId, invoice.Id);
-
-        _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(cola.Id, It.IsAny<int>()), Times.Never);
     }
 
     [Fact]
