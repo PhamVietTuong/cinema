@@ -12,6 +12,9 @@ import { ImageUploadService } from '../../../../shared/image-upload.service';
 type Dto = CinemaServiceAgent.PromotionProgramDTO;
 type Mechanic = CinemaServiceAgent.PromotionMechanic;
 type Eligibility = CinemaServiceAgent.PromotionEligibility;
+/** How a customer gets this program — mirrors the backend's Code-xor-AutoApply rule as a single
+ * three-way choice instead of a toggle the user could leave in a confusing combination. */
+type TriggerMode = 'none' | 'auto' | 'code';
 
 export interface PromotionProgramDialogData {
   program: Dto | null;
@@ -93,6 +96,7 @@ export class PromotionProgramDialog implements OnInit {
       termsText: [item?.termsText ?? ''],
 
       autoApply: [item?.autoApply ?? false],
+      triggerMode: [(item?.code ? 'code' : item?.autoApply ? 'auto' : 'none') as TriggerMode],
       code: [item?.code ?? ''],
       maxUsage: [item?.maxUsage ?? null],
       maxDiscountAmount: [item?.maxDiscountAmount ?? null],
@@ -105,21 +109,37 @@ export class PromotionProgramDialog implements OnInit {
     this.channelSelection = new Set(channelsMaskToList(item?.allowedChannelsMask));
     (item?.schedules ?? []).forEach(s => this._addScheduleRow(s));
 
-    const resetAutoApplyIfNowDisabled = () => {
-      if (this.autoApplyDisabled && this.form.value.autoApply) {
-        this.form.get('autoApply')!.setValue(false, { emitEvent: false });
+    // The three-way triggerMode choice drives autoApply/code directly, so the xor rule is a UI
+    // structure instead of a silently-corrected combination.
+    this._applyTriggerMode(this.form.value.triggerMode, { emitEvent: false });
+    this.form.get('triggerMode')!.valueChanges.subscribe((mode: TriggerMode) => this._applyTriggerMode(mode));
+
+    // Auto-apply can become disallowed after the fact (switching Mechanic to Info, or Eligibility to
+    // StudentOrTeacher/AgeLimit) — fall back to "not triggered online" rather than leaving a now-invalid
+    // choice selected.
+    const resetTriggerModeIfAutoNowDisallowed = () => {
+      if (!this.autoApplyAllowed && this.form.value.triggerMode === 'auto') {
+        this.form.get('triggerMode')!.setValue('none');
       }
       this._cdr.markForCheck();
     };
-    this.form.get('mechanic')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
-    this.form.get('eligibility')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
-    // A program is triggered by exactly one of Code or AutoApply — entering a code turns AutoApply off.
-    this.form.get('code')!.valueChanges.subscribe(value => {
-      if (value?.trim() && this.form.value.autoApply) {
-        this.form.get('autoApply')!.setValue(false, { emitEvent: false });
-      }
-      this._cdr.markForCheck();
-    });
+    this.form.get('mechanic')!.valueChanges.subscribe(resetTriggerModeIfAutoNowDisallowed);
+    this.form.get('eligibility')!.valueChanges.subscribe(resetTriggerModeIfAutoNowDisallowed);
+  }
+
+  /** Keeps autoApply/code (the fields actually sent to the server) and the code control's
+   * required-ness in sync with the triggerMode choice. */
+  private _applyTriggerMode(mode: TriggerMode, opts: { emitEvent: boolean } = { emitEvent: false }): void {
+    this.form.get('autoApply')!.setValue(mode === 'auto', opts);
+    const codeCtrl = this.form.get('code')!;
+    if (mode === 'code') {
+      codeCtrl.setValidators([Validators.required]);
+    } else {
+      codeCtrl.setValue('', opts);
+      codeCtrl.clearValidators();
+    }
+    codeCtrl.updateValueAndValidity({ emitEvent: false });
+    this._cdr.markForCheck();
   }
 
   ngOnInit(): void {
@@ -138,11 +158,13 @@ export class PromotionProgramDialog implements OnInit {
   get isPercentOff(): boolean { return this.mechanic === CinemaServiceAgent.PromotionMechanic.PercentOff; }
   get isMembers(): boolean { return this.eligibility === CinemaServiceAgent.PromotionEligibility.Members; }
   get isAgeLimit(): boolean { return this.eligibility === CinemaServiceAgent.PromotionEligibility.AgeLimit; }
-  get autoApplyDisabled(): boolean {
-    return this.mechanic === CinemaServiceAgent.PromotionMechanic.Info
-      || this.eligibility === CinemaServiceAgent.PromotionEligibility.StudentOrTeacher
-      || this.eligibility === CinemaServiceAgent.PromotionEligibility.AgeLimit
-      || !!this.form.value.code?.trim();
+  get triggerMode(): TriggerMode { return this.form.value.triggerMode; }
+  /** Whether Mechanic/Eligibility allow "Auto-apply" as a triggerMode choice (StudentOrTeacher/AgeLimit
+   * have no online verification; Info is display-only) — independent of which mode is currently picked. */
+  get autoApplyAllowed(): boolean {
+    return this.mechanic !== CinemaServiceAgent.PromotionMechanic.Info
+      && this.eligibility !== CinemaServiceAgent.PromotionEligibility.StudentOrTeacher
+      && this.eligibility !== CinemaServiceAgent.PromotionEligibility.AgeLimit;
   }
 
   get priceRows(): FormArray { return this.form.get('prices') as FormArray; }
@@ -272,7 +294,7 @@ export class PromotionProgramDialog implements OnInit {
       endTimeOfDay: s.endTimeOfDay || null,
     }));
 
-    const code = v.code?.trim() || null;
+    const mode: TriggerMode = v.triggerMode;
     return {
       title: v.title.trim(),
       summary: v.summary?.trim() || null,
@@ -292,9 +314,9 @@ export class PromotionProgramDialog implements OnInit {
       maxTicketsPerTransaction: v.maxTicketsPerTransaction || null,
       stacksWithMembershipDiscount: !!v.stacksWithMembershipDiscount,
       termsText: v.termsText?.trim() || null,
-      // A program is triggered by exactly one of Code or AutoApply — a code wins when both are set.
-      autoApply: code ? false : (this.autoApplyDisabled ? false : !!v.autoApply),
-      code,
+      // triggerMode is the single source of truth for Code-xor-AutoApply — see _applyTriggerMode.
+      autoApply: mode === 'auto',
+      code: mode === 'code' ? (v.code?.trim() || null) : null,
       maxUsage: v.maxUsage || null,
       maxDiscountAmount: v.maxDiscountAmount || null,
       movieId: v.movieId || null,
