@@ -2,7 +2,7 @@
 
 > Purpose: Inventory of features actually implemented across CinemaUser, CinemaAdmin, and CinemaStaff, with code locations and status.
 > Sources: cinemafe/projects/{CinemaUser,CinemaAdmin,CinemaStaff,CinemaLib}, E:\cinema\ROADMAP.md, cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs (`#region`s Gate/BoxOffice/StaffReport/Operations/Workforce), cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-06
 
 Status legend: **complete** (wired end-to-end, used in production routes) · **partial** (data/API exists but UI/flow incomplete, or vice versa) · **stubbed** (code present but hidden/unused). Roadmap status (`E:\cinema\ROADMAP.md`, ✅/🟡/🆕) is cited where it adds context — in a few places the code is further along than the roadmap entry suggests (noted below).
 
@@ -26,6 +26,7 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | E-tickets + QR codes | `CinemaLib` `components/ticket` (`ticket-card`), `components/qr` (`qr-code`) | complete | ROADMAP marks 🆕 but the QR component and ticket card exist and are used; <!-- TODO: confirm with team whether server-side scan validation (CinemaStaff gate) is the same feature or a separate build --> |
 | Notification preferences | `features/profile` → `CinemaLib` `notification.actions.ts`/`notification.effects.ts` | complete | |
 | Auth (login/register/forgot/reset/verify email, Google login) | `features/auth/*` | complete | Facebook login is ROADMAP 🆕, not found in `auth/` folders — not implemented. |
+| Support chatbot | `shared/chatbot` | complete | ROADMAP marks 🆕 — code shows it's implemented: rule-based, no LLM/API key, keyword-matched against a 7-topic FAQ array (booking, showtimes, cancel, membership, nearby theater, payment, combo) plus 5 quick-reply chips. Mounted globally within CinemaUser only (`app.html`), not in CinemaAdmin/CinemaStaff. Fallback re-prompts with topic suggestions rather than a literal "contact support" message, since no support email/phone/ticket endpoint exists in the app for such a CTA to target. Matching is plain Vietnamese-keyword substring matching (order-dependent, first match wins) — a user typing a question in English rather than using the pre-translated quick-reply chips will mostly hit the fallback, despite the app being bilingual. |
 
 ## CinemaAdmin (admin app, port 4201)
 
@@ -82,4 +83,3 @@ The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified dir
 | Revenue/advanced stats dashboard | 🆕 partial | Basic reports exist (`modules/overview/reports`); advanced charts not confirmed. |
 | Messaging infra (real email/SMS providers) | 🟡 | `SmtpNotificationService` (email), `TwilioSmsNotificationService`/`DevLogSmsNotificationService` (SMS, dev fallback logs instead of sending) exist in `Cinema.Business/Notifications/*` — may be further along than ROADMAP's 🆕. |
 | Multilingual (i18n) | partial | `@ngx-translate/core` is a dependency and used in components (e.g. `movie-detail.component.ts` uses `_translate.instant`) — <!-- TODO: confirm with team how many languages are actually translated -->. |
-| Support chatbot | 🆕 not started | |

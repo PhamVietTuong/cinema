@@ -2,7 +2,7 @@
 
 > Purpose: Feature backlog and status for the multi-theater cinema platform, restructured from the repo-root roadmap.
 > Sources: E:\cinema\ROADMAP.md
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-06
 
 Status reflects the codebase as of the `feature/multi-theater-catalog-pricing` branch (per
 `ROADMAP.md`). See `docs/00-overview/open-questions.md` for a note on this roadmap possibly being
@@ -74,7 +74,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Messaging (email/SMS) | New | M | Underpins order confirmation + showtime reminders. `INotificationService` (`DevLogNotificationService`) abstraction exists — implement a real email provider + SMS provider. Pick providers. |
 | Showtime reminders | New | M | Depends on messaging; needs a scheduler (e.g. background job) to send before showtime. |
 | Multilingual (i18n) | New | L | Angular i18n or a runtime translation lib across CinemaUser + CinemaAdmin. Decide languages + approach. |
-| Support chatbot | New | L | Decide: rule-based FAQ vs LLM-backed; scope of questions; data it can access. |
+| Support chatbot | Done | - | Rule-based, no LLM/API key: keyword-matched against a canned FAQ (booking, showtimes, cancel, membership, nearby theater, payment, combo) in `CinemaUser/shared/chatbot`. |
 
 ## Suggested next steps (small, high-value, low-dependency)
 
@@ -83,4 +83,4 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 3. Order food/drink combos with tickets (Partial, M) — completes the booking value chain.
 4. Messaging infra (New, M) — unblocks order confirmation + reminders.
 
-Larger tracks (payments, recommendations, i18n, chatbot) are best scheduled on their own.
+Larger tracks (payments, recommendations, i18n) are best scheduled on their own.

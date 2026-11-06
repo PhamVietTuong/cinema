@@ -67,7 +67,7 @@ Backlog for the multi-theater cinema platform. Status reflects the codebase as o
 | **Messaging (email/SMS)** | 🆕 | M | Underpins order confirmation + showtime reminders. `INotificationService` (`DevLogNotificationService`) abstraction exists — implement a real email provider + SMS provider. Pick providers. |
 | **Showtime reminders** | 🆕 | M | Depends on messaging; needs a scheduler (e.g. background job) to send before showtime. |
 | **Multilingual (i18n)** | 🆕 | L | Angular i18n or a runtime translation lib across CinemaUser + CinemaAdmin. Decide languages + approach. |
-| **Support chatbot** | 🆕 | L | Decide: rule-based FAQ vs LLM-backed; scope of questions; data it can access. |
+| **Support chatbot** | ✅ | L | Rule-based (no LLM/API key), keyword-matched against a canned FAQ in `CinemaUser/shared/chatbot`. |
 
 ---
 
@@ -77,4 +77,4 @@ Backlog for the multi-theater cinema platform. Status reflects the codebase as o
 3. **Order food/drink combos with tickets** (🟡 M) — completes the booking value chain.
 4. **Messaging infra** (🆕 M) — unblocks order confirmation + reminders.
 
-Larger tracks (payments, recommendations, i18n, chatbot) are best scheduled on their own.
+Larger tracks (payments, recommendations, i18n) are best scheduled on their own.
