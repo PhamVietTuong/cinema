@@ -52,6 +52,25 @@ export class PromotionProgramDialog implements OnInit {
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
   movies: CinemaServiceAgent.MovieDTO[] = [];
 
+  /** One step per former section — i18n keys reused as both section heading and step label. */
+  readonly stepLabelKeys = [
+    'promotionPrograms.sectionBasics',
+    'promotionPrograms.sectionPricing',
+    'promotionPrograms.sectionAudience',
+    'promotionPrograms.sectionSchedule',
+    'promotionPrograms.sectionRedemption',
+  ];
+  /** Which required/invalid-able controls live on each step, so save() can jump to the first
+   * offending step instead of leaving the admin stuck on whichever step they happened to be on. */
+  private readonly _stepControlNames = [
+    ['title'],
+    [],
+    [],
+    ['startDate', 'endDate'],
+    ['code'],
+  ];
+  currentStep = 0;
+
   /** Day-of-week selections per schedule row index (mask stored as a Set for the chip UI). */
   scheduleDaySelections: Set<number>[] = [];
   /** Sales-channel selections, shared across the whole program. */
@@ -170,6 +189,43 @@ export class PromotionProgramDialog implements OnInit {
   get priceRows(): FormArray { return this.form.get('prices') as FormArray; }
   get scheduleRows(): FormArray { return this.form.get('schedules') as FormArray; }
 
+  // ── Step navigation ───────────────────────────────────────────────────────────
+  get isFirstStep(): boolean { return this.currentStep === 0; }
+  get isLastStep(): boolean { return this.currentStep === this.stepLabelKeys.length - 1; }
+
+  goToStep(i: number): void {
+    this.currentStep = i;
+    this._cdr.markForCheck();
+  }
+
+  back(): void {
+    if (!this.isFirstStep) {
+      this.goToStep(this.currentStep - 1);
+    }
+  }
+
+  next(): void {
+    if (!this.isLastStep) {
+      this.goToStep(this.currentStep + 1);
+    }
+  }
+
+  stepDone(i: number): boolean { return i < this.currentStep; }
+
+  /** First step with an invalid control, or -1 if every step is valid — lets save() land the
+   * admin on the step that needs attention instead of a generic "fix the form" dead end. */
+  private _firstInvalidStep(): number {
+    for (let i = 0; i < this._stepControlNames.length; i++) {
+      if (this._stepControlNames[i].some(name => this.form.get(name)?.invalid)) {
+        return i;
+      }
+      if (i === 1 && this.isFixedPrice && this.priceRows.invalid) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   // ── Price rows ───────────────────────────────────────────────────────────────
   addPriceRow(): void {
     this.priceRows.push(this._priceRow(null, null, null));
@@ -261,6 +317,10 @@ export class PromotionProgramDialog implements OnInit {
   save(): void {
     if (!this.form.valid || this.priceRows.invalid) {
       this.form.markAllAsTouched();
+      const badStep = this._firstInvalidStep();
+      if (badStep >= 0) {
+        this.goToStep(badStep);
+      }
       return;
     }
     const payload = this._payload();

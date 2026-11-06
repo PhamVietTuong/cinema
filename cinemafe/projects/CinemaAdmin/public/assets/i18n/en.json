@@ -601,7 +601,10 @@
     "triggerModeNone": "Not triggered online",
     "triggerModeAuto": "Auto-apply at checkout",
     "triggerModeCode": "Requires a promo code",
-    "triggerModeNoneHint": "Not applied automatically and has no code — a customer only finds out about it from this card, and staff apply it manually (e.g. after checking a student ID at the counter)."
+    "triggerModeNoneHint": "Not applied automatically and has no code — a customer only finds out about it from this card, and staff apply it manually (e.g. after checking a student ID at the counter).",
+    "stepOf": "Step {{current}}/{{total}}",
+    "stepBack": "Back",
+    "stepNext": "Next"
   },
   "promoProgram": {
     "mechanic": { "info": "Info only", "fixedPrice": "Fixed price", "percentOff": "Percent off" },

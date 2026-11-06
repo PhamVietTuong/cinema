@@ -2,12 +2,22 @@
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
+
+    <!-- Step indicator -->
+    <div class="dlg-steps">
+      <ng-container *ngFor="let key of stepLabelKeys; let i = index; let last = last">
+        <button type="button" class="dlg-step-dot" [class.is-active]="currentStep === i" [class.is-done]="stepDone(i)"
+                [attr.aria-label]="key | translate" [attr.aria-current]="currentStep === i ? 'step' : null"
+                (click)="goToStep(i)">{{ i + 1 }}</button>
+        <div class="dlg-step-line" *ngIf="!last" [class.is-done]="stepDone(i + 1) || currentStep > i"></div>
+      </ng-container>
+    </div>
+    <p class="dlg-step-label">{{ 'promotionPrograms.stepOf' | translate: { current: currentStep + 1, total: stepLabelKeys.length } }} · {{ stepLabelKeys[currentStep] | translate }}</p>
+
     <div class="dlg-grid">
 
       <!-- Basics -->
-      <div class="dlg-section">
-        <h3 class="dlg-section-title">{{ 'promotionPrograms.sectionBasics' | translate }}</h3>
-
+      <ng-container *ngIf="currentStep === 0">
         <div class="dlg-row">
           <div class="dlg-field">
             <label class="dlg-label" for="pp-title">{{ 'promotionPrograms.titleLabel' | translate }}</label>
@@ -71,12 +81,10 @@
           <span class="dlg-switch-label" id="pp-published-lbl">{{ 'promotionPrograms.publishedLabel' | translate }}</span>
           <mat-slide-toggle formControlName="isPublished" aria-labelledby="pp-published-lbl"></mat-slide-toggle>
         </div>
-      </div>
+      </ng-container>
 
       <!-- Pricing -->
-      <div class="dlg-section">
-        <h3 class="dlg-section-title">{{ 'promotionPrograms.sectionPricing' | translate }}</h3>
-
+      <ng-container *ngIf="currentStep === 1">
         <div class="dlg-row">
           <div class="dlg-field">
             <label class="dlg-label" for="pp-mechanic">{{ 'promotionPrograms.mechanic' | translate }}</label>
@@ -124,12 +132,10 @@
             <button mat-stroked-button type="button" (click)="addPriceRow()"><mat-icon>add</mat-icon> {{ 'promotionPrograms.addPriceRow' | translate }}</button>
           </div>
         </div>
-      </div>
+      </ng-container>
 
       <!-- Audience -->
-      <div class="dlg-section">
-        <h3 class="dlg-section-title">{{ 'promotionPrograms.sectionAudience' | translate }}</h3>
-
+      <ng-container *ngIf="currentStep === 2">
         <div class="dlg-row dlg-row--2">
           <div class="dlg-field">
             <label class="dlg-label" for="pp-eligibility">{{ 'promotionPrograms.eligibility' | translate }}</label>
@@ -154,12 +160,10 @@
             </mat-form-field>
           </div>
         </div>
-      </div>
+      </ng-container>
 
       <!-- Schedule -->
-      <div class="dlg-section">
-        <h3 class="dlg-section-title">{{ 'promotionPrograms.sectionSchedule' | translate }}</h3>
-
+      <ng-container *ngIf="currentStep === 3">
         <div class="dlg-row dlg-row--2">
           <div class="dlg-field">
             <label class="dlg-label" for="pp-start">{{ 'promotionPrograms.startDateLabel' | translate }}</label>
@@ -234,12 +238,10 @@
             </mat-form-field>
           </div>
         </div>
-      </div>
+      </ng-container>
 
       <!-- Redemption: how a customer gets this program, and what happens once they do -->
-      <div class="dlg-section">
-        <h3 class="dlg-section-title">{{ 'promotionPrograms.sectionRedemption' | translate }}</h3>
-
+      <ng-container *ngIf="currentStep === 4">
         <div class="dlg-row">
           <div class="dlg-field dlg-field--full">
             <label class="dlg-label">{{ 'promotionPrograms.triggerModeLabel' | translate }}</label>
@@ -305,14 +307,20 @@
             </mat-form-field>
           </div>
         </div>
-      </div>
+      </ng-container>
 
     </div>
   </mat-dialog-content>
 
   <div mat-dialog-actions class="dialog-actions">
-    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
-    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+    <div class="dlg-step-actions">
+      <button mat-stroked-button type="button" (click)="back()" [disabled]="isFirstStep">{{ 'promotionPrograms.stepBack' | translate }}</button>
+      <div class="dlg-step-actions-right">
+        <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+        <button *ngIf="!isLastStep" mat-raised-button color="primary" type="button" (click)="next()">{{ 'promotionPrograms.stepNext' | translate }}</button>
+        <button *ngIf="isLastStep" mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+      </div>
+    </div>
   </div>
 </form>
 

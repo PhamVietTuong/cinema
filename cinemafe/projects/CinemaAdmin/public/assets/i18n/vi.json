@@ -601,7 +601,10 @@
     "triggerModeNone": "Không kích hoạt trực tuyến",
     "triggerModeAuto": "Tự động áp dụng khi thanh toán",
     "triggerModeCode": "Yêu cầu mã khuyến mãi",
-    "triggerModeNoneHint": "Không tự động áp dụng và không có mã — khách chỉ biết đến ưu đãi qua thẻ này, nhân viên sẽ áp dụng thủ công (VD: sau khi kiểm tra thẻ học sinh tại quầy)."
+    "triggerModeNoneHint": "Không tự động áp dụng và không có mã — khách chỉ biết đến ưu đãi qua thẻ này, nhân viên sẽ áp dụng thủ công (VD: sau khi kiểm tra thẻ học sinh tại quầy).",
+    "stepOf": "Bước {{current}}/{{total}}",
+    "stepBack": "Quay Lại",
+    "stepNext": "Tiếp Theo"
   },
   "promoProgram": {
     "mechanic": { "info": "Chỉ thông tin", "fixedPrice": "Giá cố định", "percentOff": "Giảm phần trăm" },
