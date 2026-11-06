@@ -29,8 +29,6 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - As a box-office staff member, I want to look up a returning customer by phone, so that I can attach their loyalty account to a counter sale.
 - As a gate staff member, I want to scan a customer's QR ticket and get an immediate accept/deny result with a reason, so that I can admit valid ticket holders and catch invalid/duplicate/wrong-showtime tickets.
 - As a gate staff member, I want to look up a paid ticket by invoice code or phone when a customer's QR code won't scan, so that I can still admit them manually.
-- As a concession staff member, I want to see the food/drink pickup queue and mark orders as ready/handed over, so that customers get their order without a long wait.
-- As a concession staff member, I want to see low-stock alerts, so that I can flag items for restocking before they run out mid-shift.
 - As a staff member, I want to view the day's schedule board for my theater, so that I know which rooms/showtimes are running.
 - As a staff member, I want to report an incident (seat/room/projection/sound/safety/customer/cleanliness issue), so that it's tracked and can be resolved before it affects more customers.
 

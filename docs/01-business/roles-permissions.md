@@ -11,7 +11,7 @@ Exactly **3 roles** exist, each a `UserType.Name` value and the sole JWT role cl
 | Role | Meaning | Theater-scoped? |
 |---|---|---|
 | `Admin` | Full access to everything; no theater scoping. | No |
-| `TheaterStaff` | Single consolidated staff role. Absorbed what used to be 5 separate roles (box office, gate, concession, warehouse, manager) — those are now capability composites in code, not distinct UserTypes/roles. | Yes — requires a `theaterId` JWT claim |
+| `TheaterStaff` | Single consolidated staff role. Absorbed what used to be 5 separate roles (box office, gate, concession, warehouse, manager) — those are now capability composites in code, not distinct UserTypes/roles. The concession/kitchen-pickup-queue composite itself was later removed along with the feature. | Yes — requires a `theaterId` JWT claim |
 | `Customer` | Default role for self-registered / social-login users. | No |
 
 There is **no permission table in the database** — `[Authorize(Roles=...)]` composites are hard-coded string constants in `RoleNames.cs`. A future reintroduction of finer-grained staff roles would only require editing that file, not every controller action.
@@ -26,14 +26,13 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 | `RoleNames.StaffApp` | `Admin,TheaterStaff` | Login to CinemaStaff app; general staff endpoints (seat-map admin read, schedule board, incidents read/report, workforce self-service reads) |
 | `RoleNames.Sellers` | `Admin,TheaterStaff` | `BoxOffice` region: `Quote`, `Sell`, `GetShowtimesToday`, `FindCustomer` |
 | `RoleNames.GateKeepers` | `Admin,TheaterStaff` | `Gate` region: `Scan`, `Lookup` |
-| `RoleNames.Concession` | `Admin,TheaterStaff` | `Concession` region: `GetPickupQueue`, `SetFoodStatus`, `GetLowStock`, `LookupPickup` |
 | `RoleNames.BackOffice` | `Admin,TheaterStaff` | Documented intent for warehouse/inventory staff-app access; narrowed to the caller's own theater in code — no endpoint in the current controller is gated by this constant as of this review |
 | `RoleNames.StockApprovers` | `Admin` only | Documented intent: approve/reject storage plans, change inventory tracking — storage-plan/inventory management was removed from `CinemaStaff`'s current feature set (confirmed absent from the controller and the staff sidebar); no live endpoint uses this constant currently |
 | `RoleNames.Approvers` | `Admin` only | `Operations` region: `BlockSeat`/`BlockRoom`/incident resolve-with-unblock require this role outright (no PIN-based alternate path); POS price overrides (`Sell`) also require it when any line carries an `OverrideUnitPrice` |
 | `RoleNames.Reporting` | `Admin` only | `StaffReport` region: `GetAuditLog`, `GetSales`, `GetOccupancy`, `GetKpis` |
 | `RoleNames.TheaterScopedRoles` | `TheaterStaff` | Not an authz filter — used by `AuthManager.ResolveTheaterIdAsync` to decide which `UserType`s *require* a non-null `TheaterId` on create/update |
 
-**Since `TheaterStaff` is the only non-Admin staff value today, every composite other than the three Admin-only ones (`StockApprovers`, `Approvers`, `Reporting`) is behaviorally identical to `StaffApp` (`Admin,TheaterStaff`)** — there is no way today to grant a staff account gate-scanning access without also granting it box-office/concession access.
+**Since `TheaterStaff` is the only non-Admin staff value today, every composite other than the three Admin-only ones (`StockApprovers`, `Approvers`, `Reporting`) is behaviorally identical to `StaffApp` (`Admin,TheaterStaff`)** — there is no way today to grant a staff account gate-scanning access without also granting it box-office access.
 
 ## 3. What each role can / cannot do
 
@@ -43,7 +42,7 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 - Not theater-scoped — can act across all theaters.
 
 ### TheaterStaff
-- Box office counter sale (`Quote`/`Sell`), gate ticket scan/lookup, concession pickup queue/food status/low-stock, schedule board, incident reporting (not resolving with unblock, which needs `Approvers`), seat-map read (`GetRoomSeatMap`).
+- Box office counter sale (`Quote`/`Sell`), gate ticket scan/lookup, schedule board, incident reporting (not resolving with unblock, which needs `Approvers`), seat-map read (`GetRoomSeatMap`).
 - Cannot: block/unblock a seat or room, apply a POS price override, run staff reports (`StaffReport` region is `Admin`-only despite the staff-sounding name), write any catalog/pricing/theater/movie data (all gated `_adminRole`="Admin" literal, not `RoleNames.TheaterStaff`).
 - Always theater-scoped — JWT carries exactly one `theaterId` claim; `TryGetBackOfficeScope`/`TryGetStaffScope` pin the caller to that theater, 403 if attempting cross-theater access.
 

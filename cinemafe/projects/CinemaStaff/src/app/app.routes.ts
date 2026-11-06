@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { ForbiddenPageComponent, authGuard, roleGuard, homeRedirectByRole, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles, CONCESSION_ROLES } from 'CinemaLib';
+import { ForbiddenPageComponent, authGuard, roleGuard, homeRedirectByRole, GATE_KEEPER_ROLES, REPORTING_ROLES, SELLER_ROLES, STAFF_APP_ROLES, UserRoles } from 'CinemaLib';
 
 /**
  * Where each role lands from '/'. Everyone goes to /home until the role-specific pages
- * (gate, POS, kitchen) exist; add them here as they are built.
+ * (gate, POS) exist; add them here as they are built.
  */
 const STAFF_LANDING: Record<string, string> = {
   [UserRoles.Admin]: '/home',
@@ -46,12 +46,6 @@ export const routes: Routes = [
         path: 'gate',
         canActivate: [roleGuard(GATE_KEEPER_ROLES)],
         loadChildren: () => import('./features/gate/gate.routes').then(m => m.GATE_ROUTES)
-      },
-      // Kitchen: food pickup queue and low-stock alerts.
-      {
-        path: 'kitchen',
-        canActivate: [roleGuard(CONCESSION_ROLES)],
-        loadChildren: () => import('./features/kitchen/kitchen.routes').then(m => m.KITCHEN_ROUTES)
       },
       // Sales, occupancy and KPI reports: management roles.
       {

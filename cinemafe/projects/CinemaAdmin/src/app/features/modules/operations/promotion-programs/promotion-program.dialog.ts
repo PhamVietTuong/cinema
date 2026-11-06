@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {
   CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException,
-  PromotionMechanicValues, PromotionEligibilityValues, SalesChannelValues, DayOfWeekValues,
+  PromotionMechanicValues, PromotionEligibilityValues, SalesChannel, SalesChannelValues, DayOfWeekValues,
   daysMaskToList, daysListToMask, channelsMaskToList, channelsListToMask,
 } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
@@ -184,12 +184,12 @@ export class PromotionProgramDialog implements OnInit {
   }
 
   // ── Channels ─────────────────────────────────────────────────────────────────
-  toggleChannel(value: CinemaServiceAgent.SalesChannel): void {
+  toggleChannel(value: SalesChannel): void {
     if (this.channelSelection.has(value)) { this.channelSelection.delete(value); } else { this.channelSelection.add(value); }
     this._cdr.markForCheck();
   }
 
-  isChannelSelected(value: CinemaServiceAgent.SalesChannel): boolean {
+  isChannelSelected(value: SalesChannel): boolean {
     return this.channelSelection.has(value);
   }
 

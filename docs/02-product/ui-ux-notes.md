@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | CinemaUser | `app` | 4202 | `app.routes.ts` | `authGuard` on `booking`, `profile` |
 | CinemaAdmin | `app` | 4201 | `app.routes.ts` | `authGuard` + `adminGuard` on everything except `/auth/login`, `/forbidden` |
-| CinemaStaff | `staff` | 4203 | `app.routes.ts` | `authGuard` + `roleGuard(STAFF_APP_ROLES)`; per-section `roleGuard` (gate/kitchen/reports/POS) |
+| CinemaStaff | `staff` | 4203 | `app.routes.ts` | `authGuard` + `roleGuard(STAFF_APP_ROLES)`; per-section `roleGuard` (gate/reports/POS) |
 | CinemaLib | `cl` | — | shared library, no routes | — |
 
 ### CinemaUser route tree
@@ -50,14 +50,13 @@ Overview/Catalog/Operations are each one `NgModule` with its own internal route 
   ''               homeRedirectByRole -> /home (Admin and TheaterStaff both land here today)
   home, profile
   gate/*           roleGuard(GATE_KEEPER_ROLES)   — gate-page, gate-scan, gate-lookup
-  kitchen/*        roleGuard(CONCESSION_ROLES)    — routes exist but NOT linked from staff-menu.ts (hidden)
   reports/*        roleGuard(REPORTING_ROLES)     — sales-reports
   ''  (reports.routes)  roleGuard(REPORTING_ROLES) — audit-log
   schedule/*, incidents/*   — no extra section guard (approver-only screens self-guard)
   ''  (pos.routes)      roleGuard(SELLER_ROLES)   — counter POS
 /**                -> /auth/login
 ```
-Current roles are exactly `Admin`, `Customer`, `TheaterStaff` (see business doc); all the `*_ROLES` constants above (`GATE_KEEPER_ROLES`, `SELLER_ROLES`, `REPORTING_ROLES`, `CONCESSION_ROLES`, `STAFF_APP_ROLES`) currently resolve to `Admin,TheaterStaff` — there's no longer a role-level split between e.g. a gate keeper and a seller.
+Current roles are exactly `Admin`, `Customer`, `TheaterStaff` (see business doc); all the `*_ROLES` constants above (`GATE_KEEPER_ROLES`, `SELLER_ROLES`, `REPORTING_ROLES`, `STAFF_APP_ROLES`) currently resolve to `Admin,TheaterStaff` — there's no longer a role-level split between e.g. a gate keeper and a seller.
 
 ## Key user flows
 
@@ -117,4 +116,3 @@ Per root `CLAUDE.md`'s rule ("menus/shell/topbar/pills/dialogs/tables/seat map u
 - **Legacy URL compatibility**: CinemaUser's `:legacyId/:legacySlug` movie route exists purely to redirect old links to the new `:slug` route.
 - **Splash banner**: dismissed state tracked per banner `Id` in `sessionStorage`, so it reappears once per browser session or when a new banner is activated.
 - **Payment pending state**: `payment-return` showing "Payment pending" after ~30s is expected behavior (not a bug) when VNPay's IPN hasn't reached the backend yet — see root `CLAUDE.md`.
-- **Kitchen pickup queue**: fully coded (`features/kitchen`, guarded by `CONCESSION_ROLES`) but deliberately not linked from `staff-menu.ts` — reachable only by direct URL today.

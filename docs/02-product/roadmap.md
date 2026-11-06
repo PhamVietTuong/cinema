@@ -28,7 +28,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 |---|---|---|---|
 | Google login | Done | - | `AuthManager` + `GoogleTokenValidator`; OTP/2FA, email verify, lockout also done. |
 | Facebook login | New | S | Mirror the Google flow: add a Facebook token validator + `AuthManager` path + FE button. Needs a Facebook App ID/secret. |
-| Role-based access (admin / theater staff / customer) | Done | - | **Note**: this roadmap entry is stale — `TheaterStaff` is already a live third role (`RoleNames.cs`, `UserType.Name`), always theater-scoped via a `theaterId` JWT claim, with a full box-office/gate/concession/workforce feature set wired into `CinemaController` and the `CinemaStaff` app. See `docs/01-business/roles-permissions.md` for the full role model and capability composites (see open questions for the stale-roadmap discrepancy). |
+| Role-based access (admin / theater staff / customer) | Done | - | **Note**: this roadmap entry is stale — `TheaterStaff` is already a live third role (`RoleNames.cs`, `UserType.Name`), always theater-scoped via a `theaterId` JWT claim, with a full box-office/gate/workforce feature set wired into `CinemaController` and the `CinemaStaff` app. See `docs/01-business/roles-permissions.md` for the full role model and capability composites (see open questions for the stale-roadmap discrepancy). |
 
 ## Booking & tickets
 

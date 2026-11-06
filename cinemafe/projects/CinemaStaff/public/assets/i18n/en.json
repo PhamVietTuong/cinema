@@ -316,46 +316,6 @@
       "blocked": "Blocked."
     }
   },
-  "kitchen": {
-    "section": "Kitchen",
-    "pageTitle": "Pickup queue",
-    "title": "Food pickup queue",
-    "subtitle": "Prepare and hand over food and drink orders as they come in.",
-    "nav": {
-      "kitchen": "Pickup queue"
-    },
-    "live": "Live",
-    "offline": "Offline",
-    "refresh": "Refresh",
-    "pickTheater": "Pick a theater",
-    "pickTheaterHint": "Choose a theater in the top bar to see its pickup queue.",
-    "emptyColumn": "No orders",
-    "paidAgo": "paid {{minutes}} min ago",
-    "action": {
-      "start": "Start preparing",
-      "ready": "Mark ready",
-      "handOver": "Hand over"
-    },
-    "status": {
-      "none": "None",
-      "pending": "Pending",
-      "preparing": "Preparing",
-      "ready": "Ready",
-      "handedOver": "Handed over",
-      "cancelled": "Cancelled"
-    },
-    "lookup": {
-      "code": "Pickup / invoice code",
-      "search": "Find",
-      "result": "Lookup result",
-      "notFound": "No order found for this code."
-    }
-  },
-  "stockAlerts": {
-    "title": "Low stock",
-    "none": "All tracked items are above their threshold.",
-    "onHand": "{{qty}} left (alert at {{threshold}})"
-  },
   "salesReports": {
     "section": "Reports",
     "pageTitle": "Sales reports",

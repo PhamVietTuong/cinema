@@ -84,7 +84,7 @@ Not a runtime dependency of the app — a local developer tool. VNPay's sandbox 
 | `ISeatNotificationService` | `NoOpSeatNotificationService` | `SignalRSeatNotificationService` (`Hubs/SignalRSeatNotificationService.cs`) | always (no config gate — unconditionally overridden in `Program.cs`) | — |
 | `IStaffNotificationService` | `NoOpStaffNotificationService` | `SignalRStaffNotificationService` (`Hubs/SignalRStaffNotificationService.cs`) | always (unconditionally overridden) | — |
 
-Used for: booking confirmations, password reset / email verification / 2FA codes (email + SMS — 2FA sends a 6-digit numeric code, SHA-256-hashed, 5-minute expiry, emailed and also SMS'd if the user has a phone number; forgot-password/resend-verification return 204 silently for an unknown or already-confirmed email, by design, to avoid account enumeration), showtime reminders (`ShowtimeReminderService`), kitchen/stock/incident staff alerts. Templates are stored in the `Template` entity, rendered via `TemplateRenderer` with `{{Token}}` placeholders (see `database-schema.md` §8).
+Used for: booking confirmations, password reset / email verification / 2FA codes (email + SMS — 2FA sends a 6-digit numeric code, SHA-256-hashed, 5-minute expiry, emailed and also SMS'd if the user has a phone number; forgot-password/resend-verification return 204 silently for an unknown or already-confirmed email, by design, to avoid account enumeration), showtime reminders (`ShowtimeReminderService`), incident staff alerts. Templates are stored in the `Template` entity, rendered via `TemplateRenderer` with `{{Token}}` placeholders (see `database-schema.md` §8).
 
 ## 7. Summary — credential config keys by integration
 

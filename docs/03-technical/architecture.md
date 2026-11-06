@@ -14,7 +14,7 @@ Dependency direction is enforced by folder prefix and by actual `ProjectReferenc
 | 1 | `1-Service/` | `Cinema.Service.Clients` | NSwag-generated HTTP clients (C# + Angular). Not referenced by the host itself; consumed by other .NET clients and copied into `cinemafe`. Do not hand-edit. |
 | 1 | `1-Service/` | `Cinema.Service.WebApiHost.Tests` | xUnit tests against the host (e.g. `ControllerArchitectureTests.OnlyThreeControllersExist`). |
 | 2 | `2-Business/` | `Cinema.Business.Contracts` | One `I*Manager`/`ITokenService`/gateway interface per file. References `Cinema.Data.Contracts` + `Cinema.Business.DTO` only. |
-| 2 | `2-Business/` | `Cinema.Business.DTO` | DTOs grouped by domain (`Auth/`, `Booking/`, `BoxOffice/`, `Catalog/`, `Concession/`, `Gate/`, `Invoices/`, `Loyalty/`, `Movies/`, `Operations/`, `Requests/`, `Staff/`, `Theaters/`, `Validation/`). References `Cinema.Data.Entities` only. |
+| 2 | `2-Business/` | `Cinema.Business.DTO` | DTOs grouped by domain (`Auth/`, `Booking/`, `BoxOffice/`, `Catalog/`, `Gate/`, `Invoices/`, `Loyalty/`, `Movies/`, `Operations/`, `Requests/`, `Staff/`, `Theaters/`, `Validation/`). References `Cinema.Data.Entities` only. |
 | 2 | `2-Business/` | `Cinema.Business` | Manager implementations, payment gateways, notification services, external-ratings provider. Wired via `AddBusiness()`. |
 | 2 | `2-Business/` | `Cinema.Business.Tests` | Dual-purpose: `dotnet run` seeds dev accounts, `dotnet test` runs xUnit suites. |
 | 3 | `3-Data/` | `Cinema.Data.Entities` | POCO entities + enums. No project references besides EF Core itself. |
@@ -86,7 +86,7 @@ Two hubs, both mapped in `Program.cs` (`app.MapHub<BookingHub>("/hubs/booking")`
 
 ## 5. Controllers (exactly 3 — enforced, never add a 4th)
 
-`1-Service/Cinema.Service.WebApiHost/Controllers/`: `ApiControllerBase.cs` (shared `HandleException`), `CinemaController.cs` (catalog/booking/staff — 86+ `[Authorize(Roles="Admin")]` actions plus role-composite-gated `#region`s for Concession/Gate/BoxOffice/StaffReport/Operations/Workforce), `IdentityController.cs` (auth/profile), `PaymentController.cs` (gateway initiate/callback/admin). All routes: `api/[controller]/[action]`, HTTP verb POST even for queries. `ControllerArchitectureTests.OnlyThreeControllersExist` enforces the count. See `api-spec.md` for the full role/authorization matrix and `01-business/roles-permissions.md` for the role model.
+`1-Service/Cinema.Service.WebApiHost/Controllers/`: `ApiControllerBase.cs` (shared `HandleException`), `CinemaController.cs` (catalog/booking/staff — 86+ `[Authorize(Roles="Admin")]` actions plus role-composite-gated `#region`s for Gate/BoxOffice/StaffReport/Operations/Workforce), `IdentityController.cs` (auth/profile), `PaymentController.cs` (gateway initiate/callback/admin). All routes: `api/[controller]/[action]`, HTTP verb POST even for queries. `ControllerArchitectureTests.OnlyThreeControllersExist` enforces the count. See `api-spec.md` for the full role/authorization matrix and `01-business/roles-permissions.md` for the role model.
 
 NSwag emits one OpenAPI document per `[ApiExplorerSettings(GroupName=...)]` group (`cinema`, `identity`, `payment` — configured in `Program.cs`), surfaced at `/swagger/{group}/swagger.json`; Swagger UI (`/swagger`) and ReDoc (`/redoc`) are dev-only (`app.Environment.IsDevelopment()`).
 

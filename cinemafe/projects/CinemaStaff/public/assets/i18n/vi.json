@@ -316,46 +316,6 @@
       "blocked": "Đã chặn bán."
     }
   },
-  "kitchen": {
-    "section": "Bếp",
-    "pageTitle": "Hàng chờ nhận đồ",
-    "title": "Hàng chờ nhận đồ ăn",
-    "subtitle": "Chuẩn bị và giao đồ ăn, thức uống ngay khi có đơn.",
-    "nav": {
-      "kitchen": "Hàng chờ nhận đồ"
-    },
-    "live": "Trực tiếp",
-    "offline": "Mất kết nối",
-    "refresh": "Làm mới",
-    "pickTheater": "Chọn rạp",
-    "pickTheaterHint": "Chọn một rạp ở thanh trên để xem hàng chờ của rạp đó.",
-    "emptyColumn": "Không có đơn",
-    "paidAgo": "đã thanh toán {{minutes}} phút trước",
-    "action": {
-      "start": "Bắt đầu chuẩn bị",
-      "ready": "Đánh dấu sẵn sàng",
-      "handOver": "Giao khách"
-    },
-    "status": {
-      "none": "Không có",
-      "pending": "Chờ xử lý",
-      "preparing": "Đang chuẩn bị",
-      "ready": "Sẵn sàng",
-      "handedOver": "Đã giao",
-      "cancelled": "Đã hủy"
-    },
-    "lookup": {
-      "code": "Mã nhận đồ / mã hóa đơn",
-      "search": "Tìm",
-      "result": "Kết quả tra cứu",
-      "notFound": "Không tìm thấy đơn với mã này."
-    }
-  },
-  "stockAlerts": {
-    "title": "Sắp hết hàng",
-    "none": "Mọi mặt hàng theo dõi đều trên ngưỡng cảnh báo.",
-    "onHand": "Còn {{qty}} (cảnh báo ở {{threshold}})"
-  },
   "salesReports": {
     "section": "Báo cáo",
     "pageTitle": "Báo cáo doanh thu",
