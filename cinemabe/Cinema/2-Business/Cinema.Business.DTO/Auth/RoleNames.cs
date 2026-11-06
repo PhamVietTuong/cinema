@@ -29,7 +29,7 @@ public static class RoleNames
     /// <summary>Roles that may approve/reject storage plans and change inventory tracking settings.</summary>
     public const string StockApprovers = Admin;
 
-    /// <summary>Override PIN approvers, drawer reconciliation, compensation, rosters.</summary>
+    /// <summary>Blocking/unblocking seats and rooms, price overrides, drawer reconciliation, compensation.</summary>
     public const string Approvers = Admin;
 
     /// <summary>Management reporting (daily close, sales, audit log).</summary>

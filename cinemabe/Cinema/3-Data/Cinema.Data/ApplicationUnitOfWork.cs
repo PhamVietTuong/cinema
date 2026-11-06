@@ -49,7 +49,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IAuditLogStore AuditLogStore { get; }
     public IIncidentStore IncidentStore { get; }
     public IScheduleBoardStore ScheduleBoardStore { get; }
-    public IWorkforceStore WorkforceStore { get; }
     public IStaffReportStore StaffReportStore { get; }
 
     public ApplicationUnitOfWork(CinemaContext db)
@@ -93,7 +92,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         AuditLogStore = new AuditLogStore(db);
         IncidentStore = new IncidentStore(db);
         ScheduleBoardStore = new ScheduleBoardStore(db);
-        WorkforceStore = new WorkforceStore(db);
         StaffReportStore = new StaffReportStore(db);
     }
 

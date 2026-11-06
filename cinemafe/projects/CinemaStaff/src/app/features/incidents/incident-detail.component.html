@@ -42,21 +42,23 @@
     </mat-card>
 
     @if (isOpen) {
-      <mat-card class="card">
-        <h3 class="ad-card-title">{{ 'incidents.block.title' | translate }}</h3>
-        <p class="hint">{{ (overrides.isApprover() ? 'incidents.block.hintApprover' : 'incidents.block.hintOverride') | translate }}</p>
-        <form [formGroup]="blockForm">
-          <staff-room-seat-picker [group]="blockForm" [theaterId]="inc.theaterId!" />
-        </form>
-        <div class="actions">
-          <button mat-stroked-button color="warn" type="button" [disabled]="busy || !blockForm.value.seatId" (click)="blockSeat()"><mat-icon>event_seat</mat-icon> {{ 'incidents.block.seat' | translate }}</button>
-          <button mat-stroked-button color="warn" type="button" [disabled]="busy || !blockForm.value.roomId" (click)="blockRoom()"><mat-icon>meeting_room</mat-icon> {{ 'incidents.block.room' | translate }}</button>
-        </div>
-      </mat-card>
+      @if (isApprover()) {
+        <mat-card class="card">
+          <h3 class="ad-card-title">{{ 'incidents.block.title' | translate }}</h3>
+          <p class="hint">{{ 'incidents.block.hintApprover' | translate }}</p>
+          <form [formGroup]="blockForm">
+            <staff-room-seat-picker [group]="blockForm" [theaterId]="inc.theaterId!" />
+          </form>
+          <div class="actions">
+            <button mat-stroked-button color="warn" type="button" [disabled]="busy || !blockForm.value.seatId" (click)="blockSeat()"><mat-icon>event_seat</mat-icon> {{ 'incidents.block.seat' | translate }}</button>
+            <button mat-stroked-button color="warn" type="button" [disabled]="busy || !blockForm.value.roomId" (click)="blockRoom()"><mat-icon>meeting_room</mat-icon> {{ 'incidents.block.room' | translate }}</button>
+          </div>
+        </mat-card>
+      }
 
       <mat-card class="card">
         <h3 class="ad-card-title">{{ 'incidents.resolve.title' | translate }}</h3>
-        @if (inc.blocksSeat || inc.blocksRoom) {
+        @if (isApprover() && (inc.blocksSeat || inc.blocksRoom)) {
           <mat-checkbox [checked]="unblock" (change)="unblock = $event.checked">{{ 'incidents.resolve.unblock' | translate }}</mat-checkbox>
           <p class="hint">{{ 'incidents.resolve.unblockHint' | translate }}</p>
         }

@@ -45,8 +45,7 @@ public class StaffToolsetAuthorizationTests
 
     public static IEnumerable<object[]> ApproverOnlyActions()
     {
-        foreach (var action in new[] { nameof(CinemaController.SaveShift), nameof(CinemaController.DeleteShift), nameof(CinemaController.GetRoster),
-            nameof(CinemaController.GetTheaterStaff) })
+        foreach (var action in new[] { nameof(CinemaController.BlockSeat), nameof(CinemaController.BlockRoom) })
         {
             yield return new object[] { typeof(CinemaController), action };
         }
@@ -54,10 +53,6 @@ public class StaffToolsetAuthorizationTests
 
     public static IEnumerable<object[]> EveryStaffActions()
     {
-        foreach (var action in new[] { nameof(CinemaController.GetMyShifts) })
-        {
-            yield return new object[] { typeof(CinemaController), action };
-        }
         foreach (var action in new[] { nameof(CinemaController.GetScheduleBoard), nameof(CinemaController.ReportIncident), nameof(CinemaController.GetIncidents) })
         {
             yield return new object[] { typeof(CinemaController), action };
@@ -66,7 +61,7 @@ public class StaffToolsetAuthorizationTests
 
     [Theory]
     [MemberData(nameof(ApproverOnlyActions))]
-    public async Task TheaterStaff_CannotUseApproverEndpoints_SoRosterEditIs403(Type controller, string action)
+    public async Task TheaterStaff_CannotUseApproverEndpoints_SoBlockingIs403(Type controller, string action)
     {
         (await IsAllowedAsync(controller, action, RoleNames.TheaterStaff)).Should().BeFalse();
     }
@@ -80,7 +75,7 @@ public class StaffToolsetAuthorizationTests
 
     [Theory]
     [MemberData(nameof(EveryStaffActions))]
-    public async Task EveryStaffRole_CanUseShiftsScheduleAndIncidents_ButCustomersCannot(Type controller, string action)
+    public async Task EveryStaffRole_CanUseScheduleAndIncidents_ButCustomersCannot(Type controller, string action)
     {
         foreach (var role in RoleNames.StaffApp.Split(','))
         {

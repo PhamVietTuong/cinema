@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Cinema.Business.DTO.Staff;
 using Cinema.Data.Enums;
 
 namespace Cinema.Business.DTO.BoxOffice;
@@ -38,9 +37,6 @@ public class CounterSaleRequest
     /// <summary>The seat-lock hub connection id of the terminal, so its own held seats pass and are released.</summary>
     [StringLength(128)]
     public string? ConnectionId { get; set; }
-
-    /// <summary>Manager approval, required when any line carries an OverrideUnitPrice.</summary>
-    public ManagerOverrideDTO? Override { get; set; }
 
     /// <summary>The food is not handed over at the counter: it joins the kitchen's pickup queue (Pending) instead of
     /// being recorded as handed over. Ignored when the sale has no food.</summary>

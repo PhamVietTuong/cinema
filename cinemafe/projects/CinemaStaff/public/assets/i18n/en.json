@@ -137,16 +137,6 @@
     "subtitle": "Your account and security settings.",
     "account": "Account"
   },
-  "pinSettings": {
-    "title": "Manager override PIN",
-    "hint": "Staff at the counter can ask you to approve sensitive actions by typing this PIN. Choose 4 to 8 digits and keep it private.",
-    "pin": "New PIN",
-    "confirmPin": "Confirm PIN",
-    "pinInvalid": "The PIN must be 4 to 8 digits.",
-    "mismatch": "The two PINs do not match.",
-    "save": "Save PIN",
-    "saved": "Override PIN saved."
-  },
   "pos": {
     "section": "Counter",
     "nav": {
@@ -225,7 +215,7 @@
       "title": "Change price",
       "newPrice": "New price (VND)",
       "invalid": "Enter a price of 0 or more.",
-      "hint": "A price change needs a manager's approval.",
+      "hint": "Only managers can change a price.",
       "apply": "Apply",
       "reset": "Restore list price",
       "action": "Change price",
@@ -299,7 +289,6 @@
     "block": {
       "title": "Block from sale",
       "hintApprover": "Blocked seats and rooms cannot be sold. Upcoming tickets are listed so you can move the guests; nothing is cancelled automatically.",
-      "hintOverride": "Blocking needs a manager: you will be asked for an approver and their PIN. Upcoming tickets are listed afterwards; nothing is cancelled automatically.",
       "seat": "Block seat",
       "room": "Block room"
     },
@@ -323,32 +312,6 @@
       "reported": "Incident reported.",
       "resolved": "Incident resolved.",
       "blocked": "Blocked."
-    }
-  },
-  "roster": {
-    "section": "Workforce",
-    "nav": "Roster",
-    "title": "Roster",
-    "subtitle": "Weekly shifts. Click a day to add a shift, click a shift to edit it.",
-    "prevWeek": "Previous week",
-    "nextWeek": "Next week",
-    "thisWeek": "This week",
-    "staff": "Staff",
-    "hours": "Hours",
-    "empty": "No staff in this theater.",
-    "dialog": {
-      "new": "New shift",
-      "edit": "Edit shift",
-      "start": "Start",
-      "end": "End",
-      "overnightHint": "An end time at or before the start means the shift ends the next day."
-    },
-    "errors": {
-      "invalidTime": "Enter a valid date and times."
-    },
-    "toast": {
-      "saved": "Shift saved.",
-      "deleted": "Shift deleted."
     }
   },
   "kitchen": {

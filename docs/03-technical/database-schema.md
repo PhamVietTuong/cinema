@@ -46,10 +46,6 @@ Schema changes are hand-written into `cinemabe/sql/create_db.sql` / `upgrade_db.
 | EmailVerificationTokenHash / EmailVerificationExpiresAt | string? / DateTime? | |
 | TwoFactorEnabled | bool | default false |
 | TwoFactorCodeHash / TwoFactorCodeExpiresAt | string? / DateTime? | emailed OTP |
-| OverridePinHash | byte[]? | max 64, PBKDF2, staff-terminal manager override |
-| OverridePinSalt | byte[]? | max 128 |
-| OverridePinFailedCount | int | default 0 |
-| OverridePinLockoutEndUtc | DateTime? | |
 
 Relationships: `UserType` (Restrict), `MemberShip` (SetNull), `Theater` (SetNull). Nav collections: `Invoices`, `Comments`, `Evaluations`.
 
@@ -284,9 +280,6 @@ ComboId (Cascade, FK → FoodAndDrink "Combo"), ComponentId (NoAction, FK → Fo
 FoodAndDrinkId (NoAction), TheaterId (denormalized, no FK object), Type (StockMovementType: Receive=0/Sale=1/SaleReversal=2/Adjust=3/Waste=4), Quantity (int, **signed**), ReasonCode (StockReasonCode?, Adjust/Waste only), Reason (500)?, InvoiceId (Guid?, no FK), StoragePlanId (Guid?), UserId (Guid?, null = system/expiry reaper).
 
 ## 7. Staff / Operations
-
-### StaffShift
-TheaterId, UserId (plain Guid columns, no FK objects, indexed), StartTime/EndTime (DateTime, theater local wall-clock), Note (500)?. Index (TheaterId, StartTime), (UserId, StartTime).
 
 ### Incident
 TheaterId (Guid, plain), RoomId/SeatId/ShowTimeId (Guid?, plain), Category (IncidentCategory), Severity (IncidentSeverity, default Medium), Status (IncidentStatus, default Open), Title (200), Description (2000)?, ReportedByUserId (Guid), ResolvedByUserId (Guid?), ResolvedAt (DateTime?), ResolutionNote (1000)?, BlocksSeat (bool), BlocksRoom (bool). Index (TheaterId, Status, CreationTime). No FKs by design (survives deletion of referenced rows).

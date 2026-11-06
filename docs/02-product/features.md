@@ -61,14 +61,14 @@ The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified dir
 | Gate: lookup | `features/gate/gate-lookup*` | complete | Find paid tickets by invoice code or phone. |
 | Counter sale (POS) | `features/pos` | complete | Quote/sell flow backed by `#region BoxOffice`. |
 | Schedule board | `features/schedule` | complete | Rooms + today's showtimes + status. |
-| Incidents (report/list/detail, seat/room block) | `features/incidents` | complete | Block actions require `Approvers` role or manager-override PIN. |
-| Roster / shift scheduling | `features/roster` | complete | Approvers manage roster; all staff can view own shifts. |
+| Incidents (report/list/detail, seat/room block) | `features/incidents` | complete | Block actions, and resolve-with-unblock, require the `Approvers` role (Admin only) — no PIN-based alternate path. |
 | Sales reports | `features/sales-reports` | complete | Management-role gated (`REPORTING_ROLES`). |
 | Audit log (staff-facing) | `features/reports/audit-log` | complete | Theater-scoped, management roles. |
-| Profile + override-PIN | `features/profile` | complete | `SetMyOverridePin` flow. |
+| Profile | `features/profile` | complete | Account summary. |
 | Kitchen pickup queue | `features/kitchen` | **stubbed** | Code and routes exist (`kitchen.routes.ts`, guarded by `CONCESSION_ROLES`), but intentionally excluded from `staff-menu.ts` navigation — comment in that file confirms it's hidden, not deleted. |
 | Cash drawer close / daily close | — | removed | UI removed from CinemaStaff; backend `DrawerReconcile`/`CashPayOut` audit actions remain (possibly vestigial). |
 | Customer-service desk, time-clock, tasks, checklists, inventory/storage-plan | — | removed | Confirmed absent from current feature tree and sidebar. |
+| Roster / shift scheduling, manager-override PIN | — | removed | Roster (`features/roster`, `StaffShift` table) and the manager-override-PIN mechanism (`ManagerOverrideService`, `User.OverridePin*` columns) were both removed outright; blocking/unblocking and POS price overrides now require the `Approvers` role directly. |
 
 ## Cross-cutting / not yet built (per ROADMAP.md)
 

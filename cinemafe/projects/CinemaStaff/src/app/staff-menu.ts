@@ -1,4 +1,4 @@
-import { APPROVER_ROLES, GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES, SELLER_ROLES } from 'CinemaLib';
+import { GATE_KEEPER_ROLES, NavSection, REPORTING_ROLES, SELLER_ROLES } from 'CinemaLib';
 
 /**
  * CinemaStaff sidebar. Each item may carry `roles` (omitted = every staff role); the shared
@@ -36,12 +36,6 @@ export const STAFF_MENU: NavSection[] = [
     items: [
       { icon: 'calendar_view_day', labelKey: 'schedule.nav', route: '/schedule', titleKey: 'schedule.title' },
       { icon: 'report', labelKey: 'incidents.nav', route: '/incidents', titleKey: 'incidents.list.title' },
-    ],
-  },
-  {
-    titleKey: 'roster.section',
-    items: [
-      { icon: 'calendar_month', labelKey: 'roster.nav', route: '/roster', titleKey: 'roster.title', roles: APPROVER_ROLES },
     ],
   },
   {

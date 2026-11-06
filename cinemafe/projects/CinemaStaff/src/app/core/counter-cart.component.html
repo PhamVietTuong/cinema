@@ -70,7 +70,9 @@
                 }
               </td>
               <td class="pos-row-actions">
-                <button mat-icon-button type="button" (click)="cart.overrideTicket(t)" [matTooltip]="'pos.override.action' | translate"><mat-icon>price_change</mat-icon></button>
+                @if (cart.isApprover()) {
+                  <button mat-icon-button type="button" (click)="cart.overrideTicket(t)" [matTooltip]="'pos.override.action' | translate"><mat-icon>price_change</mat-icon></button>
+                }
                 <button mat-icon-button type="button" (click)="cart.toggleSeatByTicket(t)" [matTooltip]="'common.remove' | translate"><mat-icon>close</mat-icon></button>
               </td>
             </tr>
@@ -120,7 +122,9 @@
             @if (l.overridePrice !== undefined) {
               <mat-icon class="pos-flag" [matTooltip]="'pos.override.active' | translate">edit</mat-icon>
             }
-            <button mat-icon-button type="button" (click)="cart.overrideFood(l)" [matTooltip]="'pos.override.action' | translate"><mat-icon>price_change</mat-icon></button>
+            @if (cart.isApprover()) {
+              <button mat-icon-button type="button" (click)="cart.overrideFood(l)" [matTooltip]="'pos.override.action' | translate"><mat-icon>price_change</mat-icon></button>
+            }
           </span>
         </div>
       }

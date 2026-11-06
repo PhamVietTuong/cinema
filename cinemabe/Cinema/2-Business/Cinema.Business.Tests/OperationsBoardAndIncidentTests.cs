@@ -15,8 +15,6 @@ namespace Cinema.Business.Tests;
 
 public class OperationsBoardAndIncidentTests
 {
-    private const string _pin = "4321";
-
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();
     private readonly List<AuditLog> _staged = new();
     private readonly List<Incident> _createdIncidents = new();
@@ -46,12 +44,9 @@ public class OperationsBoardAndIncidentTests
 
         _staff = NewUser(RoleNames.TheaterStaff);
         _manager = NewUser(RoleNames.Admin);
-        PasswordHasher.CreateHash(_pin, out var hash, out var salt);
-        _manager.OverridePinHash = hash;
-        _manager.OverridePinSalt = salt;
 
         var audit = new AuditLogger(_uowMock.Object);
-        _incidents = new IncidentManager(_uowMock.Object, audit, new ManagerOverrideService(_uowMock.Object, audit));
+        _incidents = new IncidentManager(_uowMock.Object, audit);
     }
 
     private User NewUser(string role)
@@ -147,51 +142,6 @@ public class OperationsBoardAndIncidentTests
     }
 
     [Fact]
-    public async Task BlockSeat_ByStaffWithoutOverride_Is403AndChangesNothing()
-    {
-        var seat = GivenSeat();
-
-        var act = () => _incidents.BlockSeatAsync(_theaterId, _staff.Id, new BlockSeatRequest { SeatId = seat.Id });
-
-        await act.Should().ThrowAsync<AccessDeniedException>();
-        seat.IsActive.Should().BeTrue();
-        _createdIncidents.Should().BeEmpty();
-        _uowMock.Verify(u => u.BeginTransactionAsync(), Times.Never);
-    }
-
-    [Fact]
-    public async Task BlockSeat_ByStaffWithManagerOverride_Works_AndAuditsBothActorAndApprover()
-    {
-        var seat = GivenSeat();
-
-        await _incidents.BlockSeatAsync(_theaterId, _staff.Id, new BlockSeatRequest
-        {
-            SeatId = seat.Id,
-            Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin }
-        });
-
-        seat.IsActive.Should().BeFalse();
-        var audit = _staged.Should().ContainSingle(a => a.Action == AuditAction.BlockSeat).Subject;
-        audit.ActorUserId.Should().Be(_staff.Id);
-        audit.ApproverUserId.Should().Be(_manager.Id);
-    }
-
-    [Fact]
-    public async Task BlockSeat_WrongPin_Is403AndSeatStaysOnSale()
-    {
-        var seat = GivenSeat();
-
-        var act = () => _incidents.BlockSeatAsync(_theaterId, _staff.Id, new BlockSeatRequest
-        {
-            SeatId = seat.Id,
-            Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = "0000" }
-        });
-
-        await act.Should().ThrowAsync<AccessDeniedException>();
-        seat.IsActive.Should().BeTrue();
-    }
-
-    [Fact]
     public async Task BlockSeat_DoubleSeat_BlocksBothHalves()
     {
         var groupId = Guid.NewGuid();
@@ -238,15 +188,6 @@ public class OperationsBoardAndIncidentTests
     }
 
     [Fact]
-    public async Task BlockRoom_ByStaffWithoutOverride_Is403()
-    {
-        var act = () => _incidents.BlockRoomAsync(_theaterId, _staff.Id, new BlockRoomRequest { RoomId = _room.Id });
-
-        await act.Should().ThrowAsync<AccessDeniedException>();
-        _room.Status.Should().Be(RoomStatus.Active);
-    }
-
-    [Fact]
     public async Task BlockRoom_AlreadyInMaintenance_Is400()
     {
         _room.Status = RoomStatus.Maintenance;
@@ -287,11 +228,11 @@ public class OperationsBoardAndIncidentTests
         _uowMock.Setup(u => u.IncidentStore.GetByIdAsync(incident.Id)).ReturnsAsync(incident);
         _staged.Clear();
 
-        var refused = () => _incidents.ResolveAsync(new[] { _theaterId }, _staff.Id, new ResolveIncidentRequest { IncidentId = incident.Id, Unblock = true });
+        var refused = () => _incidents.ResolveAsync(new[] { _theaterId }, _staff.Id, false, new ResolveIncidentRequest { IncidentId = incident.Id, Unblock = true });
         await refused.Should().ThrowAsync<AccessDeniedException>();
         seat.IsActive.Should().BeFalse();
 
-        var dto = await _incidents.ResolveAsync(new[] { _theaterId }, _manager.Id, new ResolveIncidentRequest { IncidentId = incident.Id, Unblock = true, ResolutionNote = "fixed" });
+        var dto = await _incidents.ResolveAsync(new[] { _theaterId }, _manager.Id, true, new ResolveIncidentRequest { IncidentId = incident.Id, Unblock = true, ResolutionNote = "fixed" });
 
         seat.IsActive.Should().BeTrue();
         dto.Status.Should().Be(IncidentStatus.Resolved);
@@ -307,10 +248,10 @@ public class OperationsBoardAndIncidentTests
         var incident = _createdIncidents[0];
         _uowMock.Setup(u => u.IncidentStore.GetByIdAsync(incident.Id)).ReturnsAsync(incident);
 
-        await _incidents.ResolveAsync(null, _staff.Id, new ResolveIncidentRequest { IncidentId = incident.Id });
+        await _incidents.ResolveAsync(null, _staff.Id, false, new ResolveIncidentRequest { IncidentId = incident.Id });
 
         seat.IsActive.Should().BeFalse();
-        var again = () => _incidents.ResolveAsync(null, _staff.Id, new ResolveIncidentRequest { IncidentId = incident.Id });
+        var again = () => _incidents.ResolveAsync(null, _staff.Id, false, new ResolveIncidentRequest { IncidentId = incident.Id });
         await again.Should().ThrowAsync<InvalidOperationException>();
     }
 
@@ -320,7 +261,7 @@ public class OperationsBoardAndIncidentTests
         var incident = new Incident { Id = Guid.NewGuid(), TheaterId = _theaterId, Title = "x" };
         _uowMock.Setup(u => u.IncidentStore.GetByIdAsync(incident.Id)).ReturnsAsync(incident);
 
-        var act = () => _incidents.ResolveAsync(new[] { Guid.NewGuid() }, _staff.Id, new ResolveIncidentRequest { IncidentId = incident.Id });
+        var act = () => _incidents.ResolveAsync(new[] { Guid.NewGuid() }, _staff.Id, false, new ResolveIncidentRequest { IncidentId = incident.Id });
 
         await act.Should().ThrowAsync<AccessDeniedException>();
     }

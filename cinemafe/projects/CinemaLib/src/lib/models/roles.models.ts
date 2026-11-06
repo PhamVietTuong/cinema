@@ -50,7 +50,7 @@ export const CONCESSION_ROLES: readonly string[] = [
   UserRoles.TheaterStaff,
 ];
 
-/** Manager override PIN, drawer reconciliation, compensation, rosters. */
+/** Blocking/unblocking seats and rooms, price overrides, drawer reconciliation, compensation. */
 export const APPROVER_ROLES: readonly string[] = [
   UserRoles.Admin,
 ];

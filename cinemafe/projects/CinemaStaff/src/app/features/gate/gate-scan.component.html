@@ -48,8 +48,7 @@
       <h1 class="overlay-title">{{ outcomeKey() | translate }}</h1>
       @if (r.seatLabel) {
         <div class="detail seat">{{ r.seatLabel }}</div>
-        <div class="detail">{{ r.movieTitle }}</div>
-        <div class="detail">{{ r.roomName }} &middot; {{ r.showTime | date: 'HH:mm dd/MM/yyyy' }}</div>
+        <div class="detail info">{{ r.movieTitle }} &middot; {{ r.roomName }} &middot; {{ r.showTime | date: 'HH:mm dd/MM/yyyy' }}</div>
         @if (r.patronCategory) {
           <div class="detail">{{ r.patronCategory }}</div>
         }

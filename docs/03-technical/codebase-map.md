@@ -38,7 +38,7 @@
 |---|---|
 | `projects/CinemaUser/src/app/features/` | Customer app: auth, discover (home/movies/theaters/promotions/membership), booking (seats/checkout/payment-return), profile (bookings/tickets/cancel/notification prefs). |
 | `projects/CinemaAdmin/src/app/features/` | Admin app: auth, categories (reference-data CRUD: age-restrictions, discount-types, holidays, memberships, movie-types, news, templates, user-types), operations (audit-log, comments, discounts, gift-cards, invoices, loyalty-settings, promotion-programs, splash-banners), overview (dashboard, movies, theaters+tabs, showtimes, users, reports). |
-| `projects/CinemaStaff/src/app/features/` | Staff app: auth, gate (scan/lookup), home, incidents, kitchen (coded, hidden from nav — see open-questions.md), pos (counter sale), profile (+override-PIN), reports/audit-log, roster, sales-reports, schedule. |
+| `projects/CinemaStaff/src/app/features/` | Staff app: auth, gate (scan/lookup), home, incidents, kitchen (coded, hidden from nav — see open-questions.md), pos (counter sale), profile, reports/audit-log, sales-reports, schedule. |
 | `projects/CinemaLib/src/lib/components/` | Shared UI used by 2+ apps: seat-map, shell, dialogs, table base, filter-bar, status-pill, ticket/qr, price, empty-state, forbidden, profile, bar-chart. |
 | `projects/CinemaLib/src/lib/services/` | NSwag-generated API service agents (cinema/identity/payment http services) + `seat-lock-session.service`, `booking-hub`/`staff-hub` (SignalR), `toast.service`, API error handling. |
 | `projects/CinemaLib/src/lib/store/` | NgRx: `auth` and `movies` feature stores (mounted in all 3 apps), plus a legacy `reducers/actions/selectors` folder (search, loading, notification slices). |

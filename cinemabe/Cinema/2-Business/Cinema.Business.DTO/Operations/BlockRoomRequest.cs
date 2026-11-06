@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Cinema.Business.DTO.Staff;
 
 namespace Cinema.Business.DTO.Operations;
 
@@ -17,7 +16,4 @@ public class BlockRoomRequest
 
     [StringLength(2000)]
     public string? Description { get; set; }
-
-    /// <summary>Manager approval when the caller is not an approver.</summary>
-    public ManagerOverrideDTO? Override { get; set; }
 }

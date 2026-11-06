@@ -11,7 +11,7 @@
 - `PaymentController` has a **class-level `[Authorize]`** — any action without its own `[AllowAnonymous]`/`[Authorize(Roles=...)]` still requires a valid JWT. `IdentityController` and `CinemaController` have no class-level auth attribute — an action with no attribute is public.
 - Standard error mapping (`ApiControllerBase.HandleException`): `KeyNotFoundException`→404, `AccessDeniedException`→**403** (never 401 — the frontend force-logs-out on 401), `UnauthorizedAccessException`→401, `InvalidOperationException`→400, anything else→500. Body shape: `{ error, statusCode }`. A plain `[Authorize(Roles=...)]` pipeline rejection (no controller code reached) returns ASP.NET's framework default (401 no token / 403 wrong role) with an empty body.
 - `CinemaController`'s one-line CRUD actions use `Run`/`RunNoContent`/`EnsureExistsAsync` helpers (`#region Catalog helpers`) that wrap the same try/catch + `LogProvider` + 404 pattern as the more verbose hand-written actions.
-- `_adminRole` is a local `"Admin"` string constant in each controller (not `RoleNames.Admin`, though equivalent) — used for most catalog/admin writes. `RoleNames.*` composites are used for staff-area endpoints only (Gate/BoxOffice/Concession/Operations/Workforce/StaffReport).
+- `_adminRole` is a local `"Admin"` string constant in each controller (not `RoleNames.Admin`, though equivalent) — used for most catalog/admin writes. `RoleNames.*` composites are used for staff-area endpoints only (Gate/BoxOffice/Concession/Operations/StaffReport).
 
 ---
 
@@ -169,8 +169,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `Gate` | `RoleNames.GateKeepers` (`Admin,TheaterStaff`) | `Scan` (QR scan — a refused scan is still HTTP 200 with `Outcome` field; only auth failures are 403), `Lookup` (find today's paid tickets by invoice code/phone) |
 | `BoxOffice` | `RoleNames.Sellers` (`Admin,TheaterStaff`) | `Quote` (dry-run price), `Sell` (creates `Paid` invoice directly), `GetShowtimesToday`, `FindCustomer` (by exact phone) |
 | `StaffReport` | `RoleNames.Reporting` (`Admin` only) | `GetAuditLog`, `GetSales`, `GetOccupancy`, `GetKpis` — date range capped at 92 days, theater-scoped |
-| `Operations` | `RoleNames.StaffApp` (`Admin,TheaterStaff`) | `GetScheduleBoard`, `ReportIncident`, `GetIncidents`, `GetIncident`, `ResolveIncident`, `BlockSeat`, `BlockRoom` (block/resolve-with-unblock need the `Approvers` role or a manager-override PIN — 403 otherwise; `BlockSeat`/`BlockRoom` set `Incident.BlocksSeat`/`BlocksRoom`, and `ResolveIncident`'s optional `Unblock` flag reopens the seat/room) |
-| `Workforce` | `RoleNames.Approvers` (`Admin`) for roster CRUD + PIN set; `RoleNames.StaffApp` for self-service reads | `SetMyOverridePin` (Approvers), `GetOverrideApprovers` (StaffApp), `GetTheaterStaff`/`GetRoster`/`SaveShift`/`DeleteShift` (Approvers), `GetMyShifts` (StaffApp) |
+| `Operations` | `RoleNames.StaffApp` (`Admin,TheaterStaff`); `BlockSeat`/`BlockRoom` are `RoleNames.Approvers` (`Admin`) only | `GetScheduleBoard`, `ReportIncident`, `GetIncidents`, `GetIncident`, `ResolveIncident`, `BlockSeat`, `BlockRoom` (`BlockSeat`/`BlockRoom` require the `Approvers` role outright — 403 otherwise, no PIN-based alternate path; they set `Incident.BlocksSeat`/`BlocksRoom`, and `ResolveIncident`'s optional `Unblock` flag, which also needs `Approvers`, reopens the seat/room) |
 
 ---
 

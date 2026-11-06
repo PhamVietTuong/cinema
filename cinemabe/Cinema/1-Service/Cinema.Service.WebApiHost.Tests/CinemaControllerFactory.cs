@@ -19,9 +19,7 @@ internal static class CinemaControllerFactory
         IBoxOfficeManager? boxOffice = null,
         IStaffReportManager? reports = null,
         IScheduleBoardManager? board = null,
-        IIncidentManager? incidents = null,
-        IManagerOverrideService? overrides = null,
-        IWorkforceManager? workforce = null)
+        IIncidentManager? incidents = null)
     {
         var controller = new CinemaController(
             movieManager: null!,
@@ -57,9 +55,7 @@ internal static class CinemaControllerFactory
             boxOffice: boxOffice!,
             reports: reports!,
             board: board!,
-            incidents: incidents!,
-            overrides: overrides!,
-            workforce: workforce!)
+            incidents: incidents!)
         {
             ControllerContext = new ControllerContext
             {

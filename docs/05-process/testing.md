@@ -58,8 +58,6 @@ Verified by listing `cinemabe/Cinema/2-Business/Cinema.Business.Tests/*.cs`:
 | `TicketPriceManagerTests.cs` | Ticket price multiplier logic |
 | `TimeSlotManagerTests.cs` | Time slot management |
 | `VnPayGatewayTests.cs` (+ `VnPayTestHelper.cs`) | VNPay gateway signature/parsing |
-| `WorkforceTests.cs` | Staff shift/workforce management |
-| `AuditOverrideTests.cs` | Audit log / manager-override PIN |
 | `FixedClock.cs` | Test helper (not a test class) |
 
 This list is substantially larger than the four classes named in `CLAUDE.md`

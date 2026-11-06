@@ -10,7 +10,7 @@
 -- table it references (FK target) — otherwise SQL Server refuses the drop.
 IF OBJECT_ID('dbo.__EFMigrationsHistory', 'U') IS NOT NULL
 DROP TABLE dbo.__EFMigrationsHistory;
--- legacy (removed staff features: time clock, tasks)
+-- legacy (removed staff features: time clock, tasks, roster/shift scheduling)
 IF OBJECT_ID('dbo.StaffTask', 'U') IS NOT NULL
 DROP TABLE dbo.StaffTask;
 IF OBJECT_ID('dbo.TimeClockEntry', 'U') IS NOT NULL
@@ -447,10 +447,6 @@ CREATE TABLE [User] (
     [TwoFactorEnabled] bit NOT NULL DEFAULT 0,
     [TwoFactorCodeHash] nvarchar(max) NULL,
     [TwoFactorCodeExpiresAt] datetime NULL,
-    [OverridePinHash] varbinary(64) NULL,
-    [OverridePinSalt] varbinary(128) NULL,
-    [OverridePinFailedCount] int NOT NULL DEFAULT 0,
-    [OverridePinLockoutEndUtc] datetime NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_User] PRIMARY KEY ([Id]),
@@ -825,25 +821,6 @@ CREATE TABLE [Incident] (
 );
 CREATE INDEX [IX_Incident_TheaterId_Status_CreationTime] ON [Incident] ([TheaterId], [Status], [CreationTime]);
 -- ── end P8a incidents ────────────────────────────────────────────────────────
-
-
--- ── P8c workforce ────────────────────────────────────────────────────────────
--- Rosters, time clock and staff tasks. No FKs (like AuditLog/Incident): history survives user/theater deletions.
-CREATE TABLE [StaffShift] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NOT NULL,
-    [UserId] uniqueidentifier NOT NULL,
-    [StartTime] datetime NOT NULL,
-    [EndTime] datetime NOT NULL,
-    [Note] nvarchar(500) NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_StaffShift] PRIMARY KEY ([Id])
-);
-CREATE INDEX [IX_StaffShift_TheaterId_StartTime] ON [StaffShift] ([TheaterId], [StartTime]);
-CREATE INDEX [IX_StaffShift_UserId_StartTime] ON [StaffShift] ([UserId], [StartTime]);
-
--- ── end P8c workforce ────────────────────────────────────────────────────────
 
 -- ============================================================
 -- P4 box office: counter sales, split tenders, cash drawer

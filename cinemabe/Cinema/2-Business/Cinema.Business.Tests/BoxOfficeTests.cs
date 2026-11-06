@@ -19,8 +19,6 @@ namespace Cinema.Business.Tests;
 
 public class BoxOfficeTests
 {
-    private const string _pin = "4321";
-
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new() { DefaultValue = DefaultValue.Mock };
     private readonly Mock<INotificationService> _notifications = new();
     private readonly Mock<ISmsNotificationService> _sms = new();
@@ -49,15 +47,10 @@ public class BoxOfficeTests
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
         _booking = new BookingManager(_uowMock.Object, gateways, _notifications.Object, _sms.Object, _seatNotifications.Object);
-        var audit = new AuditLogger(_uowMock.Object);
-        var overrides = new ManagerOverrideService(_uowMock.Object, audit);
-        _sut = new BoxOfficeManager(_uowMock.Object, _booking, overrides);
+        _sut = new BoxOfficeManager(_uowMock.Object, _booking);
 
         _staff = NewUser(RoleNames.TheaterStaff, _theaterId);
         _manager = NewUser(RoleNames.Admin, _theaterId);
-        PasswordHasher.CreateHash(_pin, out var hash, out var salt);
-        _manager.OverridePinHash = hash;
-        _manager.OverridePinSalt = salt;
 
         _uowMock.Setup(u => u.AuditLogStore.Stage(It.IsAny<AuditLog>())).Callback<AuditLog>(a => _audits.Add(a));
         _uowMock.Setup(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()))
@@ -142,7 +135,7 @@ public class BoxOfficeTests
         var request = SeatSale(_seatA, _seatB);
         request.Tenders = new List<TenderLine> { Card(100000), Cash(100000) };
 
-        var result = await _sut.SellAsync(_theaterId, _staff.Id, request);
+        var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
 
         var invoice = _created.Should().ContainSingle().Subject;
         invoice.Status.Should().Be(InvoiceStatus.Paid);
@@ -171,7 +164,7 @@ public class BoxOfficeTests
         var request = SeatSale(_seatA);
         request.Tenders = new List<TenderLine> { Cash(50000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*short by 50000*");
 
         _created.Should().BeEmpty();
@@ -185,7 +178,7 @@ public class BoxOfficeTests
         var request = SeatSale(_seatA);
         request.Tenders = new List<TenderLine> { Cash(150000) };
 
-        var result = await _sut.SellAsync(_theaterId, _staff.Id, request);
+        var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
 
         result.ChangeDue.Should().Be(50000);
         var cash = _created.Single().Payments.Single();
@@ -200,7 +193,7 @@ public class BoxOfficeTests
         var request = SeatSale(_seatA);
         request.Tenders = new List<TenderLine> { Cash(100000) };
 
-        var result = await _sut.SellAsync(_theaterId, _staff.Id, request);
+        var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
 
         _created.Should().ContainSingle();
         result.ChangeDue.Should().Be(0);
@@ -215,7 +208,7 @@ public class BoxOfficeTests
             Tenders = new List<TenderLine> { Cash(60000) },
         };
 
-        var result = await _sut.SellAsync(_theaterId, _staff.Id, request);
+        var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
 
         _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(_cola.Id, -2), Times.Once);
         _stockMovements.Should().ContainSingle(m => m.FoodAndDrinkId == _cola.Id && m.Quantity == -2 && m.UserId == _staff.Id);
@@ -234,7 +227,7 @@ public class BoxOfficeTests
         var request = SeatSale(_seatA);
         request.Tenders = new List<TenderLine> { Card(100000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*already booked*");
         _created.Should().BeEmpty();
     }
@@ -249,11 +242,11 @@ public class BoxOfficeTests
         request.ConnectionId = "my-conn";
         request.Tenders = new List<TenderLine> { Card(100000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*held by another user*");
 
         request.ConnectionId = "other-conn";
-        await _sut.SellAsync(_theaterId, _staff.Id, request);
+        await _sut.SellAsync(_theaterId, _staff.Id, false, request);
         _booking.IsSeatLocked(_showTimeId, _roomId, held).Should().BeFalse("the sale releases the terminal's own hold");
     }
 
@@ -265,7 +258,7 @@ public class BoxOfficeTests
         var counter = SeatSale(blocked);
         counter.Tenders = new List<TenderLine> { Card(100000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, counter))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, counter))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*blocked*");
 
         var online = new CreateBookingRequest
@@ -287,7 +280,7 @@ public class BoxOfficeTests
         var request = SeatSale(_seatA);
         request.Tenders = new List<TenderLine> { Card(100000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(otherTheater, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(otherTheater, _staff.Id, false, request))
             .Should().ThrowAsync<AccessDeniedException>();
         _created.Should().BeEmpty();
     }
@@ -301,7 +294,7 @@ public class BoxOfficeTests
         var request = SeatSale(_seatA);
         request.Tenders = new List<TenderLine> { Card(100000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*not open for sale*");
     }
 
@@ -313,7 +306,7 @@ public class BoxOfficeTests
         var request = SeatSale(_seatA);
         request.Tenders = new List<TenderLine> { Card(100000) };
 
-        await _sut.SellAsync(_theaterId, _staff.Id, request);
+        await _sut.SellAsync(_theaterId, _staff.Id, false, request);
 
         _created.Single().UserId.Should().BeNull();
         _uowMock.Verify(u => u.UserStore.UpdateAsync(It.IsAny<User>()), Times.Never);
@@ -331,7 +324,7 @@ public class BoxOfficeTests
         request.CustomerUserId = member.Id;
         request.Tenders = new List<TenderLine> { Card(100000) };
 
-        await _sut.SellAsync(_theaterId, _staff.Id, request);
+        await _sut.SellAsync(_theaterId, _staff.Id, false, request);
 
         _created.Single().UserId.Should().Be(member.Id);
         member.Points.Should().Be(3 + 100);   // default rate: 1 point per 1,000 VND
@@ -345,7 +338,7 @@ public class BoxOfficeTests
         request.PointsToRedeem = 5;
         request.Tenders = new List<TenderLine> { Card(100000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*member*");
     }
 
@@ -362,7 +355,7 @@ public class BoxOfficeTests
         request.GiftCardCode = "GC1";
         request.Tenders = new List<TenderLine> { Card(75000) };
 
-        var result = await _sut.SellAsync(_theaterId, _staff.Id, request);
+        var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
 
         result.FinalAmount.Should().Be(75000);
         var invoice = _created.Single();
@@ -375,13 +368,13 @@ public class BoxOfficeTests
     // ── Price override ───────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Sell_PriceOverrideWithoutApproverPin_IsForbidden_AndNothingIsSaved()
+    public async Task Sell_PriceOverrideByNonApprover_IsForbidden_AndNothingIsSaved()
     {
         var request = SeatSale(_seatA);
         request.Seats[0].OverrideUnitPrice = 80000;
         request.Tenders = new List<TenderLine> { Card(80000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, request))
             .Should().ThrowAsync<AccessDeniedException>();
 
         _created.Should().BeEmpty();
@@ -389,32 +382,18 @@ public class BoxOfficeTests
     }
 
     [Fact]
-    public async Task Sell_PriceOverrideWithWrongPin_IsForbidden()
+    public async Task Sell_PriceOverrideByApprover_AppliesTheLowerPriceAndIsAudited()
     {
         var request = SeatSale(_seatA);
         request.Seats[0].OverrideUnitPrice = 80000;
-        request.Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = "0000" };
         request.Tenders = new List<TenderLine> { Card(80000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
-            .Should().ThrowAsync<AccessDeniedException>();
-        _created.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task Sell_PriceOverrideWithApproverPin_AppliesTheLowerPriceAndIsAudited()
-    {
-        var request = SeatSale(_seatA);
-        request.Seats[0].OverrideUnitPrice = 80000;
-        request.Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin };
-        request.Tenders = new List<TenderLine> { Card(80000) };
-
-        var result = await _sut.SellAsync(_theaterId, _staff.Id, request);
+        var result = await _sut.SellAsync(_theaterId, _manager.Id, true, request);
 
         result.FinalAmount.Should().Be(80000);
         _created.Single().InvoiceTickets.Single().Price.Should().Be(80000);
         var audit = _audits.Should().ContainSingle(a => a.Action == AuditAction.PriceOverride).Subject;
-        audit.ActorUserId.Should().Be(_staff.Id);
+        audit.ActorUserId.Should().Be(_manager.Id);
         audit.ApproverUserId.Should().Be(_manager.Id);
         audit.TheaterId.Should().Be(_theaterId);
         audit.EntityId.Should().Be(_created.Single().Id);
@@ -426,23 +405,10 @@ public class BoxOfficeTests
     {
         var request = SeatSale(_seatA);
         request.Seats[0].OverrideUnitPrice = 120000;
-        request.Override = new ManagerOverrideDTO { ApproverUserId = _manager.Id, Pin = _pin };
         request.Tenders = new List<TenderLine> { Card(120000) };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _manager.Id, true, request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*list price*");
-    }
-
-    [Fact]
-    public async Task Sell_ByAManager_NeedsNoPinForAnOverride_ButIsStillAudited()
-    {
-        var request = SeatSale(_seatA);
-        request.Seats[0].OverrideUnitPrice = 90000;
-        request.Tenders = new List<TenderLine> { Card(90000) };
-
-        await _sut.SellAsync(_theaterId, _manager.Id, request);
-
-        _audits.Should().ContainSingle(a => a.Action == AuditAction.PriceOverride && a.ApproverUserId == _manager.Id && a.ActorUserId == _manager.Id);
     }
 
     // ── Quote ────────────────────────────────────────────────────────────────────
@@ -565,7 +531,7 @@ public class BoxOfficeTests
     [Fact]
     public async Task Sell_EmptyCart_IsRejected()
     {
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, new CounterSaleRequest()))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, new CounterSaleRequest()))
             .Should().ThrowAsync<InvalidOperationException>();
     }
 
@@ -574,7 +540,7 @@ public class BoxOfficeTests
     {
         var request = new CounterSaleRequest { Seats = new List<CounterSeatItem> { new() { SeatId = _seatA, PatronCategoryId = _adultId } } };
 
-        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, request))
+        await FluentActions.Awaiting(() => _sut.SellAsync(_theaterId, _staff.Id, false, request))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*showtime*");
     }
 
