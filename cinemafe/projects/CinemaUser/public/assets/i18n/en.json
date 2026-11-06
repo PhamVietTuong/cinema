@@ -562,7 +562,6 @@
   "promoProgram": {
     "mechanic": { "info": "Info only", "fixedPrice": "Fixed price", "percentOff": "Percent off" },
     "eligibility": { "everyone": "Open to everyone", "members": "Members only", "studentOrTeacher": "Student / Teacher", "ageLimit": "Age limit" },
-    "category": { "promotion": "Promotion", "seasonal": "Seasonal", "membership": "Membership" },
     "channel": { "online": "online", "counter": "counter" }
   },
   "theaters": {

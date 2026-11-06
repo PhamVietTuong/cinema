@@ -3,11 +3,15 @@ import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
   SharedModule, CinemaServiceAgent, SalesChannel,
-  PromotionMechanicValues, PromotionEligibilityValues, PromotionCategoryValues, daysMaskToList, channelsMaskToList,
+  PromotionMechanicValues, PromotionEligibilityValues, daysMaskToList, channelsMaskToList,
 } from 'CinemaLib';
 
 type ProgramDTO = CinemaServiceAgent.PromotionProgramDTO;
-type CategoryFilter = 'all' | CinemaServiceAgent.PromotionCategory;
+/** 'all', or a campaign's id — the filter tabs are built from whichever campaign names are actually
+ * in use among the loaded (published) programs, not a fixed list, since campaigns are admin-managed
+ * and open-ended (see PromotionCampaign). A program with no campaign never gets its own tab but still
+ * shows under "All". */
+type CampaignFilter = 'all' | string;
 
 @Component({
   selector: 'app-promotions',
@@ -27,33 +31,53 @@ export class PromotionsComponent implements OnInit {
   private _expanded = new Set<string>();
   private _copiedId: string | null = null;
 
-  readonly categoryFilters: { key: CategoryFilter; label: string }[] = [
+  /** Built once the programs load, from whichever campaigns are actually in use — see CampaignFilter. */
+  campaignFilters: { key: CampaignFilter; label: string }[] = [
     { key: 'all', label: 'promotions.categories.all' },
-    ...PromotionCategoryValues.map(c => ({ key: c.value as CategoryFilter, label: c.name })),
   ];
-  activeCategory: CategoryFilter = 'all';
+  activeCampaign: CampaignFilter = 'all';
 
   ngOnInit(): void {
     this._cinema.getPublishedPromotionPrograms(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 50 }))
       .subscribe({
-        next: r => { this.programs = r.results ?? []; this.applyFilter(); this.loading = false; this._cdr.markForCheck(); },
+        next: r => {
+          this.programs = r.results ?? [];
+          this._buildCampaignFilters();
+          this.applyFilter();
+          this.loading = false;
+          this._cdr.markForCheck();
+        },
         error: () => { this.loading = false; this._cdr.markForCheck(); },
       });
   }
 
   // ── Filter ───────────────────────────────────────────────────────────────────
-  setCategory(key: CategoryFilter): void {
-    this.activeCategory = key;
+  private _buildCampaignFilters(): void {
+    const byId = new Map<string, string>();
+    for (const p of this.programs) {
+      if (p.campaignId && p.campaignName && !byId.has(p.campaignId)) {
+        byId.set(p.campaignId, p.campaignName);
+      }
+    }
+    const campaigns = [...byId.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+    this.campaignFilters = [
+      { key: 'all', label: 'promotions.categories.all' },
+      ...campaigns.map(([id, name]) => ({ key: id, label: name })),
+    ];
+  }
+
+  setCampaign(key: CampaignFilter): void {
+    this.activeCampaign = key;
     this.applyFilter();
     this._cdr.markForCheck();
   }
 
   private applyFilter(): void {
-    this.visible = this.programs.filter(p => this.matchesCategory(p, this.activeCategory));
+    this.visible = this.programs.filter(p => this.matchesCampaign(p, this.activeCampaign));
   }
 
-  private matchesCategory(p: ProgramDTO, category: CategoryFilter): boolean {
-    return category === 'all' || p.category === category;
+  private matchesCampaign(p: ProgramDTO, campaign: CampaignFilter): boolean {
+    return campaign === 'all' || p.campaignId === campaign;
   }
 
   // ── Display helpers ──────────────────────────────────────────────────────────

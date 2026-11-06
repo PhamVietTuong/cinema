@@ -109,6 +109,11 @@ export interface IHttpService {
     createPromotionProgram(request: CreatePromotionProgramRequest): Observable<PromotionProgramDTO>;
     updatePromotionProgram(request: UpdatePromotionProgramRequest): Observable<PromotionProgramDTO>;
     deletePromotionProgram(id?: string | undefined): Observable<void>;
+    getPromotionCampaigns(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPromotionCampaignDTO>;
+    getPromotionCampaign(id?: string | undefined): Observable<PromotionCampaignDTO>;
+    createPromotionCampaign(request: CreatePromotionCampaignRequest): Observable<PromotionCampaignDTO>;
+    updatePromotionCampaign(request: UpdatePromotionCampaignRequest): Observable<PromotionCampaignDTO>;
+    deletePromotionCampaign(id?: string | undefined): Observable<void>;
     getActiveSplashBanner(): Observable<SplashBannerDTO[]>;
     getSplashBanners(search: PagingSearchDTO): Observable<DefaultSearchResultsOfSplashBannerDTO>;
     getSplashBanner(id?: string | undefined): Observable<SplashBannerDTO>;
@@ -4777,6 +4782,262 @@ export class HttpService implements IHttpService {
     }
 
     protected processDeletePromotionProgram(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPromotionCampaigns(search: PagingSearchDTO): Observable<DefaultSearchResultsOfPromotionCampaignDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPromotionCampaigns";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPromotionCampaigns(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPromotionCampaigns(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfPromotionCampaignDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfPromotionCampaignDTO>;
+        }));
+    }
+
+    protected processGetPromotionCampaigns(response: HttpResponseBase): Observable<DefaultSearchResultsOfPromotionCampaignDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfPromotionCampaignDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getPromotionCampaign(id?: string | undefined): Observable<PromotionCampaignDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetPromotionCampaign?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetPromotionCampaign(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetPromotionCampaign(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PromotionCampaignDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PromotionCampaignDTO>;
+        }));
+    }
+
+    protected processGetPromotionCampaign(response: HttpResponseBase): Observable<PromotionCampaignDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PromotionCampaignDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    createPromotionCampaign(request: CreatePromotionCampaignRequest): Observable<PromotionCampaignDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/CreatePromotionCampaign";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreatePromotionCampaign(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreatePromotionCampaign(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PromotionCampaignDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PromotionCampaignDTO>;
+        }));
+    }
+
+    protected processCreatePromotionCampaign(response: HttpResponseBase): Observable<PromotionCampaignDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PromotionCampaignDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updatePromotionCampaign(request: UpdatePromotionCampaignRequest): Observable<PromotionCampaignDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdatePromotionCampaign";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdatePromotionCampaign(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdatePromotionCampaign(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PromotionCampaignDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PromotionCampaignDTO>;
+        }));
+    }
+
+    protected processUpdatePromotionCampaign(response: HttpResponseBase): Observable<PromotionCampaignDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PromotionCampaignDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deletePromotionCampaign(id?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeletePromotionCampaign?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeletePromotionCampaign(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeletePromotionCampaign(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeletePromotionCampaign(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -12769,7 +13030,8 @@ export class PromotionProgramDTO implements IPromotionProgramDTO {
     title?: string;
     summary?: string | undefined;
     bannerUrl?: string | undefined;
-    category?: PromotionCategory;
+    campaignId?: string | undefined;
+    campaignName?: string | undefined;
     mechanic?: PromotionMechanic;
     percentOff?: number | undefined;
     eligibility?: PromotionEligibility;
@@ -12810,7 +13072,8 @@ export class PromotionProgramDTO implements IPromotionProgramDTO {
             this.title = _data["title"];
             this.summary = _data["summary"];
             this.bannerUrl = _data["bannerUrl"];
-            this.category = _data["category"];
+            this.campaignId = _data["campaignId"];
+            this.campaignName = _data["campaignName"];
             this.mechanic = _data["mechanic"];
             this.percentOff = _data["percentOff"];
             this.eligibility = _data["eligibility"];
@@ -12859,7 +13122,8 @@ export class PromotionProgramDTO implements IPromotionProgramDTO {
         data["title"] = this.title;
         data["summary"] = this.summary;
         data["bannerUrl"] = this.bannerUrl;
-        data["category"] = this.category;
+        data["campaignId"] = this.campaignId;
+        data["campaignName"] = this.campaignName;
         data["mechanic"] = this.mechanic;
         data["percentOff"] = this.percentOff;
         data["eligibility"] = this.eligibility;
@@ -12901,7 +13165,8 @@ export interface IPromotionProgramDTO {
     title?: string;
     summary?: string | undefined;
     bannerUrl?: string | undefined;
-    category?: PromotionCategory;
+    campaignId?: string | undefined;
+    campaignName?: string | undefined;
     mechanic?: PromotionMechanic;
     percentOff?: number | undefined;
     eligibility?: PromotionEligibility;
@@ -12926,12 +13191,6 @@ export interface IPromotionProgramDTO {
     movieTitle?: string | undefined;
     prices?: PromotionProgramPriceDTO[];
     schedules?: PromotionProgramScheduleDTO[];
-}
-
-export enum PromotionCategory {
-    Promotion = 0,
-    Seasonal = 1,
-    Membership = 2,
 }
 
 export enum PromotionMechanic {
@@ -13047,7 +13306,7 @@ export class CreatePromotionProgramRequest implements ICreatePromotionProgramReq
     title!: string;
     summary?: string | undefined;
     bannerUrl?: string | undefined;
-    category?: PromotionCategory;
+    campaignId?: string | undefined;
     mechanic?: PromotionMechanic;
     percentOff?: number | undefined;
     eligibility?: PromotionEligibility;
@@ -13084,7 +13343,7 @@ export class CreatePromotionProgramRequest implements ICreatePromotionProgramReq
             this.title = _data["title"];
             this.summary = _data["summary"];
             this.bannerUrl = _data["bannerUrl"];
-            this.category = _data["category"];
+            this.campaignId = _data["campaignId"];
             this.mechanic = _data["mechanic"];
             this.percentOff = _data["percentOff"];
             this.eligibility = _data["eligibility"];
@@ -13129,7 +13388,7 @@ export class CreatePromotionProgramRequest implements ICreatePromotionProgramReq
         data["title"] = this.title;
         data["summary"] = this.summary;
         data["bannerUrl"] = this.bannerUrl;
-        data["category"] = this.category;
+        data["campaignId"] = this.campaignId;
         data["mechanic"] = this.mechanic;
         data["percentOff"] = this.percentOff;
         data["eligibility"] = this.eligibility;
@@ -13167,7 +13426,7 @@ export interface ICreatePromotionProgramRequest {
     title: string;
     summary?: string | undefined;
     bannerUrl?: string | undefined;
-    category?: PromotionCategory;
+    campaignId?: string | undefined;
     mechanic?: PromotionMechanic;
     percentOff?: number | undefined;
     eligibility?: PromotionEligibility;
@@ -13196,7 +13455,7 @@ export class UpdatePromotionProgramRequest implements IUpdatePromotionProgramReq
     title!: string;
     summary?: string | undefined;
     bannerUrl?: string | undefined;
-    category?: PromotionCategory;
+    campaignId?: string | undefined;
     mechanic?: PromotionMechanic;
     percentOff?: number | undefined;
     eligibility?: PromotionEligibility;
@@ -13234,7 +13493,7 @@ export class UpdatePromotionProgramRequest implements IUpdatePromotionProgramReq
             this.title = _data["title"];
             this.summary = _data["summary"];
             this.bannerUrl = _data["bannerUrl"];
-            this.category = _data["category"];
+            this.campaignId = _data["campaignId"];
             this.mechanic = _data["mechanic"];
             this.percentOff = _data["percentOff"];
             this.eligibility = _data["eligibility"];
@@ -13280,7 +13539,7 @@ export class UpdatePromotionProgramRequest implements IUpdatePromotionProgramReq
         data["title"] = this.title;
         data["summary"] = this.summary;
         data["bannerUrl"] = this.bannerUrl;
-        data["category"] = this.category;
+        data["campaignId"] = this.campaignId;
         data["mechanic"] = this.mechanic;
         data["percentOff"] = this.percentOff;
         data["eligibility"] = this.eligibility;
@@ -13319,7 +13578,7 @@ export interface IUpdatePromotionProgramRequest {
     title: string;
     summary?: string | undefined;
     bannerUrl?: string | undefined;
-    category?: PromotionCategory;
+    campaignId?: string | undefined;
     mechanic?: PromotionMechanic;
     percentOff?: number | undefined;
     eligibility?: PromotionEligibility;
@@ -13341,6 +13600,203 @@ export interface IUpdatePromotionProgramRequest {
     movieId?: string | undefined;
     prices?: PromotionProgramPriceDTO[];
     schedules?: PromotionProgramScheduleDTO[];
+}
+
+export abstract class BaseSearchResultsOfPromotionCampaignDTO implements IBaseSearchResultsOfPromotionCampaignDTO {
+    results?: PromotionCampaignDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfPromotionCampaignDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(PromotionCampaignDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfPromotionCampaignDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfPromotionCampaignDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfPromotionCampaignDTO {
+    results?: PromotionCampaignDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfPromotionCampaignDTO extends BaseSearchResultsOfPromotionCampaignDTO implements IDefaultSearchResultsOfPromotionCampaignDTO {
+
+    constructor(data?: IDefaultSearchResultsOfPromotionCampaignDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfPromotionCampaignDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfPromotionCampaignDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfPromotionCampaignDTO extends IBaseSearchResultsOfPromotionCampaignDTO {
+}
+
+export class PromotionCampaignDTO implements IPromotionCampaignDTO {
+    id?: string;
+    name?: string;
+
+    constructor(data?: IPromotionCampaignDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): PromotionCampaignDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new PromotionCampaignDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IPromotionCampaignDTO {
+    id?: string;
+    name?: string;
+}
+
+export class CreatePromotionCampaignRequest implements ICreatePromotionCampaignRequest {
+    name?: string;
+
+    constructor(data?: ICreatePromotionCampaignRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): CreatePromotionCampaignRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreatePromotionCampaignRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface ICreatePromotionCampaignRequest {
+    name?: string;
+}
+
+export class UpdatePromotionCampaignRequest implements IUpdatePromotionCampaignRequest {
+    id?: string;
+    name?: string;
+
+    constructor(data?: IUpdatePromotionCampaignRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): UpdatePromotionCampaignRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdatePromotionCampaignRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IUpdatePromotionCampaignRequest {
+    id?: string;
+    name?: string;
 }
 
 export class SplashBannerDTO implements ISplashBannerDTO {

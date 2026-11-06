@@ -68,12 +68,14 @@
 
         <div class="dlg-row">
           <div class="dlg-field">
-            <label class="dlg-label" for="pp-category">{{ 'promotionPrograms.categoryLabel' | translate }}</label>
+            <label class="dlg-label" for="pp-campaign">{{ 'promotionPrograms.campaignLabel' | translate }}</label>
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-select id="pp-category" formControlName="category">
-                <mat-option *ngFor="let c of categories" [value]="c.value">{{ c.name | translate }}</mat-option>
+              <mat-select id="pp-campaign" formControlName="campaignId">
+                <mat-option [value]="null">{{ 'promotionPrograms.noCampaign' | translate }}</mat-option>
+                <mat-option *ngFor="let c of campaigns" [value]="c.id">{{ c.name }}</mat-option>
               </mat-select>
             </mat-form-field>
+            <p class="dlg-hint">{{ 'promotionPrograms.campaignHint' | translate }}</p>
           </div>
         </div>
 

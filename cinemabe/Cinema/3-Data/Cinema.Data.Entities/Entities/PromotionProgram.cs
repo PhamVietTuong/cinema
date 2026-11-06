@@ -17,8 +17,13 @@ public class PromotionProgram : BaseEntity
     public string? Summary { get; set; }
     public string? BannerUrl { get; set; }
 
-    /// <summary>Customer-facing grouping, carried over from the old DiscountType reference table.</summary>
-    public PromotionCategory Category { get; set; } = PromotionCategory.Promotion;
+    /// <summary>Optional campaign family this program belongs to (e.g. "C'Student", "Happy Hour") —
+    /// customer-facing grouping on the Promotions page filter. Replaced the old fixed
+    /// Promotion/Seasonal/Membership enum, which only ever had three buckets and mostly funneled
+    /// everything into "Promotion"; a managed, growable list of named campaigns is the useful grouping
+    /// in practice. Null = no campaign (not shown under any filter tab but "All").</summary>
+    public Guid? CampaignId { get; set; }
+    public PromotionCampaign? Campaign { get; set; }
 
     public PromotionMechanic Mechanic { get; set; } = PromotionMechanic.Info;
     /// <summary>Required when Mechanic = PercentOff (0,100]. Unused otherwise.</summary>

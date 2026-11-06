@@ -12,11 +12,13 @@
       type="button"
       role="tab"
       class="promo-tab"
-      *ngFor="let c of categoryFilters"
-      [class.is-active]="activeCategory === c.key"
-      [attr.aria-selected]="activeCategory === c.key"
-      (click)="setCategory(c.key)">
-      {{ c.label | translate }}
+      *ngFor="let c of campaignFilters"
+      [class.is-active]="activeCampaign === c.key"
+      [attr.aria-selected]="activeCampaign === c.key"
+      (click)="setCampaign(c.key)">
+      <!-- "All" is a translated i18n key; a campaign name (e.g. "C'Student") is literal admin-entered
+           text, shown as-is rather than looked up as a translation key. -->
+      {{ c.key === 'all' ? (c.label | translate) : c.label }}
     </button>
   </nav>
 

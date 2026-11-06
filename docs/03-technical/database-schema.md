@@ -178,7 +178,7 @@ exactly one of `Code` (customer-entered) **xor** `AutoApply=true`, enforced in
 | Field | Notes |
 |---|---|
 | Title (200), Summary (500)?, BannerUrl? | |
-| Category | enum: Promotion=0/Seasonal=1/Membership=2 — customer-facing grouping, carried over from the old `DiscountType` reference table (3 values, now an enum, edited inline from the dialog) |
+| CampaignId? | FK → PromotionCampaign, SetNull — optional customer-facing grouping/filter; replaces the old fixed 3-value `Category` enum (Promotion/Seasonal/Membership), which in practice was nearly always "Promotion" and served no real grouping purpose |
 | Mechanic | enum: Info=0/FixedPrice=1/PercentOff=2 |
 | PercentOff? | double, required iff Mechanic=PercentOff, (0,100] |
 | Eligibility | enum: Everyone=0/Members=1/StudentOrTeacher=2/AgeLimit=3 |
@@ -201,6 +201,9 @@ Index: (IsPublished, EndDate), MinMemberShipId, Code (filtered unique), MovieId.
 `Invoice.DiscountId` is vestigial: the column stays (historical data only, no FK, never written by new
 code) so old invoices keep their value; `Invoice.PromotionProgramId` is the only pricing-source column
 new code writes.
+
+### PromotionCampaign (admin-managed named grouping, e.g. "C'Student", "Happy Hour")
+Name (100, unique), referenced by `PromotionProgram.CampaignId`. Managed via its own CRUD screen (Catalog > Promotion Campaigns) rather than being a fixed enum, so new campaign families can be added without a code change. Drives the dynamically-built filter tabs on the customer Promotions page.
 
 ### PromotionProgramPrice
 PromotionProgramId (Cascade), ProjectionForm?/SeatKind? (null = "any"). Price (double, all-in). **Unique** (PromotionProgramId, ProjectionForm, SeatKind).

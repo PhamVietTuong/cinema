@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {
   CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException,
-  PromotionMechanicValues, PromotionEligibilityValues, PromotionCategoryValues, SalesChannel, SalesChannelValues, DayOfWeekValues,
+  PromotionMechanicValues, PromotionEligibilityValues, SalesChannel, SalesChannelValues, DayOfWeekValues,
   daysMaskToList, daysListToMask, channelsMaskToList, channelsListToMask,
 } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
@@ -34,7 +34,6 @@ export class PromotionProgramDialog implements OnInit {
 
   readonly mechanics = PromotionMechanicValues;
   readonly eligibilities = PromotionEligibilityValues;
-  readonly categories = PromotionCategoryValues;
   readonly channels = SalesChannelValues;
   readonly weekDays = DayOfWeekValues;
   readonly formats = [
@@ -51,6 +50,7 @@ export class PromotionProgramDialog implements OnInit {
   memberShips: CinemaServiceAgent.MemberShipDTO[] = [];
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
   movies: CinemaServiceAgent.MovieDTO[] = [];
+  campaigns: CinemaServiceAgent.PromotionCampaignDTO[] = [];
 
   /** One step per former section — i18n keys reused as both section heading and step label. */
   readonly stepLabelKeys = [
@@ -95,7 +95,7 @@ export class PromotionProgramDialog implements OnInit {
       title: [item?.title ?? '', [Validators.required, Validators.maxLength(200)]],
       summary: [item?.summary ?? ''],
       bannerUrl: [item?.bannerUrl ?? ''],
-      category: [item?.category ?? CinemaServiceAgent.PromotionCategory.Promotion],
+      campaignId: [item?.campaignId ?? null],
       displayOrder: [item?.displayOrder ?? 0],
       isPublished: [item?.isPublished ?? false],
 
@@ -168,6 +168,8 @@ export class PromotionProgramDialog implements OnInit {
       .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
       .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });
+    this._svc.getPromotionCampaigns(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
+      .subscribe(r => { this.campaigns = r.results ?? []; this._cdr.markForCheck(); });
   }
 
   // ── Derived state for the template ──────────────────────────────────────────
@@ -359,7 +361,7 @@ export class PromotionProgramDialog implements OnInit {
       title: v.title.trim(),
       summary: v.summary?.trim() || null,
       bannerUrl: v.bannerUrl?.trim() || null,
-      category: v.category,
+      campaignId: v.campaignId || null,
       displayOrder: v.displayOrder ?? 0,
       isPublished: !!v.isPublished,
       mechanic: v.mechanic,

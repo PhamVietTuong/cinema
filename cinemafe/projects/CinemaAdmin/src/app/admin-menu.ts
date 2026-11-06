@@ -27,6 +27,7 @@ export const ADMIN_MENU: NavSection[] = [
       { icon: 'celebration', labelKey: 'nav.holidays', route: '/holidays', titleKey: 'pageTitle.holidays', roles: ADMIN_ONLY },
       { icon: 'article', labelKey: 'nav.news', route: '/news', titleKey: 'pageTitle.news', roles: ADMIN_ONLY },
       { icon: 'mail', labelKey: 'nav.templates', route: '/templates', titleKey: 'pageTitle.templates', roles: ADMIN_ONLY },
+      { icon: 'sell', labelKey: 'nav.promotionCampaigns', route: '/promotion-campaigns', titleKey: 'pageTitle.promotionCampaigns', roles: ADMIN_ONLY },
     ],
   },
   {

@@ -3317,6 +3317,188 @@
         ]
       }
     },
+    "/api/Cinema/GetPromotionCampaigns": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPromotionCampaigns",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfPromotionCampaignDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetPromotionCampaign": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetPromotionCampaign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionCampaignDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/CreatePromotionCampaign": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_CreatePromotionCampaign",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromotionCampaignRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionCampaignDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/UpdatePromotionCampaign": {
+      "put": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpdatePromotionCampaign",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromotionCampaignRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionCampaignDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/DeletePromotionCampaign": {
+      "delete": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_DeletePromotionCampaign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetActiveSplashBanner": {
       "get": {
         "tags": [
@@ -8048,8 +8230,14 @@
             "type": "string",
             "nullable": true
           },
-          "category": {
-            "$ref": "#/components/schemas/PromotionCategory"
+          "campaignId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "campaignName": {
+            "type": "string",
+            "nullable": true
           },
           "mechanic": {
             "$ref": "#/components/schemas/PromotionMechanic"
@@ -8154,20 +8342,6 @@
             }
           }
         }
-      },
-      "PromotionCategory": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "Promotion",
-          "Seasonal",
-          "Membership"
-        ],
-        "enum": [
-          0,
-          1,
-          2
-        ]
       },
       "PromotionMechanic": {
         "type": "integer",
@@ -8275,8 +8449,10 @@
             "type": "string",
             "nullable": true
           },
-          "category": {
-            "$ref": "#/components/schemas/PromotionCategory"
+          "campaignId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           },
           "mechanic": {
             "$ref": "#/components/schemas/PromotionMechanic"
@@ -8400,8 +8576,10 @@
             "type": "string",
             "nullable": true
           },
-          "category": {
-            "$ref": "#/components/schemas/PromotionCategory"
+          "campaignId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           },
           "mechanic": {
             "$ref": "#/components/schemas/PromotionMechanic"
@@ -8496,6 +8674,77 @@
             "items": {
               "$ref": "#/components/schemas/PromotionProgramScheduleDTO"
             }
+          }
+        }
+      },
+      "DefaultSearchResultsOfPromotionCampaignDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfPromotionCampaignDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfPromotionCampaignDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromotionCampaignDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PromotionCampaignDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePromotionCampaignRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdatePromotionCampaignRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },

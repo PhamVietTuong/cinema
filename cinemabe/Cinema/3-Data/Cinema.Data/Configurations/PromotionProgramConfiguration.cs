@@ -24,5 +24,9 @@ public class PromotionProgramConfiguration : IEntityTypeConfiguration<PromotionP
         b.HasOne(p => p.MinMemberShip).WithMany().HasForeignKey(p => p.MinMemberShipId).OnDelete(DeleteBehavior.Restrict);
         // Optional movie scope: null = any movie. Deleting the movie reverts the program to any-movie.
         b.HasOne(p => p.Movie).WithMany().HasForeignKey(p => p.MovieId).OnDelete(DeleteBehavior.SetNull);
+        b.HasIndex(p => p.CampaignId);
+        // Optional campaign grouping: null = no campaign (still shown under "All" on the customer page).
+        // Deleting a campaign reverts its programs to uncategorized rather than blocking the delete.
+        b.HasOne(p => p.Campaign).WithMany().HasForeignKey(p => p.CampaignId).OnDelete(DeleteBehavior.SetNull);
     }
 }

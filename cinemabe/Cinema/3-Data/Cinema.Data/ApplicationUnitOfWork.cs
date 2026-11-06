@@ -20,6 +20,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IRoomStore RoomStore { get; }
     public IRoomTypeStore RoomTypeStore { get; }
     public IPromotionProgramStore PromotionProgramStore { get; }
+    public IPromotionCampaignStore PromotionCampaignStore { get; }
     public ISplashBannerStore SplashBannerStore { get; }
     public IMovieTypeDetailStore MovieTypeDetailStore { get; }
     public IUserTypeStore UserTypeStore { get; }
@@ -61,6 +62,7 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         RoomStore = new RoomStore(db);
         RoomTypeStore = new RoomTypeStore(db);
         PromotionProgramStore = new PromotionProgramStore(db);
+        PromotionCampaignStore = new PromotionCampaignStore(db);
         SplashBannerStore = new SplashBannerStore(db);
         MovieTypeDetailStore = new MovieTypeDetailStore(db);
         UserTypeStore = new UserTypeStore(db);

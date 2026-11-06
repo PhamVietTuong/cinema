@@ -299,6 +299,18 @@ CREATE TABLE [Movie] (
     CONSTRAINT [FK_Movie_AgeRestriction_AgeRestrictionId] FOREIGN KEY ([AgeRestrictionId]) REFERENCES [AgeRestriction] ([Id]) ON DELETE NO ACTION
 );
 
+-- A named promotion campaign family (e.g. "C'Student", "Happy Hour") one or more PromotionProgram rows
+-- belong to — the customer-facing Promotions-page filter groups by this. Replaced a fixed
+-- Promotion/Seasonal/Membership enum, which only ever had three buckets; a managed, growable list is
+-- the useful grouping in practice. Admin-managed via a small CRUD screen (CinemaAdmin > Categories).
+CREATE TABLE [PromotionCampaign] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [Name] nvarchar(100) NOT NULL,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_PromotionCampaign] PRIMARY KEY ([Id])
+);
+
 -- Customer-facing promotion programs (Cinestar-style cards). Single pricing entity: a program is
 -- triggered by either a customer-entered [Code] or auto-apply at checkout, never both. Formerly two
 -- separate entities (this table and Discount/DiscountType/DiscountTheater); merged so there is one
@@ -308,7 +320,7 @@ CREATE TABLE [PromotionProgram] (
     [Title] nvarchar(200) NOT NULL,
     [Summary] nvarchar(500) NULL,
     [BannerUrl] nvarchar(max) NULL,
-    [Category] int NOT NULL DEFAULT 0,
+    [CampaignId] uniqueidentifier NULL,
     [Mechanic] int NOT NULL DEFAULT 0,
     [PercentOff] float NULL,
     [Eligibility] int NOT NULL DEFAULT 0,
@@ -333,7 +345,8 @@ CREATE TABLE [PromotionProgram] (
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_PromotionProgram] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_PromotionProgram_MemberShip_MinMemberShipId] FOREIGN KEY ([MinMemberShipId]) REFERENCES [MemberShip] ([Id]) ON DELETE NO ACTION,
-    CONSTRAINT [FK_PromotionProgram_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE SET NULL
+    CONSTRAINT [FK_PromotionProgram_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE SET NULL,
+    CONSTRAINT [FK_PromotionProgram_PromotionCampaign_CampaignId] FOREIGN KEY ([CampaignId]) REFERENCES [PromotionCampaign] ([Id]) ON DELETE SET NULL
 );
 
 CREATE TABLE [PromotionProgramPrice] (
@@ -687,6 +700,8 @@ CREATE INDEX [IX_PromotionProgram_IsPublished_EndDate] ON [PromotionProgram] ([I
 CREATE INDEX [IX_PromotionProgram_MinMemberShipId] ON [PromotionProgram] ([MinMemberShipId]);
 CREATE UNIQUE INDEX [IX_PromotionProgram_Code] ON [PromotionProgram] ([Code]) WHERE [Code] IS NOT NULL;
 CREATE INDEX [IX_PromotionProgram_MovieId] ON [PromotionProgram] ([MovieId]);
+CREATE INDEX [IX_PromotionProgram_CampaignId] ON [PromotionProgram] ([CampaignId]);
+CREATE UNIQUE INDEX [IX_PromotionCampaign_Name] ON [PromotionCampaign] ([Name]);
 CREATE UNIQUE INDEX [IX_PromotionProgramPrice_PromotionProgramId_ProjectionForm_SeatKind] ON [PromotionProgramPrice] ([PromotionProgramId], [ProjectionForm], [SeatKind]);
 CREATE INDEX [IX_PromotionProgramSchedule_PromotionProgramId] ON [PromotionProgramSchedule] ([PromotionProgramId]);
 CREATE INDEX [IX_PromotionProgramSchedule_TheaterId] ON [PromotionProgramSchedule] ([TheaterId]);

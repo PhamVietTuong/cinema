@@ -1054,6 +1054,49 @@ END
 -- ===== end merge Discount/DiscountType/DiscountTheater into PromotionProgram =====
 
 -- ============================================================
+-- Replace PromotionProgram.Category (fixed Promotion/Seasonal/Membership enum) with a managed,
+-- growable PromotionCampaign table (e.g. "C'Student", "Happy Hour") — the fixed 3-value enum mostly
+-- funneled everything into "Promotion" in practice, so it wasn't a useful customer-page filter.
+-- Existing rows cannot be mapped automatically (the old 3 buckets don't correspond to specific
+-- campaign names), so every program's CampaignId starts NULL ("uncategorized") after this runs; an
+-- admin assigns campaigns via the new management screen.
+-- ============================================================
+
+IF OBJECT_ID('dbo.PromotionCampaign', 'U') IS NULL
+BEGIN
+    CREATE TABLE [PromotionCampaign] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [Name] nvarchar(100) NOT NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_PromotionCampaign] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_PromotionCampaign_Name] ON [PromotionCampaign] ([Name]);
+END
+
+IF COL_LENGTH('dbo.PromotionProgram', 'CampaignId') IS NULL
+BEGIN
+    ALTER TABLE [PromotionProgram] ADD [CampaignId] uniqueidentifier NULL;
+    CREATE INDEX [IX_PromotionProgram_CampaignId] ON [PromotionProgram] ([CampaignId]);
+    ALTER TABLE [PromotionProgram] ADD CONSTRAINT [FK_PromotionProgram_PromotionCampaign_CampaignId]
+        FOREIGN KEY ([CampaignId]) REFERENCES [PromotionCampaign] ([Id]) ON DELETE SET NULL;
+END
+
+IF COL_LENGTH('dbo.PromotionProgram', 'Category') IS NOT NULL
+BEGIN
+    DECLARE @categoryDefault nvarchar(200) = (
+        SELECT dc.name FROM sys.default_constraints dc
+        JOIN sys.columns c ON c.object_id = dc.parent_object_id AND c.column_id = dc.parent_column_id
+        WHERE dc.parent_object_id = OBJECT_ID('dbo.PromotionProgram') AND c.name = 'Category');
+    IF @categoryDefault IS NOT NULL
+    BEGIN
+        EXEC('ALTER TABLE [PromotionProgram] DROP CONSTRAINT [' + @categoryDefault + ']');
+    END
+    ALTER TABLE [PromotionProgram] DROP COLUMN [Category];
+END
+-- ===== end PromotionProgram.Category -> PromotionCampaign =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

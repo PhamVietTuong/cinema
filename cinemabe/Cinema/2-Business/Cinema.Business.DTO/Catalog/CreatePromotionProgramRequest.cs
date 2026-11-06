@@ -14,7 +14,7 @@ public class CreatePromotionProgramRequest
     public string? Summary { get; set; }
     public string? BannerUrl { get; set; }
 
-    public PromotionCategory Category { get; set; }
+    public Guid? CampaignId { get; set; }
 
     public PromotionMechanic Mechanic { get; set; }
     public double? PercentOff { get; set; }

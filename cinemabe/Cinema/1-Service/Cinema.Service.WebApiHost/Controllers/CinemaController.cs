@@ -37,6 +37,7 @@ public class CinemaController : ApiControllerBase
     private readonly INewsManager           _news;
     private readonly IPersonManager         _people;
     private readonly IPromotionProgramManager _promotionPrograms;
+    private readonly IPromotionCampaignManager _promotionCampaigns;
     private readonly ISplashBannerManager _splashBanners;
     private readonly IFoodAndDrinkManager   _foodAndDrinks;
     private readonly IRoomManager           _rooms;
@@ -72,6 +73,7 @@ public class CinemaController : ApiControllerBase
         INewsManager news,
         IPersonManager people,
         IPromotionProgramManager promotionPrograms,
+        IPromotionCampaignManager promotionCampaigns,
         ISplashBannerManager splashBanners,
         IFoodAndDrinkManager foodAndDrinks,
         IRoomManager rooms,
@@ -111,6 +113,7 @@ public class CinemaController : ApiControllerBase
         _news            = news;
         _people          = people;
         _promotionPrograms = promotionPrograms;
+        _promotionCampaigns = promotionCampaigns;
         _splashBanners   = splashBanners;
         _foodAndDrinks   = foodAndDrinks;
         _rooms           = rooms;
@@ -1272,6 +1275,61 @@ public class CinemaController : ApiControllerBase
             return notFound;
         }
         return await RunNoContent(nameof(DeletePromotionProgram), () => _promotionPrograms.DeleteAsync(id));
+    }
+    #endregion
+
+    #region PromotionCampaign
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<PromotionCampaignDTO>), 200)]
+    public Task<IActionResult> GetPromotionCampaigns([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetPromotionCampaigns), () => _promotionCampaigns.GetAsync(search));
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(PromotionCampaignDTO), 200)]
+    public async Task<IActionResult> GetPromotionCampaign([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _promotionCampaigns.ExistsAsync(id), nameof(GetPromotionCampaign), nameof(PromotionCampaign), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(GetPromotionCampaign), () => _promotionCampaigns.GetByIdAsync(id));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(PromotionCampaignDTO), 200)]
+    public Task<IActionResult> CreatePromotionCampaign([FromBody] CreatePromotionCampaignRequest request)
+    {
+        return Run(nameof(CreatePromotionCampaign), () => _promotionCampaigns.CreateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPut]
+    [ProducesResponseType(typeof(PromotionCampaignDTO), 200)]
+    public async Task<IActionResult> UpdatePromotionCampaign([FromBody] UpdatePromotionCampaignRequest request)
+    {
+        var notFound = await EnsureExistsAsync(() => _promotionCampaigns.ExistsAsync(request.Id), nameof(UpdatePromotionCampaign), nameof(PromotionCampaign), request.Id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await Run(nameof(UpdatePromotionCampaign), () => _promotionCampaigns.UpdateAsync(request));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeletePromotionCampaign([FromQuery] Guid id)
+    {
+        var notFound = await EnsureExistsAsync(() => _promotionCampaigns.ExistsAsync(id), nameof(DeletePromotionCampaign), nameof(PromotionCampaign), id);
+        if (notFound != null)
+        {
+            return notFound;
+        }
+        return await RunNoContent(nameof(DeletePromotionCampaign), () => _promotionCampaigns.DeleteAsync(id));
     }
     #endregion
 

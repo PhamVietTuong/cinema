@@ -84,14 +84,14 @@ public class PromotionProgramManager : IPromotionProgramManager
     {
         await ValidateAsync(request.Mechanic, request.PercentOff, request.Eligibility, request.MinMemberShipId, request.MaxAge,
             request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.Code,
-            request.MaxTicketsPerTransaction, request.MovieId, null);
+            request.MaxTicketsPerTransaction, request.MovieId, request.CampaignId, null);
 
         var entity = new PromotionProgram
         {
             Title = request.Title.Trim(),
             Summary = Normalize(request.Summary),
             BannerUrl = Normalize(request.BannerUrl),
-            Category = request.Category,
+            CampaignId = request.CampaignId,
             Mechanic = request.Mechanic,
             Eligibility = request.Eligibility,
             StartDate = request.StartDate,
@@ -127,12 +127,12 @@ public class PromotionProgramManager : IPromotionProgramManager
 
         await ValidateAsync(request.Mechanic, request.PercentOff, request.Eligibility, request.MinMemberShipId, request.MaxAge,
             request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.Code,
-            request.MaxTicketsPerTransaction, request.MovieId, request.Id);
+            request.MaxTicketsPerTransaction, request.MovieId, request.CampaignId, request.Id);
 
         entity.Title = request.Title.Trim();
         entity.Summary = Normalize(request.Summary);
         entity.BannerUrl = Normalize(request.BannerUrl);
-        entity.Category = request.Category;
+        entity.CampaignId = request.CampaignId;
         entity.Mechanic = request.Mechanic;
         entity.Eligibility = request.Eligibility;
         entity.StartDate = request.StartDate;
@@ -170,7 +170,7 @@ public class PromotionProgramManager : IPromotionProgramManager
         PromotionEligibility eligibility, Guid? minMemberShipId, int? maxAge,
         DateTime startDate, DateTime endDate,
         List<PromotionProgramPriceDTO> prices, List<PromotionProgramScheduleDTO> schedules,
-        bool autoApply, string? code, int? maxTicketsPerTransaction, Guid? movieId, Guid? selfId)
+        bool autoApply, string? code, int? maxTicketsPerTransaction, Guid? movieId, Guid? campaignId, Guid? selfId)
     {
         if (endDate < startDate)
         {
@@ -248,6 +248,11 @@ public class PromotionProgramManager : IPromotionProgramManager
         if (movieId is Guid mId && !await _uow.MovieStore.ExistsAsync(m => m.Id == mId))
         {
             throw new InvalidOperationException("Selected movie does not exist.");
+        }
+
+        if (campaignId is Guid cId && !await _uow.PromotionCampaignStore.ExistsAsync(c => c.Id == cId))
+        {
+            throw new InvalidOperationException("Selected campaign does not exist.");
         }
 
         var normalizedCode = NormalizeCode(code);
@@ -364,6 +369,11 @@ public class PromotionProgramManager : IPromotionProgramManager
             ? (await _uow.MovieStore.FindAsync(m => movieIds.Contains(m.Id))).ToDictionary(m => m.Id, m => m.Title)
             : new Dictionary<Guid, string>();
 
+        var campaignIds = items.Where(p => p.CampaignId.HasValue).Select(p => p.CampaignId!.Value).Distinct().ToList();
+        var campaignNames = campaignIds.Count > 0
+            ? (await _uow.PromotionCampaignStore.FindAsync(c => campaignIds.Contains(c.Id))).ToDictionary(c => c.Id, c => c.Name)
+            : new Dictionary<Guid, string>();
+
         foreach (var dto in dtos)
         {
             var entity = byId[dto.Id];
@@ -394,6 +404,11 @@ public class PromotionProgramManager : IPromotionProgramManager
             if (entity.MovieId.HasValue)
             {
                 dto.MovieTitle = movieTitles.GetValueOrDefault(entity.MovieId.Value);
+            }
+
+            if (entity.CampaignId.HasValue)
+            {
+                dto.CampaignName = campaignNames.GetValueOrDefault(entity.CampaignId.Value);
             }
         }
 

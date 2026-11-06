@@ -562,7 +562,6 @@
   "promoProgram": {
     "mechanic": { "info": "Chỉ thông tin", "fixedPrice": "Giá cố định", "percentOff": "Giảm phần trăm" },
     "eligibility": { "everyone": "Dành cho mọi người", "members": "Chỉ dành cho thành viên", "studentOrTeacher": "Học sinh / Giáo viên", "ageLimit": "Giới hạn độ tuổi" },
-    "category": { "promotion": "Khuyến Mãi", "seasonal": "Theo Mùa", "membership": "Thành Viên" },
     "channel": { "online": "trực tuyến", "counter": "tại quầy" }
   },
   "theaters": {

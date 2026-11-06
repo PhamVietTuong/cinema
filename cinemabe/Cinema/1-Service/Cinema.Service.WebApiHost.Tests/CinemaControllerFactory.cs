@@ -34,6 +34,7 @@ internal static class CinemaControllerFactory
             news: null!,
             people: null!,
             promotionPrograms: null!,
+            promotionCampaigns: null!,
             splashBanners: null!,
             foodAndDrinks: null!,
             rooms: null!,

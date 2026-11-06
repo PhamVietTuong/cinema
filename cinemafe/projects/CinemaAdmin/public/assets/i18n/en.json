@@ -13,6 +13,7 @@
     "holidays": "Holidays",
     "news": "News",
     "templates": "Templates",
+    "promotionCampaigns": "Promotion Campaigns",
     "promotionPrograms": "Promotion Programs",
     "splashBanners": "Splash Banners",
     "invoices": "Invoices",
@@ -39,6 +40,7 @@
     "holidays": "Holiday Management",
     "news": "News Management",
     "templates": "Notification Template Management",
+    "promotionCampaigns": "Promotion Campaign Management",
     "promotionPrograms": "Promotion Program Management",
     "splashBanners": "Splash Banner Management",
     "invoices": "Invoice Management",
@@ -583,7 +585,9 @@
     "termsTextPlaceholder": "e.g. Valid at participating theaters only.",
     "autoApplyHint": "Customer is always charged the better of this program or a membership discount; never combined with a promo code, and combined with the membership discount only when 'Stacks with membership discount' is on.",
     "autoApplyDisabledHint": "Requires identity verification or is informational-only — cannot be auto-applied.",
-    "categoryLabel": "Category",
+    "campaignLabel": "Campaign",
+    "noCampaign": "No campaign",
+    "campaignHint": "Optional campaign family (e.g. \"C'Student\", \"Happy Hour\") — groups this program with others under the same name on the customer-page filter. Manage the list under Catalog > Promotion Campaigns.",
     "codeLabel": "Promo code",
     "codePlaceholder": "e.g. SUMMER25",
     "codeHint": "Customer enters this code at checkout to get the discount.",
@@ -609,7 +613,6 @@
   "promoProgram": {
     "mechanic": { "info": "Info only", "fixedPrice": "Fixed price", "percentOff": "Percent off" },
     "eligibility": { "everyone": "Everyone", "members": "Members (tier)", "studentOrTeacher": "Student / Teacher", "ageLimit": "Age limit" },
-    "category": { "promotion": "Promotion", "seasonal": "Seasonal", "membership": "Membership" },
     "channel": { "online": "Online", "counter": "Counter" },
     "anyFormat": "Any format",
     "anySeatKind": "Any seat kind",
@@ -722,6 +725,15 @@
     "inactive": "Inactive",
     "empty": "No templates yet.",
     "placeholdersHint": "Available placeholders (use as shown, e.g. double curly braces around the name):"
+  },
+  "promotionCampaigns": {
+    "title": "Promotion Campaign Management",
+    "subtitle": "Named campaign families (e.g. \"C'Student\", \"Happy Hour\") that group several promotion programs for the customer-page filter.",
+    "editTitle": "Edit Campaign",
+    "newTitle": "New Campaign",
+    "campaignName": "Campaign Name",
+    "namePlaceholder": "e.g. C'Student",
+    "empty": "No campaigns yet."
   },
   "comments": {
     "title": "Comment Moderation",
