@@ -8,7 +8,6 @@ using Cinema.Business.Contracts.Exceptions;
 using Cinema.Business.Contracts.Payments;
 using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.BoxOffice;
-using Cinema.Business.DTO.Concession;
 using Cinema.Business.DTO.Invoices;
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
@@ -177,7 +176,6 @@ public class BookingManager : IBookingManager
                 }
             }
             await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId, request.RoomId, request.Seats.Select(s => s.SeatId).ToList());
-            await PushStockLowAsync(composed.StockDemand);
 
             return new BookingResultDTO
             {
@@ -266,9 +264,9 @@ public class BookingManager : IBookingManager
             invoice.PaymentMethod       = _counterPaymentMethod;
             invoice.TheaterId           = context.TheaterId;
             invoice.SoldByUserId        = context.StaffUserId;
-            if (invoice.FoodStatus == FoodOrderStatus.Pending && !request.HoldForPickup)
+            if (invoice.FoodStatus == FoodOrderStatus.Pending)
             {
-                // Food handed over at the counter with the receipt, unless the customer asked the kitchen to hold it.
+                // Food is always handed over at the counter with the receipt.
                 invoice.FoodStatus             = FoodOrderStatus.HandedOver;
                 invoice.FoodHandedOverAt       = paidAt;
                 invoice.FoodHandedOverByUserId = context.StaffUserId;
@@ -313,9 +311,6 @@ public class BookingManager : IBookingManager
 
             await _uow.SaveChangesAsync();
             await _uow.CommitTransactionAsync();
-
-            await PushStockLowAsync(composed.StockDemand);
-            await PushFoodOrderQueuedAsync(invoice);
 
             if (hasSeats)
             {
@@ -910,64 +905,12 @@ public class BookingManager : IBookingManager
         return FoodStockRestorer.RestoreAsync(_uow, invoices.Select(i => i.Id).ToList(), reason, userId);
     }
 
-    // ── Staff push (kitchen queue, low stock) ───────────────────────────────────
-    // Every push runs after the commit and swallows its own failures: the sale is already durable.
-
     // A cancelled or expired invoice no longer has food to hand over.
     private static void CancelFoodOrder(Invoice invoice)
     {
         if (invoice.FoodStatus != FoodOrderStatus.None)
         {
             invoice.FoodStatus = FoodOrderStatus.Cancelled;
-        }
-    }
-
-    private async Task PushFoodOrderQueuedAsync(Invoice invoice)
-    {
-        if (invoice.FoodStatus != FoodOrderStatus.Pending || invoice.TheaterId is not Guid theaterId)
-        {
-            return;
-        }
-        try
-        {
-            var row = await _uow.InvoiceStore.GetPickupOrderByIdAsync(invoice.Id);
-            if (row != null)
-            {
-                await _staffNotifications.NotifyFoodOrderQueuedAsync(theaterId, ConcessionManager.ToDto(row));
-            }
-        }
-        catch (Exception e)
-        {
-            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(PushFoodOrderQueuedAsync)} failed for {invoice.Code}: {e.Message}");
-        }
-    }
-
-    // Items whose stock crossed their low-stock threshold during THIS sale. Computed from the demand list: each entry's
-    // Food was read before the sale took its units, so "was above, is now at or under" holds exactly once per crossing.
-    private async Task PushStockLowAsync(IReadOnlyList<StockDemand> demand)
-    {
-        try
-        {
-            var crossed = demand
-                .Where(d => d.Food.QuantityOnHand > d.Food.LowStockThreshold
-                            && d.Food.QuantityOnHand - d.Quantity <= d.Food.LowStockThreshold)
-                .ToList();
-            foreach (var theaterGroup in crossed.GroupBy(d => d.Food.TheaterId))
-            {
-                var items = theaterGroup.Select(d => new LowStockItemDTO
-                {
-                    FoodAndDrinkId = d.Food.Id,
-                    Name = d.Food.Name,
-                    QuantityOnHand = d.Food.QuantityOnHand - d.Quantity,
-                    LowStockThreshold = d.Food.LowStockThreshold,
-                    TargetStockLevel = d.Food.TargetStockLevel
-                }).ToList();
-                await _staffNotifications.NotifyStockLowAsync(theaterGroup.Key, items);
-            }
-        }
-        catch (Exception e)
-        {
-            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(PushStockLowAsync)} failed: {e.Message}");
         }
     }
 
@@ -1136,8 +1079,6 @@ public class BookingManager : IBookingManager
         var user = await ApplyPaidSideEffectsAsync(invoice);
 
         await _uow.SaveChangesAsync();
-
-        await PushFoodOrderQueuedAsync(invoice);
 
         // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
         if (user is not null)

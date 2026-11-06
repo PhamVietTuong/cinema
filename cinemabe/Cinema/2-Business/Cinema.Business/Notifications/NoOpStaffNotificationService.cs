@@ -1,5 +1,4 @@
 using Cinema.Business.Contracts;
-using Cinema.Business.DTO.Concession;
 using Cinema.Business.DTO.Operations;
 using Cinema.Foundation.Logging;
 
@@ -11,24 +10,6 @@ namespace Cinema.Business.Notifications;
 /// </summary>
 public class NoOpStaffNotificationService : IStaffNotificationService
 {
-    public Task NotifyFoodOrderQueuedAsync(Guid theaterId, PickupOrderDTO order)
-    {
-        LogProvider.Current.Information($"[StaffNotification:skipped] FoodOrderQueued TheaterId={theaterId} Invoice={order.InvoiceCode}");
-        return Task.CompletedTask;
-    }
-
-    public Task NotifyFoodOrderUpdatedAsync(Guid theaterId, FoodOrderUpdateDTO update)
-    {
-        LogProvider.Current.Information($"[StaffNotification:skipped] FoodOrderUpdated TheaterId={theaterId} Invoice={update.InvoiceCode} Status={update.FoodStatus}");
-        return Task.CompletedTask;
-    }
-
-    public Task NotifyStockLowAsync(Guid theaterId, IReadOnlyList<LowStockItemDTO> items)
-    {
-        LogProvider.Current.Information($"[StaffNotification:skipped] StockLow TheaterId={theaterId} Items={string.Join(",", items.Select(i => i.Name))}");
-        return Task.CompletedTask;
-    }
-
     public Task NotifyIncidentRaisedAsync(Guid theaterId, IncidentDTO incident)
     {
         LogProvider.Current.Information($"[StaffNotification:skipped] IncidentRaised TheaterId={theaterId} IncidentId={incident.Id}");

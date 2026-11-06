@@ -1,4 +1,3 @@
-using Cinema.Business.DTO.Concession;
 using Cinema.Business.DTO.Operations;
 
 namespace Cinema.Business.Contracts;
@@ -10,15 +9,6 @@ namespace Cinema.Business.Contracts;
 /// </summary>
 public interface IStaffNotificationService
 {
-    /// <summary>Event <c>FoodOrderQueued</c>: a paid invoice with food entered the pickup queue.</summary>
-    Task NotifyFoodOrderQueuedAsync(Guid theaterId, PickupOrderDTO order);
-
-    /// <summary>Event <c>FoodOrderUpdated</c>: the pickup status of an invoice changed.</summary>
-    Task NotifyFoodOrderUpdatedAsync(Guid theaterId, FoodOrderUpdateDTO update);
-
-    /// <summary>Event <c>StockLow</c>: items whose stock crossed their low-stock threshold during a sale.</summary>
-    Task NotifyStockLowAsync(Guid theaterId, IReadOnlyList<LowStockItemDTO> items);
-
     /// <summary>Event <c>IncidentRaised</c>: a staff incident was reported.</summary>
     Task NotifyIncidentRaisedAsync(Guid theaterId, IncidentDTO incident);
 }

@@ -13,8 +13,4 @@ public interface IFoodAndDrinkStore : IGenericStore<FoodAndDrink>
     /// nothing — when the result would be negative. Joins whatever transaction is open on the context.
     /// </summary>
     Task<bool> TryApplyStockDeltaAsync(Guid foodAndDrinkId, int delta);
-
-    /// <summary>Tracked items of a theater with <c>QuantityOnHand &lt;= LowStockThreshold</c>, projected and untracked
-    /// (combos hold no stock and are never tracked), emptiest first.</summary>
-    Task<List<LowStockRow>> GetLowStockAsync(Guid theaterId);
 }
