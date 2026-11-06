@@ -306,7 +306,8 @@
       "tabTimeSlots": "Time Slots",
       "tabTicketPrices": "Ticket Prices",
       "tabPatronCategories": "Patron Categories",
-      "tabLoyalty": "Loyalty Points"
+      "tabLoyalty": "Loyalty Points",
+      "tabStaff": "Staff"
     },
     "loyalty": {
       "title": "Loyalty Points",
@@ -413,6 +414,11 @@
       "idCheckMessagePlaceholder": "Leave blank to use the default notice",
       "idCheckMessageHint": "Shown to the customer instead of the default wording when set."
     },
+    "staff": {
+      "subtitle": "Staff assigned to this cinema.",
+      "add": "Add Staff",
+      "empty": "No staff assigned to this cinema yet."
+    },
     "food": {
       "subtitle": "Popcorn and drinks sold at this theater (combos are in the Combos tab).",
       "add": "Add Item",
@@ -496,6 +502,7 @@
       "passwordMinLength": "Password must be at least 6 characters.",
       "role": "Role",
       "selectRole": "— Select role —",
+      "cinema": "Cinema",
       "saveFailed": "Save failed."
     },
     "status": {

@@ -145,5 +145,14 @@
         <app-theater-loyalty [theaterId]="theaterId"></app-theater-loyalty>
       </div>
     </mat-tab>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">badge</mat-icon>
+        <span>{{ 'theaters.detail.tabStaff' | translate }}</span>
+      </ng-template>
+      <div class="tab-body">
+        <app-theater-staff [theaterId]="theaterId"></app-theater-staff>
+      </div>
+    </mat-tab>
   </mat-tab-group>
 </div>

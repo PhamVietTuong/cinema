@@ -23,6 +23,7 @@ interface UserRow {
   role: UserRole;
   active: boolean;
   joined: string;
+  theaterName: string;
 }
 
 @Component({
@@ -71,6 +72,7 @@ export class UsersManagementComponent extends BaseTableComponent {
       role: this._toRole(u.userTypeName),
       active: (u.status ?? IdentityServiceAgent.UserStatus.Active) === IdentityServiceAgent.UserStatus.Active,
       joined: u.creationTime ? new Date(u.creationTime).toLocaleDateString('vi-VN') : '',
+      theaterName: u.theaterName ?? '',
     };
   }
 

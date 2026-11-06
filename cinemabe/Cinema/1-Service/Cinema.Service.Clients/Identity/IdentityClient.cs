@@ -1630,6 +1630,9 @@ namespace Cinema.Service.Clients.Identity
         [Newtonsoft.Json.JsonProperty("theaterId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Guid? TheaterId { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("theaterName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string TheaterName { get; set; }
+
         [Newtonsoft.Json.JsonProperty("points", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int Points { get; set; }
 

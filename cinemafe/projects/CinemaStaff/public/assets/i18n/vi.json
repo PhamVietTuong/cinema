@@ -135,7 +135,9 @@
     "myProfile": "Hồ sơ của tôi",
     "title": "Hồ sơ của tôi",
     "subtitle": "Tài khoản và cài đặt bảo mật của bạn.",
-    "account": "Tài khoản"
+    "account": "Tài khoản",
+    "cinema": "Rạp",
+    "loadingCinema": "Đang tải thông tin rạp…"
   },
   "pos": {
     "section": "Quầy vé",

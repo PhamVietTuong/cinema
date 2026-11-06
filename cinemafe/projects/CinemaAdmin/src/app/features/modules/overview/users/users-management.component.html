@@ -77,6 +77,10 @@
           </ng-template>
         </ngx-datatable-column>
 
+        <ngx-datatable-column [name]="'users.form.cinema' | translate" prop="theaterName" [sortable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.theaterName || '—' }}</ng-template>
+        </ngx-datatable-column>
+
         <ngx-datatable-column [name]="'common.actions' | translate" [sortable]="false" [width]="150" [canAutoResize]="false">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <div class="ad-td-actions ad-td-actions--mat">
@@ -107,6 +111,7 @@
           <div class="ad-mobile-card-row"><span>{{ 'users.form.phone' | translate }}</span><span>{{ row.phone }}</span></div>
           <div class="ad-mobile-card-row"><span>{{ 'users.form.role' | translate }}</span><span>{{ row.role }}</span></div>
           <div class="ad-mobile-card-row"><span>{{ 'common.status' | translate }}</span><span>{{ (row.active ? 'users.status.active' : 'users.status.locked') | translate }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'users.form.cinema' | translate }}</span><span>{{ row.theaterName || '—' }}</span></div>
           <div class="ad-mobile-card-actions">
             <button mat-icon-button (click)="edit(row)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
             <button mat-icon-button (click)="delete(row.id)" [matTooltip]="'users.list.lockAccount' | translate"><mat-icon>delete</mat-icon></button>

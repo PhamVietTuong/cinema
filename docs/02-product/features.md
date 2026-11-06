@@ -33,9 +33,9 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 |---|---|---|---|
 | Dashboard | `modules/overview/dashboard` | complete | ROADMAP ✅. |
 | Movies management | `modules/overview/movies` | complete | |
-| Theaters management (+ tabs: info, rooms, room types, seat types, food, combos, time slots, ticket prices, loyalty, patron categories, holidays) | `modules/overview/theaters/*` (`theater-detail.component.ts` + per-tab components/dialogs) | complete | Matches ROADMAP "Recently shipped": multi-theater catalog, seat-map editor, per-theater pricing. |
+| Theaters management (+ tabs: info, rooms, room types, seat types, food, combos, time slots, ticket prices, loyalty, patron categories, staff, holidays) | `modules/overview/theaters/*` (`theater-detail.component.ts` + per-tab components/dialogs) | complete | Matches ROADMAP "Recently shipped": multi-theater catalog, seat-map editor, per-theater pricing. Staff tab (`theater-staff.component.ts`) lists/adds/edits/removes staff scoped to that cinema (`GetUsers` filtered by `theaterId`), reusing `user.dialog.ts` with the theater pre-filled and locked. |
 | Showtimes management | `modules/overview/show-times` | complete | |
-| Users management | `modules/overview/users` | complete | |
+| Users management | `modules/overview/users` | complete | Lists a Cinema column (`UserDTO.TheaterName`, batch-resolved, blank for theater-less users). |
 | Reports (sales/occupancy/KPIs) + CSV export | `modules/overview/reports` | complete | `GetSales`/`GetOccupancy`/`GetKpis` return structured DTOs; CSV built client-side (`_downloadCsv`, UTF-8 BOM, `Blob`/`a.download`) — there is no backend CSV-generation endpoint. |
 | Reference-data CRUD: age-restrictions, discount-types, holidays, memberships, movie-types, news, user-types | `modules/categories/*` | complete | Each feature folder has its own component (no shared generic admin CRUD base). |
 | Notification templates | `modules/categories/templates` | complete | Booking-confirmation message content, distinct from user notification preferences. |

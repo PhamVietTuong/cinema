@@ -306,7 +306,8 @@
       "tabTimeSlots": "Khung Giờ",
       "tabTicketPrices": "Giá Vé",
       "tabPatronCategories": "Đối Tượng Vé",
-      "tabLoyalty": "Điểm Thưởng"
+      "tabLoyalty": "Điểm Thưởng",
+      "tabStaff": "Nhân Viên"
     },
     "loyalty": {
       "title": "Điểm Thưởng",
@@ -413,6 +414,11 @@
       "idCheckMessagePlaceholder": "Để trống để dùng thông báo mặc định",
       "idCheckMessageHint": "Hiển thị cho khách thay cho nội dung mặc định khi được thiết lập."
     },
+    "staff": {
+      "subtitle": "Nhân viên được phân công cho rạp này.",
+      "add": "Thêm Nhân Viên",
+      "empty": "Chưa có nhân viên nào được phân công cho rạp này."
+    },
     "food": {
       "subtitle": "Bắp và nước bán tại rạp này (combo nằm ở tab Combo).",
       "add": "Thêm Món",
@@ -496,6 +502,7 @@
       "passwordMinLength": "Mật khẩu tối thiểu 6 ký tự.",
       "role": "Vai Trò",
       "selectRole": "— Chọn vai trò —",
+      "cinema": "Rạp",
       "saveFailed": "Lưu thất bại."
     },
     "status": {

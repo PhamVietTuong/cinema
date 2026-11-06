@@ -47,7 +47,7 @@ No class-level `[Authorize]`; actions default to anonymous unless tagged.
 
 | Action | Verb | Auth | Request | Response |
 |---|---|---|---|---|
-| `GetUsers` | POST | Admin | `PagingSearchDTO` | `DefaultSearchResults<UserDTO>` |
+| `GetUsers` | POST | Admin | `PagingSearchDTO` | `DefaultSearchResults<UserDTO>` — `UserDTO.TheaterName` is batch-resolved from `TheaterId` (null if unset or stale); `Filters["theaterId"]` scopes results to one theater (e.g. a cinema's Staff tab) |
 | `CreateUser` | POST | Admin | `CreateUserRequest` | `UserDTO` — theater-scoped roles require valid `TheaterId` (400 otherwise) |
 | `UpdateUser` | POST | Admin | `UpdateUserRequest` | `UserDTO` |
 | `DeleteUser` | POST | Admin | `[FromQuery] Guid id` | 200/204 |

@@ -11,5 +11,13 @@
     <p><strong>{{ user()?.name }}</strong></p>
     <p class="muted">{{ user()?.email }}</p>
     <p class="muted">{{ user()?.userTypeName }}</p>
+    @if (loadingTheater()) {
+      <p class="muted">{{ 'profile.loadingCinema' | translate }}</p>
+    } @else if (theater(); as t) {
+      <p class="muted">{{ 'profile.cinema' | translate }}: {{ t.name }}</p>
+      @if (theaterLocation()) {
+        <p class="muted">{{ theaterLocation() }}</p>
+      }
+    }
   </mat-card>
 </div>
