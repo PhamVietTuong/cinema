@@ -168,46 +168,6 @@
         ]
       }
     },
-    "/api/Payment/CancelBooking": {
-      "post": {
-        "tags": [
-          "Payment"
-        ],
-        "operationId": "Payment_CancelBooking",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CancelBookingRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
     "/api/Payment/InitiatePayment": {
       "post": {
         "tags": [
@@ -1274,16 +1234,6 @@
           },
           "paymentReference": {
             "type": "string"
-          }
-        }
-      },
-      "CancelBookingRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "invoiceId": {
-            "type": "string",
-            "format": "guid"
           }
         }
       },

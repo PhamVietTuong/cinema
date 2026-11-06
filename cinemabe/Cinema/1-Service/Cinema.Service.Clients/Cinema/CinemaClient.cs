@@ -13663,9 +13663,11 @@ namespace Cinema.Service.Clients.Cinema
         public string ImageUrl { get; set; }
 
         [Newtonsoft.Json.JsonProperty("latitude", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(-90.0D, 90.0D)]
         public double? Latitude { get; set; }
 
         [Newtonsoft.Json.JsonProperty("longitude", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(-180.0D, 180.0D)]
         public double? Longitude { get; set; }
 
     }
@@ -13695,9 +13697,11 @@ namespace Cinema.Service.Clients.Cinema
         public string ImageUrl { get; set; }
 
         [Newtonsoft.Json.JsonProperty("latitude", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(-90.0D, 90.0D)]
         public double? Latitude { get; set; }
 
         [Newtonsoft.Json.JsonProperty("longitude", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(-180.0D, 180.0D)]
         public double? Longitude { get; set; }
 
     }
