@@ -71,7 +71,7 @@ flowchart TB
 5. `CinemaContext.OnModelCreating` applies every `IEntityTypeConfiguration<T>` in the assembly (`Configurations/*.cs`) via `ApplyConfigurationsFromAssembly`, then globally rewrites every `DateTime`/`DateTime?` property's column type to `datetime` (not EF's default `datetime2`) — confirmed in `CinemaContext.cs` lines 61-71.
 6. The manager maps entities to DTOs (`Cinema.Business.DTO`) and returns them to the controller, which returns them as the HTTP response body (always 200/4xx/5xx JSON; list endpoints return `DefaultSearchResults<T>`).
 
-Multi-step writes (e.g. booking creation, cancellation) wrap steps 3-5 inside `BeginTransactionAsync`/`CommitTransactionAsync` for atomicity — see `BookingManager.CreateBookingAsync`/`CancelBookingAsync` for the reference shape.
+Multi-step writes (e.g. booking creation, expiry) wrap steps 3-5 inside `BeginTransactionAsync`/`CommitTransactionAsync` for atomicity — see `BookingManager.CreateBookingAsync`/`ExpireStalePendingBookingsAsync` for the reference shape.
 
 ## 4. SignalR
 

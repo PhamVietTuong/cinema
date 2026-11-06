@@ -67,7 +67,7 @@ Current roles are exactly `Admin`, `Customer`, `TheaterStaff` (see business doc)
 4. **Seat selection** (`booking/booking-selection`) — shared `seat-map` component + `seat-lock-session.service.ts`, live via SignalR (`/hubs/booking`).
 5. **Checkout** (`booking/booking-checkout`) — discounts, gift cards, loyalty points, food/drink combos; surfaces out-of-stock errors for food/combo items.
 6. **Payment** — redirect to VNPay sandbox; **payment-return** page polls `GetInvoice` for ~30s (IPN-authoritative, not redirect-authoritative — see root `CLAUDE.md`).
-7. **Profile** — booking history, ticket view (QR via `ticket-card`/`qr-code` CinemaLib components), cancel booking, notification preferences.
+7. **Profile** — booking history, ticket view (QR rendered inline, not via the CinemaLib `ticket-card`/`qr-code` components), notification preferences.
 
 ### CinemaAdmin — catalog & operations management
 - **Catalog**: Movies / Theaters (with nested tabs: rooms, room types, seat types, food, combos, time slots, ticket prices, loyalty, patron categories, holidays) / Showtimes / Users — standard list + dialog CRUD pattern, each with its own list component + `*.dialog.ts`.
