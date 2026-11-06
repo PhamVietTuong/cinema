@@ -591,7 +591,8 @@
     "maxUsageLabel": "Số Lần Tối Đa",
     "maxDiscountAmountLabel": "Giảm Tối Đa (đ)",
     "movieLabel": "Phim",
-    "anyMovie": "Tất cả phim"
+    "anyMovie": "Tất cả phim",
+    "validity": "Hiệu lực"
   },
   "promoProgram": {
     "mechanic": { "info": "Chỉ thông tin", "fixedPrice": "Giá cố định", "percentOff": "Giảm phần trăm" },

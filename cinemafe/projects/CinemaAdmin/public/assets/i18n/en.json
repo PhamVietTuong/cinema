@@ -591,7 +591,8 @@
     "maxUsageLabel": "Max usage",
     "maxDiscountAmountLabel": "Max discount amount (₫)",
     "movieLabel": "Movie",
-    "anyMovie": "Any movie"
+    "anyMovie": "Any movie",
+    "validity": "Validity"
   },
   "promoProgram": {
     "mechanic": { "info": "Info only", "fixedPrice": "Fixed price", "percentOff": "Percent off" },

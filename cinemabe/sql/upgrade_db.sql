@@ -969,12 +969,14 @@ BEGIN
         [CreationTime], [LastUpdatedTime])
     SELECT
         d.[Id], LEFT(COALESCE(NULLIF(d.[Description], N''''), d.[Code], N''Discount''), 200), d.[Description], NULL,
-        0 /* Promotion */, 2 /* PercentOff */, d.[Percent], 0 /* Everyone */,
+        CASE dt.[Name] WHEN N''Theo Mùa'' THEN 1 WHEN N''Thành Viên'' THEN 2 ELSE 0 END /* Promotion/Seasonal/Membership, mapped from the old DiscountType name */,
+        2 /* PercentOff */, d.[Percent], 0 /* Everyone */,
         NULL, NULL, d.[StartDate], d.[EndDate], 0, NULL,
         NULL, 1 /* StacksWithMembershipDiscount: keep stacking exactly as Discount did */, NULL, 0,
         d.[IsActive], d.[AutoApply], d.[Code], d.[MaxUsage], d.[UsedCount], d.[MaxDiscountAmount], d.[MovieId],
         d.[CreationTime], d.[LastUpdatedTime]
     FROM [Discount] d
+    LEFT JOIN [DiscountType] dt ON dt.[Id] = d.[DiscountTypeId]
     WHERE NOT EXISTS (SELECT 1 FROM [PromotionProgram] p WHERE p.[Id] = d.[Id]);
 
     INSERT INTO [PromotionProgramSchedule] (
