@@ -135,7 +135,9 @@
     "myProfile": "My profile",
     "title": "My profile",
     "subtitle": "Your account and security settings.",
-    "account": "Account"
+    "account": "Account",
+    "cinema": "Cinema",
+    "loadingCinema": "Loading cinema…"
   },
   "pos": {
     "section": "Counter",
