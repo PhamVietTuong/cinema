@@ -19,7 +19,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IUserStore UserStore { get; }
     public IRoomStore RoomStore { get; }
     public IRoomTypeStore RoomTypeStore { get; }
-    public IDiscountStore DiscountStore { get; }
     public IPromotionProgramStore PromotionProgramStore { get; }
     public ISplashBannerStore SplashBannerStore { get; }
     public IMovieTypeDetailStore MovieTypeDetailStore { get; }
@@ -28,7 +27,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
     public IEvaluationStore EvaluationStore { get; }
     public IFoodAndDrinkStore FoodAndDrinkStore { get; }
     public IAgeRestrictionStore AgeRestrictionStore { get; }
-    public IDiscountTypeStore DiscountTypeStore { get; }
     public IMovieTypeStore MovieTypeStore { get; }
     public ITemplateStore TemplateStore { get; }
     public ISeatTypeStore SeatTypeStore { get; }
@@ -62,7 +60,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         UserStore = new UserStore(db);
         RoomStore = new RoomStore(db);
         RoomTypeStore = new RoomTypeStore(db);
-        DiscountStore = new DiscountStore(db);
         PromotionProgramStore = new PromotionProgramStore(db);
         SplashBannerStore = new SplashBannerStore(db);
         MovieTypeDetailStore = new MovieTypeDetailStore(db);
@@ -71,7 +68,6 @@ public class ApplicationUnitOfWork : IApplicationUnitOfWork
         EvaluationStore = new EvaluationStore(db);
         FoodAndDrinkStore = new FoodAndDrinkStore(db);
         AgeRestrictionStore = new AgeRestrictionStore(db);
-        DiscountTypeStore = new DiscountTypeStore(db);
         MovieTypeStore = new MovieTypeStore(db);
         TemplateStore = new TemplateStore(db);
         SeatTypeStore = new SeatTypeStore(db);

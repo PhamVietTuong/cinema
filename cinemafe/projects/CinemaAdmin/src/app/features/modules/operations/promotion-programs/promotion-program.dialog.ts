@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {
   CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException,
-  PromotionMechanicValues, PromotionEligibilityValues, SalesChannel, SalesChannelValues, DayOfWeekValues,
+  PromotionMechanicValues, PromotionEligibilityValues, PromotionCategoryValues, SalesChannel, SalesChannelValues, DayOfWeekValues,
   daysMaskToList, daysListToMask, channelsMaskToList, channelsListToMask,
 } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
@@ -31,6 +31,7 @@ export class PromotionProgramDialog implements OnInit {
 
   readonly mechanics = PromotionMechanicValues;
   readonly eligibilities = PromotionEligibilityValues;
+  readonly categories = PromotionCategoryValues;
   readonly channels = SalesChannelValues;
   readonly weekDays = DayOfWeekValues;
   readonly formats = [
@@ -46,7 +47,7 @@ export class PromotionProgramDialog implements OnInit {
 
   memberShips: CinemaServiceAgent.MemberShipDTO[] = [];
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
-  discounts: CinemaServiceAgent.DiscountDTO[] = [];
+  movies: CinemaServiceAgent.MovieDTO[] = [];
 
   /** Day-of-week selections per schedule row index (mask stored as a Set for the chip UI). */
   scheduleDaySelections: Set<number>[] = [];
@@ -72,6 +73,7 @@ export class PromotionProgramDialog implements OnInit {
       title: [item?.title ?? '', [Validators.required, Validators.maxLength(200)]],
       summary: [item?.summary ?? ''],
       bannerUrl: [item?.bannerUrl ?? ''],
+      category: [item?.category ?? CinemaServiceAgent.PromotionCategory.Promotion],
       displayOrder: [item?.displayOrder ?? 0],
       isPublished: [item?.isPublished ?? false],
 
@@ -91,7 +93,10 @@ export class PromotionProgramDialog implements OnInit {
       termsText: [item?.termsText ?? ''],
 
       autoApply: [item?.autoApply ?? false],
-      linkedDiscountId: [item?.linkedDiscountId ?? null],
+      code: [item?.code ?? ''],
+      maxUsage: [item?.maxUsage ?? null],
+      maxDiscountAmount: [item?.maxDiscountAmount ?? null],
+      movieId: [item?.movieId ?? null],
 
       prices: this._fb.array((item?.prices ?? []).map(p => this._priceRow(p.projectionForm ?? null, p.seatKind ?? null, p.price ?? null))),
       schedules: this._fb.array([]),
@@ -108,7 +113,13 @@ export class PromotionProgramDialog implements OnInit {
     };
     this.form.get('mechanic')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
     this.form.get('eligibility')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
-    this.form.get('linkedDiscountId')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
+    // A program is triggered by exactly one of Code or AutoApply — entering a code turns AutoApply off.
+    this.form.get('code')!.valueChanges.subscribe(value => {
+      if (value?.trim() && this.form.value.autoApply) {
+        this.form.get('autoApply')!.setValue(false, { emitEvent: false });
+      }
+      this._cdr.markForCheck();
+    });
   }
 
   ngOnInit(): void {
@@ -116,8 +127,8 @@ export class PromotionProgramDialog implements OnInit {
       .subscribe(r => { this.memberShips = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
       .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
-    this._svc.getDiscounts(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
-      .subscribe(r => { this.discounts = r.results ?? []; this._cdr.markForCheck(); });
+    this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
+      .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });
   }
 
   // ── Derived state for the template ──────────────────────────────────────────
@@ -131,7 +142,7 @@ export class PromotionProgramDialog implements OnInit {
     return this.mechanic === CinemaServiceAgent.PromotionMechanic.Info
       || this.eligibility === CinemaServiceAgent.PromotionEligibility.StudentOrTeacher
       || this.eligibility === CinemaServiceAgent.PromotionEligibility.AgeLimit
-      || !!this.form.value.linkedDiscountId;
+      || !!this.form.value.code?.trim();
   }
 
   get priceRows(): FormArray { return this.form.get('prices') as FormArray; }
@@ -261,10 +272,12 @@ export class PromotionProgramDialog implements OnInit {
       endTimeOfDay: s.endTimeOfDay || null,
     }));
 
+    const code = v.code?.trim() || null;
     return {
       title: v.title.trim(),
       summary: v.summary?.trim() || null,
       bannerUrl: v.bannerUrl?.trim() || null,
+      category: v.category,
       displayOrder: v.displayOrder ?? 0,
       isPublished: !!v.isPublished,
       mechanic: v.mechanic,
@@ -279,8 +292,12 @@ export class PromotionProgramDialog implements OnInit {
       maxTicketsPerTransaction: v.maxTicketsPerTransaction || null,
       stacksWithMembershipDiscount: !!v.stacksWithMembershipDiscount,
       termsText: v.termsText?.trim() || null,
-      autoApply: this.autoApplyDisabled ? false : !!v.autoApply,
-      linkedDiscountId: v.linkedDiscountId || null,
+      // A program is triggered by exactly one of Code or AutoApply — a code wins when both are set.
+      autoApply: code ? false : (this.autoApplyDisabled ? false : !!v.autoApply),
+      code,
+      maxUsage: v.maxUsage || null,
+      maxDiscountAmount: v.maxDiscountAmount || null,
+      movieId: v.movieId || null,
       prices,
       schedules,
     };

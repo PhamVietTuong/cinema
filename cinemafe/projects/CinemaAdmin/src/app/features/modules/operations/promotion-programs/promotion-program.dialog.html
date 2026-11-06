@@ -53,6 +53,17 @@
         </div>
       </div>
 
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-category">{{ 'promotionPrograms.categoryLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select id="pp-category" formControlName="category">
+              <mat-option *ngFor="let c of categories" [value]="c.value">{{ c.name | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
       <div class="dlg-switch">
         <span class="dlg-switch-label" id="pp-published-lbl">{{ 'promotionPrograms.publishedLabel' | translate }}</span>
         <mat-slide-toggle formControlName="isPublished" aria-labelledby="pp-published-lbl"></mat-slide-toggle>
@@ -232,16 +243,39 @@
       <p class="dlg-hint" *ngIf="autoApplyDisabled">{{ 'promotionPrograms.autoApplyDisabledHint' | translate }}</p>
       <p class="dlg-hint" *ngIf="!autoApplyDisabled">{{ 'promotionPrograms.autoApplyHint' | translate }}</p>
 
-      <div class="dlg-row">
+      <!-- Code-triggered (mutually exclusive with AutoApply above) -->
+      <div class="dlg-row dlg-row--2">
         <div class="dlg-field">
-          <label class="dlg-label" for="pp-linkeddiscount">{{ 'promotionPrograms.linkedDiscountLabel' | translate }}</label>
+          <label class="dlg-label" for="pp-code">{{ 'promotionPrograms.codeLabel' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-select id="pp-linkeddiscount" formControlName="linkedDiscountId">
-              <mat-option [value]="null">{{ 'common.none' | translate }}</mat-option>
-              <mat-option *ngFor="let d of discounts" [value]="d.id">{{ d.code || d.description }}</mat-option>
+            <input matInput id="pp-code" formControlName="code" [placeholder]="'promotionPrograms.codePlaceholder' | translate">
+          </mat-form-field>
+          <p class="dlg-hint">{{ 'promotionPrograms.codeHint' | translate }}</p>
+        </div>
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-maxusage">{{ 'promotionPrograms.maxUsageLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-maxusage" type="number" min="1" formControlName="maxUsage">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dlg-row dlg-row--2">
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-maxdiscount">{{ 'promotionPrograms.maxDiscountAmountLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="pp-maxdiscount" type="number" min="0" formControlName="maxDiscountAmount">
+            <span matTextSuffix>đ</span>
+          </mat-form-field>
+        </div>
+        <div class="dlg-field">
+          <label class="dlg-label" for="pp-movie">{{ 'promotionPrograms.movieLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select id="pp-movie" formControlName="movieId">
+              <mat-option [value]="null">{{ 'promotionPrograms.anyMovie' | translate }}</mat-option>
+              <mat-option *ngFor="let m of movies" [value]="m.id">{{ m.title }}</mat-option>
             </mat-select>
           </mat-form-field>
-          <p class="dlg-hint">{{ 'promotionPrograms.linkedDiscountHint' | translate }}</p>
         </div>
       </div>
 

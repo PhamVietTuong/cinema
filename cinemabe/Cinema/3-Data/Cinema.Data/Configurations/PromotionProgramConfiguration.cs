@@ -12,14 +12,17 @@ public class PromotionProgramConfiguration : IEntityTypeConfiguration<PromotionP
         b.Property(p => p.Title).IsRequired().HasMaxLength(200);
         b.Property(p => p.Summary).HasMaxLength(500);
         b.Property(p => p.PercentOff).HasColumnType("float");
+        b.Property(p => p.MaxDiscountAmount).HasColumnType("float");
         b.Property(p => p.TermsText).HasMaxLength(2000);
+        b.Property(p => p.Code).HasMaxLength(50);
+        // Codes stay unique when present; auto-apply/info programs may have no code (multiple NULLs allowed).
+        b.HasIndex(p => p.Code).IsUnique().HasFilter("[Code] IS NOT NULL");
         b.HasIndex(p => new { p.IsPublished, p.EndDate });
         b.HasIndex(p => p.MinMemberShipId);
-        b.HasIndex(p => p.LinkedDiscountId);
         // A program references a tier it requires — deleting that tier should not silently open the
-        // program to everyone, so it is blocked (NO ACTION / Restrict), same stance as DiscountTheater.
+        // program to everyone, so it is blocked (NO ACTION / Restrict), same stance as the movie scope below.
         b.HasOne(p => p.MinMemberShip).WithMany().HasForeignKey(p => p.MinMemberShipId).OnDelete(DeleteBehavior.Restrict);
-        // Deleting the linked Discount just unlinks the program (it stops showing a code).
-        b.HasOne(p => p.LinkedDiscount).WithMany().HasForeignKey(p => p.LinkedDiscountId).OnDelete(DeleteBehavior.SetNull);
+        // Optional movie scope: null = any movie. Deleting the movie reverts the program to any-movie.
+        b.HasOne(p => p.Movie).WithMany().HasForeignKey(p => p.MovieId).OnDelete(DeleteBehavior.SetNull);
     }
 }

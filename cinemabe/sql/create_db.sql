@@ -97,10 +97,6 @@ IF OBJECT_ID('dbo.User', 'U') IS NOT NULL
 DROP TABLE dbo.[User];
 IF OBJECT_ID('dbo.Room', 'U') IS NOT NULL
 DROP TABLE dbo.Room;
-IF OBJECT_ID('dbo.DiscountTheater', 'U') IS NOT NULL
-DROP TABLE dbo.DiscountTheater;
-IF OBJECT_ID('dbo.Discount', 'U') IS NOT NULL
-DROP TABLE dbo.Discount;
 IF OBJECT_ID('dbo.Movie', 'U') IS NOT NULL
 DROP TABLE dbo.Movie;
 IF OBJECT_ID('dbo.FoodAndDrink', 'U') IS NOT NULL
@@ -125,8 +121,6 @@ IF OBJECT_ID('dbo.MemberShip', 'U') IS NOT NULL
 DROP TABLE dbo.MemberShip;
 IF OBJECT_ID('dbo.Holiday', 'U') IS NOT NULL
 DROP TABLE dbo.Holiday;
-IF OBJECT_ID('dbo.DiscountType', 'U') IS NOT NULL
-DROP TABLE dbo.DiscountType;
 IF OBJECT_ID('dbo.AgeRestriction', 'U') IS NOT NULL
 DROP TABLE dbo.AgeRestriction;
 
@@ -138,14 +132,6 @@ CREATE TABLE [AgeRestriction] (
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_AgeRestriction] PRIMARY KEY ([Id])
-);
-
-CREATE TABLE [DiscountType] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [Name] nvarchar(max) NOT NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_DiscountType] PRIMARY KEY ([Id])
 );
 
 CREATE TABLE [Holiday] (
@@ -313,50 +299,16 @@ CREATE TABLE [Movie] (
     CONSTRAINT [FK_Movie_AgeRestriction_AgeRestrictionId] FOREIGN KEY ([AgeRestrictionId]) REFERENCES [AgeRestriction] ([Id]) ON DELETE NO ACTION
 );
 
-CREATE TABLE [Discount] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [Code] nvarchar(50) NULL,
-    [Description] nvarchar(max) NULL,
-    [Percent] float NOT NULL,
-    [MaxDiscountAmount] float NULL,
-    [DiscountTypeId] uniqueidentifier NOT NULL,
-    [StartDate] datetime NOT NULL,
-    [EndDate] datetime NOT NULL,
-    [MaxUsage] int NULL,
-    [UsedCount] int NOT NULL,
-    [IsActive] bit NOT NULL,
-    [AutoApply] bit NOT NULL DEFAULT 0,
-    [ApplyToAllTheaters] bit NOT NULL DEFAULT 1,
-    [MovieId] uniqueidentifier NULL,
-    [DaysOfWeekMask] int NULL,
-    [StartTimeOfDay] time NULL,
-    [EndTimeOfDay] time NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_Discount] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Discount_DiscountType_DiscountTypeId] FOREIGN KEY ([DiscountTypeId]) REFERENCES [DiscountType] ([Id]) ON DELETE NO ACTION,
-    CONSTRAINT [FK_Discount_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE SET NULL
-);
-
--- Theaters a promotion is limited to (only when [Discount].[ApplyToAllTheaters] = 0).
-CREATE TABLE [DiscountTheater] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [DiscountId] uniqueidentifier NOT NULL,
-    [TheaterId] uniqueidentifier NOT NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_DiscountTheater] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_DiscountTheater_Discount_DiscountId] FOREIGN KEY ([DiscountId]) REFERENCES [Discount] ([Id]) ON DELETE CASCADE,
-    CONSTRAINT [FK_DiscountTheater_Theater_TheaterId] FOREIGN KEY ([TheaterId]) REFERENCES [Theater] ([Id]) ON DELETE NO ACTION
-);
-
--- Customer-facing promotion programs (Cinestar-style cards) — a separate, display/eligibility-rich
--- aggregate from Discount above. See PromotionProgram.cs for the design rationale.
+-- Customer-facing promotion programs (Cinestar-style cards). Single pricing entity: a program is
+-- triggered by either a customer-entered [Code] or auto-apply at checkout, never both. Formerly two
+-- separate entities (this table and Discount/DiscountType/DiscountTheater); merged so there is one
+-- pricing path and one admin screen. See PromotionProgram.cs for the design rationale.
 CREATE TABLE [PromotionProgram] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
     [Title] nvarchar(200) NOT NULL,
     [Summary] nvarchar(500) NULL,
     [BannerUrl] nvarchar(max) NULL,
+    [Category] int NOT NULL DEFAULT 0,
     [Mechanic] int NOT NULL DEFAULT 0,
     [PercentOff] float NULL,
     [Eligibility] int NOT NULL DEFAULT 0,
@@ -372,12 +324,16 @@ CREATE TABLE [PromotionProgram] (
     [DisplayOrder] int NOT NULL DEFAULT 0,
     [IsPublished] bit NOT NULL DEFAULT 0,
     [AutoApply] bit NOT NULL DEFAULT 0,
-    [LinkedDiscountId] uniqueidentifier NULL,
+    [Code] nvarchar(50) NULL,
+    [MaxUsage] int NULL,
+    [UsedCount] int NOT NULL DEFAULT 0,
+    [MaxDiscountAmount] float NULL,
+    [MovieId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_PromotionProgram] PRIMARY KEY ([Id]),
     CONSTRAINT [FK_PromotionProgram_MemberShip_MinMemberShipId] FOREIGN KEY ([MinMemberShipId]) REFERENCES [MemberShip] ([Id]) ON DELETE NO ACTION,
-    CONSTRAINT [FK_PromotionProgram_Discount_LinkedDiscountId] FOREIGN KEY ([LinkedDiscountId]) REFERENCES [Discount] ([Id]) ON DELETE SET NULL
+    CONSTRAINT [FK_PromotionProgram_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE SET NULL
 );
 
 CREATE TABLE [PromotionProgramPrice] (
@@ -537,11 +493,12 @@ CREATE TABLE [Invoice] (
     [PointsRedeemed] int NOT NULL DEFAULT 0,
     [GiftCardId] uniqueidentifier NULL,
     [GiftCardAmount] float NOT NULL DEFAULT 0,
+    -- Vestigial: the old Discount entity/table is gone. Historical data only — no FK, never written by
+    -- new code (see PromotionProgramId below instead).
     [DiscountId] uniqueidentifier NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Invoice] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Invoice_Discount_DiscountId] FOREIGN KEY ([DiscountId]) REFERENCES [Discount] ([Id]) ON DELETE SET NULL,
     CONSTRAINT [FK_Invoice_User_UserId] FOREIGN KEY ([UserId]) REFERENCES [User] ([Id]) ON DELETE NO ACTION
 );
 
@@ -726,14 +683,10 @@ CREATE TABLE [LoyaltySetting] (
 CREATE INDEX [IX_Comment_MovieId] ON [Comment] ([MovieId]);
 CREATE INDEX [IX_Comment_ParentId] ON [Comment] ([ParentId]);
 CREATE INDEX [IX_Comment_UserId] ON [Comment] ([UserId]);
-CREATE UNIQUE INDEX [IX_Discount_Code] ON [Discount] ([Code]) WHERE [Code] IS NOT NULL;
-CREATE INDEX [IX_Discount_DiscountTypeId] ON [Discount] ([DiscountTypeId]);
-CREATE INDEX [IX_Discount_MovieId] ON [Discount] ([MovieId]);
-CREATE UNIQUE INDEX [IX_DiscountTheater_DiscountId_TheaterId] ON [DiscountTheater] ([DiscountId], [TheaterId]);
-CREATE INDEX [IX_DiscountTheater_TheaterId] ON [DiscountTheater] ([TheaterId]);
 CREATE INDEX [IX_PromotionProgram_IsPublished_EndDate] ON [PromotionProgram] ([IsPublished], [EndDate]);
 CREATE INDEX [IX_PromotionProgram_MinMemberShipId] ON [PromotionProgram] ([MinMemberShipId]);
-CREATE INDEX [IX_PromotionProgram_LinkedDiscountId] ON [PromotionProgram] ([LinkedDiscountId]);
+CREATE UNIQUE INDEX [IX_PromotionProgram_Code] ON [PromotionProgram] ([Code]) WHERE [Code] IS NOT NULL;
+CREATE INDEX [IX_PromotionProgram_MovieId] ON [PromotionProgram] ([MovieId]);
 CREATE UNIQUE INDEX [IX_PromotionProgramPrice_PromotionProgramId_ProjectionForm_SeatKind] ON [PromotionProgramPrice] ([PromotionProgramId], [ProjectionForm], [SeatKind]);
 CREATE INDEX [IX_PromotionProgramSchedule_PromotionProgramId] ON [PromotionProgramSchedule] ([PromotionProgramId]);
 CREATE INDEX [IX_PromotionProgramSchedule_TheaterId] ON [PromotionProgramSchedule] ([TheaterId]);
@@ -742,7 +695,6 @@ CREATE INDEX [IX_Evaluation_UserId] ON [Evaluation] ([UserId]);
 CREATE INDEX [IX_FoodAndDrink_TheaterId] ON [FoodAndDrink] ([TheaterId]);
 CREATE INDEX [IX_InvoiceFoodAndDrink_FoodAndDrinkId] ON [InvoiceFoodAndDrink] ([FoodAndDrinkId]);
 CREATE UNIQUE INDEX [IX_Invoice_Code] ON [Invoice] ([Code]);
-CREATE INDEX [IX_Invoice_DiscountId] ON [Invoice] ([DiscountId]);
 CREATE INDEX [IX_Invoice_UserId] ON [Invoice] ([UserId]);
 CREATE INDEX [IX_InvoiceTicket_SeatId] ON [InvoiceTicket] ([SeatId]);
 CREATE INDEX [IX_InvoiceTicket_ShowTimeId_RoomId] ON [InvoiceTicket] ([ShowTimeId], [RoomId]);

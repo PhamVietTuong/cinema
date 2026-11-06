@@ -28,7 +28,6 @@ public class CinemaController : ApiControllerBase
     private readonly IMovieManager   _movieManager;
     private readonly ITheaterManager _theaterManager;
     private readonly IAgeRestrictionManager _ageRestrictions;
-    private readonly IDiscountTypeManager   _discountTypes;
     private readonly IMovieTypeManager      _movieTypes;
     private readonly ITemplateManager       _templates;
     private readonly ISeatTypeManager       _seatTypes;
@@ -37,7 +36,6 @@ public class CinemaController : ApiControllerBase
     private readonly IHolidayManager        _holidays;
     private readonly INewsManager           _news;
     private readonly IPersonManager         _people;
-    private readonly IDiscountManager       _discounts;
     private readonly IPromotionProgramManager _promotionPrograms;
     private readonly ISplashBannerManager _splashBanners;
     private readonly IFoodAndDrinkManager   _foodAndDrinks;
@@ -65,7 +63,6 @@ public class CinemaController : ApiControllerBase
         IMovieManager movieManager,
         ITheaterManager theaterManager,
         IAgeRestrictionManager ageRestrictions,
-        IDiscountTypeManager discountTypes,
         IMovieTypeManager movieTypes,
         ITemplateManager templates,
         ISeatTypeManager seatTypes,
@@ -74,7 +71,6 @@ public class CinemaController : ApiControllerBase
         IHolidayManager holidays,
         INewsManager news,
         IPersonManager people,
-        IDiscountManager discounts,
         IPromotionProgramManager promotionPrograms,
         ISplashBannerManager splashBanners,
         IFoodAndDrinkManager foodAndDrinks,
@@ -106,7 +102,6 @@ public class CinemaController : ApiControllerBase
         _movieManager    = movieManager;
         _theaterManager  = theaterManager;
         _ageRestrictions = ageRestrictions;
-        _discountTypes   = discountTypes;
         _movieTypes      = movieTypes;
         _templates       = templates;
         _seatTypes       = seatTypes;
@@ -115,7 +110,6 @@ public class CinemaController : ApiControllerBase
         _holidays        = holidays;
         _news            = news;
         _people          = people;
-        _discounts       = discounts;
         _promotionPrograms = promotionPrograms;
         _splashBanners   = splashBanners;
         _foodAndDrinks   = foodAndDrinks;
@@ -599,61 +593,6 @@ public class CinemaController : ApiControllerBase
             return notFound;
         }
         return await RunNoContent(nameof(DeleteAgeRestriction), () => _ageRestrictions.DeleteAsync(id));
-    }
-    #endregion
-
-    #region DiscountType
-    [HttpPost]
-    [ProducesResponseType(typeof(DefaultSearchResults<DiscountTypeDTO>), 200)]
-    public Task<IActionResult> GetDiscountTypes([FromBody] PagingSearchDTO search)
-    {
-        return Run(nameof(GetDiscountTypes), () => _discountTypes.GetAsync(search));
-    }
-
-    [HttpGet]
-    [ProducesResponseType(typeof(DiscountTypeDTO), 200)]
-    public async Task<IActionResult> GetDiscountType([FromQuery] Guid id)
-    {
-        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(id), nameof(GetDiscountType), nameof(DiscountType), id);
-        if (notFound != null)
-        {
-            return notFound;
-        }
-        return await Run(nameof(GetDiscountType), () => _discountTypes.GetByIdAsync(id));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(typeof(DiscountTypeDTO), 200)]
-    public Task<IActionResult> CreateDiscountType([FromBody] CreateDiscountTypeRequest request)
-    {
-        return Run(nameof(CreateDiscountType), () => _discountTypes.CreateAsync(request));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPut]
-    [ProducesResponseType(typeof(DiscountTypeDTO), 200)]
-    public async Task<IActionResult> UpdateDiscountType([FromBody] UpdateDiscountTypeRequest request)
-    {
-        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(request.Id), nameof(UpdateDiscountType), nameof(DiscountType), request.Id);
-        if (notFound != null)
-        {
-            return notFound;
-        }
-        return await Run(nameof(UpdateDiscountType), () => _discountTypes.UpdateAsync(request));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpDelete]
-    [ProducesResponseType(204)]
-    public async Task<IActionResult> DeleteDiscountType([FromQuery] Guid id)
-    {
-        var notFound = await EnsureExistsAsync(() => _discountTypes.ExistsAsync(id), nameof(DeleteDiscountType), nameof(DiscountType), id);
-        if (notFound != null)
-        {
-            return notFound;
-        }
-        return await RunNoContent(nameof(DeleteDiscountType), () => _discountTypes.DeleteAsync(id));
     }
     #endregion
 
@@ -1268,61 +1207,6 @@ public class CinemaController : ApiControllerBase
     public Task<IActionResult> GetPeopleByNames([FromBody] List<string> names)
     {
         return Run(nameof(GetPeopleByNames), () => _people.GetByNamesAsync(names));
-    }
-    #endregion
-
-    #region Discount
-    [HttpPost]
-    [ProducesResponseType(typeof(DefaultSearchResults<DiscountDTO>), 200)]
-    public Task<IActionResult> GetDiscounts([FromBody] PagingSearchDTO search)
-    {
-        return Run(nameof(GetDiscounts), () => _discounts.GetAsync(search));
-    }
-
-    [HttpGet]
-    [ProducesResponseType(typeof(DiscountDTO), 200)]
-    public async Task<IActionResult> GetDiscount([FromQuery] Guid id)
-    {
-        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(id), nameof(GetDiscount), nameof(Discount), id);
-        if (notFound != null)
-        {
-            return notFound;
-        }
-        return await Run(nameof(GetDiscount), () => _discounts.GetByIdAsync(id));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(typeof(DiscountDTO), 200)]
-    public Task<IActionResult> CreateDiscount([FromBody] CreateDiscountRequest request)
-    {
-        return Run(nameof(CreateDiscount), () => _discounts.CreateAsync(request));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPut]
-    [ProducesResponseType(typeof(DiscountDTO), 200)]
-    public async Task<IActionResult> UpdateDiscount([FromBody] UpdateDiscountRequest request)
-    {
-        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(request.Id), nameof(UpdateDiscount), nameof(Discount), request.Id);
-        if (notFound != null)
-        {
-            return notFound;
-        }
-        return await Run(nameof(UpdateDiscount), () => _discounts.UpdateAsync(request));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpDelete]
-    [ProducesResponseType(204)]
-    public async Task<IActionResult> DeleteDiscount([FromQuery] Guid id)
-    {
-        var notFound = await EnsureExistsAsync(() => _discounts.ExistsAsync(id), nameof(DeleteDiscount), nameof(Discount), id);
-        if (notFound != null)
-        {
-            return notFound;
-        }
-        return await RunNoContent(nameof(DeleteDiscount), () => _discounts.DeleteAsync(id));
     }
     #endregion
 

@@ -4,17 +4,21 @@ namespace Cinema.Data.Entities;
 
 /// <summary>
 /// A customer-facing promotion program (Cinestar-style "C'MONDAY", "Happy Hour", etc). Drives the
-/// CinemaUser promotions page as display content, and — only when <see cref="AutoApply"/> is true —
-/// also lowers the price charged at checkout for matching, in-window bookings (see
-/// BookingManager.ComputePricingAsync). It is deliberately a separate aggregate from <see cref="Discount"/>:
-/// Discount stays the flat-percent, code/auto-apply engine already wired into checkout; this entity adds
-/// fixed-price-by-format/seat-kind, eligibility and richer validity on top without touching that path.
+/// CinemaUser promotions page as display content, and lowers the price charged at checkout for
+/// matching, in-window bookings (see BookingManager.ComputePricingAsync) — either automatically
+/// (<see cref="AutoApply"/>) or when the customer enters its <see cref="Code"/>. A program is
+/// triggered by exactly one of Code or AutoApply, never both (see PromotionProgramManager.ValidateAsync).
+/// Formerly two separate entities (this one and the flat-percent Discount); merged so there is a single
+/// pricing path and a single admin screen.
 /// </summary>
 public class PromotionProgram : BaseEntity
 {
     public string Title { get; set; } = string.Empty;
     public string? Summary { get; set; }
     public string? BannerUrl { get; set; }
+
+    /// <summary>Customer-facing grouping, carried over from the old DiscountType reference table.</summary>
+    public PromotionCategory Category { get; set; } = PromotionCategory.Promotion;
 
     public PromotionMechanic Mechanic { get; set; } = PromotionMechanic.Info;
     /// <summary>Required when Mechanic = PercentOff (0,100]. Unused otherwise.</summary>
@@ -42,17 +46,26 @@ public class PromotionProgram : BaseEntity
     public bool IsPublished { get; set; }
 
     /// <summary>When true, this program is evaluated automatically at checkout (no code entry) for
-    /// eligible, in-window bookings — see BookingManager. Requires Mechanic != Info, Eligibility in
-    /// (Everyone, Members), and LinkedDiscountId to be null (only one source of price per program).</summary>
+    /// eligible, in-window bookings — see BookingManager. Mutually exclusive with <see cref="Code"/>:
+    /// a program is triggered by exactly one of the two.</summary>
     public bool AutoApply { get; set; }
 
-    /// <summary>Optional: ties this program's card to an existing code-based Discount, shown on the
-    /// CinemaUser card. Does not itself change price — only LinkedDiscount's own auto-apply/code
-    /// behavior does, same as today.</summary>
-    public Guid? LinkedDiscountId { get; set; }
+    /// <summary>Optional promo code the customer enters at checkout. Mutually exclusive with
+    /// <see cref="AutoApply"/>. Null/empty for an auto-applied or info-only program. Unique when present
+    /// (multiple NULLs allowed).</summary>
+    public string? Code { get; set; }
+    /// <summary>Caps how many times this program's Code can be used in total; null = unlimited.</summary>
+    public int? MaxUsage { get; set; }
+    public int UsedCount { get; set; }
+    /// <summary>Caps the summed per-unit saving (post-ComputeProgramSaving, pre-membership-stack);
+    /// null = no cap.</summary>
+    public double? MaxDiscountAmount { get; set; }
+    /// <summary>Optional movie scope; null = applies to any movie. Theater/day/time scope is expressed
+    /// via <see cref="Schedules"/> instead.</summary>
+    public Guid? MovieId { get; set; }
 
     public MemberShip? MinMemberShip { get; set; }
-    public Discount? LinkedDiscount { get; set; }
+    public Movie? Movie { get; set; }
     public ICollection<PromotionProgramPrice> Prices { get; set; } = new List<PromotionProgramPrice>();
     public ICollection<PromotionProgramSchedule> Schedules { get; set; } = new List<PromotionProgramSchedule>();
 }

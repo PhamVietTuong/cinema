@@ -18,6 +18,12 @@ public class PromotionProgramStore : GenericStore<PromotionProgram>, IPromotionP
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(p => p.Id == id);
 
+    public Task<PromotionProgram?> GetByCodeAsync(string code)
+        => DbSet.Include(p => p.Prices)
+                .Include(p => p.Schedules)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(p => p.Code == code);
+
     public Task<List<PromotionProgramPrice>> GetPricesAsync(IReadOnlyCollection<Guid> programIds)
         => Context.PromotionProgramPrice
                 .AsNoTracking()

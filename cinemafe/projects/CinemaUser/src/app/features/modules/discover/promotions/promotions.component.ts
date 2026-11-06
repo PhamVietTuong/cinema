@@ -3,11 +3,12 @@ import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
   SharedModule, CinemaServiceAgent, SalesChannel,
-  PromotionMechanicValues, PromotionEligibilityValues, daysMaskToList, channelsMaskToList,
+  PromotionMechanicValues, PromotionEligibilityValues, PromotionCategoryValues, daysMaskToList, channelsMaskToList,
 } from 'CinemaLib';
 
 type ProgramDTO = CinemaServiceAgent.PromotionProgramDTO;
 type PromoTab = 'all' | 'auto' | 'code' | 'members' | 'students';
+type CategoryFilter = 'all' | CinemaServiceAgent.PromotionCategory;
 
 @Component({
   selector: 'app-promotions',
@@ -36,6 +37,12 @@ export class PromotionsComponent implements OnInit {
   ];
   activeTab: PromoTab = 'all';
 
+  readonly categoryFilters: { key: CategoryFilter; label: string }[] = [
+    { key: 'all', label: 'promotions.categories.all' },
+    ...PromotionCategoryValues.map(c => ({ key: c.value as CategoryFilter, label: c.name })),
+  ];
+  activeCategory: CategoryFilter = 'all';
+
   ngOnInit(): void {
     this._cinema.getPublishedPromotionPrograms(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 50 }))
       .subscribe({
@@ -51,8 +58,14 @@ export class PromotionsComponent implements OnInit {
     this._cdr.markForCheck();
   }
 
+  setCategory(key: CategoryFilter): void {
+    this.activeCategory = key;
+    this.applyFilter();
+    this._cdr.markForCheck();
+  }
+
   private applyFilter(): void {
-    this.visible = this.programs.filter(p => this.matchesTab(p, this.activeTab));
+    this.visible = this.programs.filter(p => this.matchesTab(p, this.activeTab) && this.matchesCategory(p, this.activeCategory));
   }
 
   private matchesTab(p: ProgramDTO, tab: PromoTab): boolean {
@@ -62,12 +75,16 @@ export class PromotionsComponent implements OnInit {
       case 'auto':
         return !!p.autoApply;
       case 'code':
-        return !!p.linkedDiscountCode;
+        return !!p.code;
       case 'members':
         return p.eligibility === CinemaServiceAgent.PromotionEligibility.Members;
       case 'students':
         return p.eligibility === CinemaServiceAgent.PromotionEligibility.StudentOrTeacher;
     }
+  }
+
+  private matchesCategory(p: ProgramDTO, category: CategoryFilter): boolean {
+    return category === 'all' || p.category === category;
   }
 
   // ── Display helpers ──────────────────────────────────────────────────────────

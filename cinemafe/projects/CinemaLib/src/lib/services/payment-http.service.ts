@@ -2045,6 +2045,7 @@ export class ValidateDiscountCodeRequest implements IValidateDiscountCodeRequest
     roomId?: string;
     showTimeId?: string;
     total?: number;
+    seats?: BookingSeatItem[];
 
     constructor(data?: IValidateDiscountCodeRequest) {
         if (data) {
@@ -2061,6 +2062,11 @@ export class ValidateDiscountCodeRequest implements IValidateDiscountCodeRequest
             this.roomId = _data["roomId"];
             this.showTimeId = _data["showTimeId"];
             this.total = _data["total"];
+            if (Array.isArray(_data["seats"])) {
+                this.seats = [] as any;
+                for (let item of _data["seats"])
+                    this.seats!.push(BookingSeatItem.fromJS(item));
+            }
         }
     }
 
@@ -2077,6 +2083,11 @@ export class ValidateDiscountCodeRequest implements IValidateDiscountCodeRequest
         data["roomId"] = this.roomId;
         data["showTimeId"] = this.showTimeId;
         data["total"] = this.total;
+        if (Array.isArray(this.seats)) {
+            data["seats"] = [];
+            for (let item of this.seats)
+                data["seats"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -2086,6 +2097,7 @@ export interface IValidateDiscountCodeRequest {
     roomId?: string;
     showTimeId?: string;
     total?: number;
+    seats?: BookingSeatItem[];
 }
 
 export class GiftCardValidationDTO implements IGiftCardValidationDTO {

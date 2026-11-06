@@ -353,6 +353,14 @@ export const PromotionEligibilityValues: { value: CinemaServiceAgent.PromotionEl
   { value: CinemaServiceAgent.PromotionEligibility.AgeLimit, name: 'promoProgram.eligibility.ageLimit' },
 ];
 
+/** Display label for each PromotionProgram.Category value (customer-facing grouping, carried over
+ * from the old DiscountType reference table — a small, stable enum rather than a CRUD screen). */
+export const PromotionCategoryValues: { value: CinemaServiceAgent.PromotionCategory; name: string }[] = [
+  { value: CinemaServiceAgent.PromotionCategory.Promotion, name: 'promoProgram.category.promotion' },
+  { value: CinemaServiceAgent.PromotionCategory.Seasonal, name: 'promoProgram.category.seasonal' },
+  { value: CinemaServiceAgent.PromotionCategory.Membership, name: 'promoProgram.category.membership' },
+];
+
 /**
  * Where an invoice was sold. Mirrors `SalesChannel` in cinemabe/Cinema/3-Data/Cinema.Data.Entities/Enums
  * (never renumber). Not referenced via `CinemaServiceAgent.SalesChannel`: NSwag emits that enum outside the

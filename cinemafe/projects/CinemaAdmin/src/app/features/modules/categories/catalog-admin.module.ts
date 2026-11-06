@@ -8,8 +8,6 @@ import { AgeRestrictionsManagementComponent } from './age-restrictions/age-restr
 import { AgeRestrictionDialog } from './age-restrictions/age-restriction.dialog';
 import { MovieTypesManagementComponent } from './movie-types/movie-types.component';
 import { MovieTypeDialog } from './movie-types/movie-type.dialog';
-import { DiscountTypesManagementComponent } from './discount-types/discount-types.component';
-import { DiscountTypeDialog } from './discount-types/discount-type.dialog';
 import { MembershipsManagementComponent } from './memberships/memberships.component';
 import { MembershipDialog } from './memberships/membership.dialog';
 import { UserTypesManagementComponent } from './user-types/user-types.component';
@@ -23,7 +21,6 @@ import { TemplateDialog } from './templates/template.dialog';
 const routes: Routes = [
   { path: 'age-restrictions', component: AgeRestrictionsManagementComponent },
   { path: 'movie-types', component: MovieTypesManagementComponent },
-  { path: 'discount-types', component: DiscountTypesManagementComponent },
   { path: 'memberships', component: MembershipsManagementComponent },
   { path: 'user-types', component: UserTypesManagementComponent },
   { path: 'holidays', component: HolidaysManagementComponent },
@@ -37,8 +34,6 @@ const routes: Routes = [
     AgeRestrictionDialog,
     MovieTypesManagementComponent,
     MovieTypeDialog,
-    DiscountTypesManagementComponent,
-    DiscountTypeDialog,
     MembershipsManagementComponent,
     MembershipDialog,
     UserTypesManagementComponent,

@@ -8,6 +8,9 @@ public interface IPromotionProgramStore : IGenericStore<PromotionProgram>
     /// cartesian result across the two collections), for Update.</summary>
     Task<PromotionProgram?> GetByIdWithChildrenAsync(Guid id);
 
+    /// <summary>Looks up a program by its promo Code, with Prices and Schedules loaded (split query).</summary>
+    Task<PromotionProgram?> GetByCodeAsync(string code);
+
     /// <summary>Price rows for a page of programs, AsNoTracking, keyed by PromotionProgramId by the caller.</summary>
     Task<List<PromotionProgramPrice>> GetPricesAsync(IReadOnlyCollection<Guid> programIds);
 

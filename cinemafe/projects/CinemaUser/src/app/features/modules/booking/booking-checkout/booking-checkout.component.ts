@@ -213,6 +213,12 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       roomId: this.roomId,
       showTimeId: this.showTimeId,
       total: this.grandTotal,
+      // The promo's saving is computed per-ticket-unit server-side, same basis as booking — send the
+      // seats already chosen on this page (a food-only order sends none; the code is still validated).
+      seats: this.seats.map(s => PaymentServiceAgent.BookingSeatItem.fromJS({
+        seatId: s.seatId,
+        patronCategoryId: s.patronCategoryId || undefined,
+      })),
     })).pipe(
       map(res => {
         const amount = res?.discountAmount ?? 0;

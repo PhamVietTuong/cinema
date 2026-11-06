@@ -167,36 +167,18 @@ TheaterId (Cascade), Name, StartTime/EndTime (string "HH:mm"). Nav `TicketPrices
 ### Holiday
 Name, Date (DateOnly), PriceMultiplier (double, default 1.5). No TheaterId — global.
 
-## 4. Promotions / Discounts / Loyalty / Gift Cards
+## 4. Promotions / Loyalty / Gift Cards
 
-### Discount
-| Field | Notes |
-|---|---|
-| Code | string?, max 50, unique when present (filtered unique index `WHERE [Code] IS NOT NULL`) |
-| Description? | |
-| Percent | double |
-| MaxDiscountAmount? | double |
-| DiscountTypeId | FK → DiscountType, Restrict |
-| StartDate/EndDate | DateTime |
-| MaxUsage? / UsedCount | int, UsedCount default 0 |
-| IsActive, AutoApply | bool |
-| ApplyToAllTheaters | bool, default true (else via `DiscountTheaters`) |
-| MovieId | Guid?, FK → Movie, **SetNull** |
-| DaysOfWeekMask | int? bitmask, bit0=Sunday..bit6=Saturday |
-| StartTimeOfDay/EndTimeOfDay | TimeOnly? |
+### PromotionProgram (single promotion/pricing entity — campaign-card display + code/auto-apply pricing)
+Formerly two separate entities (this one and the flat-percent `Discount`/`DiscountType`/`DiscountTheater`,
+now removed); merged so there is one pricing path and one admin screen. A program is triggered by
+exactly one of `Code` (customer-entered) **xor** `AutoApply=true`, enforced in
+`PromotionProgramManager.ValidateAsync`.
 
-Nav `DiscountTheaters`.
-
-### DiscountTheater (join)
-DiscountId (Cascade), TheaterId (**Restrict** — avoids SQL Server multi-cascade-path). **Unique** (DiscountId, TheaterId).
-
-### DiscountType
-`Name`. Nav `Discounts`.
-
-### PromotionProgram (campaign-card promotion, display + optional auto-apply pricing)
 | Field | Notes |
 |---|---|
 | Title (200), Summary (500)?, BannerUrl? | |
+| Category | enum: Promotion=0/Seasonal=1/Membership=2 — customer-facing grouping, carried over from the old `DiscountType` reference table (3 values, now an enum, edited inline from the dialog) |
 | Mechanic | enum: Info=0/FixedPrice=1/PercentOff=2 |
 | PercentOff? | double, required iff Mechanic=PercentOff, (0,100] |
 | Eligibility | enum: Everyone=0/Members=1/StudentOrTeacher=2/AgeLimit=3 |
@@ -206,12 +188,19 @@ DiscountId (Cascade), TheaterId (**Restrict** — avoids SQL Server multi-cascad
 | ExcludeHolidays | bool |
 | AllowedChannelsMask? | int bitmask of SalesChannel; null = all |
 | MaxTicketsPerTransaction? | int |
-| StacksWithMembershipDiscount | bool |
+| StacksWithMembershipDiscount | bool; a migrated `Discount` row always gets `true` to keep stacking exactly as it did before |
 | TermsText (2000)?, DisplayOrder, IsPublished | |
-| AutoApply | bool; requires Mechanic != Info, Eligibility in (Everyone, Members), LinkedDiscountId null |
-| LinkedDiscountId? | FK → Discount, **SetNull**, cosmetic only |
+| AutoApply | bool; requires Mechanic != Info, Eligibility in (Everyone, Members), Code null |
+| Code? | string, max 50, unique when present (filtered unique index `WHERE [Code] IS NOT NULL`) — mutually exclusive with AutoApply |
+| MaxUsage? / UsedCount | int, UsedCount default 0 — incremented on every paid invoice whose `PromotionProgramId` points here, regardless of trigger (code or auto-apply) |
+| MaxDiscountAmount? | double — caps the *summed* per-unit saving (post-`ComputeProgramSaving`, pre-membership-stack), migrated from `Discount.MaxDiscountAmount` |
+| MovieId? | FK → Movie, **SetNull** — optional movie scope; migrated from `Discount.MovieId`. Theater/day/time scope is expressed via `Schedules` instead (no separate fields here) |
 
-Index: (IsPublished, EndDate), MinMemberShipId, LinkedDiscountId. Nav `Prices`, `Schedules`.
+Index: (IsPublished, EndDate), MinMemberShipId, Code (filtered unique), MovieId. Nav `Prices`, `Schedules`.
+
+`Invoice.DiscountId` is vestigial: the column stays (historical data only, no FK, never written by new
+code) so old invoices keep their value; `Invoice.PromotionProgramId` is the only pricing-source column
+new code writes.
 
 ### PromotionProgramPrice
 PromotionProgramId (Cascade), ProjectionForm?/SeatKind? (null = "any"). Price (double, all-in). **Unique** (PromotionProgramId, ProjectionForm, SeatKind).
@@ -237,14 +226,14 @@ Code (max 50, **unique**), InitialBalance (double), Balance (double), IsActive, 
 | Code | string | max 50, **unique** |
 | UserId | Guid? | FK → User, Restrict; null = walk-in counter sale |
 | TotalAmount, DiscountAmount, FinalAmount | double | column type `float`; DiscountAmount default 0 |
+| DiscountId | Guid? | **Vestigial** — the `Discount` entity/table is gone; no FK, historical data only, never written by new code |
+| PromotionProgramId | Guid? | FK → PromotionProgram, SetNull; the pricing source for any invoice that used a program (code or auto-apply) |
 | Status | InvoiceStatus | Pending=0/Paid=1/Cancelled=2/Failed=3 (4 reserved, "Refunded", never reused) |
 | PaymentMethod?, PaymentReference? | string | |
 | PaidAt | DateTime? | |
 | PointsRedeemed | int | reserved at creation, restored on cancel/expire |
 | GiftCardId | Guid? | **no FK** |
 | GiftCardAmount | double | |
-| DiscountId | Guid? | FK → Discount, SetNull |
-| PromotionProgramId | Guid? | FK → PromotionProgram, SetNull; mutually exclusive with DiscountId as pricing source |
 | TheaterId | Guid? | FK (shadow), Restrict; null only on rows predating the column |
 | Channel | SalesChannel | Online=0/Counter=1 |
 | SoldByUserId | Guid? | no FK |
@@ -334,6 +323,6 @@ All enums below are stored as `int`. Several are explicitly append-only with res
 
 ## 11. Multi-cascade-path avoidance
 
-SQL Server rejects multiple cascade paths to the same table. Wherever two FKs on a join/child row could both cascade from a common ancestor, exactly one leg is `Restrict`/`NoAction` by design: `DiscountTheater.TheaterId` (Restrict), `PromotionProgramSchedule.TheaterId` (Restrict), `RoomTypePatronCategoryPrice.RoomTypeId` (Restrict). Do not "fix" these to Cascade.
+SQL Server rejects multiple cascade paths to the same table. Wherever two FKs on a join/child row could both cascade from a common ancestor, exactly one leg is `Restrict`/`NoAction` by design: `PromotionProgramSchedule.TheaterId` (Restrict), `RoomTypePatronCategoryPrice.RoomTypeId` (Restrict). Do not "fix" these to Cascade.
 
 <!-- TODO: confirm with team — some entities (AgeRestriction, Holiday, MemberShip, MovieType, News, UserType) have no dedicated Configurations/*.cs file and rely on EF conventions; verify this is intentional if touched. -->

@@ -83,14 +83,15 @@ public class PromotionProgramManager : IPromotionProgramManager
     public async Task<PromotionProgramDTO> CreateAsync(CreatePromotionProgramRequest request)
     {
         await ValidateAsync(request.Mechanic, request.PercentOff, request.Eligibility, request.MinMemberShipId, request.MaxAge,
-            request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.LinkedDiscountId,
-            request.MaxTicketsPerTransaction);
+            request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.Code,
+            request.MaxTicketsPerTransaction, request.MovieId, null);
 
         var entity = new PromotionProgram
         {
             Title = request.Title.Trim(),
             Summary = Normalize(request.Summary),
             BannerUrl = Normalize(request.BannerUrl),
+            Category = request.Category,
             Mechanic = request.Mechanic,
             Eligibility = request.Eligibility,
             StartDate = request.StartDate,
@@ -103,7 +104,10 @@ public class PromotionProgramManager : IPromotionProgramManager
             DisplayOrder = request.DisplayOrder,
             IsPublished = request.IsPublished,
             AutoApply = request.AutoApply,
-            LinkedDiscountId = request.LinkedDiscountId,
+            Code = NormalizeCode(request.Code),
+            MaxUsage = request.MaxUsage,
+            MaxDiscountAmount = request.MaxDiscountAmount,
+            MovieId = request.MovieId,
         };
         ApplyMechanicAndEligibility(entity, request.PercentOff, request.MinMemberShipId, request.MaxAge, request.Prices);
         ReplaceSchedules(entity, request.Schedules);
@@ -122,12 +126,13 @@ public class PromotionProgramManager : IPromotionProgramManager
         }
 
         await ValidateAsync(request.Mechanic, request.PercentOff, request.Eligibility, request.MinMemberShipId, request.MaxAge,
-            request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.LinkedDiscountId,
-            request.MaxTicketsPerTransaction);
+            request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.Code,
+            request.MaxTicketsPerTransaction, request.MovieId, request.Id);
 
         entity.Title = request.Title.Trim();
         entity.Summary = Normalize(request.Summary);
         entity.BannerUrl = Normalize(request.BannerUrl);
+        entity.Category = request.Category;
         entity.Mechanic = request.Mechanic;
         entity.Eligibility = request.Eligibility;
         entity.StartDate = request.StartDate;
@@ -140,7 +145,10 @@ public class PromotionProgramManager : IPromotionProgramManager
         entity.DisplayOrder = request.DisplayOrder;
         entity.IsPublished = request.IsPublished;
         entity.AutoApply = request.AutoApply;
-        entity.LinkedDiscountId = request.LinkedDiscountId;
+        entity.Code = NormalizeCode(request.Code);
+        entity.MaxUsage = request.MaxUsage;
+        entity.MaxDiscountAmount = request.MaxDiscountAmount;
+        entity.MovieId = request.MovieId;
         entity.LastUpdatedTime = DateTime.UtcNow;
         ApplyMechanicAndEligibility(entity, request.PercentOff, request.MinMemberShipId, request.MaxAge, request.Prices);
         ReplaceSchedules(entity, request.Schedules);
@@ -162,7 +170,7 @@ public class PromotionProgramManager : IPromotionProgramManager
         PromotionEligibility eligibility, Guid? minMemberShipId, int? maxAge,
         DateTime startDate, DateTime endDate,
         List<PromotionProgramPriceDTO> prices, List<PromotionProgramScheduleDTO> schedules,
-        bool autoApply, Guid? linkedDiscountId, int? maxTicketsPerTransaction)
+        bool autoApply, string? code, int? maxTicketsPerTransaction, Guid? movieId, Guid? selfId)
     {
         if (endDate < startDate)
         {
@@ -237,9 +245,21 @@ public class PromotionProgramManager : IPromotionProgramManager
             throw new InvalidOperationException("MaxTicketsPerTransaction must be positive when set.");
         }
 
-        if (linkedDiscountId is Guid discountId && !await _uow.DiscountStore.ExistsAsync(d => d.Id == discountId))
+        if (movieId is Guid mId && !await _uow.MovieStore.ExistsAsync(m => m.Id == mId))
         {
-            throw new InvalidOperationException("Linked discount does not exist.");
+            throw new InvalidOperationException("Selected movie does not exist.");
+        }
+
+        var normalizedCode = NormalizeCode(code);
+        if (autoApply && normalizedCode is not null)
+        {
+            throw new InvalidOperationException("A program cannot both require a code and auto-apply.");
+        }
+
+        if (normalizedCode is not null
+            && await _uow.PromotionProgramStore.ExistsAsync(p => p.Code == normalizedCode && (selfId == null || p.Id != selfId)))
+        {
+            throw new InvalidOperationException("This code is already used by another program.");
         }
 
         if (autoApply)
@@ -251,10 +271,6 @@ public class PromotionProgramManager : IPromotionProgramManager
             if (eligibility is PromotionEligibility.StudentOrTeacher or PromotionEligibility.AgeLimit)
             {
                 throw new InvalidOperationException("StudentOrTeacher/AgeLimit eligibility cannot be auto-applied online (no verification available) — leave AutoApply off.");
-            }
-            if (linkedDiscountId is not null)
-            {
-                throw new InvalidOperationException("An auto-apply program cannot also be linked to a code-based discount.");
             }
         }
     }
@@ -295,6 +311,7 @@ public class PromotionProgramManager : IPromotionProgramManager
     }
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static string? NormalizeCode(string? code) => string.IsNullOrWhiteSpace(code) ? null : code.Trim();
     private static TimeOnly? ParseTime(string? value) => TimeOnly.TryParse(value, out var t) ? t : null;
 
     // ── Mapping (fixed number of queries regardless of page size) ────────────
@@ -323,10 +340,10 @@ public class PromotionProgramManager : IPromotionProgramManager
             ? (await _uow.MemberShipStore.FindAsync(m => tierIds.Contains(m.Id))).ToDictionary(m => m.Id, m => m.Name)
             : new Dictionary<Guid, string>();
 
-        var discountIds = items.Where(p => p.LinkedDiscountId.HasValue).Select(p => p.LinkedDiscountId!.Value).Distinct().ToList();
-        var discounts = discountIds.Count > 0
-            ? (await _uow.DiscountStore.FindAsync(d => discountIds.Contains(d.Id))).ToDictionary(d => d.Id, d => (d.Code, d.IsActive))
-            : new Dictionary<Guid, (string? Code, bool IsActive)>();
+        var movieIds = items.Where(p => p.MovieId.HasValue).Select(p => p.MovieId!.Value).Distinct().ToList();
+        var movieTitles = movieIds.Count > 0
+            ? (await _uow.MovieStore.FindAsync(m => movieIds.Contains(m.Id))).ToDictionary(m => m.Id, m => m.Title)
+            : new Dictionary<Guid, string>();
 
         foreach (var dto in dtos)
         {
@@ -355,11 +372,9 @@ public class PromotionProgramManager : IPromotionProgramManager
                 dto.MinMemberShipName = tierNames.GetValueOrDefault(entity.MinMemberShipId.Value);
             }
 
-            if (entity.LinkedDiscountId.HasValue
-                && discounts.TryGetValue(entity.LinkedDiscountId.Value, out var d)
-                && d.IsActive && !string.IsNullOrEmpty(d.Code))
+            if (entity.MovieId.HasValue)
             {
-                dto.LinkedDiscountCode = d.Code;
+                dto.MovieTitle = movieTitles.GetValueOrDefault(entity.MovieId.Value);
             }
         }
 

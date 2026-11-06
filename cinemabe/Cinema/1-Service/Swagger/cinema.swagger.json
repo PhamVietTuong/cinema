@@ -1030,188 +1030,6 @@
         ]
       }
     },
-    "/api/Cinema/GetDiscountTypes": {
-      "post": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_GetDiscountTypes",
-        "requestBody": {
-          "x-name": "search",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PagingSearchDTO"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DefaultSearchResultsOfDiscountTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/GetDiscountType": {
-      "get": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_GetDiscountType",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscountTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/CreateDiscountType": {
-      "post": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_CreateDiscountType",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateDiscountTypeRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscountTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/UpdateDiscountType": {
-      "put": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_UpdateDiscountType",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDiscountTypeRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscountTypeDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/DeleteDiscountType": {
-      "delete": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_DeleteDiscountType",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
     "/api/Cinema/GetMovieTypes": {
       "post": {
         "tags": [
@@ -3272,188 +3090,6 @@
         "security": [
           {
             "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/GetDiscounts": {
-      "post": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_GetDiscounts",
-        "requestBody": {
-          "x-name": "search",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PagingSearchDTO"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DefaultSearchResultsOfDiscountDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/GetDiscount": {
-      "get": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_GetDiscount",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscountDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/CreateDiscount": {
-      "post": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_CreateDiscount",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateDiscountRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscountDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/UpdateDiscount": {
-      "put": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_UpdateDiscount",
-        "requestBody": {
-          "x-name": "request",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDiscountRequest"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscountDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/DeleteDiscount": {
-      "delete": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_DeleteDiscount",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
           }
         ]
       }
@@ -7110,77 +6746,6 @@
           }
         }
       },
-      "DefaultSearchResultsOfDiscountTypeDTO": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/BaseSearchResultsOfDiscountTypeDTO"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "BaseSearchResultsOfDiscountTypeDTO": {
-        "type": "object",
-        "x-abstract": true,
-        "additionalProperties": false,
-        "properties": {
-          "results": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DiscountTypeDTO"
-            }
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "countPerPage": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DiscountTypeDTO": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateDiscountTypeRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "UpdateDiscountTypeRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
       "DefaultSearchResultsOfMovieTypeDTO": {
         "allOf": [
           {
@@ -8428,272 +7993,6 @@
           }
         }
       },
-      "DefaultSearchResultsOfDiscountDTO": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/BaseSearchResultsOfDiscountDTO"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false
-          }
-        ]
-      },
-      "BaseSearchResultsOfDiscountDTO": {
-        "type": "object",
-        "x-abstract": true,
-        "additionalProperties": false,
-        "properties": {
-          "results": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DiscountDTO"
-            }
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "countPerPage": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DiscountDTO": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "percent": {
-            "type": "number",
-            "format": "double"
-          },
-          "maxDiscountAmount": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "discountTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "maxUsage": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "autoApply": {
-            "type": "boolean"
-          },
-          "applyToAllTheaters": {
-            "type": "boolean"
-          },
-          "theaterIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "guid"
-            }
-          },
-          "movieId": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          },
-          "daysOfWeekMask": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "startTimeOfDay": {
-            "type": "string",
-            "nullable": true
-          },
-          "endTimeOfDay": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "CreateDiscountRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "percent": {
-            "type": "number",
-            "format": "double"
-          },
-          "maxDiscountAmount": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "discountTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "maxUsage": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "autoApply": {
-            "type": "boolean"
-          },
-          "applyToAllTheaters": {
-            "type": "boolean"
-          },
-          "theaterIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "guid"
-            }
-          },
-          "movieId": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          },
-          "daysOfWeekMask": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "startTimeOfDay": {
-            "type": "string",
-            "nullable": true
-          },
-          "endTimeOfDay": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "UpdateDiscountRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "percent": {
-            "type": "number",
-            "format": "double"
-          },
-          "maxDiscountAmount": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "discountTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "maxUsage": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "autoApply": {
-            "type": "boolean"
-          },
-          "applyToAllTheaters": {
-            "type": "boolean"
-          },
-          "theaterIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "guid"
-            }
-          },
-          "movieId": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          },
-          "daysOfWeekMask": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "startTimeOfDay": {
-            "type": "string",
-            "nullable": true
-          },
-          "endTimeOfDay": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
       "DefaultSearchResultsOfPromotionProgramDTO": {
         "allOf": [
           {
@@ -8748,6 +8047,9 @@
           "bannerUrl": {
             "type": "string",
             "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/PromotionCategory"
           },
           "mechanic": {
             "$ref": "#/components/schemas/PromotionMechanic"
@@ -8812,12 +8114,30 @@
           "autoApply": {
             "type": "boolean"
           },
-          "linkedDiscountId": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxUsage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "usedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxDiscountAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "movieId": {
             "type": "string",
             "format": "guid",
             "nullable": true
           },
-          "linkedDiscountCode": {
+          "movieTitle": {
             "type": "string",
             "nullable": true
           },
@@ -8834,6 +8154,20 @@
             }
           }
         }
+      },
+      "PromotionCategory": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Promotion",
+          "Seasonal",
+          "Membership"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
       },
       "PromotionMechanic": {
         "type": "integer",
@@ -8941,6 +8275,9 @@
             "type": "string",
             "nullable": true
           },
+          "category": {
+            "$ref": "#/components/schemas/PromotionCategory"
+          },
           "mechanic": {
             "$ref": "#/components/schemas/PromotionMechanic"
           },
@@ -9002,7 +8339,23 @@
           "autoApply": {
             "type": "boolean"
           },
-          "linkedDiscountId": {
+          "code": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0,
+            "nullable": true
+          },
+          "maxUsage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxDiscountAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "movieId": {
             "type": "string",
             "format": "guid",
             "nullable": true
@@ -9047,6 +8400,9 @@
             "type": "string",
             "nullable": true
           },
+          "category": {
+            "$ref": "#/components/schemas/PromotionCategory"
+          },
           "mechanic": {
             "$ref": "#/components/schemas/PromotionMechanic"
           },
@@ -9108,7 +8464,23 @@
           "autoApply": {
             "type": "boolean"
           },
-          "linkedDiscountId": {
+          "code": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0,
+            "nullable": true
+          },
+          "maxUsage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxDiscountAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "movieId": {
             "type": "string",
             "format": "guid",
             "nullable": true

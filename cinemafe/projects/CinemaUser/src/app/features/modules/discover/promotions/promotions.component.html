@@ -20,6 +20,19 @@
     </button>
   </nav>
 
+  <nav class="promo-tabs promo-tabs--category" role="tablist" *ngIf="!loading && programs.length">
+    <button
+      type="button"
+      role="tab"
+      class="promo-tab"
+      *ngFor="let c of categoryFilters"
+      [class.is-active]="activeCategory === c.key"
+      [attr.aria-selected]="activeCategory === c.key"
+      (click)="setCategory(c.key)">
+      {{ c.label | translate }}
+    </button>
+  </nav>
+
   <div *ngIf="loading" class="spinner-wrap"><mat-spinner diameter="40"></mat-spinner></div>
 
   <div *ngIf="!loading && !programs.length" class="empty">
@@ -78,7 +91,7 @@
         </dl>
 
         <div class="ticket-foot">
-          <div class="ticket-code" *ngIf="p.linkedDiscountCode as code">
+          <div class="ticket-code" *ngIf="p.code as code">
             <span class="code-label">{{ 'promotions.codeLabel' | translate }}</span>
             <span class="code-val">{{ code }}</span>
             <button mat-stroked-button type="button" (click)="copyCode(p.id, code)">

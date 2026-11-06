@@ -36,7 +36,6 @@ public static class DependencyInjection
 
         // Catalog (simple lookup) managers
         services.AddScoped<IAgeRestrictionManager, AgeRestrictionManager>();
-        services.AddScoped<IDiscountTypeManager, DiscountTypeManager>();
         services.AddScoped<IMovieTypeManager, MovieTypeManager>();
         services.AddScoped<ITemplateManager, TemplateManager>();
         services.AddScoped<ISeatTypeManager, SeatTypeManager>();
@@ -46,7 +45,6 @@ public static class DependencyInjection
         services.AddScoped<IHolidayManager, HolidayManager>();
         services.AddScoped<INewsManager, NewsManager>();
         services.AddScoped<IPersonManager, PersonManager>();
-        services.AddScoped<IDiscountManager, DiscountManager>();
         services.AddScoped<IPromotionProgramManager, PromotionProgramManager>();
         services.AddScoped<ISplashBannerManager, SplashBannerManager>();
         services.AddScoped<IFoodAndDrinkManager, FoodAndDrinkManager>();
