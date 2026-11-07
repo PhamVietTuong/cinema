@@ -44,9 +44,13 @@ No secret values are reproduced anywhere below — only key names, defaults as c
 | `Smtp:Port` | SMTP port | optional | `587` |
 | `Smtp:User`, `Smtp:Password`, `Smtp:From` | SMTP credentials/sender | optional | `""` |
 | `Smtp:EnableSsl` | SMTP TLS | optional | `true` |
+| `Smtp:TimeoutSeconds` | Per-send timeout (1-120) | optional | `15` |
 | `Sms:Provider` | SMS provider label | optional | `Twilio` |
 | `Sms:Twilio:AccountSid` | Presence gates whether `TwilioSmsNotificationService` replaces the dev-log sender | optional | `""` (dev-log fallback) |
-| `Sms:Twilio:AuthToken`, `Sms:Twilio:FromNumber` | Twilio credentials/sender number | optional | `""` |
+| `Sms:Twilio:AuthToken`, `Sms:Twilio:FromNumber` | Twilio credentials/sender number (required once `AccountSid` is set; `FromNumber` must be a valid number, normalised to E.164) | optional | `""` |
+| `Sms:Twilio:TimeoutSeconds` | Per-request timeout (1-120) | optional | `10` |
+
+Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program.cs` validates the whole section (`SmtpOptions`/`TwilioOptions`) and the host refuses to start with every problem listed (bad port, sender not an email, `User` without `Password`, missing `AuthToken`, invalid `FromNumber`...). Unconfigured sections just keep the dev-log senders.
 
 ### Payments
 | Key | Purpose | Required | Default |

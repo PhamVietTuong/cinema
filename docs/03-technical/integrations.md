@@ -55,6 +55,8 @@ Registered in `AddBusiness()` as a named `HttpClient` (`OmdbRatingsProvider.Http
 
 Credential: `OMDb:ApiKey`.
 
+**Stripe prerequisite:** CinemaUser checkout offers "Pay by card (Stripe)", but there is no availability endpoint. Until a Stripe account is configured (`Payments:Stripe:*`, plus the webhook pointed at the API) `PaymentGatewayResolver` falls back to the default provider, so the redirect goes to that provider instead of Stripe.
+
 No evidence of a Stripe/MoMo-equivalent stub beyond what's listed in §1 — all four `IPaymentGateway` implementations found under `Cinema.Business/Payments/` are fully implemented (none are "planned but not built").
 
 ## 4. SignalR (real-time, in-process — not a third-party service)
@@ -93,8 +95,8 @@ Used for: booking confirmations, password reset / email verification / 2FA codes
 | JWT | `JWT:Secret`, `JWT:Issuer`, `JWT:Audience`, `JWT:ExpiryHours` |
 | Google OAuth | `Google:ClientId` |
 | Facebook OAuth | `Facebook:AppId`, `Facebook:AppSecret` |
-| SMTP | `Smtp:Host`, `Smtp:Port`, `Smtp:User`, `Smtp:Password`, `Smtp:From`, `Smtp:EnableSsl` |
-| SMS (Twilio) | `Sms:Provider`, `Sms:Twilio:AccountSid`, `Sms:Twilio:AuthToken`, `Sms:Twilio:FromNumber` |
+| SMTP | `Smtp:Host`, `Smtp:Port`, `Smtp:User`, `Smtp:Password`, `Smtp:From`, `Smtp:EnableSsl`, `Smtp:TimeoutSeconds` (validated at startup, see configuration.md) |
+| SMS (Twilio) | `Sms:Provider`, `Sms:Twilio:AccountSid`, `Sms:Twilio:AuthToken`, `Sms:Twilio:FromNumber`, `Sms:Twilio:TimeoutSeconds` (validated at startup; recipients normalised to E.164 by `PhoneNumberNormalizer`, invalid numbers logged and skipped) |
 | VNPay | `Payments:VnPay:TmnCode`, `Payments:VnPay:HashSecret`, `Payments:VnPay:PayUrl`, `Payments:VnPay:ReturnUrl` |
 | MoMo | `Payments:MoMo:PartnerCode`, `Payments:MoMo:AccessKey`, `Payments:MoMo:SecretKey`, `Payments:MoMo:Endpoint`, `Payments:MoMo:ReturnUrl`, `Payments:MoMo:IpnUrl` |
 | Stripe | `Payments:Stripe:SecretKey`, `Payments:Stripe:PublishableKey`, `Payments:Stripe:WebhookSecret`, `Payments:Stripe:SuccessUrl`, `Payments:Stripe:CancelUrl` |

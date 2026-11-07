@@ -35,15 +35,15 @@ Backlog for the multi-theater cinema platform. Status verified directly against 
 | **Order food/drink combos with tickets** | ✅ | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end, including out-of-stock handling. |
 | **Manage booked tickets (view / cancel)** | ✅ | - | `profile.component.ts`'s `cancelBooking`/`cancelById` via `PaymentServiceAgent.cancelBooking`. |
 | **E-tickets + QR codes** | ✅ | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`). |
-| **Payment gateway (VNPay/MoMo/Stripe)** | 🟡 | L | VNPay and MoMo are both fully wired (backend gateway + selectable checkout option); `StripeGateway.cs` exists and is DI-registered but has no frontend entry point yet. |
+| **Payment gateway (VNPay/MoMo/Stripe)** | 🟡 | L | VNPay and MoMo are both fully wired (backend gateway + selectable checkout option). Stripe now has a CinemaUser checkout option too (`booking-checkout.component.ts`, "Pay by card (Stripe)"); it only redirects to Stripe once `Payments:Stripe:*` keys are configured - with an unconfigured account `PaymentGatewayResolver` falls back to the default provider, so a real Stripe account must be set up and a Checkout round-trip exercised before this is marked done. |
 | Order confirmation email/SMS | 🆕 | M | Overlaps with reminders — see messaging infra below. |
 
 ## Discovery & engagement
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
-| **Ratings & reviews** | ✅ | - | Surfaced in `movie-detail.component.ts`: star rating widget, threaded comments, `canReview` gate; comments go through admin moderation. |
+| **Ratings & reviews** | ✅ | - | Fixed and finished: score validated 1-10 (400), comments 1-2000 chars, replies one level deep onto an approved top-level comment of the same movie, unique `(MovieId, UserId)` rating, star click keeps the saved review. CinemaUser shows "No ratings yet" (no ring), own rating/private review (`myRating`/`myReview`), reply form, "load more" comments (`GetMovieComments`), and edit/delete own comment (`UpdateOwnComment`/`DeleteOwnComment`). Only users who watched the movie may rate/comment/reply (403 otherwise, read-only UI). Comments go through admin moderation. |
 | **Movie recommendations by preference** | ✅ | - | `CinemaController.GetRecommendedMovies` → `MovieManager.GetRecommendedAsync`, personalized for signed-in users (top-rated for anonymous), wired into CinemaUser's home page. |
-| **Search & filter movies/showtimes** (theater, date, time, genre, language) | 🟡 | M | Some search exists (`GetTheatersByMovie`); build a unified filter API + UI. Confirm "language" = movie audio/subtitle field (add if missing). |
+| **Search & filter movies/showtimes** (theater, date, time, genre, language) | ✅ | M | Done: `GetMovies` filters server-side by genre (`movieTypeId`), `language`, `theaterId`, `date` and `status` (now/coming) across all pages; `SearchShowTimes` searches showtimes across movies with `theaterId`/`movieTypeId`/`language`/`date`/`timeFrom`/`timeTo`; `GetMovieLanguages` feeds the language filter. UI: `cl-filter-bar` on CinemaUser `/movies` (incl. a "Showtimes" tab). |
 | **Nearest theater by location** | ✅ | - | `Theater.Latitude`/`Longitude` (manually entered per theater in CinemaAdmin, no geocoding API) + browser geolocation + Haversine distance sort on CinemaUser's theaters list. |
 
 ## Membership & promotions
@@ -63,7 +63,7 @@ Backlog for the multi-theater cinema platform. Status verified directly against 
 ## Platform / infra
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
-| **Messaging (email/SMS)** | 🆕 | M | Underpins order confirmation + showtime reminders. `INotificationService` (`DevLogNotificationService`) abstraction exists — implement a real email provider + SMS provider. Pick providers. |
+| **Messaging (email/SMS)** | 🟡 | M | Providers are implemented and hardened but unvalidated against real accounts: `SmtpNotificationService` (email) and `TwilioSmsNotificationService` (SMS) take typed `SmtpOptions`/`TwilioOptions` validated at startup (a half-filled section fails the host start), normalise phone numbers to E.164 (`0900123456` -> `+84900123456`) and enforce send timeouts; unconfigured falls back to the dev-log senders. No outbox/retry queue (a failed send is logged, not retried). |
 | **Showtime reminders** | 🆕 | M | Depends on messaging; needs a scheduler (e.g. background job) to send before showtime. |
 | **Multilingual (i18n)** | 🆕 | L | Angular i18n or a runtime translation lib across CinemaUser + CinemaAdmin. Decide languages + approach. |
 | **Support chatbot** | ✅ | L | Rule-based (no LLM/API key), keyword-matched against a canned FAQ in `CinemaUser/shared/chatbot`. |
@@ -71,8 +71,8 @@ Backlog for the multi-theater cinema platform. Status verified directly against 
 ---
 
 ## Suggested next steps (small, high-value, low-dependency)
-1. **Messaging infra** (🆕 M) — unblocks order confirmation + reminders.
-2. **Search & filter movies/showtimes** (🟡 M) — some search exists, build a unified filter UI.
+1. **Messaging infra** (🟡 M) — exercise the SMTP/Twilio providers against real accounts; add an outbox if delivery guarantees are needed.
+2. **Stripe** (🟡 L) — configure a Stripe account and run a real Checkout round-trip.
 3. **Revenue statistics & detailed reports** (🆕 M) — basic reports exist, add the full report set.
 
-Ratings & reviews, Facebook login, food/drink combos, movie recommendations, nearest theater, and the support chatbot are all already done. Larger tracks (payments, i18n) are best scheduled on their own.
+Ratings & reviews, search & filter, Facebook login, food/drink combos, movie recommendations, nearest theater, and the support chatbot are all already done. Larger tracks (payments, i18n) are best scheduled on their own.
