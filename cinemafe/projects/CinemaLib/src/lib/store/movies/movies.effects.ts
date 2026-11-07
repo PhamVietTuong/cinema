@@ -6,6 +6,12 @@ import { CinemaServiceAgent } from '../../services/cinema-http.service';
 import { apiErrorMessage } from '../../services/api-error';
 import * as MoviesActions from './movies.actions';
 
+/** Drops unset/blank filters so the request carries only what the user actually chose. */
+function toFilterMap(filters?: MoviesActions.MovieFilters): { [key: string]: string } | undefined {
+  const entries = Object.entries(filters ?? {}).filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '');
+  return entries.length ? Object.fromEntries(entries.map(([k, v]) => [k, String(v)])) : undefined;
+}
+
 @Injectable()
 export class MoviesEffects {
   private actions$ = inject(Actions);
@@ -42,12 +48,12 @@ export class MoviesEffects {
   loadMovies$ = createEffect(() =>
     this.actions$.pipe(
       ofType(MoviesActions.loadMovies),
-      switchMap(({ search, page, pageSize }) =>
+      switchMap(({ filters, page, pageSize }) =>
         this._cinemaService.getMovies(
           CinemaServiceAgent.PagingSearchDTO.fromJS({
             pageIndex: page,
             pageSize,
-            filters: search ? { search } : undefined,
+            filters: toFilterMap(filters),
           })
         ).pipe(
           map(r => MoviesActions.loadMoviesSuccess({
@@ -101,6 +107,36 @@ export class MoviesEffects {
             MoviesActions.loadMovieDetail({ id: movieId })
           )),
           catchError(err => of(MoviesActions.rateMovieFailure({ error: apiErrorMessage(err, err?.message ?? '') })))
+        )
+      )
+    )
+  );
+
+  updateOwnComment$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(MoviesActions.updateOwnComment),
+      switchMap(({ movieId, commentId, content }) =>
+        this._cinemaService.updateOwnComment(CinemaServiceAgent.UpdateCommentRequest.fromJS({ content }), commentId).pipe(
+          mergeMap(() => of(
+            MoviesActions.updateOwnCommentSuccess({ movieId, commentId }),
+            MoviesActions.loadMovieDetail({ id: movieId })
+          )),
+          catchError(err => of(MoviesActions.updateOwnCommentFailure({ error: apiErrorMessage(err, err?.message ?? '') })))
+        )
+      )
+    )
+  );
+
+  deleteOwnComment$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(MoviesActions.deleteOwnComment),
+      switchMap(({ movieId, commentId }) =>
+        this._cinemaService.deleteOwnComment(commentId).pipe(
+          mergeMap(() => of(
+            MoviesActions.deleteOwnCommentSuccess({ movieId, commentId }),
+            MoviesActions.loadMovieDetail({ id: movieId })
+          )),
+          catchError(err => of(MoviesActions.deleteOwnCommentFailure({ error: apiErrorMessage(err, err?.message ?? '') })))
         )
       )
     )

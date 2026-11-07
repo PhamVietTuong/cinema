@@ -201,3 +201,20 @@
   .hero-inner, .md-body { padding-left: 20px; padding-right: 20px; }
 }
 
+// ── Review card, comment actions, reply form ──────────────────────────────
+.review-card { background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-lg); padding: 16px 18px; margin-bottom: 20px; }
+.review-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.review-title { font-weight: 700; color: var(--ml-ink); }
+.review-score { font-size: 0.82rem; color: var(--ml-action-strong); font-weight: 600; }
+.review-hint { font-size: 0.78rem; color: var(--ml-muted); margin: 4px 0 10px; }
+.review-input { width: 100%; }
+.comment-card.is-mine { border-color: var(--ml-action); }
+.comment-mine { margin-left: 8px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ml-action-strong); }
+.comment-actions { display: flex; gap: 14px; margin-top: 8px; }
+.comment-link {
+  background: none; border: none; padding: 0; cursor: pointer; font-size: 0.78rem; font-weight: 600; color: var(--ml-muted);
+  &:hover { color: var(--ml-action-strong); }
+  &--danger:hover { color: var(--ml-danger-ink, #c0392b); }
+}
+.reply-form .composer-actions, .comment-card .composer-actions { gap: 14px; align-items: center; }
+.comment-more { display: flex; justify-content: center; margin-top: 18px; }

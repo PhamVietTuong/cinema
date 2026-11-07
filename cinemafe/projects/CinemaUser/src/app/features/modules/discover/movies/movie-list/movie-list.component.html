@@ -5,7 +5,7 @@
         <h1 class="page-title">{{ title | translate }}</h1>
         <p class="page-sub">{{ 'movies.list.subtitle' | translate }}</p>
       </div>
-      <mat-form-field appearance="outline" class="search-box">
+      <mat-form-field appearance="outline" class="search-box" *ngIf="!isShowtimes">
         <mat-icon matPrefix>search</mat-icon>
         <input matInput [formControl]="searchCtrl" [placeholder]="'movies.list.searchPlaceholder' | translate">
       </mat-form-field>
@@ -15,42 +15,58 @@
       <mat-button-toggle-group class="tabs" [value]="mode" (change)="setMode($event.value)">
         <mat-button-toggle *ngFor="let t of tabs" class="tab" [value]="t.mode">{{ t.label | translate }}</mat-button-toggle>
       </mat-button-toggle-group>
-      <mat-form-field appearance="outline" *ngIf="hasClientFilters && genres.length">
-        <mat-select [(ngModel)]="selectedGenre">
-          <mat-option value="">{{ 'movies.filters.genre' | translate }}</mat-option>
-          <mat-option *ngFor="let g of genres" [value]="g">{{ g }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline" *ngIf="hasClientFilters && languages.length">
-        <mat-select [(ngModel)]="selectedLanguage">
-          <mat-option value="">{{ 'movies.filters.language' | translate }}</mat-option>
-          <mat-option *ngFor="let l of languages" [value]="l">{{ l }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+      <button type="button" class="clear-filters" *ngIf="hasActiveFilters" (click)="clearFilters()">
+        <mat-icon>filter_alt_off</mat-icon> {{ 'movies.filters.clear' | translate }}
+      </button>
     </div>
   </div>
 </div>
 
 <div class="movies-page">
-  <div *ngIf="(loading$ | async) && displayed.length === 0" class="spinner-wrap">
+  <cl-filter-bar class="movie-filters" titleKey="movies.filters.title"
+                 [form]="filterForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
+
+  <div *ngIf="isLoading && loadedCount === 0" class="spinner-wrap">
     <mat-spinner diameter="40"></mat-spinner>
   </div>
 
-  <div class="movie-grid">
+  <!-- Movies -->
+  <div class="movie-grid" *ngIf="!isShowtimes">
     <app-movie-card *ngFor="let movie of displayed" [movie]="movie"></app-movie-card>
   </div>
 
-  <div *ngIf="displayed.length === 0 && !(loading$ | async)" class="empty">
+  <div *ngIf="!isShowtimes && displayed.length === 0 && !isLoading" class="empty">
     <mat-icon>movie</mat-icon>
-    <p>{{ 'movies.list.empty' | translate }}</p>
+    <p>{{ (hasActiveFilters ? 'movies.list.emptyFiltered' : 'movies.list.empty') | translate }}</p>
+  </div>
+
+  <!-- Cross-movie showtime search -->
+  <div class="st-list" *ngIf="isShowtimes">
+    <a class="st-row" *ngFor="let st of showtimes" [routerLink]="movieLink(st)">
+      <img class="st-poster" [src]="st.posterUrl || 'assets/no-poster.jpg'" [alt]="st.movieTitle">
+      <div class="st-time">
+        <span class="st-hhmm">{{ st.startTime | date:'HH:mm' }}</span>
+        <span class="st-date">{{ st.startTime | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="st-info">
+        <span class="st-movie">{{ st.movieTitle }}</span>
+        <span class="st-meta">{{ st.theaterName }} · {{ st.roomName }} · {{ formatOf(st) }}<ng-container *ngIf="st.language"> · {{ st.language }}</ng-container></span>
+      </div>
+      <span class="st-price">{{ st.basePrice | number:'1.0-0' }}đ</span>
+    </a>
+  </div>
+
+  <div *ngIf="isShowtimes && showtimes.length === 0 && !showtimesLoading" class="empty">
+    <mat-icon>schedule</mat-icon>
+    <p>{{ (showtimesError ? showtimesError : 'movies.list.emptyShowtimes') | translate }}</p>
   </div>
 
   <div class="pager-loadmore" *ngIf="canLoadMore">
     <div class="lm-track"><div class="lm-fill" [style.width.%]="loadProgressPct"></div></div>
     <span class="lm-count">{{ 'movies.list.shownCount' | translate: { shown: loadedCount, total: total } }}</span>
-    <button type="button" class="lm-btn" (click)="loadMore()" [disabled]="loading$ | async">
-      <mat-spinner diameter="16" *ngIf="loading$ | async"></mat-spinner>
-      <ng-container *ngIf="!(loading$ | async)">
+    <button type="button" class="lm-btn" (click)="loadMore()" [disabled]="isLoading">
+      <mat-spinner diameter="16" *ngIf="isLoading"></mat-spinner>
+      <ng-container *ngIf="!isLoading">
         {{ 'movies.list.loadMore' | translate }} <mat-icon>expand_more</mat-icon>
       </ng-container>
     </button>

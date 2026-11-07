@@ -65,10 +65,20 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   qrDataUrl = '';
 
   /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
-  readonly methods: { value: string; labelKey: string; svg?: string; icon?: string }[] = [
-    { value: 'Momo', labelKey: 'booking.confirm.momoWallet', svg: 'momo' },
-    { value: 'VNPay', labelKey: 'booking.confirm.vnpay', svg: 'vnpay' },
+  readonly methods: { value: string; labelKey: string; app: string; svg?: string; icon?: string }[] = [
+    { value: 'Momo', labelKey: 'booking.confirm.momoWallet', app: 'MoMo', svg: 'momo' },
+    { value: 'VNPay', labelKey: 'booking.confirm.vnpay', app: 'VNPAY', svg: 'vnpay' },
+    // Card checkout hosted by Stripe: the browser is redirected to Stripe, no QR is scanned.
+    { value: 'Stripe', labelKey: 'booking.confirm.stripe', app: 'Stripe', icon: 'credit_card' },
   ];
+
+  /** True for gateways that show a QR code to scan (the wallets); Stripe redirects to a hosted card page instead. */
+  get usesQr(): boolean { return this.paymentMethod !== 'Stripe'; }
+
+  /** Display name of the selected gateway for the instruction note; never falls back to another gateway's name. */
+  get paymentAppName(): string {
+    return this.methods.find(m => m.value === this.paymentMethod)?.app ?? this.paymentMethod;
+  }
 
   // Order context for the summary card, loaded after arrival; blank until each lookup answers.
   movieTitle = '';
@@ -497,6 +507,9 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       }
       case 'VNPay': {
         return 'VNPay';
+      }
+      case 'Stripe': {
+        return 'Stripe';
       }
       default: {
         return 'Sandbox';

@@ -17,7 +17,7 @@ export interface FilterBarOption {
 /** One control of the filter bar, bound to the form control named `key`. */
 export interface FilterBarField {
   key: string;
-  type: 'text' | 'select' | 'multiselect' | 'toggle' | 'date';
+  type: 'text' | 'select' | 'multiselect' | 'toggle' | 'date' | 'time';
   /** i18n key of the control label. */
   labelKey: string;
   /** `select` only: the choices. */
