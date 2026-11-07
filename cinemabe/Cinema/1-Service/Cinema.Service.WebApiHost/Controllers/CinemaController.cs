@@ -366,6 +366,93 @@ public class CinemaController : ApiControllerBase
         }
     }
 
+    #region Reviews
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<CommentDTO>), 200)]
+    public async Task<IActionResult> GetMovieComments([FromQuery] Guid movieId, [FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetMovieComments being awakened to process request...");
+        try
+        {
+            Guid? userId = User?.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+            var result = await _movieManager.GetCommentsAsync(movieId, userId, search);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetMovieComments));
+        }
+    }
+
+    [Authorize]
+    [HttpPut]
+    [ProducesResponseType(typeof(CommentDTO), 200)]
+    public async Task<IActionResult> UpdateOwnComment([FromQuery] Guid commentId, [FromBody] UpdateCommentRequest request)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.UpdateOwnComment being awakened to process request...");
+        try
+        {
+            var result = await _movieManager.UpdateOwnCommentAsync(commentId, User.GetUserId(), request.Content);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(UpdateOwnComment));
+        }
+    }
+
+    [Authorize]
+    [HttpDelete]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> DeleteOwnComment([FromQuery] Guid commentId)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.DeleteOwnComment being awakened to process request...");
+        try
+        {
+            await _movieManager.DeleteOwnCommentAsync(commentId, User.GetUserId());
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(DeleteOwnComment));
+        }
+    }
+    #endregion
+
+    #region Search
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<ShowTimeSearchResultDTO>), 200)]
+    public async Task<IActionResult> SearchShowTimes([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.SearchShowTimes being awakened to process request...");
+        try
+        {
+            var result = await _movieManager.SearchShowTimesAsync(search);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SearchShowTimes));
+        }
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(List<string>), 200)]
+    public async Task<IActionResult> GetMovieLanguages()
+    {
+        LogProvider.Current.Information($"{GetType().Name}.GetMovieLanguages being awakened to process request...");
+        try
+        {
+            var result = await _movieManager.GetMovieLanguagesAsync();
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(GetMovieLanguages));
+        }
+    }
+    #endregion
+
     // ── Comment moderation (admin) ──────────────────────────────────────────────
 
     [Authorize(Roles = _adminRole)]
