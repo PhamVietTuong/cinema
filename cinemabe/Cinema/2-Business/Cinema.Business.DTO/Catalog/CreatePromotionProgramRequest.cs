@@ -14,6 +14,8 @@ public class CreatePromotionProgramRequest
     public string? Summary { get; set; }
     public string? BannerUrl { get; set; }
 
+    public Guid? CampaignId { get; set; }
+
     public PromotionMechanic Mechanic { get; set; }
     public double? PercentOff { get; set; }
 
@@ -35,7 +37,12 @@ public class CreatePromotionProgramRequest
     public int DisplayOrder { get; set; }
     public bool IsPublished { get; set; }
     public bool AutoApply { get; set; }
-    public Guid? LinkedDiscountId { get; set; }
+
+    [StringLength(50)]
+    public string? Code { get; set; }
+    public int? MaxUsage { get; set; }
+    public double? MaxDiscountAmount { get; set; }
+    public Guid? MovieId { get; set; }
 
     public List<PromotionProgramPriceDTO> Prices { get; set; } = new();
     public List<PromotionProgramScheduleDTO> Schedules { get; set; } = new();

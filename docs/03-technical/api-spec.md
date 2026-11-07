@@ -68,7 +68,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `ConfirmPayment` | POST | `[Authorize]` (owner) | `ConfirmPaymentRequest{InvoiceId, PaymentReference}` | bool/invoice result | only succeeds for Sandbox gateway — VNPay/MoMo/Stripe always return false (callback-authoritative) |
 | `InitiatePayment` | POST | `[Authorize]` (owner) | `InitiatePaymentRequest{InvoiceId, Provider?}` | `PaymentInitiationDTO{Provider, PaymentReference, RedirectUrl?}` | `FinalAmount<=0` (gift card/points fully cover) finalizes immediately, no gateway call, `Provider="None"`, `PaymentReference="GIFTCARD-FULL"` |
 | `PaymentCallback` | GET/POST | `[AllowAnonymous]` | `provider` query + gateway-specific query/form/raw-body fields | VNPay: `{"RspCode","Message"}`; others: generic `{message}`/`{error}` | signature-verified per gateway; idempotent; amount cross-checked; `[AllowAnonymous]` by design (called by the gateway's servers) |
-| `ValidateDiscountCode` | POST | `[Authorize]` | `ValidateDiscountCodeRequest` | non-throwing usability/amount result | |
+| `ValidateDiscountCode` | POST | `[Authorize]` | `ValidateDiscountCodeRequest{Code, RoomId, ShowTimeId, Total, Seats[]}` (wire name kept for FE compat; resolves a `PromotionProgram` by `Code`) | non-throwing usability/amount result | `Seats[]` lets the server compute the per-ticket-unit saving the same way booking does; empty for a food-only quote (saving is 0, but the code's existence/window/usage is still validated) |
 | `ValidateGiftCard` | POST | `[Authorize]` | `ValidateGiftCardRequest{Code}` | `GiftCardValidationDTO{Valid, Message, Balance}` | non-throwing |
 
 ### Gift cards (banner `// ── Gift cards ──`, Admin-only)
@@ -135,7 +135,6 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | Region | List/Get | Write | Notable actions beyond basic CRUD |
 |---|---|---|---|
 | `AgeRestriction` | anonymous | Admin | — |
-| `DiscountType` | anonymous | Admin | — |
 | `MovieType` | anonymous | Admin | — |
 | `Template` | **Admin-only even to list/get** | Admin | notification-template CRUD (booking-confirmation content) |
 | `SeatType` | anonymous | Admin (Update only) | no Create/Delete — seeded 2 rows/theater (Standard+Double) at theater creation |
@@ -147,8 +146,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `Holiday` | anonymous | Admin | |
 | `News` | anonymous | Admin | |
 | `Person` | **Admin-only** for CRUD; `GetPeopleByNames` is `[AllowAnonymous]` | Admin | |
-| `Discount` | anonymous | Admin | |
-| `PromotionProgram` | `GetPublishedPromotionPrograms` `[AllowAnonymous]`; `GetPromotionPrograms`/`GetPromotionProgram` Admin | Admin | |
+| `PromotionProgram` | `GetPublishedPromotionPrograms` `[AllowAnonymous]`; `GetPromotionPrograms`/`GetPromotionProgram` Admin | Admin | Single promotion/pricing entity (merged from the former `Discount`/`DiscountType`/`DiscountTheater`); triggered by `Code` xor `AutoApply` |
 | `SplashBanner` | `GetActiveSplashBanner` `[AllowAnonymous]` (returns `List<SplashBannerDTO>`, 0 or 1 items); rest Admin | Admin | |
 | `FoodAndDrink` | anonymous | Admin | |
 | `Room` | anonymous | Admin | |

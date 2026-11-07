@@ -16,8 +16,7 @@
 | SeatType | Per-theater, exactly `Single` + `Double`, keyed by `SeatKind` enum (matched by Kind, never by Name). | `Cinema.Data.Entities/Entities/SeatType.cs` |
 | SeatKind | Enum: `Standard=0`, `Double=1`. Lives in `Cinema.Data.Entities` namespace, not `...Enums` like sibling enums (documented inconsistency). | `Cinema.Data.Entities/SeatKind.cs` |
 | MemberShip | Loyalty tier: `Name`, `MinPoints`/`MaxPoints`, `DiscountPercent`. Also referenced by `PromotionProgram.MinMemberShipId` as a minimum-tier gate. | `Cinema.Data.Entities/Entities/MemberShip.cs` |
-| Discount | Older of two promotion mechanisms: flat-percent code/auto-apply engine, optionally theater-scoped, day/time-windowed. | `Cinema.Data.Entities/Entities/Discount.cs` |
-| PromotionProgram | Newer, richer "campaign card" promotion (Cinestar-style), deliberately separate from `Discount`. Drives CinemaUser's promotions page; only lowers checkout price when `AutoApply=true`. | `Cinema.Data.Entities/Entities/PromotionProgram.cs` |
+| PromotionProgram | Single promotion/pricing entity ("campaign card", Cinestar-style). Drives CinemaUser's promotions page and lowers checkout price when triggered by exactly one of `Code` (customer-entered) or `AutoApply`. Formerly two separate entities (this one and the flat-percent `Discount`), merged into one. | `Cinema.Data.Entities/Entities/PromotionProgram.cs` |
 | GiftCard | Prepaid balance identified by a unique `Code`. No FK from `Invoice` — referenced loosely via `Invoice.GiftCardId`. | `Cinema.Data.Entities/Entities/GiftCard.cs` |
 | Holiday | Global (no TheaterId) calendar-date price multiplier (default 1.5) that overrides `TicketPrice`'s day-of-week multiplier for that date. | `Cinema.Data.Entities/Entities/Holiday.cs` |
 | TicketPrice | Time-of-day/day-of-week price multiplier keyed by (TheaterId, RoomTypeId, TimeSlotId, DayOfWeek). | `Cinema.Data.Entities/Entities/TicketPrice.cs` |

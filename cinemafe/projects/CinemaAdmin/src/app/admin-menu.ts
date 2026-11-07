@@ -22,18 +22,17 @@ export const ADMIN_MENU: NavSection[] = [
     items: [
       { icon: 'category', labelKey: 'nav.movieTypes', route: '/movie-types', titleKey: 'pageTitle.movieTypes', roles: ADMIN_ONLY },
       { icon: 'shield', labelKey: 'nav.ageRestrictions', route: '/age-restrictions', titleKey: 'pageTitle.ageRestrictions', roles: ADMIN_ONLY },
-      { icon: 'sell', labelKey: 'nav.discountTypes', route: '/discount-types', titleKey: 'pageTitle.discountTypes', roles: ADMIN_ONLY },
       { icon: 'card_membership', labelKey: 'nav.memberships', route: '/memberships', titleKey: 'pageTitle.memberships', roles: ADMIN_ONLY },
       { icon: 'badge', labelKey: 'nav.userTypes', route: '/user-types', titleKey: 'pageTitle.userTypes', roles: ADMIN_ONLY },
       { icon: 'celebration', labelKey: 'nav.holidays', route: '/holidays', titleKey: 'pageTitle.holidays', roles: ADMIN_ONLY },
       { icon: 'article', labelKey: 'nav.news', route: '/news', titleKey: 'pageTitle.news', roles: ADMIN_ONLY },
       { icon: 'mail', labelKey: 'nav.templates', route: '/templates', titleKey: 'pageTitle.templates', roles: ADMIN_ONLY },
+      { icon: 'sell', labelKey: 'nav.promotionCampaigns', route: '/promotion-campaigns', titleKey: 'pageTitle.promotionCampaigns', roles: ADMIN_ONLY },
     ],
   },
   {
     titleKey: 'section.operations',
     items: [
-      { icon: 'local_offer', labelKey: 'nav.discounts', route: '/discounts', titleKey: 'pageTitle.discounts', roles: ADMIN_ONLY },
       { icon: 'campaign', labelKey: 'nav.promotionPrograms', route: '/promotion-programs', titleKey: 'pageTitle.promotionPrograms', roles: ADMIN_ONLY },
       { icon: 'wallpaper', labelKey: 'nav.splashBanners', route: '/splash-banners', titleKey: 'pageTitle.splashBanners', roles: ADMIN_ONLY },
       { icon: 'receipt_long', labelKey: 'nav.invoices', route: '/invoices', titleKey: 'pageTitle.invoices', roles: ADMIN_ONLY },

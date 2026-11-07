@@ -516,12 +516,8 @@
     "empty": "There are no promotions available at the moment.",
     "emptyFiltered": "No promotions in this category.",
     "pricesTitle": "Price list",
-    "tabs": {
-      "all": "All",
-      "auto": "Auto-applied",
-      "code": "Code required",
-      "members": "Members",
-      "students": "Students"
+    "categories": {
+      "all": "All categories"
     },
     "ledger": {
       "eligibility": "Eligibility",

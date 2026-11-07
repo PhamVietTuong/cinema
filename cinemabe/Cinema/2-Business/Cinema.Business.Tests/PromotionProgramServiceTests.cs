@@ -28,8 +28,10 @@ public class PromotionProgramServiceTests
             .ReturnsAsync(new List<PromotionProgramSchedule>());
         _uowMock.Setup(u => u.MemberShipStore.ExistsAsync(It.IsAny<Expression<Func<MemberShip, bool>>>()))
             .ReturnsAsync(true);
-        _uowMock.Setup(u => u.DiscountStore.ExistsAsync(It.IsAny<Expression<Func<Discount, bool>>>()))
+        _uowMock.Setup(u => u.MovieStore.ExistsAsync(It.IsAny<Expression<Func<Movie, bool>>>()))
             .ReturnsAsync(true);
+        _uowMock.Setup(u => u.PromotionProgramStore.ExistsAsync(It.IsAny<Expression<Func<PromotionProgram, bool>>>()))
+            .ReturnsAsync(false);
         _uowMock.Setup(u => u.PromotionProgramStore.CreateAsync(It.IsAny<PromotionProgram>()))
             .ReturnsAsync((PromotionProgram p) => p);
     }
@@ -70,11 +72,24 @@ public class PromotionProgramServiceTests
     }
 
     [Fact]
-    public async Task CreateAsync_AutoApplyWithLinkedDiscount_Rejected()
+    public async Task CreateAsync_AutoApplyWithCode_Rejected()
     {
         var request = BaseRequest();
         request.AutoApply = true;
-        request.LinkedDiscountId = Guid.NewGuid();
+        request.Code = "SUMMER25";
+
+        var act = () => _sut.CreateAsync(request);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task CreateAsync_DuplicateCode_Rejected()
+    {
+        _uowMock.Setup(u => u.PromotionProgramStore.ExistsAsync(It.IsAny<Expression<Func<PromotionProgram, bool>>>()))
+            .ReturnsAsync(true);
+        var request = BaseRequest();
+        request.Code = "SUMMER25";
 
         var act = () => _sut.CreateAsync(request);
 

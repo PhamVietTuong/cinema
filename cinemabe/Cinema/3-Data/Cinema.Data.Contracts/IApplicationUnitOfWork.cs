@@ -10,8 +10,8 @@ public interface IApplicationUnitOfWork : IDisposable
     IUserStore UserStore { get; }
     IRoomStore RoomStore { get; }
     IRoomTypeStore RoomTypeStore { get; }
-    IDiscountStore DiscountStore { get; }
     IPromotionProgramStore PromotionProgramStore { get; }
+    IPromotionCampaignStore PromotionCampaignStore { get; }
     ISplashBannerStore SplashBannerStore { get; }
     IMovieTypeDetailStore MovieTypeDetailStore { get; }
     IUserTypeStore UserTypeStore { get; }
@@ -19,7 +19,6 @@ public interface IApplicationUnitOfWork : IDisposable
     IEvaluationStore EvaluationStore { get; }
     IFoodAndDrinkStore FoodAndDrinkStore { get; }
     IAgeRestrictionStore AgeRestrictionStore { get; }
-    IDiscountTypeStore DiscountTypeStore { get; }
     IMovieTypeStore MovieTypeStore { get; }
     ITemplateStore TemplateStore { get; }
     ISeatTypeStore SeatTypeStore { get; }

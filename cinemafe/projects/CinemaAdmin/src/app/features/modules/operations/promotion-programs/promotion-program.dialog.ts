@@ -12,6 +12,9 @@ import { ImageUploadService } from '../../../../shared/image-upload.service';
 type Dto = CinemaServiceAgent.PromotionProgramDTO;
 type Mechanic = CinemaServiceAgent.PromotionMechanic;
 type Eligibility = CinemaServiceAgent.PromotionEligibility;
+/** How a customer gets this program — mirrors the backend's Code-xor-AutoApply rule as a single
+ * three-way choice instead of a toggle the user could leave in a confusing combination. */
+type TriggerMode = 'none' | 'auto' | 'code';
 
 export interface PromotionProgramDialogData {
   program: Dto | null;
@@ -46,7 +49,27 @@ export class PromotionProgramDialog implements OnInit {
 
   memberShips: CinemaServiceAgent.MemberShipDTO[] = [];
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
-  discounts: CinemaServiceAgent.DiscountDTO[] = [];
+  movies: CinemaServiceAgent.MovieDTO[] = [];
+  campaigns: CinemaServiceAgent.PromotionCampaignDTO[] = [];
+
+  /** One step per former section — i18n keys reused as both section heading and step label. */
+  readonly stepLabelKeys = [
+    'promotionPrograms.sectionBasics',
+    'promotionPrograms.sectionPricing',
+    'promotionPrograms.sectionAudience',
+    'promotionPrograms.sectionSchedule',
+    'promotionPrograms.sectionRedemption',
+  ];
+  /** Which required/invalid-able controls live on each step, so save() can jump to the first
+   * offending step instead of leaving the admin stuck on whichever step they happened to be on. */
+  private readonly _stepControlNames = [
+    ['title'],
+    [],
+    [],
+    ['startDate', 'endDate'],
+    ['code'],
+  ];
+  currentStep = 0;
 
   /** Day-of-week selections per schedule row index (mask stored as a Set for the chip UI). */
   scheduleDaySelections: Set<number>[] = [];
@@ -72,6 +95,7 @@ export class PromotionProgramDialog implements OnInit {
       title: [item?.title ?? '', [Validators.required, Validators.maxLength(200)]],
       summary: [item?.summary ?? ''],
       bannerUrl: [item?.bannerUrl ?? ''],
+      campaignId: [item?.campaignId ?? null],
       displayOrder: [item?.displayOrder ?? 0],
       isPublished: [item?.isPublished ?? false],
 
@@ -91,7 +115,11 @@ export class PromotionProgramDialog implements OnInit {
       termsText: [item?.termsText ?? ''],
 
       autoApply: [item?.autoApply ?? false],
-      linkedDiscountId: [item?.linkedDiscountId ?? null],
+      triggerMode: [(item?.code ? 'code' : item?.autoApply ? 'auto' : 'none') as TriggerMode],
+      code: [item?.code ?? ''],
+      maxUsage: [item?.maxUsage ?? null],
+      maxDiscountAmount: [item?.maxDiscountAmount ?? null],
+      movieId: [item?.movieId ?? null],
 
       prices: this._fb.array((item?.prices ?? []).map(p => this._priceRow(p.projectionForm ?? null, p.seatKind ?? null, p.price ?? null))),
       schedules: this._fb.array([]),
@@ -100,15 +128,37 @@ export class PromotionProgramDialog implements OnInit {
     this.channelSelection = new Set(channelsMaskToList(item?.allowedChannelsMask));
     (item?.schedules ?? []).forEach(s => this._addScheduleRow(s));
 
-    const resetAutoApplyIfNowDisabled = () => {
-      if (this.autoApplyDisabled && this.form.value.autoApply) {
-        this.form.get('autoApply')!.setValue(false, { emitEvent: false });
+    // The three-way triggerMode choice drives autoApply/code directly, so the xor rule is a UI
+    // structure instead of a silently-corrected combination.
+    this._applyTriggerMode(this.form.value.triggerMode, { emitEvent: false });
+    this.form.get('triggerMode')!.valueChanges.subscribe((mode: TriggerMode) => this._applyTriggerMode(mode));
+
+    // Auto-apply can become disallowed after the fact (switching Mechanic to Info, or Eligibility to
+    // StudentOrTeacher/AgeLimit) — fall back to "not triggered online" rather than leaving a now-invalid
+    // choice selected.
+    const resetTriggerModeIfAutoNowDisallowed = () => {
+      if (!this.autoApplyAllowed && this.form.value.triggerMode === 'auto') {
+        this.form.get('triggerMode')!.setValue('none');
       }
       this._cdr.markForCheck();
     };
-    this.form.get('mechanic')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
-    this.form.get('eligibility')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
-    this.form.get('linkedDiscountId')!.valueChanges.subscribe(resetAutoApplyIfNowDisabled);
+    this.form.get('mechanic')!.valueChanges.subscribe(resetTriggerModeIfAutoNowDisallowed);
+    this.form.get('eligibility')!.valueChanges.subscribe(resetTriggerModeIfAutoNowDisallowed);
+  }
+
+  /** Keeps autoApply/code (the fields actually sent to the server) and the code control's
+   * required-ness in sync with the triggerMode choice. */
+  private _applyTriggerMode(mode: TriggerMode, opts: { emitEvent: boolean } = { emitEvent: false }): void {
+    this.form.get('autoApply')!.setValue(mode === 'auto', opts);
+    const codeCtrl = this.form.get('code')!;
+    if (mode === 'code') {
+      codeCtrl.setValidators([Validators.required]);
+    } else {
+      codeCtrl.setValue('', opts);
+      codeCtrl.clearValidators();
+    }
+    codeCtrl.updateValueAndValidity({ emitEvent: false });
+    this._cdr.markForCheck();
   }
 
   ngOnInit(): void {
@@ -116,8 +166,10 @@ export class PromotionProgramDialog implements OnInit {
       .subscribe(r => { this.memberShips = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
       .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
-    this._svc.getDiscounts(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
-      .subscribe(r => { this.discounts = r.results ?? []; this._cdr.markForCheck(); });
+    this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
+      .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });
+    this._svc.getPromotionCampaigns(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
+      .subscribe(r => { this.campaigns = r.results ?? []; this._cdr.markForCheck(); });
   }
 
   // ── Derived state for the template ──────────────────────────────────────────
@@ -127,15 +179,54 @@ export class PromotionProgramDialog implements OnInit {
   get isPercentOff(): boolean { return this.mechanic === CinemaServiceAgent.PromotionMechanic.PercentOff; }
   get isMembers(): boolean { return this.eligibility === CinemaServiceAgent.PromotionEligibility.Members; }
   get isAgeLimit(): boolean { return this.eligibility === CinemaServiceAgent.PromotionEligibility.AgeLimit; }
-  get autoApplyDisabled(): boolean {
-    return this.mechanic === CinemaServiceAgent.PromotionMechanic.Info
-      || this.eligibility === CinemaServiceAgent.PromotionEligibility.StudentOrTeacher
-      || this.eligibility === CinemaServiceAgent.PromotionEligibility.AgeLimit
-      || !!this.form.value.linkedDiscountId;
+  get triggerMode(): TriggerMode { return this.form.value.triggerMode; }
+  /** Whether Mechanic/Eligibility allow "Auto-apply" as a triggerMode choice (StudentOrTeacher/AgeLimit
+   * have no online verification; Info is display-only) — independent of which mode is currently picked. */
+  get autoApplyAllowed(): boolean {
+    return this.mechanic !== CinemaServiceAgent.PromotionMechanic.Info
+      && this.eligibility !== CinemaServiceAgent.PromotionEligibility.StudentOrTeacher
+      && this.eligibility !== CinemaServiceAgent.PromotionEligibility.AgeLimit;
   }
 
   get priceRows(): FormArray { return this.form.get('prices') as FormArray; }
   get scheduleRows(): FormArray { return this.form.get('schedules') as FormArray; }
+
+  // ── Step navigation ───────────────────────────────────────────────────────────
+  get isFirstStep(): boolean { return this.currentStep === 0; }
+  get isLastStep(): boolean { return this.currentStep === this.stepLabelKeys.length - 1; }
+
+  goToStep(i: number): void {
+    this.currentStep = i;
+    this._cdr.markForCheck();
+  }
+
+  back(): void {
+    if (!this.isFirstStep) {
+      this.goToStep(this.currentStep - 1);
+    }
+  }
+
+  next(): void {
+    if (!this.isLastStep) {
+      this.goToStep(this.currentStep + 1);
+    }
+  }
+
+  stepDone(i: number): boolean { return i < this.currentStep; }
+
+  /** First step with an invalid control, or -1 if every step is valid — lets save() land the
+   * admin on the step that needs attention instead of a generic "fix the form" dead end. */
+  private _firstInvalidStep(): number {
+    for (let i = 0; i < this._stepControlNames.length; i++) {
+      if (this._stepControlNames[i].some(name => this.form.get(name)?.invalid)) {
+        return i;
+      }
+      if (i === 1 && this.isFixedPrice && this.priceRows.invalid) {
+        return i;
+      }
+    }
+    return -1;
+  }
 
   // ── Price rows ───────────────────────────────────────────────────────────────
   addPriceRow(): void {
@@ -228,6 +319,10 @@ export class PromotionProgramDialog implements OnInit {
   save(): void {
     if (!this.form.valid || this.priceRows.invalid) {
       this.form.markAllAsTouched();
+      const badStep = this._firstInvalidStep();
+      if (badStep >= 0) {
+        this.goToStep(badStep);
+      }
       return;
     }
     const payload = this._payload();
@@ -261,10 +356,12 @@ export class PromotionProgramDialog implements OnInit {
       endTimeOfDay: s.endTimeOfDay || null,
     }));
 
+    const mode: TriggerMode = v.triggerMode;
     return {
       title: v.title.trim(),
       summary: v.summary?.trim() || null,
       bannerUrl: v.bannerUrl?.trim() || null,
+      campaignId: v.campaignId || null,
       displayOrder: v.displayOrder ?? 0,
       isPublished: !!v.isPublished,
       mechanic: v.mechanic,
@@ -279,8 +376,12 @@ export class PromotionProgramDialog implements OnInit {
       maxTicketsPerTransaction: v.maxTicketsPerTransaction || null,
       stacksWithMembershipDiscount: !!v.stacksWithMembershipDiscount,
       termsText: v.termsText?.trim() || null,
-      autoApply: this.autoApplyDisabled ? false : !!v.autoApply,
-      linkedDiscountId: v.linkedDiscountId || null,
+      // triggerMode is the single source of truth for Code-xor-AutoApply — see _applyTriggerMode.
+      autoApply: mode === 'auto',
+      code: mode === 'code' ? (v.code?.trim() || null) : null,
+      maxUsage: v.maxUsage || null,
+      maxDiscountAmount: v.maxDiscountAmount || null,
+      movieId: v.movieId || null,
       prices,
       schedules,
     };

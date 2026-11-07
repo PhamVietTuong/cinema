@@ -20,9 +20,11 @@ public class Invoice : BaseEntity
     /// restored to the card if the booking is cancelled or expires.</summary>
     public Guid? GiftCardId { get; set; }
     public double GiftCardAmount { get; set; }
+    /// <summary>Vestigial: the old Discount entity has been merged into PromotionProgram and removed.
+    /// Historical rows only — no FK, no navigation property. New invoices never set this; see
+    /// PromotionProgramId instead.</summary>
     public Guid? DiscountId { get; set; }
-    /// <summary>Set when an auto-apply PromotionProgram (not a Discount) produced the cheaper price for
-    /// this invoice. Mutually exclusive with DiscountId being the source of the saving.</summary>
+    /// <summary>Set when a PromotionProgram (by code or auto-apply) produced the price for this invoice.</summary>
     public Guid? PromotionProgramId { get; set; }
     /// <summary>Theater the sale belongs to (null only on rows predating the column).</summary>
     public Guid? TheaterId { get; set; }
@@ -37,7 +39,6 @@ public class Invoice : BaseEntity
     /// <summary>The invoice this one replaced in a counter exchange.</summary>
     public Guid? ExchangedFromInvoiceId { get; set; }
     public User? User { get; set; }
-    public Discount? Discount { get; set; }
     public PromotionProgram? PromotionProgram { get; set; }
     public ICollection<InvoiceTicket> InvoiceTickets { get; set; } = new List<InvoiceTicket>();
     public ICollection<InvoiceFoodAndDrink> InvoiceFoodAndDrinks { get; set; } = new List<InvoiceFoodAndDrink>();

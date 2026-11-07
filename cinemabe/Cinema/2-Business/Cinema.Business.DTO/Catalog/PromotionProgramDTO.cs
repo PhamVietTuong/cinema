@@ -11,6 +11,9 @@ public class PromotionProgramDTO
     public string? Summary { get; set; }
     public string? BannerUrl { get; set; }
 
+    public Guid? CampaignId { get; set; }
+    public string? CampaignName { get; set; }
+
     public PromotionMechanic Mechanic { get; set; }
     public double? PercentOff { get; set; }
 
@@ -33,9 +36,12 @@ public class PromotionProgramDTO
     public bool IsPublished { get; set; }
     public bool AutoApply { get; set; }
 
-    public Guid? LinkedDiscountId { get; set; }
-    /// <summary>Shown only when the linked discount is active and has a code.</summary>
-    public string? LinkedDiscountCode { get; set; }
+    public string? Code { get; set; }
+    public int? MaxUsage { get; set; }
+    public int UsedCount { get; set; }
+    public double? MaxDiscountAmount { get; set; }
+    public Guid? MovieId { get; set; }
+    public string? MovieTitle { get; set; }
 
     public List<PromotionProgramPriceDTO> Prices { get; set; } = new();
     public List<PromotionProgramScheduleDTO> Schedules { get; set; } = new();

@@ -83,14 +83,15 @@ public class PromotionProgramManager : IPromotionProgramManager
     public async Task<PromotionProgramDTO> CreateAsync(CreatePromotionProgramRequest request)
     {
         await ValidateAsync(request.Mechanic, request.PercentOff, request.Eligibility, request.MinMemberShipId, request.MaxAge,
-            request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.LinkedDiscountId,
-            request.MaxTicketsPerTransaction);
+            request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.Code,
+            request.MaxTicketsPerTransaction, request.MovieId, request.CampaignId, null);
 
         var entity = new PromotionProgram
         {
             Title = request.Title.Trim(),
             Summary = Normalize(request.Summary),
             BannerUrl = Normalize(request.BannerUrl),
+            CampaignId = request.CampaignId,
             Mechanic = request.Mechanic,
             Eligibility = request.Eligibility,
             StartDate = request.StartDate,
@@ -103,7 +104,10 @@ public class PromotionProgramManager : IPromotionProgramManager
             DisplayOrder = request.DisplayOrder,
             IsPublished = request.IsPublished,
             AutoApply = request.AutoApply,
-            LinkedDiscountId = request.LinkedDiscountId,
+            Code = NormalizeCode(request.Code),
+            MaxUsage = request.MaxUsage,
+            MaxDiscountAmount = request.MaxDiscountAmount,
+            MovieId = request.MovieId,
         };
         ApplyMechanicAndEligibility(entity, request.PercentOff, request.MinMemberShipId, request.MaxAge, request.Prices);
         ReplaceSchedules(entity, request.Schedules);
@@ -122,12 +126,13 @@ public class PromotionProgramManager : IPromotionProgramManager
         }
 
         await ValidateAsync(request.Mechanic, request.PercentOff, request.Eligibility, request.MinMemberShipId, request.MaxAge,
-            request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.LinkedDiscountId,
-            request.MaxTicketsPerTransaction);
+            request.StartDate, request.EndDate, request.Prices, request.Schedules, request.AutoApply, request.Code,
+            request.MaxTicketsPerTransaction, request.MovieId, request.CampaignId, request.Id);
 
         entity.Title = request.Title.Trim();
         entity.Summary = Normalize(request.Summary);
         entity.BannerUrl = Normalize(request.BannerUrl);
+        entity.CampaignId = request.CampaignId;
         entity.Mechanic = request.Mechanic;
         entity.Eligibility = request.Eligibility;
         entity.StartDate = request.StartDate;
@@ -140,7 +145,10 @@ public class PromotionProgramManager : IPromotionProgramManager
         entity.DisplayOrder = request.DisplayOrder;
         entity.IsPublished = request.IsPublished;
         entity.AutoApply = request.AutoApply;
-        entity.LinkedDiscountId = request.LinkedDiscountId;
+        entity.Code = NormalizeCode(request.Code);
+        entity.MaxUsage = request.MaxUsage;
+        entity.MaxDiscountAmount = request.MaxDiscountAmount;
+        entity.MovieId = request.MovieId;
         entity.LastUpdatedTime = DateTime.UtcNow;
         ApplyMechanicAndEligibility(entity, request.PercentOff, request.MinMemberShipId, request.MaxAge, request.Prices);
         ReplaceSchedules(entity, request.Schedules);
@@ -162,7 +170,7 @@ public class PromotionProgramManager : IPromotionProgramManager
         PromotionEligibility eligibility, Guid? minMemberShipId, int? maxAge,
         DateTime startDate, DateTime endDate,
         List<PromotionProgramPriceDTO> prices, List<PromotionProgramScheduleDTO> schedules,
-        bool autoApply, Guid? linkedDiscountId, int? maxTicketsPerTransaction)
+        bool autoApply, string? code, int? maxTicketsPerTransaction, Guid? movieId, Guid? campaignId, Guid? selfId)
     {
         if (endDate < startDate)
         {
@@ -237,9 +245,26 @@ public class PromotionProgramManager : IPromotionProgramManager
             throw new InvalidOperationException("MaxTicketsPerTransaction must be positive when set.");
         }
 
-        if (linkedDiscountId is Guid discountId && !await _uow.DiscountStore.ExistsAsync(d => d.Id == discountId))
+        if (movieId is Guid mId && !await _uow.MovieStore.ExistsAsync(m => m.Id == mId))
         {
-            throw new InvalidOperationException("Linked discount does not exist.");
+            throw new InvalidOperationException("Selected movie does not exist.");
+        }
+
+        if (campaignId is Guid cId && !await _uow.PromotionCampaignStore.ExistsAsync(c => c.Id == cId))
+        {
+            throw new InvalidOperationException("Selected campaign does not exist.");
+        }
+
+        var normalizedCode = NormalizeCode(code);
+        if (autoApply && normalizedCode is not null)
+        {
+            throw new InvalidOperationException("A program cannot both require a code and auto-apply.");
+        }
+
+        if (normalizedCode is not null
+            && await _uow.PromotionProgramStore.ExistsAsync(p => p.Code == normalizedCode && (selfId == null || p.Id != selfId)))
+        {
+            throw new InvalidOperationException("This code is already used by another program.");
         }
 
         if (autoApply)
@@ -252,49 +277,65 @@ public class PromotionProgramManager : IPromotionProgramManager
             {
                 throw new InvalidOperationException("StudentOrTeacher/AgeLimit eligibility cannot be auto-applied online (no verification available) — leave AutoApply off.");
             }
-            if (linkedDiscountId is not null)
-            {
-                throw new InvalidOperationException("An auto-apply program cannot also be linked to a code-based discount.");
-            }
         }
     }
 
     // ── Entity shaping ───────────────────────────────────────────────────────
 
     /// <summary>Clears fields that don't apply to the chosen mechanic/eligibility, and replaces the
-    /// price-row collection wholesale.</summary>
-    private static void ApplyMechanicAndEligibility(PromotionProgram entity, double? percentOff, Guid? minMemberShipId, int? maxAge, List<PromotionProgramPriceDTO> prices)
+    /// price-row collection wholesale.
+    /// A new row is created with its PromotionProgramId set explicitly and handed to
+    /// IPromotionProgramStore.AddPrice (an explicit DbSet.Add), not entity.Prices.Add(...): a child
+    /// discovered only via collection-navigation fixup, never through an explicit Add(), gets tracked
+    /// as Modified instead of Added once its Guid Id is a non-default, client-set value (BaseEntity
+    /// sets Id = Guid.NewGuid() in its property initializer) — EF's heuristic for navigation-discovered
+    /// entities with an already-set key assumes "this might reference an existing row" rather than
+    /// "this is new", which threw DbUpdateConcurrencyException ("expected 1 row, affected 0") on every
+    /// Update, even a no-op one, because the "Modified" UPDATE targeted a row that had never existed.
+    /// The old rows are explicitly removed first (RemovePrices) so they are never fixed-up against the
+    /// new ones, and entity.Prices is still kept in sync for the in-memory graph MapPageAsync reads
+    /// afterwards.</summary>
+    private void ApplyMechanicAndEligibility(PromotionProgram entity, double? percentOff, Guid? minMemberShipId, int? maxAge, List<PromotionProgramPriceDTO> prices)
     {
         entity.PercentOff = entity.Mechanic == PromotionMechanic.PercentOff ? percentOff : null;
         entity.MinMemberShipId = entity.Eligibility == PromotionEligibility.Members ? minMemberShipId : null;
         entity.MaxAge = entity.Eligibility == PromotionEligibility.AgeLimit ? maxAge : null;
 
-        entity.Prices.Clear();
+        _uow.PromotionProgramStore.RemovePrices(entity.Prices);
+        entity.Prices = new List<PromotionProgramPrice>();
         if (entity.Mechanic == PromotionMechanic.FixedPrice)
         {
             foreach (var p in prices ?? new())
             {
-                entity.Prices.Add(new PromotionProgramPrice { ProjectionForm = p.ProjectionForm, SeatKind = p.SeatKind, Price = p.Price });
+                var price = new PromotionProgramPrice { PromotionProgramId = entity.Id, ProjectionForm = p.ProjectionForm, SeatKind = p.SeatKind, Price = p.Price };
+                _uow.PromotionProgramStore.AddPrice(price);
+                entity.Prices.Add(price);
             }
         }
     }
 
-    private static void ReplaceSchedules(PromotionProgram entity, List<PromotionProgramScheduleDTO> schedules)
+    /// <summary>See the remarks on <see cref="ApplyMechanicAndEligibility"/> — same fix, for Schedules.</summary>
+    private void ReplaceSchedules(PromotionProgram entity, List<PromotionProgramScheduleDTO> schedules)
     {
-        entity.Schedules.Clear();
+        _uow.PromotionProgramStore.RemoveSchedules(entity.Schedules);
+        entity.Schedules = new List<PromotionProgramSchedule>();
         foreach (var s in schedules ?? new())
         {
-            entity.Schedules.Add(new PromotionProgramSchedule
+            var schedule = new PromotionProgramSchedule
             {
+                PromotionProgramId = entity.Id,
                 TheaterId = s.TheaterId,
                 DaysOfWeekMask = s.DaysOfWeekMask,
                 StartTimeOfDay = ParseTime(s.StartTimeOfDay),
                 EndTimeOfDay = ParseTime(s.EndTimeOfDay),
-            });
+            };
+            _uow.PromotionProgramStore.AddSchedule(schedule);
+            entity.Schedules.Add(schedule);
         }
     }
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static string? NormalizeCode(string? code) => string.IsNullOrWhiteSpace(code) ? null : code.Trim();
     private static TimeOnly? ParseTime(string? value) => TimeOnly.TryParse(value, out var t) ? t : null;
 
     // ── Mapping (fixed number of queries regardless of page size) ────────────
@@ -323,10 +364,15 @@ public class PromotionProgramManager : IPromotionProgramManager
             ? (await _uow.MemberShipStore.FindAsync(m => tierIds.Contains(m.Id))).ToDictionary(m => m.Id, m => m.Name)
             : new Dictionary<Guid, string>();
 
-        var discountIds = items.Where(p => p.LinkedDiscountId.HasValue).Select(p => p.LinkedDiscountId!.Value).Distinct().ToList();
-        var discounts = discountIds.Count > 0
-            ? (await _uow.DiscountStore.FindAsync(d => discountIds.Contains(d.Id))).ToDictionary(d => d.Id, d => (d.Code, d.IsActive))
-            : new Dictionary<Guid, (string? Code, bool IsActive)>();
+        var movieIds = items.Where(p => p.MovieId.HasValue).Select(p => p.MovieId!.Value).Distinct().ToList();
+        var movieTitles = movieIds.Count > 0
+            ? (await _uow.MovieStore.FindAsync(m => movieIds.Contains(m.Id))).ToDictionary(m => m.Id, m => m.Title)
+            : new Dictionary<Guid, string>();
+
+        var campaignIds = items.Where(p => p.CampaignId.HasValue).Select(p => p.CampaignId!.Value).Distinct().ToList();
+        var campaignNames = campaignIds.Count > 0
+            ? (await _uow.PromotionCampaignStore.FindAsync(c => campaignIds.Contains(c.Id))).ToDictionary(c => c.Id, c => c.Name)
+            : new Dictionary<Guid, string>();
 
         foreach (var dto in dtos)
         {
@@ -355,11 +401,14 @@ public class PromotionProgramManager : IPromotionProgramManager
                 dto.MinMemberShipName = tierNames.GetValueOrDefault(entity.MinMemberShipId.Value);
             }
 
-            if (entity.LinkedDiscountId.HasValue
-                && discounts.TryGetValue(entity.LinkedDiscountId.Value, out var d)
-                && d.IsActive && !string.IsNullOrEmpty(d.Code))
+            if (entity.MovieId.HasValue)
             {
-                dto.LinkedDiscountCode = d.Code;
+                dto.MovieTitle = movieTitles.GetValueOrDefault(entity.MovieId.Value);
+            }
+
+            if (entity.CampaignId.HasValue)
+            {
+                dto.CampaignName = campaignNames.GetValueOrDefault(entity.CampaignId.Value);
             }
         }
 
