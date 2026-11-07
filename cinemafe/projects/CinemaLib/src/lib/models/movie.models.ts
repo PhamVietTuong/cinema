@@ -52,7 +52,7 @@ export interface Comment {
   content: string;
   userName: string;
   userAvatar?: string;
-  parentId?: number;
+  parentId?: string;
   creationTime: string;
   /** True when the signed-in user wrote it, so edit/delete are offered. */
   isMine: boolean;

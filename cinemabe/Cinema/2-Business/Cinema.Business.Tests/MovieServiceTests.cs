@@ -408,19 +408,20 @@ public class MovieServiceTests
             .ReturnsAsync(new Dictionary<Guid, double>());
         var typeId = Guid.NewGuid();
         var theaterId = Guid.NewGuid();
+        var future = DateOnly.FromDateTime(DateTime.Today.AddDays(30));
 
         await _sut.GetMoviesAsync(new PagingSearchDTO
         {
             PageIndex = 2, PageSize = 15,
-            Filters = new() { ["movieTypeId"] = typeId.ToString(), ["language"] = "English", ["theaterId"] = theaterId.ToString(), ["date"] = "2026-12-01" },
+            Filters = new() { ["movieTypeId"] = typeId.ToString(), ["language"] = "English", ["theaterId"] = theaterId.ToString(), ["date"] = future.ToString("yyyy-MM-dd") },
         });
 
         captured.Should().NotBeNull();
         captured!.MovieTypeId.Should().Be(typeId);
         captured.Language.Should().Be("English");
         captured.TheaterId.Should().Be(theaterId);
-        captured.ShowFrom.Should().Be(new DateTime(2026, 12, 1));
-        captured.ShowTo.Should().Be(new DateTime(2026, 12, 2));
+        captured.ShowFrom.Should().Be(future.ToDateTime(TimeOnly.MinValue));
+        captured.ShowTo.Should().Be(future.ToDateTime(TimeOnly.MinValue).AddDays(1));
     }
 
     [Fact]
@@ -435,13 +436,151 @@ public class MovieServiceTests
 
         var result = await _sut.SearchShowTimesAsync(new PagingSearchDTO
         {
-            Filters = new() { ["timeFrom"] = "18:00", ["timeTo"] = "22:00", ["date"] = "2026-12-01" },
+            Filters = new() { ["timeFrom"] = "18:00", ["timeTo"] = "22:00", ["date"] = DateTime.Today.AddDays(30).ToString("yyyy-MM-dd") },
         });
 
         captured!.TimeFrom.Should().Be(new TimeOnly(18, 0));
         captured.TimeTo.Should().Be(new TimeOnly(22, 0));
         result.TotalCount.Should().Be(1);
         result.Results.Single().MovieTitle.Should().Be("Wicked");
+    }
+
+    private async Task<MovieSearchFilter> CaptureMovieFilterAsync(Dictionary<string, string> filters)
+    {
+        MovieSearchFilter? captured = null;
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(It.IsAny<MovieSearchFilter>(), It.IsAny<int>(), It.IsAny<int>()))
+            .Callback<MovieSearchFilter, int, int>((f, _, _) => captured = f)
+            .ReturnsAsync((new List<Movie>(), 0));
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, double>());
+        await _sut.GetMoviesAsync(new PagingSearchDTO { Filters = filters });
+        return captured!;
+    }
+
+    [Theory]
+    [InlineData("now", "now")]
+    [InlineData("coming", "coming")]
+    [InlineData("bogus", null)]
+    public async Task GetMoviesAsync_Status_OnlyNowOrComingReachesFilter(string status, string? expected)
+    {
+        var filter = await CaptureMovieFilterAsync(new() { ["status"] = status });
+
+        filter.Status.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task GetMoviesAsync_TheaterOnly_ShowFromNowAndNoUpperBound()
+    {
+        var filter = await CaptureMovieFilterAsync(new() { ["theaterId"] = Guid.NewGuid().ToString() });
+
+        filter.ShowFrom.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.ShowTo.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetMoviesAsync_DateToday_ClampsShowFromToNow()
+    {
+        var filter = await CaptureMovieFilterAsync(new() { ["date"] = DateTime.Today.ToString("yyyy-MM-dd") });
+
+        filter.ShowFrom.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.ShowTo.Should().Be(DateTime.Today.AddDays(1));
+    }
+
+    [Fact]
+    public async Task GetMoviesAsync_PastDate_ClampsShowFromToNow_SoNothingMatches()
+    {
+        var filter = await CaptureMovieFilterAsync(new() { ["date"] = DateTime.Today.AddDays(-5).ToString("yyyy-MM-dd") });
+
+        filter.ShowFrom.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.ShowTo.Should().BeBefore(filter.ShowFrom!.Value);
+    }
+
+    private async Task<(ShowTimeSearchFilter Filter, int PageSize)> CaptureShowTimeFilterAsync(Dictionary<string, string>? filters, int pageSize = 20)
+    {
+        ShowTimeSearchFilter? captured = null;
+        var capturedSize = 0;
+        _uowMock.Setup(u => u.ShowTimeStore.SearchRoomsAsync(It.IsAny<ShowTimeSearchFilter>(), It.IsAny<int>(), It.IsAny<int>()))
+            .Callback<ShowTimeSearchFilter, int, int>((f, _, size) => { captured = f; capturedSize = size; })
+            .ReturnsAsync((new List<ShowTimeSearchRow>(), 0));
+        await _sut.SearchShowTimesAsync(new PagingSearchDTO { PageSize = pageSize, Filters = filters });
+        return (captured!, capturedSize);
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_FutureDate_CoversThatWholeDay()
+    {
+        var day = DateTime.Today.AddDays(10);
+
+        var (filter, _) = await CaptureShowTimeFilterAsync(new() { ["date"] = day.ToString("yyyy-MM-dd") });
+
+        filter.From.Should().Be(day);
+        filter.To.Should().Be(day.AddDays(1));
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_NoDate_StartsNowWithNoUpperBound()
+    {
+        var (filter, _) = await CaptureShowTimeFilterAsync(null);
+
+        filter.From.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.To.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_Today_ClampsFromToNow()
+    {
+        var (filter, _) = await CaptureShowTimeFilterAsync(new() { ["date"] = DateTime.Today.ToString("yyyy-MM-dd") });
+
+        filter.From.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.To.Should().Be(DateTime.Today.AddDays(1));
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_PastDate_ClampsFromToNow()
+    {
+        var (filter, _) = await CaptureShowTimeFilterAsync(new() { ["date"] = DateTime.Today.AddDays(-3).ToString("yyyy-MM-dd") });
+
+        filter.From.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.To.Should().BeBefore(filter.From!.Value);
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_PageSizeCappedAt100()
+    {
+        var (_, size) = await CaptureShowTimeFilterAsync(null, pageSize: 5000);
+
+        size.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_SetsIsMineOnRepliesToo_AndNotForAnonymous()
+    {
+        var movieId = Guid.NewGuid();
+        var me = Guid.NewGuid();
+        var reply = new CommentView(Guid.NewGuid(), "my reply", Guid.NewGuid(), me, DateTime.UtcNow, "Me", null, new List<CommentView>());
+        var top = new CommentView(Guid.NewGuid(), "theirs", null, Guid.NewGuid(), DateTime.UtcNow, "Other", null, new List<CommentView> { reply });
+        _uowMock.Setup(u => u.CommentStore.GetPagedForMovieAsync(movieId, 1, 10))
+            .ReturnsAsync((new List<CommentView> { top }, 1));
+
+        var signedIn = await _sut.GetCommentsAsync(movieId, me, new PagingSearchDTO { PageSize = 10 });
+        var anonymous = await _sut.GetCommentsAsync(movieId, null, new PagingSearchDTO { PageSize = 10 });
+
+        signedIn.Results.Single().IsMine.Should().BeFalse();
+        signedIn.Results.Single().Replies.Single().IsMine.Should().BeTrue();
+        anonymous.Results.Single().Replies.Single().IsMine.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_PageSizeCappedAt50()
+    {
+        var movieId = Guid.NewGuid();
+        _uowMock.Setup(u => u.CommentStore.GetPagedForMovieAsync(movieId, 2, 50))
+            .ReturnsAsync((new List<CommentView>(), 0));
+
+        var result = await _sut.GetCommentsAsync(movieId, null, new PagingSearchDTO { PageIndex = 2, PageSize = 500 });
+
+        result.CountPerPage.Should().Be(50);
+        _uowMock.Verify(u => u.CommentStore.GetPagedForMovieAsync(movieId, 2, 50), Times.Once);
     }
 
     [Fact]

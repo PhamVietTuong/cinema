@@ -115,10 +115,10 @@ export class MoviesEffects {
   updateOwnComment$ = createEffect(() =>
     this.actions$.pipe(
       ofType(MoviesActions.updateOwnComment),
-      switchMap(({ movieId, commentId, content }) =>
+      mergeMap(({ movieId, commentId, content }) =>
         this._cinemaService.updateOwnComment(CinemaServiceAgent.UpdateCommentRequest.fromJS({ content }), commentId).pipe(
-          mergeMap(() => of(
-            MoviesActions.updateOwnCommentSuccess({ movieId, commentId }),
+          mergeMap(comment => of(
+            MoviesActions.updateOwnCommentSuccess({ movieId, commentId, comment }),
             MoviesActions.loadMovieDetail({ id: movieId })
           )),
           catchError(err => of(MoviesActions.updateOwnCommentFailure({ error: apiErrorMessage(err, err?.message ?? '') })))
@@ -130,7 +130,7 @@ export class MoviesEffects {
   deleteOwnComment$ = createEffect(() =>
     this.actions$.pipe(
       ofType(MoviesActions.deleteOwnComment),
-      switchMap(({ movieId, commentId }) =>
+      mergeMap(({ movieId, commentId }) =>
         this._cinemaService.deleteOwnComment(commentId).pipe(
           mergeMap(() => of(
             MoviesActions.deleteOwnCommentSuccess({ movieId, commentId }),
@@ -147,8 +147,8 @@ export class MoviesEffects {
       ofType(MoviesActions.addComment),
       switchMap(({ movieId, content, parentId }) =>
         this._cinemaService.addComment(CinemaServiceAgent.AddCommentRequest.fromJS({ content, parentId }), movieId).pipe(
-          mergeMap(() => of(
-            MoviesActions.addCommentSuccess({ movieId }),
+          mergeMap(comment => of(
+            MoviesActions.addCommentSuccess({ movieId, comment }),
             MoviesActions.loadMovieDetail({ id: movieId })
           )),
           catchError(err => of(MoviesActions.addCommentFailure({ error: apiErrorMessage(err, err?.message ?? '') })))

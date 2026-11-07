@@ -60,7 +60,7 @@ public class TwilioSmsNotificationService : ISmsNotificationService
             using var resp = await http.SendAsync(req, timeout.Token);
             if (!resp.IsSuccessStatusCode)
             {
-                var body = await resp.Content.ReadAsStringAsync();
+                var body = await resp.Content.ReadAsStringAsync(timeout.Token);
                 LogProvider.Current.Information($"TwilioSmsNotificationService->non-success {(int)resp.StatusCode}: {body}");
             }
         }

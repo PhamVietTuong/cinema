@@ -17,6 +17,8 @@ public class NotificationTests
     [InlineData("84900123456", "+84900123456")]
     [InlineData("0084900123456", "+84900123456")]
     [InlineData("+15005550006", "+15005550006")]
+    [InlineData("+84 0900123456", "+84900123456")]
+    [InlineData("0084 0900123456", "+84900123456")]
     public void ToE164_NormalisesValidNumbers(string raw, string expected)
     {
         PhoneNumberNormalizer.ToE164(raw).Should().Be(expected);
@@ -81,6 +83,38 @@ public class NotificationTests
         errors.Should().Contain(e => e.Contains("TimeoutSeconds"));
         errors.Should().Contain(e => e.Contains("From"));
         errors.Should().Contain(e => e.Contains("Password"));
+    }
+
+    [Theory]
+    [InlineData("Cinema <noreply@example.com>")]
+    [InlineData("\"Cinema VN\" <noreply@example.com>")]
+    [InlineData("noreply@example.com")]
+    public void SmtpOptions_FromWithDisplayName_IsAccepted(string from)
+    {
+        var options = new SmtpOptions { Host = "smtp.example.com", From = from };
+
+        options.Validate().Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("user", null, null)]
+    [InlineData(null, "secret", null)]
+    [InlineData(null, null, "noreply@example.com")]
+    public void SmtpOptions_StrayFieldsWithoutHost_Fail(string? user, string? password, string? from)
+    {
+        var options = new SmtpOptions { Host = "", User = user, Password = password, From = from };
+
+        options.Validate().Should().ContainSingle().Which.Should().Contain("Host");
+    }
+
+    [Theory]
+    [InlineData("token", null)]
+    [InlineData(null, "+15005550006")]
+    public void TwilioOptions_StrayFieldsWithoutSid_Fail(string? token, string? from)
+    {
+        var options = new TwilioOptions { AccountSid = "", AuthToken = token, FromNumber = from };
+
+        options.Validate().Should().ContainSingle().Which.Should().Contain("AccountSid");
     }
 
     [Fact]

@@ -388,6 +388,7 @@
       "date": "Ngày",
       "timeFrom": "Từ giờ",
       "timeTo": "Đến giờ",
+      "timeRangeInvalid": "Giờ bắt đầu không được sau giờ kết thúc.",
       "clear": "Xóa bộ lọc"
     },
     "detail": {

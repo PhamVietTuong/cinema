@@ -43,14 +43,16 @@ public class MovieManager : IMovieManager
         var pageSize = search.PageSize  > 0 ? search.PageSize  : 12;
 
         // Date alone means "any theater showing it that day"; theater alone means "from now on".
+        // Screenings that already started never count, so today (or a past date) is clamped to now.
         var date = search.Filters.GetDateOnly("date");
         var theaterId = search.Filters.GetGuid("theaterId");
         DateTime? showFrom = null;
         DateTime? showTo = null;
         if (date is DateOnly d)
         {
-            showFrom = d.ToDateTime(TimeOnly.MinValue);
-            showTo = showFrom.Value.AddDays(1);
+            var dayStart = d.ToDateTime(TimeOnly.MinValue);
+            showFrom = dayStart > DateTime.Now ? dayStart : DateTime.Now;
+            showTo = dayStart.AddDays(1);
         }
         else if (theaterId.HasValue)
         {
@@ -146,13 +148,11 @@ public class MovieManager : IMovieManager
             throw new InvalidOperationException("The start of the time range must not be after its end.");
         }
 
-        // A given date covers that whole day; otherwise only screenings that have not started yet.
-        var from = date.HasValue ? date.Value.ToDateTime(TimeOnly.MinValue) : DateTime.Now;
-        DateTime? to = date.HasValue ? from.AddDays(1) : null;
-        if (date.HasValue && date.Value == DateOnly.FromDateTime(DateTime.Today))
-        {
-            from = DateTime.Now;
-        }
+        // A given date covers that day, but only screenings that have not started yet: today (or a past
+        // date) is clamped to now, so a past date yields nothing.
+        var dayStart = date.HasValue ? date.Value.ToDateTime(TimeOnly.MinValue) : DateTime.Now;
+        var from = dayStart > DateTime.Now ? dayStart : DateTime.Now;
+        DateTime? to = date.HasValue ? dayStart.AddDays(1) : null;
 
         var filter = new ShowTimeSearchFilter(
             MovieId: search.Filters.GetGuid("movieId"),

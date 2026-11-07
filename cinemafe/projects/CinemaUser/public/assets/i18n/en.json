@@ -388,6 +388,7 @@
       "date": "Date",
       "timeFrom": "From time",
       "timeTo": "To time",
+      "timeRangeInvalid": "The start time must not be after the end time.",
       "clear": "Clear filters"
     },
     "detail": {

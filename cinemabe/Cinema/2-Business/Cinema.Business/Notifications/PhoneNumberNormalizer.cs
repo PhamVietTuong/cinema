@@ -42,13 +42,15 @@ public static partial class PhoneNumberNormalizer
         }
 
         string candidate;
-        if (hasPlus)
+        if (hasPlus || digits.StartsWith("00"))
         {
-            candidate = "+" + digits;
-        }
-        else if (digits.StartsWith("00"))
-        {
-            candidate = "+" + digits[2..];
+            var international = hasPlus ? digits : digits[2..];
+            // "+84 0900123456": the trunk 0 is not part of the number once a country code is written.
+            if (international.StartsWith(defaultCountryCode + "0"))
+            {
+                international = defaultCountryCode + international[(defaultCountryCode.Length + 1)..];
+            }
+            candidate = "+" + international;
         }
         else if (digits.StartsWith('0'))
         {

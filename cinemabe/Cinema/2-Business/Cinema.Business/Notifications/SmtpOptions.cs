@@ -41,6 +41,11 @@ public class SmtpOptions
         var errors = new List<string>();
         if (!IsConfigured)
         {
+            // A section with credentials/sender but no host would silently fall back to the dev-log sender.
+            if (!string.IsNullOrWhiteSpace(User) || !string.IsNullOrWhiteSpace(Password) || !string.IsNullOrWhiteSpace(From))
+            {
+                errors.Add($"{SectionName}:Host is required when {SectionName}:User, Password or From is set.");
+            }
             return errors;
         }
         if (Port is < 1 or > 65535)
@@ -65,6 +70,7 @@ public class SmtpOptions
 
     private static bool IsEmail(string value)
     {
-        return MailAddress.TryCreate(value, out var address) && address.Address == value.Trim();
+        // Anything MailMessage accepts, including a display name ("Cinema <noreply@x.vn>").
+        return MailAddress.TryCreate(value, out _);
     }
 }

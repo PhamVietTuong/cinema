@@ -50,7 +50,7 @@ No secret values are reproduced anywhere below — only key names, defaults as c
 | `Sms:Twilio:AuthToken`, `Sms:Twilio:FromNumber` | Twilio credentials/sender number (required once `AccountSid` is set; `FromNumber` must be a valid number, normalised to E.164) | optional | `""` |
 | `Sms:Twilio:TimeoutSeconds` | Per-request timeout (1-120) | optional | `10` |
 
-Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program.cs` validates the whole section (`SmtpOptions`/`TwilioOptions`) and the host refuses to start with every problem listed (bad port, sender not an email, `User` without `Password`, missing `AuthToken`, invalid `FromNumber`...). Unconfigured sections just keep the dev-log senders.
+Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program.cs` validates the whole section (`SmtpOptions`/`TwilioOptions`) and the host refuses to start with every problem listed (bad port, sender not an email, `User` without `Password`, missing `AuthToken`, invalid `FromNumber`...). A section with a credential/sender but no key field (`Smtp:User`/`Password`/`From` without `Smtp:Host`, or `Sms:Twilio:AuthToken`/`FromNumber` without `AccountSid`) fails too, so it cannot silently fall back to the dev-log sender. A fully empty section just keeps the dev-log senders. `Smtp:From` may include a display name (`Cinema <noreply@x.vn>`).
 
 ### Payments
 | Key | Purpose | Required | Default |

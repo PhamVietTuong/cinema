@@ -34,11 +34,11 @@ export const rateMovieSuccess = createAction('[Movies] Rate Movie Success', prop
 export const rateMovieFailure = createAction('[Movies] Rate Movie Failure', props<{ error: string }>());
 
 export const addComment = createAction('[Movies] Add Comment', props<{ movieId: string; content: string; parentId?: string }>());
-export const addCommentSuccess = createAction('[Movies] Add Comment Success', props<{ movieId: string }>());
+export const addCommentSuccess = createAction('[Movies] Add Comment Success', props<{ movieId: string; comment: any }>());
 export const addCommentFailure = createAction('[Movies] Add Comment Failure', props<{ error: string }>());
 
 export const updateOwnComment = createAction('[Movies] Update Own Comment', props<{ movieId: string; commentId: string; content: string }>());
-export const updateOwnCommentSuccess = createAction('[Movies] Update Own Comment Success', props<{ movieId: string; commentId: string }>());
+export const updateOwnCommentSuccess = createAction('[Movies] Update Own Comment Success', props<{ movieId: string; commentId: string; comment: any }>());
 export const updateOwnCommentFailure = createAction('[Movies] Update Own Comment Failure', props<{ error: string }>());
 
 export const deleteOwnComment = createAction('[Movies] Delete Own Comment', props<{ movieId: string; commentId: string }>());

@@ -58,7 +58,7 @@
 
   <div *ngIf="isShowtimes && showtimes.length === 0 && !showtimesLoading" class="empty">
     <mat-icon>schedule</mat-icon>
-    <p>{{ (showtimesError ? showtimesError : 'movies.list.emptyShowtimes') | translate }}</p>
+    <p>{{ showtimesError || ('movies.list.emptyShowtimes' | translate) }}</p>
   </div>
 
   <div class="pager-loadmore" *ngIf="canLoadMore">

@@ -37,6 +37,11 @@ public class TwilioOptions
         var errors = new List<string>();
         if (!IsConfigured)
         {
+            // A section with a token or sender but no SID would silently fall back to the dev-log sender.
+            if (!string.IsNullOrWhiteSpace(AuthToken) || !string.IsNullOrWhiteSpace(FromNumber))
+            {
+                errors.Add($"{SectionName}:AccountSid is required when {SectionName}:AuthToken or FromNumber is set.");
+            }
             return errors;
         }
         if (!AccountSid!.StartsWith("AC", StringComparison.Ordinal))

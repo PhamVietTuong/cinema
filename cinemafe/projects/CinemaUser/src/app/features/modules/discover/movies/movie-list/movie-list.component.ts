@@ -3,10 +3,11 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import {
   SharedModule, loadMovies, MOVIE_PAGE_SIZE, FilterBarComponent, FilterBarField, FilterBarOption,
-  selectPagedMovies, selectMoviesLoading, screeningFormatLabel, CinemaServiceAgent,
+  selectPagedMovies, selectMoviesLoading, screeningFormatLabel, rawApiErrorMessage, CinemaServiceAgent,
 } from 'CinemaLib';
 import { MovieCardComponent } from '../../../../../shared/movie-card/movie-card.component';
 import { SiteFooterComponent } from '../../../../../shared/site-footer/site-footer.component';
@@ -29,6 +30,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
   private _route = inject(ActivatedRoute);
   private _cdr = inject(ChangeDetectorRef);
   private _api = inject(CinemaServiceAgent.HttpService);
+  private _translate = inject(TranslateService);
   private _destroy$ = new Subject<void>();
   private _filterChange$ = new Subject<void>();
 
@@ -116,6 +118,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
 
   setMode(m: Mode): void {
     this.mode = m;
+    this.searchCtrl.reset('', { emitEvent: false });
     this.filterForm.reset({ movieTypeId: '', language: '', theaterId: '', date: '', timeFrom: '', timeTo: '' }, { emitEvent: false });
     this._buildFilterFields();
     this.page = 1;
@@ -127,13 +130,14 @@ export class MovieListComponent implements OnInit, OnDestroy {
   }
 
   clearFilters(): void {
+    this.searchCtrl.reset('', { emitEvent: false });
     this.filterForm.reset({ movieTypeId: '', language: '', theaterId: '', date: '', timeFrom: '', timeTo: '' }, { emitEvent: false });
     this.page = 1;
     this._load();
   }
 
   get hasActiveFilters(): boolean {
-    return Object.values(this.filterForm.getRawValue()).some(v => !!v);
+    return !!(this.searchCtrl.value ?? '').trim() || Object.values(this.filterForm.getRawValue()).some(v => !!v);
   }
 
   private _loadFilterOptions(): void {
@@ -215,6 +219,15 @@ export class MovieListComponent implements OnInit, OnDestroy {
   private _loadShowtimes(): void {
     const request = ++this._showtimesRequest;
     const filters: { [key: string]: string } = this._filterValues();
+    // Same rule as the server (400 otherwise), checked here so the user gets a clear message at once.
+    if (filters['timeFrom'] && filters['timeTo'] && filters['timeFrom'] > filters['timeTo']) {
+      this.showtimes = [];
+      this.showtimesTotal = 0;
+      this.showtimesLoading = false;
+      this.showtimesError = this._translate.instant('movies.filters.timeRangeInvalid');
+      this._cdr.markForCheck();
+      return;
+    }
     this.showtimesLoading = true;
     this.showtimesError = '';
     this._cdr.markForCheck();
@@ -231,7 +244,9 @@ export class MovieListComponent implements OnInit, OnDestroy {
         error: err => {
           if (request !== this._showtimesRequest) { return; }
           if (this.page === 1) { this.showtimes = []; this.showtimesTotal = 0; }
-          this.showtimesError = err?.error?.error ?? err?.message ?? '';
+          else { this.page -= 1; }
+          // The server's own validation message, shown as plain text (not an i18n key).
+          this.showtimesError = rawApiErrorMessage(err) ?? '';
           this.showtimesLoading = false;
           this._cdr.markForCheck();
         },
