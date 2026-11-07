@@ -71,6 +71,7 @@
 .pill { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
 .pill--auto { border: 1px solid var(--ns-beam-line); color: var(--mp-ink-2); }
 .pill--starts { color: var(--mp-gold-deep); }
+.pill--campaign { order: -1; background: var(--mp-red); color: var(--mp-paper); text-transform: uppercase; letter-spacing: .03em; }
 
 .ticket-mechanic { display: block; font-family: var(--mp-font-display); font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--mp-gold-deep); margin-top: 6px; }
 .ticket-summary { font-size: .88rem; color: var(--mp-muted); margin: 8px 0 0; line-height: 1.5; }

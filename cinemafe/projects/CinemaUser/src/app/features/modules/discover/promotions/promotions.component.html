@@ -57,7 +57,8 @@
 
       <div class="ticket-body">
         <div class="ticket-head">
-          <h3 class="ticket-title">{{ p.title }}</h3>
+          <span class="pill pill--campaign" *ngIf="p.campaignName">{{ p.campaignName }}</span>
+          <h3 class="ticket-title">{{ displayTitle(p) }}</h3>
           <span class="pill pill--auto" *ngIf="p.autoApply">{{ 'promotions.autoApplied' | translate }}</span>
           <span class="pill pill--starts" *ngIf="!hasStarted(p)">{{ 'promotions.startsOn' | translate:{ date: (p.startDate | date:'dd/MM') } }}</span>
         </div>

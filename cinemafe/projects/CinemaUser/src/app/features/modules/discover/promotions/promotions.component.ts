@@ -81,6 +81,16 @@ export class PromotionsComponent implements OnInit {
   }
 
   // ── Display helpers ──────────────────────────────────────────────────────────
+  /** Title with a leading "{CampaignName} - " stripped, since the campaign is now shown as its own
+   * badge next to the title instead of being baked into the title text. */
+  displayTitle(p: ProgramDTO): string {
+    const title = p.title ?? '';
+    if (p.campaignName && title.startsWith(`${p.campaignName} - `)) {
+      return title.slice(p.campaignName.length + 3);
+    }
+    return title;
+  }
+
   mechanicLabel(p: ProgramDTO): string | null {
     if (p.mechanic === CinemaServiceAgent.PromotionMechanic.Info) {
       return null;
