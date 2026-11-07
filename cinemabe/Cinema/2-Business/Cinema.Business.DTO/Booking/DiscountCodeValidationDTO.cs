@@ -5,7 +5,8 @@ public class DiscountCodeValidationDTO
 {
     public bool Valid { get; set; }
 
-    /// <summary>What this code alone would take off the given total (after the member's tier discount).</summary>
+    /// <summary>What this code alone would take off the given total, per-ticket-unit (same basis as
+    /// booking), capped by the program's MaxDiscountAmount.</summary>
     public double DiscountAmount { get; set; }
 
     public string? Message { get; set; }

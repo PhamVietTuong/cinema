@@ -8,6 +8,9 @@ public interface IShowTimeStore : IGenericStore<ShowTime>
     /// <summary>Flattened ShowTime x Room schedule of one movie inside [fromInclusive, toExclusive),
     /// ordered by StartTime. Backs the movie-detail date-tab strip (today + next 3 days).</summary>
     Task<IReadOnlyList<MovieScheduleRow>> GetMovieScheduleAsync(Guid movieId, DateTime fromInclusive, DateTime toExclusive);
+    /// <summary>Public cross-movie search over showtime x room rows (active showtimes in Active rooms), ordered by
+    /// StartTime and paged in SQL.</summary>
+    Task<(IReadOnlyList<ShowTimeSearchRow> Items, int Total)> SearchRoomsAsync(ShowTimeSearchFilter filter, int page, int pageSize);
     Task<ShowTimeRoom?> GetShowTimeRoomAsync(Guid showTimeId, Guid roomId);
     /// <summary>Active showtimes in Active rooms of a theater with StartTime in [fromInclusive, toExclusive), ordered by StartTime.</summary>
     Task<IReadOnlyList<TheaterShowTimeRow>> GetByTheaterAndRangeAsync(Guid theaterId, DateTime fromInclusive, DateTime toExclusive);

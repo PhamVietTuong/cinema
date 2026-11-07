@@ -27,7 +27,7 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
     public async Task<Invoice?> GetWithDetailsAsync(Guid id)
         => await DbSet
             .Include(i => i.User)
-            .Include(i => i.Discount)
+            .Include(i => i.PromotionProgram)
             .Include(i => i.InvoiceTickets)
                 .ThenInclude(it => it.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
             .Include(i => i.InvoiceTickets)

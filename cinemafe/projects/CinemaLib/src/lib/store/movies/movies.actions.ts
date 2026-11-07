@@ -9,7 +9,17 @@ export const loadComingSoon = createAction('[Movies] Load Coming Soon', props<{ 
 export const loadComingSoonSuccess = createAction('[Movies] Load Coming Soon Success', props<{ movies: Movie[]; total: number; page: number }>());
 export const loadComingSoonFailure = createAction('[Movies] Load Coming Soon Failure', props<{ error: string }>());
 
-export const loadMovies = createAction('[Movies] Load Movies', props<{ search?: string; genreId?: number; page: number; pageSize: number }>());
+/** Server-side movie filters; every member is optional. `date` is yyyy-MM-dd, `status` is 'now' | 'coming'. */
+export interface MovieFilters {
+  search?: string;
+  movieTypeId?: string;
+  language?: string;
+  theaterId?: string;
+  date?: string;
+  status?: 'now' | 'coming';
+}
+
+export const loadMovies = createAction('[Movies] Load Movies', props<{ filters?: MovieFilters; page: number; pageSize: number }>());
 export const loadMoviesSuccess = createAction('[Movies] Load Movies Success', props<{ result: PagedResult<Movie> }>());
 export const loadMoviesFailure = createAction('[Movies] Load Movies Failure', props<{ error: string }>());
 
@@ -24,5 +34,13 @@ export const rateMovieSuccess = createAction('[Movies] Rate Movie Success', prop
 export const rateMovieFailure = createAction('[Movies] Rate Movie Failure', props<{ error: string }>());
 
 export const addComment = createAction('[Movies] Add Comment', props<{ movieId: string; content: string; parentId?: string }>());
-export const addCommentSuccess = createAction('[Movies] Add Comment Success', props<{ movieId: string }>());
+export const addCommentSuccess = createAction('[Movies] Add Comment Success', props<{ movieId: string; comment: any }>());
 export const addCommentFailure = createAction('[Movies] Add Comment Failure', props<{ error: string }>());
+
+export const updateOwnComment = createAction('[Movies] Update Own Comment', props<{ movieId: string; commentId: string; content: string }>());
+export const updateOwnCommentSuccess = createAction('[Movies] Update Own Comment Success', props<{ movieId: string; commentId: string; comment: any }>());
+export const updateOwnCommentFailure = createAction('[Movies] Update Own Comment Failure', props<{ error: string }>());
+
+export const deleteOwnComment = createAction('[Movies] Delete Own Comment', props<{ movieId: string; commentId: string }>());
+export const deleteOwnCommentSuccess = createAction('[Movies] Delete Own Comment Success', props<{ movieId: string; commentId: string }>());
+export const deleteOwnCommentFailure = createAction('[Movies] Delete Own Comment Failure', props<{ error: string }>());

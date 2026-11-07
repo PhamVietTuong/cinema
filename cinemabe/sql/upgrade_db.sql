@@ -939,6 +939,184 @@ END
 -- ===== end theater latitude/longitude =====
 
 -- ============================================================
+-- Merge Discount/DiscountType/DiscountTheater into PromotionProgram
+-- ============================================================
+-- PromotionProgram becomes the single pricing entity: a program is triggered by either a
+-- customer-entered Code or auto-apply, never both (see PromotionProgramManager.ValidateAsync). Every
+-- existing Discount row is copied into PromotionProgram first (reusing the same Id, so a historical
+-- Invoice.DiscountId value still names the row, now living in PromotionProgram) before the old tables
+-- are dropped. Known limitation: a Discount's DaysOfWeekMask/StartTimeOfDay/EndTimeOfDay scope is
+-- preserved only for rows with ApplyToAllTheaters = 0 (carried onto each new PromotionProgramSchedule
+-- row); an all-theaters Discount that also had a day/time restriction loses that restriction, same as
+-- the documented migration mapping (one Schedule row per DiscountTheater, zero rows when
+-- ApplyToAllTheaters = 1).
+IF COL_LENGTH('dbo.PromotionProgram', 'Code') IS NULL
+BEGIN
+    ALTER TABLE [PromotionProgram] ADD [Category] int NOT NULL CONSTRAINT [DF_PromotionProgram_Category] DEFAULT 0;
+    ALTER TABLE [PromotionProgram] ADD [Code] nvarchar(50) NULL;
+    ALTER TABLE [PromotionProgram] ADD [MaxUsage] int NULL;
+    ALTER TABLE [PromotionProgram] ADD [UsedCount] int NOT NULL CONSTRAINT [DF_PromotionProgram_UsedCount] DEFAULT 0;
+    ALTER TABLE [PromotionProgram] ADD [MaxDiscountAmount] float NULL;
+    ALTER TABLE [PromotionProgram] ADD [MovieId] uniqueidentifier NULL;
+
+    -- Deferred (EXEC) so the batch compiles before the columns above exist.
+    EXEC('
+    INSERT INTO [PromotionProgram] (
+        [Id], [Title], [Summary], [BannerUrl], [Category], [Mechanic], [PercentOff], [Eligibility],
+        [MinMemberShipId], [MaxAge], [StartDate], [EndDate], [ExcludeHolidays], [AllowedChannelsMask],
+        [MaxTicketsPerTransaction], [StacksWithMembershipDiscount], [TermsText], [DisplayOrder],
+        [IsPublished], [AutoApply], [Code], [MaxUsage], [UsedCount], [MaxDiscountAmount], [MovieId],
+        [CreationTime], [LastUpdatedTime])
+    SELECT
+        d.[Id], LEFT(COALESCE(NULLIF(d.[Description], N''''), d.[Code], N''Discount''), 200), d.[Description], NULL,
+        CASE dt.[Name] WHEN N''Theo Mùa'' THEN 1 WHEN N''Thành Viên'' THEN 2 ELSE 0 END /* Promotion/Seasonal/Membership, mapped from the old DiscountType name */,
+        2 /* PercentOff */, d.[Percent], 0 /* Everyone */,
+        NULL, NULL, d.[StartDate], d.[EndDate], 0, NULL,
+        NULL, 1 /* StacksWithMembershipDiscount: keep stacking exactly as Discount did */, NULL, 0,
+        d.[IsActive], d.[AutoApply], d.[Code], d.[MaxUsage], d.[UsedCount], d.[MaxDiscountAmount], d.[MovieId],
+        d.[CreationTime], d.[LastUpdatedTime]
+    FROM [Discount] d
+    LEFT JOIN [DiscountType] dt ON dt.[Id] = d.[DiscountTypeId]
+    WHERE NOT EXISTS (SELECT 1 FROM [PromotionProgram] p WHERE p.[Id] = d.[Id]);
+
+    INSERT INTO [PromotionProgramSchedule] (
+        [Id], [PromotionProgramId], [TheaterId], [DaysOfWeekMask], [StartTimeOfDay], [EndTimeOfDay],
+        [CreationTime], [LastUpdatedTime])
+    SELECT
+        NEWID(), dt.[DiscountId], dt.[TheaterId], d.[DaysOfWeekMask], d.[StartTimeOfDay], d.[EndTimeOfDay],
+        dt.[CreationTime], dt.[LastUpdatedTime]
+    FROM [DiscountTheater] dt
+    JOIN [Discount] d ON d.[Id] = dt.[DiscountId]
+    WHERE d.[ApplyToAllTheaters] = 0;
+
+    -- An all-theaters Discount that also had a day/time restriction needs its own Schedule row (TheaterId
+    -- NULL = any theater, same convention PromotionProgramSchedule already uses) carrying that
+    -- restriction forward — otherwise it is silently dropped (e.g. a weekend-only auto-discount would
+    -- become always-on).
+    INSERT INTO [PromotionProgramSchedule] (
+        [Id], [PromotionProgramId], [TheaterId], [DaysOfWeekMask], [StartTimeOfDay], [EndTimeOfDay],
+        [CreationTime], [LastUpdatedTime])
+    SELECT
+        NEWID(), d.[Id], NULL, d.[DaysOfWeekMask], d.[StartTimeOfDay], d.[EndTimeOfDay],
+        d.[CreationTime], d.[LastUpdatedTime]
+    FROM [Discount] d
+    WHERE d.[ApplyToAllTheaters] = 1
+      AND (d.[DaysOfWeekMask] IS NOT NULL OR d.[StartTimeOfDay] IS NOT NULL OR d.[EndTimeOfDay] IS NOT NULL);
+    ');
+
+    EXEC('CREATE UNIQUE INDEX [IX_PromotionProgram_Code] ON [PromotionProgram] ([Code]) WHERE [Code] IS NOT NULL');
+    EXEC('CREATE INDEX [IX_PromotionProgram_MovieId] ON [PromotionProgram] ([MovieId])');
+    EXEC('ALTER TABLE [PromotionProgram] ADD CONSTRAINT [FK_PromotionProgram_Movie_MovieId] FOREIGN KEY ([MovieId]) REFERENCES [Movie] ([Id]) ON DELETE SET NULL');
+END
+
+-- Drop the now-unused LinkedDiscountId (superseded by Code above).
+IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_PromotionProgram_Discount_LinkedDiscountId')
+BEGIN
+    ALTER TABLE [PromotionProgram] DROP CONSTRAINT [FK_PromotionProgram_Discount_LinkedDiscountId];
+END
+
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PromotionProgram_LinkedDiscountId' AND object_id = OBJECT_ID('dbo.PromotionProgram'))
+BEGIN
+    DROP INDEX [IX_PromotionProgram_LinkedDiscountId] ON [PromotionProgram];
+END
+
+IF COL_LENGTH('dbo.PromotionProgram', 'LinkedDiscountId') IS NOT NULL
+BEGIN
+    ALTER TABLE [PromotionProgram] DROP COLUMN [LinkedDiscountId];
+END
+
+-- Invoice.DiscountId becomes vestigial (historical data only, same precedent as a removed-feature
+-- column) — drop its FK/index but keep the column so old invoices keep their value.
+IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Invoice_Discount_DiscountId')
+BEGIN
+    ALTER TABLE [Invoice] DROP CONSTRAINT [FK_Invoice_Discount_DiscountId];
+END
+
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_DiscountId' AND object_id = OBJECT_ID('dbo.Invoice'))
+BEGIN
+    DROP INDEX [IX_Invoice_DiscountId] ON [Invoice];
+END
+
+IF OBJECT_ID('dbo.DiscountTheater', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE [DiscountTheater];
+END
+
+IF OBJECT_ID('dbo.Discount', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE [Discount];
+END
+
+IF OBJECT_ID('dbo.DiscountType', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE [DiscountType];
+END
+-- ===== end merge Discount/DiscountType/DiscountTheater into PromotionProgram =====
+
+-- ============================================================
+-- Replace PromotionProgram.Category (fixed Promotion/Seasonal/Membership enum) with a managed,
+-- growable PromotionCampaign table (e.g. "C'Student", "Happy Hour") — the fixed 3-value enum mostly
+-- funneled everything into "Promotion" in practice, so it wasn't a useful customer-page filter.
+-- Existing rows cannot be mapped automatically (the old 3 buckets don't correspond to specific
+-- campaign names), so every program's CampaignId starts NULL ("uncategorized") after this runs; an
+-- admin assigns campaigns via the new management screen.
+-- ============================================================
+
+IF OBJECT_ID('dbo.PromotionCampaign', 'U') IS NULL
+BEGIN
+    CREATE TABLE [PromotionCampaign] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [Name] nvarchar(100) NOT NULL,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_PromotionCampaign] PRIMARY KEY ([Id])
+    );
+    CREATE UNIQUE INDEX [IX_PromotionCampaign_Name] ON [PromotionCampaign] ([Name]);
+END
+
+IF COL_LENGTH('dbo.PromotionProgram', 'CampaignId') IS NULL
+BEGIN
+    ALTER TABLE [PromotionProgram] ADD [CampaignId] uniqueidentifier NULL;
+    CREATE INDEX [IX_PromotionProgram_CampaignId] ON [PromotionProgram] ([CampaignId]);
+    ALTER TABLE [PromotionProgram] ADD CONSTRAINT [FK_PromotionProgram_PromotionCampaign_CampaignId]
+        FOREIGN KEY ([CampaignId]) REFERENCES [PromotionCampaign] ([Id]) ON DELETE SET NULL;
+END
+
+IF COL_LENGTH('dbo.PromotionProgram', 'Category') IS NOT NULL
+BEGIN
+    DECLARE @categoryDefault nvarchar(200) = (
+        SELECT dc.name FROM sys.default_constraints dc
+        JOIN sys.columns c ON c.object_id = dc.parent_object_id AND c.column_id = dc.parent_column_id
+        WHERE dc.parent_object_id = OBJECT_ID('dbo.PromotionProgram') AND c.name = 'Category');
+    IF @categoryDefault IS NOT NULL
+    BEGIN
+        EXEC('ALTER TABLE [PromotionProgram] DROP CONSTRAINT [' + @categoryDefault + ']');
+    END
+    ALTER TABLE [PromotionProgram] DROP COLUMN [Category];
+END
+-- ===== end PromotionProgram.Category -> PromotionCampaign =====
+
+-- ============================================================
+-- Evaluation: one rating per (MovieId, UserId)
+-- ============================================================
+-- create_db.sql / EvaluationConfiguration already declare the unique index; databases built before it
+-- was enforced may hold duplicate pairs from concurrent double-rates. BACK UP FIRST: this deletes rows,
+-- keeping the newest (by CreationTime, then Id) per (MovieId, UserId).
+-- ============================================================
+
+;WITH ranked AS (
+    SELECT [Id], ROW_NUMBER() OVER (PARTITION BY [MovieId], [UserId] ORDER BY [CreationTime] DESC, [Id] DESC) AS rn
+    FROM [Evaluation]
+)
+DELETE FROM ranked WHERE rn > 1;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Evaluation_MovieId_UserId' AND object_id = OBJECT_ID('dbo.Evaluation'))
+BEGIN
+    CREATE UNIQUE INDEX [IX_Evaluation_MovieId_UserId] ON [Evaluation] ([MovieId], [UserId]);
+END
+-- ===== end Evaluation unique (MovieId, UserId) =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

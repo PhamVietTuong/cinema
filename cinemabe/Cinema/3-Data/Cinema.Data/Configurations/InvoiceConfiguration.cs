@@ -18,7 +18,9 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         b.HasOne(i => i.User).WithMany(u => u.Invoices).HasForeignKey(i => i.UserId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<Theater>().WithMany().HasForeignKey(i => i.TheaterId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(i => new { i.TheaterId, i.PaidAt });
-        b.HasOne(i => i.Discount).WithMany().HasForeignKey(i => i.DiscountId).OnDelete(DeleteBehavior.SetNull);
+        // DiscountId is vestigial (the Discount entity/table is gone) — no FK, left as a plain column so
+        // EF doesn't try to map a navigation to a type that no longer exists.
+        b.Ignore(i => i.DiscountId);
         b.HasOne(i => i.PromotionProgram).WithMany().HasForeignKey(i => i.PromotionProgramId).OnDelete(DeleteBehavior.SetNull);
     }
 }

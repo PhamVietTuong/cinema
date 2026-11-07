@@ -68,7 +68,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `ConfirmPayment` | POST | `[Authorize]` (owner) | `ConfirmPaymentRequest{InvoiceId, PaymentReference}` | bool/invoice result | only succeeds for Sandbox gateway — VNPay/MoMo/Stripe always return false (callback-authoritative) |
 | `InitiatePayment` | POST | `[Authorize]` (owner) | `InitiatePaymentRequest{InvoiceId, Provider?}` | `PaymentInitiationDTO{Provider, PaymentReference, RedirectUrl?}` | `FinalAmount<=0` (gift card/points fully cover) finalizes immediately, no gateway call, `Provider="None"`, `PaymentReference="GIFTCARD-FULL"` |
 | `PaymentCallback` | GET/POST | `[AllowAnonymous]` | `provider` query + gateway-specific query/form/raw-body fields | VNPay: `{"RspCode","Message"}`; others: generic `{message}`/`{error}` | signature-verified per gateway; idempotent; amount cross-checked; `[AllowAnonymous]` by design (called by the gateway's servers) |
-| `ValidateDiscountCode` | POST | `[Authorize]` | `ValidateDiscountCodeRequest` | non-throwing usability/amount result | |
+| `ValidateDiscountCode` | POST | `[Authorize]` | `ValidateDiscountCodeRequest{Code, RoomId, ShowTimeId, Total, Seats[]}` (wire name kept for FE compat; resolves a `PromotionProgram` by `Code`) | non-throwing usability/amount result | `Seats[]` lets the server compute the per-ticket-unit saving the same way booking does; empty for a food-only quote (saving is 0, but the code's existence/window/usage is still validated) |
 | `ValidateGiftCard` | POST | `[Authorize]` | `ValidateGiftCardRequest{Code}` | `GiftCardValidationDTO{Valid, Message, Balance}` | non-throwing |
 
 ### Gift cards (banner `// ── Gift cards ──`, Admin-only)
@@ -106,7 +106,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 |---|---|---|---|---|
 | `UploadImage` | POST | Admin | `IFormFile` (jpg/png/webp/gif, ≤5MB) | `UploadResultDTO{Url}` |
 | `GetRecommendedMovies` | POST | anonymous | `count` query (default 8) | `List<MovieDTO>` — personalized if signed in |
-| `GetMovies` | POST | anonymous | `PagingSearchDTO` | `DefaultSearchResults<MovieDTO>` |
+| `GetMovies` | POST | anonymous | `PagingSearchDTO` (filters `search`, `director`, `movieTypeId`, `language`, `theaterId`, `date`, `status` = `now`/`coming`) | `DefaultSearchResults<MovieDTO>` |
 | `GetNowShowingMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsNowShowing` filter |
 | `GetComingSoonMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsComingSoon` filter |
 | `GetMovie` | GET | anonymous | `id` query | `MovieDetailDTO` (personalized `CanReview` if signed in) |
@@ -114,8 +114,13 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `CreateMovie` | POST | Admin | `CreateMovieRequest` | `MovieDetailDTO` |
 | `UpdateMovie` | PUT | Admin | `UpdateMovieRequest` | `MovieDetailDTO` (slug never regenerated) |
 | `DeleteMovie` | DELETE | Admin | `id` query | 204 — soft delete (`IsActive=false`) |
-| `AddComment` | POST | `[Authorize]` | `movieId` query + `AddCommentRequest{Content, ParentId?}` | `CommentDTO` | gated by `EnsureCanReviewAsync` (must have watched the movie) |
-| `RateMovie` | POST | `[Authorize]` | `movieId` query + `RateMovieRequest{Score, Review?}` | 204 | same watch-gate |
+| `AddComment` | POST | `[Authorize]` | `movieId` query + `AddCommentRequest{Content, ParentId?}` | `CommentDTO` | gated by `EnsureCanReviewAsync` (must have watched the movie, else 403); content 1-2000 chars (400); `ParentId` must be an approved top-level comment of the same movie (400) |
+| `RateMovie` | POST | `[Authorize]` | `movieId` query + `RateMovieRequest{Score, Review?}` | 204 | same watch-gate (403); `Score` must be 1-10 (400); `Review` max 1000, `null` keeps the saved review, blank clears it; one row per (movie, user) |
+| `GetMovieComments` | POST | anonymous | `movieId` query + `PagingSearchDTO` | `DefaultSearchResults<CommentDTO>` | approved top-level comments newest first, each with replies; `isMine` set for a signed-in caller |
+| `UpdateOwnComment` | PUT | `[Authorize]` | `commentId` query + `UpdateCommentRequest{Content}` | `CommentDTO` | author only (403 otherwise), same length rules |
+| `DeleteOwnComment` | DELETE | `[Authorize]` | `commentId` query | 204 | author only (403 otherwise); its replies are removed too |
+| `SearchShowTimes` | POST | anonymous | `PagingSearchDTO` (filters `movieId`, `theaterId`, `movieTypeId`, `language`, `date` yyyy-MM-dd, `timeFrom`/`timeTo` HH:mm) | `DefaultSearchResults<ShowTimeSearchResultDTO>` | upcoming showtime x room rows ordered by start; `timeFrom` after `timeTo` is 400 |
+| `GetMovieLanguages` | GET | anonymous | - | `string[]` | distinct languages of active movies |
 | `GetTheaters` | POST | anonymous | `PagingSearchDTO` | `DefaultSearchResults<TheaterDTO>` |
 | `GetTheater` | GET | anonymous | `id` query | `TheaterDTO` |
 | `GetTheatersByMovie` | POST | anonymous | `PagingSearchDTO` | theaters currently screening a movie |
@@ -135,7 +140,6 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | Region | List/Get | Write | Notable actions beyond basic CRUD |
 |---|---|---|---|
 | `AgeRestriction` | anonymous | Admin | — |
-| `DiscountType` | anonymous | Admin | — |
 | `MovieType` | anonymous | Admin | — |
 | `Template` | **Admin-only even to list/get** | Admin | notification-template CRUD (booking-confirmation content) |
 | `SeatType` | anonymous | Admin (Update only) | no Create/Delete — seeded 2 rows/theater (Standard+Double) at theater creation |
@@ -147,8 +151,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `Holiday` | anonymous | Admin | |
 | `News` | anonymous | Admin | |
 | `Person` | **Admin-only** for CRUD; `GetPeopleByNames` is `[AllowAnonymous]` | Admin | |
-| `Discount` | anonymous | Admin | |
-| `PromotionProgram` | `GetPublishedPromotionPrograms` `[AllowAnonymous]`; `GetPromotionPrograms`/`GetPromotionProgram` Admin | Admin | |
+| `PromotionProgram` | `GetPublishedPromotionPrograms` `[AllowAnonymous]`; `GetPromotionPrograms`/`GetPromotionProgram` Admin | Admin | Single promotion/pricing entity (merged from the former `Discount`/`DiscountType`/`DiscountTheater`); triggered by `Code` xor `AutoApply` |
 | `SplashBanner` | `GetActiveSplashBanner` `[AllowAnonymous]` (returns `List<SplashBannerDTO>`, 0 or 1 items); rest Admin | Admin | |
 | `FoodAndDrink` | anonymous | Admin | |
 | `Room` | anonymous | Admin | |

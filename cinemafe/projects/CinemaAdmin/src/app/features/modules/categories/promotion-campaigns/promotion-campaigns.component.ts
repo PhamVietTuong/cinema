@@ -10,16 +10,16 @@ import {
   DialogService,
   showLoading, hideLoading, showSuccess, showException,
 } from 'CinemaLib';
-import { DiscountTypeDialog } from './discount-type.dialog';
+import { PromotionCampaignDialog } from './promotion-campaign.dialog';
 
-type Dto = CinemaServiceAgent.DiscountTypeDTO;
+type Dto = CinemaServiceAgent.PromotionCampaignDTO;
 
 @Component({
-  selector: 'app-discount-types',
+  selector: 'app-promotion-campaigns',
   standalone: false,
-  templateUrl: './discount-types.component.html',
+  templateUrl: './promotion-campaigns.component.html',
 })
-export class DiscountTypesManagementComponent extends BaseTableComponent {
+export class PromotionCampaignsManagementComponent extends BaseTableComponent {
   constructor(
     cd: ChangeDetectorRef,
     fb: FormBuilder,
@@ -37,18 +37,18 @@ export class DiscountTypesManagementComponent extends BaseTableComponent {
   }
 
   protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {
-    return this._svc.getDiscountTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({
+    return this._svc.getPromotionCampaigns(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: criteria.pageIndex, pageSize: criteria.pageSize, filters: criteria.filters,
     }));
   }
 
   openCreate(): void {
-    this._dialog.open(DiscountTypeDialog, { width: '560px', data: { discountType: null } })
+    this._dialog.open(PromotionCampaignDialog, { width: '560px', data: { campaign: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(DiscountTypeDialog, { width: '560px', data: { discountType: item } })
+    this._dialog.open(PromotionCampaignDialog, { width: '560px', data: { campaign: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
@@ -66,7 +66,7 @@ export class DiscountTypesManagementComponent extends BaseTableComponent {
 
   private _deleteConfirmed(id: string): void {
     this._store.dispatch(showLoading());
-    this._svc.deleteDiscountType(id).subscribe({
+    this._svc.deletePromotionCampaign(id).subscribe({
       next: () => {
         this._store.dispatch(showSuccess({}));
         this.triggerSearch();

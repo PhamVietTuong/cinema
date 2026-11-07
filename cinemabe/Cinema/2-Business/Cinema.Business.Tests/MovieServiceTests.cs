@@ -24,6 +24,9 @@ public class MovieServiceTests
         // about credits don't need to stub this explicitly.
         _uowMock.Setup(u => u.MovieCreditStore.GetByMovieAsync(It.IsAny<Guid>()))
             .ReturnsAsync(new List<MovieCreditRow>());
+        // Default: the user has not rated anything.
+        _uowMock.Setup(u => u.EvaluationStore.GetUserEvaluationAsync(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .ReturnsAsync(((int Score, string? Review)?)null);
         // Default: no external ratings, so existing GetDetailAsync tests don't need to stub this.
         _externalRatingsMock.Setup(p => p.GetRatingsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ExternalRatingsDTO?)null);
@@ -34,7 +37,7 @@ public class MovieServiceTests
     {
         var movieId = Guid.NewGuid();
         var movies  = new List<Movie> { new() { Id = movieId, Title = "Movie A" } };
-        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(null, null, (Guid?)null, 1, 12)).ReturnsAsync((movies, 1));
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(It.IsAny<MovieSearchFilter>(), 1, 12)).ReturnsAsync((movies, 1));
         // Ratings for the whole page come from one grouped lookup, not one call per movie.
         _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new Dictionary<Guid, double> { [movieId] = 4.5 });
@@ -139,12 +142,473 @@ public class MovieServiceTests
             .ReturnsAsync(true);
         _uowMock.Setup(u => u.EvaluationStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Evaluation, bool>>>()))
             .ReturnsAsync(new List<Evaluation>());
+        _uowMock.Setup(u => u.EvaluationStore.TryAddAsync(It.IsAny<Evaluation>())).ReturnsAsync(true);
 
         var score = await _sut.RateMovieAsync(movieId, userId, 5, "Great");
 
         score.Should().Be(5);
-        _uowMock.Verify(u => u.EvaluationStore.CreateAsync(It.IsAny<Evaluation>()), Times.Once);
+        _uowMock.Verify(u => u.EvaluationStore.TryAddAsync(It.Is<Evaluation>(e => e.Score == 5 && e.Review == "Great")), Times.Once);
+    }
+
+    private void SetupWatched(Guid movieId, Guid userId, bool watched = true)
+    {
+        _uowMock.Setup(u => u.InvoiceStore.HasWatchedMovieAsync(userId, movieId, It.IsAny<DateTime>())).ReturnsAsync(watched);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(11)]
+    [InlineData(-3)]
+    public async Task RateMovieAsync_ScoreOutsideOneToTen_Throws_AndDoesNotWrite(int score)
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+
+        await _sut.Invoking(s => s.RateMovieAsync(movieId, userId, score, null))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.EvaluationStore.TryAddAsync(It.IsAny<Evaluation>()), Times.Never);
+        _uowMock.Verify(u => u.EvaluationStore.UpdateAsync(It.IsAny<Evaluation>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RateMovieAsync_StarClickWithoutReview_PreservesSavedReview()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+        var existing = new Evaluation { MovieId = movieId, UserId = userId, Score = 3, Review = "Loved the score" };
+        _uowMock.Setup(u => u.EvaluationStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Evaluation, bool>>>()))
+            .ReturnsAsync(new List<Evaluation> { existing });
+
+        await _sut.RateMovieAsync(movieId, userId, 9, null);
+
+        existing.Score.Should().Be(9);
+        existing.Review.Should().Be("Loved the score");
+        _uowMock.Verify(u => u.EvaluationStore.UpdateAsync(existing), Times.Once);
+    }
+
+    [Fact]
+    public async Task RateMovieAsync_BlankReview_ClearsSavedReview()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+        var existing = new Evaluation { MovieId = movieId, UserId = userId, Score = 3, Review = "Old" };
+        _uowMock.Setup(u => u.EvaluationStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Evaluation, bool>>>()))
+            .ReturnsAsync(new List<Evaluation> { existing });
+
+        await _sut.RateMovieAsync(movieId, userId, 4, "   ");
+
+        existing.Review.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task RateMovieAsync_ConcurrentFirstRating_BecomesUpdateOfWinningRow()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+        var winner = new Evaluation { MovieId = movieId, UserId = userId, Score = 2 };
+        _uowMock.SetupSequence(u => u.EvaluationStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Evaluation, bool>>>()))
+            .ReturnsAsync(new List<Evaluation>())
+            .ReturnsAsync(new List<Evaluation> { winner });
+        _uowMock.Setup(u => u.EvaluationStore.TryAddAsync(It.IsAny<Evaluation>())).ReturnsAsync(false);
+
+        await _sut.RateMovieAsync(movieId, userId, 8, null);
+
+        winner.Score.Should().Be(8);
+        _uowMock.Verify(u => u.EvaluationStore.UpdateAsync(winner), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task AddCommentAsync_Blank_Throws(string content)
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+
+        await _sut.Invoking(s => s.AddCommentAsync(movieId, userId, content, null))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.CommentStore.CreateAsync(It.IsAny<Comment>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_Over2000Chars_Throws()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+
+        await _sut.Invoking(s => s.AddCommentAsync(movieId, userId, new string('x', 2001), null))
+            .Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_Exactly2000Chars_Succeeds()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+        _uowMock.Setup(u => u.CommentStore.CreateAsync(It.IsAny<Comment>())).ReturnsAsync((Comment c) => c);
+
+        var result = await _sut.AddCommentAsync(movieId, userId, new string('x', 2000), null);
+
+        result.Content.Should().HaveLength(2000);
+    }
+
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("otherMovie")]
+    [InlineData("unapproved")]
+    [InlineData("isReply")]
+    public async Task AddCommentAsync_InvalidReplyParent_Throws(string scenario)
+    {
+        var movieId  = Guid.NewGuid();
+        var userId   = Guid.NewGuid();
+        var parentId = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+        Comment? parent = scenario switch
+        {
+            "missing"    => null,
+            "otherMovie" => new Comment { Id = parentId, MovieId = Guid.NewGuid() },
+            "unapproved" => new Comment { Id = parentId, MovieId = movieId, IsApproved = false },
+            _            => new Comment { Id = parentId, MovieId = movieId, ParentId = Guid.NewGuid() },
+        };
+        _uowMock.Setup(u => u.CommentStore.GetByIdAsync(parentId)).ReturnsAsync(parent);
+
+        await _sut.Invoking(s => s.AddCommentAsync(movieId, userId, "reply", parentId))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        _uowMock.Verify(u => u.CommentStore.CreateAsync(It.IsAny<Comment>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_ValidReply_Creates()
+    {
+        var movieId  = Guid.NewGuid();
+        var userId   = Guid.NewGuid();
+        var parentId = Guid.NewGuid();
+        SetupWatched(movieId, userId);
+        _uowMock.Setup(u => u.CommentStore.GetByIdAsync(parentId)).ReturnsAsync(new Comment { Id = parentId, MovieId = movieId });
+        _uowMock.Setup(u => u.CommentStore.CreateAsync(It.IsAny<Comment>())).ReturnsAsync((Comment c) => c);
+
+        var result = await _sut.AddCommentAsync(movieId, userId, "  me too ", parentId);
+
+        result.Content.Should().Be("me too");
+        result.ParentId.Should().Be(parentId);
+    }
+
+    [Fact]
+    public async Task UpdateOwnCommentAsync_Author_UpdatesContent()
+    {
+        var userId  = Guid.NewGuid();
+        var comment = new Comment { Id = Guid.NewGuid(), UserId = userId, Content = "old" };
+        _uowMock.Setup(u => u.CommentStore.GetByIdAsync(comment.Id)).ReturnsAsync(comment);
+
+        var result = await _sut.UpdateOwnCommentAsync(comment.Id, userId, " new text ");
+
+        comment.Content.Should().Be("new text");
+        result.IsMine.Should().BeTrue();
         _uowMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateOwnCommentAsync_NonAuthor_ThrowsAccessDenied()
+    {
+        var comment = new Comment { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), Content = "old" };
+        _uowMock.Setup(u => u.CommentStore.GetByIdAsync(comment.Id)).ReturnsAsync(comment);
+
+        await _sut.Invoking(s => s.UpdateOwnCommentAsync(comment.Id, Guid.NewGuid(), "hack"))
+            .Should().ThrowAsync<AccessDeniedException>();
+
+        comment.Content.Should().Be("old");
+    }
+
+    [Fact]
+    public async Task DeleteOwnCommentAsync_Author_RemovesCommentAndReplies()
+    {
+        var userId  = Guid.NewGuid();
+        var comment = new Comment { Id = Guid.NewGuid(), UserId = userId };
+        var reply   = new Comment { Id = Guid.NewGuid(), ParentId = comment.Id };
+        _uowMock.Setup(u => u.CommentStore.GetByIdAsync(comment.Id)).ReturnsAsync(comment);
+        _uowMock.Setup(u => u.CommentStore.GetRepliesAsync(comment.Id)).ReturnsAsync(new List<Comment> { reply });
+
+        await _sut.DeleteOwnCommentAsync(comment.Id, userId);
+
+        _uowMock.Verify(u => u.CommentStore.DeleteAsync(reply), Times.Once);
+        _uowMock.Verify(u => u.CommentStore.DeleteAsync(comment), Times.Once);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteOwnCommentAsync_NonAuthor_ThrowsAccessDenied_AndDeletesNothing()
+    {
+        var comment = new Comment { Id = Guid.NewGuid(), UserId = Guid.NewGuid() };
+        _uowMock.Setup(u => u.CommentStore.GetByIdAsync(comment.Id)).ReturnsAsync(comment);
+
+        await _sut.Invoking(s => s.DeleteOwnCommentAsync(comment.Id, Guid.NewGuid()))
+            .Should().ThrowAsync<AccessDeniedException>();
+
+        _uowMock.Verify(u => u.CommentStore.DeleteAsync(It.IsAny<Comment>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_SignedInUser_ReturnsMyRatingMyReviewAndOwnership()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        var movie   = new Movie { Id = movieId, Title = "Test Movie" };
+        SetupBasicDetailRead(movieId, movie);
+        SetupWatched(movieId, userId);
+        _uowMock.Setup(u => u.MovieStore.GetRatingCountAsync(movieId)).ReturnsAsync(3);
+        _uowMock.Setup(u => u.CommentStore.CountApprovedForMovieAsync(movieId)).ReturnsAsync(5);
+        _uowMock.Setup(u => u.EvaluationStore.GetUserEvaluationAsync(movieId, userId)).ReturnsAsync((7, "Solid"));
+        _uowMock.Setup(u => u.CommentStore.GetRecentForMovieAsync(movieId, 10)).ReturnsAsync(new List<CommentView>
+        {
+            new(Guid.NewGuid(), "mine", null, userId, DateTime.UtcNow, "Me", null, new List<CommentView>()),
+            new(Guid.NewGuid(), "theirs", null, Guid.NewGuid(), DateTime.UtcNow, "Other", null, new List<CommentView>()),
+        });
+
+        var result = await _sut.GetDetailAsync(movieId, userId);
+
+        result.MyRating.Should().Be(7);
+        result.MyReview.Should().Be("Solid");
+        result.RatingCount.Should().Be(3);
+        result.TotalComments.Should().Be(5);
+        result.RecentComments.Select(c => c.IsMine).Should().Equal(true, false);
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_NoRatings_RatingCountZero_MyRatingNull()
+    {
+        var movieId = Guid.NewGuid();
+        var userId  = Guid.NewGuid();
+        SetupBasicDetailRead(movieId, new Movie { Id = movieId, Title = "Test Movie" });
+        SetupWatched(movieId, userId, false);
+
+        var result = await _sut.GetDetailAsync(movieId, userId);
+
+        result.RatingCount.Should().Be(0);
+        result.MyRating.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetMoviesAsync_MapsFiltersToStoreFilter()
+    {
+        MovieSearchFilter? captured = null;
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(It.IsAny<MovieSearchFilter>(), 2, 15))
+            .Callback<MovieSearchFilter, int, int>((f, _, _) => captured = f)
+            .ReturnsAsync((new List<Movie>(), 0));
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, double>());
+        var typeId = Guid.NewGuid();
+        var theaterId = Guid.NewGuid();
+        var future = DateOnly.FromDateTime(DateTime.Today.AddDays(30));
+
+        await _sut.GetMoviesAsync(new PagingSearchDTO
+        {
+            PageIndex = 2, PageSize = 15,
+            Filters = new() { ["movieTypeId"] = typeId.ToString(), ["language"] = "English", ["theaterId"] = theaterId.ToString(), ["date"] = future.ToString("yyyy-MM-dd") },
+        });
+
+        captured.Should().NotBeNull();
+        captured!.MovieTypeId.Should().Be(typeId);
+        captured.Language.Should().Be("English");
+        captured.TheaterId.Should().Be(theaterId);
+        captured.ShowFrom.Should().Be(future.ToDateTime(TimeOnly.MinValue));
+        captured.ShowTo.Should().Be(future.ToDateTime(TimeOnly.MinValue).AddDays(1));
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_MapsTimeRange_AndRows()
+    {
+        ShowTimeSearchFilter? captured = null;
+        var row = new ShowTimeSearchRow(Guid.NewGuid(), Guid.NewGuid(), new DateTime(2026, 12, 1, 19, 30, 0), new DateTime(2026, 12, 1, 21, 30, 0),
+            ProjectionForm.TwoD, Guid.NewGuid(), "Wicked", "wicked", null, "English", Guid.NewGuid(), "Cinema One", "Room 1", "Standard", 90000);
+        _uowMock.Setup(u => u.ShowTimeStore.SearchRoomsAsync(It.IsAny<ShowTimeSearchFilter>(), 1, 20))
+            .Callback<ShowTimeSearchFilter, int, int>((f, _, _) => captured = f)
+            .ReturnsAsync((new List<ShowTimeSearchRow> { row }, 1));
+
+        var result = await _sut.SearchShowTimesAsync(new PagingSearchDTO
+        {
+            Filters = new() { ["timeFrom"] = "18:00", ["timeTo"] = "22:00", ["date"] = DateTime.Today.AddDays(30).ToString("yyyy-MM-dd") },
+        });
+
+        captured!.TimeFrom.Should().Be(new TimeOnly(18, 0));
+        captured.TimeTo.Should().Be(new TimeOnly(22, 0));
+        result.TotalCount.Should().Be(1);
+        result.Results.Single().MovieTitle.Should().Be("Wicked");
+    }
+
+    private async Task<MovieSearchFilter> CaptureMovieFilterAsync(Dictionary<string, string> filters)
+    {
+        MovieSearchFilter? captured = null;
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(It.IsAny<MovieSearchFilter>(), It.IsAny<int>(), It.IsAny<int>()))
+            .Callback<MovieSearchFilter, int, int>((f, _, _) => captured = f)
+            .ReturnsAsync((new List<Movie>(), 0));
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, double>());
+        await _sut.GetMoviesAsync(new PagingSearchDTO { Filters = filters });
+        return captured!;
+    }
+
+    [Theory]
+    [InlineData("now", "now")]
+    [InlineData("coming", "coming")]
+    [InlineData("bogus", null)]
+    public async Task GetMoviesAsync_Status_OnlyNowOrComingReachesFilter(string status, string? expected)
+    {
+        var filter = await CaptureMovieFilterAsync(new() { ["status"] = status });
+
+        filter.Status.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task GetMoviesAsync_TheaterOnly_ShowFromNowAndNoUpperBound()
+    {
+        var filter = await CaptureMovieFilterAsync(new() { ["theaterId"] = Guid.NewGuid().ToString() });
+
+        filter.ShowFrom.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.ShowTo.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetMoviesAsync_DateToday_ClampsShowFromToNow()
+    {
+        var filter = await CaptureMovieFilterAsync(new() { ["date"] = DateTime.Today.ToString("yyyy-MM-dd") });
+
+        filter.ShowFrom.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.ShowTo.Should().Be(DateTime.Today.AddDays(1));
+    }
+
+    [Fact]
+    public async Task GetMoviesAsync_PastDate_ClampsShowFromToNow_SoNothingMatches()
+    {
+        var filter = await CaptureMovieFilterAsync(new() { ["date"] = DateTime.Today.AddDays(-5).ToString("yyyy-MM-dd") });
+
+        filter.ShowFrom.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.ShowTo.Should().BeBefore(filter.ShowFrom!.Value);
+    }
+
+    private async Task<(ShowTimeSearchFilter Filter, int PageSize)> CaptureShowTimeFilterAsync(Dictionary<string, string>? filters, int pageSize = 20)
+    {
+        ShowTimeSearchFilter? captured = null;
+        var capturedSize = 0;
+        _uowMock.Setup(u => u.ShowTimeStore.SearchRoomsAsync(It.IsAny<ShowTimeSearchFilter>(), It.IsAny<int>(), It.IsAny<int>()))
+            .Callback<ShowTimeSearchFilter, int, int>((f, _, size) => { captured = f; capturedSize = size; })
+            .ReturnsAsync((new List<ShowTimeSearchRow>(), 0));
+        await _sut.SearchShowTimesAsync(new PagingSearchDTO { PageSize = pageSize, Filters = filters });
+        return (captured!, capturedSize);
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_FutureDate_CoversThatWholeDay()
+    {
+        var day = DateTime.Today.AddDays(10);
+
+        var (filter, _) = await CaptureShowTimeFilterAsync(new() { ["date"] = day.ToString("yyyy-MM-dd") });
+
+        filter.From.Should().Be(day);
+        filter.To.Should().Be(day.AddDays(1));
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_NoDate_StartsNowWithNoUpperBound()
+    {
+        var (filter, _) = await CaptureShowTimeFilterAsync(null);
+
+        filter.From.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.To.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_Today_ClampsFromToNow()
+    {
+        var (filter, _) = await CaptureShowTimeFilterAsync(new() { ["date"] = DateTime.Today.ToString("yyyy-MM-dd") });
+
+        filter.From.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.To.Should().Be(DateTime.Today.AddDays(1));
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_PastDate_ClampsFromToNow()
+    {
+        var (filter, _) = await CaptureShowTimeFilterAsync(new() { ["date"] = DateTime.Today.AddDays(-3).ToString("yyyy-MM-dd") });
+
+        filter.From.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        filter.To.Should().BeBefore(filter.From!.Value);
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_PageSizeCappedAt100()
+    {
+        var (_, size) = await CaptureShowTimeFilterAsync(null, pageSize: 5000);
+
+        size.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_SetsIsMineOnRepliesToo_AndNotForAnonymous()
+    {
+        var movieId = Guid.NewGuid();
+        var me = Guid.NewGuid();
+        var reply = new CommentView(Guid.NewGuid(), "my reply", Guid.NewGuid(), me, DateTime.UtcNow, "Me", null, new List<CommentView>());
+        var top = new CommentView(Guid.NewGuid(), "theirs", null, Guid.NewGuid(), DateTime.UtcNow, "Other", null, new List<CommentView> { reply });
+        _uowMock.Setup(u => u.CommentStore.GetPagedForMovieAsync(movieId, 1, 10))
+            .ReturnsAsync((new List<CommentView> { top }, 1));
+
+        var signedIn = await _sut.GetCommentsAsync(movieId, me, new PagingSearchDTO { PageSize = 10 });
+        var anonymous = await _sut.GetCommentsAsync(movieId, null, new PagingSearchDTO { PageSize = 10 });
+
+        signedIn.Results.Single().IsMine.Should().BeFalse();
+        signedIn.Results.Single().Replies.Single().IsMine.Should().BeTrue();
+        anonymous.Results.Single().Replies.Single().IsMine.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_PageSizeCappedAt50()
+    {
+        var movieId = Guid.NewGuid();
+        _uowMock.Setup(u => u.CommentStore.GetPagedForMovieAsync(movieId, 2, 50))
+            .ReturnsAsync((new List<CommentView>(), 0));
+
+        var result = await _sut.GetCommentsAsync(movieId, null, new PagingSearchDTO { PageIndex = 2, PageSize = 500 });
+
+        result.CountPerPage.Should().Be(50);
+        _uowMock.Verify(u => u.CommentStore.GetPagedForMovieAsync(movieId, 2, 50), Times.Once);
+    }
+
+    [Fact]
+    public async Task SearchShowTimesAsync_InvertedTimeRange_Throws()
+    {
+        await _sut.Invoking(s => s.SearchShowTimesAsync(new PagingSearchDTO
+            {
+                Filters = new() { ["timeFrom"] = "22:00", ["timeTo"] = "18:00" },
+            }))
+            .Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task GetRecommendedAsync_TreatsScoresFromSevenAsLiked()
+    {
+        var userId  = Guid.NewGuid();
+        var liked   = new Movie { Id = Guid.NewGuid(), Title = "Liked", IsActive = true, MovieTypeDetails = new List<MovieTypeDetail> { new() { MovieType = new MovieType { Name = "Horror" } } } };
+        var horror  = new Movie { Id = Guid.NewGuid(), Title = "Horror 2", IsActive = true, MovieTypeDetails = new List<MovieTypeDetail> { new() { MovieType = new MovieType { Name = "Horror" } } } };
+        var comedy  = new Movie { Id = Guid.NewGuid(), Title = "Comedy", IsActive = true, MovieTypeDetails = new List<MovieTypeDetail> { new() { MovieType = new MovieType { Name = "Comedy" } } } };
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(It.IsAny<MovieSearchFilter>(), 1, 200)).ReturnsAsync((new List<Movie> { comedy, horror, liked }, 3));
+        _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new Dictionary<Guid, double> { [comedy.Id] = 9, [horror.Id] = 5 });
+        _uowMock.Setup(u => u.EvaluationStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Evaluation, bool>>>()))
+            .ReturnsAsync(new List<Evaluation> { new() { MovieId = liked.Id, UserId = userId, Score = 7 } });
+
+        var result = await _sut.GetRecommendedAsync(userId, 5);
+
+        result.Select(m => m.Title).Should().Equal("Horror 2", "Comedy");
     }
 
     [Fact]
@@ -490,7 +954,7 @@ public class MovieServiceTests
     {
         var movieId = Guid.NewGuid();
         var movies  = new List<Movie> { new() { Id = movieId, Title = "Movie A" } };
-        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(null, null, (Guid?)null, 1, 12)).ReturnsAsync((movies, 1));
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(It.IsAny<MovieSearchFilter>(), 1, 12)).ReturnsAsync((movies, 1));
         _uowMock.Setup(u => u.MovieStore.GetAverageRatingsAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new Dictionary<Guid, double>());
 

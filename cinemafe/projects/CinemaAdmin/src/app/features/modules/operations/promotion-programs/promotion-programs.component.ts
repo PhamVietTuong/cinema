@@ -77,6 +77,16 @@ export class PromotionProgramsManagementComponent extends BaseTableComponent {
     return key ? this._translate.instant(key) : '—';
   }
 
+  /** Title with a leading "{CampaignName} - " stripped — the Campaign column already shows that name,
+   * so the title shouldn't repeat it. */
+  displayTitle(row: Dto): string {
+    const title = row.title ?? '';
+    if (row.campaignName && title.startsWith(`${row.campaignName} - `)) {
+      return title.slice(row.campaignName.length + 3);
+    }
+    return title;
+  }
+
   private _deleteConfirmed(id: string): void {
     this._store.dispatch(showLoading());
     this._svc.deletePromotionProgram(id).subscribe({

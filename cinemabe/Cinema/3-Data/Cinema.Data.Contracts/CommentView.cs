@@ -9,6 +9,7 @@ public record CommentView(
     Guid Id,
     string Content,
     Guid? ParentId,
+    Guid UserId,
     DateTime CreationTime,
     string UserName,
     string? UserAvatar,

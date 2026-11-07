@@ -29,6 +29,11 @@ export interface MovieDetail extends Movie {
   showTimes: ShowTimeSummary[];
   recentComments: Comment[];
   canReview: boolean;
+  /** The signed-in user's own score (1-10) and private review text; absent until they rate. */
+  myRating?: number | null;
+  myReview?: string | null;
+  /** Approved comments on the movie, replies included. */
+  totalComments: number;
 }
 
 export interface ShowTimeSummary {
@@ -47,8 +52,10 @@ export interface Comment {
   content: string;
   userName: string;
   userAvatar?: string;
-  parentId?: number;
-  createdAt: string;
+  parentId?: string;
+  creationTime: string;
+  /** True when the signed-in user wrote it, so edit/delete are offered. */
+  isMine: boolean;
   replies: Comment[];
 }
 

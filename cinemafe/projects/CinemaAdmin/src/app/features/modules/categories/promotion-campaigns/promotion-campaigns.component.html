@@ -1,21 +1,20 @@
 <div class="ad-page">
   <div class="ad-page-header">
     <div>
-      <h1 class="ad-h1">{{ 'discountTypes.title' | translate }}</h1>
-      <p class="ad-sub">{{ 'discountTypes.subtitle' | translate }}</p>
+      <h1 class="ad-h1">{{ 'promotionCampaigns.title' | translate }}</h1>
+      <p class="ad-sub">{{ 'promotionCampaigns.subtitle' | translate }}</p>
     </div>
     <div class="ad-toolbar">
       <button mat-raised-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> {{ 'common.add' | translate }}</button>
     </div>
   </div>
 
-  <!-- Filters card — one filter UI feeds both the desktop grid and the mobile card list below. -->
   <mat-card class="ad-filter-card">
     <mat-card-content>
       <h3 class="ad-card-title">{{ 'common.filters' | translate }}</h3>
       <form [formGroup]="searchForm" class="ad-filter-grid">
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'discountTypes.typeName' | translate }}</mat-label>
+          <mat-label>{{ 'promotionCampaigns.campaignName' | translate }}</mat-label>
           <input matInput formControlName="name" (input)="onFilterChange()">
         </mat-form-field>
       </form>
@@ -23,7 +22,6 @@
   </mat-card>
 
   <mat-card class="ad-card--pad-0">
-    <!-- Desktop / tablet: ngx-datatable grid. -->
     <div class="ad-table-wrap ad-desktop-only">
       <ngx-datatable
         class="material ad-datatable"
@@ -38,10 +36,10 @@
         [offset]="pageOffset"
         [limit]="pageSize"
         [loadingIndicator]="loadingIndicator"
-        [messages]="{ emptyMessage: 'discountTypes.empty' | translate, selectedMessage: '' }"
+        [messages]="{ emptyMessage: 'promotionCampaigns.empty' | translate, selectedMessage: '' }"
         (page)="onChangePage($event)">
 
-        <ngx-datatable-column [name]="'discountTypes.typeName' | translate" prop="name" [sortable]="false">
+        <ngx-datatable-column [name]="'promotionCampaigns.campaignName' | translate" prop="name" [sortable]="false">
           <ng-template let-row="row" ngx-datatable-cell-template><strong>{{ row.name }}</strong></ng-template>
         </ngx-datatable-column>
 
@@ -63,7 +61,6 @@
       </ngx-datatable>
     </div>
 
-    <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
     <div class="ad-mobile-only">
       <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
         <mat-card-content>
@@ -74,7 +71,7 @@
           </div>
         </mat-card-content>
       </mat-card>
-      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>sell</mat-icon><p>{{ 'discountTypes.empty' | translate }}</p></div>
+      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>campaign</mat-icon><p>{{ 'promotionCampaigns.empty' | translate }}</p></div>
 
       <mat-paginator
         *ngIf="total > 0"

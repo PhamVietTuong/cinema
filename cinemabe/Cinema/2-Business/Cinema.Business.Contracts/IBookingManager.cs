@@ -18,8 +18,10 @@ public interface IBookingManager
     /// <summary>Side-effect-free price quote of a counter sale (no stock, points, gift-card or invoice writes).</summary>
     Task<CounterQuoteDTO>               QuoteCounterAsync(CounterSaleContext context);
     /// <summary>Checks a promo code against a showtime+room using the same rules as booking, and reports
-    /// what it would take off <paramref name="total"/>. Never throws for an unusable code.</summary>
-    Task<DiscountCodeValidationDTO>     ValidateDiscountCodeAsync(Guid userId, string code, Guid roomId, Guid showTimeId, double total);
+    /// what it would take off <paramref name="total"/> on a per-ticket-unit basis (built from
+    /// <paramref name="seats"/>, the same seats already selected on the checkout page). Never throws for
+    /// an unusable code.</summary>
+    Task<DiscountCodeValidationDTO>     ValidateDiscountCodeAsync(Guid userId, string code, Guid roomId, Guid showTimeId, double total, List<BookingSeatItem> seats);
     /// <summary>Starts a payment for the owner's Pending invoice via the chosen provider; returns the redirect/checkout info.</summary>
     Task<PaymentInitiationDTO?>         InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl, string? clientIp);
     Task<bool>                          ConfirmPaymentAsync(Guid userId, Guid invoiceId, string paymentReference);

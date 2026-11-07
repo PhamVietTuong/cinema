@@ -37,24 +37,24 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Order food/drink combos with tickets | Done | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end (out-of-stock handling included) — this roadmap entry was stale. |
 | Manage booked tickets (view / cancel) | Done | - | `profile.component.ts`'s `cancelBooking`/`cancelById` via `PaymentServiceAgent.cancelBooking` — this roadmap entry was stale. |
 | E-tickets + QR codes | Done | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`), not via the `CinemaLib` ticket-card/qr-code components (those are dead code in CinemaUser, used only by CinemaStaff's POS receipt) — this roadmap entry was stale. |
-| Payment gateway (VNPay/MoMo/Stripe) | Partial | L | VNPay and MoMo are both fully wired (backend gateway + selectable checkout option); `StripeGateway.cs` exists and is DI-registered but has no frontend entry point in `booking-checkout.component.ts` yet. |
+| Payment gateway (VNPay/MoMo/Stripe) | Partial | L | VNPay and MoMo are both fully wired (backend gateway + selectable checkout option). Stripe has a CinemaUser checkout option too (`booking-checkout.component.ts`, "Pay by card (Stripe)"); it only redirects to Stripe once `Payments:Stripe:*` keys are configured - with an unconfigured account `PaymentGatewayResolver` falls back to the default provider, so a real Stripe account must be set up and a Checkout round-trip exercised before this is marked done. |
 | Order confirmation email/SMS | New | M | Overlaps with reminders — see messaging infra below. |
 
 ## Discovery & engagement
 
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
-| Ratings & reviews | Done | - | Surfaced in `movie-detail.component.ts`: star rating widget, threaded comments (`recentComments`/`replies`), `canReview` gate; comments go through admin moderation — this roadmap entry was stale. |
+| Ratings & reviews | Done | - | Score is validated 1-10 (400), comments are 1-2000 chars, replies attach one level deep to an approved top-level comment of the same movie, and each user has one rating per movie. A star click keeps the saved review. CinemaUser shows "No ratings yet" (no ring), the viewer's own rating and private review (`myRating`/`myReview`), a reply form, "load more" comments (`GetMovieComments`) and edit/delete of own comments (`UpdateOwnComment`/`DeleteOwnComment`). Only users who watched the movie may rate/comment/reply (403 otherwise, read-only UI). Comments go through admin moderation. |
 | Movie recommendations by preference | Done | - | `CinemaController.GetRecommendedMovies` → `MovieManager.GetRecommendedAsync`, personalized for signed-in users (top-rated for anonymous), wired into CinemaUser's home page. |
-| Search & filter movies/showtimes (theater, date, time, genre, language) | Partial | M | Some search exists (`GetTheatersByMovie`); build a unified filter API + UI. Confirm "language" = movie audio/subtitle field (add if missing). |
+| Search & filter movies/showtimes (theater, date, time, genre, language) | Done | M | Done: `GetMovies` filters server-side by genre (`movieTypeId`), `language`, `theaterId`, `date` and `status` (now/coming) across all pages; `SearchShowTimes` searches showtimes across movies with `theaterId`/`movieTypeId`/`language`/`date`/`timeFrom`/`timeTo`; `GetMovieLanguages` feeds the language filter. UI: `cl-filter-bar` on CinemaUser `/movies` (incl. a "Showtimes" tab). |
 | Nearest theater by location | Done | - | `Theater.Latitude`/`Longitude` (manually entered per theater in CinemaAdmin, no geocoding API) + browser geolocation + Haversine distance sort on CinemaUser's theaters list. |
 
 ## Membership & promotions
 
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
-| Membership / points / vouchers | Partial | M | `MemberShip` tiers + `Discount`/`DiscountType` exist; wire point accrual on purchase, tier upgrades, voucher redemption at checkout. |
-| Promotions scoped system-wide OR per-theater | New | M | Add an optional `TheaterId` to `Discount` (null = global). Enforce scope at redemption. |
+| Membership / points / vouchers | Done | - | `MemberShip` tiers + `PromotionProgram` (code/auto-apply, merged from the former `Discount`/`DiscountType`) exist; point accrual on purchase and tier upgrades are wired (`BookingManager.ApplyPaidSideEffectsAsync`). |
+| Promotions scoped system-wide OR per-theater | Done | - | `PromotionProgramSchedule` rows scope a program to specific theaters/days/times (zero rows = system-wide); enforced at redemption in `BookingManager.MatchesProgramScope`. |
 
 ## Admin & reporting
 
@@ -69,15 +69,15 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
-| Messaging (email/SMS) | New | M | Underpins order confirmation + showtime reminders. `INotificationService` (`DevLogNotificationService`) abstraction exists — implement a real email provider + SMS provider. Pick providers. |
+| Messaging (email/SMS) | Partial | M | Providers are implemented but unvalidated against real accounts: `SmtpNotificationService` (email) and `TwilioSmsNotificationService` (SMS) take typed `SmtpOptions`/`TwilioOptions` validated at startup (a half-filled section fails the host start), normalise phone numbers to E.164 (`0900123456` -> `+84900123456`) and enforce send timeouts; unconfigured falls back to the dev-log senders. No outbox/retry queue (a failed send is logged, not retried). |
 | Showtime reminders | New | M | Depends on messaging; needs a scheduler (e.g. background job) to send before showtime. |
 | Multilingual (i18n) | New | L | Angular i18n or a runtime translation lib across CinemaUser + CinemaAdmin. Decide languages + approach. |
 | Support chatbot | Done | - | Rule-based, no LLM/API key: keyword-matched against a canned FAQ (booking, showtimes, cancel, membership, nearby theater, payment, combo) in `CinemaUser/shared/chatbot`. |
 
 ## Suggested next steps (small, high-value, low-dependency)
 
-1. Messaging infra (New, M) — unblocks order confirmation + reminders.
-2. Search & filter movies/showtimes (Partial, M) — some search exists, build a unified filter UI.
+1. Messaging infra (Partial, M) — exercise the SMTP/Twilio providers against real accounts; add an outbox if delivery guarantees are needed.
+2. Stripe (Partial, L) — configure a Stripe account and run a real Checkout round-trip.
 3. Revenue statistics & detailed reports (New, M) — basic reports exist, add the full report set.
 
-Ratings & reviews, Facebook login, food/drink combos, movie recommendations, nearest theater, and the support chatbot are all already done. Larger tracks (payments, i18n) are best scheduled on their own.
+Ratings & reviews, search & filter, Facebook login, food/drink combos, movie recommendations, nearest theater, and the support chatbot are all already done. Larger tracks (payments, i18n) are best scheduled on their own.

@@ -10,6 +10,12 @@ public class MovieDetailDTO : MovieDTO
     /// <summary>True when the requesting user has watched the movie (paid, active ticket for a finished
     /// screening) and may rate/comment. Always false for anonymous callers.</summary>
     public bool CanReview { get; set; }
+    /// <summary>The requesting user's own score (1-10), or null when anonymous or not rated yet.</summary>
+    public int? MyRating { get; set; }
+    /// <summary>The requesting user's own private review text, read back to its author only.</summary>
+    public string? MyReview { get; set; }
+    /// <summary>Approved comments on the movie, replies included (RecentComments only carries the newest page).</summary>
+    public int TotalComments { get; set; }
     /// <summary>Explicit Director/Actor credits, ordered Directors then Actors then DisplayOrder.
     /// Empty means this movie has none set up yet; the client then falls back to splitting the
     /// Director/Cast strings.</summary>

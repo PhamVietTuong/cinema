@@ -293,6 +293,72 @@
       .dlg-row--2, .dlg-row--3 { grid-template-columns: 1fr; }
     }
 
+    // ── Step wizard: a long form (e.g. promotion-program.dialog) broken into
+    // named steps, one visible at a time, navigated by a dot/line indicator
+    // plus Back/Next (Save on the last step). Opt-in: most dialogs are short
+    // enough that .dlg-grid's flat row stack needs no further structure.
+    .dlg-steps {
+      display: flex;
+      align-items: center;
+      padding: 0 var(--cx-space-2) var(--cx-space-3);
+    }
+    .dlg-step-dot {
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--ml-rule);
+      background: var(--ml-panel);
+      color: var(--ml-muted);
+      font-family: var(--ml-font-data);
+      font-size: var(--cx-text-xs);
+      font-weight: var(--cx-weight-semibold);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &.is-active {
+        border-color: var(--ml-action);
+        background: var(--ml-action);
+        color: var(--ml-on-action);
+      }
+      &.is-done {
+        border-color: var(--ml-action);
+        background: var(--ml-action-soft);
+        color: var(--ml-action-strong);
+      }
+    }
+    .dlg-step-line {
+      flex: 1 1 auto;
+      height: 2px;
+      margin: 0 var(--cx-space-2);
+      background: var(--ml-rule);
+
+      &.is-done { background: var(--ml-action); }
+    }
+    .dlg-step-label {
+      margin: 0 0 var(--cx-space-4);
+      font-family: var(--ml-font-data);
+      font-size: var(--cx-text-xs);
+      font-weight: var(--cx-weight-semibold);
+      letter-spacing: var(--cx-track-caps);
+      text-transform: uppercase;
+      color: var(--ml-muted);
+    }
+    .dlg-step-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: var(--cx-space-3);
+    }
+    .dlg-step-actions-right {
+      display: flex;
+      align-items: center;
+      gap: var(--cx-space-2);
+    }
+
     .dlg-field {
       display: flex;
       flex-direction: column;
