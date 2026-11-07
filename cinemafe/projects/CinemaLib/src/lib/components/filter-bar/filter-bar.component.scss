@@ -1,1 +1,14 @@
+// The grid lives here, not only in the Admin/Staff global theme (_marquee-ledger.scss), so the bar lays
+// out the same in every app — CinemaUser does not load that theme and rendered the fields flush together.
+// The fallbacks match the --cx-space-4/5 token values.
+:host { display: block; }
+
+.ad-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--cx-space-4, 16px) var(--cx-space-5, 24px);
+}
+
+.ad-filter-grid mat-form-field { width: 100%; }
+
 .cl-filter-toggle { display: flex; align-items: center; padding-bottom: 8px; }
