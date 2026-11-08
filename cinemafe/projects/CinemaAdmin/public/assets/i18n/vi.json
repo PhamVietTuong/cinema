@@ -725,7 +725,8 @@
     "active": "Đang Dùng",
     "inactive": "Ngừng Dùng",
     "empty": "Chưa có mẫu nào.",
-    "placeholdersHint": "Các placeholder khả dụng (dùng đúng định dạng với dấu ngoặc nhọn kép):"
+    "placeholdersHint": "Các placeholder khả dụng (dùng đúng định dạng với dấu ngoặc nhọn kép):",
+    "preview": "Xem trước"
   },
   "promotionCampaigns": {
     "title": "Quản Lý Chiến Dịch Khuyến Mãi",

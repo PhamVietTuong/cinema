@@ -90,6 +90,16 @@ public class BookingConfirmationTemplateTests
     }
 
     [Fact]
+    public void EmailIcons_AttachesOnlyIconsReferencedByBody()
+    {
+        var images = EmailIcons.ReferencedBy("<img src=\"cid:icon-check@cinema\"><img src=\"cid:icon-ticket@cinema\">");
+
+        images.Select(i => i.ContentId).Should().BeEquivalentTo("icon-check@cinema", "icon-ticket@cinema");
+        images.Should().OnlyContain(i => i.MediaType == "image/png" && i.Content.Length > 8);
+        EmailIcons.ReferencedBy("no images here").Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task ConfirmPayment_TemplateLookupThrows_FallsBackAndStillSendsOnce()
     {
         var userId = Guid.NewGuid();

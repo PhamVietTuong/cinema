@@ -1,7 +1,10 @@
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnDestroy } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { debounceTime, startWith, Subscription } from 'rxjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { renderTemplatePreview } from './template-preview';
 import { CinemaServiceAgent, TemplateChannelValues, showLoading, hideLoading, showSuccess, showException } from 'CinemaLib';
 
 type Dto = CinemaServiceAgent.TemplateDTO;
@@ -17,6 +20,7 @@ const PLACEHOLDER_TOKENS = [
   'CustomerName', 'BookingCode', 'MovieTitle', 'TheaterName', 'RoomName', 'RoomTypeName',
   'ProjectionForm', 'ShowDate', 'ShowStartTime', 'ShowTime', 'TicketTypes', 'SeatLabels',
   'TicketCount', 'Concessions', 'SubTotal', 'DiscountAmount', 'TotalAmount', 'QrCodes', 'QrImages',
+  'TicketsUrl', 'HomeUrl',
 ];
 
 /** Create/edit form for a notification template, opened via MatDialog. Resolves `true` on save, `false` on cancel. */
@@ -25,18 +29,26 @@ const PLACEHOLDER_TOKENS = [
   standalone: false,
   templateUrl: './template.dialog.html',
 })
-export class TemplateDialog {
+export class TemplateDialog implements OnDestroy {
   readonly editingId: string | null;
   readonly channelValues = TemplateChannelValues;
   readonly placeholderTokens = PLACEHOLDER_TOKENS;
   readonly channelEmail = CinemaServiceAgent.TemplateChannel.Email;
   form: FormGroup;
+  /** Rendered email HTML for the sandboxed preview iframe; null when the channel isn't Email. */
+  previewHtml: SafeHtml | null = null;
+  /** Rendered plain text for non-email (SMS) templates. */
+  previewText = '';
+  private _previewSub: Subscription;
+  private _previewSeq = 0;
 
   constructor(
     private _svc: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
     private _store: Store<any>,
     private _dialogRef: MatDialogRef<TemplateDialog, boolean>,
+    private _sanitizer: DomSanitizer,
+    private _cd: ChangeDetectorRef,
     @Inject(MAT_DIALOG_DATA) data: TemplateDialogData,
   ) {
     const t = data.template;
@@ -52,6 +64,25 @@ export class TemplateDialog {
 
     this.form.get('channel')!.valueChanges.subscribe(() => this._updateSubjectValidator());
     this._updateSubjectValidator();
+
+    this._previewSub = this.form.valueChanges.pipe(startWith(null), debounceTime(150))
+      .subscribe(() => void this._refreshPreview());
+  }
+
+  ngOnDestroy(): void {
+    this._previewSub.unsubscribe();
+  }
+
+  private async _refreshPreview(): Promise<void> {
+    const seq = ++this._previewSeq;
+    const isEmail = this.form.get('channel')!.value === this.channelEmail;
+    const html = await renderTemplatePreview(this.form.get('body')!.value ?? '', isEmail);
+    if (seq !== this._previewSeq) {
+      return;
+    }
+    this.previewHtml = isEmail ? this._sanitizer.bypassSecurityTrustHtml(html) : null;
+    this.previewText = isEmail ? '' : html;
+    this._cd.markForCheck();
   }
 
   private _updateSubjectValidator(): void {

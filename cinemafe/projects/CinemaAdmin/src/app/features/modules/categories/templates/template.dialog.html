@@ -53,6 +53,16 @@
       </div>
 
       <div class="dlg-row">
+        <div class="dlg-field">
+          <span class="dlg-label">{{ 'templates.preview' | translate }}</span>
+          <!-- Sandboxed with no permissions: the body is admin-authored HTML, so scripts/forms/navigation stay off. -->
+          <iframe *ngIf="previewHtml" sandbox="" [srcdoc]="previewHtml" title="preview"
+            style="width: 100%; height: 640px; border: 1px solid #e0d6c6; border-radius: 8px; background: #fff;"></iframe>
+          <pre *ngIf="!previewHtml" style="white-space: pre-wrap; margin: 0;">{{ previewText }}</pre>
+        </div>
+      </div>
+
+      <div class="dlg-row">
         <mat-checkbox formControlName="isActive">{{ 'templates.active' | translate }}</mat-checkbox>
       </div>
 
