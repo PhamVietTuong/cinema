@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { expectRouteRenders } from '../../helpers/page-health';
+import { USER_URL, expectRouteRenders } from './helpers';
+
+test.use({ baseURL: USER_URL });
 
 test.describe('CinemaUser: public discovery pages', () => {
   for (const route of ['/', '/movies', '/theaters', '/promotions', '/membership']) {

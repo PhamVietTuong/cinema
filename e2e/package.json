@@ -5,14 +5,13 @@
   "description": "Playwright end-to-end + API tests for CinemaUser (:4202), CinemaAdmin (:4201), CinemaStaff (:4203) and the Web API (:5102).",
   "scripts": {
     "test": "playwright test",
-    "test:api": "playwright test --project=api",
-    "test:user": "playwright test --project=user",
-    "test:admin": "playwright test --project=admin",
-    "test:staff": "playwright test --project=staff",
+    "test:api": "playwright test api-",
+    "test:user": "playwright test user-",
+    "test:admin": "playwright test admin-",
+    "test:staff": "playwright test staff-",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
-    "typecheck": "tsc --noEmit",
-    "report": "playwright show-report"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",

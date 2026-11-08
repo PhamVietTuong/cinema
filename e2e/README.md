@@ -1,19 +1,30 @@
-# Cinema E2E
+# Cinema E2E tests
 
-Playwright suite covering the Web API and all three Angular apps. Tracked in git (unlike the local `QA-tests/` harness).
-
-| Project | Target | Specs |
-|---|---|---|
-| `api` | Web API `:5102` | health, public catalog, auth/authorization, payment-callback signature contract |
-| `user` | CinemaUser `:4202` | auth, route guards, discovery pages, movie detail, chatbot, profile, booking seat map |
-| `admin` | CinemaAdmin `:4201` | login, guards, every routed screen (overview / catalog / operations), theater detail |
-| `staff` | CinemaStaff `:4203` | login, guards, every routed screen (gate, POS, schedule, incidents, reports, audit log) |
+Playwright tests against a **real** stack — API + DB + the three Angular apps, no mocks. Same layout as
+`augure-fe/e2e`: flat `tests/` folder, one shared `tests/helpers.ts`, a `global-setup.ts` that fails fast
+when something is down, one chromium project.
 
 ## Prerequisites
 
-1. SQL Server DB built from `cinemabe/sql/*.sql`.
-2. Seed accounts: `dotnet run --project Cinema/2-Business/Cinema.Business.Tests` (from `cinemabe/`) → `admin@cinema.vn`, `user@cinema.vn`.
-3. API running on `http://localhost:5102`; apps served with `ng serve CinemaUser|CinemaAdmin|CinemaStaff` (Node 22 via nvm).
+Start everything on the same dev DB (Node 22 via nvm for the apps):
+
+```bash
+# 1. API — from cinemabe/  (http://localhost:5102)
+dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost
+
+# 2. Apps — from cinemafe/
+npx ng serve CinemaAdmin --port 4201
+npx ng serve CinemaUser  --port 4202
+npx ng serve CinemaStaff --port 4203
+```
+
+Accounts (override with `E2E_{ADMIN,USER,STAFF}_{EMAIL,PASSWORD}`):
+
+| Role | Default | Source |
+|---|---|---|
+| Admin (also used for CinemaStaff screens — `STAFF_APP_ROLES` includes Admin) | `admin@cinema.vn` / `Admin@123` | `dotnet run --project Cinema/2-Business/Cinema.Business.Tests` |
+| Customer | `khach01@cinema.vn` / `Khach01@123` | `cinemabe/sql/insert_db.sql` |
+| Theater staff | `staff@cinema.vn` / `Staff@123` | seed (needs a theater) |
 
 ## Run
 
@@ -21,19 +32,33 @@ Playwright suite covering the Web API and all three Angular apps. Tracked in git
 cd e2e
 npm install
 npx playwright install chromium
-npm test                 # everything
-npm run test:api         # one project
-npm run report           # open the HTML report
+npm test                  # everything
+npm run test:admin        # one app: api- / user- / admin- / staff- spec prefix
+npx playwright test -g "gate"
 ```
 
-Environment overrides: `CINEMA_API_URL`, `CINEMA_USER_URL`, `CINEMA_ADMIN_URL`, `CINEMA_STAFF_URL`,
-`E2E_ADMIN_EMAIL/PASSWORD`, `E2E_USER_EMAIL/PASSWORD`, and `E2E_STAFF_EMAIL/PASSWORD` (the seed creates no
-TheaterStaff account, so that one spec skips without them).
+Point at other hosts with `CINEMA_API_URL`, `CINEMA_USER_URL`, `CINEMA_ADMIN_URL`, `CINEMA_STAFF_URL`.
+
+## Layout
+
+| File | Covers |
+|---|---|
+| `tests/api-public-catalog.spec.ts` | health, `GetMovies` / `GetTheaters` paging, validation |
+| `tests/api-auth.spec.ts` | login, 401 / 403 on admin endpoints |
+| `tests/api-payment-callback.spec.ts` | VNPay callback contract (bad signature is never `RspCode` `00`) |
+| `tests/user-auth.spec.ts` | CinemaUser login/register/reset pages, route guards |
+| `tests/user-discover.spec.ts` | home, movies, theaters, promotions, membership, chatbot |
+| `tests/user-profile-booking.spec.ts` | profile, session persistence, showtime → seat map |
+| `tests/admin-auth-guards.spec.ts` | CinemaAdmin login, guards, non-admin refusal |
+| `tests/admin-screens.spec.ts` | all 22 routed admin screens + theater detail |
+| `tests/staff-auth-screens.spec.ts` | CinemaStaff login, guards, all screens |
+| `tests/helpers.ts` | URLs, accounts, `login`, session helpers, `expectRouteRenders`, `bearer` |
+| `global-setup.ts` | reachability checks + one saved login per app (`.auth/`, git-ignored) |
 
 ## Notes
 
-- Runs serially (one worker): specs share one database.
-- Data-dependent specs (movie detail, showtime → seat map, theater detail) skip when nothing is seeded.
-- Admin is used for the staff-app screens because `STAFF_APP_ROLES` includes `Admin`.
-- Out of scope: real payment-gateway round-trips (VNPay/MoMo/Stripe need public callbacks); only the callback contract is asserted.
-- Keep reports/screenshots out of tracked folders; `playwright-report/` and `test-results/` are git-ignored here.
+- Serial (`workers: 1`): specs share one dev DB.
+- `/api/Identity/Login` allows 10 requests/min per IP, so specs that only need "a signed-in user" reuse the
+  session saved by `global-setup.ts` (`test.use({ storageState: SESSION.admin })`) instead of logging in per test.
+- Specs that need seeded data (a movie, an upcoming showtime, a theater) skip when there is none.
+- Out of scope: real payment-gateway round trips (VNPay/MoMo/Stripe need a public callback URL).

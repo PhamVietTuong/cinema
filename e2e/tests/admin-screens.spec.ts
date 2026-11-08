@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { ADMIN } from '../../fixtures/personas';
-import { loginAs } from '../../helpers/auth';
-import { expectRouteRenders } from '../../helpers/page-health';
+import { ADMIN_URL, SESSION, expectRouteRenders } from './helpers';
+
+test.use({ baseURL: ADMIN_URL });
 
 /** Every routed admin screen, grouped as in the three lazy modules of app.routes.ts. */
 const SCREENS: Record<string, string[]> = {
@@ -17,9 +17,7 @@ const SCREENS: Record<string, string[]> = {
 };
 
 test.describe('CinemaAdmin: every screen loads for an admin', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAs(page, ADMIN);
-  });
+  test.use({ storageState: SESSION.admin });
 
   for (const [group, routes] of Object.entries(SCREENS)) {
     for (const route of routes) {
@@ -31,9 +29,7 @@ test.describe('CinemaAdmin: every screen loads for an admin', () => {
 });
 
 test.describe('CinemaAdmin: theater management', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAs(page, ADMIN);
-  });
+  test.use({ storageState: SESSION.admin });
 
   test('theater list opens a detail page with tabs', async ({ page }) => {
     await page.goto('/theaters');

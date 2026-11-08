@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { ADMIN, CUSTOMER } from '../../fixtures/personas';
-import { PAGING, bearer } from '../../helpers/api';
+import { ADMIN, API_URL, CUSTOMER, PAGING, bearer, login } from './helpers';
+
+test.use({ baseURL: API_URL });
 
 test.describe('API: authentication and authorization', () => {
   test('login with valid credentials returns a token', async ({ request }) => {

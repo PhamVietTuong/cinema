@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { ADMIN, CUSTOMER, STAFF } from '../../fixtures/personas';
-import { clearSession, loginAs } from '../../helpers/auth';
-import { expectRouteRenders } from '../../helpers/page-health';
+import { ADMIN, ANONYMOUS, CUSTOMER, SESSION, STAFF, STAFF_URL, clearSession, expectRouteRenders, login } from './helpers';
+
+test.use({ baseURL: STAFF_URL });
 
 test.describe('CinemaStaff: authentication and guards', () => {
+  test.use({ storageState: ANONYMOUS });
   test('anonymous visitors are sent to login', async ({ page }) => {
     await clearSession(page);
     await page.goto('/home');
@@ -25,21 +26,18 @@ test.describe('CinemaStaff: authentication and guards', () => {
   });
 
   test('admin lands on /home', async ({ page }) => {
-    await loginAs(page, ADMIN);
+    await login(page, ADMIN);
     await expect(page).toHaveURL(/\/home/);
   });
 
   test('theater staff account lands on /home', async ({ page }) => {
-    test.skip(!STAFF, 'Set E2E_STAFF_EMAIL / E2E_STAFF_PASSWORD to run');
-    await loginAs(page, STAFF!);
+    await login(page, STAFF);
     await expect(page).toHaveURL(/\/home/);
   });
 });
 
 test.describe('CinemaStaff: every screen loads for an admin', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAs(page, ADMIN);
-  });
+  test.use({ storageState: SESSION.staff });
 
   const screens = ['/home', '/profile', '/gate', '/pos', '/schedule', '/incidents', '/reports', '/audit-log'];
   for (const route of screens) {

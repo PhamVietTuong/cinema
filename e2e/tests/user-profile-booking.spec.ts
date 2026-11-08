@@ -1,11 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { CUSTOMER } from '../../fixtures/personas';
-import { loginAs } from '../../helpers/auth';
+import { SESSION, USER_URL, dropToken, login } from './helpers';
+
+test.use({ baseURL: USER_URL });
 
 test.describe('CinemaUser: signed-in customer', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAs(page, CUSTOMER);
-  });
+  test.use({ storageState: SESSION.user });
 
   test('profile page opens', async ({ page }) => {
     await page.goto('/profile');
@@ -32,7 +31,7 @@ test.describe('CinemaUser: signed-in customer', () => {
   });
 
   test('removing the token sends the next protected visit to login', async ({ page }) => {
-    await page.evaluate(() => localStorage.removeItem('cinema_token'));
+    await dropToken(page);
     await page.goto('/profile');
     await expect(page).toHaveURL(/\/auth\/login/);
   });

@@ -118,7 +118,7 @@ file there (see above).
 
 ## Committed E2E suite — `e2e/`
 
-`e2e/` is the tracked Playwright suite (78 tests, 4 projects: `api`, `user`, `admin`, `staff`) covering the
+`e2e/` is the tracked Playwright suite (78 tests in `e2e/tests/`, one chromium project, files prefixed `api-` / `user-` / `admin-` / `staff-`; same layout as `augure-fe/e2e`) covering the
 Web API plus CinemaUser/CinemaAdmin/CinemaStaff: auth + route guards, every routed screen, and the VNPay
 callback contract. See `e2e/README.md` for prerequisites and env overrides. It runs serially against a
 seeded dev DB and is not yet wired into `.github/workflows/ci.yml` (the CI `e2e` job still runs

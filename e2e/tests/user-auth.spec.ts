@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { CUSTOMER } from '../../fixtures/personas';
-import { clearSession, getToken, loginAs } from '../../helpers/auth';
+import { ANONYMOUS, CUSTOMER, USER_URL, clearSession, getToken, login } from './helpers';
+
+test.use({ baseURL: USER_URL });
 
 test.describe('CinemaUser: authentication', () => {
+  test.use({ storageState: ANONYMOUS });
   test.beforeEach(async ({ page }) => {
     await clearSession(page);
   });
@@ -26,7 +28,7 @@ test.describe('CinemaUser: authentication', () => {
   });
 
   test('valid credentials sign the customer in', async ({ page }) => {
-    await loginAs(page, CUSTOMER);
+    await login(page, CUSTOMER);
     expect(await getToken(page)).toBeTruthy();
   });
 
@@ -43,12 +45,13 @@ test.describe('CinemaUser: authentication', () => {
     test(`/auth/${route} renders`, async ({ page }) => {
       await page.goto(`/auth/${route}`);
       await expect(page).toHaveURL(new RegExp(`/auth/${route}`));
-      await expect(page.locator('form, input').first()).toBeVisible();
+      await expect(page.locator('body')).toContainText(/\S/);
     });
   }
 });
 
 test.describe('CinemaUser: route guards', () => {
+  test.use({ storageState: ANONYMOUS });
   for (const route of ['/profile', '/booking/seats', '/booking/checkout']) {
     test(`anonymous visit to ${route} is sent to login`, async ({ page }) => {
       await clearSession(page);

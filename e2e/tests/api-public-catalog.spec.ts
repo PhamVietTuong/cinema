@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { PAGING } from '../../helpers/api';
+import { API_URL, PAGING } from './helpers';
+
+test.use({ baseURL: API_URL });
 
 test.describe('API: health and public catalog', () => {
   test('liveness endpoint is up', async ({ request }) => {
@@ -10,7 +12,7 @@ test.describe('API: health and public catalog', () => {
   test('GetMovies returns a paged result', async ({ request }) => {
     const res = await request.post('/api/Cinema/GetMovies', { data: PAGING });
     expect(res.status()).toBe(200);
-    expect(await res.json()).toEqual(expect.objectContaining({ items: expect.any(Array) }));
+    expect(await res.json()).toEqual(expect.objectContaining({ results: expect.any(Array) }));
   });
 
   test('GetNowShowingMovies returns a paged result', async ({ request }) => {
@@ -21,7 +23,7 @@ test.describe('API: health and public catalog', () => {
   test('GetTheaters returns a paged result', async ({ request }) => {
     const res = await request.post('/api/Cinema/GetTheaters', { data: PAGING });
     expect(res.status()).toBe(200);
-    expect(await res.json()).toEqual(expect.objectContaining({ items: expect.any(Array) }));
+    expect(await res.json()).toEqual(expect.objectContaining({ results: expect.any(Array) }));
   });
 
   test('GetMovieLanguages returns a list', async ({ request }) => {

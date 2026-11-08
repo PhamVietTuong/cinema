@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { ADMIN, CUSTOMER } from '../../fixtures/personas';
-import { clearSession, loginAs } from '../../helpers/auth';
+import { ADMIN, ADMIN_URL, ANONYMOUS, CUSTOMER, clearSession, login } from './helpers';
+
+test.use({ baseURL: ADMIN_URL });
 
 test.describe('CinemaAdmin: authentication and guards', () => {
+  test.use({ storageState: ANONYMOUS });
   test('anonymous visitors are sent to login', async ({ page }) => {
     await clearSession(page);
     await page.goto('/dashboard');
@@ -16,7 +18,7 @@ test.describe('CinemaAdmin: authentication and guards', () => {
   });
 
   test('admin lands on the dashboard after login', async ({ page }) => {
-    await loginAs(page, ADMIN);
+    await login(page, ADMIN);
     await expect(page).toHaveURL(/\/dashboard/);
   });
 

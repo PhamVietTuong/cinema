@@ -1,30 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const USER_URL = process.env.CINEMA_USER_URL || 'http://localhost:4202';
-const ADMIN_URL = process.env.CINEMA_ADMIN_URL || 'http://localhost:4201';
-const STAFF_URL = process.env.CINEMA_STAFF_URL || 'http://localhost:4203';
-const API_URL = process.env.CINEMA_API_URL || 'http://localhost:5102';
-
+// Real stack, no mocks. Prereqs (see e2e/README.md): SQL Server DB, cinema API on :5102,
+// CinemaUser :4202, CinemaAdmin :4201, CinemaStaff :4203, all on the same dev DB.
+//
+// One chromium project; each spec file picks its app with `test.use({ baseURL })` (USER_URL /
+// ADMIN_URL / STAFF_URL / API_URL from tests/helpers.ts). Override the targets via CINEMA_*_URL.
 export default defineConfig({
-  testDir: './specs',
-  // Specs share one database (seat locks, invoices, reference data) — run serially.
-  fullyParallel: false,
+  testDir: './tests',
+  timeout: 30_000,
+  expect: { timeout: 10_000 },
+  fullyParallel: false, // shared dev DB — parallel runs would race on the same rows.
   workers: 1,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  timeout: 45_000,
-  expect: { timeout: 8_000 },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  retries: 0,
+  reporter: [['list']],
+  globalSetup: require.resolve('./global-setup.ts'),
   use: {
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    locale: 'vi-VN',
   },
-  projects: [
-    { name: 'api', testDir: './specs/api', use: { baseURL: API_URL } },
-    { name: 'user', testDir: './specs/user', use: { ...devices['Desktop Chrome'], baseURL: USER_URL } },
-    { name: 'admin', testDir: './specs/admin', use: { ...devices['Desktop Chrome'], baseURL: ADMIN_URL } },
-    { name: 'staff', testDir: './specs/staff', use: { ...devices['Desktop Chrome'], baseURL: STAFF_URL } },
-  ],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });
