@@ -14,6 +14,7 @@ var config = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
     .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
+    .AddEnvironmentVariables() // CI supplies ConnectionStrings__CinemaDatabase; Development.json is git-ignored
     .Build();
 
 // ─── DI ───────────────────────────────────────────────────────────────────────
@@ -44,7 +45,15 @@ await CreateAccount(services,
     label:        "User");
 
 // ─── Theater staff account (needs a theater) ──────────────────────────────────
-var seedTheaterId = await GetFirstTheaterId(services);
+Guid? seedTheaterId = null;
+try
+{
+    seedTheaterId = await GetFirstTheaterId(services);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"[Staff] could not read theaters: {ex}");
+}
 if (seedTheaterId == null)
 {
     Console.WriteLine("[Staff] No theaters found — skipped the theater staff account. Seed theaters, then re-run.");
@@ -64,10 +73,17 @@ else
 Console.WriteLine();
 Console.WriteLine("Done.");
 
-if (!Console.IsInputRedirected)
+if (!Console.IsInputRedirected && Environment.GetEnvironmentVariable("CI") == null)
 {
-    Console.WriteLine("Press any key to exit...");
-    Console.ReadKey();
+    try
+    {
+        Console.WriteLine("Press any key to exit...");
+        Console.ReadKey();
+    }
+    catch (InvalidOperationException)
+    {
+        // No interactive console (CI runner, service) — nothing to wait for.
+    }
 }
 
 // ─── Create account helper ────────────────────────────────────────────────────
