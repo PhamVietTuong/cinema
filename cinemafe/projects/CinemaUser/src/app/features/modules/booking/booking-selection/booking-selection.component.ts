@@ -107,7 +107,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       (a.patronCategoryName ?? '').localeCompare(b.patronCategoryName ?? '') || (a.isDouble ? 1 : 0) - (b.isDouble ? 1 : 0));
   }
 
-  canIncrement(row: ShowTimePriceDTO): boolean {
+  canIncrement(_row: ShowTimePriceDTO): boolean {
     return this.totalTickets < this.maxTickets;
   }
 

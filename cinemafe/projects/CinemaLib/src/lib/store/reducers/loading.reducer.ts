@@ -1,14 +1,14 @@
-import { Action, createReducer, on } from '@ngrx/store';
+import { createReducer, on } from '@ngrx/store';
 import { LoadingActions } from '../actions';
 
 export const loadingReducer = createReducer(
   false,
 
-  on(LoadingActions.showLoading, (state, action) => {
+  on(LoadingActions.showLoading, () => {
     return true;
   }),
 
-  on(LoadingActions.hideLoading, (state, action) => {
+  on(LoadingActions.hideLoading, () => {
     return false;
   })
 );

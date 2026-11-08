@@ -50,7 +50,7 @@
             <div class="ticket-detail-label">{{ 'booking.summary.snacks' | translate }}</div>
             <div class="ticket-info-value">{{ foodSummary }}</div>
           </div>
-          <div class="ticket-info-wide ticket-total" *ngIf="invoice?.finalAmount != null">
+          <div class="ticket-info-wide ticket-total" *ngIf="invoice?.finalAmount !== null && invoice?.finalAmount !== undefined">
             <div class="ticket-detail-label">{{ 'booking.success.totalLabel' | translate }}</div>
             <div class="ticket-info-value">{{ invoice?.finalAmount | number:'1.0-0' }}đ</div>
           </div>

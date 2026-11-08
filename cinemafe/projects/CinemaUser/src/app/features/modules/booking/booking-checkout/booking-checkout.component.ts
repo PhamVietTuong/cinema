@@ -384,7 +384,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this._holdTimer = setInterval(() => {
       if (this.holdSecondsLeft > 0) {
         this.holdSecondsLeft--;
-      } else {
+      }
+      if (this.holdSecondsLeft === 0) {
         this.holdExpired = true;
         clearInterval(this._holdTimer);
         this._redirectAfterHoldExpired();

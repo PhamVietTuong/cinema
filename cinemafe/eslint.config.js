@@ -31,14 +31,14 @@ module.exports = tseslint.config(
     ],
     processor: angular.processInlineTemplates,
     rules: {
-      // Component/directive selector prefixes per angular.json: apps use `app`, the library `cl`.
+      // Component/directive selector prefixes per angular.json: apps use `app`, CinemaStaff `staff`, the library `cl`.
       '@angular-eslint/component-selector': [
         'error',
-        { type: 'element', prefix: ['app', 'cl'], style: 'kebab-case' },
+        { type: 'element', prefix: ['app', 'cl', 'staff'], style: 'kebab-case' },
       ],
       '@angular-eslint/directive-selector': [
         'error',
-        { type: 'attribute', prefix: ['app', 'cl'], style: 'camelCase' },
+        { type: 'attribute', prefix: ['app', 'cl', 'staff'], style: 'camelCase' },
       ],
       // The codebase leans on `any` at the NSwag/store boundary; flagging every use would bury
       // real findings. Left on as a warning so new ones are visible without failing the build.

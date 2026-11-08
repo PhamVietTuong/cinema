@@ -114,8 +114,8 @@
             <h4>{{ 'promotions.pricesTitle' | translate }}</h4>
             <div class="price-chips">
               <span class="chip" *ngFor="let row of p.prices">
-                {{ (row.projectionForm == null ? ('promotions.allFormats' | translate) : (row.projectionForm === 1 ? '2D' : '3D')) }}
-                {{ row.seatKind == null ? ('promotions.allSeats' | translate) : (row.seatKind === 1 ? ('booking.seats.kindDouble' | translate) : ('booking.seats.kindStandard' | translate)) }}
+                {{ ((row.projectionForm === null || row.projectionForm === undefined) ? ('promotions.allFormats' | translate) : (row.projectionForm === 1 ? '2D' : '3D')) }}
+                {{ (row.seatKind === null || row.seatKind === undefined) ? ('promotions.allSeats' | translate) : (row.seatKind === 1 ? ('booking.seats.kindDouble' | translate) : ('booking.seats.kindStandard' | translate)) }}
                 · {{ row.price | number }}đ
               </span>
             </div>
