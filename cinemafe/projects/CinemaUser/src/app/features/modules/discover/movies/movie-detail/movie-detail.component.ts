@@ -594,6 +594,14 @@ export class MovieDetailComponent implements OnInit {
       });
   }
 
+  /** Plays the movie's trailer in the shared trailer dialog (same as the Home hero and movie cards). */
+  openTrailer(movie: any): void {
+    if (!movie?.trailerUrl) {
+      return;
+    }
+    this._dialog.openTrailerDialog({ title: movie.title, trailerUrl: movie.trailerUrl });
+  }
+
   scrollToShowtimes(): void {
     document.getElementById('showtimes')?.scrollIntoView({ behavior: 'smooth' });
   }
