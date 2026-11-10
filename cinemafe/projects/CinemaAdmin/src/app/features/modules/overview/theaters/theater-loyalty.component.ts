@@ -52,7 +52,7 @@ export class TheaterLoyaltyComponent implements OnChanges {
     this.loading = true;
     this._cinemaService.getEffectiveLoyaltyRate(this.theaterId).subscribe({
       next: rate => {
-        this.hasOverride = rate.isCustom;
+        this.hasOverride = !!rate.isCustom;
         this.form.patchValue({ pointsPerUnit: rate.pointsPerUnit, pointValueVnd: rate.pointValueVnd });
         this.loading = false;
         this._cdr.markForCheck();

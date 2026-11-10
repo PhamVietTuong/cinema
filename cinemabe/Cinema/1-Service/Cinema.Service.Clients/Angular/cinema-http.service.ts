@@ -157,11 +157,9 @@ export interface IHttpService {
     getInvoices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfInvoiceAdminDTO>;
     updateInvoiceStatus(request: UpdateInvoiceStatusRequest): Observable<InvoiceAdminDTO>;
     deleteInvoice(id?: string | undefined): Observable<void>;
-    getEffectiveLoyaltyRate(theaterId?: string | null | undefined): Observable<EffectiveLoyaltyRateDTO>;
-    getGlobalLoyaltySetting(): Observable<LoyaltySettingDTO>;
-    getTheaterLoyaltySetting(theaterId?: string | undefined): Observable<LoyaltySettingDTO>;
+    getEffectiveLoyaltyRate(theaterId?: string | undefined): Observable<EffectiveLoyaltyRateDTO>;
     saveLoyaltySetting(request: SaveLoyaltySettingRequest): Observable<LoyaltySettingDTO>;
-    clearTheaterLoyaltyOverride(theaterId?: string | undefined): Observable<void>;
+    resetTheaterLoyaltyToDefault(theaterId?: string | undefined): Observable<void>;
     getComboComponents(comboId?: string | undefined): Observable<ComboComponentDTO[]>;
     saveComboComposition(request: SaveComboRequest): Observable<void>;
     scan(request: ScanTicketRequest): Observable<ScanTicketResultDTO>;
@@ -7303,9 +7301,11 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
-    getEffectiveLoyaltyRate(theaterId?: string | null | undefined): Observable<EffectiveLoyaltyRateDTO> {
+    getEffectiveLoyaltyRate(theaterId?: string | undefined): Observable<EffectiveLoyaltyRateDTO> {
         let url_ = this.baseUrl + "/api/Cinema/GetEffectiveLoyaltyRate?";
-        if (theaterId !== undefined && theaterId !== null)
+        if (theaterId === null)
+            throw new Error("The parameter 'theaterId' cannot be null.");
+        else if (theaterId !== undefined)
             url_ += "theaterId=" + encodeURIComponent("" + theaterId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -7343,106 +7343,6 @@ export class HttpService implements IHttpService {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = EffectiveLoyaltyRateDTO.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    getGlobalLoyaltySetting(): Observable<LoyaltySettingDTO> {
-        let url_ = this.baseUrl + "/api/Cinema/GetGlobalLoyaltySetting";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetGlobalLoyaltySetting(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetGlobalLoyaltySetting(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<LoyaltySettingDTO>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<LoyaltySettingDTO>;
-        }));
-    }
-
-    protected processGetGlobalLoyaltySetting(response: HttpResponseBase): Observable<LoyaltySettingDTO> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = LoyaltySettingDTO.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    getTheaterLoyaltySetting(theaterId?: string | undefined): Observable<LoyaltySettingDTO> {
-        let url_ = this.baseUrl + "/api/Cinema/GetTheaterLoyaltySetting?";
-        if (theaterId === null)
-            throw new Error("The parameter 'theaterId' cannot be null.");
-        else if (theaterId !== undefined)
-            url_ += "theaterId=" + encodeURIComponent("" + theaterId) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetTheaterLoyaltySetting(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetTheaterLoyaltySetting(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<LoyaltySettingDTO>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<LoyaltySettingDTO>;
-        }));
-    }
-
-    protected processGetTheaterLoyaltySetting(response: HttpResponseBase): Observable<LoyaltySettingDTO> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = LoyaltySettingDTO.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -7505,8 +7405,8 @@ export class HttpService implements IHttpService {
         return _observableOf(null as any);
     }
 
-    clearTheaterLoyaltyOverride(theaterId?: string | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/Cinema/ClearTheaterLoyaltyOverride?";
+    resetTheaterLoyaltyToDefault(theaterId?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/ResetTheaterLoyaltyToDefault?";
         if (theaterId === null)
             throw new Error("The parameter 'theaterId' cannot be null.");
         else if (theaterId !== undefined)
@@ -7521,11 +7421,11 @@ export class HttpService implements IHttpService {
         };
 
         return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processClearTheaterLoyaltyOverride(response_);
+            return this.processResetTheaterLoyaltyToDefault(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processClearTheaterLoyaltyOverride(response_ as any);
+                    return this.processResetTheaterLoyaltyToDefault(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<void>;
                 }
@@ -7534,7 +7434,7 @@ export class HttpService implements IHttpService {
         }));
     }
 
-    protected processClearTheaterLoyaltyOverride(response: HttpResponseBase): Observable<void> {
+    protected processResetTheaterLoyaltyToDefault(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -16512,7 +16412,7 @@ export interface IUpdateInvoiceStatusRequest {
 export class EffectiveLoyaltyRateDTO implements IEffectiveLoyaltyRateDTO {
     pointsPerUnit?: number;
     pointValueVnd?: number;
-    isOverride?: boolean;
+    isCustom?: boolean;
 
     constructor(data?: IEffectiveLoyaltyRateDTO) {
         if (data) {
@@ -16527,7 +16427,7 @@ export class EffectiveLoyaltyRateDTO implements IEffectiveLoyaltyRateDTO {
         if (_data) {
             this.pointsPerUnit = _data["pointsPerUnit"];
             this.pointValueVnd = _data["pointValueVnd"];
-            this.isOverride = _data["isOverride"];
+            this.isCustom = _data["isCustom"];
         }
     }
 
@@ -16542,7 +16442,7 @@ export class EffectiveLoyaltyRateDTO implements IEffectiveLoyaltyRateDTO {
         data = typeof data === 'object' ? data : {};
         data["pointsPerUnit"] = this.pointsPerUnit;
         data["pointValueVnd"] = this.pointValueVnd;
-        data["isOverride"] = this.isOverride;
+        data["isCustom"] = this.isCustom;
         return data;
     }
 }
@@ -16550,11 +16450,11 @@ export class EffectiveLoyaltyRateDTO implements IEffectiveLoyaltyRateDTO {
 export interface IEffectiveLoyaltyRateDTO {
     pointsPerUnit?: number;
     pointValueVnd?: number;
-    isOverride?: boolean;
+    isCustom?: boolean;
 }
 
 export class LoyaltySettingDTO implements ILoyaltySettingDTO {
-    theaterId?: string | undefined;
+    theaterId?: string;
     pointsPerUnit?: number;
     pointValueVnd?: number;
     lastUpdatedTime?: Date | undefined;
@@ -16595,14 +16495,14 @@ export class LoyaltySettingDTO implements ILoyaltySettingDTO {
 }
 
 export interface ILoyaltySettingDTO {
-    theaterId?: string | undefined;
+    theaterId?: string;
     pointsPerUnit?: number;
     pointValueVnd?: number;
     lastUpdatedTime?: Date | undefined;
 }
 
 export class SaveLoyaltySettingRequest implements ISaveLoyaltySettingRequest {
-    theaterId?: string | undefined;
+    theaterId!: string;
     pointsPerUnit?: number;
     pointValueVnd?: number;
 
@@ -16640,7 +16540,7 @@ export class SaveLoyaltySettingRequest implements ISaveLoyaltySettingRequest {
 }
 
 export interface ISaveLoyaltySettingRequest {
-    theaterId?: string | undefined;
+    theaterId: string;
     pointsPerUnit?: number;
     pointValueVnd?: number;
 }
