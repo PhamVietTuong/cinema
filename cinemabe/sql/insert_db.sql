@@ -15771,7 +15771,7 @@ UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=UywJmJ6ohvc'
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=9HGy-c4_xFg' WHERE [Slug] = N'austin-powers-international-man-of-mystery' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=jm2sNLIPPvA' WHERE [Slug] = N'avatar' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=TcMBFSGVi1c' WHERE [Slug] = N'avengers-endgame' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
-UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=Kq02sBe5xko' WHERE [Slug] = N'a-walk-to-remember' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
+UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=699IksW5yKk' WHERE [Slug] = N'a-walk-to-remember' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=jGGptGEAo2U' WHERE [Slug] = N'baby-driver' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=ez6WQ7IX72U' WHERE [Slug] = N'back-to-the-future' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=lirBhHXvDSg' WHERE [Slug] = N'batman-begins' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
@@ -15931,7 +15931,7 @@ UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=5_RsHRmIRBY'
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=X7xfRXGMrDM' WHERE [Slug] = N'miracle' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=L8Pbjh4EZRk' WHERE [Slug] = N'mission-impossible' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=MEOOas3JZt0' WHERE [Slug] = N'mission-impossible-fallout' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
-UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=EEz5xbzYPKI' WHERE [Slug] = N'moana' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
+UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=LKFuXETZUsI' WHERE [Slug] = N'moana' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=JdSl4RMNtGE' WHERE [Slug] = N'moana-2' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=RAG74hfW4pM' WHERE [Slug] = N'moneyball' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=6tCxnHCqqxg' WHERE [Slug] = N'monsters-inc' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
@@ -16032,7 +16032,7 @@ UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=vU6L3jXt2r8'
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=BP_FwE0Z7no' WHERE [Slug] = N'the-equalizer' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=BU2eYAO31Cc' WHERE [Slug] = N'the-exorcist' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=EySdVK0NK1Y' WHERE [Slug] = N'the-fall-guy' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
-UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=t3vEkE_8S3w' WHERE [Slug] = N'the-fast-and-the-furious' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
+UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=iIU1xlDbbQk' WHERE [Slug] = N'the-fast-and-the-furious' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=3Ixw15DE-xY' WHERE [Slug] = N'the-fault-in-our-stars' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=y5yk-HGqKmM' WHERE [Slug] = N'the-girl-on-the-train' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=svucpVzRBD4' WHERE [Slug] = N'the-girl-with-the-dragon-tattoo' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
@@ -16049,7 +16049,7 @@ UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=wLGOaKY5STw'
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=sJCjKQQOqT0' WHERE [Slug] = N'the-incredibles' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=f6dKhzYgksc' WHERE [Slug] = N'the-intern' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=mJgGUnV9i54' WHERE [Slug] = N'the-italian-job' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
-UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=XY8amUImEu0' WHERE [Slug] = N'the-karate-kid' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
+UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=r_8Rw16uscg' WHERE [Slug] = N'the-karate-kid' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=HXMqX9s67kY' WHERE [Slug] = N'the-king-s-speech' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=7TavVZMewpY' WHERE [Slug] = N'the-lion-king' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=ZGZX5-PAwR8' WHERE [Slug] = N'the-little-mermaid' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
@@ -16107,7 +16107,7 @@ UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=Ajcdb4FAL7A'
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=hNCmb-4oXJA' WHERE [Slug] = N'us' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=xLCn88bfW1o' WHERE [Slug] = N'venom' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=UHhsEYDg8GI' WHERE [Slug] = N'vertigo' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
-UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=d9erkpdh5o0' WHERE [Slug] = N'war-of-the-worlds' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
+UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=TLnQXsKn5-E' WHERE [Slug] = N'war-of-the-worlds' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=A5GJLwWiYSg' WHERE [Slug] = N'west-side-story' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=HnLHmGzByPA' WHERE [Slug] = N'we-were-soldiers' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
 UPDATE [Movie] SET [TrailerUrl] = N'https://www.youtube.com/watch?v=Lv8W7PPpkdo' WHERE [Slug] = N'when-harry-met-sally' AND ([TrailerUrl] IS NULL OR [TrailerUrl] = '');
