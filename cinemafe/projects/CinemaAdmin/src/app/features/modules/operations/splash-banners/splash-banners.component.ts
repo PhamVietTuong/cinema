@@ -43,12 +43,12 @@ export class SplashBannersManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(SplashBannerDialog, { width: '640px', maxWidth: '95vw', data: { banner: null } })
+    this._dialog.open(SplashBannerDialog, { width: '640px', maxWidth: '100vw', data: { banner: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(SplashBannerDialog, { width: '640px', maxWidth: '95vw', data: { banner: item } })
+    this._dialog.open(SplashBannerDialog, { width: '640px', maxWidth: '100vw', data: { banner: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

@@ -1,8 +1,11 @@
+@use 'lib/theme/mixins' as m;
+
 :host {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 280px;
+  max-width: 100%;
   flex: 0 0 280px;
 }
 
@@ -41,6 +44,6 @@
 
 .hs-row-actions { display: flex; flex-shrink: 0; }
 
-@media (max-width: 900px) {
+@include m.tablet {
   :host { width: 100%; flex: 1 1 100%; }
 }

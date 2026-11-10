@@ -33,12 +33,12 @@ export class HolidaySidebarComponent {
   ) {}
 
   add(): void {
-    this._dialog.open(HolidayDialog, { width: '560px', data: { holiday: null } })
+    this._dialog.open(HolidayDialog, { width: '560px', maxWidth: '100vw', data: { holiday: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.changed.emit(); } });
   }
 
   edit(holiday: Dto): void {
-    this._dialog.open(HolidayDialog, { width: '560px', data: { holiday } })
+    this._dialog.open(HolidayDialog, { width: '560px', maxWidth: '100vw', data: { holiday } })
       .afterClosed().subscribe(saved => { if (saved) { this.changed.emit(); } });
   }
 

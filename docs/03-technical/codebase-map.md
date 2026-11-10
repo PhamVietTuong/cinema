@@ -2,7 +2,7 @@
 
 > Purpose: Folder/module → responsibility, plus a "where to change X" guide.
 > Sources: cinemabe/Cinema/**, cinemafe/projects/**, CLAUDE.md
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-10
 
 ## Backend (`cinemabe/`)
 
@@ -51,3 +51,4 @@
 - Seat map UI → `CinemaLib` seat-map component + `seat-lock-session.service` + `booking-hub.service`.
 - API client code → regenerate via NSwag (`Generator/GenerateNswag.ps1`), never hand-edit `*-http.service.ts`.
 - Role-based routing → `CinemaLib/src/lib/guards/`.
+- Responsive breakpoints → `CinemaLib/src/lib/theme/_mixins.scss` is the single source: `m.phone` (<=480), `m.tablet-small` (<=768, drawer nav + card lists), `m.tablet` (<=1024, icon-rail sidebar). Use `@use 'lib/theme/mixins' as m;` in app component SCSS (CinemaLib components use a relative `../../theme/mixins`). Shared admin responsive rules (fluid inputs, 44px touch targets, dialog max-width, `.dlg-row--2/3` collapse) live in `_marquee-ledger.scss` / `_dialog-ledger.scss`.

@@ -51,17 +51,17 @@ export class TemplatesManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(TemplateDialog, { width: '760px', data: { template: null } })
+    this._dialog.open(TemplateDialog, { width: '760px', maxWidth: '100vw', data: { template: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(TemplateDialog, { width: '760px', data: { template: item } })
+    this._dialog.open(TemplateDialog, { width: '760px', maxWidth: '100vw', data: { template: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   preview(item: Dto): void {
-    this._dialog.open(TemplatePreviewDialog, { width: '760px', data: { template: item } });
+    this._dialog.open(TemplatePreviewDialog, { width: '760px', maxWidth: '100vw', data: { template: item } });
   }
 
   delete(id?: string): void {

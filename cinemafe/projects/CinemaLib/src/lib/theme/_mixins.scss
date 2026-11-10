@@ -61,12 +61,35 @@
 }
 
 // ── Responsive ────────────────────────────────────────────────────────────────
-@mixin tablet {
-  @media (max-width: 768px) { @content; }
+// Single source of truth for breakpoints. Every responsive media query in the
+// apps/library goes through these mixins (never a hand-typed px value):
+//   phone        <= 480px   single column, stacked actions
+//   tablet-small <= 768px   drawer nav + card lists (primary mobile boundary)
+//   tablet       <= 1024px  icon-rail sidebar, 2-column grids
+$bp-phone: 480px;
+$bp-tablet-small: 768px;
+$bp-tablet: 1024px;
+
+@mixin phone {
+  @media (max-width: $bp-phone) { @content; }
 }
 
+@mixin tablet-small {
+  @media (max-width: $bp-tablet-small) { @content; }
+}
+
+@mixin tablet {
+  @media (max-width: $bp-tablet) { @content; }
+}
+
+// Rail range only: above tablet-small, up to tablet.
+@mixin tablet-only {
+  @media (min-width: $bp-tablet-small + 1) and (max-width: $bp-tablet) { @content; }
+}
+
+// Backwards-compatible alias of `phone`.
 @mixin mobile {
-  @media (max-width: 480px) { @content; }
+  @media (max-width: $bp-phone) { @content; }
 }
 
 // ── Typography ────────────────────────────────────────────────────────────────

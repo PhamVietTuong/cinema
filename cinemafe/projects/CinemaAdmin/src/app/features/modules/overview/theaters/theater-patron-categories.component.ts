@@ -63,12 +63,12 @@ export class TheaterPatronCategoriesComponent implements OnInit {
   }
 
   openCreate(): void {
-    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, category: null } })
+    this._dialog.open(PatronCategoryDialog, { width: '560px', maxWidth: '100vw', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, category: null } })
       .afterClosed().subscribe(saved => { if (saved) { this._load(); } });
   }
 
   edit(row: Dto): void {
-    this._dialog.open(PatronCategoryDialog, { width: '560px', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, category: row } })
+    this._dialog.open(PatronCategoryDialog, { width: '560px', maxWidth: '100vw', data: { theaterId: this.theaterId, seatTypes: this.seatTypes, category: row } })
       .afterClosed().subscribe(saved => { if (saved) { this._load(); } });
   }
 

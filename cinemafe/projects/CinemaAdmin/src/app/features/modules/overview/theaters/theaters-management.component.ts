@@ -40,12 +40,12 @@ export class TheatersManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(TheaterDialog, { width: '560px', data: { theater: null } })
+    this._dialog.open(TheaterDialog, { width: '560px', maxWidth: '100vw', data: { theater: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(TheaterDialog, { width: '560px', data: { theater: item } })
+    this._dialog.open(TheaterDialog, { width: '560px', maxWidth: '100vw', data: { theater: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

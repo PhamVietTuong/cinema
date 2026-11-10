@@ -3,6 +3,8 @@
 // only — @use'ing this file emits nothing; each page calls auth-ledger-shell
 // once and adds its own page-specific rules alongside it.
 
+@use './mixins' as m;
+
 @mixin auth-ledger-shell {
 
   // ── Page ────────────────────────────────────────────────────────────────
@@ -292,7 +294,7 @@
   }
 
   // ── Responsive ──────────────────────────────────────────────────────────
-  @media (max-width: 900px) {
+  @include m.tablet-small {
     .auth-ticket { grid-template-columns: 1fr; min-height: auto; }
 
     .auth-stub {

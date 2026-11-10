@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 :host { display: block; }
 
 .ad-page > .ad-card { margin-bottom: 20px; }
@@ -23,9 +25,19 @@
 .rp-row-fill { display: block; height: 100%; border-radius: 999px; background: var(--ad-primary); }
 .rp-row-val { text-align: right; color: var(--ad-muted); font-variant-numeric: tabular-nums; }
 
-@media (max-width: 720px) {
+@include m.tablet {
+  .rp-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@include m.tablet-small {
   .rp-kpis { grid-template-columns: 1fr; }
-  .rp-row { grid-template-columns: 120px 1fr 90px; }
+  .rp-row { grid-template-columns: minmax(0, 120px) 1fr minmax(0, 90px); }
+  .rp-range .ad-field { flex: 1 1 140px; }
+  .rp-card-head { flex-wrap: wrap; }
+}
+@include m.phone {
+  // Name on its own line above the bar + value so long names stay readable.
+  .rp-row { grid-template-columns: 1fr auto; row-gap: 4px; }
+  .rp-row-name { grid-column: 1 / -1; }
 }
 
 /* Section header with export action */

@@ -54,12 +54,12 @@ export class TheaterTimeSlotsComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(TimeSlotDialog, { width: '560px', data: { theaterId: this.theaterId, timeSlot: null } })
+    this._dialog.open(TimeSlotDialog, { width: '560px', maxWidth: '100vw', data: { theaterId: this.theaterId, timeSlot: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(TimeSlotDialog, { width: '560px', data: { theaterId: this.theaterId, timeSlot: item } })
+    this._dialog.open(TimeSlotDialog, { width: '560px', maxWidth: '100vw', data: { theaterId: this.theaterId, timeSlot: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

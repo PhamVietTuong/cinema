@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 .tp-dialog-sub { margin: 0 0 4px; }
 
 .tp-day-chips {
@@ -31,9 +33,17 @@
 
 .tp-stepper-field {
   width: 100px;
+  flex: 1 1 80px;
+  min-width: 0;
+  max-width: 140px;
   ::ng-deep input { text-align: center; }
 }
 
 .tp-hint { color: var(--ml-muted); }
 
 .tp-actions-spacer { flex: 1 1 auto; }
+
+@include m.tablet-small {
+  .tp-day-chip { min-height: 44px; }
+  .tp-actions-spacer { display: none; }
+}

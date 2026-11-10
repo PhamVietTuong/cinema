@@ -65,12 +65,12 @@ export class TheaterRoomsComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(RoomDialog, { width: '600px', data: { theaterId: this.theaterId, room: null, roomTypes: this.roomTypes } })
+    this._dialog.open(RoomDialog, { width: '600px', maxWidth: '100vw', data: { theaterId: this.theaterId, room: null, roomTypes: this.roomTypes } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(RoomDialog, { width: '600px', data: { theaterId: this.theaterId, room: item, roomTypes: this.roomTypes } })
+    this._dialog.open(RoomDialog, { width: '600px', maxWidth: '100vw', data: { theaterId: this.theaterId, room: item, roomTypes: this.roomTypes } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

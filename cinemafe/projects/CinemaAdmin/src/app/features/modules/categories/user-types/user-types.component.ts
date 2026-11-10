@@ -43,12 +43,12 @@ export class UserTypesManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(UserTypeDialog, { width: '560px', data: { userType: null } })
+    this._dialog.open(UserTypeDialog, { width: '560px', maxWidth: '100vw', data: { userType: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(UserTypeDialog, { width: '560px', data: { userType: item } })
+    this._dialog.open(UserTypeDialog, { width: '560px', maxWidth: '100vw', data: { userType: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

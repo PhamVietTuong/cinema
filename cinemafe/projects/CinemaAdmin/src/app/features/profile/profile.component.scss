@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 :host { display: block; }
 
 .profile-layout {
@@ -22,13 +24,13 @@
 .id-tabs .ad-btn { width: 100%; justify-content: flex-start; }
 
 // Content card
-.content-card { padding: 26px 28px; }
-.ad-form { display: flex; flex-direction: column; gap: 16px; max-width: 440px; }
+.content-card { padding: 26px 28px; @include m.phone { padding: 18px 16px; } }
+.ad-form { display: flex; flex-direction: column; gap: 16px; max-width: 440px; width: 100%; }
 .form-actions { margin-top: 4px; }
 .msg { font-size: 14px; margin: 0; }
 .msg.ok { color: var(--ad-success-ink); }
 .msg.err { color: var(--ad-danger-ink); }
 
-@media (max-width: 820px) {
+@include m.tablet-small {
   .profile-layout { grid-template-columns: 1fr; }
 }

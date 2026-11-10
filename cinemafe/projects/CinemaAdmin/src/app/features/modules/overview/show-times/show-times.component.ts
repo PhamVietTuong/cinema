@@ -200,6 +200,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   openCreate(): void {
     this._dialog.open(ShowTimeDialog, {
       width: '800px',
+      maxWidth: '100vw',
       data: { showTime: null, weekStart: this.weekStart, movies: this.movies, theaters: this.theaters, rooms: this.rooms },
     }).afterClosed().subscribe(changed => { if (changed) { this.load(); } });
   }
@@ -207,6 +208,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   edit(st: Dto): void {
     this._dialog.open(ShowTimeDialog, {
       width: '800px',
+      maxWidth: '100vw',
       data: { showTime: st, weekStart: this.weekStart, movies: this.movies, theaters: this.theaters, rooms: this.rooms },
     }).afterClosed().subscribe(changed => { if (changed) { this.load(); } });
   }

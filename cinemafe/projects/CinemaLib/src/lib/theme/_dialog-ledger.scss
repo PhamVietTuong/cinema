@@ -37,6 +37,8 @@
 // rather than reusing another dialog's, so two dialogs never collide if
 // ever mounted at once.
 
+@use './mixins' as m;
+
 @mixin ledger-dialog-forms {
   // ── mat-form-field: flat ledger box, no floating label ──────────────────
   // App-wide (see caveat #1) — every mat-form-field in CinemaAdmin, dialog or
@@ -289,7 +291,7 @@
     .dlg-row--2 { grid-template-columns: repeat(2, 1fr); }
     .dlg-row--3 { grid-template-columns: repeat(3, 1fr); }
 
-    @media (max-width: 560px) {
+    @include m.tablet-small {
       .dlg-row--2, .dlg-row--3 { grid-template-columns: 1fr; }
     }
 

@@ -53,7 +53,7 @@ export class TheaterSeatTypesComponent extends BaseTableComponent {
   }
 
   edit(item: Dto): void {
-    this._dialog.open(SeatTypeDialog, { width: '560px', data: { theaterId: this.theaterId, seatType: item } })
+    this._dialog.open(SeatTypeDialog, { width: '560px', maxWidth: '100vw', data: { theaterId: this.theaterId, seatType: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 }

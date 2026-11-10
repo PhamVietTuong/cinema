@@ -43,12 +43,12 @@ export class NewsManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(NewsDialog, { width: '800px', data: { news: null } })
+    this._dialog.open(NewsDialog, { width: '800px', maxWidth: '100vw', data: { news: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(NewsDialog, { width: '800px', data: { news: item } })
+    this._dialog.open(NewsDialog, { width: '800px', maxWidth: '100vw', data: { news: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

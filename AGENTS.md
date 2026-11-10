@@ -52,3 +52,7 @@ Full-stack cinema booking platform. Monorepo: `cinemabe/` (.NET 9 Web API + EF C
 - Save generated screenshots to `E:\cinema\tasks`; redirect run/serve/QA logs to `E:\cinema\logs` — both are git-ignored, never write them into tracked project folders.
 
 <!-- /bmad:context -->
+
+## Responsive layout (kept outside the managed block)
+
+- Every new or changed UI feature must be responsive (hand-typed queries still in CinemaUser/CinemaStaff are migrated when those files are touched) at phone (<=480), small tablet (<=768) and tablet (<=1024) widths: use the shared CinemaLib mixins `phone` / `tablet-small` / `tablet` from `lib/theme/mixins` (`@use 'lib/theme/mixins' as m;` then `@include m.tablet-small { }`) — never a hand-typed `@media (max-width: …px)`. No page-level horizontal scroll at 360px, touch targets >= 44px on <=768px, list pages use the `.ad-desktop-only` / `.ad-mobile-only` card pattern.

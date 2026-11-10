@@ -44,7 +44,7 @@ export class GiftCardsManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(GiftCardDialog, { width: '560px' })
+    this._dialog.open(GiftCardDialog, { width: '560px', maxWidth: '100vw' })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
