@@ -1170,6 +1170,7 @@ public class BookingManager : IBookingManager
                     var qrTickets = GetQrTickets(row?.Tickets ?? new List<BookingConfirmationTicketRow>());
                     inlineImages = BuildQrImages(qrTickets)
                         .Where(image => emailBody.Contains($"cid:{image.ContentId}", StringComparison.Ordinal))
+                        .Concat(EmailIcons.ReferencedBy(emailBody))
                         .ToList();
                 }
 
@@ -1244,7 +1245,9 @@ public class BookingManager : IBookingManager
             ["TicketTypes"] = JoinOrDash(tickets.Select(t => t.PatronCategoryName ?? string.Empty).Distinct()),
             ["SeatLabels"] = JoinOrDash(tickets.Select(t => t.SeatLabel)),
             ["TicketCount"] = tickets.Count.ToString(CultureInfo.InvariantCulture),
-            ["Concessions"] = JoinOrDash(foods.Select(f => $"{f.Quantity} x {f.Name}")),
+            ["Concessions"] = JoinOrDash(foods.Select(f => $"{f.Quantity} × {f.Name}")),
+            ["TicketsUrl"] = PublicSiteUrl + "/profile",
+            ["HomeUrl"] = PublicSiteUrl,
             ["SubTotal"] = Money(invoice.TotalAmount),
             ["DiscountAmount"] = Money(invoice.DiscountAmount),
             ["TotalAmount"] = Money(invoice.FinalAmount),
@@ -1268,6 +1271,10 @@ public class BookingManager : IBookingManager
         return "-";
     }
 
+    // Base URL of CinemaUser for the email's call-to-action buttons; override per environment with CINEMA_PUBLIC_URL.
+    private static readonly string PublicSiteUrl =
+        (Environment.GetEnvironmentVariable("CINEMA_PUBLIC_URL") ?? "http://localhost:4202").TrimEnd('/');
+
     private const string QrImagesKey = "QrImages";
     private static readonly HashSet<string> QrImageKeys = new() { QrImagesKey };
 
@@ -1289,9 +1296,13 @@ public class BookingManager : IBookingManager
         }
 
         var blocks = qrTickets.Select((t, i) =>
-            $"<div style=\"display:inline-block;margin:4px 8px;text-align:center;\">" +
-            $"<img src=\"cid:{QrContentId(i)}\" width=\"160\" height=\"160\" alt=\"QR {WebUtility.HtmlEncode(t.SeatLabel)}\" />" +
-            $"<div style=\"font-size:12px;color:#6b6258;margin-top:4px;\">{WebUtility.HtmlEncode(t.SeatLabel)}</div>" +
+            $"<div style=\"display:inline-block;margin:4px 6px;text-align:center;\">" +
+            $"<div style=\"background:#ffffff;border-radius:12px;padding:12px;\">" +
+            $"<img src=\"cid:{QrContentId(i)}\" width=\"152\" height=\"152\" alt=\"QR {WebUtility.HtmlEncode(t.SeatLabel)}\" style=\"display:block;border:0;\" />" +
+            "</div>" +
+            (qrTickets.Count > 1
+                ? $"<div style=\"font-size:12px;color:#8a8176;margin-top:4px;\">{WebUtility.HtmlEncode(t.SeatLabel)}</div>"
+                : string.Empty) +
             "</div>");
         return string.Join(string.Empty, blocks);
     }

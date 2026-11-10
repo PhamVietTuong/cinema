@@ -946,25 +946,55 @@ IF NOT EXISTS (SELECT 1 FROM [Template] WHERE [Code] = N'BookingConfirmationEmai
 BEGIN
     INSERT INTO [Template] ([Id], [Code], [Name], [Channel], [Subject], [Body], [IsActive], [CreationTime]) VALUES
     (NEWID(), N'BookingConfirmationEmail', N'Xác nhận đặt vé (Email)', 1, N'Đặt vé thành công — {{BookingCode}}',
-N'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#faf6f0;padding:24px;">
-  <div style="text-align:center;margin-bottom:16px;">
-    <h2 style="color:#2b2420;margin:8px 0 4px;">Đặt Vé Thành Công!</h2>
-    <p style="color:#6b6258;margin:0;">Cảm ơn bạn, {{CustomerName}}. Vé của bạn đã được xác nhận.</p>
+N'<div style="background:#f7f2ea;padding:32px 12px;font-family:Work Sans,Segoe UI,Arial,sans-serif;color:#1c1410;">
+  <div style="max-width:460px;margin:0 auto;">
+    <div style="text-align:center;">
+      <img src="cid:icon-check@cinema" width="72" height="72" alt="" style="display:block;margin:0 auto 20px;border:0;" />
+      <h1 style="font-family:Oswald,Arial Narrow,Arial,sans-serif;font-size:26px;line-height:32px;font-weight:700;margin:0 0 6px;color:#1c1410;">Đặt Vé Thành Công!</h1>
+      <p style="margin:0 0 22px;font-size:14px;line-height:20px;color:#6b6258;">Cảm ơn bạn đã đặt vé. Vé của bạn đã được xác nhận.</p>
+    </div>
+    <div style="background:#f3ece0;border:1px solid #e0d6c6;border-radius:16px;overflow:hidden;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px dashed #d9cfbf;">
+        <tr>
+          <td style="padding:18px 20px;font-size:15px;font-weight:600;color:#1c1410;"><img src="cid:icon-clapper@cinema" width="20" height="20" alt="" style="vertical-align:middle;border:0;margin-right:8px;" /><span style="vertical-align:middle;">{{RoomTypeName}}</span></td>
+          <td align="right" style="padding:18px 20px;font-family:Consolas,Courier New,monospace;font-size:13px;color:#3d342c;">{{BookingCode}}</td>
+        </tr>
+      </table>
+      <div style="padding:20px;">
+        <div style="font-size:17px;line-height:24px;font-weight:700;margin:0 0 16px;color:#1c1410;">{{MovieTitle}}</div>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Rạp chiếu</div>
+        <div style="font-size:14px;margin:0 0 16px;">{{TheaterName}}</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+          <tr>
+            <td width="50%" valign="top">
+              <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Suất chiếu</div>
+              <div style="font-size:14px;font-weight:600;">{{ShowTime}}</div>
+            </td>
+            <td width="50%" valign="top">
+              <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Phòng chiếu</div>
+              <div style="font-size:14px;font-weight:600;">{{RoomName}}</div>
+            </td>
+          </tr>
+        </table>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Loại vé</div>
+        <div style="font-size:14px;margin:0 0 16px;">{{TicketTypes}}</div>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 6px;">Ghế</div>
+        <div style="margin:0 0 16px;"><span style="display:inline-block;background:#e8e0d0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;">{{SeatLabels}}</span></div>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Bắp nước</div>
+        <div style="font-size:14px;margin:0 0 16px;">{{Concessions}}</div>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Tổng tiền</div>
+        <div style="font-size:16px;font-weight:700;margin:0 0 24px;">{{TotalAmount}}</div>
+        <div style="text-align:center;">{{QrImages}}</div>
+        <div style="text-align:center;font-size:12px;color:#8a8176;margin-top:14px;">Xuất trình mã QR tại quầy hoặc cổng soát vé</div>
+      </div>
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;">
+      <tr><td align="center" style="background:#e3a23a;border-radius:999px;"><a href="{{TicketsUrl}}" style="display:block;padding:12px 20px;font-size:15px;color:#1c1410;text-decoration:none;"><img src="cid:icon-ticket@cinema" width="20" height="20" alt="" style="vertical-align:middle;border:0;margin-right:10px;" /><span style="vertical-align:middle;">Xem Vé Của Tôi</span></a></td></tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;">
+      <tr><td align="center" style="border:1px solid #8a7e72;border-radius:999px;"><a href="{{HomeUrl}}" style="display:block;padding:11px 20px;font-size:15px;color:#8a4a0c;text-decoration:none;"><img src="cid:icon-home@cinema" width="20" height="20" alt="" style="vertical-align:middle;border:0;margin-right:10px;" /><span style="vertical-align:middle;">Về Trang Chủ</span></a></td></tr>
+    </table>
   </div>
-  <div style="background:#ffffff;border-radius:12px;padding:20px;border:1px solid #eee2d2;">
-    <p><strong>Mã đặt vé:</strong> {{BookingCode}}</p>
-    <p><strong>Phim:</strong> {{MovieTitle}}</p>
-    <p><strong>Rạp chiếu:</strong> {{TheaterName}}</p>
-    <p><strong>Suất chiếu:</strong> {{ShowTime}}</p>
-    <p><strong>Phòng chiếu:</strong> {{RoomName}} ({{RoomTypeName}}, {{ProjectionForm}})</p>
-    <p><strong>Loại vé:</strong> {{TicketTypes}}</p>
-    <p><strong>Ghế:</strong> {{SeatLabels}}</p>
-    <p><strong>Bắp nước:</strong> {{Concessions}}</p>
-    <p style="font-size:18px;"><strong>Tổng tiền:</strong> {{TotalAmount}}</p>
-    <div style="text-align:center;margin-top:12px;">{{QrImages}}</div>
-    <p style="text-align:center;color:#9a9186;font-size:12px;">Mã vé: {{QrCodes}}</p>
-  </div>
-  <p style="text-align:center;color:#9a9186;margin-top:16px;">Xuất trình mã QR tại quầy hoặc cổng soát vé.</p>
 </div>', 1, GETUTCDATE());
 END
 
@@ -976,6 +1006,64 @@ SET [Body] = REPLACE([Body], N'<p><strong>Mã vé (QR):</strong> {{QrCodes}}</p>
 WHERE [Code] = N'BookingConfirmationEmail'
   AND [Body] NOT LIKE N'%{{QrImages}}%'
   AND [Body] LIKE N'%<p><strong>Mã vé (QR):</strong> {{QrCodes}}</p>%';
+
+-- Existing DBs seeded with the original plain layout: swap in the redesigned card (icons, QR box, CTA buttons);
+-- only a still-stock body is rewritten, admin customizations are left alone.
+UPDATE [Template]
+SET [Body] = N'<div style="background:#f7f2ea;padding:32px 12px;font-family:Work Sans,Segoe UI,Arial,sans-serif;color:#1c1410;">
+  <div style="max-width:460px;margin:0 auto;">
+    <div style="text-align:center;">
+      <img src="cid:icon-check@cinema" width="72" height="72" alt="" style="display:block;margin:0 auto 20px;border:0;" />
+      <h1 style="font-family:Oswald,Arial Narrow,Arial,sans-serif;font-size:26px;line-height:32px;font-weight:700;margin:0 0 6px;color:#1c1410;">Đặt Vé Thành Công!</h1>
+      <p style="margin:0 0 22px;font-size:14px;line-height:20px;color:#6b6258;">Cảm ơn bạn đã đặt vé. Vé của bạn đã được xác nhận.</p>
+    </div>
+    <div style="background:#f3ece0;border:1px solid #e0d6c6;border-radius:16px;overflow:hidden;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px dashed #d9cfbf;">
+        <tr>
+          <td style="padding:18px 20px;font-size:15px;font-weight:600;color:#1c1410;"><img src="cid:icon-clapper@cinema" width="20" height="20" alt="" style="vertical-align:middle;border:0;margin-right:8px;" /><span style="vertical-align:middle;">{{RoomTypeName}}</span></td>
+          <td align="right" style="padding:18px 20px;font-family:Consolas,Courier New,monospace;font-size:13px;color:#3d342c;">{{BookingCode}}</td>
+        </tr>
+      </table>
+      <div style="padding:20px;">
+        <div style="font-size:17px;line-height:24px;font-weight:700;margin:0 0 16px;color:#1c1410;">{{MovieTitle}}</div>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Rạp chiếu</div>
+        <div style="font-size:14px;margin:0 0 16px;">{{TheaterName}}</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+          <tr>
+            <td width="50%" valign="top">
+              <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Suất chiếu</div>
+              <div style="font-size:14px;font-weight:600;">{{ShowTime}}</div>
+            </td>
+            <td width="50%" valign="top">
+              <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Phòng chiếu</div>
+              <div style="font-size:14px;font-weight:600;">{{RoomName}}</div>
+            </td>
+          </tr>
+        </table>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Loại vé</div>
+        <div style="font-size:14px;margin:0 0 16px;">{{TicketTypes}}</div>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 6px;">Ghế</div>
+        <div style="margin:0 0 16px;"><span style="display:inline-block;background:#e8e0d0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;">{{SeatLabels}}</span></div>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Bắp nước</div>
+        <div style="font-size:14px;margin:0 0 16px;">{{Concessions}}</div>
+        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Tổng tiền</div>
+        <div style="font-size:16px;font-weight:700;margin:0 0 24px;">{{TotalAmount}}</div>
+        <div style="text-align:center;">{{QrImages}}</div>
+        <div style="text-align:center;font-size:12px;color:#8a8176;margin-top:14px;">Xuất trình mã QR tại quầy hoặc cổng soát vé</div>
+      </div>
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;">
+      <tr><td align="center" style="background:#e3a23a;border-radius:999px;"><a href="{{TicketsUrl}}" style="display:block;padding:12px 20px;font-size:15px;color:#1c1410;text-decoration:none;"><img src="cid:icon-ticket@cinema" width="20" height="20" alt="" style="vertical-align:middle;border:0;margin-right:10px;" /><span style="vertical-align:middle;">Xem Vé Của Tôi</span></a></td></tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;">
+      <tr><td align="center" style="border:1px solid #8a7e72;border-radius:999px;"><a href="{{HomeUrl}}" style="display:block;padding:11px 20px;font-size:15px;color:#8a4a0c;text-decoration:none;"><img src="cid:icon-home@cinema" width="20" height="20" alt="" style="vertical-align:middle;border:0;margin-right:10px;" /><span style="vertical-align:middle;">Về Trang Chủ</span></a></td></tr>
+    </table>
+  </div>
+</div>',
+    [LastUpdatedTime] = GETUTCDATE()
+WHERE [Code] = N'BookingConfirmationEmail'
+  AND [Body] LIKE N'%max-width:600px;margin:0 auto;background:#faf6f0;padding:24px;%'
+  AND [Body] NOT LIKE N'%icon-check@cinema%';
 
 IF NOT EXISTS (SELECT 1 FROM [Template] WHERE [Code] = N'BookingConfirmationSms')
 BEGIN

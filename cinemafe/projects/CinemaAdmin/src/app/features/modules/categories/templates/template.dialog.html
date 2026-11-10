@@ -55,11 +55,6 @@
       <div class="dlg-row">
         <mat-checkbox formControlName="isActive">{{ 'templates.active' | translate }}</mat-checkbox>
       </div>
-
-      <div class="dlg-row">
-        <p>{{ 'templates.placeholdersHint' | translate }}</p>
-        <code *ngFor="let token of placeholderTokens" style="margin-right: 8px;">{{ '{{' + token + '}}' }}</code>
-      </div>
     </div>
   </mat-dialog-content>
 

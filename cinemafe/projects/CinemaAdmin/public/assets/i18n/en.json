@@ -725,7 +725,7 @@
     "active": "Active",
     "inactive": "Inactive",
     "empty": "No templates yet.",
-    "placeholdersHint": "Available placeholders (use as shown, e.g. double curly braces around the name):"
+    "preview": "Preview"
   },
   "promotionCampaigns": {
     "title": "Promotion Campaign Management",

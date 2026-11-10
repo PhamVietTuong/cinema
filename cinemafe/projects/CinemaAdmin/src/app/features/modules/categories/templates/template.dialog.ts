@@ -10,15 +10,6 @@ export interface TemplateDialogData {
   template: Dto | null;
 }
 
-/** Tokens a booking-confirmation template body/subject can use — kept in sync with
- * BookingManager.BuildConfirmationValues (cinemabe). Shown as a hint, not translated (token
- * names are literal, not user-facing copy). */
-const PLACEHOLDER_TOKENS = [
-  'CustomerName', 'BookingCode', 'MovieTitle', 'TheaterName', 'RoomName', 'RoomTypeName',
-  'ProjectionForm', 'ShowDate', 'ShowStartTime', 'ShowTime', 'TicketTypes', 'SeatLabels',
-  'TicketCount', 'Concessions', 'SubTotal', 'DiscountAmount', 'TotalAmount', 'QrCodes', 'QrImages',
-];
-
 /** Create/edit form for a notification template, opened via MatDialog. Resolves `true` on save, `false` on cancel. */
 @Component({
   selector: 'app-template-dialog',
@@ -28,7 +19,6 @@ const PLACEHOLDER_TOKENS = [
 export class TemplateDialog {
   readonly editingId: string | null;
   readonly channelValues = TemplateChannelValues;
-  readonly placeholderTokens = PLACEHOLDER_TOKENS;
   readonly channelEmail = CinemaServiceAgent.TemplateChannel.Email;
   form: FormGroup;
 
