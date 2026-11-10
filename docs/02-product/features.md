@@ -42,7 +42,6 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | Comment moderation | `modules/operations/comments` | complete | Approve/reject/delete, admin-only. |
 | Gift cards | `modules/operations/gift-cards` | complete | |
 | Invoices (admin list/status/void) | `modules/operations/invoices` | complete | |
-| Loyalty settings | `modules/operations/loyalty-settings` | complete | |
 | Promotion programs (+ banner upload) | `modules/operations/promotion-programs` | complete | Single promotion/pricing screen — the old separate `Discounts`/`Discount Types` screens were merged into this one. A program is triggered by a customer-entered `Code` or `AutoApply`, never both; theater/day/time scope comes from `PromotionProgramSchedule` rows, movie scope from `MovieId`. |
 | Splash banner management | `modules/operations/splash-banners` | complete | CRUD for the CinemaUser popup banner. |
 | Audit log viewer | `modules/operations/audit-log` | complete | Admin-only, theater-filterable. |

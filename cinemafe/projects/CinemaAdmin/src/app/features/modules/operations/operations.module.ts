@@ -10,7 +10,6 @@ import { CommentsModerationComponent } from './comments/comments.component';
 import { GiftCardsManagementComponent } from './gift-cards/gift-cards.component';
 import { GiftCardDialog } from './gift-cards/gift-card.dialog';
 import { AuditLogManagementComponent } from './audit-log/audit-log.component';
-import { LoyaltySettingsComponent } from './loyalty-settings/loyalty-settings.component';
 import { PromotionProgramsManagementComponent } from './promotion-programs/promotion-programs.component';
 import { PromotionProgramDialog } from './promotion-programs/promotion-program.dialog';
 import { SplashBannersManagementComponent } from './splash-banners/splash-banners.component';
@@ -28,7 +27,6 @@ const routes: Routes = [
   { path: 'comments', component: CommentsModerationComponent },
   { path: 'gift-cards', component: GiftCardsManagementComponent },
   { path: 'audit-log', component: AuditLogManagementComponent },
-  { path: 'loyalty-settings', component: LoyaltySettingsComponent },
   { path: 'promotion-programs', component: PromotionProgramsManagementComponent },
   { path: 'splash-banners', component: SplashBannersManagementComponent },
 ];
@@ -41,7 +39,6 @@ const routes: Routes = [
     GiftCardsManagementComponent,
     GiftCardDialog,
     AuditLogManagementComponent,
-    LoyaltySettingsComponent,
     PromotionProgramsManagementComponent,
     PromotionProgramDialog,
     SplashBannersManagementComponent,

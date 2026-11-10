@@ -19,7 +19,7 @@ describe('BookingCheckoutComponent', () => {
     foods: [{ foodAndDrinkId: 'f1', name: 'Popcorn', unitPrice: 50000, quantity: 2 }],
   };
 
-  const build = (historyState: unknown, queryParams: Record<string, string> = {}, loyaltyRate: { pointsPerUnit: number; pointValueVnd: number; isOverride: boolean } | null = { pointsPerUnit: 1000, pointValueVnd: 1000, isOverride: false }) => {
+  const build = (historyState: unknown, queryParams: Record<string, string> = {}, loyaltyRate: { pointsPerUnit: number; pointValueVnd: number; isCustom: boolean } | null = { pointsPerUnit: 1000, pointValueVnd: 1000, isCustom: false }) => {
     Object.defineProperty(window, 'history', { value: { state: historyState }, writable: true });
 
     router = { navigate: vi.fn(), navigateByUrl: vi.fn() };
@@ -214,7 +214,7 @@ describe('BookingCheckoutComponent', () => {
   });
 
   it('loads the theater-specific loyalty rate and applies it to redemption math', () => {
-    const c = build(state, {}, { pointsPerUnit: 1000, pointValueVnd: 2000, isOverride: true });
+    const c = build(state, {}, { pointsPerUnit: 1000, pointValueVnd: 2000, isCustom: true });
 
     expect(c.pointValue).toBe(2000);
     // grandTotal is 275000 (175000 tickets + 100000 food); balance is 10.
@@ -231,7 +231,7 @@ describe('BookingCheckoutComponent', () => {
   });
 
   it('projects points earned on payment from the effective earn rate', () => {
-    const c = build(state, {}, { pointsPerUnit: 2000, pointValueVnd: 1000, isOverride: false });
+    const c = build(state, {}, { pointsPerUnit: 2000, pointValueVnd: 1000, isCustom: false });
 
     // finalTotal is 275000 with no redemption; 275000 / 2000 = 137.5 -> floor 137.
     expect(c.pointsToEarn).toBe(137);

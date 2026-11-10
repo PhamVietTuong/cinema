@@ -680,11 +680,11 @@ CREATE TABLE [GiftCard] (
     CONSTRAINT [PK_GiftCard] PRIMARY KEY ([Id])
 );
 
--- Loyalty point conversion rate: TheaterId NULL is the global default row; a row with TheaterId set
--- overrides the rate for that one theater.
+-- Loyalty point conversion rate, one row per theater (no global rate). A theater without a row uses the
+-- built-in default: 1,000 VND spent = 1 point (PointsPerUnit = 1000); 100 points = 1,000 VND (PointValueVnd = 10).
 CREATE TABLE [LoyaltySetting] (
     [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [TheaterId] uniqueidentifier NULL,
+    [TheaterId] uniqueidentifier NOT NULL,
     [PointsPerUnit] int NOT NULL,
     [PointValueVnd] int NOT NULL,
     [CreationTime] datetime NOT NULL,
@@ -741,7 +741,7 @@ CREATE INDEX [IX_User_UserTypeId] ON [User] ([UserTypeId]);
 CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_ReminderLog_UserId_ShowTimeId] ON [ReminderLog] ([UserId], [ShowTimeId]);
 CREATE UNIQUE INDEX [IX_GiftCard_Code] ON [GiftCard] ([Code]);
-CREATE UNIQUE INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting] ([TheaterId]) WHERE [TheaterId] IS NOT NULL;
+CREATE UNIQUE INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting] ([TheaterId]);
 
 -- Insert-only audit trail of sensitive staff actions (no FKs, so it survives deletions).
 CREATE TABLE [AuditLog] (

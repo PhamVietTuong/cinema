@@ -45,10 +45,6 @@ INSERT INTO [MemberShip] ([Id], [Name], [MinPoints], [MaxPoints], [DiscountPerce
 (@MemberPlatinum, N'Hạng Bạch Kim',    10000, 19999, 12, GETUTCDATE()),
 (@MemberDiamond,  N'Hạng Kim Cương',   20000, 99999, 15, GETUTCDATE());
 
--- ── Loyalty points (global default rate; theaters may override in LoyaltySetting) ──
-INSERT INTO [LoyaltySetting] ([Id], [TheaterId], [PointsPerUnit], [PointValueVnd], [CreationTime]) VALUES
-(NEWID(), NULL, 1000, 1000, GETUTCDATE());
-
 -- ── Movie Types ───────────────────────────────────────────────────────────────
 DECLARE @MTActionMovie uniqueidentifier = NEWID();
 DECLARE @MTComedy      uniqueidentifier = NEWID();
@@ -274,16 +270,16 @@ JOIN [RoomType] rt ON rt.Id = rtpcp.RoomTypeId
 JOIN [PatronCategory] pc ON pc.Id = rtpcp.PatronCategoryId
 WHERE rt.Name IN (N'IMAX', N'4DX', N'Deluxe') AND pc.Name = N'Người Lớn';
 
--- ── Loyalty overrides for the 5 flagship theaters (global default row stays for everyone else) ──
+-- ── Loyalty rates for the 5 flagship theaters (every other theater uses the built-in default: 1,000 VND = 1 point, 1 point = 10 VND) ──
 INSERT INTO [LoyaltySetting] ([Id], [TheaterId], [PointsPerUnit], [PointValueVnd], [CreationTime])
 SELECT NEWID(), t.Id, l.PointsPerUnit, l.PointValueVnd, GETUTCDATE()
 FROM [Theater] t
 JOIN (VALUES
-    (N'Cinema Vạn Hạnh Mall',    800, 1000),
-    (N'Cinema Times City',       800, 1000),
-    (N'Cinema Lotte Đà Nẵng',    500, 1000),
-    (N'Cinema Vincom Nha Trang', 500, 1000),
-    (N'Cinema Vincom Hải Phòng', 500, 1000)
+    (N'Cinema Vạn Hạnh Mall',    800, 10),
+    (N'Cinema Times City',       800, 10),
+    (N'Cinema Lotte Đà Nẵng',    500, 10),
+    (N'Cinema Vincom Nha Trang', 500, 10),
+    (N'Cinema Vincom Hải Phòng', 500, 10)
 ) AS l(TheaterName, PointsPerUnit, PointValueVnd) ON l.TheaterName = t.Name;
 
 GO

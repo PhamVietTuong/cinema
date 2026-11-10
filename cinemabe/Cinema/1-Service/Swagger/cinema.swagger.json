@@ -5099,8 +5099,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -5120,71 +5119,6 @@
         "security": [
           {
             "Bearer": []
-          }
-        ]
-      }
-    },
-    "/api/Cinema/GetGlobalLoyaltySetting": {
-      "get": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_GetGlobalLoyaltySetting",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoyaltySettingDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
-          }
-        ]
-      }
-    },
-    "/api/Cinema/GetTheaterLoyaltySetting": {
-      "get": {
-        "tags": [
-          "Cinema"
-        ],
-        "operationId": "Cinema_GetTheaterLoyaltySetting",
-        "parameters": [
-          {
-            "name": "theaterId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoyaltySettingDTO"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [
-              "Admin"
-            ]
           }
         ]
       }
@@ -5228,12 +5162,12 @@
         ]
       }
     },
-    "/api/Cinema/ClearTheaterLoyaltyOverride": {
+    "/api/Cinema/ResetTheaterLoyaltyToDefault": {
       "delete": {
         "tags": [
           "Cinema"
         ],
-        "operationId": "Cinema_ClearTheaterLoyaltyOverride",
+        "operationId": "Cinema_ResetTheaterLoyaltyToDefault",
         "parameters": [
           {
             "name": "theaterId",
@@ -10201,7 +10135,7 @@
             "type": "integer",
             "format": "int32"
           },
-          "isOverride": {
+          "isCustom": {
             "type": "boolean"
           }
         }
@@ -10212,8 +10146,7 @@
         "properties": {
           "theaterId": {
             "type": "string",
-            "format": "guid",
-            "nullable": true
+            "format": "guid"
           },
           "pointsPerUnit": {
             "type": "integer",
@@ -10233,11 +10166,14 @@
       "SaveLoyaltySettingRequest": {
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "theaterId"
+        ],
         "properties": {
           "theaterId": {
             "type": "string",
             "format": "guid",
-            "nullable": true
+            "minLength": 1
           },
           "pointsPerUnit": {
             "type": "integer",

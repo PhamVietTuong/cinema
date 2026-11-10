@@ -1810,25 +1810,9 @@ public class CinemaController : ApiControllerBase
     #region Loyalty
     [HttpGet]
     [ProducesResponseType(typeof(EffectiveLoyaltyRateDTO), 200)]
-    public Task<IActionResult> GetEffectiveLoyaltyRate([FromQuery] Guid? theaterId)
+    public Task<IActionResult> GetEffectiveLoyaltyRate([FromQuery] Guid theaterId)
     {
         return Run(nameof(GetEffectiveLoyaltyRate), () => _loyaltySettings.GetEffectiveAsync(theaterId));
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpGet]
-    [ProducesResponseType(typeof(LoyaltySettingDTO), 200)]
-    public Task<IActionResult> GetGlobalLoyaltySetting()
-    {
-        return Run(nameof(GetGlobalLoyaltySetting), () => _loyaltySettings.GetGlobalAsync());
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpGet]
-    [ProducesResponseType(typeof(LoyaltySettingDTO), 200)]
-    public Task<IActionResult> GetTheaterLoyaltySetting([FromQuery] Guid theaterId)
-    {
-        return Run(nameof(GetTheaterLoyaltySetting), () => _loyaltySettings.GetOverrideAsync(theaterId));
     }
 
     [Authorize(Roles = _adminRole)]
@@ -1843,12 +1827,12 @@ public class CinemaController : ApiControllerBase
     [HttpDelete]
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> ClearTheaterLoyaltyOverride([FromQuery] Guid theaterId)
+    public async Task<IActionResult> ResetTheaterLoyaltyToDefault([FromQuery] Guid theaterId)
     {
-        LogProvider.Current.Information($"{GetType().Name}.{nameof(ClearTheaterLoyaltyOverride)} being awakened to process request...");
+        LogProvider.Current.Information($"{GetType().Name}.{nameof(ResetTheaterLoyaltyToDefault)} being awakened to process request...");
         try
         {
-            var cleared = await _loyaltySettings.ClearOverrideAsync(theaterId);
+            var cleared = await _loyaltySettings.ResetToDefaultAsync(theaterId);
             if (cleared)
             {
                 return NoContent();
@@ -1857,7 +1841,7 @@ public class CinemaController : ApiControllerBase
         }
         catch (Exception e)
         {
-            return HandleException(e, nameof(ClearTheaterLoyaltyOverride));
+            return HandleException(e, nameof(ResetTheaterLoyaltyToDefault));
         }
     }
     #endregion

@@ -35,7 +35,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 
 - As an Admin, I want full CRUD over movies, theaters, rooms, room types, seat types, patron categories, pricing (time-slot multipliers, holidays, 3D surcharge, per-showtime base price), so that I can configure the entire catalog and pricing model without code changes.
 - As an Admin, I want to create promotion programs (fixed-price or percent-off, scoped by theater/day/time/channel, with an auto-apply option), so that I can run campaigns that automatically discount eligible bookings.
-- As an Admin, I want to manage loyalty settings globally and per-theater, so that different theaters can have different point-earning/redemption rates if needed.
+- As an Admin, I want to configure the loyalty point rates for each theater (default 1,000 VND = 1 point; 100 points = 1,000 VND), so that different theaters can have different point-earning/redemption rates if needed.
 - As an Admin, I want to moderate customer comments (approve/reject/delete), so that inappropriate content doesn't stay visible on the site.
 - As an Admin, I want to issue and deactivate gift cards, so that I can run promotions or compensate customers without a refund feature.
 - As an Admin, I want to view and override an invoice's status when something goes wrong operationally, so that I can correct bookings outside the normal customer/gateway flow (being aware this path isn't validated against a transition allow-list).

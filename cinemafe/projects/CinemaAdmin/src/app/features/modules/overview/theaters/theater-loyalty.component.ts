@@ -4,7 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { CinemaServiceAgent, ToastService } from 'CinemaLib';
 
 /** Loyalty point conversion rate for one theater: shows the effective rate (this theater's own
- * override, or the global default) and lets an admin set or clear a theater-specific override. */
+ * setting, or the built-in default of 1.000đ = 1 point / 100 points = 1.000đ) and lets an admin
+ * change it or reset it to the default. There is no global setting. */
 @Component({
   selector: 'app-theater-loyalty',
   standalone: false,
@@ -24,6 +25,10 @@ export class TheaterLoyaltyComponent implements OnChanges {
   readonly sampleOrderAmount = 165000;
   readonly samplePoints = 100;
 
+  /** Built-in default (mirrors LoyaltyRates on the server): 1.000đ spent = 1 point; 1 point = 10đ. */
+  readonly defaultPointsPerUnit = 1000;
+  readonly defaultPointValueVnd = 10;
+
   constructor(
     private _fb: FormBuilder,
     private _cinemaService: CinemaServiceAgent.HttpService,
@@ -32,8 +37,8 @@ export class TheaterLoyaltyComponent implements OnChanges {
     private _cdr: ChangeDetectorRef,
   ) {
     this.form = this._fb.group({
-      pointsPerUnit: [1000, [Validators.required, Validators.min(1)]],
-      pointValueVnd: [1000, [Validators.required, Validators.min(1)]],
+      pointsPerUnit: [this.defaultPointsPerUnit, [Validators.required, Validators.min(1)]],
+      pointValueVnd: [this.defaultPointValueVnd, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -45,27 +50,9 @@ export class TheaterLoyaltyComponent implements OnChanges {
 
   private _load(): void {
     this.loading = true;
-    this._cinemaService.getTheaterLoyaltySetting(this.theaterId).subscribe({
-      next: override => {
-        this.hasOverride = !!override;
-        if (override) {
-          this.form.patchValue({ pointsPerUnit: override.pointsPerUnit, pointValueVnd: override.pointValueVnd });
-          this.loading = false;
-          this._cdr.markForCheck();
-        } else {
-          this._loadEffective();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this._cdr.markForCheck();
-      },
-    });
-  }
-
-  private _loadEffective(): void {
     this._cinemaService.getEffectiveLoyaltyRate(this.theaterId).subscribe({
       next: rate => {
+        this.hasOverride = !!rate.isCustom;
         this.form.patchValue({ pointsPerUnit: rate.pointsPerUnit, pointValueVnd: rate.pointValueVnd });
         this.loading = false;
         this._cdr.markForCheck();
@@ -104,13 +91,13 @@ export class TheaterLoyaltyComponent implements OnChanges {
 
   clearOverride(): void {
     this.clearing = true;
-    this._cinemaService.clearTheaterLoyaltyOverride(this.theaterId).subscribe({
+    this._cinemaService.resetTheaterLoyaltyToDefault(this.theaterId).subscribe({
       next: () => {
         this.hasOverride = false;
         this.clearing = false;
         this._toast.success(this._translate.instant('theaters.loyalty.cleared'));
         this._cdr.markForCheck();
-        this._loadEffective();
+        this._load();
       },
       error: e => {
         this.clearing = false;
