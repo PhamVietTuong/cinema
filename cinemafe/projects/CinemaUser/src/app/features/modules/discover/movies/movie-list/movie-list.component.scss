@@ -1,10 +1,10 @@
 // "Marquee Ledger" — Movie List. Movie-card and footer styling now live in
 // app-movie-card / app-site-footer (shared with Home).
 
-.page-header { background: var(--ml-panel); border-bottom: 1px dashed var(--ml-rule); padding: 32px 0; }
+.page-header { background: var(--ml-paper); padding: 56px 0 8px; }
 .page-header-inner { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
 .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.page-title { font-family: var(--ml-font-head); font-size: 1.7rem; font-weight: 600; text-transform: uppercase; color: var(--ml-ink); margin: 0; }
+.page-title { font-family: var(--ml-font-head); font-size: 1.7rem; font-weight: 600; text-transform: uppercase; color: var(--ml-ink); margin: 12px 0 0; }
 .page-sub { color: var(--ml-muted); margin: 8px 0 0; max-width: 520px; font-size: 0.9rem; }
 
 .filter-row {

@@ -2,6 +2,7 @@
   <div class="page-header-inner">
     <div class="header-top">
       <div>
+        <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
         <h1 class="page-title">{{ title | translate }}</h1>
         <p class="page-sub">{{ 'movies.list.subtitle' | translate }}</p>
       </div>
@@ -32,7 +33,7 @@
 
   <!-- Movies -->
   <div class="movie-grid" *ngIf="!isShowtimes">
-    <app-movie-card *ngFor="let movie of displayed" [movie]="movie"></app-movie-card>
+    <app-movie-card *ngFor="let movie of displayed" [movie]="movie" [variant]="mode === 'coming' ? 'coming' : 'showing'" [actions]="true"></app-movie-card>
   </div>
 
   <div *ngIf="!isShowtimes && displayed.length === 0 && !isLoading" class="empty">
