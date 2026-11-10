@@ -243,10 +243,7 @@
     "confirm": {
       "title": "Thanh Toán",
       "paymentMethod": "Phương Thức Thanh Toán",
-      "momoWallet": "Ví MoMo",
       "vnpay": "Thanh toán qua VNPAY",
-      "stripe": "Thanh toán bằng thẻ (Stripe)",
-      "stripeNote": "Bạn sẽ được chuyển đến trang thanh toán bảo mật của Stripe để thanh toán bằng thẻ.",
       "concessions": "Bắp Nước & Combo",
       "concessionsShort": "Bắp nước",
       "qrNote": "Quét mã QR bằng ứng dụng {{app}} để hoàn tất thanh toán.",
@@ -539,7 +536,7 @@
     "answerCancel": "Bạn có thể hủy vé khi đơn còn ở trạng thái \"Chờ Thanh Toán\" trong mục Lịch Sử Đặt Vé.",
     "answerMembership": "Bạn tích điểm trên mỗi lần thanh toán (mặc định 1.000đ chi tiêu = 1 điểm, 100 điểm = 1.000đ; mỗi rạp có thể đặt mức riêng, hiển thị khi thanh toán); hạng thành viên tự nâng theo điểm. Nhập mã giảm giá ở bước thanh toán.",
     "answerNearby": "Vào trang \"Rạp Chiếu\" và bấm \"Tìm rạp gần nhất\" để sắp xếp theo khoảng cách tới bạn.",
-    "answerPayment": "Hỗ trợ thanh toán qua MoMo và VNPAY ở bước thanh toán.",
+    "answerPayment": "Hỗ trợ thanh toán qua VNPAY ở bước thanh toán.",
     "answerCombo": "Bạn có thể thêm bắp nước & combo ngay ở bước thanh toán, tính gộp vào đơn.",
     "fallback": "Mình chưa hiểu ý bạn. Thử hỏi về: đặt vé, giờ chiếu, hủy vé, thành viên, thanh toán, hoặc rạp gần bạn nhé."
   },

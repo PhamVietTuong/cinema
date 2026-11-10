@@ -35,7 +35,7 @@ Backlog for the multi-theater cinema platform. Status verified directly against 
 | **Order food/drink combos with tickets** | ✅ | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end, including out-of-stock handling. |
 | **Manage booked tickets (view / cancel)** | ✅ | - | `profile.component.ts`'s `cancelBooking`/`cancelById` via `PaymentServiceAgent.cancelBooking`. |
 | **E-tickets + QR codes** | ✅ | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`). |
-| **Payment gateway (VNPay/MoMo/Stripe)** | 🟡 | L | VNPay and MoMo are both fully wired (backend gateway + selectable checkout option). Stripe has a CinemaUser checkout option too (`booking-checkout.component.ts`, "Pay by card (Stripe)"); it only redirects to Stripe once `Payments:Stripe:*` keys are configured - with an unconfigured account `PaymentGatewayResolver` falls back to the default provider, so a real Stripe account must be set up and a Checkout round-trip exercised before this is marked done. |
+| **Payment gateway (VNPay)** | ✅ | L | VNPay is the only real gateway and the only checkout option. MoMo and Stripe were removed. |
 | Order confirmation email/SMS | 🆕 | M | Overlaps with reminders — see messaging infra below. |
 
 ## Discovery & engagement
@@ -72,7 +72,6 @@ Backlog for the multi-theater cinema platform. Status verified directly against 
 
 ## Suggested next steps (small, high-value, low-dependency)
 1. **Messaging infra** (🟡 M) — exercise the SMTP/Twilio providers against real accounts; add an outbox if delivery guarantees are needed.
-2. **Stripe** (🟡 L) — configure a Stripe account and run a real Checkout round-trip.
 3. **Revenue statistics & detailed reports** (🆕 M) — basic reports exist, add the full report set.
 
 Ratings & reviews, search & filter, Facebook login, food/drink combos, movie recommendations, nearest theater, and the support chatbot are all already done. Larger tracks (payments, i18n) are best scheduled on their own.

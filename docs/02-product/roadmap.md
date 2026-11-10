@@ -37,7 +37,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Order food/drink combos with tickets | Done | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end (out-of-stock handling included) — this roadmap entry was stale. |
 | Manage booked tickets (view / cancel) | Done | - | `profile.component.ts`'s `cancelBooking`/`cancelById` via `PaymentServiceAgent.cancelBooking` — this roadmap entry was stale. |
 | E-tickets + QR codes | Done | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`), not via the `CinemaLib` ticket-card/qr-code components (those are dead code in CinemaUser, used only by CinemaStaff's POS receipt) — this roadmap entry was stale. |
-| Payment gateway (VNPay/MoMo/Stripe) | Partial | L | VNPay and MoMo are both fully wired (backend gateway + selectable checkout option). Stripe has a CinemaUser checkout option too (`booking-checkout.component.ts`, "Pay by card (Stripe)"); it only redirects to Stripe once `Payments:Stripe:*` keys are configured - with an unconfigured account `PaymentGatewayResolver` falls back to the default provider, so a real Stripe account must be set up and a Checkout round-trip exercised before this is marked done. |
+| Payment gateway (VNPay) | Done | L | VNPay is the only real gateway and the only checkout option. MoMo and Stripe were removed. |
 | Order confirmation email/SMS | New | M | Overlaps with reminders — see messaging infra below. |
 
 ## Discovery & engagement
@@ -77,7 +77,6 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 ## Suggested next steps (small, high-value, low-dependency)
 
 1. Messaging infra (Partial, M) — exercise the SMTP/Twilio providers against real accounts; add an outbox if delivery guarantees are needed.
-2. Stripe (Partial, L) — configure a Stripe account and run a real Checkout round-trip.
 3. Revenue statistics & detailed reports (New, M) — basic reports exist, add the full report set.
 
 Ratings & reviews, search & filter, Facebook login, food/drink combos, movie recommendations, nearest theater, and the support chatbot are all already done. Larger tracks (payments, i18n) are best scheduled on their own.

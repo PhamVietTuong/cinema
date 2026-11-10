@@ -27,7 +27,7 @@ public static class DependencyInjection
         services.AddSingleton<IExternalRatingsProvider, OmdbRatingsProvider>();
         services.AddScoped<IMovieManager, MovieManager>();
         services.AddScoped<IBookingManager, BookingManager>();
-        // Payment gateways (Sandbox + VNPay/MoMo/Stripe) and their resolver are registered in the
+        // Payment gateways (Sandbox + VNPay) and their resolver are registered in the
         // Web API host's Program.cs, where IConfiguration is available to read the "Payments" section.
         services.AddScoped<IInvoiceManager, InvoiceManager>();
         services.AddScoped<IGiftCardManager, GiftCardManager>();

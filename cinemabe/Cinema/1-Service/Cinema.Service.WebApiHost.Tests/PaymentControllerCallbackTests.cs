@@ -59,9 +59,9 @@ public class PaymentControllerCallbackTests
     public async Task PaymentCallback_NonVnPay_Rejected_ReturnsBadRequest_LegacyShape()
     {
         _bookingManagerMock.Setup(m => m.HandlePaymentCallbackAsync(It.IsAny<string>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
-            .ReturnsAsync(new PaymentCallbackHandlingResult("MoMo", PaymentCallbackOutcome.Rejected));
+            .ReturnsAsync(new PaymentCallbackHandlingResult("Sandbox", PaymentCallbackOutcome.Rejected));
 
-        var result = await Controller("MoMo").PaymentCallback("MoMo");
+        var result = await Controller("Sandbox").PaymentCallback("Sandbox");
 
         result.Should().BeOfType<BadRequestObjectResult>();
     }
@@ -70,9 +70,9 @@ public class PaymentControllerCallbackTests
     public async Task PaymentCallback_NonVnPay_Confirmed_ReturnsOk_LegacyShape()
     {
         _bookingManagerMock.Setup(m => m.HandlePaymentCallbackAsync(It.IsAny<string>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
-            .ReturnsAsync(new PaymentCallbackHandlingResult("MoMo", PaymentCallbackOutcome.Confirmed));
+            .ReturnsAsync(new PaymentCallbackHandlingResult("Sandbox", PaymentCallbackOutcome.Confirmed));
 
-        var result = await Controller("MoMo").PaymentCallback("MoMo");
+        var result = await Controller("Sandbox").PaymentCallback("Sandbox");
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         ok.Value.Should().NotBeOfType<VnPayIpnResponseDTO>();
@@ -84,7 +84,7 @@ public class PaymentControllerCallbackTests
         _bookingManagerMock.Setup(m => m.HandlePaymentCallbackAsync(It.IsAny<string>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
 
-        var result = await Controller("MoMo").PaymentCallback("MoMo");
+        var result = await Controller("Sandbox").PaymentCallback("Sandbox");
 
         // HandleException maps InvalidOperationException to 400 (see ApiControllerBase).
         result.Should().BeOfType<BadRequestObjectResult>();

@@ -14,7 +14,7 @@ This is a capability inventory of what exists today (verified against code), not
 | Discovery | Browse now-showing/coming-soon/recommended movies, view movie detail + external ratings (OMDb), browse theaters (incl. by movie), view showtimes | `CinemaController` Movies/Theaters/ShowTimes |
 | Reviews | Rate and comment on a movie, but only after watching it (a Paid invoice for a past showtime of that movie) | `CinemaController.RateMovie`/`AddComment` |
 | Promotions | View published promotions, see the active splash banner once per browser session | `GetPublishedPromotionPrograms`, `GetActiveSplashBanner` |
-| Booking | View seat map + live seat-lock state (SignalR), view prices, lock/unlock a seat in real time, apply a discount code / gift card / loyalty points, create a booking, pay via a gateway (VNPay/MoMo/Stripe/Sandbox), poll invoice status post-redirect | `PaymentController.*`, `BookingHub` |
+| Booking | View seat map + live seat-lock state (SignalR), view prices, lock/unlock a seat in real time, apply a discount code / gift card / loyalty points, create a booking, pay via a gateway (VNPay/Sandbox), poll invoice status post-redirect | `PaymentController.*`, `BookingHub` |
 | Post-purchase | View own invoices/tickets, see e-ticket confirmation (email/SMS) | `GetMyInvoices`, `GetInvoice` |
 | Profile | Update profile, set notification preferences | `IdentityController.UpdateProfile`/`UpdateNotificationPreferences` |
 

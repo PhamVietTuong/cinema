@@ -50,7 +50,7 @@ The `01-business/` docs are the complete business-rule reference for this projec
 | [codebase-map.md](03-technical/codebase-map.md) | Folder/module → responsibility, "where to change X." |
 | [api-spec.md](03-technical/api-spec.md) | Every endpoint on the 3 controllers: route, auth, request/response, errors. |
 | [database-schema.md](03-technical/database-schema.md) | Every EF Core entity: fields, constraints, relationships, indexes. |
-| [integrations.md](03-technical/integrations.md) | External services (Google/Facebook OAuth, VNPay/MoMo/Stripe, OMDb, notifications). |
+| [integrations.md](03-technical/integrations.md) | External services (Google/Facebook OAuth, VNPay, OMDb, notifications). |
 | [configuration.md](03-technical/configuration.md) | Every env var / config key, purpose, required/optional. |
 | [tech-stack.md](03-technical/tech-stack.md) | Languages, frameworks, key libraries with versions. |
 

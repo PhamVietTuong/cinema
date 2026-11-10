@@ -14,7 +14,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - As a Customer, I want to see which theaters are screening a given movie and when, so that I can pick a convenient showtime.
 - As a Customer, I want to see which seats are available, locked by someone else, or already booked in real time while I'm choosing seats, so that I don't pick a seat someone else is about to take.
 - As a Customer, I want to apply a discount code, a gift card, or my loyalty points at checkout, so that I pay less for tickets I'd book anyway.
-- As a Customer, I want to pay through a gateway (VNPay/MoMo/Stripe) and get my booking confirmed automatically once payment clears, so that I don't have to manually confirm payment myself.
+- As a Customer, I want to pay through a gateway (VNPay) and get my booking confirmed automatically once payment clears, so that I don't have to manually confirm payment myself.
 - As a Customer, if my payment gateway redirect returns before the payment is actually confirmed, I want the app to keep checking and tell me "payment pending" rather than falsely confirming my booking, so that I'm never shown a ticket I didn't actually pay for.
 - As a Customer, I want my seat hold to expire automatically if I abandon checkout, so that other customers can book those seats again.
 - As a Customer, I want to rate and comment on a movie after I've actually watched it (not before), so that reviews reflect real viewing experience.

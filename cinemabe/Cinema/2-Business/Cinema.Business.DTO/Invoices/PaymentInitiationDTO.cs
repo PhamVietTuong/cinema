@@ -3,7 +3,7 @@ namespace Cinema.Business.DTO.Invoices;
 /// <summary>What the client needs to send the user to a hosted checkout for an invoice.</summary>
 public class PaymentInitiationDTO
 {
-    /// <summary>Provider that will process the payment (e.g. "Sandbox", "VNPay", "MoMo", "Stripe").</summary>
+    /// <summary>Provider that will process the payment (e.g. "Sandbox", "VNPay").</summary>
     public string Provider { get; set; } = string.Empty;
 
     /// <summary>Provider reference stored on the invoice.</summary>

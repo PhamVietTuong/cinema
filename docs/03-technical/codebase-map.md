@@ -15,7 +15,7 @@
 | `Cinema/2-Business/Cinema.Business.DTO/` | Request/response DTOs grouped by domain folder (`Auth/`, `Booking/`, `Movies/`, `Theaters/`, `Invoices/`, `Requests/`). |
 | `Cinema/2-Business/Cinema.Business/Managers/` | Business-logic managers, one per `I*Manager` interface. |
 | `Cinema/2-Business/Cinema.Business/Managers/Auth/` | `AuthManager`, Google/Facebook token validators. |
-| `Cinema/2-Business/Cinema.Business/Payments/` | `IPaymentGateway` implementations (Sandbox/VNPay/MoMo/Stripe) + gateway resolver. |
+| `Cinema/2-Business/Cinema.Business/Payments/` | `IPaymentGateway` implementations (Sandbox/VNPay) + gateway resolver. |
 | `Cinema/2-Business/Cinema.Business/Notifications/` | Email/SMS/seat/staff notification implementations (dev-log, no-op, SMTP, Twilio, SignalR). |
 | `Cinema/2-Business/Cinema.Business/ExternalRatings/` | OMDb ratings provider. |
 | `Cinema/2-Business/Cinema.Business.Tests/` | Dual-purpose: `dotnet run` seeds dev accounts (`admin@cinema.vn`/`user@cinema.vn`), `dotnet test` runs xUnit suites. |

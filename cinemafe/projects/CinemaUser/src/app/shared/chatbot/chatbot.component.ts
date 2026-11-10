@@ -38,7 +38,7 @@ export class ChatbotComponent {
     { k: ['hủy', 'cancel'], a: 'chatbot.answerCancel' },
     { k: ['thành viên', 'điểm', 'tích điểm', 'membership', 'voucher', 'mã giảm', 'khuyến mãi'], a: 'chatbot.answerMembership' },
     { k: ['rạp', 'gần', 'địa chỉ', 'theater', 'vị trí'], a: 'chatbot.answerNearby' },
-    { k: ['thanh toán', 'payment', 'momo', 'thẻ', 'ví'], a: 'chatbot.answerPayment' },
+    { k: ['thanh toán', 'payment', 'vnpay', 'thẻ', 'ví'], a: 'chatbot.answerPayment' },
     { k: ['combo', 'bắp', 'nước', 'đồ ăn'], a: 'chatbot.answerCombo' },
   ];
   private readonly fallback = 'chatbot.fallback';

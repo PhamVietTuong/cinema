@@ -55,7 +55,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   holdExpired = false;
   private _holdTimer: any;
 
-  paymentMethod = 'Momo';
+  paymentMethod = 'VNPay';
   loading = false;
   error = '';
   /** The last createBooking failure was a stock problem — show the localized hint to go back and adjust. */
@@ -66,14 +66,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
 
   /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
   readonly methods: { value: string; labelKey: string; app: string; svg?: string; icon?: string }[] = [
-    { value: 'Momo', labelKey: 'booking.confirm.momoWallet', app: 'MoMo', svg: 'momo' },
     { value: 'VNPay', labelKey: 'booking.confirm.vnpay', app: 'VNPAY', svg: 'vnpay' },
-    // Card checkout hosted by Stripe: the browser is redirected to Stripe, no QR is scanned.
-    { value: 'Stripe', labelKey: 'booking.confirm.stripe', app: 'Stripe', icon: 'credit_card' },
   ];
-
-  /** True for gateways that show a QR code to scan (the wallets); Stripe redirects to a hosted card page instead. */
-  get usesQr(): boolean { return this.paymentMethod !== 'Stripe'; }
 
   /** Display name of the selected gateway for the instruction note; never falls back to another gateway's name. */
   get paymentAppName(): string {
@@ -506,14 +500,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
 
   private _providerFor(method: string): string {
     switch (method) {
-      case 'Momo': {
-        return 'MoMo';
-      }
       case 'VNPay': {
         return 'VNPay';
-      }
-      case 'Stripe': {
-        return 'Stripe';
       }
       default: {
         return 'Sandbox';

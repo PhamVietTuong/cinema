@@ -8,7 +8,7 @@ namespace Cinema.Business.Payments;
 ///
 /// Only gateways reporting <see cref="IPaymentGateway.IsConfigured"/> are selectable: a provider whose
 /// credentials are blank is skipped in favour of one that works. Without this, picking a payment method
-/// the deployment never configured (VNPay/MoMo/Stripe with empty settings) threw mid-checkout and left
+/// the deployment never configured (VNPay with empty settings) threw mid-checkout and left
 /// the customer with a pending invoice holding their seats.
 /// </summary>
 public class PaymentGatewayResolver : IPaymentGatewayResolver

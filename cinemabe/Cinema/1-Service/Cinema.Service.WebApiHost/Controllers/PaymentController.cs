@@ -125,7 +125,7 @@ public class PaymentController : ApiControllerBase
         }
     }
 
-    /// <summary>Server-to-server gateway callback (VNPay/MoMo IPN, Stripe webhook). Signature is verified
+    /// <summary>Server-to-server gateway callback (VNPay IPN). Signature is verified
     /// inside the resolved gateway; only a valid, paid callback flips the invoice to Paid. VNPay requires its
     /// specific {RspCode, Message} acknowledgement shape (see <see cref="VnPayGateway.BuildIpnResponse"/>) —
     /// other providers keep the generic Ok/BadRequest shape.</summary>
@@ -157,10 +157,6 @@ public class PaymentController : ApiControllerBase
             {
                 using var reader = new StreamReader(Request.Body, leaveOpen: true);
                 data["__rawBody"] = await reader.ReadToEndAsync();
-            }
-            if (Request.Headers.TryGetValue("Stripe-Signature", out var signature))
-            {
-                data["__signature"] = signature.ToString();
             }
 
             var handling = await _bookingManager.HandlePaymentCallbackAsync(provider, data);

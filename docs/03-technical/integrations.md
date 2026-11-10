@@ -8,7 +8,7 @@
 
 Abstracted behind `IPaymentGateway` (`Cinema.Business.Contracts.Payments`), one implementation per provider, all registered as singletons directly in `Program.cs` (not `AddBusiness()`, since the resolver needs `IConfiguration`). `IPaymentGatewayResolver` picks the default from config key `Payments:Provider`, falling back to the first configured gateway, then the first registered gateway at all (so an unconfigured deployment still gets a provider-specific error rather than a generic one).
 
-**Callback-authoritative, not redirect-authoritative** — confirmed for VNPay, MoMo, and Stripe alike: each gateway's `VerifyPaymentAsync` (the synchronous, browser-redirect-driven confirm path) is hardcoded to return `Success = false` with a message pointing at the callback; only `SandboxPaymentGateway.VerifyPaymentAsync` ever succeeds synchronously. The only path to `Paid` for a real gateway is the signed server-to-server call to `PaymentController.PaymentCallback?provider=...` → `BookingManager.HandlePaymentCallbackAsync`. `PaymentCallback` is `[AllowAnonymous]` by design (called by the gateway's own servers, not the browser) and accepts both GET and POST; it builds a flattened `data` dict from query + form fields, falling back to the raw request body (`__rawBody`) for Stripe's JSON webhook, and copies the `Stripe-Signature` header into `__signature`.
+**Callback-authoritative, not redirect-authoritative** — confirmed for VNPay: the gateway's `VerifyPaymentAsync` (the synchronous, browser-redirect-driven confirm path) is hardcoded to return `Success = false` with a message pointing at the callback; only `SandboxPaymentGateway.VerifyPaymentAsync` ever succeeds synchronously. The only path to `Paid` for a real gateway is the signed server-to-server call to `PaymentController.PaymentCallback?provider=...` → `BookingManager.HandlePaymentCallbackAsync`. `PaymentCallback` is `[AllowAnonymous]` by design (called by the gateway's own servers, not the browser) and accepts both GET and POST; it builds a flattened `data` dict from query + form fields, falling back to the raw request body (`__rawBody`).
 
 **Idempotency**: `HandlePaymentCallbackAsync` checks `invoice.Status == Paid` first and returns `AlreadyConfirmed` without re-finalizing (no double loyalty accrual, no duplicate `InvoicePayment` row) — see the outcome matrix below. A non-`Pending`/non-`Paid` status (e.g. `Cancelled`) returns `NotPending` and leaves the invoice untouched.
 
@@ -31,8 +31,6 @@ Abstracted behind `IPaymentGateway` (`Cinema.Business.Contracts.Payments`), one 
 |---|---|---|---|---|
 | Sandbox | `Cinema.Business.Payments.SandboxPaymentGateway` | Dev/test only, always "configured" | none | Synchronous confirm always succeeds; not for production. |
 | VNPay | `Cinema.Business.Payments.VnPayGateway` | Production-shaped | `Payments:VnPay:TmnCode`, `Payments:VnPay:HashSecret`, `Payments:VnPay:PayUrl`, `Payments:VnPay:ReturnUrl` | HMAC-SHA512 signed redirect + IPN. **Callback-authoritative** — `VerifyPaymentAsync` always returns false; only the signed server-to-server IPN (`PaymentController.PaymentCallback?provider=VNPay`) can mark an invoice Paid. Requires a public tunnel (ngrok) for local dev — see §5. |
-| MoMo | `Cinema.Business.Payments.MoMoGateway` | Production-shaped | `Payments:MoMo:PartnerCode`, `Payments:MoMo:AccessKey`, `Payments:MoMo:SecretKey`, `Payments:MoMo:Endpoint`, `Payments:MoMo:ReturnUrl`, `Payments:MoMo:IpnUrl` | `captureWallet` v2 flow, real HTTP POST via `IHttpClientFactory`, HMAC-SHA256 signed IPN. No dedicated unit test file (unlike VNPay). |
-| Stripe | `Cinema.Business.Payments.StripeGateway` | Production-shaped | `Payments:Stripe:SecretKey`, `Payments:Stripe:PublishableKey`, `Payments:Stripe:WebhookSecret`, `Payments:Stripe:SuccessUrl`, `Payments:Stripe:CancelUrl` | Hosted Checkout Session via raw HTTP calls (no Stripe SDK dependency); webhook signature per Stripe's `t=...,v1=...` scheme; VND treated as zero-decimal currency (no ×100). |
 
 Selector config: `Payments:Provider` (default provider name when a client doesn't specify one). All four gateways are selectable per-invoice via the `provider` parameter on `PaymentController.InitiatePayment`.
 
@@ -55,9 +53,10 @@ Registered in `AddBusiness()` as a named `HttpClient` (`OmdbRatingsProvider.Http
 
 Credential: `OMDb:ApiKey`.
 
-**Stripe prerequisite:** CinemaUser checkout offers "Pay by card (Stripe)", but there is no availability endpoint. Until a Stripe account is configured (`Payments:Stripe:*`, plus the webhook pointed at the API) `PaymentGatewayResolver` falls back to the default provider, so the redirect goes to that provider instead of Stripe.
+**Checkout options:** CinemaUser checkout lists only VNPAY (`methods` in `booking-checkout.component.ts`). MoMo and Stripe were removed entirely.
 
-No evidence of a Stripe/MoMo-equivalent stub beyond what's listed in §1 — all four `IPaymentGateway` implementations found under `Cinema.Business/Payments/` are fully implemented (none are "planned but not built").
+
+No evidence of a stub beyond what's listed in §1 — both `IPaymentGateway` implementations under `Cinema.Business/Payments/` (Sandbox, VNPay) are fully implemented.
 
 ## 4. SignalR (real-time, in-process — not a third-party service)
 
@@ -98,8 +97,6 @@ Used for: booking confirmations, password reset / email verification / 2FA codes
 | SMTP | `Smtp:Host`, `Smtp:Port`, `Smtp:User`, `Smtp:Password`, `Smtp:From`, `Smtp:EnableSsl`, `Smtp:TimeoutSeconds` (validated at startup, see configuration.md) |
 | SMS (Twilio) | `Sms:Provider`, `Sms:Twilio:AccountSid`, `Sms:Twilio:AuthToken`, `Sms:Twilio:FromNumber`, `Sms:Twilio:TimeoutSeconds` (validated at startup; recipients normalised to E.164 by `PhoneNumberNormalizer`, invalid numbers logged and skipped) |
 | VNPay | `Payments:VnPay:TmnCode`, `Payments:VnPay:HashSecret`, `Payments:VnPay:PayUrl`, `Payments:VnPay:ReturnUrl` |
-| MoMo | `Payments:MoMo:PartnerCode`, `Payments:MoMo:AccessKey`, `Payments:MoMo:SecretKey`, `Payments:MoMo:Endpoint`, `Payments:MoMo:ReturnUrl`, `Payments:MoMo:IpnUrl` |
-| Stripe | `Payments:Stripe:SecretKey`, `Payments:Stripe:PublishableKey`, `Payments:Stripe:WebhookSecret`, `Payments:Stripe:SuccessUrl`, `Payments:Stripe:CancelUrl` |
 | Payment default | `Payments:Provider` |
 | OMDb | `OMDb:ApiKey` |
 | Database | `ConnectionStrings:CinemaDatabase` |
