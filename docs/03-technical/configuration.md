@@ -60,12 +60,6 @@ Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program
 | `Payments:VnPay:HashSecret` | VNPay HMAC-SHA512 signing secret | optional (see above) | `""` |
 | `Payments:VnPay:PayUrl` | VNPay hosted payment page | optional | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html` |
 | `Payments:VnPay:ReturnUrl` | Browser redirect target after payment (display-only — VNPay is callback-authoritative, so this URL is never trusted to confirm payment; see `integrations.md` §1) | optional | `http://localhost:4202/booking/payment-return` |
-| `Payments:MoMo:PartnerCode`, `Payments:MoMo:AccessKey`, `Payments:MoMo:SecretKey` | MoMo credentials | optional — gateway unconfigured if blank | `""` |
-| `Payments:MoMo:Endpoint` | MoMo `captureWallet` create-order endpoint | optional | `https://test-payment.momo.vn/v2/gateway/api/create` |
-| `Payments:MoMo:ReturnUrl` | Browser redirect target | optional | `http://localhost:4202/booking/payment-return` |
-| `Payments:MoMo:IpnUrl` | Server-to-server callback URL registered with MoMo | optional | `http://localhost:5102/api/Payment/PaymentCallback?provider=MoMo` |
-| `Payments:Stripe:SecretKey`, `Payments:Stripe:PublishableKey`, `Payments:Stripe:WebhookSecret` | Stripe credentials | optional — gateway unconfigured if blank | `""` |
-| `Payments:Stripe:SuccessUrl` / `Payments:Stripe:CancelUrl` | Checkout Session redirect targets | optional | `http://localhost:4202/booking/payment-return?status=success` / `...?status=cancel` |
 
 ### Movie metadata
 | Key | Purpose | Required | Default |

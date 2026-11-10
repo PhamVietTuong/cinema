@@ -66,13 +66,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
 
   /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
   readonly methods: { value: string; labelKey: string; app: string; svg?: string; icon?: string }[] = [
-    // Only VNPAY is offered for now. MoMo ({ value: 'Momo', ..., svg: 'momo' }) and Stripe
-    // ({ value: 'Stripe', ..., icon: 'credit_card' }) are hidden here; their backend gateways stay registered.
     { value: 'VNPay', labelKey: 'booking.confirm.vnpay', app: 'VNPAY', svg: 'vnpay' },
   ];
-
-  /** True for gateways that show a QR code to scan (the wallets); Stripe redirects to a hosted card page instead. */
-  get usesQr(): boolean { return this.paymentMethod !== 'Stripe'; }
 
   /** Display name of the selected gateway for the instruction note; never falls back to another gateway's name. */
   get paymentAppName(): string {
@@ -505,14 +500,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
 
   private _providerFor(method: string): string {
     switch (method) {
-      case 'Momo': {
-        return 'MoMo';
-      }
       case 'VNPay': {
         return 'VNPay';
-      }
-      case 'Stripe': {
-        return 'Stripe';
       }
       default: {
         return 'Sandbox';

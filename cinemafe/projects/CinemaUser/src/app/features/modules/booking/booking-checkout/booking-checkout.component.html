@@ -30,14 +30,8 @@
       </div>
 
       <div class="form-card center">
-        <ng-container *ngIf="usesQr; else stripeInfo">
-          <div class="qr-placeholder"><mat-icon>qr_code_2</mat-icon></div>
-          <p class="qr-note">{{ 'booking.confirm.qrNote' | translate:{ app: paymentAppName } }}</p>
-        </ng-container>
-        <ng-template #stripeInfo>
-          <div class="qr-placeholder"><mat-icon>credit_card</mat-icon></div>
-          <p class="qr-note">{{ 'booking.confirm.stripeNote' | translate }}</p>
-        </ng-template>
+        <div class="qr-placeholder"><mat-icon>qr_code_2</mat-icon></div>
+        <p class="qr-note">{{ 'booking.confirm.qrNote' | translate:{ app: paymentAppName } }}</p>
       </div>
 
       <div class="section-rule"></div>

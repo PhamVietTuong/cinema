@@ -160,16 +160,6 @@ describe('BookingCheckoutComponent', () => {
     expect(request.provider).toBe('VNPay');
   });
 
-  it('initiates payment with provider Stripe when Stripe is selected', () => {
-    const c = build(state);
-    c.paymentMethod = 'Stripe';
-
-    c.confirmBooking();
-
-    const request = payment.initiatePayment.mock.calls[0][0];
-    expect(request.provider).toBe('Stripe');
-  });
-
   it('does not flag a stock problem for other booking failures', () => {
     const c = build(state);
     payment.createBooking.mockReturnValue(throwError(() => ({ error: 'Seat is locked' })));

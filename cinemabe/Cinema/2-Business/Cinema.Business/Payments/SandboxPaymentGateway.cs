@@ -6,7 +6,7 @@ namespace Cinema.Business.Payments;
 /// Development/sandbox payment gateway. Approves any non-empty reference for a positive amount so
 /// dev and test flows complete end-to-end, while exposing the exact seam a real provider plugs into.
 ///
-/// A production provider (VNPay/MoMo/Stripe) implements the same <see cref="IPaymentGateway"/> and is
+/// A production provider (VNPay) implements the same <see cref="IPaymentGateway"/> and is
 /// selected via <c>Payments:Provider</c>. Unlike the real providers, the sandbox also approves the
 /// synchronous <see cref="VerifyPaymentAsync"/> path so local dev doesn't need a live callback.
 /// </summary>

@@ -61,4 +61,4 @@ Point at other hosts with `CINEMA_API_URL`, `CINEMA_USER_URL`, `CINEMA_ADMIN_URL
 - `/api/Identity/Login` allows 10 requests/min per IP, so specs that only need "a signed-in user" reuse the
   session saved by `global-setup.ts` (`test.use({ storageState: SESSION.admin })`) instead of logging in per test.
 - Specs that need seeded data (a movie, an upcoming showtime, a theater) skip when there is none.
-- Out of scope: real payment-gateway round trips (VNPay/MoMo/Stripe need a public callback URL).
+- Out of scope: real payment-gateway round trips (VNPay needs a public callback URL).

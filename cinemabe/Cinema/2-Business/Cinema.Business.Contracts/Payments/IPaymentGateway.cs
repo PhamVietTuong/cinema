@@ -1,13 +1,13 @@
 namespace Cinema.Business.Contracts.Payments;
 
 /// <summary>
-/// Abstraction over a payment provider. The dev default is <c>Sandbox</c>; VNPay / MoMo / Stripe
+/// Abstraction over a payment provider. The dev default is <c>Sandbox</c>; VNPay
 /// plug in behind this interface without touching booking logic. Multiple implementations are
 /// registered and picked per-invoice through <see cref="IPaymentGatewayResolver"/>.
 /// </summary>
 public interface IPaymentGateway
 {
-    /// <summary>Stable provider key (e.g. "Sandbox", "VNPay", "MoMo", "Stripe"). Stored on the invoice.</summary>
+    /// <summary>Stable provider key (e.g. "Sandbox", "VNPay"). Stored on the invoice.</summary>
     string Name { get; }
 
     /// <summary>
