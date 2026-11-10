@@ -163,6 +163,7 @@
           <span class="total-label">{{ 'booking.summary.amountToPay' | translate }}</span>
           <span class="total-amount">{{ finalTotal | number:'1.0-0' }}đ</span>
         </div>
+        <p class="points-earn-note" *ngIf="pointsPerUnit > 0 && pointValue > 0">{{ 'booking.summary.pointsRate' | translate:{ spend: (pointsPerUnit | number:'1.0-0'), points: ratePoints, amount: (ratePoints * pointValue | number:'1.0-0') } }}</p>
         <p class="points-earn-note" *ngIf="pointsToEarn > 0">{{ 'booking.summary.pointsToEarn' | translate:{ points: pointsToEarn } }}</p>
       </div>
     </div>

@@ -18,31 +18,19 @@ public class LoyaltySettingServiceTests
     {
         _sut = new LoyaltySettingManager(_uow.Object);
         // Default: no rows exist unless a test sets one up.
-        _uow.Setup(u => u.LoyaltySettingStore.GetGlobalAsync()).ReturnsAsync((LoyaltySetting?)null);
         _uow.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(It.IsAny<Guid>())).ReturnsAsync((LoyaltySetting?)null);
         // Default: the theater named in a per-theater save exists, unless a test says otherwise.
         _uow.Setup(u => u.TheaterStore.ExistsAsync(It.IsAny<Expression<Func<Theater, bool>>>())).ReturnsAsync(true);
     }
 
     [Fact]
-    public async Task GetGlobalAsync_NoRow_ReturnsDefaults()
+    public async Task GetEffectiveAsync_NoRow_ReturnsBuiltInDefaults()
     {
-        var dto = await _sut.GetGlobalAsync();
+        var rate = await _sut.GetEffectiveAsync(Guid.NewGuid());
 
-        dto.PointsPerUnit.Should().Be(LoyaltyRates.DefaultPointsPerUnit);
-        dto.PointValueVnd.Should().Be(LoyaltyRates.DefaultPointValueVnd);
-    }
-
-    [Fact]
-    public async Task GetGlobalAsync_StoredRow_ReturnsStoredValues()
-    {
-        _uow.Setup(u => u.LoyaltySettingStore.GetGlobalAsync())
-            .ReturnsAsync(new LoyaltySetting { TheaterId = null, PointsPerUnit = 2000, PointValueVnd = 3000 });
-
-        var dto = await _sut.GetGlobalAsync();
-
-        dto.PointsPerUnit.Should().Be(2000);
-        dto.PointValueVnd.Should().Be(3000);
+        rate.PointsPerUnit.Should().Be(1000);
+        rate.PointValueVnd.Should().Be(10);
+        rate.IsCustom.Should().BeFalse();
     }
 
     [Fact]
@@ -52,7 +40,7 @@ public class LoyaltySettingServiceTests
         _uow.Setup(u => u.LoyaltySettingStore.CreateAsync(It.IsAny<LoyaltySetting>()))
             .ReturnsAsync((LoyaltySetting s) => { created = s; return s; });
 
-        var dto = await _sut.SaveAsync(new SaveLoyaltySettingRequest { TheaterId = null, PointsPerUnit = 1500, PointValueVnd = 1500 });
+        var dto = await _sut.SaveAsync(new SaveLoyaltySettingRequest { TheaterId = Guid.NewGuid(), PointsPerUnit = 1500, PointValueVnd = 1500 });
 
         created.Should().NotBeNull();
         dto.PointsPerUnit.Should().Be(1500);
@@ -90,27 +78,27 @@ public class LoyaltySettingServiceTests
     [InlineData(-1, 1000)]
     public async Task SaveAsync_NonPositiveValue_Throws(int pointsPerUnit, int pointValueVnd)
     {
-        await FluentActions.Awaiting(() => _sut.SaveAsync(new SaveLoyaltySettingRequest { PointsPerUnit = pointsPerUnit, PointValueVnd = pointValueVnd }))
+        await FluentActions.Awaiting(() => _sut.SaveAsync(new SaveLoyaltySettingRequest { TheaterId = Guid.NewGuid(), PointsPerUnit = pointsPerUnit, PointValueVnd = pointValueVnd }))
             .Should().ThrowAsync<InvalidOperationException>();
     }
 
     [Fact]
-    public async Task ClearOverrideAsync_NoRow_ReturnsFalse()
+    public async Task ResetToDefaultAsync_NoRow_ReturnsFalse()
     {
-        var result = await _sut.ClearOverrideAsync(Guid.NewGuid());
+        var result = await _sut.ResetToDefaultAsync(Guid.NewGuid());
 
         result.Should().BeFalse();
     }
 
     [Fact]
-    public async Task ClearOverrideAsync_ExistingRow_DeletesAndReturnsTrue()
+    public async Task ResetToDefaultAsync_ExistingRow_DeletesAndReturnsTrue()
     {
         var theaterId = Guid.NewGuid();
         var existing = new LoyaltySetting { TheaterId = theaterId, PointsPerUnit = 2000, PointValueVnd = 2000 };
         _uow.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId)).ReturnsAsync(existing);
         _uow.Setup(u => u.LoyaltySettingStore.DeleteAsync(existing)).ReturnsAsync(existing);
 
-        var result = await _sut.ClearOverrideAsync(theaterId);
+        var result = await _sut.ResetToDefaultAsync(theaterId);
 
         result.Should().BeTrue();
         _uow.Verify(u => u.LoyaltySettingStore.DeleteAsync(existing), Times.Once);
@@ -127,25 +115,11 @@ public class LoyaltySettingServiceTests
 
         rate.PointsPerUnit.Should().Be(500);
         rate.PointValueVnd.Should().Be(2000);
-        rate.IsOverride.Should().BeTrue();
+        rate.IsCustom.Should().BeTrue();
     }
 
     [Fact]
-    public async Task GetEffectiveAsync_TheaterWithoutOverride_FallsBackToGlobal()
-    {
-        var theaterId = Guid.NewGuid();
-        _uow.Setup(u => u.LoyaltySettingStore.GetGlobalAsync())
-            .ReturnsAsync(new LoyaltySetting { TheaterId = null, PointsPerUnit = 800, PointValueVnd = 1200 });
-
-        var rate = await _sut.GetEffectiveAsync(theaterId);
-
-        rate.PointsPerUnit.Should().Be(800);
-        rate.PointValueVnd.Should().Be(1200);
-        rate.IsOverride.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task LoyaltyRates_LoadAsync_NoRowsAtAll_FallsBackToHardcodedDefaults()
+    public async Task LoyaltyRates_LoadAsync_NoRowsAtAll_FallsBackToBuiltInDefaults()
     {
         var (pointsPerUnit, pointValueVnd) = await LoyaltyRates.LoadAsync(_uow.Object, Guid.NewGuid());
 

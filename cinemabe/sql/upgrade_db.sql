@@ -509,26 +509,30 @@ BEGIN
 END
 
 -- ============================================================
--- Loyalty points: admin-configurable conversion rate (global default + per-theater override)
+-- Loyalty points: admin-configurable conversion rate, per theater
 -- ============================================================
 IF OBJECT_ID('dbo.LoyaltySetting', 'U') IS NULL
 BEGIN
     CREATE TABLE [LoyaltySetting] (
         [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-        [TheaterId] uniqueidentifier NULL,
+        [TheaterId] uniqueidentifier NOT NULL,
         [PointsPerUnit] int NOT NULL,
         [PointValueVnd] int NOT NULL,
         [CreationTime] datetime NOT NULL,
         [LastUpdatedTime] datetime NULL,
         CONSTRAINT [PK_LoyaltySetting] PRIMARY KEY ([Id])
     );
-    CREATE UNIQUE INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting] ([TheaterId]) WHERE [TheaterId] IS NOT NULL;
+    CREATE UNIQUE INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting] ([TheaterId]);
 END
 
-IF NOT EXISTS (SELECT 1 FROM [LoyaltySetting] WHERE [TheaterId] IS NULL)
+-- Per-theater only: drop the global default row (TheaterId NULL) and make TheaterId mandatory. A theater without a
+-- row now uses the built-in default (1,000 VND = 1 point; 100 points = 1,000 VND, i.e. PointValueVnd = 10).
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.LoyaltySetting') AND name = 'TheaterId' AND is_nullable = 1)
 BEGIN
-    INSERT INTO [LoyaltySetting] ([Id], [TheaterId], [PointsPerUnit], [PointValueVnd], [CreationTime]) VALUES
-    (NEWID(), NULL, 1000, 1000, GETUTCDATE());
+    DELETE FROM [LoyaltySetting] WHERE [TheaterId] IS NULL;
+    DROP INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting];
+    ALTER TABLE [LoyaltySetting] ALTER COLUMN [TheaterId] uniqueidentifier NOT NULL;
+    CREATE UNIQUE INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting] ([TheaterId]);
 END
 
 -- ===== patron category ID-check notice =====

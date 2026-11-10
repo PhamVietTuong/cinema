@@ -12,7 +12,7 @@ const SCREENS: Record<string, string[]> = {
   ],
   operations: [
     '/invoices', '/comments', '/gift-cards', '/audit-log',
-    '/loyalty-settings', '/promotion-programs', '/splash-banners',
+    '/promotion-programs', '/splash-banners',
   ],
 };
 

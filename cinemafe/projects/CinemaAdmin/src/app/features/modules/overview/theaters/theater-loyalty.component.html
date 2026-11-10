@@ -25,7 +25,7 @@
     <div class="loy-field-card">
       <label class="loy-field-label" for="theaterEarnRate">{{ 'theaters.loyalty.earnLabel' | translate }}</label>
       <div class="loy-input-row">
-        <input id="theaterEarnRate" class="loy-input" type="number" min="1" step="1" formControlName="pointsPerUnit">
+        <input id="theaterEarnRate" class="loy-input" type="text" cinemaThousands formControlName="pointsPerUnit">
         <span class="loy-input-unit">{{ 'theaters.loyalty.earnUnit' | translate }}</span>
       </div>
       <span class="ad-field-err" *ngIf="form.get('pointsPerUnit')?.touched && form.get('pointsPerUnit')?.hasError('required')">{{ 'theaters.loyalty.required' | translate }}</span>
@@ -36,7 +36,7 @@
     <div class="loy-field-card">
       <label class="loy-field-label" for="theaterRedeemRate">{{ 'theaters.loyalty.redeemLabel' | translate }}</label>
       <div class="loy-input-row">
-        <input id="theaterRedeemRate" class="loy-input" type="number" min="1" step="1" formControlName="pointValueVnd">
+        <input id="theaterRedeemRate" class="loy-input" type="text" cinemaThousands formControlName="pointValueVnd">
         <span class="loy-input-unit">{{ 'theaters.loyalty.redeemUnit' | translate }}</span>
       </div>
       <span class="ad-field-err" *ngIf="form.get('pointValueVnd')?.touched && form.get('pointValueVnd')?.hasError('required')">{{ 'theaters.loyalty.required' | translate }}</span>

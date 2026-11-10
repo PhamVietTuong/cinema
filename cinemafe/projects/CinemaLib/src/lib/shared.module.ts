@@ -32,6 +32,7 @@ import { SvgIconComponent } from '@ngneat/svg-icon';
 import { TranslatePipe, TranslateDirective } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from './i18n/language-switcher.component';
 import { ServerUtcPipe } from './pipes/server-utc.pipe';
+import { ThousandsInputDirective } from './directives/thousands-input.directive';
 
 const SHARED = [
   CommonModule,
@@ -69,6 +70,7 @@ const SHARED = [
   TranslateDirective,
   LanguageSwitcherComponent,
   ServerUtcPipe,
+  ThousandsInputDirective,
 ];
 
 @NgModule({

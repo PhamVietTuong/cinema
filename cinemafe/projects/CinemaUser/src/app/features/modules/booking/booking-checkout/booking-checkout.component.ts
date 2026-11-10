@@ -156,6 +156,9 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     return this.totalPrice + this.foodTotal;
   }
 
+  /** Point count used to phrase the redeem rate in the summary ("100 points = 1.000đ"). */
+  readonly ratePoints = 100;
+
   get maxRedeemablePoints(): number {
     if (this.pointValue <= 0) {
       return 0;

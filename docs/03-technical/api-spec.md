@@ -160,7 +160,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `MovieTypeDetail` | anonymous list | Admin (Create/Delete) | Movie↔MovieType join |
 | `Room seat map` | `GetRoomSeatMap` = `RoleNames.StaffApp` | Admin | `SaveRoomSeatMap`, `ResizeRoomSeatGrid`, `RemoveRoomSeat` |
 | `Invoice (admin)` | Admin | Admin | `GetInvoices`, `UpdateInvoiceStatus` (no enum allow-list — can write reserved value 4), `DeleteInvoice` (restores food stock if was Pending) |
-| `Loyalty` | `GetEffectiveLoyaltyRate` anonymous; rest Admin | Admin | `SaveLoyaltySetting`, `ClearTheaterLoyaltyOverride` |
+| `Loyalty` | `GetEffectiveLoyaltyRate` anonymous; rest Admin | Admin | `SaveLoyaltySetting` (requires `TheaterId`), `ResetTheaterLoyaltyToDefault`; `GetEffectiveLoyaltyRate?theaterId=` (required) returns `{pointsPerUnit, pointValueVnd, isCustom}`. No global-setting endpoints |
 | `Combo` | `GetComboComponents` `[AllowAnonymous]` | `RoleNames.Admin` | `SaveComboComposition` |
 
 ### Staff-area regions (gated by `RoleNames.*` composites, not `_adminRole`)

@@ -810,9 +810,8 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<Expression<Func<MemberShip, bool>>>()))
             .ReturnsAsync(new List<MemberShip>());
         _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        // No theater override and no global row configured -> LoyaltyRates' hardcoded 1000/1000 fallback.
+        // No setting row for the theater -> LoyaltyRates' built-in default (1000 VND = 1 point).
         _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId)).ReturnsAsync((LoyaltySetting?)null);
-        _uowMock.Setup(u => u.LoyaltySettingStore.GetGlobalAsync()).ReturnsAsync((LoyaltySetting?)null);
 
         var confirmed = await _sut.ConfirmPaymentAsync(customerId, invoice.Id, "SANDBOX-REF");
 

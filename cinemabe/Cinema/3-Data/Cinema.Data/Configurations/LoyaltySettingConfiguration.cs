@@ -9,6 +9,6 @@ public class LoyaltySettingConfiguration : IEntityTypeConfiguration<LoyaltySetti
     public void Configure(EntityTypeBuilder<LoyaltySetting> b)
     {
         b.HasKey(s => s.Id);
-        b.HasIndex(s => s.TheaterId).IsUnique().HasFilter("[TheaterId] IS NOT NULL");
+        b.HasIndex(s => s.TheaterId).IsUnique();
     }
 }

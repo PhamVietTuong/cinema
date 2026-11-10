@@ -15,42 +15,16 @@ public class LoyaltySettingManager : ILoyaltySettingManager
         _uow = uow;
     }
 
-    public async Task<LoyaltySettingDTO> GetGlobalAsync()
-    {
-        var setting = await _uow.LoyaltySettingStore.GetGlobalAsync();
-        return ToDTO(setting, null);
-    }
-
-    public async Task<LoyaltySettingDTO?> GetOverrideAsync(Guid theaterId)
+    public async Task<EffectiveLoyaltyRateDTO> GetEffectiveAsync(Guid theaterId)
     {
         var setting = await _uow.LoyaltySettingStore.GetOverrideAsync(theaterId);
-        if (setting is null)
-        {
-            return null;
-        }
-        return ToDTO(setting, theaterId);
-    }
-
-    public async Task<EffectiveLoyaltyRateDTO> GetEffectiveAsync(Guid? theaterId)
-    {
-        LoyaltySetting? overrideSetting = null;
-        if (theaterId is Guid id)
-        {
-            overrideSetting = await _uow.LoyaltySettingStore.GetOverrideAsync(id);
-        }
-
-        var setting = overrideSetting;
-        if (setting is null)
-        {
-            setting = await _uow.LoyaltySettingStore.GetGlobalAsync();
-        }
 
         var (pointsPerUnit, pointValueVnd) = LoyaltyRates.Resolve(setting);
         return new EffectiveLoyaltyRateDTO
         {
             PointsPerUnit = pointsPerUnit,
             PointValueVnd = pointValueVnd,
-            IsOverride    = overrideSetting is not null,
+            IsCustom      = setting is not null,
         };
     }
 
@@ -61,19 +35,11 @@ public class LoyaltySettingManager : ILoyaltySettingManager
             throw new InvalidOperationException("Point rates must be positive.");
         }
 
-        LoyaltySetting? existing;
-        if (request.TheaterId is Guid theaterId)
+        if (!await _uow.TheaterStore.ExistsAsync(t => t.Id == request.TheaterId))
         {
-            if (!await _uow.TheaterStore.ExistsAsync(t => t.Id == theaterId))
-            {
-                throw new KeyNotFoundException("Theater not found.");
-            }
-            existing = await _uow.LoyaltySettingStore.GetOverrideAsync(theaterId);
+            throw new KeyNotFoundException("Theater not found.");
         }
-        else
-        {
-            existing = await _uow.LoyaltySettingStore.GetGlobalAsync();
-        }
+        var existing = await _uow.LoyaltySettingStore.GetOverrideAsync(request.TheaterId);
 
         if (existing is null)
         {
@@ -93,7 +59,7 @@ public class LoyaltySettingManager : ILoyaltySettingManager
         return ToDTO(existing, request.TheaterId);
     }
 
-    public async Task<bool> ClearOverrideAsync(Guid theaterId)
+    public async Task<bool> ResetToDefaultAsync(Guid theaterId)
     {
         var existing = await _uow.LoyaltySettingStore.GetOverrideAsync(theaterId);
         if (existing is null)
@@ -104,7 +70,7 @@ public class LoyaltySettingManager : ILoyaltySettingManager
         return true;
     }
 
-    private static LoyaltySettingDTO ToDTO(LoyaltySetting? setting, Guid? theaterId)
+    private static LoyaltySettingDTO ToDTO(LoyaltySetting? setting, Guid theaterId)
     {
         var (pointsPerUnit, pointValueVnd) = LoyaltyRates.Resolve(setting);
         DateTime? lastUpdatedTime = null;

@@ -11,11 +11,6 @@ public class LoyaltySettingStore : GenericStore<LoyaltySetting>, ILoyaltySetting
     {
     }
 
-    public async Task<LoyaltySetting?> GetGlobalAsync()
-    {
-        return await DbSet.AsNoTracking().FirstOrDefaultAsync(s => s.TheaterId == null);
-    }
-
     public async Task<LoyaltySetting?> GetOverrideAsync(Guid theaterId)
     {
         return await DbSet.AsNoTracking().FirstOrDefaultAsync(s => s.TheaterId == theaterId);
