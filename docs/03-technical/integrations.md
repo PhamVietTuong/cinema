@@ -55,7 +55,9 @@ Registered in `AddBusiness()` as a named `HttpClient` (`OmdbRatingsProvider.Http
 
 Credential: `OMDb:ApiKey`.
 
-**Stripe prerequisite:** CinemaUser checkout offers "Pay by card (Stripe)", but there is no availability endpoint. Until a Stripe account is configured (`Payments:Stripe:*`, plus the webhook pointed at the API) `PaymentGatewayResolver` falls back to the default provider, so the redirect goes to that provider instead of Stripe.
+**Checkout options:** CinemaUser checkout currently lists only VNPAY (`methods` in `booking-checkout.component.ts`); MoMo and Stripe are hidden from the UI but their backend gateways remain registered. Re-add the entries there to re-enable them.
+
+**Stripe prerequisite (applies if Stripe is re-enabled in checkout):** there is no availability endpoint. Until a Stripe account is configured (`Payments:Stripe:*`, plus the webhook pointed at the API) `PaymentGatewayResolver` falls back to the default provider, so the redirect goes to that provider instead of Stripe.
 
 No evidence of a Stripe/MoMo-equivalent stub beyond what's listed in §1 — all four `IPaymentGateway` implementations found under `Cinema.Business/Payments/` are fully implemented (none are "planned but not built").
 

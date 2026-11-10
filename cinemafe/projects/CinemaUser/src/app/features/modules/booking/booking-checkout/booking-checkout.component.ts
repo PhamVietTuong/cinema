@@ -55,7 +55,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   holdExpired = false;
   private _holdTimer: any;
 
-  paymentMethod = 'Momo';
+  paymentMethod = 'VNPay';
   loading = false;
   error = '';
   /** The last createBooking failure was a stock problem — show the localized hint to go back and adjust. */
@@ -66,10 +66,9 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
 
   /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
   readonly methods: { value: string; labelKey: string; app: string; svg?: string; icon?: string }[] = [
-    { value: 'Momo', labelKey: 'booking.confirm.momoWallet', app: 'MoMo', svg: 'momo' },
+    // Only VNPAY is offered for now. MoMo ({ value: 'Momo', ..., svg: 'momo' }) and Stripe
+    // ({ value: 'Stripe', ..., icon: 'credit_card' }) are hidden here; their backend gateways stay registered.
     { value: 'VNPay', labelKey: 'booking.confirm.vnpay', app: 'VNPAY', svg: 'vnpay' },
-    // Card checkout hosted by Stripe: the browser is redirected to Stripe, no QR is scanned.
-    { value: 'Stripe', labelKey: 'booking.confirm.stripe', app: 'Stripe', icon: 'credit_card' },
   ];
 
   /** True for gateways that show a QR code to scan (the wallets); Stripe redirects to a hosted card page instead. */
