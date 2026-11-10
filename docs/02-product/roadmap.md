@@ -53,8 +53,8 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
-| Membership / points / vouchers | Partial | M | `MemberShip` tiers + `Discount`/`DiscountType` exist; wire point accrual on purchase, tier upgrades, voucher redemption at checkout. |
-| Promotions scoped system-wide OR per-theater | New | M | Add an optional `TheaterId` to `Discount` (null = global). Enforce scope at redemption. |
+| Membership / points / vouchers | Done | - | `MemberShip` tiers + `PromotionProgram` (code/auto-apply, merged from the former `Discount`/`DiscountType`) exist; point accrual on purchase and tier upgrades are wired (`BookingManager.ApplyPaidSideEffectsAsync`). |
+| Promotions scoped system-wide OR per-theater | Done | - | `PromotionProgramSchedule` rows scope a program to specific theaters/days/times (zero rows = system-wide); enforced at redemption in `BookingManager.MatchesProgramScope`. |
 
 ## Admin & reporting
 

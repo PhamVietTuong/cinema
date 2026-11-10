@@ -655,7 +655,6 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()))
             .ReturnsAsync(new List<TicketPrice>());
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(showTimeId, roomId)).ReturnsAsync(new List<Guid>());
-        _uowMock.Setup(u => u.DiscountStore.GetActiveAutoApplyAsync(It.IsAny<DateTime>())).ReturnsAsync(new List<Discount>());
         _uowMock.Setup(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>())).ReturnsAsync((Invoice i) => i);
         _uowMock.Setup(u => u.UserStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
     }
@@ -1113,30 +1112,51 @@ public class BookingServiceTests
         _sut.IsSeatLocked(ShowTimeId2, RoomId1, SeatId21, excludeConnectionId: "my-conn").Should().BeTrue();
     }
 
-    // ── Discount code validation ────────────────────────────────────────────────
+    // ── Promo code validation (code-triggered PromotionProgram) ─────────────────
 
-    private Discount SetupDiscount(Action<Discount>? tweak = null)
+    private PromotionProgram SetupCodeProgram(Action<PromotionProgram>? tweak = null)
     {
-        var discount = new Discount
+        var program = new PromotionProgram
         {
-            Id = Guid.NewGuid(), Code = "SUMMER25", Percent = 10, IsActive = true,
+            Id = Guid.NewGuid(), Title = "Summer", Code = "SUMMER25", IsPublished = true,
+            Mechanic = PromotionMechanic.PercentOff, PercentOff = 10,
             StartDate = DateTime.UtcNow.AddDays(-1), EndDate = DateTime.UtcNow.AddDays(1),
-            ApplyToAllTheaters = true,
         };
-        tweak?.Invoke(discount);
-        _uowMock.Setup(u => u.DiscountStore.GetByCodeAsync("SUMMER25")).ReturnsAsync(discount);
+        tweak?.Invoke(program);
+        _uowMock.Setup(u => u.PromotionProgramStore.GetByCodeAsync("SUMMER25")).ReturnsAsync(program);
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(RoomId1)).ReturnsAsync(new Room { Id = RoomId1, TheaterId = Guid.NewGuid() });
         _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(ShowTimeId1)).ReturnsAsync(new ShowTime { Id = ShowTimeId1, StartTime = DateTime.UtcNow });
         _uowMock.Setup(u => u.UserStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
-        return discount;
+        return program;
+    }
+
+    /// <summary>One seat priced at 200000, scoped so BuildSeatPricingContextAsync (which the code-path
+    /// preview reuses) resolves it; mirrors SetupPricingContext's pattern.</summary>
+    private List<BookingSeatItem> SetupOneSeat(double price)
+    {
+        var theaterId = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var seatId = Guid.NewGuid();
+
+        SetupPricingContext(
+            theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            startTime: DateTime.UtcNow, projectionForm: ProjectionForm.TwoD,
+            categories: new List<PatronCategory> { new() { Id = categoryId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = price, IsActive = true } },
+            kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId });
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seatId] = new() { Id = seatId, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+
+        return new List<BookingSeatItem> { new() { SeatId = seatId, PatronCategoryId = categoryId } };
     }
 
     [Fact]
     public async Task ValidateDiscountCodeAsync_UsableCode_ReportsWhatItTakesOff()
     {
-        SetupDiscount();
+        SetupCodeProgram();
+        var seats = SetupOneSeat(200000);
 
-        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), " SUMMER25 ", RoomId1, ShowTimeId1, 200000);
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), " SUMMER25 ", RoomId1, ShowTimeId1, 200000, seats);
 
         result.Valid.Should().BeTrue();
         result.DiscountAmount.Should().Be(20000);
@@ -1145,21 +1165,33 @@ public class BookingServiceTests
     [Fact]
     public async Task ValidateDiscountCodeAsync_CapsTheAmountAtMaxDiscount()
     {
-        SetupDiscount(d => d.MaxDiscountAmount = 5000);
+        SetupCodeProgram(p => p.MaxDiscountAmount = 5000);
+        var seats = SetupOneSeat(200000);
 
-        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000);
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, seats);
 
         result.DiscountAmount.Should().Be(5000);
     }
 
     [Fact]
+    public async Task ValidateDiscountCodeAsync_FoodOnlyQuote_ValidatesCodeButSavingIsZero()
+    {
+        SetupCodeProgram();
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 50000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeTrue();
+        result.DiscountAmount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task ValidateDiscountCodeAsync_UnknownCode_IsInvalidWithoutThrowing()
     {
-        _uowMock.Setup(u => u.DiscountStore.GetByCodeAsync("NOPE")).ReturnsAsync((Discount?)null);
+        _uowMock.Setup(u => u.PromotionProgramStore.GetByCodeAsync("NOPE")).ReturnsAsync((PromotionProgram?)null);
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(RoomId1)).ReturnsAsync(new Room { Id = RoomId1, TheaterId = Guid.NewGuid() });
         _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(ShowTimeId1)).ReturnsAsync(new ShowTime { Id = ShowTimeId1, StartTime = DateTime.UtcNow });
 
-        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "NOPE", RoomId1, ShowTimeId1, 200000);
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "NOPE", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
 
         result.Valid.Should().BeFalse();
         result.Message.Should().NotBeNullOrEmpty();
@@ -1168,11 +1200,11 @@ public class BookingServiceTests
     [Fact]
     public async Task ValidateDiscountCodeAsync_ExpiredOrExhaustedCode_IsInvalid()
     {
-        SetupDiscount(d => d.EndDate = DateTime.UtcNow.AddDays(-1));
-        (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000)).Valid.Should().BeFalse();
+        SetupCodeProgram(p => p.EndDate = DateTime.UtcNow.AddDays(-1));
+        (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>())).Valid.Should().BeFalse();
 
-        SetupDiscount(d => { d.MaxUsage = 3; d.UsedCount = 3; });
-        (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000)).Valid.Should().BeFalse();
+        SetupCodeProgram(p => { p.MaxUsage = 3; p.UsedCount = 3; });
+        (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>())).Valid.Should().BeFalse();
     }
 
     // ── Food stock: deduct at booking, restore on cancel / expire ──────
@@ -1431,7 +1463,7 @@ public class BookingServiceTests
     /// auto-apply PromotionProgram candidates in scope. Monday 2026-03-02 19:00 (see SetupBaselineBookingMocks).</summary>
     private async Task<BookingResultDTO> BookOneSeatWithProgramsAsync(
         double listPrice, List<PromotionProgram> candidates, Guid? customerId = null, User? customer = null,
-        List<Discount>? autoApplyDiscounts = null, List<Holiday>? holidays = null)
+        List<Holiday>? holidays = null, string? code = null)
     {
         var theaterId    = Guid.NewGuid();
         var roomTypeId   = Guid.NewGuid();
@@ -1454,10 +1486,6 @@ public class BookingServiceTests
         // (empty) defaults for the same members — a setup made before calling this helper would
         // otherwise be silently overridden by that call's defaults.
         _uowMock.Setup(u => u.PromotionProgramStore.GetAutoApplyCandidatesAsync(It.IsAny<DateOnly>())).ReturnsAsync(candidates);
-        if (autoApplyDiscounts != null)
-        {
-            _uowMock.Setup(u => u.DiscountStore.GetActiveAutoApplyAsync(It.IsAny<DateTime>())).ReturnsAsync(autoApplyDiscounts);
-        }
         if (holidays != null)
         {
             _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<Expression<Func<Holiday, bool>>>())).ReturnsAsync(holidays);
@@ -1473,6 +1501,7 @@ public class BookingServiceTests
             RoomId     = RoomId1,
             Seats = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
             PaymentMethod = "Sandbox",
+            DiscountCode = code,
         };
 
         return await _sut.CreateBookingAsync(customerId ?? Guid.NewGuid(), request);
@@ -1559,37 +1588,35 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task CreateBookingAsync_AutoApplyDiscountCheaperThanProgram_ChargesDiscountNotProgram()
+    public async Task CreateBookingAsync_TwoAutoApplyPrograms_BiggerSavingWins()
     {
-        var program = FixedPriceProgram(price: 70000); // saves 10,000 off 80,000
-        var discount = new Discount
-        {
-            Id = Guid.NewGuid(), Percent = 50, IsActive = true, AutoApply = true, ApplyToAllTheaters = true,
-            StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31), DiscountTheaters = new List<DiscountTheater>(),
-        };
+        var cheaper = FixedPriceProgram(price: 70000); // saves 10,000 off 80,000
+        var pricier = FixedPriceProgram(price: 20000); // saves 60,000 off 80,000
 
-        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program },
-            autoApplyDiscounts: new List<Discount> { discount });
-
-        result.FinalAmount.Should().Be(40000); // 50% off 80,000 beats the program's 70,000
-        result.AppliedPromotionTitle.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_ProgramCheaperThanAutoApplyDiscount_ChargesProgramNotDiscount()
-    {
-        var program = FixedPriceProgram(price: 20000); // saves 60,000 off 80,000
-        var discount = new Discount
-        {
-            Id = Guid.NewGuid(), Percent = 10, IsActive = true, AutoApply = true, ApplyToAllTheaters = true,
-            StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31), DiscountTheaters = new List<DiscountTheater>(),
-        };
-
-        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program },
-            autoApplyDiscounts: new List<Discount> { discount });
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { cheaper, pricier });
 
         result.FinalAmount.Should().Be(20000);
         result.AppliedPromotionTitle.Should().Be("Happy Hour");
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_CodeSupplied_UsesCodeProgramInsteadOfAutoApplyCandidates()
+    {
+        // A customer-entered code always wins over auto-apply candidates — a program is triggered by
+        // exactly one of Code or AutoApply, so the two paths are mutually exclusive, not compared.
+        var autoApplyProgram = FixedPriceProgram(price: 20000); // would save 60,000 off 80,000 if it ran
+        var codeProgram = new PromotionProgram
+        {
+            Id = Guid.NewGuid(), Title = "Summer", Code = "SUMMER25", IsPublished = true,
+            Mechanic = PromotionMechanic.PercentOff, PercentOff = 10,
+            StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31),
+        };
+        _uowMock.Setup(u => u.PromotionProgramStore.GetByCodeAsync("SUMMER25")).ReturnsAsync(codeProgram);
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { autoApplyProgram }, code: "SUMMER25");
+
+        result.FinalAmount.Should().Be(72000); // 10% off 80,000, not the auto-apply program's 20,000
+        result.AppliedPromotionTitle.Should().Be("Summer");
     }
 
     [Fact]

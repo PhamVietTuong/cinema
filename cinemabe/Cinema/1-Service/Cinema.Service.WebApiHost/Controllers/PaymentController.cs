@@ -193,7 +193,7 @@ public class PaymentController : ApiControllerBase
         LogProvider.Current.Information($"{GetType().Name}.ValidateDiscountCode being awakened to process request...");
         try
         {
-            var result = await _bookingManager.ValidateDiscountCodeAsync(User.GetUserId(), request.Code, request.RoomId, request.ShowTimeId, request.Total);
+            var result = await _bookingManager.ValidateDiscountCodeAsync(User.GetUserId(), request.Code, request.RoomId, request.ShowTimeId, request.Total, request.Seats);
             return Ok(result);
         }
         catch (Exception e)

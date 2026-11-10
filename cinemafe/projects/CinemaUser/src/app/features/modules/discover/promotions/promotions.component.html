@@ -12,11 +12,13 @@
       type="button"
       role="tab"
       class="promo-tab"
-      *ngFor="let t of tabs"
-      [class.is-active]="activeTab === t.key"
-      [attr.aria-selected]="activeTab === t.key"
-      (click)="setTab(t.key)">
-      {{ t.label | translate }}
+      *ngFor="let c of campaignFilters"
+      [class.is-active]="activeCampaign === c.key"
+      [attr.aria-selected]="activeCampaign === c.key"
+      (click)="setCampaign(c.key)">
+      <!-- "All" is a translated i18n key; a campaign name (e.g. "C'Student") is literal admin-entered
+           text, shown as-is rather than looked up as a translation key. -->
+      {{ c.key === 'all' ? (c.label | translate) : c.label }}
     </button>
   </nav>
 
@@ -35,17 +37,28 @@
   <div class="ticket-list">
     <article class="ticket" *ngFor="let p of visible">
 
-      <div class="ticket-stub">
+      <div class="ticket-stub" [class.ticket-stub--img]="p.bannerUrl">
         <span class="notch notch--top" aria-hidden="true"></span>
         <span class="notch notch--bottom" aria-hidden="true"></span>
-        <span class="stub-value" *ngIf="stubValue(p) as sv; else stubIcon">{{ sv }}</span>
-        <ng-template #stubIcon><mat-icon class="stub-icon">local_activity</mat-icon></ng-template>
-        <span class="stub-caption">{{ stubCaption(p) }}</span>
+
+        <ng-container *ngIf="p.bannerUrl; else noImage">
+          <img [src]="p.bannerUrl" alt="" class="stub-img">
+          <span class="stub-chip">
+            <span class="chip-val" *ngIf="stubValue(p) as sv; else chipIcon">{{ sv }}</span>
+            <ng-template #chipIcon><mat-icon class="chip-icon">local_activity</mat-icon></ng-template>
+          </span>
+        </ng-container>
+        <ng-template #noImage>
+          <span class="stub-value" *ngIf="stubValue(p) as sv; else stubIcon">{{ sv }}</span>
+          <ng-template #stubIcon><mat-icon class="stub-icon">local_activity</mat-icon></ng-template>
+          <span class="stub-caption">{{ stubCaption(p) }}</span>
+        </ng-template>
       </div>
 
       <div class="ticket-body">
         <div class="ticket-head">
-          <h3 class="ticket-title">{{ p.title }}</h3>
+          <span class="pill pill--campaign" *ngIf="p.campaignName">{{ p.campaignName }}</span>
+          <h3 class="ticket-title">{{ displayTitle(p) }}</h3>
           <span class="pill pill--auto" *ngIf="p.autoApply">{{ 'promotions.autoApplied' | translate }}</span>
           <span class="pill pill--starts" *ngIf="!hasStarted(p)">{{ 'promotions.startsOn' | translate:{ date: (p.startDate | date:'dd/MM') } }}</span>
         </div>
@@ -78,7 +91,7 @@
         </dl>
 
         <div class="ticket-foot">
-          <div class="ticket-code" *ngIf="p.linkedDiscountCode as code">
+          <div class="ticket-code" *ngIf="p.code as code">
             <span class="code-label">{{ 'promotions.codeLabel' | translate }}</span>
             <span class="code-val">{{ code }}</span>
             <button mat-stroked-button type="button" (click)="copyCode(p.id, code)">
@@ -97,10 +110,6 @@
         </div>
 
         <div class="promo-details" *ngIf="isExpanded(p.id)">
-          <div class="promo-banner" *ngIf="p.bannerUrl">
-            <img [src]="p.bannerUrl" alt="">
-          </div>
-
           <div class="promo-prices" *ngIf="p.prices?.length">
             <h4>{{ 'promotions.pricesTitle' | translate }}</h4>
             <div class="price-chips">

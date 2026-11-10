@@ -1,5 +1,13 @@
 .dlg-field--full { grid-column: 1 / -1; }
 
+// Each step renders a different subset of fields, so .dlg-grid's natural height varies step to
+// step (as little as ~100px on Audience, as much as ~630px on Schedule & Availability with every
+// optional field shown) — without a floor, the dialog visibly grows/shrinks as the admin clicks
+// through steps. 630px is that measured maximum; shorter steps just leave empty space below
+// instead, and a step whose content genuinely exceeds it (many schedule/price rows) still grows
+// past the floor and scrolls within mat-dialog-content as before.
+.dlg-grid { min-height: 630px; }
+
 .pp-row {
   display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;
   mat-form-field { flex: 1 1 0; min-width: 0; }

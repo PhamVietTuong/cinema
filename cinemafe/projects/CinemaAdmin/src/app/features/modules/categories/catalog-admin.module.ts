@@ -8,8 +8,6 @@ import { AgeRestrictionsManagementComponent } from './age-restrictions/age-restr
 import { AgeRestrictionDialog } from './age-restrictions/age-restriction.dialog';
 import { MovieTypesManagementComponent } from './movie-types/movie-types.component';
 import { MovieTypeDialog } from './movie-types/movie-type.dialog';
-import { DiscountTypesManagementComponent } from './discount-types/discount-types.component';
-import { DiscountTypeDialog } from './discount-types/discount-type.dialog';
 import { MembershipsManagementComponent } from './memberships/memberships.component';
 import { MembershipDialog } from './memberships/membership.dialog';
 import { UserTypesManagementComponent } from './user-types/user-types.component';
@@ -19,16 +17,18 @@ import { NewsManagementComponent } from './news/news.component';
 import { NewsDialog } from './news/news.dialog';
 import { TemplatesManagementComponent } from './templates/templates.component';
 import { TemplateDialog } from './templates/template.dialog';
+import { PromotionCampaignsManagementComponent } from './promotion-campaigns/promotion-campaigns.component';
+import { PromotionCampaignDialog } from './promotion-campaigns/promotion-campaign.dialog';
 
 const routes: Routes = [
   { path: 'age-restrictions', component: AgeRestrictionsManagementComponent },
   { path: 'movie-types', component: MovieTypesManagementComponent },
-  { path: 'discount-types', component: DiscountTypesManagementComponent },
   { path: 'memberships', component: MembershipsManagementComponent },
   { path: 'user-types', component: UserTypesManagementComponent },
   { path: 'holidays', component: HolidaysManagementComponent },
   { path: 'news', component: NewsManagementComponent },
   { path: 'templates', component: TemplatesManagementComponent },
+  { path: 'promotion-campaigns', component: PromotionCampaignsManagementComponent },
 ];
 
 @NgModule({
@@ -37,8 +37,6 @@ const routes: Routes = [
     AgeRestrictionDialog,
     MovieTypesManagementComponent,
     MovieTypeDialog,
-    DiscountTypesManagementComponent,
-    DiscountTypeDialog,
     MembershipsManagementComponent,
     MembershipDialog,
     UserTypesManagementComponent,
@@ -48,6 +46,8 @@ const routes: Routes = [
     NewsDialog,
     TemplatesManagementComponent,
     TemplateDialog,
+    PromotionCampaignsManagementComponent,
+    PromotionCampaignDialog,
   ],
   imports: [
     SharedModule,

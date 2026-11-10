@@ -18,6 +18,12 @@ public class PromotionProgramStore : GenericStore<PromotionProgram>, IPromotionP
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(p => p.Id == id);
 
+    public Task<PromotionProgram?> GetByCodeAsync(string code)
+        => DbSet.Include(p => p.Prices)
+                .Include(p => p.Schedules)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(p => p.Code == code);
+
     public Task<List<PromotionProgramPrice>> GetPricesAsync(IReadOnlyCollection<Guid> programIds)
         => Context.PromotionProgramPrice
                 .AsNoTracking()
@@ -29,6 +35,25 @@ public class PromotionProgramStore : GenericStore<PromotionProgram>, IPromotionP
                 .AsNoTracking()
                 .Where(x => programIds.Contains(x.PromotionProgramId))
                 .ToListAsync();
+
+    public void RemovePrices(IEnumerable<PromotionProgramPrice> prices)
+        => Context.PromotionProgramPrice.RemoveRange(prices);
+
+    public void RemoveSchedules(IEnumerable<PromotionProgramSchedule> schedules)
+        => Context.PromotionProgramSchedule.RemoveRange(schedules);
+
+    // A brand-new child discovered only via collection-navigation fixup (entity.Prices.Add(...)), never
+    // through an explicit DbSet.Add(), gets tracked as Modified instead of Added once its Guid Id is a
+    // non-default, client-set value (BaseEntity sets Id = Guid.NewGuid() in its property initializer) —
+    // EF's heuristic for navigation-discovered entities with an already-set key assumes "this might
+    // reference an existing row" rather than "this is new". An explicit Add() here removes that
+    // ambiguity; the manager still also puts the row in entity.Prices/Schedules so the in-memory graph
+    // MapPageAsync reads afterwards is correct.
+    public void AddPrice(PromotionProgramPrice price)
+        => Context.PromotionProgramPrice.Add(price);
+
+    public void AddSchedule(PromotionProgramSchedule schedule)
+        => Context.PromotionProgramSchedule.Add(schedule);
 
     public Task<List<PromotionProgram>> GetAutoApplyCandidatesAsync(DateOnly showDate)
     {

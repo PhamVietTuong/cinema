@@ -80,7 +80,7 @@ public class BoxOfficeTests
         _uowMock.Setup(u => u.SeatStore.FindAsync(It.IsAny<Expression<Func<Seat, bool>>>())).ReturnsAsync(new List<Seat>());
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(_showTimeId, _roomId)).ReturnsAsync(new List<Guid>());
         SetSeats(new Seat { Id = _seatA, RoomId = _roomId, RowName = "A", ColIndex = 1 }, new Seat { Id = _seatB, RoomId = _roomId, RowName = "A", ColIndex = 2 });
-        _uowMock.Setup(u => u.DiscountStore.GetActiveAutoApplyAsync(It.IsAny<DateTime>())).ReturnsAsync(new List<Discount>());
+        _uowMock.Setup(u => u.PromotionProgramStore.GetAutoApplyCandidatesAsync(It.IsAny<DateOnly>())).ReturnsAsync(new List<PromotionProgram>());
         _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<Expression<Func<MemberShip, bool>>>())).ReturnsAsync(new List<MemberShip>());
 
         _cola = new FoodAndDrink { Id = Guid.NewGuid(), TheaterId = _theaterId, Name = "Cola", Price = 30000, TrackInventory = true, QuantityOnHand = 10, IsAvailable = true };

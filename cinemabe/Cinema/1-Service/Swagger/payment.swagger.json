@@ -1309,6 +1309,12 @@
           "total": {
             "type": "number",
             "format": "double"
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingSeatItem"
+            }
           }
         }
       },

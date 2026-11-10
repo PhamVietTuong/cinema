@@ -4,19 +4,20 @@ import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException } from 'CinemaLib';
 
-type Dto = CinemaServiceAgent.DiscountTypeDTO;
+type Dto = CinemaServiceAgent.PromotionCampaignDTO;
 
-export interface DiscountTypeDialogData {
-  discountType: Dto | null;
+export interface PromotionCampaignDialogData {
+  campaign: Dto | null;
 }
 
-/** Create/edit form for a discount type, opened via MatDialog. Resolves `true` on save, `false` on cancel. */
+/** Create/edit form for a promotion campaign (e.g. "C'Student", "Happy Hour"), opened via MatDialog.
+ * Resolves `true` on save, `false` on cancel. */
 @Component({
-  selector: 'app-discount-type-dialog',
+  selector: 'app-promotion-campaign-dialog',
   standalone: false,
-  templateUrl: './discount-type.dialog.html',
+  templateUrl: './promotion-campaign.dialog.html',
 })
-export class DiscountTypeDialog {
+export class PromotionCampaignDialog {
   readonly editingId: string | null;
   form: FormGroup;
 
@@ -24,12 +25,12 @@ export class DiscountTypeDialog {
     private _svc: CinemaServiceAgent.HttpService,
     private _fb: FormBuilder,
     private _store: Store<any>,
-    private _dialogRef: MatDialogRef<DiscountTypeDialog, boolean>,
-    @Inject(MAT_DIALOG_DATA) data: DiscountTypeDialogData,
+    private _dialogRef: MatDialogRef<PromotionCampaignDialog, boolean>,
+    @Inject(MAT_DIALOG_DATA) data: PromotionCampaignDialogData,
   ) {
-    this.editingId = data.discountType?.id ?? null;
+    this.editingId = data.campaign?.id ?? null;
     this.form = this._fb.group({
-      name: [data.discountType?.name ?? '', Validators.required],
+      name: [data.campaign?.name ?? '', Validators.required],
     });
   }
 
@@ -40,8 +41,8 @@ export class DiscountTypeDialog {
     }
     const v = this.form.value;
     const obs = this.editingId
-      ? this._svc.updateDiscountType(CinemaServiceAgent.UpdateDiscountTypeRequest.fromJS({ ...v, id: this.editingId }))
-      : this._svc.createDiscountType(CinemaServiceAgent.CreateDiscountTypeRequest.fromJS(v));
+      ? this._svc.updatePromotionCampaign(CinemaServiceAgent.UpdatePromotionCampaignRequest.fromJS({ ...v, id: this.editingId }))
+      : this._svc.createPromotionCampaign(CinemaServiceAgent.CreatePromotionCampaignRequest.fromJS(v));
 
     this._store.dispatch(showLoading());
     obs.subscribe({

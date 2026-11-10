@@ -1,13 +1,13 @@
-<div mat-dialog-title class="dialog-title">{{ (editingId ? 'discountTypes.editTitle' : 'discountTypes.newTitle') | translate }}</div>
+<div mat-dialog-title class="dialog-title">{{ (editingId ? 'promotionCampaigns.editTitle' : 'promotionCampaigns.newTitle') | translate }}</div>
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
     <div class="dlg-grid">
       <div class="dlg-row">
         <div class="dlg-field">
-          <label class="dlg-label" for="dt-name">{{ 'discountTypes.typeName' | translate }}</label>
+          <label class="dlg-label" for="pc-name">{{ 'promotionCampaigns.campaignName' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput id="dt-name" formControlName="name" [placeholder]="'discountTypes.namePlaceholder' | translate">
+            <input matInput id="pc-name" formControlName="name" [placeholder]="'promotionCampaigns.namePlaceholder' | translate">
             <mat-error *ngIf="form.controls['name'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
           </mat-form-field>
         </div>
