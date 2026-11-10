@@ -11,6 +11,7 @@ import {
   showLoading, hideLoading, showSuccess, showException,
 } from 'CinemaLib';
 import { TemplateDialog } from './template.dialog';
+import { TemplatePreviewDialog } from './template-preview.dialog';
 
 type Dto = CinemaServiceAgent.TemplateDTO;
 
@@ -21,6 +22,7 @@ type Dto = CinemaServiceAgent.TemplateDTO;
 })
 export class TemplatesManagementComponent extends BaseTableComponent {
   readonly channelValues = TemplateChannelValues;
+  readonly channelEmail = CinemaServiceAgent.TemplateChannel.Email;
 
   constructor(
     cd: ChangeDetectorRef,
@@ -56,6 +58,10 @@ export class TemplatesManagementComponent extends BaseTableComponent {
   edit(item: Dto): void {
     this._dialog.open(TemplateDialog, { width: '760px', data: { template: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+  }
+
+  preview(item: Dto): void {
+    this._dialog.open(TemplatePreviewDialog, { width: '760px', data: { template: item } });
   }
 
   delete(id?: string): void {

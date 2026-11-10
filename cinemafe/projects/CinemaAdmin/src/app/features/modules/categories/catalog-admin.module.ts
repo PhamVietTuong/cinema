@@ -17,6 +17,7 @@ import { NewsManagementComponent } from './news/news.component';
 import { NewsDialog } from './news/news.dialog';
 import { TemplatesManagementComponent } from './templates/templates.component';
 import { TemplateDialog } from './templates/template.dialog';
+import { TemplatePreviewDialog } from './templates/template-preview.dialog';
 import { PromotionCampaignsManagementComponent } from './promotion-campaigns/promotion-campaigns.component';
 import { PromotionCampaignDialog } from './promotion-campaigns/promotion-campaign.dialog';
 
@@ -46,6 +47,7 @@ const routes: Routes = [
     NewsDialog,
     TemplatesManagementComponent,
     TemplateDialog,
+    TemplatePreviewDialog,
     PromotionCampaignsManagementComponent,
     PromotionCampaignDialog,
   ],
