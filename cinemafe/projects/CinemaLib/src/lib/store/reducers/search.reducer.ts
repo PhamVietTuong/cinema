@@ -1,4 +1,4 @@
-import { Action, createReducer, on } from '@ngrx/store';
+import { createReducer, on } from '@ngrx/store';
 import { SearchActions } from '../actions';
 
 export const searchReducer = createReducer(

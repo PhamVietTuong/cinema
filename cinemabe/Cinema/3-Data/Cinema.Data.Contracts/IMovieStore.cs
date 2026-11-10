@@ -4,7 +4,13 @@ namespace Cinema.Data.Contracts;
 
 public interface IMovieStore : IGenericStore<Movie>
 {
-    Task<(IEnumerable<Movie> Items, int Total)> GetPagedAsync(string? search, string? director, Guid? movieTypeId, int page, int pageSize);
+    Task<(IEnumerable<Movie> Items, int Total)> GetPagedAsync(MovieSearchFilter filter, int page, int pageSize);
+
+    /// <summary>Distinct, non-empty languages of active movies, sorted - feeds the movie-list language filter.</summary>
+    Task<IReadOnlyList<string>> GetLanguagesAsync();
+
+    /// <summary>Number of ratings a movie has (COUNT in SQL; the detail query no longer loads every evaluation).</summary>
+    Task<int> GetRatingCountAsync(Guid movieId);
     Task<Movie?> GetDetailAsync(Guid id);
     Task<Movie?> GetDetailBySlugAsync(string slug);
     Task<Movie?> GetForUpdateAsync(Guid id);

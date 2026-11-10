@@ -12,7 +12,7 @@
   </mat-select>
 </mat-form-field>
 <div class="step"><span class="step-num">2</span><span class="muted">{{ 'gate.stepScan' | translate }}</span></div>
-<input #scanInput id="gate-scan-input" class="ad-input scan-input" type="text" autocomplete="off" autofocus
+<input #scanInput id="gate-scan-input" class="ad-input scan-input" type="text" autocomplete="off"
        [attr.aria-label]="'gate.scanLabel' | translate"
        [placeholder]="'gate.scanPlaceholder' | translate"
        [disabled]="busy()"

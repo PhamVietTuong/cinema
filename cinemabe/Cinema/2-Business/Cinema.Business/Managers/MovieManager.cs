@@ -20,6 +20,15 @@ public class MovieManager : IMovieManager
     /// entirely client-side (no re-fetch per tab), so the response must cover exactly it.</summary>
     private const int ScheduleWindowDays = 4;
 
+    /// <summary>Top-level comments shown on first load and fetched per "load more" page.</summary>
+    private const int CommentPageSize = 10;
+    private const int MaxCommentLength = 2000;
+    private const int MaxReviewLength = 1000;
+    private const int MinScore = 1;
+    private const int MaxScore = 10;
+    /// <summary>A rating at or above this counts as a "like" when recommending by favourite genre (scale 1-10).</summary>
+    private const int LikedScoreThreshold = 7;
+
     private const string ReviewNotAllowedMessage = "You can only rate or comment on a movie after watching it.";
 
     public MovieManager(IApplicationUnitOfWork uow, IExternalRatingsProvider externalRatings)
@@ -30,13 +39,38 @@ public class MovieManager : IMovieManager
 
     public async Task<DefaultSearchResults<MovieDTO>> GetMoviesAsync(PagingSearchDTO search)
     {
-        var searchText  = search.Filters.GetString("search") ?? search.Filters.GetString("title");
-        var director    = search.Filters.GetString("director");
-        var movieTypeId = search.Filters.GetGuid("movieTypeId");
-        var page        = search.PageIndex > 0 ? search.PageIndex : 1;
-        var pageSize    = search.PageSize  > 0 ? search.PageSize  : 12;
+        var page     = search.PageIndex > 0 ? search.PageIndex : 1;
+        var pageSize = search.PageSize  > 0 ? search.PageSize  : 12;
 
-        var (items, total) = await _uow.MovieStore.GetPagedAsync(searchText, director, movieTypeId, page, pageSize);
+        // Date alone means "any theater showing it that day"; theater alone means "from now on".
+        // Screenings that already started never count, so today (or a past date) is clamped to now.
+        var date = search.Filters.GetDateOnly("date");
+        var theaterId = search.Filters.GetGuid("theaterId");
+        DateTime? showFrom = null;
+        DateTime? showTo = null;
+        if (date is DateOnly d)
+        {
+            var dayStart = d.ToDateTime(TimeOnly.MinValue);
+            showFrom = dayStart > DateTime.Now ? dayStart : DateTime.Now;
+            showTo = dayStart.AddDays(1);
+        }
+        else if (theaterId.HasValue)
+        {
+            showFrom = DateTime.Now;
+        }
+
+        var status = search.Filters.GetString("status");
+        var filter = new MovieSearchFilter(
+            Search: search.Filters.GetString("search") ?? search.Filters.GetString("title"),
+            Director: search.Filters.GetString("director"),
+            MovieTypeId: search.Filters.GetGuid("movieTypeId"),
+            Language: search.Filters.GetString("language"),
+            TheaterId: theaterId,
+            ShowFrom: showFrom,
+            ShowTo: showTo,
+            Status: status is "now" or "coming" ? status : null);
+
+        var (items, total) = await _uow.MovieStore.GetPagedAsync(filter, page, pageSize);
         var dtos = items.Select(ToMovieDTO).ToList();
 
         // One grouped query for the whole page. Querying per movie made this endpoint issue
@@ -99,6 +133,80 @@ public class MovieManager : IMovieManager
             CountPerPage = dtos.Count,
             Page         = 1
         };
+    }
+
+    public async Task<DefaultSearchResults<ShowTimeSearchResultDTO>> SearchShowTimesAsync(PagingSearchDTO search)
+    {
+        var page     = search.PageIndex > 0 ? search.PageIndex : 1;
+        var pageSize = search.PageSize  > 0 ? Math.Min(search.PageSize, 100) : 20;
+
+        var date     = search.Filters.GetDateOnly("date");
+        var timeFrom = ParseTimeOfDay(search.Filters.GetString("timeFrom"));
+        var timeTo   = ParseTimeOfDay(search.Filters.GetString("timeTo"));
+        if (timeFrom.HasValue && timeTo.HasValue && timeFrom > timeTo)
+        {
+            throw new InvalidOperationException("The start of the time range must not be after its end.");
+        }
+
+        // A given date covers that day, but only screenings that have not started yet: today (or a past
+        // date) is clamped to now, so a past date yields nothing.
+        var dayStart = date.HasValue ? date.Value.ToDateTime(TimeOnly.MinValue) : DateTime.Now;
+        var from = dayStart > DateTime.Now ? dayStart : DateTime.Now;
+        DateTime? to = date.HasValue ? dayStart.AddDays(1) : null;
+
+        var filter = new ShowTimeSearchFilter(
+            MovieId: search.Filters.GetGuid("movieId"),
+            TheaterId: search.Filters.GetGuid("theaterId"),
+            MovieTypeId: search.Filters.GetGuid("movieTypeId"),
+            Language: search.Filters.GetString("language"),
+            From: from,
+            To: to,
+            TimeFrom: timeFrom,
+            TimeTo: timeTo);
+
+        var (rows, total) = await _uow.ShowTimeStore.SearchRoomsAsync(filter, page, pageSize);
+        return new DefaultSearchResults<ShowTimeSearchResultDTO>
+        {
+            Results = rows.Select(r => new ShowTimeSearchResultDTO
+            {
+                ShowTimeId     = r.ShowTimeId,
+                RoomId         = r.RoomId,
+                StartTime      = r.StartTime,
+                EndTime        = r.EndTime,
+                ProjectionForm = r.ProjectionForm,
+                MovieId        = r.MovieId,
+                MovieTitle     = r.MovieTitle,
+                MovieSlug      = r.MovieSlug,
+                PosterUrl      = r.PosterUrl,
+                Language       = r.Language,
+                TheaterId      = r.TheaterId,
+                TheaterName    = r.TheaterName,
+                RoomName       = r.RoomName,
+                RoomTypeName   = r.RoomTypeName,
+                BasePrice      = r.BasePrice,
+            }).ToList(),
+            TotalCount   = total,
+            CountPerPage = pageSize,
+            Page         = page
+        };
+    }
+
+    public async Task<List<string>> GetMovieLanguagesAsync()
+    {
+        return (await _uow.MovieStore.GetLanguagesAsync()).ToList();
+    }
+
+    private static TimeOnly? ParseTimeOfDay(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+        if (!TimeOnly.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out var time))
+        {
+            throw new InvalidOperationException($"'{value}' is not a valid time (expected HH:mm).");
+        }
+        return time;
     }
 
     public async Task<MovieDetailDTO> GetDetailAsync(Guid id, Guid? userId)
@@ -164,12 +272,19 @@ public class MovieManager : IMovieManager
         }).ToList();
         dto.ShowTimes = summaries;
         dto.AverageRating             = await _uow.MovieStore.GetAverageRatingAsync(id);
-        dto.RatingCount               = movie.Evaluations.Count;
-        dto.RecentComments = (await _uow.CommentStore.GetRecentForMovieAsync(id, 10))
-            .Select(ToCommentDTO).ToList();
+        dto.RatingCount               = await _uow.MovieStore.GetRatingCountAsync(id);
+        dto.TotalComments             = await _uow.CommentStore.CountApprovedForMovieAsync(id);
+        dto.RecentComments = (await _uow.CommentStore.GetRecentForMovieAsync(id, CommentPageSize))
+            .Select(c => ToCommentDTO(c, userId)).ToList();
         if (userId is Guid uid)
         {
             dto.CanReview = await CanReviewAsync(id, uid);
+            var mine = await _uow.EvaluationStore.GetUserEvaluationAsync(id, uid);
+            if (mine is { } m)
+            {
+                dto.MyRating = m.Score;
+                dto.MyReview = m.Review;
+            }
         }
         dto.Credits = (await _uow.MovieCreditStore.GetByMovieAsync(id)).Select(ToCreditDTO).ToList();
         dto.ExternalRatings = await externalRatingsTask;
@@ -247,10 +362,81 @@ public class MovieManager : IMovieManager
 
     public async Task<CommentDTO> AddCommentAsync(Guid movieId, Guid userId, string content, Guid? parentId)
     {
+        var text = ValidateCommentContent(content);
         await EnsureCanReviewAsync(movieId, userId);
-        var comment = new Comment { MovieId = movieId, UserId = userId, Content = content, ParentId = parentId };
+
+        if (parentId is Guid pid)
+        {
+            // Replies are one level deep: the parent must exist on this movie, be visible and be top-level.
+            var parent = await _uow.CommentStore.GetByIdAsync(pid);
+            if (parent is null || parent.MovieId != movieId || !parent.IsApproved || parent.ParentId != null)
+            {
+                throw new InvalidOperationException("You can only reply to an existing top-level comment on this movie.");
+            }
+        }
+
+        var comment = new Comment { MovieId = movieId, UserId = userId, Content = text, ParentId = parentId };
         await _uow.CommentStore.CreateAsync(comment);
-        return new CommentDTO { Id = comment.Id, Content = content, CreationTime = DateTime.UtcNow };
+        return new CommentDTO { Id = comment.Id, Content = text, ParentId = parentId, UserId = userId, IsMine = true, CreationTime = DateTime.UtcNow };
+    }
+
+    public async Task<DefaultSearchResults<CommentDTO>> GetCommentsAsync(Guid movieId, Guid? userId, PagingSearchDTO search)
+    {
+        var page     = search.PageIndex > 0 ? search.PageIndex : 1;
+        var pageSize = search.PageSize  > 0 ? Math.Min(search.PageSize, 50) : CommentPageSize;
+        var (items, total) = await _uow.CommentStore.GetPagedForMovieAsync(movieId, page, pageSize);
+        return new DefaultSearchResults<CommentDTO>
+        {
+            Results      = items.Select(c => ToCommentDTO(c, userId)).ToList(),
+            TotalCount   = total,
+            CountPerPage = pageSize,
+            Page         = page
+        };
+    }
+
+    public async Task<CommentDTO> UpdateOwnCommentAsync(Guid commentId, Guid userId, string content)
+    {
+        var text = ValidateCommentContent(content);
+        var comment = await _uow.CommentStore.GetByIdAsync(commentId)
+            ?? throw new KeyNotFoundException($"Comment {commentId} not found.");
+        if (comment.UserId != userId)
+        {
+            throw new AccessDeniedException("You can only edit your own comments.");
+        }
+        comment.Content = text;
+        comment.LastUpdatedTime = DateTime.UtcNow;
+        await _uow.CommentStore.UpdateAsync(comment);
+        await _uow.SaveChangesAsync();
+        return new CommentDTO
+        {
+            Id = comment.Id, Content = text, ParentId = comment.ParentId, UserId = userId, IsMine = true,
+            CreationTime = comment.CreationTime,
+        };
+    }
+
+    public async Task DeleteOwnCommentAsync(Guid commentId, Guid userId)
+    {
+        var comment = await _uow.CommentStore.GetByIdAsync(commentId)
+            ?? throw new KeyNotFoundException($"Comment {commentId} not found.");
+        if (comment.UserId != userId)
+        {
+            throw new AccessDeniedException("You can only delete your own comments.");
+        }
+        await DeleteWithRepliesAsync(comment);
+    }
+
+    private static string ValidateCommentContent(string? content)
+    {
+        var text = content?.Trim() ?? string.Empty;
+        if (text.Length == 0)
+        {
+            throw new InvalidOperationException("A comment cannot be empty.");
+        }
+        if (text.Length > MaxCommentLength)
+        {
+            throw new InvalidOperationException($"A comment cannot be longer than {MaxCommentLength} characters.");
+        }
+        return text;
     }
 
     public async Task<DefaultSearchResults<CommentModerationDTO>> GetCommentsForModerationAsync(PagingSearchDTO search)
@@ -300,10 +486,16 @@ public class MovieManager : IMovieManager
         {
             return false;
         }
-        // Remove direct replies too so none are left orphaned (moderation is a hard removal of content).
-        // Each store delete commits on its own, so without an explicit transaction a failure partway
-        // through left some replies deleted and the parent still standing.
-        var replies = await _uow.CommentStore.GetRepliesAsync(commentId);
+        await DeleteWithRepliesAsync(comment);
+        return true;
+    }
+
+    /// <summary>Removes a comment and its direct replies (replies are one level deep) so none is left orphaned.
+    /// Each store delete commits on its own, so an explicit transaction keeps a failure partway through from
+    /// leaving some replies deleted and the parent still standing.</summary>
+    private async Task DeleteWithRepliesAsync(Comment comment)
+    {
+        var replies = await _uow.CommentStore.GetRepliesAsync(comment.Id);
         await _uow.BeginTransactionAsync();
         try
         {
@@ -320,25 +512,56 @@ public class MovieManager : IMovieManager
             await _uow.RollbackTransactionAsync();
             throw;
         }
-        return true;
     }
 
     public async Task<int> RateMovieAsync(Guid movieId, Guid userId, int score, string? review)
     {
+        if (score < MinScore || score > MaxScore)
+        {
+            throw new InvalidOperationException($"A rating must be between {MinScore} and {MaxScore}.");
+        }
+        var reviewText = review?.Trim();
+        if (reviewText != null && reviewText.Length > MaxReviewLength)
+        {
+            throw new InvalidOperationException($"A review cannot be longer than {MaxReviewLength} characters.");
+        }
         await EnsureCanReviewAsync(movieId, userId);
+
+        // null review = "keep what is saved" (a star click); a blank string clears it.
         var existing = (await _uow.EvaluationStore.FindAsync(e => e.MovieId == movieId && e.UserId == userId)).FirstOrDefault();
         if (existing != null)
         {
-            existing.Score  = score;
-            existing.Review = review;
+            ApplyRating(existing, score, reviewText);
             await _uow.EvaluationStore.UpdateAsync(existing);
+            await _uow.SaveChangesAsync();
+            return score;
         }
-        else
+
+        var created = await _uow.EvaluationStore.TryAddAsync(new Evaluation
         {
-            await _uow.EvaluationStore.CreateAsync(new Evaluation { MovieId = movieId, UserId = userId, Score = score, Review = review });
+            MovieId = movieId, UserId = userId, Score = score,
+            Review = string.IsNullOrEmpty(reviewText) ? null : reviewText,
+        });
+        if (!created)
+        {
+            // Two concurrent first ratings: the unique (MovieId, UserId) index rejected the second insert,
+            // so it becomes an update of the row the first request created.
+            var winner = (await _uow.EvaluationStore.FindAsync(e => e.MovieId == movieId && e.UserId == userId)).First();
+            ApplyRating(winner, score, reviewText);
+            await _uow.EvaluationStore.UpdateAsync(winner);
+            await _uow.SaveChangesAsync();
         }
-        await _uow.SaveChangesAsync();
         return score;
+    }
+
+    private static void ApplyRating(Evaluation evaluation, int score, string? reviewText)
+    {
+        evaluation.Score = score;
+        if (reviewText != null)
+        {
+            evaluation.Review = reviewText.Length == 0 ? null : reviewText;
+        }
+        evaluation.LastUpdatedTime = DateTime.UtcNow;
     }
 
     public async Task<List<MovieDTO>> GetRecommendedAsync(Guid? userId, int count)
@@ -353,7 +576,7 @@ public class MovieManager : IMovieManager
         {
             var evals = (await _uow.EvaluationStore.FindAsync(e => e.UserId == uid)).ToList();
             ratedIds  = evals.Select(e => e.MovieId).ToHashSet();
-            var liked = evals.Where(e => e.Score >= 4).Select(e => e.MovieId).ToHashSet();
+            var liked = evals.Where(e => e.Score >= LikedScoreThreshold).Select(e => e.MovieId).ToHashSet();
             favGenres = pool.Where(m => liked.Contains(m.Id)).SelectMany(m => m.Genres).ToHashSet();
         }
 
@@ -668,18 +891,20 @@ public class MovieManager : IMovieManager
         }
     }
 
-    /// <summary>Maps a comment (and its approved replies, recursively) to a DTO.</summary>
-    private static CommentDTO ToCommentDTO(CommentView c)
+    /// <summary>Maps a comment (and its approved replies, recursively) to a DTO; IsMine is set for the viewer's own.</summary>
+    private static CommentDTO ToCommentDTO(CommentView c, Guid? viewerId)
     {
         return new()
         {
             Id           = c.Id,
             Content      = c.Content,
             ParentId     = c.ParentId,
+            UserId       = c.UserId,
+            IsMine       = viewerId.HasValue && viewerId.Value == c.UserId,
             CreationTime = c.CreationTime,
             UserName     = c.UserName,
             UserAvatar   = c.UserAvatar,
-            Replies      = c.Replies.Select(ToCommentDTO).ToList(),
+            Replies      = c.Replies.Select(r => ToCommentDTO(r, viewerId)).ToList(),
         };
     }
 

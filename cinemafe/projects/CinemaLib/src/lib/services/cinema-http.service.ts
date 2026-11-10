@@ -32,6 +32,11 @@ export interface IHttpService {
     deleteMovie(id?: string | undefined): Observable<void>;
     addComment(request: AddCommentRequest, movieId?: string | undefined): Observable<CommentDTO>;
     rateMovie(request: RateMovieRequest, movieId?: string | undefined): Observable<void>;
+    getMovieComments(search: PagingSearchDTO, movieId?: string | undefined): Observable<DefaultSearchResultsOfCommentDTO>;
+    updateOwnComment(request: UpdateCommentRequest, commentId?: string | undefined): Observable<CommentDTO>;
+    deleteOwnComment(commentId?: string | undefined): Observable<void>;
+    searchShowTimes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeSearchResultDTO>;
+    getMovieLanguages(): Observable<string[]>;
     getCommentsForModeration(search: PagingSearchDTO): Observable<DefaultSearchResultsOfCommentModerationDTO>;
     moderateComment(request: ModerateCommentRequest): Observable<void>;
     deleteComment(request: DeleteCommentRequest): Observable<void>;
@@ -812,6 +817,273 @@ export class HttpService implements IHttpService {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMovieComments(search: PagingSearchDTO, movieId?: string | undefined): Observable<DefaultSearchResultsOfCommentDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMovieComments?";
+        if (movieId === null)
+            throw new Error("The parameter 'movieId' cannot be null.");
+        else if (movieId !== undefined)
+            url_ += "movieId=" + encodeURIComponent("" + movieId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMovieComments(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMovieComments(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfCommentDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfCommentDTO>;
+        }));
+    }
+
+    protected processGetMovieComments(response: HttpResponseBase): Observable<DefaultSearchResultsOfCommentDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfCommentDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateOwnComment(request: UpdateCommentRequest, commentId?: string | undefined): Observable<CommentDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/UpdateOwnComment?";
+        if (commentId === null)
+            throw new Error("The parameter 'commentId' cannot be null.");
+        else if (commentId !== undefined)
+            url_ += "commentId=" + encodeURIComponent("" + commentId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateOwnComment(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateOwnComment(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CommentDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CommentDTO>;
+        }));
+    }
+
+    protected processUpdateOwnComment(response: HttpResponseBase): Observable<CommentDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CommentDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    deleteOwnComment(commentId?: string | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Cinema/DeleteOwnComment?";
+        if (commentId === null)
+            throw new Error("The parameter 'commentId' cannot be null.");
+        else if (commentId !== undefined)
+            url_ += "commentId=" + encodeURIComponent("" + commentId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteOwnComment(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteOwnComment(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteOwnComment(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    searchShowTimes(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeSearchResultDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/SearchShowTimes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchShowTimes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchShowTimes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfShowTimeSearchResultDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfShowTimeSearchResultDTO>;
+        }));
+    }
+
+    protected processSearchShowTimes(response: HttpResponseBase): Observable<DefaultSearchResultsOfShowTimeSearchResultDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfShowTimeSearchResultDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getMovieLanguages(): Observable<string[]> {
+        let url_ = this.baseUrl + "/api/Cinema/GetMovieLanguages";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetMovieLanguages(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetMovieLanguages(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<string[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<string[]>;
+        }));
+    }
+
+    protected processGetMovieLanguages(response: HttpResponseBase): Observable<string[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(item);
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -8657,6 +8929,9 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
     showTimes?: ShowTimeSummaryDTO[];
     recentComments?: CommentDTO[];
     canReview?: boolean;
+    myRating?: number | undefined;
+    myReview?: string | undefined;
+    totalComments?: number;
     credits?: MovieCreditDTO[];
     externalRatings?: ExternalRatingsDTO | undefined;
 
@@ -8680,6 +8955,9 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
                     this.recentComments!.push(CommentDTO.fromJS(item));
             }
             this.canReview = _data["canReview"];
+            this.myRating = _data["myRating"];
+            this.myReview = _data["myReview"];
+            this.totalComments = _data["totalComments"];
             if (Array.isArray(_data["credits"])) {
                 this.credits = [] as any;
                 for (let item of _data["credits"])
@@ -8711,6 +8989,9 @@ export class MovieDetailDTO extends MovieDTO implements IMovieDetailDTO {
                 data["recentComments"].push(item.toJSON());
         }
         data["canReview"] = this.canReview;
+        data["myRating"] = this.myRating;
+        data["myReview"] = this.myReview;
+        data["totalComments"] = this.totalComments;
         if (Array.isArray(this.credits)) {
             data["credits"] = [];
             for (let item of this.credits)
@@ -8728,6 +9009,9 @@ export interface IMovieDetailDTO extends IMovieDTO {
     showTimes?: ShowTimeSummaryDTO[];
     recentComments?: CommentDTO[];
     canReview?: boolean;
+    myRating?: number | undefined;
+    myReview?: string | undefined;
+    totalComments?: number;
     credits?: MovieCreditDTO[];
     externalRatings?: ExternalRatingsDTO | undefined;
 }
@@ -8819,6 +9103,8 @@ export class CommentDTO implements ICommentDTO {
     userName?: string;
     userAvatar?: string | undefined;
     parentId?: string | undefined;
+    userId?: string;
+    isMine?: boolean;
     creationTime?: Date;
     replies?: CommentDTO[];
 
@@ -8838,6 +9124,8 @@ export class CommentDTO implements ICommentDTO {
             this.userName = _data["userName"];
             this.userAvatar = _data["userAvatar"];
             this.parentId = _data["parentId"];
+            this.userId = _data["userId"];
+            this.isMine = _data["isMine"];
             this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
             if (Array.isArray(_data["replies"])) {
                 this.replies = [] as any;
@@ -8861,6 +9149,8 @@ export class CommentDTO implements ICommentDTO {
         data["userName"] = this.userName;
         data["userAvatar"] = this.userAvatar;
         data["parentId"] = this.parentId;
+        data["userId"] = this.userId;
+        data["isMine"] = this.isMine;
         data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
         if (Array.isArray(this.replies)) {
             data["replies"] = [];
@@ -8877,6 +9167,8 @@ export interface ICommentDTO {
     userName?: string;
     userAvatar?: string | undefined;
     parentId?: string | undefined;
+    userId?: string;
+    isMine?: boolean;
     creationTime?: Date;
     replies?: CommentDTO[];
 }
@@ -9344,6 +9636,296 @@ export class RateMovieRequest implements IRateMovieRequest {
 export interface IRateMovieRequest {
     score?: number;
     review?: string | undefined;
+}
+
+export abstract class BaseSearchResultsOfCommentDTO implements IBaseSearchResultsOfCommentDTO {
+    results?: CommentDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfCommentDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(CommentDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfCommentDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfCommentDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfCommentDTO {
+    results?: CommentDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfCommentDTO extends BaseSearchResultsOfCommentDTO implements IDefaultSearchResultsOfCommentDTO {
+
+    constructor(data?: IDefaultSearchResultsOfCommentDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfCommentDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfCommentDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfCommentDTO extends IBaseSearchResultsOfCommentDTO {
+}
+
+export class UpdateCommentRequest implements IUpdateCommentRequest {
+    content?: string;
+
+    constructor(data?: IUpdateCommentRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.content = _data["content"];
+        }
+    }
+
+    static fromJS(data: any): UpdateCommentRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateCommentRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["content"] = this.content;
+        return data;
+    }
+}
+
+export interface IUpdateCommentRequest {
+    content?: string;
+}
+
+export abstract class BaseSearchResultsOfShowTimeSearchResultDTO implements IBaseSearchResultsOfShowTimeSearchResultDTO {
+    results?: ShowTimeSearchResultDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfShowTimeSearchResultDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(ShowTimeSearchResultDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfShowTimeSearchResultDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfShowTimeSearchResultDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfShowTimeSearchResultDTO {
+    results?: ShowTimeSearchResultDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfShowTimeSearchResultDTO extends BaseSearchResultsOfShowTimeSearchResultDTO implements IDefaultSearchResultsOfShowTimeSearchResultDTO {
+
+    constructor(data?: IDefaultSearchResultsOfShowTimeSearchResultDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfShowTimeSearchResultDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfShowTimeSearchResultDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfShowTimeSearchResultDTO extends IBaseSearchResultsOfShowTimeSearchResultDTO {
+}
+
+export class ShowTimeSearchResultDTO implements IShowTimeSearchResultDTO {
+    showTimeId?: string;
+    roomId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    movieId?: string;
+    movieTitle?: string;
+    movieSlug?: string;
+    posterUrl?: string | undefined;
+    language?: string | undefined;
+    theaterId?: string;
+    theaterName?: string;
+    roomName?: string;
+    roomTypeName?: string;
+    basePrice?: number;
+
+    constructor(data?: IShowTimeSearchResultDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.showTimeId = _data["showTimeId"];
+            this.roomId = _data["roomId"];
+            this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : <any>undefined;
+            this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : <any>undefined;
+            this.projectionForm = _data["projectionForm"];
+            this.movieId = _data["movieId"];
+            this.movieTitle = _data["movieTitle"];
+            this.movieSlug = _data["movieSlug"];
+            this.posterUrl = _data["posterUrl"];
+            this.language = _data["language"];
+            this.theaterId = _data["theaterId"];
+            this.theaterName = _data["theaterName"];
+            this.roomName = _data["roomName"];
+            this.roomTypeName = _data["roomTypeName"];
+            this.basePrice = _data["basePrice"];
+        }
+    }
+
+    static fromJS(data: any): ShowTimeSearchResultDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ShowTimeSearchResultDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["showTimeId"] = this.showTimeId;
+        data["roomId"] = this.roomId;
+        data["startTime"] = this.startTime ? this.startTime.toISOString() : <any>undefined;
+        data["endTime"] = this.endTime ? this.endTime.toISOString() : <any>undefined;
+        data["projectionForm"] = this.projectionForm;
+        data["movieId"] = this.movieId;
+        data["movieTitle"] = this.movieTitle;
+        data["movieSlug"] = this.movieSlug;
+        data["posterUrl"] = this.posterUrl;
+        data["language"] = this.language;
+        data["theaterId"] = this.theaterId;
+        data["theaterName"] = this.theaterName;
+        data["roomName"] = this.roomName;
+        data["roomTypeName"] = this.roomTypeName;
+        data["basePrice"] = this.basePrice;
+        return data;
+    }
+}
+
+export interface IShowTimeSearchResultDTO {
+    showTimeId?: string;
+    roomId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    movieId?: string;
+    movieTitle?: string;
+    movieSlug?: string;
+    posterUrl?: string | undefined;
+    language?: string | undefined;
+    theaterId?: string;
+    theaterName?: string;
+    roomName?: string;
+    roomTypeName?: string;
+    basePrice?: number;
 }
 
 export abstract class BaseSearchResultsOfCommentModerationDTO implements IBaseSearchResultsOfCommentModerationDTO {

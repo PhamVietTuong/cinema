@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, AfterViewInit, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   EmptyStateComponent,
@@ -45,7 +45,7 @@ const CAMERA_SCAN_INTERVAL_MS = 300;
   templateUrl: './gate-scan.component.html',
   styleUrl: './gate-scan.component.scss',
 })
-export class GateScanComponent implements OnDestroy {
+export class GateScanComponent implements AfterViewInit, OnDestroy {
   private readonly _gate = inject(CinemaServiceAgent.HttpService);
   private readonly _theater = inject(TheaterContextService);
   private readonly _store = inject(Store);
@@ -193,6 +193,10 @@ export class GateScanComponent implements OnDestroy {
       // The filter is optional: if the board cannot be loaded the gate still scans without it.
       error: () => this.showTimes.set([]),
     });
+  }
+
+  ngAfterViewInit(): void {
+    this._focusInput();
   }
 
   private _focusInput(): void {

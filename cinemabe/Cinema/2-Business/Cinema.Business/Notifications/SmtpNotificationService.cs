@@ -4,23 +4,23 @@ using System.Net.Mime;
 using System.Text;
 using Cinema.Business.Contracts;
 using Cinema.Foundation.Logging;
-using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Notifications;
 
 /// <summary>
-/// Sends notifications as email over SMTP (config under "Smtp"). Registered only when
+/// Sends notifications as email over SMTP (config under "Smtp", see <see cref="SmtpOptions"/>, validated at
+/// startup, with a per-send timeout). Registered only when
 /// <c>Smtp:Host</c> is set; otherwise the dev-log sender is used. SMS can be added the
 /// same way behind <see cref="INotificationService"/>. Failures are logged, never thrown,
 /// so a mail outage can't break booking/auth flows.
 /// </summary>
 public class SmtpNotificationService : INotificationService
 {
-    private readonly IConfiguration _config;
+    private readonly SmtpOptions _options;
 
-    public SmtpNotificationService(IConfiguration config)
+    public SmtpNotificationService(SmtpOptions options)
     {
-        _config = config;
+        _options = options;
     }
 
     public Task SendAsync(string to, string subject, string body)
@@ -35,22 +35,22 @@ public class SmtpNotificationService : INotificationService
 
     private async Task SendCoreAsync(string to, string subject, string body, IReadOnlyList<EmailInlineImage>? inlineImages)
     {
-        var host = _config["Smtp:Host"];
+        var host = _options.Host;
         if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(to))
         {
             LogProvider.Current.Information($"[Notification:skipped] To={to} | Subject={subject}");
             return;
         }
 
-        var port      = int.TryParse(_config["Smtp:Port"], out var p) ? p : 587;
-        var user      = _config["Smtp:User"];
-        var pass      = _config["Smtp:Password"];
-        var from      = _config["Smtp:From"] ?? user ?? "no-reply@cinema.vn";
-        var enableSsl = !bool.TryParse(_config["Smtp:EnableSsl"], out var ssl) || ssl; // default true
+        var port      = _options.Port;
+        var user      = _options.User;
+        var pass      = _options.Password;
+        var from      = string.IsNullOrWhiteSpace(_options.From) ? user ?? "no-reply@cinema.vn" : _options.From;
+        var enableSsl = _options.EnableSsl;
 
         try
         {
-            using var client = new SmtpClient(host, port) { EnableSsl = enableSsl };
+            using var client = new SmtpClient(host, port) { EnableSsl = enableSsl, Timeout = _options.TimeoutSeconds * 1000 };
             if (!string.IsNullOrWhiteSpace(user))
             {
                 client.Credentials = new NetworkCredential(user, pass);

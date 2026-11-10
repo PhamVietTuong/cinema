@@ -9,8 +9,7 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
 {
     public MovieStore(CinemaContext db) : base(db) { }
 
-    public async Task<(IEnumerable<Movie> Items, int Total)> GetPagedAsync(
-        string? search, string? director, Guid? movieTypeId, int page, int pageSize)
+    public async Task<(IEnumerable<Movie> Items, int Total)> GetPagedAsync(MovieSearchFilter filter, int page, int pageSize)
     {
         var q = DbSet
             .AsNoTracking()
@@ -18,26 +17,70 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
             .Where(m => m.IsActive);
 
+        var search = filter.Search;
         if (!string.IsNullOrWhiteSpace(search))
         {
             q = q.Where(m => m.Title.Contains(search) || (m.Director != null && m.Director.Contains(search)) || (m.Cast != null && m.Cast.Contains(search)));
         }
 
+        var director = filter.Director;
         if (!string.IsNullOrWhiteSpace(director))
         {
             q = q.Where(m => m.Director != null && m.Director.Contains(director));
         }
 
-        if (movieTypeId.HasValue)
+        if (filter.MovieTypeId.HasValue)
         {
-            q = q.Where(m => m.MovieTypeDetails.Any(mt => mt.MovieTypeId == movieTypeId.Value));
+            var typeId = filter.MovieTypeId.Value;
+            q = q.Where(m => m.MovieTypeDetails.Any(mt => mt.MovieTypeId == typeId));
+        }
+
+        var language = filter.Language;
+        if (!string.IsNullOrWhiteSpace(language))
+        {
+            q = q.Where(m => m.Language == language);
+        }
+
+        if (filter.TheaterId.HasValue || filter.ShowFrom.HasValue || filter.ShowTo.HasValue)
+        {
+            var theaterId = filter.TheaterId;
+            var from = filter.ShowFrom;
+            var to = filter.ShowTo;
+            q = q.Where(m => m.ShowTimes.Any(s => s.IsActive
+                && (from == null || s.StartTime >= from)
+                && (to == null || s.StartTime < to)
+                && (theaterId == null || s.ShowTimeRooms.Any(sr => sr.Room.TheaterId == theaterId))));
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var coming = filter.Status == "coming";
+        if (filter.Status == "now")
+        {
+            q = q.Where(m => m.ReleaseDate <= today && (m.EndDate == null || m.EndDate >= today));
+        }
+        else if (coming)
+        {
+            q = q.Where(m => m.ReleaseDate > today);
         }
 
         var total = await q.CountAsync();
-        var items = await q.OrderByDescending(m => m.ReleaseDate)
+        var ordered = coming ? q.OrderBy(m => m.ReleaseDate) : q.OrderByDescending(m => m.ReleaseDate);
+        var items = await ordered.ThenBy(m => m.Id)
             .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return (items, total);
     }
+
+    public async Task<IReadOnlyList<string>> GetLanguagesAsync()
+        => await DbSet
+            .AsNoTracking()
+            .Where(m => m.IsActive && m.Language != null && m.Language != "")
+            .Select(m => m.Language!)
+            .Distinct()
+            .OrderBy(l => l)
+            .ToListAsync();
+
+    public async Task<int> GetRatingCountAsync(Guid movieId)
+        => await Context.Evaluation.CountAsync(e => e.MovieId == movieId);
 
     // Comments are deliberately NOT included here: they are loaded separately (and bounded) by
     // ICommentStore.GetRecentForMovieAsync. Joining them in multiplied every showtime row by every
@@ -52,7 +95,6 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
         => await DbSet
             .Include(m => m.AgeRestriction)
             .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
-            .Include(m => m.Evaluations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -61,7 +103,6 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .AsNoTracking()
             .Include(m => m.AgeRestriction)
             .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
-            .Include(m => m.Evaluations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Slug == slug);
 

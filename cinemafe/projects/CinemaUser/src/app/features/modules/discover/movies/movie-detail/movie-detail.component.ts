@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, rottenTomatoesTier, ToastService, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, updateOwnComment, updateOwnCommentSuccess, updateOwnCommentFailure, deleteOwnComment, deleteOwnCommentSuccess, deleteOwnCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, rottenTomatoesTier, ToastService, DialogService, CinemaServiceAgent } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
 import { movieDetailUrl, isLegacyMovieId } from '../../../../../shared/movie-route';
@@ -38,6 +38,27 @@ export class MovieDetailComponent implements OnInit {
   /** Hovered star while picking a rating in the hero widget; 0 when not hovering. */
   hoverScore = 0;
   newComment = '';
+  /** The user's private review text, seeded from the server's `myReview` on every detail load. */
+  reviewText = '';
+  readonly maxCommentLength = 2000;
+  readonly maxReviewLength = 1000;
+  /** Matches the backend's per-page size of top-level comments. */
+  private readonly _commentPageSize = 10;
+  /** Extra top-level comments fetched by "load more", appended after `movie.recentComments`. */
+  extraComments: any[] = [];
+  commentsHasMore = false;
+  commentsLoadingMore = false;
+  private _commentsPage = 1;
+  /** Movie whose extra comment pages are loaded; they reset only when this changes. */
+  private _commentsMovieId = '';
+  /** Bumped on every detail (re)load; a load-more response begun before the latest bump is stale. */
+  private _detailSeq = 0;
+  /** Comment id whose reply form is open (top-level comments only: replies are one level deep). */
+  replyingToId = '';
+  replyText = '';
+  /** Comment id being edited inline. */
+  editingId = '';
+  editText = '';
   readonly heroStars = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   readonly rtTier = rottenTomatoesTier;
 
@@ -74,6 +95,7 @@ export class MovieDetailComponent implements OnInit {
     private _toast: ToastService,
     private _actions$: Actions,
     private _cinemaSvc: CinemaServiceAgent.HttpService,
+    private _dialog: DialogService,
   ) {
     this.movie$ = this._store.select(selectSelectedMovie);
     this.loading$ = this._store.select(selectMoviesLoading);
@@ -117,6 +139,18 @@ export class MovieDetailComponent implements OnInit {
       )
       .subscribe(movie => {
         this.movieId = movie.id;
+        // Server state wins on every (re)load: own rating/review, and a fresh first comments page.
+        this.myScore = movie.myRating ?? 0;
+        this.reviewText = movie.myReview ?? '';
+        this._detailSeq += 1;
+        if (this._commentsMovieId !== movie.id) {
+          this._commentsMovieId = movie.id;
+          this.extraComments = [];
+          this._commentsPage = 1;
+        }
+        if (this.extraComments.length === 0) {
+          this.commentsHasMore = (movie.recentComments?.length ?? 0) >= this._commentPageSize;
+        }
         this._syncCanonicalUrl(movie);
         this._loadPhotos(movie);
         if (restore && !restoreApplied) {
@@ -139,14 +173,41 @@ export class MovieDetailComponent implements OnInit {
       ofType(addCommentSuccess),
       filter(a => a.movieId === this.movieId),
       takeUntilDestroyed(this._destroyRef),
-    ).subscribe(() => {
+    ).subscribe(a => {
+      this._patchExtraAfterAdd(a.comment);
       this.newComment = '';
+      this.replyText = '';
+      this.replyingToId = '';
       this._toast.success(this._translate.instant('movies.detail.commentPosted'));
       this._cdr.markForCheck();
     });
 
     this._actions$.pipe(
-      ofType(rateMovieFailure, addCommentFailure),
+      ofType(updateOwnCommentSuccess),
+      filter(a => a.movieId === this.movieId),
+      takeUntilDestroyed(this._destroyRef),
+    ).subscribe(a => {
+      this._mapExtra(c => c.id === a.commentId ? { ...c, content: a.comment?.content ?? c.content } : c);
+      this.editingId = '';
+      this.editText = '';
+      this._toast.success(this._translate.instant('movies.detail.commentUpdated'));
+      this._cdr.markForCheck();
+    });
+
+    this._actions$.pipe(
+      ofType(deleteOwnCommentSuccess),
+      filter(a => a.movieId === this.movieId),
+      takeUntilDestroyed(this._destroyRef),
+    ).subscribe(a => {
+      this.extraComments = this.extraComments
+        .filter(c => c.id !== a.commentId)
+        .map(c => ({ ...c, replies: (c.replies ?? []).filter((r: any) => r.id !== a.commentId) }));
+      this._toast.success(this._translate.instant('movies.detail.commentDeleted'));
+      this._cdr.markForCheck();
+    });
+
+    this._actions$.pipe(
+      ofType(rateMovieFailure, addCommentFailure, updateOwnCommentFailure, deleteOwnCommentFailure),
       takeUntilDestroyed(this._destroyRef),
     ).subscribe(() => {
       // The interceptor already showed the translated error toast; just resync eligibility/state.
@@ -281,9 +342,10 @@ export class MovieDetailComponent implements OnInit {
       .sort((a, b) => a.theaterName.localeCompare(b.theaterName));
   }
 
-  /** Score to paint in the hero widget: the real average once rated, else a full 10/10 default. */
+  /** Score to paint in the hero widget: the real average once the movie has ratings, else 0 (no
+   * ratings yet: no ring, no filled stars). */
   displayScore(movie: any): number {
-    return movie.ratingCount > 0 ? movie.averageRating : 10;
+    return movie.ratingCount > 0 ? movie.averageRating : 0;
   }
 
   onHeroStarHover(score: number): void {
@@ -320,7 +382,116 @@ export class MovieDetailComponent implements OnInit {
   }
 
   commentCount(movie: any): number {
-    return (movie.recentComments ?? []).reduce((n: number, c: any) => n + 1 + (c.replies?.length ?? 0), 0);
+    return movie.totalComments ?? 0;
+  }
+
+  /** Top-level comments to render: the first page from the detail plus any "load more" pages
+   * (de-duplicated by id: a new comment shifts the page boundary). */
+  allComments(movie: any): any[] {
+    const first = movie.recentComments ?? [];
+    const seen = new Set<string>(first.map((c: any) => c.id));
+    return [...first, ...this.extraComments.filter(c => !seen.has(c.id))];
+  }
+
+  /** Applies `fn` to every comment and reply held in the "load more" pages. */
+  private _mapExtra(fn: (c: any) => any): void {
+    this.extraComments = this.extraComments.map(c => ({ ...fn(c), replies: (c.replies ?? []).map((r: any) => fn(r)) }));
+  }
+
+  /** A reply to a comment that lives in a "load more" page is appended there; the reloaded first page
+   * already carries replies to its own comments. */
+  private _patchExtraAfterAdd(comment: any): void {
+    if (!comment?.parentId) { return; }
+    this.extraComments = this.extraComments.map(c =>
+      c.id === comment.parentId ? { ...c, replies: [...(c.replies ?? []), comment] } : c);
+  }
+
+  loadMoreComments(): void {
+    if (this.commentsLoadingMore) { return; }
+    this.commentsLoadingMore = true;
+    this._commentsPage += 1;
+    const seq = this._detailSeq;
+    this._cinemaSvc.getMovieComments(
+      CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: this._commentsPage, pageSize: this._commentPageSize }),
+      this.movieId,
+    ).pipe(takeUntilDestroyed(this._destroyRef)).subscribe({
+      next: r => {
+        if (seq !== this._detailSeq) {
+          // The detail reloaded while this page was in flight; its page boundaries no longer match.
+          this._commentsPage -= 1;
+          this.commentsLoadingMore = false;
+          this._cdr.markForCheck();
+          return;
+        }
+        this.extraComments = [...this.extraComments, ...(r.results ?? [])];
+        const loadedTopLevel = this._commentPageSize + this.extraComments.length;
+        this.commentsHasMore = loadedTopLevel < (r.totalCount ?? 0);
+        this.commentsLoadingMore = false;
+        this._cdr.markForCheck();
+      },
+      error: () => {
+        this._commentsPage -= 1;
+        this.commentsLoadingMore = false;
+        this._cdr.markForCheck();
+      },
+    });
+  }
+
+  /** Saves the star rating together with the review text typed in the review card. */
+  saveReview(movie: any): void {
+    const score = this.myScore || movie.myRating || 0;
+    if (!score) {
+      this._toast.info(this._translate.instant('movies.detail.pickScoreFirst'));
+      return;
+    }
+    this._store.dispatch(rateMovie({ movieId: this.movieId, score, review: this.reviewText.trim() }));
+  }
+
+  startReply(c: any): void {
+    this.replyingToId = c.id;
+    this.replyText = '';
+    this.editingId = '';
+  }
+
+  cancelReply(): void {
+    this.replyingToId = '';
+    this.replyText = '';
+  }
+
+  submitReply(parent: any): void {
+    const content = this.replyText.trim();
+    if (!content || content.length > this.maxCommentLength) { return; }
+    this._store.dispatch(addComment({ movieId: this.movieId, content, parentId: parent.id }));
+  }
+
+  startEdit(c: any): void {
+    this.editingId = c.id;
+    this.editText = c.content;
+    this.replyingToId = '';
+  }
+
+  cancelEdit(): void {
+    this.editingId = '';
+    this.editText = '';
+  }
+
+  saveEdit(c: any): void {
+    const content = this.editText.trim();
+    if (!content || content.length > this.maxCommentLength) { return; }
+    this._store.dispatch(updateOwnComment({ movieId: this.movieId, commentId: c.id, content }));
+  }
+
+  deleteComment(c: any): void {
+    this._dialog.openConfirmDialog({
+      title: 'movies.detail.delete',
+      message: 'movies.detail.deleteCommentConfirm',
+      confirmText: 'movies.detail.delete',
+      cancelText: 'movies.detail.cancel',
+    }).afterClosed().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(confirmed => {
+      if (confirmed) {
+        this._store.dispatch(deleteOwnComment({ movieId: this.movieId, commentId: c.id }));
+      }
+    });
   }
 
   submitComment(movie: any): void {
@@ -333,6 +504,10 @@ export class MovieDetailComponent implements OnInit {
       }
       if (!this.canReview(movie)) {
         this._toast.info(this._translate.instant('movies.detail.watchFirstToReview'));
+        return;
+      }
+      if (content.length > this.maxCommentLength) {
+        this._toast.info(this._translate.instant('movies.detail.commentTooLong'));
         return;
       }
       this._store.dispatch(addComment({ movieId: this.movieId, content }));

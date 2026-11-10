@@ -1097,6 +1097,26 @@ END
 -- ===== end PromotionProgram.Category -> PromotionCampaign =====
 
 -- ============================================================
+-- Evaluation: one rating per (MovieId, UserId)
+-- ============================================================
+-- create_db.sql / EvaluationConfiguration already declare the unique index; databases built before it
+-- was enforced may hold duplicate pairs from concurrent double-rates. BACK UP FIRST: this deletes rows,
+-- keeping the newest (by CreationTime, then Id) per (MovieId, UserId).
+-- ============================================================
+
+;WITH ranked AS (
+    SELECT [Id], ROW_NUMBER() OVER (PARTITION BY [MovieId], [UserId] ORDER BY [CreationTime] DESC, [Id] DESC) AS rn
+    FROM [Evaluation]
+)
+DELETE FROM ranked WHERE rn > 1;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Evaluation_MovieId_UserId' AND object_id = OBJECT_ID('dbo.Evaluation'))
+BEGIN
+    CREATE UNIQUE INDEX [IX_Evaluation_MovieId_UserId] ON [Evaluation] ([MovieId], [UserId]);
+END
+-- ===== end Evaluation unique (MovieId, UserId) =====
+
+-- ============================================================
 -- EF Core migrations baseline
 -- ============================================================
 -- Stamping the history table here marks a database upgraded via this script as already

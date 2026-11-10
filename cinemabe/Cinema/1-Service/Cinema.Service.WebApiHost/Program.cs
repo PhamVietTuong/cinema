@@ -27,15 +27,26 @@ builder.Services.AddSingleton<Cinema.Business.Contracts.ISeatNotificationService
 // Real-time staff-app events (kitchen queue, low stock, incidents) replace AddBusiness's no-op sender.
 builder.Services.AddSingleton<Cinema.Business.Contracts.IStaffNotificationService, Cinema.Service.WebApiHost.Hubs.SignalRStaffNotificationService>();
 
-// Real email delivery when SMTP is configured; otherwise AddBusiness's dev-log sender stays.
-if (!string.IsNullOrWhiteSpace(builder.Configuration["Smtp:Host"]))
+// Messaging providers. Each is validated at startup (a half-filled section fails fast with every problem
+// listed, instead of silently failing on the first booking email/SMS) and only replaces AddBusiness's
+// dev-log sender when its section is actually configured.
+var smtpOptions = Cinema.Business.Notifications.SmtpOptions.Load(builder.Configuration);
+var twilioOptions = Cinema.Business.Notifications.TwilioOptions.Load(builder.Configuration);
+var messagingErrors = smtpOptions.Validate().Concat(twilioOptions.Validate()).ToList();
+if (messagingErrors.Count > 0)
 {
+    throw new InvalidOperationException("Invalid messaging configuration: " + string.Join(" ", messagingErrors));
+}
+
+if (smtpOptions.IsConfigured)
+{
+    builder.Services.AddSingleton(smtpOptions);
     builder.Services.AddSingleton<Cinema.Business.Contracts.INotificationService, Cinema.Business.Notifications.SmtpNotificationService>();
 }
 
-// Real SMS delivery when Twilio is configured; otherwise AddBusiness's dev-log SMS sender stays.
-if (!string.IsNullOrWhiteSpace(builder.Configuration["Sms:Twilio:AccountSid"]))
+if (twilioOptions.IsConfigured)
 {
+    builder.Services.AddSingleton(twilioOptions);
     builder.Services.AddSingleton<Cinema.Business.Contracts.ISmsNotificationService, Cinema.Business.Notifications.TwilioSmsNotificationService>();
 }
 

@@ -51,7 +51,7 @@ describe('MovieDetailComponent', () => {
     cinemaSvc = { getPeopleByNames: vi.fn(() => of([])) };
     return new MovieDetailComponent(
       store as never, route as never, router as never, location as never, destroyRef as never, cdr as never, translate as never, toast as never,
-      actions$ as never, cinemaSvc as never,
+      actions$ as never, cinemaSvc as never, {} as never,
     );
   };
 
@@ -310,7 +310,7 @@ describe('MovieDetailComponent', () => {
       const c = new MovieDetailComponent(
         store as never, { snapshot: { paramMap: { get: () => 'movie-1' } } } as never, router as never, location as never,
         { onDestroy: () => () => {} } as never, { markForCheck: vi.fn() } as never, { instant: (k: string) => k } as never, toast as never,
-        NEVER as never, cinemaSvc as never,
+        NEVER as never, cinemaSvc as never, {} as never,
       );
 
       c.ngOnInit();
@@ -345,7 +345,7 @@ describe('MovieDetailComponent', () => {
       const c = new MovieDetailComponent(
         store as never, { snapshot: { paramMap: { get: () => 'movie-1' } } } as never, router as never, location as never,
         { onDestroy: () => () => {} } as never, { markForCheck: vi.fn() } as never, { instant: (k: string) => k } as never, toast as never,
-        NEVER as never, cinemaSvc as never,
+        NEVER as never, cinemaSvc as never, {} as never,
       );
 
       expect(() => c.ngOnInit()).not.toThrow();

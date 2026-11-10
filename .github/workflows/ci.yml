@@ -112,8 +112,12 @@ jobs:
         working-directory: cinemabe
         run: |
           sqlcmd -C -S localhost,1433 -U sa -P "$SA_PASSWORD" -Q "CREATE DATABASE [Cinema];"
-          sqlcmd -C -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -i sql/create_db.sql
-          sqlcmd -C -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -i sql/insert_db.sql
+          # -I: QUOTED_IDENTIFIER ON (the filtered indexes need it); -b: fail on any SQL error;
+          # -f 65001: the scripts hold Vietnamese N'...' literals.
+          # create_db.sql is a baseline — the idempotent upgrade_db.sql brings it to the current schema.
+          for script in create_db upgrade_db insert_db; do
+            sqlcmd -C -I -b -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -f 65001 -i "sql/$script.sql"
+          done
 
       - name: Seed the admin + customer accounts
         working-directory: cinemabe

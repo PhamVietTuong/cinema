@@ -469,6 +469,196 @@
         ]
       }
     },
+    "/api/Cinema/GetMovieComments": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetMovieComments",
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfCommentDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/UpdateOwnComment": {
+      "put": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpdateOwnComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/DeleteOwnComment": {
+      "delete": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_DeleteOwnComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/SearchShowTimes": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_SearchShowTimes",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfShowTimeSearchResultDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetMovieLanguages": {
+      "get": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetMovieLanguages",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetCommentsForModeration": {
       "post": {
         "tags": [
@@ -6051,6 +6241,19 @@
               "canReview": {
                 "type": "boolean"
               },
+              "myRating": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "myReview": {
+                "type": "string",
+                "nullable": true
+              },
+              "totalComments": {
+                "type": "integer",
+                "format": "int32"
+              },
               "credits": {
                 "type": "array",
                 "items": {
@@ -6148,6 +6351,13 @@
             "type": "string",
             "format": "guid",
             "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "isMine": {
+            "type": "boolean"
           },
           "creationTime": {
             "type": "string",
@@ -6438,6 +6648,147 @@
           "review": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "DefaultSearchResultsOfCommentDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfCommentDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfCommentDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UpdateCommentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "type": "string"
+          }
+        }
+      },
+      "DefaultSearchResultsOfShowTimeSearchResultDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfShowTimeSearchResultDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfShowTimeSearchResultDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowTimeSearchResultDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ShowTimeSearchResultDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "showTimeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "projectionForm": {
+            "$ref": "#/components/schemas/ProjectionForm"
+          },
+          "movieId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "movieTitle": {
+            "type": "string"
+          },
+          "movieSlug": {
+            "type": "string"
+          },
+          "posterUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterName": {
+            "type": "string"
+          },
+          "roomName": {
+            "type": "string"
+          },
+          "roomTypeName": {
+            "type": "string"
+          },
+          "basePrice": {
+            "type": "number",
+            "format": "double"
           }
         }
       },

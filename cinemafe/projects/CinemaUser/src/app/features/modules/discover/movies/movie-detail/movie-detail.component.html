@@ -26,8 +26,10 @@
         <h1 class="hero-title">{{ movie.title }}</h1>
 
         <div class="hero-meta">
-          <span class="meta-star"><mat-icon>star</mat-icon> {{ displayScore(movie) | number:'1.1-1' }}</span>
-          <span class="sep">·</span>
+          <ng-container *ngIf="movie.ratingCount > 0">
+            <span class="meta-star"><mat-icon>star</mat-icon> {{ displayScore(movie) | number:'1.1-1' }}</span>
+            <span class="sep">·</span>
+          </ng-container>
           <span>{{ movie.duration }} phút</span>
           <span class="sep">·</span>
           <span>{{ movie.releaseDate | date:'yyyy' }}</span>
@@ -44,7 +46,7 @@
       </div>
 
       <div class="hero-score">
-        <div class="score-ring">
+        <div class="score-ring" *ngIf="movie.ratingCount > 0">
           <span class="score-pct">{{ (displayScore(movie) * 10) | number:'1.0-0' }}%</span>
           <span class="score-label">Audience<br>Score</span>
         </div>
@@ -59,6 +61,7 @@
         </div>
         <span class="score-count" *ngIf="movie.ratingCount > 0; else noRatingsYet">{{ 'movies.detail.ratingCount' | translate:{ count: (movie.ratingCount | number) } }}</span>
         <ng-template #noRatingsYet><span class="score-count">{{ 'movies.detail.noRatingsYet' | translate }}</span></ng-template>
+        <span class="score-hint" *ngIf="myScore > 0">{{ 'movies.detail.yourRatingValue' | translate:{ score: myScore } }}</span>
         <span class="score-hint" *ngIf="(isAuthenticated$ | async) && !canReview(movie)">{{ 'movies.detail.watchFirstToReview' | translate }}</span>
 
         <div class="external-ratings" *ngIf="movie.externalRatings?.rottenTomatoes || movie.externalRatings?.imdbRating || movie.externalRatings?.metascore">
@@ -224,30 +227,68 @@
         </div>
       </div>
 
-      <div class="comment-list" *ngIf="movie.recentComments?.length; else noComments">
-        <ng-container *ngFor="let c of movie.recentComments">
-          <div class="comment-row">
-            <span class="comment-avatar">
-              <img *ngIf="c.userAvatar" [src]="c.userAvatar" alt="">
-              <span *ngIf="!c.userAvatar">{{ getInitials(c.userName || 'U') }}</span>
-            </span>
-            <div class="comment-card">
-              <span class="comment-name">{{ c.userName }}</span><span class="comment-time">{{ c.creationTime | date:'HH:mm dd/MM/yyyy' }}</span>
-              <p class="comment-text">{{ c.content }}</p>
-            </div>
-          </div>
-          <div class="comment-row is-reply" *ngFor="let r of c.replies">
-            <span class="comment-avatar">
-              <img *ngIf="r.userAvatar" [src]="r.userAvatar" alt="">
-              <span *ngIf="!r.userAvatar">{{ getInitials(r.userName || 'U') }}</span>
-            </span>
-            <div class="comment-card">
-              <span class="comment-name">{{ r.userName }}</span><span class="comment-time">{{ r.creationTime | date:'HH:mm dd/MM/yyyy' }}</span>
-              <p class="comment-text">{{ r.content }}</p>
+      <!-- Own rating + private review (only for viewers who watched the movie) -->
+      <div class="review-card" *ngIf="(isAuthenticated$ | async) && canReview(movie)">
+        <div class="review-head">
+          <span class="review-title">{{ 'movies.detail.reviewTitle' | translate }}</span>
+          <span class="review-score" *ngIf="myScore > 0">{{ 'movies.detail.yourRatingValue' | translate:{ score: myScore } }}</span>
+        </div>
+        <p class="review-hint">{{ 'movies.detail.reviewHint' | translate }}</p>
+        <textarea class="comment-input review-input" [(ngModel)]="reviewText" rows="3" [maxLength]="maxReviewLength"
+                  [placeholder]="'movies.detail.reviewPlaceholder' | translate"></textarea>
+        <div class="composer-actions">
+          <button type="button" class="composer-btn" (click)="saveReview(movie)">{{ 'movies.detail.saveReview' | translate }}</button>
+        </div>
+      </div>
+
+      <div class="comment-list" *ngIf="allComments(movie).length; else noComments">
+        <ng-container *ngFor="let c of allComments(movie)">
+          <ng-container *ngTemplateOutlet="commentTpl; context: { $implicit: c, isReply: false }"></ng-container>
+          <ng-container *ngFor="let r of c.replies">
+            <ng-container *ngTemplateOutlet="commentTpl; context: { $implicit: r, isReply: true }"></ng-container>
+          </ng-container>
+          <div class="comment-row is-reply" *ngIf="replyingToId === c.id">
+            <div class="comment-card reply-form">
+              <textarea class="comment-input" [(ngModel)]="replyText" rows="2" [maxLength]="maxCommentLength"
+                        [placeholder]="'movies.detail.replyPlaceholder' | translate"></textarea>
+              <div class="composer-actions">
+                <button type="button" class="comment-link" (click)="cancelReply()">{{ 'movies.detail.cancel' | translate }}</button>
+                <button type="button" class="composer-btn" [disabled]="!replyText.trim()" (click)="submitReply(c)">{{ 'movies.detail.sendReply' | translate }}</button>
+              </div>
             </div>
           </div>
         </ng-container>
       </div>
+      <div class="comment-more" *ngIf="commentsHasMore">
+        <button type="button" class="composer-btn" [disabled]="commentsLoadingMore" (click)="loadMoreComments()">{{ 'movies.detail.loadMoreComments' | translate }}</button>
+      </div>
+
+      <ng-template #commentTpl let-c let-isReply="isReply">
+        <div class="comment-row" [class.is-reply]="isReply" [attr.data-comment-id]="c.id">
+          <span class="comment-avatar">
+            <img *ngIf="c.userAvatar" [src]="c.userAvatar" alt="">
+            <span *ngIf="!c.userAvatar">{{ getInitials(c.userName || 'U') }}</span>
+          </span>
+          <div class="comment-card" [class.is-mine]="c.isMine">
+            <span class="comment-name">{{ c.userName }}</span><span class="comment-mine" *ngIf="c.isMine">{{ 'movies.detail.you' | translate }}</span><span class="comment-time">{{ c.creationTime | date:'HH:mm dd/MM/yyyy' }}</span>
+            <ng-container *ngIf="editingId !== c.id; else editForm">
+              <p class="comment-text">{{ c.content }}</p>
+              <div class="comment-actions">
+                <button type="button" class="comment-link" *ngIf="!isReply && canReview(movie)" (click)="startReply(c)">{{ 'movies.detail.reply' | translate }}</button>
+                <button type="button" class="comment-link" *ngIf="c.isMine" (click)="startEdit(c)">{{ 'movies.detail.edit' | translate }}</button>
+                <button type="button" class="comment-link comment-link--danger" *ngIf="c.isMine" (click)="deleteComment(c)">{{ 'movies.detail.delete' | translate }}</button>
+              </div>
+            </ng-container>
+            <ng-template #editForm>
+              <textarea class="comment-input" [(ngModel)]="editText" rows="2" [maxLength]="maxCommentLength"></textarea>
+              <div class="composer-actions">
+                <button type="button" class="comment-link" (click)="cancelEdit()">{{ 'movies.detail.cancel' | translate }}</button>
+                <button type="button" class="composer-btn" [disabled]="!editText.trim()" (click)="saveEdit(c)">{{ 'movies.detail.save' | translate }}</button>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </ng-template>
       <ng-template #noComments><p class="md-text">{{ 'movies.detail.noCommentsYet' | translate }}</p></ng-template>
     </section>
 

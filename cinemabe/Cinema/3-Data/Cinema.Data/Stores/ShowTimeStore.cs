@@ -44,6 +44,81 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
                 sr.Room.Seats.Count(s => s.IsActive && s.Kind != SeatKind.Aisle)))
             .ToListAsync();
 
+    public async Task<(IReadOnlyList<ShowTimeSearchRow> Items, int Total)> SearchRoomsAsync(ShowTimeSearchFilter filter, int page, int pageSize)
+    {
+        var q = Context.ShowTimeRoom
+            .AsNoTracking()
+            .Where(sr => sr.ShowTime.IsActive && sr.ShowTime.Movie.IsActive && sr.Room.Status == RoomStatus.Active);
+
+        if (filter.MovieId.HasValue)
+        {
+            var movieId = filter.MovieId.Value;
+            q = q.Where(sr => sr.ShowTime.MovieId == movieId);
+        }
+        if (filter.TheaterId.HasValue)
+        {
+            var theaterId = filter.TheaterId.Value;
+            q = q.Where(sr => sr.Room.TheaterId == theaterId);
+        }
+        if (filter.MovieTypeId.HasValue)
+        {
+            var typeId = filter.MovieTypeId.Value;
+            q = q.Where(sr => sr.ShowTime.Movie.MovieTypeDetails.Any(mt => mt.MovieTypeId == typeId));
+        }
+        var language = filter.Language;
+        if (!string.IsNullOrWhiteSpace(language))
+        {
+            q = q.Where(sr => sr.ShowTime.Movie.Language == language);
+        }
+        if (filter.From.HasValue)
+        {
+            var from = filter.From.Value;
+            q = q.Where(sr => sr.ShowTime.StartTime >= from);
+        }
+        if (filter.To.HasValue)
+        {
+            var to = filter.To.Value;
+            q = q.Where(sr => sr.ShowTime.StartTime < to);
+        }
+        // Time of day as minutes since midnight, compared as ints so SQL Server evaluates it.
+        if (filter.TimeFrom.HasValue)
+        {
+            var fromMinutes = filter.TimeFrom.Value.Hour * 60 + filter.TimeFrom.Value.Minute;
+            q = q.Where(sr => sr.ShowTime.StartTime.Hour * 60 + sr.ShowTime.StartTime.Minute >= fromMinutes);
+        }
+        if (filter.TimeTo.HasValue)
+        {
+            var toMinutes = filter.TimeTo.Value.Hour * 60 + filter.TimeTo.Value.Minute;
+            q = q.Where(sr => sr.ShowTime.StartTime.Hour * 60 + sr.ShowTime.StartTime.Minute <= toMinutes);
+        }
+
+        var total = await q.CountAsync();
+        var items = await q
+            .OrderBy(sr => sr.ShowTime.StartTime)
+            .ThenBy(sr => sr.ShowTime.Movie.Title)
+            .ThenBy(sr => sr.RoomId)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(sr => new ShowTimeSearchRow(
+                sr.ShowTimeId,
+                sr.RoomId,
+                sr.ShowTime.StartTime,
+                sr.ShowTime.EndTime,
+                sr.ShowTime.ProjectionForm,
+                sr.ShowTime.MovieId,
+                sr.ShowTime.Movie.Title,
+                sr.ShowTime.Movie.Slug,
+                sr.ShowTime.Movie.PosterUrl,
+                sr.ShowTime.Movie.Language,
+                sr.Room.TheaterId,
+                sr.Room.Theater.Name,
+                sr.Room.Name,
+                sr.Room.RoomType.Name,
+                sr.BasePrice))
+            .ToListAsync();
+        return (items, total);
+    }
+
     public async Task<ShowTimeRoom?> GetShowTimeRoomAsync(Guid showTimeId, Guid roomId)
         => await Context.ShowTimeRoom
             .Include(sr => sr.ShowTime).ThenInclude(s => s.Movie)

@@ -103,6 +103,18 @@ Each row: **Rule → Description → Enforced at (file:function)**. This file co
 | Notification templates vs. preferences are distinct features | **Templates** = admin-authored message content (`Template` entity/region, `Admin`-only CRUD; `Code` is a unique, immutable lookup key used by sending code; currently drives booking-confirmation messages specifically, not a generic template engine). **Preferences** = per-user channel opt-in/out (`NotifyBookingEmails`/`NotifyPromotionEmails`/`NotifyReminderEmails` on `User`, via `IdentityController.UpdateNotificationPreferences`). These are commonly conflated but are backed by entirely separate entities/endpoints. | both |
 | Splash banner "active" rule | A banner is active when `IsPublished` is true AND the current Vietnam-local date (`BusinessCalendar.LocalNow`, not raw UTC) falls within `[StartDate, EndDate]` inclusive. If multiple banners qualify simultaneously, the one with the latest `StartDate` wins (ties broken by `CreationTime` then `Id`, both descending) — the newest campaign silently takes over; there is no error for overlapping published banners. Validation: `Title`/`ImageUrl` required, `EndDate` must not be before `StartDate`, and `LinkUrl` (if set) must be an absolute `http(s)://` URL or a site-relative path starting with a single `/` (blocks `javascript:` and protocol-relative `//evil.com` URLs). | `SplashBannerManager` |
 
+## 8b. Ratings, reviews and comments
+
+| Rule | Description | Enforced at |
+|---|---|---|
+| Watch-gated | Only a user with a Paid, active ticket for a finished showtime of the movie may rate, comment or reply; anyone else gets 403 and a read-only UI | `MovieManager.EnsureCanReviewAsync`, `InvoiceStore.HasWatchedMovieAsync` |
+| Score range | 1-10 inclusive, else 400; one rating per (movie, user) - a unique index backs this and a concurrent double-rate becomes an update | `MovieManager.RateMovieAsync`, `IX_Evaluation_MovieId_UserId` |
+| Private review | The review text (max 1000) is private feedback read back to its author as `MyReview`; a star click sends no review and keeps the saved one, a blank review clears it | `MovieManager.RateMovieAsync` |
+| Comment text | 1-2000 characters after trimming, else 400 | `MovieManager.ValidateCommentContent` |
+| Replies | One level deep: the parent must exist, belong to the same movie, be approved and be top-level, else 400 | `MovieManager.AddCommentAsync` |
+| Own comments | The author may edit or delete their own comment (403 for anyone else); deleting removes its replies | `MovieManager.UpdateOwnCommentAsync`/`DeleteOwnCommentAsync` |
+| "Liked" threshold | A score of 7 or more counts as a like for genre-based recommendations (scale is 1-10) | `MovieManager.GetRecommendedAsync` |
+
 ## 9. Known discrepancies surfaced during this review
 
 - `PaymentController.ValidateTicket` is `Admin`-only while `CinemaController.Gate.Scan` (apparent staff gate-scan flow) is `RoleNames.GateKeepers` (`Admin,TheaterStaff`) — see `docs/01-business/roles-permissions.md` §5. <!-- TODO: confirm with team -->
