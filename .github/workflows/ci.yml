@@ -87,6 +87,7 @@ jobs:
       JWT__Secret: 'ci-only-signing-key-not-used-anywhere-else-0123456789'
       CINEMA_USER_URL: 'http://localhost:4202'
       CINEMA_ADMIN_URL: 'http://localhost:4201'
+      CINEMA_STAFF_URL: 'http://localhost:4203'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -133,6 +134,7 @@ jobs:
           ASPNETCORE_URLS: 'http://localhost:5102'
           AllowedOrigins__0: 'http://localhost:4202'
           AllowedOrigins__1: 'http://localhost:4201'
+          AllowedOrigins__2: 'http://localhost:4203'
         run: |
           dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost -c Release > "$RUNNER_TEMP/api.log" 2>&1 &
           for i in $(seq 1 60); do
@@ -141,14 +143,15 @@ jobs:
           done
           echo "API failed to start:"; cat "$RUNNER_TEMP/api.log"; exit 1
 
-      - name: Build and serve both apps
+      - name: Build and serve the three apps
         working-directory: cinemafe
         run: |
           npm ci --legacy-peer-deps
           npx ng build CinemaLib
           npx ng serve CinemaUser  --port 4202 --configuration development > "$RUNNER_TEMP/user.log" 2>&1 &
           npx ng serve CinemaAdmin --port 4201 --configuration development > "$RUNNER_TEMP/admin.log" 2>&1 &
-          for port in 4202 4201; do
+          npx ng serve CinemaStaff --port 4203 --configuration development > "$RUNNER_TEMP/staff.log" 2>&1 &
+          for port in 4202 4201 4203; do
             for i in $(seq 1 60); do
               if curl -fsS "http://localhost:$port" > /dev/null; then echo "port $port up"; break; fi
               if [ "$i" = "60" ]; then
@@ -159,18 +162,20 @@ jobs:
           done
 
       - name: Run Playwright
-        working-directory: QA-tests/playwright
+        working-directory: e2e
         run: |
           npm ci
           npx playwright install --with-deps chromium
-          npm test
+          npx playwright test --reporter=list,html
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: QA-tests/playwright/playwright-report/**
+          path: |
+            e2e/playwright-report/**
+            e2e/test-results/**
           if-no-files-found: warn
 
       - name: Dump server logs on failure
@@ -179,3 +184,4 @@ jobs:
           echo '── api ──';   cat "$RUNNER_TEMP/api.log"   || true
           echo '── user ──';  cat "$RUNNER_TEMP/user.log"  || true
           echo '── admin ──'; cat "$RUNNER_TEMP/admin.log" || true
+          echo '── staff ──'; cat "$RUNNER_TEMP/staff.log" || true

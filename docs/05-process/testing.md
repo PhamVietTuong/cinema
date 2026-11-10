@@ -106,15 +106,22 @@ This is a **discrepancy between CLAUDE.md's description and the current working 
 `docs/00-overview/open-questions.md`. Because `QA-tests/` is git-ignored, this may simply reflect
 an incomplete local checkout/setup rather than the harness having been removed.
 
-## CI-run E2E (separate from the above)
+## CI-run E2E
 
-`.github/workflows/ci.yml` has its own `e2e` job that is **not** the same as the `/test-flow`
-flow-test system: it spins up SQL Server in a container, builds and seeds the database, starts the
-Web API and both `CinemaUser`/`CinemaAdmin` dev servers, then runs
-`QA-tests/playwright && npm ci && npx playwright install --with-deps chromium && npm test`,
-uploading the HTML report as a build artifact. This confirms a Playwright suite is expected to
-exist and run in `QA-tests/playwright/` even though a local checkout currently shows only one spec
-file there (see above).
+`.github/workflows/ci.yml` has its own `e2e` job that is **not** the `/test-flow` flow-test system: it
+spins up SQL Server in a container, builds and seeds the database, starts the Web API and the
+`CinemaUser`/`CinemaAdmin`/`CinemaStaff` dev servers, then runs the committed `e2e/` suite
+(`npm ci && npx playwright install --with-deps chromium && npx playwright test --reporter=list,html`),
+uploading `e2e/playwright-report` and `e2e/test-results` as a build artifact. The old git-ignored
+`QA-tests/playwright/` harness is no longer run in CI.
+
+## Committed E2E suite — `e2e/`
+
+`e2e/` is the tracked Playwright suite (78 tests in `e2e/tests/`, one chromium project, files prefixed
+`api-` / `user-` / `admin-` / `staff-`; same layout as `augure-fe/e2e`) covering the Web API plus
+CinemaUser/CinemaAdmin/CinemaStaff: auth + route guards, every routed screen, and the VNPay callback
+contract. See `e2e/README.md` for prerequisites and env overrides. It runs serially against a seeded DB;
+the customer account `khach01@cinema.vn` comes from `sql/insert_db.sql`.
 
 ## What's not covered (only stated where verifiable)
 
@@ -122,4 +129,4 @@ file there (see above).
 - No dedicated backend integration tests against a real database were found — the CI comment on
   the `dotnet test` step states "xUnit tests use Moq — no database required," i.e. the backend
   suite is unit-level only; database-dependent behavior is exercised only via the CI `e2e` job's
-  Playwright run.
+  Playwright run (`e2e/`).
