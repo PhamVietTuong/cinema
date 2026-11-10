@@ -41,7 +41,7 @@
 
         <div class="hero-actions">
           <button mat-raised-button type="button" (click)="scrollToShowtimes()"><mat-icon>confirmation_number</mat-icon> {{ 'movies.detail.bookNow' | translate }}</button>
-          <a mat-stroked-button *ngIf="movie.trailerUrl" [href]="movie.trailerUrl" target="_blank"><mat-icon>play_arrow</mat-icon> {{ 'movies.detail.watchTrailer' | translate }}</a>
+          <button mat-stroked-button type="button" *ngIf="movie.trailerUrl" (click)="openTrailer(movie)"><mat-icon>play_arrow</mat-icon> {{ 'movies.detail.watchTrailer' | translate }}</button>
         </div>
       </div>
 
