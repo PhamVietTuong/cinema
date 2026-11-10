@@ -215,7 +215,7 @@ PromotionProgramId (Cascade), TheaterId (Guid?, **Restrict**, null = all theater
 Title, ImageUrl (required), LinkUrl (optional), StartDate/EndDate (DateTime, date-only, inclusive), IsPublished (bool). No FKs, no nav. "Active" is computed against Vietnam local date, not stored.
 
 ### LoyaltySetting
-TheaterId (Guid?, **unique when not null** — one global default row with TheaterId=null plus optional per-theater overrides), PointsPerUnit (int), PointValueVnd (int).
+TheaterId (Guid, required, **unique** — one row per theater; no global row), PointsPerUnit (int, VND spent per 1 point earned), PointValueVnd (int, VND value of 1 point redeemed). A theater with no row uses the built-in default 1000 / 10 (1,000 VND = 1 point; 100 points = 1,000 VND).
 
 ### GiftCard
 Code (max 50, **unique**), InitialBalance (double), Balance (double), IsActive, ExpiresAt (DateTime?), IssuedToEmail (string?, optional). No FKs — `Invoice.GiftCardId` references it without a DB FK constraint.
