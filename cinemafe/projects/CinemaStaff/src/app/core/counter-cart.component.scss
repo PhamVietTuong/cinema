@@ -28,6 +28,12 @@
   &.is-active { border-color: var(--ml-action); background: var(--ml-action-soft); }
   &.is-sold-out { opacity: 0.55; }
 }
+.pos-food-img {
+  position: relative; aspect-ratio: 16 / 10; border-radius: var(--ml-r-sm); overflow: hidden;
+  background: var(--ml-action-soft); display: flex; align-items: center; justify-content: center;
+  img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+  .pos-food-img-fallback { opacity: 0.5; }
+}
 .pos-food-head { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
 .pos-food-price { font-variant-numeric: tabular-nums; }
 .pos-qty { display: flex; align-items: center; gap: 4px; margin-top: auto; span { min-width: 24px; text-align: center; font-weight: 600; } }

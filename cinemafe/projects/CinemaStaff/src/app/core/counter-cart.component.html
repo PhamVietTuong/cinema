@@ -92,6 +92,12 @@
   <div class="pos-foods">
     @for (f of cart.foods(); track f.id) {
       <div class="pos-food" [class.is-sold-out]="cart.cap(f) === 0" [class.is-active]="cart.qtyOf(f) > 0">
+        <div class="pos-food-img">
+          @if (f.imageUrl) {
+            <img [src]="f.imageUrl" [alt]="f.name" loading="lazy" (error)="$any($event.target).style.display = 'none'">
+          }
+          <mat-icon class="pos-food-img-fallback">{{ f.isCombo ? 'fastfood' : 'local_cafe' }}</mat-icon>
+        </div>
         <div class="pos-food-head">
           <strong>{{ f.name }}</strong>
           @if (f.isCombo) {
