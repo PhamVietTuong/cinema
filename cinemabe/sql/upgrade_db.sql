@@ -527,6 +527,7 @@ END
 
 -- Per-theater only: drop the global default row (TheaterId NULL) and make TheaterId mandatory. A theater without a
 -- row now uses the built-in default (1,000 VND = 1 point; 100 points = 1,000 VND, i.e. PointValueVnd = 10).
+SET QUOTED_IDENTIFIER ON;
 IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.LoyaltySetting') AND name = 'TheaterId' AND is_nullable = 1)
 BEGIN
     DELETE FROM [LoyaltySetting] WHERE [TheaterId] IS NULL;
