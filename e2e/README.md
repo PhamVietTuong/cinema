@@ -26,6 +26,11 @@ Accounts (override with `E2E_{ADMIN,USER,STAFF}_{EMAIL,PASSWORD}`):
 | Customer | `khach01@cinema.vn` / `Khach01@123` | `cinemabe/sql/insert_db.sql` |
 | Theater staff | `staff@cinema.vn` / `Staff@123` | seed (needs a theater) |
 
+VNPay spec prerequisite: run the API with `Payments__VnPay__TmnCode` and `Payments__VnPay__HashSecret` set and export
+the same secret as `E2E_VNPAY_HASH_SECRET`. Without it `api-payment-callback.spec.ts` skips locally and fails in CI.
+
+Booking spec prerequisite: at least one upcoming showtime, see `e2e/sql/seed-future-showtime.sql`.
+
 ## Run
 
 ```bash

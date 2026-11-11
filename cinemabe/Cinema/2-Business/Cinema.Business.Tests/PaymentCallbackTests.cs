@@ -372,16 +372,16 @@ public class PaymentCallbackTests
         _uowMock.Setup(u => u.InvoiceStore.GetStatusAsync(invoice.Id)).ReturnsAsync(InvoiceStatus.Paid);
 
         var arrivals = 0;
-        var bothArrived = new TaskCompletionSource();
+        var bothArrived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var claims = 0;
         _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Paid))
             .Returns(async () =>
             {
                 if (Interlocked.Increment(ref arrivals) == 2)
                 {
-                    bothArrived.SetResult();
+                    bothArrived.TrySetResult();
                 }
-                await bothArrived.Task;                      // hold both callers at the claim until both are there
+                await bothArrived.Task.WaitAsync(TimeSpan.FromSeconds(5));                      // hold both callers at the claim until both are there
                 return Interlocked.Increment(ref claims) == 1;   // the database lets exactly one UPDATE change the row
             });
         var callback = VnPayTestHelper.SignedIpn(invoice.Id, 10_000_000);

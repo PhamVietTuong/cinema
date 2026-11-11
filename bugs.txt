@@ -1,3 +1,5 @@
+NOTICE: this file is retired. Defects are now tracked in GitHub Issues (see docs/05-process/testing.md); this file is no longer maintained.
+
 Admin page:
 - Required fields that need to be displayed when saving; these fields need to be entered.
 - Bug: Selecting a start time of 4:00 PM and an end time of 5:00 PM results in 9:00 AM and 10:00 AM.

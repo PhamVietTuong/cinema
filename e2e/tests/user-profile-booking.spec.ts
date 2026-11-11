@@ -35,8 +35,12 @@ test.describe('CinemaUser: signed-in customer', () => {
     const slots = page.locator('button.time-slot');
     const dateTabs = page.locator('button.date-tab');
     await expect(dateTabs.first(), 'The movie page should show its date strip').toBeVisible({ timeout: 15_000 });
-    for (let i = 0; i < (await dateTabs.count()) && (await slots.count()) === 0; i++) {
+    for (let i = 0; i < (await dateTabs.count()); i++) {
       await dateTabs.nth(i).click();
+      const hasSlot = await slots.first().waitFor({ state: 'visible', timeout: 2_000 }).then(() => true, () => false);
+      if (hasSlot) {
+        break;
+      }
     }
     await expect(slots.first(), 'The movie page should list its upcoming showtime').toBeVisible();
     await slots.first().click();

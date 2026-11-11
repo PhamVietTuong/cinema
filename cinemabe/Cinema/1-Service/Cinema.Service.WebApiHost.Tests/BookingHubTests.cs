@@ -35,9 +35,9 @@ public class BookingHubTests
         };
     }
 
-    private static void VerifySent<T>(Mock<T> proxy, string method, Times times) where T : class, IClientProxy
+    private static void VerifySent<T>(Mock<T> proxy, string method, Times times, params object[] expectedArgs) where T : class, IClientProxy
     {
-        proxy.Verify(p => p.SendCoreAsync(method, It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), times);
+        proxy.Verify(p => p.SendCoreAsync(method, It.Is<object?[]>(a => a.SequenceEqual(expectedArgs)), It.IsAny<CancellationToken>()), times);
     }
 
     [Trait("Req", "BR-SEAT-01")]
@@ -48,8 +48,8 @@ public class BookingHubTests
 
         await CreateHub().LockSeat(_showTime, _room, _seat);
 
-        VerifySent(_caller, "SeatLockFailed", Times.Once());
-        VerifySent(_group, "SeatLocked", Times.Never());
+        VerifySent(_caller, "SeatLockFailed", Times.Once(), _seat, "Seat is already locked.");
+        VerifySent(_group, "SeatLocked", Times.Never(), _seat, Connection);
         _manager.Verify(m => m.LockSeat(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -62,8 +62,8 @@ public class BookingHubTests
         await CreateHub().LockSeat(_showTime, _room, _seat);
 
         _manager.Verify(m => m.LockSeat(_showTime, _room, _seat, Connection), Times.Once);
-        VerifySent(_group, "SeatLocked", Times.Once());
-        VerifySent(_caller, "SeatLockFailed", Times.Never());
+        VerifySent(_group, "SeatLocked", Times.Once(), _seat, Connection);
+        VerifySent(_caller, "SeatLockFailed", Times.Never(), _seat, "Seat is already locked.");
     }
 
     [Trait("Req", "BR-SEAT-01")]
@@ -74,7 +74,7 @@ public class BookingHubTests
 
         await CreateHub().UnlockSeat(_showTime, _room, _seat);
 
-        VerifySent(_group, "SeatUnlocked", Times.Never());
+        VerifySent(_group, "SeatUnlocked", Times.Never(), _seat);
     }
 
     [Trait("Req", "BR-SEAT-01")]
@@ -85,22 +85,32 @@ public class BookingHubTests
 
         await CreateHub().UnlockSeat(_showTime, _room, _seat);
 
-        VerifySent(_group, "SeatUnlocked", Times.Once());
+        VerifySent(_group, "SeatUnlocked", Times.Once(), _seat);
     }
 
     [Trait("Req", "BR-SEAT-01")]
     [Fact]
-    public async Task Disconnect_BroadcastsEverySeatTheConnectionHeld()
+    public async Task Disconnect_BroadcastsEachHeldSeatToItsOwnRoom()
     {
-        var other = Guid.NewGuid();
+        var otherRoom = Guid.NewGuid();
+        var otherSeat = Guid.NewGuid();
+        var otherGroup = new Mock<IClientProxy>();
         _manager.Setup(m => m.ReleaseConnectionLocks(Connection)).Returns(new List<(Guid, Guid, Guid)>
         {
             (_showTime, _room, _seat),
-            (_showTime, _room, other),
+            (_showTime, otherRoom, otherSeat),
         });
+        var hub = CreateHub();
+        var clients = new Mock<IHubCallerClients>();
+        clients.Setup(c => c.Group(BookingHub.RoomGroup(_showTime, _room))).Returns(_group.Object);
+        clients.Setup(c => c.Group(BookingHub.RoomGroup(_showTime, otherRoom))).Returns(otherGroup.Object);
+        hub.Clients = clients.Object;
 
-        await CreateHub().OnDisconnectedAsync(null);
+        await hub.OnDisconnectedAsync(null);
 
-        VerifySent(_group, "SeatUnlocked", Times.Exactly(2));
+        VerifySent(_group, "SeatUnlocked", Times.Once(), _seat);
+        VerifySent(_group, "SeatUnlocked", Times.Never(), otherSeat);
+        VerifySent(otherGroup, "SeatUnlocked", Times.Once(), otherSeat);
+        VerifySent(otherGroup, "SeatUnlocked", Times.Never(), _seat);
     }
 }

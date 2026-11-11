@@ -19,11 +19,12 @@ test.beforeEach(() => {
   }
 });
 
-// Mirrors System.Net.WebUtility.UrlEncode as used by VnPayGateway: space is '+', everything else percent-encoded.
+// Mirrors System.Net.WebUtility.UrlEncode as used by VnPayGateway: space is '+', ' and ~ are percent-encoded
+// (uppercase hex) and ! * ( ) stay literal.
 function urlEncode(value: string): string {
   return encodeURIComponent(value)
     .replace(/%20/g, '+')
-    .replace(/[!'()*~]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+    .replace(/['~]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
 }
 
 function signed(params: Record<string, string>): Record<string, string> {
@@ -46,6 +47,7 @@ test.describe('API: payment callbacks are signature-authoritative', () => {
 
   test('VNPay IPN with a valid signature for an unknown order is answered 200 with RspCode 01', { tag: ['@BR-PAY-02'] }, async ({ request }) => {
     const params = signed({
+      // 32-char invoice id (all zeros: no such invoice) followed by a per-attempt suffix, as VnPayGateway builds it.
       vnp_TxnRef: '0'.repeat(32) + '120000000',
       vnp_Amount: '10000000',
       vnp_ResponseCode: '00',

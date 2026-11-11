@@ -80,17 +80,19 @@ Adding a public endpoint that is meant to be anonymous: add its `Controller.Acti
 ## Traceability — rule to tests
 
 Every test that proves a business rule carries `[Trait("Req", "BR-xx-nn")]` (xUnit, class or method level) or a
-Playwright `tag: ['@BR-xx-nn']`. Filter by rule: `dotnet test --filter "Req=BR-PAY-03"`,
-`npx playwright test --grep @BR-PAY-02`. The rule text lives in `docs/01-business/business-rules.md`.
+Playwright `tag: ['@BR-xx-nn']`. The IDs are defined in the table below; the rule text is in
+`docs/01-business/business-rules.md`. Class-level traits are coarse: a filter selects the whole class, not only the
+tests that prove that rule. Filter by rule: `dotnet test --filter "Req=BR-PAY-03"`,
+`npx playwright test --grep @BR-PAY-02`.
 
 | ID | Rule | Section | Tests |
 |---|---|---|---|
 | `BR-PAY-01` | Payments are callback-authoritative; the callback's gateway must match the invoice's | business-rules s3 | `PaymentCallbackTests` |
 | `BR-PAY-02` | The IPN answers 200 with the exact `{RspCode, Message}` per outcome (97 bad signature, 01 unknown order) | s3 | `VnPayGatewayTests`, `PaymentControllerCallbackTests`, e2e `api-payment-callback.spec.ts` |
-| `BR-PAY-03` | Callback idempotency, including two concurrent deliveries: one payment row, points accrued once | s3 | `PaymentCallbackTests` (`..._TwoConcurrentDeliveries_...`) |
+| `BR-PAY-03` | Callback idempotency, including two concurrent deliveries: one payment row, points accrued once | s3 | `PaymentCallbackTests` (`..._TwoConcurrentDeliveries_...`). The claim atomicity (`InvoiceStore.TryTransitionStatusAsync`) is exercised only through mocks; there is no real-database test (tracked in `_bmad-output/implementation-artifacts/deferred-work.md`) |
 | `BR-PAY-04` | Amount cross-check (VNPay amount x100) | s3 | `VnPayGatewayTests` |
 | `BR-PAY-05` | Only a Pending invoice can be paid; expiry gives back points, gift card, seats | s2 | `PaymentCallbackTests`, `BookingServiceTests` |
-| `BR-SEAT-01` | Advisory seat lock: refused while held, only the owner unlocks, disconnect releases | s1 | `BookingHubTests`, `BookingServiceTests`, e2e `user-profile-booking.spec.ts` |
+| `BR-SEAT-01` | Advisory seat lock: refused while held, only the owner unlocks, disconnect releases | s1 | `BookingHubTests`, `BookingServiceTests`, e2e `user-profile-booking.spec.ts` (seat map opens only) |
 | `BR-SEAT-02` | DB anti-double-booking: a lost insert race rolls back as "just booked"; bad/expired gift card or spent points roll back | s1, s5 | `BookingServiceTests` |
 | `BR-AUTH-01` | Every endpoint is guarded or deliberately anonymous; role mismatch is 403 | s6 | `ControllerAuthorizationCoverageTests`, `StaffToolsetAuthorizationTests` |
 | `BR-AUTH-02` | Login lockout, account status, 2FA | s6 | `AuthServiceTests` |

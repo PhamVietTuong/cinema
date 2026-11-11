@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { expect, type APIRequestContext, type Page } from '@playwright/test';
+import { errors, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 export const USER_URL = process.env.CINEMA_USER_URL ?? 'http://localhost:4202';
 export const ADMIN_URL = process.env.CINEMA_ADMIN_URL ?? 'http://localhost:4201';
@@ -105,9 +105,12 @@ export async function dismissSplashBanner(page: Page): Promise<void> {
   const close = page.locator('.sb-close');
   try {
     await close.waitFor({ state: 'visible', timeout: 3_000 });
-    await close.click();
-    await close.waitFor({ state: 'hidden' });
-  } catch {
-    // no banner is active
+  } catch (error) {
+    if (error instanceof errors.TimeoutError) {
+      return; // no banner is active
+    }
+    throw error;
   }
+  await close.click();
+  await close.waitFor({ state: 'hidden' });
 }
