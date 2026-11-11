@@ -735,6 +735,7 @@ public class BookingServiceTests
 
         var customer = new User { Id = customerId, Points = 50 };
         _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(customerId, It.IsAny<int>())).ReturnsAsync(true);
         _uowMock.Setup(u => u.UserStore.UpdateAsync(customer)).ReturnsAsync(customer);
         // Theater A overrides the global default: 1 point = 2,000 VND here.
         _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId))
@@ -754,7 +755,9 @@ public class BookingServiceTests
         result.PointsRedeemed.Should().Be(5);
         result.DiscountAmount.Should().Be(10000);
         result.FinalAmount.Should().Be(90000);
-        customer.Points.Should().Be(45);
+        // Points are spent through one atomic conditional UPDATE, never by a read-modify-write on the entity.
+        _uowMock.Verify(u => u.UserStore.TryDeductPointsAsync(customerId, 5), Times.Once);
+        customer.Points.Should().Be(50);
     }
 
     [Fact]
@@ -1631,6 +1634,97 @@ public class BookingServiceTests
         Prices = new List<PromotionProgramPrice> { new() { Price = price } },
         Schedules = new List<PromotionProgramSchedule>(),
     };
+
+    [Fact]
+    public async Task CreateBookingAsync_AutoApplyProgramAtItsUsageCap_IsNotApplied()
+    {
+        // A13: an auto-apply program must honour MaxUsage like the promo-code path does.
+        var program = FixedPriceProgram(price: 45000);
+        program.MaxUsage = 10;
+        program.UsedCount = 10;
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(80000);
+        result.AppliedPromotionTitle.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AutoApplyProgramScopedToAnotherMovie_IsNotApplied()
+    {
+        // A13: an auto-apply program scoped to one movie must not discount a different movie.
+        var program = FixedPriceProgram(price: 45000);
+        program.MovieId = Guid.NewGuid();
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(80000);
+        result.AppliedPromotionTitle.Should().BeNull();
+    }
+
+    private async Task<BookingResultDTO> BookWithRedemptionAsync(Guid customerId, User customer, CreateBookingRequest overrides)
+    {
+        var theaterId    = Guid.NewGuid();
+        var roomTypeId   = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var seatA        = Guid.NewGuid();
+        var adultId      = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult", Price = 100000, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId)).ReturnsAsync((LoyaltySetting?)null);
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId      = ShowTimeId1,
+            RoomId          = RoomId1,
+            Seats           = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
+            PointsToRedeem  = overrides.PointsToRedeem,
+            GiftCardCode    = overrides.GiftCardCode,
+            PaymentMethod   = "Sandbox",
+        };
+        return await _sut.CreateBookingAsync(customerId, request);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_PointsAlreadySpentByAConcurrentBooking_IsRejectedAndRolledBack()
+    {
+        // A14: the atomic spend loses (another booking took the points after we read the balance).
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 50 };
+        _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(customerId, It.IsAny<int>())).ReturnsAsync(false);
+
+        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { PointsToRedeem = 5 }))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*loyalty points*");
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_GiftCardAlreadyDrawnByAConcurrentBooking_IsRejectedAndRolledBack()
+    {
+        // A14: the atomic draw loses (the balance no longer covers the amount).
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 0 };
+        var card = new GiftCard { Id = Guid.NewGuid(), Code = "GC9", IsActive = true, Balance = 30000 };
+        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC9")).ReturnsAsync(card);
+        _uowMock.Setup(u => u.GiftCardStore.TryDrawBalanceAsync(card.Id, It.IsAny<double>())).ReturnsAsync(false);
+
+        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { GiftCardCode = "GC9" }))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*gift card*");
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
 
     [Fact]
     public async Task CreateBookingAsync_FixedPriceEveryoneProgram_AppliesAutomaticallyWithNoCode()

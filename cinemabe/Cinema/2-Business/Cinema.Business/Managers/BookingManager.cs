@@ -643,10 +643,11 @@ public class BookingManager : IBookingManager
                     pointsValue     = pointsRedeemed * pointValueVnd;
                     finalAmount    -= pointsValue;
                     discountAmount += pointsValue;
-                    if (!input.DryRun)
+                    if (!input.DryRun
+                        && !await _uow.UserStore.TryDeductPointsAsync(redeemingUser.Id, pointsRedeemed))
                     {
-                        redeemingUser.Points -= pointsRedeemed;
-                        await _uow.UserStore.UpdateAsync(redeemingUser);
+                        // The atomic spend failed: a concurrent booking used these points since we read the balance.
+                        throw new InvalidOperationException("Not enough loyalty points.");
                     }
                 }
             }
@@ -676,10 +677,11 @@ public class BookingManager : IBookingManager
             {
                 finalAmount    -= giftCardAmount;
                 discountAmount += giftCardAmount;
-                if (!input.DryRun)
+                if (!input.DryRun
+                    && !await _uow.GiftCardStore.TryDrawBalanceAsync(card.Id, giftCardAmount))
                 {
-                    card.Balance -= giftCardAmount;
-                    await _uow.GiftCardStore.UpdateAsync(card);
+                    // The atomic draw failed: a concurrent booking spent the balance since we read the card.
+                    throw new InvalidOperationException("The gift card balance is no longer sufficient.");
                 }
                 giftCardId = card.Id;
             }
@@ -1563,6 +1565,16 @@ public class BookingManager : IBookingManager
 
         foreach (var program in candidates)
         {
+            // Same usage cap and movie scope the code path enforces (FindUsableProgramByCodeAsync); an
+            // auto-apply program must not ignore them. Theater/day/time scope is checked just below.
+            if (program.MaxUsage != null && program.UsedCount >= program.MaxUsage)
+            {
+                continue;
+            }
+            if (program.MovieId != null && program.MovieId != showTime.MovieId)
+            {
+                continue;
+            }
             if (program.AllowedChannelsMask is int mask && mask != 0 && (mask & (1 << (int)channel)) == 0)
             {
                 continue;
