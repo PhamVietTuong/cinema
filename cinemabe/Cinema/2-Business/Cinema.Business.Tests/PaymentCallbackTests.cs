@@ -20,6 +20,7 @@ public class PaymentCallbackTests
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway(), VnPayTestHelper.Gateway() }, "Sandbox");
         _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService(), new DevLogSmsNotificationService(), new Mock<ISeatNotificationService>().Object);
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(It.IsAny<Guid>(), InvoiceStatus.Pending, It.IsAny<InvoiceStatus>())).ReturnsAsync(true);
     }
 
     private static Invoice PendingInvoice(decimal finalAmount = 100_000) => new()
@@ -189,6 +190,63 @@ public class PaymentCallbackTests
         confirmed.Should().BeFalse();
         invoice.Status.Should().Be(InvoiceStatus.Pending);
         _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandlePaymentCallbackAsync_LosesTheClaimRace_ReturnsAlreadyConfirmed_NoSideEffects()
+    {
+        // A3: a duplicate IPN read Pending, but the other delivery already flipped the row to Paid.
+        var invoice = PendingInvoice();
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Paid)).ReturnsAsync(false);
+        _uowMock.Setup(u => u.InvoiceStore.GetStatusAsync(invoice.Id)).ReturnsAsync(InvoiceStatus.Paid);
+        var callback = VnPayTestHelper.SignedIpn(invoice.Id, 10_000_000);
+
+        var handling = await _sut.HandlePaymentCallbackAsync("VNPay", callback);
+
+        handling.Outcome.Should().Be(PaymentCallbackOutcome.AlreadyConfirmed);
+        invoice.Payments.Should().BeEmpty();
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandlePaymentCallbackAsync_InvoiceCancelledDuringRace_ReturnsNotPending()
+    {
+        // A4: the expiry job cancelled the invoice between the IPN's read and its claim.
+        var invoice = PendingInvoice();
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Paid)).ReturnsAsync(false);
+        _uowMock.Setup(u => u.InvoiceStore.GetStatusAsync(invoice.Id)).ReturnsAsync(InvoiceStatus.Cancelled);
+        var callback = VnPayTestHelper.SignedIpn(invoice.Id, 10_000_000);
+
+        var handling = await _sut.HandlePaymentCallbackAsync("VNPay", callback);
+
+        handling.Outcome.Should().Be(PaymentCallbackOutcome.NotPending);
+    }
+
+    [Fact]
+    public async Task ExpireStalePendingBookingsAsync_SkipsInvoiceThatWasJustPaid()
+    {
+        // A4: an IPN marked this invoice Paid after the reaper loaded it as Pending; it must not be cancelled.
+        var paid = PendingInvoice();
+        var stale = PendingInvoice();
+        _uowMock.Setup(u => u.InvoiceStore.GetStalePendingAsync(It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<Invoice> { paid, stale });
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(paid.Id, InvoiceStatus.Pending, InvoiceStatus.Cancelled)).ReturnsAsync(false);
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(stale.Id, InvoiceStatus.Pending, InvoiceStatus.Cancelled)).ReturnsAsync(true);
+        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<StockNetQuantity>());
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>())).ReturnsAsync((Invoice i) => i);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        var count = await _sut.ExpireStalePendingBookingsAsync(TimeSpan.FromMinutes(15));
+
+        count.Should().Be(1);
+        paid.Status.Should().Be(InvoiceStatus.Pending);
+        stale.Status.Should().Be(InvoiceStatus.Cancelled);
+        _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(paid.Id), Times.Never);
+        _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(stale.Id), Times.Once);
     }
 
     [Fact]

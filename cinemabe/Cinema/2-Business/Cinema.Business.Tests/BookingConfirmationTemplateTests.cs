@@ -23,6 +23,7 @@ public class BookingConfirmationTemplateTests
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
         _sut = new BookingManager(_uowMock.Object, gateways, _notifications.Object, _sms.Object, _seatNotifications.Object);
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(It.IsAny<Guid>(), InvoiceStatus.Pending, It.IsAny<InvoiceStatus>())).ReturnsAsync(true);
     }
 
     private static Invoice PendingInvoice(Guid userId)

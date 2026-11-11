@@ -27,6 +27,14 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     /// for the caller whose update changed the row, so two simultaneous scans cannot both admit.</summary>
     Task<bool> TryAdmitTicketAsync(Guid invoiceId, Guid seatId, Guid showTimeId, Guid userId, DateTime nowUtc);
 
+    /// <summary>Atomically moves an invoice between statuses: a single UPDATE ... WHERE Status = <paramref name="from"/>.
+    /// Returns true only for the caller whose update changed the row, so a duplicate payment callback and the
+    /// expiry job cannot both act on the same invoice (there is no row-version column to catch the race).</summary>
+    Task<bool> TryTransitionStatusAsync(Guid invoiceId, InvoiceStatus from, InvoiceStatus to);
+
+    /// <summary>Current status straight from the database (no tracking, bypasses the change tracker). Null if absent.</summary>
+    Task<InvoiceStatus?> GetStatusAsync(Guid invoiceId);
+
     /// <summary>Paid, active tickets of a theater whose showtime starts in [dayStart, dayEnd), matched by exact
     /// invoice code and/or phone (no-tracking projection).</summary>
     Task<List<GateLookupRow>> FindTicketsForLookupAsync(Guid theaterId, string? invoiceCode, string? phone, DateTime dayStart, DateTime dayEnd);

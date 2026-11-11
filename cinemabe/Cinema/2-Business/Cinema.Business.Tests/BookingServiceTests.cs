@@ -35,6 +35,7 @@ public class BookingServiceTests
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
         _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService(), new DevLogSmsNotificationService(), _seatNotificationsMock.Object);
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(It.IsAny<Guid>(), InvoiceStatus.Pending, It.IsAny<InvoiceStatus>())).ReturnsAsync(true);
 
         // Default: no RoomType price overrides for any category. Tests that care about an override
         // set this up explicitly.

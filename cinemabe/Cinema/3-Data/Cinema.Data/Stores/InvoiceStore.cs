@@ -178,6 +178,21 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         return rows == 1;
     }
 
+    public async Task<bool> TryTransitionStatusAsync(Guid invoiceId, InvoiceStatus from, InvoiceStatus to)
+    {
+        var rows = await Context.Invoice
+            .Where(i => i.Id == invoiceId && i.Status == from)
+            .ExecuteUpdateAsync(s => s.SetProperty(i => i.Status, to));
+        return rows == 1;
+    }
+
+    public async Task<InvoiceStatus?> GetStatusAsync(Guid invoiceId)
+        => await Context.Invoice
+            .AsNoTracking()
+            .Where(i => i.Id == invoiceId)
+            .Select(i => (InvoiceStatus?)i.Status)
+            .FirstOrDefaultAsync();
+
     public async Task<List<GateLookupRow>> FindTicketsForLookupAsync(
         Guid theaterId, string? invoiceCode, string? phone, DateTime dayStart, DateTime dayEnd)
     {

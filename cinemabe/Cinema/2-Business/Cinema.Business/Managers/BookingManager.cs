@@ -934,7 +934,10 @@ public class BookingManager : IBookingManager
         // Fully covered (e.g. by a gift card) — nothing to charge, so finalize immediately with no gateway.
         if (invoice.FinalAmount <= 0)
         {
-            await FinalizePaidInvoiceAsync(invoice, "GIFTCARD-FULL");
+            if (!await FinalizePaidInvoiceAsync(invoice, "GIFTCARD-FULL"))
+            {
+                return null;
+            }
             return new PaymentInitiationDTO
             {
                 Provider         = "None",
@@ -1000,8 +1003,7 @@ public class BookingManager : IBookingManager
             return false;
         }
 
-        await FinalizePaidInvoiceAsync(invoice, reference);
-        return true;
+        return await FinalizePaidInvoiceAsync(invoice, reference);
     }
 
     public async Task<PaymentCallbackHandlingResult> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData)
@@ -1064,14 +1066,51 @@ public class BookingManager : IBookingManager
             return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.PaymentFailedAcknowledged);
         }
 
-        await FinalizePaidInvoiceAsync(invoice, result.PaymentReference);
+        if (!await FinalizePaidInvoiceAsync(invoice, result.PaymentReference))
+        {
+            // Lost the race: a duplicate delivery or the expiry job changed the invoice between our read and the
+            // atomic Pending -> Paid claim. Report what the winner did.
+            var current = await _uow.InvoiceStore.GetStatusAsync(invoice.Id);
+            return new PaymentCallbackHandlingResult(gateway.Name,
+                current == InvoiceStatus.Paid ? PaymentCallbackOutcome.AlreadyConfirmed : PaymentCallbackOutcome.NotPending);
+        }
         return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.Confirmed);
     }
 
     /// <summary>Marks the invoice Paid and applies the side effects: loyalty accrual, tier re-eval,
     /// promo-code consumption, and the confirmation notification. Caller must have verified payment.
     /// A walk-in invoice (no customer) skips the loyalty and notification parts.</summary>
-    private async Task FinalizePaidInvoiceAsync(Invoice invoice, string paymentReference)
+    private async Task<bool> FinalizePaidInvoiceAsync(Invoice invoice, string paymentReference)
+    {
+        User? user;
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            // Atomic Pending -> Paid claim: of two concurrent finalizations (duplicate IPN, or an IPN racing the
+            // expiry job) only one proceeds, so loyalty points and the payment row are applied once.
+            if (!await _uow.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Paid))
+            {
+                await _uow.RollbackTransactionAsync();
+                return false;
+            }
+            user = await ApplyPaidAsync(invoice, paymentReference);
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
+
+        // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
+        if (user is not null)
+        {
+            await SendConfirmationAsync(invoice, user);
+        }
+        return true;
+    }
+
+    private async Task<User?> ApplyPaidAsync(Invoice invoice, string paymentReference)
     {
         invoice.Status           = InvoiceStatus.Paid;
         invoice.PaymentReference = paymentReference;
@@ -1093,12 +1132,7 @@ public class BookingManager : IBookingManager
         var user = await ApplyPaidSideEffectsAsync(invoice);
 
         await _uow.SaveChangesAsync();
-
-        // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
-        if (user is not null)
-        {
-            await SendConfirmationAsync(invoice, user);
-        }
+        return user;
     }
 
     // Loyalty: accrue points on the paid amount and re-evaluate the membership tier (only when the invoice has a
@@ -1847,8 +1881,16 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
+            var cancelled = new List<Invoice>(stale.Count);
             foreach (var invoice in stale)
             {
+                // Atomic Pending -> Cancelled claim: skip an invoice a concurrent IPN just marked Paid (or another
+                // reaper pass already cancelled) instead of overwriting it.
+                if (!await _uow.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Cancelled))
+                {
+                    continue;
+                }
+                cancelled.Add(invoice);
                 // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
                 invoice.Status = InvoiceStatus.Cancelled;
                 CancelFoodOrder(invoice);
@@ -1858,16 +1900,16 @@ public class BookingManager : IBookingManager
                 await RestoreGiftCardAsync(invoice);
             }
             // One batched ledger read/restock for the whole run, not one per invoice.
-            await RestoreFoodStockAsync(stale.ToList(), "Expired", null);
+            await RestoreFoodStockAsync(cancelled, "Expired", null);
             await _uow.SaveChangesAsync();
             await _uow.CommitTransactionAsync();
+            return cancelled.Count;
         }
         catch
         {
             await _uow.RollbackTransactionAsync();
             throw;
         }
-        return stale.Count;
     }
 
     public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
