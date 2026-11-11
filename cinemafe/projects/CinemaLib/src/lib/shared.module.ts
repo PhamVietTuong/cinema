@@ -33,6 +33,7 @@ import { TranslatePipe, TranslateDirective } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from './i18n/language-switcher.component';
 import { ServerUtcPipe } from './pipes/server-utc.pipe';
 import { ThousandsInputDirective } from './directives/thousands-input.directive';
+import { DragScrollDirective } from './directives/drag-scroll.directive';
 
 const SHARED = [
   CommonModule,
@@ -71,6 +72,7 @@ const SHARED = [
   LanguageSwitcherComponent,
   ServerUtcPipe,
   ThousandsInputDirective,
+  DragScrollDirective,
 ];
 
 @NgModule({

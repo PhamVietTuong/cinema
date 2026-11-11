@@ -20,10 +20,13 @@ $ad-seat-gap: 6px;
   // a row shortened by removing a seat), and centering each row individually would misalign the row letters.
   display: flex; flex-direction: column; gap: $ad-seat-gap; align-items: flex-start;
   margin: 0 auto 24px; width: fit-content; max-width: 100%;
+  // A long row scrolls sideways inside the grid (drag / swipe / shift+wheel) instead of wrapping its last seats
+  // onto a second line, which reads as a different row.
+  overflow-x: auto; padding: 3px 6px 8px; overscroll-behavior-x: contain;
   /* Remove-seat tool active: hovering an editable seat previews the delete with a danger outline. */
   &.is-removing .seat.editable:not(.busy):hover { border-color: var(--ml-warn); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ml-warn) 35%, transparent); }
 }
-.seat-row { display: flex; flex-wrap: wrap; gap: $ad-seat-gap; align-items: center; justify-content: center; }
+.seat-row { display: flex; flex-wrap: nowrap; flex: none; gap: $ad-seat-gap; align-items: center; justify-content: center; }
 .row-label {
   flex: 0 0 28px;
   width: 28px;

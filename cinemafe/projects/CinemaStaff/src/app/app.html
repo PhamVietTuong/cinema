@@ -14,7 +14,7 @@
         <select class="ad-input" [attr.aria-label]="'theaterPicker.label' | translate" (change)="onTheaterPicked($event)">
           <option value="" [selected]="!theaterContext.currentTheaterId()">{{ 'theaterPicker.placeholder' | translate }}</option>
           @for (theater of theaterContext.theaters(); track theater.id) {
-            <option [value]="theater.id" [selected]="theater.id === theaterContext.currentTheaterId()">{{ theater.name }}</option>
+            <option [value]="theater.id" [selected]="theater.id === theaterContext.currentTheaterId()" [attr.title]="theater.name">{{ pickerLabel(theater.name) }}</option>
           }
         </select>
       </label>

@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { map, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SnackBarComponent } from '../../components/snackbar';
-import { translateApiError } from '../../services/api-error';
+import { rawApiErrorMessage, translateApiError } from '../../services/api-error';
 import * as NotificationActions from '../actions/notification.actions';
 
 @Injectable()
@@ -46,6 +46,10 @@ export class NotificationEffects {
     this._actions$.pipe(
       ofType(NotificationActions.showException),
       map(action => action.error),
+      // The error interceptor already toasts (or redirects for) these: a bare 401 means the session ended and it
+      // signed the user out; a bare 403 (no message body) already got the "no permission" toast.
+      // A second generic "unexpected server error" toast on top of them is noise (and would replace the specific one).
+      filter((error: any) => !((error?.status === 401 || error?.status === 403) && rawApiErrorMessage(error) === null)),
       tap((error: any) =>
         this._matSnackBar.openFromComponent(SnackBarComponent, {
           ...this._commonConfig,

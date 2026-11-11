@@ -9,6 +9,6 @@
   <button mat-raised-button color="primary" type="button" (click)="confirm()">{{ (data.confirmText || 'common.confirm') | translate }}</button>
 </div>
 
-<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+<button mat-icon-button type="button" class="dialog-close-btn" [attr.aria-label]="'common.close' | translate" (click)="cancel()">
   <mat-icon>close</mat-icon>
 </button>

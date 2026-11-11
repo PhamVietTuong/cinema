@@ -90,6 +90,10 @@ export class AppShellComponent {
     const match = segment
       ? items.find(item => item.route.split('/').filter(Boolean)[0] === segment)
       : items[0];
+    if (!match && segment && segment === this.profileRoute()?.split('/').filter(Boolean)[0]) {
+      // The profile page is reached from the avatar, not the menu, so no item owns it.
+      return 'profile.myProfile';
+    }
     return match?.titleKey ?? this.defaultTitleKey();
   });
 

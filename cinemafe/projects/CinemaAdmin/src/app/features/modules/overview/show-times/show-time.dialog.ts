@@ -113,6 +113,7 @@ export class ShowTimeDialog {
       basePrice: [st?.basePrice ?? 75000, [Validators.required, Validators.min(0)]],
       isActive: [st?.isActive ?? true],
     });
+    this._syncRoomEnabled();
   }
 
   /** Rooms of the picked theater. Empty until one is picked, so the two selects cascade. */
@@ -126,6 +127,17 @@ export class ShowTimeDialog {
     const roomId = this.form.value.roomId;
     if (roomId && !this.roomsForTheater.some(r => r.id === roomId)) {
       this.form.patchValue({ roomId: '' });
+    }
+    this._syncRoomEnabled();
+  }
+
+  /** The room select is enabled once a theater is picked (done on the control, not via [disabled] in the template). */
+  private _syncRoomEnabled(): void {
+    const room = this.form.controls['roomId'];
+    if (this.form.value.theaterId) {
+      room.enable({ emitEvent: false });
+    } else {
+      room.disable({ emitEvent: false });
     }
   }
 

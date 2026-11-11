@@ -39,7 +39,7 @@
       <h3 class="ad-card-title">{{ 'reports.trendByDay' | translate }}</h3>
       <button class="ad-icon-btn" (click)="exportByDay()" [disabled]="!byDay.length" [title]="'reports.exportCsv' | translate"><mat-icon>download</mat-icon></button>
     </div>
-    <div class="rp-trend" *ngIf="byDay.length; else noData">
+    <div class="rp-trend" cinemaDragScroll *ngIf="byDay.length; else noData">
       <div class="rp-bar-col" *ngFor="let d of byDay" [title]="(d.date | date:'dd/MM') + ': ' + (d.total | number:'1.0-0') + 'đ'">
         <div class="rp-bar" [style.height.%]="pct(d.total, maxDay)"></div>
         <span class="rp-bar-x">{{ d.date | date:'dd/MM' }}</span>

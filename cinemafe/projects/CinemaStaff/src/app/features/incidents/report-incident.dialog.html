@@ -37,4 +37,4 @@
     <button mat-raised-button color="primary" type="submit">{{ 'incidents.report.submit' | translate }}</button>
   </div>
 </form>
-<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()"><mat-icon>close</mat-icon></button>
+<button mat-icon-button type="button" class="dialog-close-btn" [attr.aria-label]="'common.close' | translate" (click)="cancel()"><mat-icon>close</mat-icon></button>

@@ -18,7 +18,7 @@
     "theater": "You are working at {{name}}.",
     "pickTheater": "Pick a theater in the top bar to get started.",
     "noTheater": "Your account has no theater assigned. Please contact an administrator.",
-    "comingSoon": "Ticketing, gate and warehouse tools will appear here soon."
+    "comingSoon": "Use the menu to open the ticketing, gate, schedule and incident tools for your role."
   },
   "login": {
     "heroTitleLine1": "Staff",
