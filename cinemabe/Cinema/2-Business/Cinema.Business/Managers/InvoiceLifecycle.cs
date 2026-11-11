@@ -76,15 +76,10 @@ internal static class InvoiceLifecycle
             }
         }
 
-        // Mark the promotion program (if any) as consumed.
+        // Mark the promotion program (if any) as consumed — an atomic increment, not a read-modify-write.
         if (invoice.PromotionProgramId is Guid usedProgramId)
         {
-            var program = await uow.PromotionProgramStore.GetByIdAsync(usedProgramId);
-            if (program is not null)
-            {
-                program.UsedCount += 1;
-                await uow.PromotionProgramStore.UpdateAsync(program);
-            }
+            await uow.PromotionProgramStore.IncrementUsedCountAsync(usedProgramId);
         }
         return user;
     }

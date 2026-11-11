@@ -55,6 +55,23 @@ public class PaymentCallbackTests
     }
 
     [Fact]
+    public async Task HandlePaymentCallbackAsync_ValidPayment_CountsThePromotionUseWithAnAtomicIncrement()
+    {
+        var invoice = PendingInvoice();
+        var programId = Guid.NewGuid();
+        invoice.PromotionProgramId = programId;
+        _uowMock.Setup(u => u.PromotionProgramStore.IncrementUsedCountAsync(programId)).Returns(Task.CompletedTask);
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        await _sut.HandlePaymentCallbackAsync("VNPay", VnPayTestHelper.SignedIpn(invoice.Id, 10_000_000));
+
+        _uowMock.Verify(u => u.PromotionProgramStore.IncrementUsedCountAsync(programId), Times.Once);
+        _uowMock.Verify(u => u.PromotionProgramStore.UpdateAsync(It.IsAny<PromotionProgram>()), Times.Never);
+    }
+
+    [Fact]
     public async Task HandlePaymentCallbackAsync_AlreadyPaidInvoice_ReturnsAlreadyConfirmed_NoWrites()
     {
         var invoice = PendingInvoice();
@@ -276,6 +293,61 @@ public class PaymentCallbackTests
         untouched.Status.Should().Be(InvoiceStatus.Cancelled);
         longAbandoned.Status.Should().Be(InvoiceStatus.Cancelled);
         inFlight.Status.Should().Be(InvoiceStatus.Pending);
+    }
+
+    private InvoiceTicket PaidTicket(bool isActive = true, bool isUsed = false)
+    {
+        var invoice = PendingInvoice();
+        invoice.Status = InvoiceStatus.Paid;
+        var ticket = new InvoiceTicket
+        {
+            InvoiceId = invoice.Id,
+            Invoice = invoice,
+            SeatId = Guid.NewGuid(),
+            ShowTimeId = Guid.NewGuid(),
+            IsActive = isActive,
+            IsUsed = isUsed,
+        };
+        _uowMock.Setup(u => u.InvoiceStore.GetTicketByQrAsync("QR")).ReturnsAsync(ticket);
+        return ticket;
+    }
+
+    [Fact]
+    public async Task ValidateTicketAsync_DeactivatedTicket_IsRejected_EvenOnAPaidInvoice()
+    {
+        // A16: a cancelled booking's ticket is inactive; the Admin check-in must not admit it.
+        PaidTicket(isActive: false);
+
+        await _sut.Invoking(s => s.ValidateTicketAsync("QR", Guid.NewGuid()))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*no longer valid*");
+        _uowMock.Verify(u => u.InvoiceStore.TryAdmitTicketAsync(
+            It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<DateTime>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ValidateTicketAsync_AdmitsThroughTheAtomicUpdate_StampingTheAdmin()
+    {
+        var ticket = PaidTicket();
+        var adminId = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.TryAdmitTicketAsync(
+            ticket.InvoiceId, ticket.SeatId, ticket.ShowTimeId, adminId, It.IsAny<DateTime>())).ReturnsAsync(true);
+
+        var result = await _sut.ValidateTicketAsync("QR", adminId);
+
+        result.Valid.Should().BeTrue();
+        _uowMock.Verify(u => u.InvoiceStore.TryAdmitTicketAsync(
+            ticket.InvoiceId, ticket.SeatId, ticket.ShowTimeId, adminId, It.IsAny<DateTime>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ValidateTicketAsync_LosingTheAdmitRace_ReportsAlreadyUsed()
+    {
+        PaidTicket();
+        _uowMock.Setup(u => u.InvoiceStore.TryAdmitTicketAsync(
+            It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<DateTime>())).ReturnsAsync(false);
+
+        await _sut.Invoking(s => s.ValidateTicketAsync("QR", Guid.NewGuid()))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*already been used*");
     }
 
     [Fact]

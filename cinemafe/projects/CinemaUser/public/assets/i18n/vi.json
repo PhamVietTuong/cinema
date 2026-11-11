@@ -266,7 +266,10 @@
       "verifyingSub": "Vui lòng đợi trong khi chúng tôi xác nhận thanh toán. Đừng đóng cửa sổ này.",
       "pendingTitle": "Thanh toán đang chờ xử lý",
       "pendingSub": "Chúng tôi chưa xác nhận được thanh toán của bạn. Nếu bạn đã hoàn tất, có thể mất một chút thời gian — vui lòng kiểm tra vé đã đặt.",
-      "checkBookings": "Kiểm Tra Vé Của Tôi"
+      "checkBookings": "Kiểm Tra Vé Của Tôi",
+      "cancelledTitle": "Đơn đặt vé đã hết hạn hoặc bị hủy",
+      "cancelledSub": "Đơn này chưa được thanh toán kịp thời hoặc thanh toán thất bại nên ghế đã được trả lại. Nếu tiền đã bị trừ, vui lòng liên hệ rạp kèm mã đặt vé.",
+      "bookAgain": "Đặt Vé Lại"
     },
     "errors": {
       "bookingFailed": "Đặt vé thất bại. Vui lòng thử lại.",

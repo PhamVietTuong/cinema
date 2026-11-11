@@ -266,7 +266,10 @@
       "verifyingSub": "Please wait while we confirm your payment. Don't close this window.",
       "pendingTitle": "Payment pending",
       "pendingSub": "We haven't confirmed your payment yet. If you completed it, it may take a moment — please check your bookings.",
-      "checkBookings": "Check My Bookings"
+      "checkBookings": "Check My Bookings",
+      "cancelledTitle": "Booking expired or cancelled",
+      "cancelledSub": "This booking was not paid in time, or the payment failed, so your seats were released. If money was taken from your account, please contact the cinema with your booking code.",
+      "bookAgain": "Book Again"
     },
     "errors": {
       "bookingFailed": "Booking failed. Please try again.",

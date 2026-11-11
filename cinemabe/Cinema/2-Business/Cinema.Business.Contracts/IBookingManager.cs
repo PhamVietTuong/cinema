@@ -30,7 +30,7 @@ public interface IBookingManager
     /// provider-specific acknowledgement (e.g. VNPay's required {RspCode, Message} IPN response).</summary>
     Task<PaymentCallbackHandlingResult> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData);
     /// <summary>Gate check-in: validates a ticket QR, marks it used (once), returns its details.</summary>
-    Task<TicketValidationDTO>           ValidateTicketAsync(string qrCode);
+    Task<TicketValidationDTO>           ValidateTicketAsync(string qrCode, Guid adminUserId);
     /// <summary>Cancels Pending invoices older than <paramref name="age"/> (frees their held seats). Returns the count expired.</summary>
     Task<int>                           ExpireStalePendingBookingsAsync(TimeSpan age);
     void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);

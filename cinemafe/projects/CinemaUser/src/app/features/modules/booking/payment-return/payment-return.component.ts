@@ -4,7 +4,7 @@ import { SharedModule, PaymentServiceAgent, uniqueSeatLabels } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 
-type ReturnState = 'verifying' | 'success' | 'pending';
+type ReturnState = 'verifying' | 'success' | 'pending' | 'cancelled';
 
 @Component({
   selector: 'app-payment-return',
@@ -72,6 +72,13 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
         this.invoice = inv;
         if (inv?.status === this.InvoiceStatus.Paid) {
           this._onPaid(inv);
+          return;
+        }
+        if (inv?.status === this.InvoiceStatus.Cancelled || inv?.status === this.InvoiceStatus.Failed) {
+          // The booking expired or the payment failed: it will never turn Paid, so stop polling instead of
+          // showing "payment pending" for 30 seconds and then a misleading "we haven't confirmed yet".
+          this.state = 'cancelled';
+          this._cdr.markForCheck();
           return;
         }
         this._scheduleNext();

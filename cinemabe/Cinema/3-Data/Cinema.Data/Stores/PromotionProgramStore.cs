@@ -8,6 +8,13 @@ namespace Cinema.Data.Stores;
 
 public class PromotionProgramStore : GenericStore<PromotionProgram>, IPromotionProgramStore
 {
+    public async Task IncrementUsedCountAsync(Guid programId)
+    {
+        await Context.PromotionProgram
+            .Where(p => p.Id == programId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.UsedCount, p => p.UsedCount + 1));
+    }
+
     public PromotionProgramStore(CinemaContext db) : base(db)
     {
     }

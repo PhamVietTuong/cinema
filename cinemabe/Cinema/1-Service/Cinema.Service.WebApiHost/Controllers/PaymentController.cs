@@ -281,7 +281,7 @@ public class PaymentController : ApiControllerBase
         LogProvider.Current.Information($"{GetType().Name}.ValidateTicket being awakened to process request...");
         try
         {
-            var result = await _bookingManager.ValidateTicketAsync(request.QrCode);
+            var result = await _bookingManager.ValidateTicketAsync(request.QrCode, User.GetUserId());
             return Ok(result);
         }
         catch (Exception e)

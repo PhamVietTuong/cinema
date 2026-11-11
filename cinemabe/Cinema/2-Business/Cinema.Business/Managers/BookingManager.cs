@@ -1446,7 +1446,7 @@ public class BookingManager : IBookingManager
         return end > start && t >= start && t < end;
     }
 
-    public async Task<TicketValidationDTO> ValidateTicketAsync(string qrCode)
+    public async Task<TicketValidationDTO> ValidateTicketAsync(string qrCode, Guid adminUserId)
     {
         var ticket = await _uow.InvoiceStore.GetTicketByQrAsync(qrCode);
         if (ticket == null)
@@ -1457,13 +1457,25 @@ public class BookingManager : IBookingManager
         {
             throw new InvalidOperationException("Ticket has not been paid.");
         }
+        // A ticket of a cancelled/expired booking is deactivated; it must not be admitted even if its invoice reads Paid.
+        if (!ticket.IsActive)
+        {
+            throw new InvalidOperationException("Ticket is no longer valid.");
+        }
         if (ticket.IsUsed)
         {
             throw new InvalidOperationException("Ticket has already been used.");
         }
 
-        ticket.IsUsed = true;
-        await _uow.SaveChangesAsync();
+        // Same atomic admit as the gate scan (UPDATE ... WHERE IsUsed = 0 AND IsActive = 1, stamping UsedAt/UsedByUserId),
+        // so two simultaneous check-ins cannot both succeed. This Admin path does not apply the gate's theater and
+        // time-window checks; staff check in through Gate.Scan.
+        var admitted = await _uow.InvoiceStore.TryAdmitTicketAsync(
+            ticket.InvoiceId, ticket.SeatId, ticket.ShowTimeId, adminUserId, DateTime.UtcNow);
+        if (!admitted)
+        {
+            throw new InvalidOperationException("Ticket has already been used.");
+        }
 
         return new TicketValidationDTO
         {
