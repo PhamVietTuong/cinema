@@ -44,7 +44,7 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 ### TheaterStaff
 - Box office counter sale (`Quote`/`Sell`), gate ticket scan/lookup, schedule board, incident reporting (not resolving with unblock, which needs `Approvers`), seat-map read (`GetRoomSeatMap`).
 - Cannot: block/unblock a seat or room, apply a POS price override, run staff reports (`StaffReport` region is `Admin`-only despite the staff-sounding name), write any catalog/pricing/theater/movie data (all gated `_adminRole`="Admin" literal, not `RoleNames.TheaterStaff`).
-- Always theater-scoped — JWT carries exactly one `theaterId` claim; `TryGetBackOfficeScope`/`TryGetStaffScope` pin the caller to that theater, 403 if attempting cross-theater access.
+- Always theater-scoped — JWT carries exactly one `theaterId` claim (frozen for the token's 24h life: reassigning, demoting or deactivating the user or the theater does not affect tokens already issued); `TryGetBackOfficeScope`/`TryGetStaffScope` pin the caller to that theater, 403 if attempting cross-theater access.
 
 ### Customer
 - Browse movies/theaters/showtimes (all public/anonymous reads), book seats, pay, manage own profile/notification prefs/2FA, rate/comment on watched movies, view own invoices/tickets.
