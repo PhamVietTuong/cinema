@@ -1,6 +1,8 @@
 :host { display: block; }
 
-$seat-size: 34px;
+// Seat edge length is configurable per app/breakpoint via --cl-seat-size (default 34px keeps
+// CinemaStaff unchanged); CinemaUser lowers it on phones.
+$seat-size: var(--cl-seat-size, 34px);
 $seat-gap: 7px;
 
 .screen-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: var(--cx-space-6, 24px); }
@@ -43,7 +45,7 @@ $seat-gap: 7px;
 }
 .seat-row { display: flex; align-items: center; gap: $seat-gap; }
 .row-label {
-  width: 34px; flex: none; display: flex; align-items: center; justify-content: center;
+  width: $seat-size; flex: none; display: flex; align-items: center; justify-content: center;
   font-family: var(--ml-font-data); font-size: 0.72rem;
   font-weight: var(--cx-weight-medium); color: var(--ml-faint);
 }

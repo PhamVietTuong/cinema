@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 :host { display: block; }
 
 .sr-wrap { position: relative; }
@@ -50,6 +52,6 @@
   50% { transform: translateY(-50%) scale(1.18); }
 }
 
-@media (max-width: 768px) {
+@include m.tablet-small {
   .sr-chevron { display: none; }
 }

@@ -79,7 +79,7 @@
 
 <!-- ── ORDER BAR: fixed summary with hold timer, total and the continue button ── -->
 <div class="order-bar-spacer" *ngIf="totalTickets > 0"></div>
-<div class="order-bar" *ngIf="totalTickets > 0">
+<div class="order-bar" #orderBar *ngIf="totalTickets > 0">
   <div class="order-bar-inner">
     <div class="order-info">
       <span class="order-context">{{ headerLabel || roomName }}</span>

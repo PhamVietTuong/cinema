@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 :host {
   display: block;
 }
@@ -302,9 +304,16 @@
 // ground, so it must be overridden explicitly rather than left to inherit.
 .app-shell { min-height: calc(100vh - 68px); background: transparent; }
 
-@media (max-width: 768px) {
+// The full nav (logo + links + actions) needs ~1000px, so up to the tablet breakpoint it collapses
+// into the burger drawer instead of overflowing at 769-840px.
+@include m.tablet {
   .nav-links { display: none; }
   .nav-actions { display: none; }
-  .nav-burger { display: inline-flex; align-items: center; justify-content: center; }
+  .nav-burger { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
   .topbar-inner { gap: 16px; padding: 0 20px; }
+}
+
+@include m.tablet-small {
+  .topbar-inner { padding: 0 16px; }
+  .mobile-menu a, .mobile-menu button { min-height: 44px; display: flex; align-items: center; }
 }

@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 // "Marquee Ledger" — page header for the routed /booking/seats page. Everything below the header
 // (ticket quantities, seat map, snacks) lives in booking-selection.component.scss, shared with the
 // inline panel embedded on the movie-detail page.
@@ -22,6 +24,10 @@
   text-transform: uppercase; letter-spacing: var(--cx-track-tight);
 }
 
-@media (max-width: 900px) {
+@include m.tablet {
   .page-header-inner { padding-left: 20px; padding-right: 20px; }
+}
+@include m.phone {
+  .page-header-inner { padding-left: 12px; padding-right: 12px; }
+  .page-title { font-size: var(--cx-text-lg); overflow-wrap: anywhere; }
 }

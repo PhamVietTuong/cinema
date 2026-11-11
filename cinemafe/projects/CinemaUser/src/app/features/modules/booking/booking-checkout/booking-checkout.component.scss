@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 // "Marquee Ledger" — Booking step 2/2: payment / checkout.
 
 // ── Page Header ───────────────────────────────────────────────────────────────
@@ -290,8 +292,28 @@
   display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
 }
 
-@media (max-width: 900px) {
-  .checkout-page { grid-template-columns: 1fr; padding: 0 20px 24px; }
+@include m.tablet {
+  .checkout-page { grid-template-columns: minmax(0, 1fr); padding: 0 20px 24px; gap: 20px; }
   .summary-card { position: static; }
   .page-header-inner { padding: 0 20px; }
+}
+
+@include m.tablet-small {
+  .method-row, .disc-row { min-height: 44px; }
+  .btn-back { min-height: 44px; }
+  .ticket-info-grid { grid-template-columns: 1fr; }
+}
+
+@include m.phone {
+  .page-header-inner { padding: 0 12px; }
+  .page-title { font-size: 1.15rem; }
+  .checkout-page { padding: 0 12px 24px; }
+  .form-card, .summary-card { padding: 16px; }
+  .form-card.center { padding: 28px 16px; }
+  .action-row { flex-direction: column-reverse; }
+  .success-page { padding: 40px 12px 56px; }
+  .ticket-top, .ticket-body, .ticket-info, .ticket-qr-section { padding-left: 16px; padding-right: 16px; }
+  .ticket-body { flex-direction: column; }
+  .ticket-total-wrap { text-align: left; }
+  .total-amount { font-size: 1.35rem; }
 }

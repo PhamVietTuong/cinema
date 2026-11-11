@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 // "Marquee Ledger" — ticket quantities → seats → snacks. Shared by the routed /booking/seats page
 // (BookingPageComponent, which supplies its own .page-header) and the inline panel embedded on the
 // movie-detail page (this file's .panel-header, shown only when [embedded]="true").
@@ -49,7 +51,7 @@
   background: var(--ml-panel); border-top: 1px solid var(--ml-rule-strong);
   box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.12);
 }
-.order-bar-spacer { height: 120px; } // reserves room so the fixed bar never covers the last content
+.order-bar-spacer { height: var(--cx-order-bar-h, 120px); } // reserves room so the fixed bar never covers the last content
 .order-bar-inner {
   max-width: 1280px; margin: 0 auto; padding: var(--cx-space-3) 40px;
   display: flex; align-items: center; gap: var(--cx-space-5);
@@ -81,12 +83,33 @@
 }
 .order-cta { width: 100%; justify-content: center; font-size: var(--cx-text-sm); letter-spacing: 0.03em; }
 
-@media (max-width: 900px) {
+@include m.tablet {
   .seat-page { padding: 24px 20px; }
   .order-bar-inner { flex-wrap: wrap; padding: var(--cx-space-3) 20px; gap: var(--cx-space-3); }
   .order-info { flex-basis: 100%; }
   .order-total { flex: 1; }
   .section-wrap, .panel-header { padding-left: 20px; padding-right: 20px; }
+}
+
+// Phone: compact bar — summary text clamped, hold timer + total + CTA share one tight row.
+@include m.phone {
+  .seat-page { padding: 16px 12px 24px; }
+  .section-wrap, .panel-header { padding-left: 12px; padding-right: 12px; }
+  .order-bar-inner { padding: 8px 12px; gap: 8px; }
+  .order-info { flex-basis: 100%; gap: 0; }
+  .order-context { font-size: var(--cx-text-sm); }
+  .order-line {
+    font-size: var(--cx-text-xs);
+    display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .order-hold { padding: 2px 8px; }
+  .order-hold-time { font-size: var(--cx-text-md); }
+  .order-total {
+    flex: 1; min-width: 0; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px;
+  }
+  .order-total-label { display: none; }
+  .total-amount { font-size: var(--cx-text-md); flex: none; }
+  .order-cta { flex: 1; width: auto; min-height: 44px; padding-left: 12px; padding-right: 12px; }
 }
 
 // ── Ticket-quantity / food steppers ────────────────────────────────────────────
@@ -199,3 +222,19 @@
   flex: 1; min-width: 0;
   display: flex; flex-direction: column; justify-content: space-between; gap: var(--cx-space-2);
 }
+
+@include m.tablet-small {
+  .option-qty button { width: 44px; height: 44px; }
+  .panel-close { width: 44px; height: 44px; }
+  .option-grid.food-grid { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
+  .option-card { min-height: 0; }
+}
+@include m.phone {
+  .option-grid.ticket-grid .option-card { flex: 1 1 140px; min-width: 0; }
+  .food-media { width: 72px; height: 72px; }
+}
+
+// Seat map sizing (CinemaLib exposes --cl-seat-size, default 34px). The grid keeps its own
+// overflow-x scroll as the fallback for very wide halls.
+@include m.tablet-small { .seat-area { --cl-seat-size: 30px; } }
+@include m.phone { .seat-area { --cl-seat-size: 28px; } }

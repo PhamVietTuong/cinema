@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 // "Marquee Ledger" — Home page. Movie-card and footer styling now live in
 // app-movie-card / app-site-footer (shared with the Movies list).
 // Shared buttons (.btn-primary-cta / .btn-ghost-cta) are defined globally in styles.scss.
@@ -455,7 +457,7 @@
 }
 
 // ── Responsive ────────────────────────────────────────────────────────────────
-@media (max-width: 1024px) {
+@include m.tablet {
   .hero-inner { padding: 56px 24px; gap: 40px; }
   .hero-visual { display: none; }
   .section { padding: 48px 24px; }
@@ -464,7 +466,7 @@
   .membership-inner { gap: 40px; padding: 40px; }
 }
 
-@media (max-width: 768px) {
+@include m.tablet-small {
   .hero-title { font-size: 2.4rem; }
   .hero-inner { padding: 48px 20px; flex-direction: column; gap: 32px; text-align: center; }
   .hero-content { max-width: 100%; }
@@ -475,4 +477,18 @@
   .membership-inner { flex-direction: column; gap: 36px; padding: 36px 24px; }
   .membership { padding: 48px 20px; }
   .membership-visual { display: none; }
+}
+
+@include m.phone {
+  .hero-title { font-size: 2rem; }
+  .hero-inner { padding: 36px 16px; }
+  .section { padding: 32px 16px; }
+  .section--dark { .section-header, app-scroll-row { padding-left: 16px; padding-right: 16px; } }
+  .section-title { font-size: 1.35rem; }
+  .membership { padding: 32px 16px; }
+  .membership-inner { padding: 28px 16px; gap: 28px; }
+  .promo-card { width: min(320px, 82vw); }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .hero-actions > * { min-height: 44px; justify-content: center; text-align: center; }
+  .section-more { min-height: 44px; }
 }

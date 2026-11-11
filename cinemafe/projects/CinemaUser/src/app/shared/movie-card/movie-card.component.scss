@@ -1,6 +1,8 @@
 // Ticket-stub poster card — no shadow, no lift. Hover raises the border and
 // scales the poster only; a rating/age badge sits on a paper tint, never gold
 // (gold is reserved for the one action — booking).
+@use 'lib/theme/mixins' as m;
+
 :host { display: contents; }
 
 .mc-card {
@@ -18,6 +20,7 @@
   }
 }
 .mc-card--fixed { width: 234px; flex-shrink: 0; }
+@include m.phone { .mc-card--fixed { width: min(234px, 64vw); } }
 
 .mc-poster {
   position: relative;

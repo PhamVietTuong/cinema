@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 // "Night Screening" — Chatbot
 // Tokens (from styles.scss): ground #07080b · panel #101319 · ink #e9edf3 · beam #59d9d2 (action) · gel #ff4e8a (premium)
 //
@@ -6,7 +8,19 @@
 // ticket red, and the panel hardcoded its own dark palette. Both are on tokens
 // now, so the widget follows the theme instead of contradicting it.
 
-:host { position: fixed; right: 22px; bottom: 22px; z-index: 900; }
+:host { position: fixed; right: 22px; bottom: calc(22px + var(--cx-order-bar-h, 0px)); z-index: 900; }
+
+// The booking page's fixed order bar (--cx-order-bar-h, published by BookingSelectionComponent)
+// would sit under the FAB at any width, so :host above lifts the widget over it.
+@include m.tablet-small {
+  :host { right: 14px; bottom: calc(14px + var(--cx-order-bar-h, 0px)); }
+  .cb-fab { width: 48px; height: 48px; }
+  .cb-panel {
+    bottom: 58px;
+    max-height: max(200px, calc(100vh - 140px - var(--cx-order-bar-h, 0px)));
+    max-height: max(200px, calc(100dvh - 140px - var(--cx-order-bar-h, 0px)));
+  }
+}
 
 .cb-fab {
   width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;

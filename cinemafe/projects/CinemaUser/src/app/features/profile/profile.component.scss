@@ -2,6 +2,7 @@
 // (--ml-*), scoped to :host so the rest of CinemaUser keeps Night Screening.
 // pl-* classes mirror CinemaLib's .ad-* helpers of the same name.
 @use 'lib/theme/ledger-tokens' as ledger;
+@use 'lib/theme/mixins' as m;
 
 :host {
   @include ledger.ml-light-tokens;
@@ -29,6 +30,7 @@
 }
 
 // ── Identity card ───────────────────────────────────────────────────────────
+.pl-id, .pl-content { min-width: 0; } // lets the wide table scroll inside its wrapper instead of stretching the grid
 .pl-id {
   background: var(--ml-panel);
   border: 1px solid var(--ml-rule);
@@ -200,7 +202,7 @@
   background: var(--ml-panel-2); border-top: 1px dashed var(--ml-rule);
 }
 .pl-eticket {
-  display: flex; align-items: center; gap: 16px; min-width: 300px; flex: 1;
+  display: flex; align-items: center; gap: 16px; min-width: min(300px, 100%); flex: 1;
   padding: 12px 16px; border-radius: var(--ml-r-md);
   background: var(--ml-panel); border: 1px solid var(--ml-rule);
 }
@@ -271,18 +273,25 @@
 }
 
 // ── Responsive ────────────────────────────────────────────────────────────────
-@media (max-width: 860px) {
+@include m.tablet-small {
   .pl-page { grid-template-columns: minmax(0, 1fr); padding: 18px 16px 36px; }
-  .pl-id, .pl-content { min-width: 0; }
   .pl-id { position: static; }
   .pl-nav { flex-direction: row; overflow-x: auto; }
-  .pl-nav button { width: auto; flex: none; white-space: nowrap; }
+  .pl-nav button { width: auto; flex: none; white-space: nowrap; min-height: 44px; }
   .pl-stats, .pl-stats--4 { grid-template-columns: 1fr 1fr; }
   .pl-row-2, .pl-row-3 { grid-template-columns: 1fr; }
   .pl-h1 { font-size: 21px; }
   .pl-pager-info { flex-basis: 100%; }
+  .pl-btn { min-height: 44px; }
+  .pl-input { height: 44px; }
+  .pl-table-wrap { max-width: 100%; }
 }
 
-@media (max-width: 420px) {
+@include m.phone {
+  .pl-page { padding: 14px 12px 32px; }
   .pl-id-meta-row { flex-wrap: wrap; gap: 4px; }
+  .pl-stats, .pl-stats--4 { grid-template-columns: 1fr; }
+  .pl-eticket { flex-direction: column; align-items: stretch; }
+  .pl-eticket-info { border-right: none; padding-right: 0; }
+  .pl-eticket-qr { align-self: center; }
 }

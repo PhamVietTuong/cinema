@@ -1,4 +1,5 @@
 @use 'lib/theme/base';
+@use 'lib/theme/mixins' as m;
 @use 'lib/theme/tokens';
 @use 'lib/theme/ledger-tokens' as ledger;
 // Angular Material's colour system — generated once from SCSS (see the usage
@@ -488,4 +489,14 @@ a {
   background: transparent;
   box-shadow: none;
   overflow: visible;
+}
+
+// Touch targets >= 44px on small screens (seat-map seats are the one documented exception — see
+// docs/02-product/features.md). min-height only, so desktop sizing is unaffected.
+@include m.tablet-small {
+  .btn-primary-cta, .btn-ghost-cta, .mc-btn, .auth-seg, .promo-tab,
+  .mat-mdc-button, .mat-mdc-raised-button, .mat-mdc-outlined-button, .mat-mdc-unelevated-button,
+  button[type='submit'] { min-height: 44px; }
+  .forgot-link { display: inline-flex; align-items: center; min-height: 44px; }
+  .logo-link, .sf-logo { display: inline-flex; align-items: center; min-height: 44px; }
 }

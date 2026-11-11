@@ -112,7 +112,10 @@ export class LoginComponent implements AfterViewInit {
       callback: (resp: { credential: string }) => this._onGoogleCredential(resp),
     });
     if (this.googleBtn) {
-      google.accounts.id.renderButton(this.googleBtn.nativeElement, { theme: 'outline', size: 'large', width: 360 });
+      // Fluid: fit the container on narrow phones (GIS accepts 200-400px), 360px max elsewhere.
+      const available = this.googleBtn.nativeElement.getBoundingClientRect().width || this.googleBtn.nativeElement.parentElement?.clientWidth || 360;
+      const width = Math.max(200, Math.min(360, Math.floor(available)));
+      google.accounts.id.renderButton(this.googleBtn.nativeElement, { theme: 'outline', size: 'large', width });
     }
   }
 
