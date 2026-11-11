@@ -1,2 +1,8 @@
+@use 'lib/theme/mixins' as m;
+
 .fields { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+@include m.tablet-small {
+  .row { grid-template-columns: 1fr; }
+}

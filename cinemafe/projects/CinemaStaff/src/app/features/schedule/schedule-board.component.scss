@@ -1,3 +1,4 @@
+@use 'lib/theme/mixins' as m;
 .legend { display: flex; gap: 16px; margin-bottom: 8px; color: var(--ml-muted); font-size: 13px; }
 .swatch { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: middle; }
 .swatch--show { background: var(--ml-action-strong); }
@@ -20,3 +21,21 @@
 .buffer { position: absolute; top: 8px; height: 56px; border-radius: 0 6px 6px 0; box-sizing: border-box;
   background: repeating-linear-gradient(45deg, var(--ml-warn-soft), var(--ml-warn-soft) 4px, transparent 4px, transparent 8px);
   border: 1px dashed var(--ml-warn-ink); border-left: 0; }
+
+// The board scrolls inside .board-scroll; the room column stays pinned while scrolling sideways.
+.board-scroll { max-width: 100%; }
+.room-cell { position: sticky; left: 0; z-index: 3; background: var(--ml-panel); min-width: 0; overflow: hidden; overflow-wrap: anywhere; }
+
+@include m.tablet-small {
+  .legend { flex-wrap: wrap; gap: 8px 16px; }
+  .board { min-width: 860px; }
+  .board-row { grid-template-columns: 140px 1fr; }
+  .day-nav { flex-wrap: wrap; }
+  .day-nav .ad-input { flex: 1 1 140px; min-width: 0; }
+}
+
+@include m.phone {
+  .board { min-width: 760px; }
+  .board-row { grid-template-columns: 112px 1fr; }
+  .room-cell { padding: 8px; }
+}

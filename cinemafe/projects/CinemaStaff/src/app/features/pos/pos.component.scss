@@ -1,12 +1,19 @@
+@use 'lib/theme/mixins' as m;
 @use '../../core/counter-shared';
 
 :host { display: block; }
 
-.pos-layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; align-items: start; }
+.pos-layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 400px); gap: 16px; align-items: start; }
 .pos-main, .pos-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .pos-side { position: sticky; top: 16px; }
-@media (max-width: 1100px) {
-  .pos-layout { grid-template-columns: 1fr; }
+
+// Tablet counter: keep the two panes side by side; the tender column is fluid (clamp above).
+@include m.tablet {
+  .pos-layout { gap: 12px; }
+}
+
+@include m.tablet-small {
+  .pos-layout { grid-template-columns: minmax(0, 1fr); }
   .pos-side { position: static; }
 }
 

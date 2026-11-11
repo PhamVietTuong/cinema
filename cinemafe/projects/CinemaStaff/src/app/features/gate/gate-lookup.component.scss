@@ -1,3 +1,4 @@
+@use 'lib/theme/mixins' as m;
 .lookup-form { display: flex; flex-direction: column; gap: 4px; }
 .or { display: flex; align-items: center; gap: 10px; color: var(--ml-muted); font-size: 0.8rem; margin: 8px 0; }
 .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--ml-rule); }
@@ -10,3 +11,12 @@
 .ticket-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--ml-panel-3, rgba(0, 0, 0, 0.08)); }
 .seat { min-width: 48px; }
 .info { flex: 1 1 160px; }
+
+@include m.tablet-small {
+  .seat { min-width: 48px; min-height: 44px; }
+}
+
+@include m.phone {
+  .invoice-head { flex-wrap: wrap; }
+  .ticket-row .info { flex-basis: 100%; }
+}

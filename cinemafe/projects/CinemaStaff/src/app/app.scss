@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 :host { display: block; }
 
 // Theater picker projected into the shell's [topbarExtra] slot — sits on the fixed dark topbar chrome.
@@ -5,9 +7,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   color: var(--ml-chrome-muted);
 
-  mat-icon { font-size: 19px; width: 19px; height: 19px; }
+  mat-icon { font-size: 19px; width: 19px; height: 19px; flex: none; }
 
   select {
     min-width: 180px;
@@ -17,8 +20,13 @@
     border-color: var(--ml-chrome-rule);
     color: var(--ml-chrome-ink);
   }
-}
 
-@media (max-width: 768px) {
-  .theater-picker select { min-width: 0; max-width: 130px; }
+  @include m.tablet-small {
+    select { min-width: 0; max-width: 160px; height: 44px; }
+  }
+
+  @include m.phone {
+    mat-icon { display: none; }
+    select { max-width: 56px; padding-left: 6px; padding-right: 18px; }
+  }
 }

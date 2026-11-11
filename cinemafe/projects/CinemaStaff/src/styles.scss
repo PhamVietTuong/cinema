@@ -1,6 +1,7 @@
 // CinemaStaff's visual identity ("Marquee Ledger") is defined once in CinemaLib so
 // any future admin-style app (for a different role) can adopt the same look with
 // this one line, instead of redefining hundreds of lines of tokens/components per app.
+@use 'lib/theme/mixins' as m;
 @use 'lib/theme/marquee-ledger';
 
 // Angular Material's own component palette (dialogs, selects, datepickers, menus,
@@ -41,4 +42,13 @@
       tertiary: mat.$cyan-palette,
     ),
   ));
+}
+
+// Long free-text values (reasons, entity names) wrap inside mobile card rows instead of widening the page.
+.ad-mobile-card-row > span:last-child { min-width: 0; overflow-wrap: anywhere; text-align: right; }
+
+// Material selects/inputs reach the 44px touch target on small screens.
+@include m.tablet-small {
+  .mat-mdc-select, .mat-mdc-form-field-infix { min-height: 44px; }
+  .mat-mdc-select { display: flex; align-items: center; }
 }

@@ -1,3 +1,4 @@
+@use 'lib/theme/mixins' as m;
 .run-row { display: flex; align-items: center; gap: 16px; margin: 12px 0 16px; }
 .error { color: var(--ml-danger-ink, #b3261e); }
 .muted { color: var(--ml-muted); }
@@ -12,3 +13,19 @@
 .report-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .report-table .rate { min-width: 160px; }
 .report-table tfoot th { border-top: 2px solid var(--ml-panel-3, rgba(0, 0, 0, 0.2)); }
+
+// Wide numeric report tables scroll inside their own wrapper, never the page.
+.table-wrap { max-width: 100%; }
+.kpi-val { overflow-wrap: anywhere; min-width: 0; }
+
+@include m.tablet-small {
+  .run-row { flex-wrap: wrap; }
+  .run-row button { min-height: 44px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@include m.phone {
+  .run-row button { width: 100%; }
+  .section { padding: 12px; }
+  .report-table th, .report-table td { padding: 8px; }
+}

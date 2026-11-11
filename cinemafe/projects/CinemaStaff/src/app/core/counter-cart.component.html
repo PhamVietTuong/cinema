@@ -56,7 +56,7 @@
               <td><strong>{{ t.label }}</strong> @if (t.isDouble) { <small>({{ 'seatMap.legendDouble' | translate }})</small> }</td>
               <td>
                 <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-cat">
-                  <mat-select [value]="t.patronCategoryId" (selectionChange)="cart.setCategory(t, $event.value)">
+                  <mat-select [attr.aria-label]="'ticket.category' | translate" [value]="t.patronCategoryId" (selectionChange)="cart.setCategory(t, $event.value)">
                     @for (row of cart.rowsFor(t.isDouble); track row.patronCategoryId) {
                       <mat-option [value]="row.patronCategoryId">{{ row.patronCategoryName }} · {{ row.price | number:'1.0-0' }}đ</mat-option>
                     }
