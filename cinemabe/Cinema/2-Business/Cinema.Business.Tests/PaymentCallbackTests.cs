@@ -157,6 +157,41 @@ public class PaymentCallbackTests
     }
 
     [Fact]
+    public async Task HandlePaymentCallbackAsync_SandboxCallbackOnVnPayInvoice_IsRejected_NoWrites()
+    {
+        // A1: an unsigned Sandbox callback must not finalize an invoice owned by VNPay.
+        var invoice = PendingInvoice();
+        invoice.PaymentMethod = "VNPay";
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        var callback = new Dictionary<string, string> { ["invoiceId"] = invoice.Id.ToString() };
+
+        var handling = await _sut.HandlePaymentCallbackAsync("Sandbox", callback);
+
+        handling.Outcome.Should().NotBe(PaymentCallbackOutcome.Confirmed);
+        invoice.Status.Should().Be(InvoiceStatus.Pending);
+        _uowMock.Verify(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>()), Times.Never);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentAsync_InvoiceOwnedByUnavailableProvider_DoesNotFallBackToSandbox()
+    {
+        // A2: the client picked PaymentMethod freely; an unknown/unconfigured name resolves to the default
+        // gateway (Sandbox here) and must not be allowed to approve the confirm.
+        var userId = Guid.NewGuid();
+        var invoice = PendingInvoice();
+        invoice.UserId = userId;
+        invoice.PaymentMethod = "SomethingElse";
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+
+        var confirmed = await _sut.ConfirmPaymentAsync(userId, invoice.Id, "any-reference");
+
+        confirmed.Should().BeFalse();
+        invoice.Status.Should().Be(InvoiceStatus.Pending);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
     public async Task HandlePaymentCallbackAsync_Sandbox_MissingInvoiceId_ReturnsRejected()
     {
         var handling = await _sut.HandlePaymentCallbackAsync("Sandbox", new Dictionary<string, string>());

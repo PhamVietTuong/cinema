@@ -33,6 +33,7 @@ public class BookingConfirmationTemplateTests
             Code = "CIN2026101712375",
             UserId = userId,
             Status = InvoiceStatus.Pending,
+            PaymentMethod = "Sandbox",
             FinalAmount = 160000,
             TotalAmount = 160000,
         };

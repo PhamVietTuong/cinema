@@ -987,7 +987,14 @@ public class BookingManager : IBookingManager
         // Verify with the invoice's provider (must succeed and the captured amount must match FinalAmount).
         // Only the dev Sandbox approves this synchronous path; real providers are callback-authoritative, so
         // this returns false for them and the invoice is instead finalized by HandlePaymentCallbackAsync.
-        var verification = await _gateways.Resolve(invoice.PaymentMethod).VerifyPaymentAsync(reference, invoice.FinalAmount);
+        // The resolved gateway must be the invoice's own: Resolve() falls back to the default provider for an
+        // unknown/unconfigured name, which must not let a client-chosen PaymentMethod pick the approving gateway.
+        var gateway = _gateways.Resolve(invoice.PaymentMethod);
+        if (!string.Equals(invoice.PaymentMethod, gateway.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+        var verification = await gateway.VerifyPaymentAsync(reference, invoice.FinalAmount);
         if (!verification.Success)
         {
             return false;
@@ -1021,6 +1028,14 @@ public class BookingManager : IBookingManager
         if (invoice == null)
         {
             LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: no invoice for callback reference from {gateway.Name}. InvoiceId={result.InvoiceId}");
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
+        }
+
+        // The callback must come from the provider that owns this invoice (set at InitiatePayment). Otherwise an
+        // unsigned Sandbox callback could finalize an invoice that was meant to be paid through VNPay.
+        if (!string.Equals(invoice.PaymentMethod, gateway.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: provider mismatch for invoice {invoice.Id}. Invoice={invoice.PaymentMethod}, Callback={gateway.Name}");
             return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
         }
 

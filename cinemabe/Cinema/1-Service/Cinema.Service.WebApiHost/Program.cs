@@ -50,10 +50,17 @@ if (twilioOptions.IsConfigured)
     builder.Services.AddSingleton<Cinema.Business.Contracts.ISmsNotificationService, Cinema.Business.Notifications.TwilioSmsNotificationService>();
 }
 
-// Payment gateways. Sandbox is always available for dev; VNPay activates when its
-// "Payments:*" config is filled in. "Payments:Provider" picks the default provider (Sandbox when unset).
+// Payment gateways. The Sandbox gateway approves unsigned callbacks and synchronous confirms, so it is
+// registered only in Development or when "Payments:EnableSandbox" is explicitly true (CI e2e, docker-compose
+// demo) — never by default in Production. VNPay activates when its "Payments:*" config is filled in.
+// "Payments:Provider" picks the default provider.
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGateway, Cinema.Business.Payments.SandboxPaymentGateway>();
+var sandboxPaymentsEnabled = builder.Environment.IsDevelopment()
+    || builder.Configuration.GetValue<bool>("Payments:EnableSandbox");
+if (sandboxPaymentsEnabled)
+{
+    builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGateway, Cinema.Business.Payments.SandboxPaymentGateway>();
+}
 builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGateway, Cinema.Business.Payments.VnPayGateway>();
 builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGatewayResolver>(sp =>
     new Cinema.Business.Payments.PaymentGatewayResolver(
