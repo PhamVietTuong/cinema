@@ -29,3 +29,8 @@ pagelist.txt
 logs/
 _bmad/
 _bmad-output/
+
+# Build/test output and local tooling files that must not be tracked
+**/TestResults/
+*.log
+*.csproj.user

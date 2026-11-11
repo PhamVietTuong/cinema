@@ -11,8 +11,8 @@
 
 | Job | Runs on | What it does |
 |---|---|---|
-| `backend` | ubuntu-latest | `dotnet restore`/`build -c Release` on `Cinema.sln`, then `dotnet test` on `Cinema.Business.Tests` with coverage, uploads `backend-coverage` artifact. |
-| `frontend` | ubuntu-latest | `npm ci --legacy-peer-deps`, `npm run lint`, builds `CinemaLib`, runs `ng test` for `CinemaLib`/`CinemaUser`/`CinemaAdmin`, production-builds `CinemaUser`/`CinemaAdmin`, uploads `frontend-coverage` artifact. |
+| `backend` | ubuntu-latest | `dotnet restore`/`build -c Release` on `Cinema.sln`, then `dotnet test` on `Cinema.Business.Tests` (with coverage) and `Cinema.Service.WebApiHost.Tests`, enforces the 60% `Cinema.Business` coverage ratchet, uploads `backend-coverage` artifact. |
+| `frontend` | ubuntu-latest | `npm ci --legacy-peer-deps`, `npm run lint`, builds `CinemaLib`, runs `ng test` for `CinemaLib`/`CinemaUser`/`CinemaAdmin`/`CinemaStaff`, production-builds `CinemaUser`/`CinemaAdmin`/`CinemaStaff`, uploads `frontend-coverage` artifact. |
 | `e2e` | ubuntu-latest (30 min timeout) | Spins up a `mssql/server:2022-latest` service container, creates and seeds the `Cinema` DB from `cinemabe/sql/create_db.sql` + `insert_db.sql`, seeds admin/customer accounts via `dotnet run` on `Cinema.Business.Tests`, starts the Web API and `ng serve`s both `CinemaUser`/`CinemaAdmin`, then runs the Playwright suite in `QA-tests/playwright`, uploading the HTML report. |
 
 **There is no deployment/release job** — no `docker build`/`docker push`, no deploy-to-environment

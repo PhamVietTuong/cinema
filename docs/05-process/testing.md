@@ -75,9 +75,13 @@ ng test CinemaAdmin
 ```
 
 - CI (`.github/workflows/ci.yml`) runs `ng test CinemaLib` with coverage (`lcovonly` +
-  `text-summary` reporters), then `ng test CinemaUser` and `ng test CinemaAdmin` without coverage.
-- `CinemaStaff` is **not** run in CI's frontend job (only `CinemaLib`, `CinemaUser`, `CinemaAdmin`
-  appear in `ci.yml`'s frontend/e2e jobs). <!-- TODO: confirm with team whether this is intentional or an oversight. -->
+  `text-summary` reporters), then `ng test CinemaUser`, `ng test CinemaAdmin` and `ng test CinemaStaff`
+  without coverage; `CinemaUser`, `CinemaAdmin` and `CinemaStaff` are all production-built.
+- Backend CI runs two test projects: `Cinema.Business.Tests` (with coverage) and
+  `Cinema.Service.WebApiHost.Tests` (controller architecture, role authorization, IPN contract). A coverage
+  ratchet, `.github/scripts/check-coverage.py 60 Cinema.Business`, fails the build when the line coverage of
+  the `Cinema.Business` package drops below 60% (it was 63.4% when the gate was added — raise the number as
+  coverage grows, never lower it).
 
 ## QA-tests harness
 
@@ -125,7 +129,6 @@ the customer account `khach01@cinema.vn` comes from `sql/insert_db.sql`.
 
 ## What's not covered (only stated where verifiable)
 
-- No `CinemaStaff` unit tests are run in CI (see above).
 - No dedicated backend integration tests against a real database were found — the CI comment on
   the `dotnet test` step states "xUnit tests use Moq — no database required," i.e. the backend
   suite is unit-level only; database-dependent behavior is exercised only via the CI `e2e` job's

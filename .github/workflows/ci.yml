@@ -22,6 +22,12 @@ jobs:
       - run: dotnet build Cinema.sln --no-restore -c Release
       # xUnit tests use Moq — no database required.
       - run: dotnet test Cinema/2-Business/Cinema.Business.Tests --no-build -c Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory TestResults
+      # Controller architecture, authorization and IPN-contract tests live in their own project.
+      - run: dotnet test Cinema/1-Service/Cinema.Service.WebApiHost.Tests --no-build -c Release --verbosity normal
+      # Coverage ratchet for the business layer (the core). Raise the number as coverage grows; never lower it.
+      - name: Enforce business-layer coverage
+        working-directory: .
+        run: python3 .github/scripts/check-coverage.py 60 Cinema.Business $(find cinemabe/TestResults -name coverage.cobertura.xml)
       - name: Upload backend coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -53,8 +59,10 @@ jobs:
       - run: npx ng test CinemaLib   --watch=false --coverage --coverage-reporters lcovonly --coverage-reporters text-summary
       - run: npx ng test CinemaUser  --watch=false
       - run: npx ng test CinemaAdmin --watch=false
+      - run: npx ng test CinemaStaff --watch=false
       - run: npx ng build CinemaUser --configuration production
       - run: npx ng build CinemaAdmin --configuration production
+      - run: npx ng build CinemaStaff --configuration production
       - name: Upload frontend coverage
         if: always()
         uses: actions/upload-artifact@v4
