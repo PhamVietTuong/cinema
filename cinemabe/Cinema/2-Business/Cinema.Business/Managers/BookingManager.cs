@@ -489,11 +489,11 @@ public class BookingManager : IBookingManager
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is already booked.");
                 }
 
-                // Reject a seat another user is actively holding (SignalR lock). Enforced only when the
-                // client supplies its connection id, so the booker's own held seats still pass. IsSeatLocked
-                // applies the 5-minute lock expiry and the owner (connection) exclusion.
-                if (!string.IsNullOrEmpty(input.ConnectionId)
-                    && IsSeatLocked(showTimeId, roomId, seatItem.SeatId, input.ConnectionId))
+                // Reject a seat another user is actively holding (SignalR lock). With a connection id the
+                // booker's own held seats still pass; without one (a direct API call) no live lock can be the
+                // caller's, so any live lock blocks. IsSeatLocked applies the lock expiry and owner exclusion.
+                var bookerConnection = string.IsNullOrEmpty(input.ConnectionId) ? null : input.ConnectionId;
+                if (IsSeatLocked(showTimeId, roomId, seatItem.SeatId, bookerConnection))
                 {
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
                 }
@@ -1845,16 +1845,29 @@ public class BookingManager : IBookingManager
         }
     }
 
-    public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
-        => _lockedSeats[SeatKey(showTimeId, roomId, seatId)] = (connectionId, DateTime.UtcNow);
+    // How long an advisory seat lock lives before another viewer may take the seat.
+    private static readonly TimeSpan _seatLockTtl = TimeSpan.FromMinutes(5);
 
-    public void UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
+    public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
+        => _lockedSeats.AddOrUpdate(
+            SeatKey(showTimeId, roomId, seatId),
+            _ => (connectionId, DateTime.UtcNow),
+            // Re-locking a seat the connection already holds must not renew it: otherwise one client could keep a
+            // seat for as long as it keeps clicking, instead of the fixed hold window.
+            (_, existing) => existing.ConnectionId == connectionId && DateTime.UtcNow - existing.LockedAt <= _seatLockTtl
+                ? existing
+                : (connectionId, DateTime.UtcNow));
+
+    /// <summary>Releases the lock only when it belongs to <paramref name="connectionId"/>. Returns true when a lock
+    /// was actually removed, so callers broadcast SeatUnlocked only for a real release.</summary>
+    public bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
     {
         var key = SeatKey(showTimeId, roomId, seatId);
         if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId)
         {
-            _lockedSeats.TryRemove(key, out _);
+            return _lockedSeats.TryRemove(key, out _);
         }
+        return false;
     }
 
     public bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null)
@@ -1868,7 +1881,7 @@ public class BookingManager : IBookingManager
         {
             return false;
         }
-        if (DateTime.UtcNow - info.LockedAt > TimeSpan.FromMinutes(5))
+        if (DateTime.UtcNow - info.LockedAt > _seatLockTtl)
         {
             _lockedSeats.TryRemove(key, out _);
             return false;

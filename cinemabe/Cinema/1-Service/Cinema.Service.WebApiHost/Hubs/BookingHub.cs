@@ -32,8 +32,12 @@ public class BookingHub : Hub
 
     public async Task UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId)
     {
-        _bookingManager.UnlockSeat(showTimeId, roomId, seatId, Context.ConnectionId);
-        await Clients.Group(RoomGroup(showTimeId, roomId)).SendAsync("SeatUnlocked", seatId);
+        // Broadcast only a real release: a non-owner's unlock changes nothing, and announcing it would make
+        // other viewers show a still-held seat as free.
+        if (_bookingManager.UnlockSeat(showTimeId, roomId, seatId, Context.ConnectionId))
+        {
+            await Clients.Group(RoomGroup(showTimeId, roomId)).SendAsync("SeatUnlocked", seatId);
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)

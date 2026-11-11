@@ -1112,6 +1112,115 @@ public class BookingServiceTests
         _sut.IsSeatLocked(ShowTimeId2, RoomId1, SeatId21, excludeConnectionId: "my-conn").Should().BeTrue();
     }
 
+    [Fact]
+    public async Task CreateBookingAsync_NoConnectionId_RejectsSeatHeldByAnyone()
+    {
+        // A11: a direct API call without a connection id must not steal a seat someone is actively holding.
+        var heldSeat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, heldSeat, "other-conn");
+
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, Room = new Room { Id = RoomId1, Status = RoomStatus.Active } });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        SetupSeatsById(new Dictionary<Guid, Seat> { [heldSeat] = new() { Id = heldSeat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = heldSeat } },
+            ConnectionId  = null,
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*held by another user*");
+    }
+
+    [Fact]
+    public void UnlockSeat_ByOtherConnection_KeepsTheLockAndReportsNoRelease()
+    {
+        // A18: a non-owner's unlock must not release the seat, and must not be reported as a release.
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "owner");
+
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, seat, "intruder").Should().BeFalse();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat).Should().BeTrue();
+
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, seat, "owner").Should().BeTrue();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat).Should().BeFalse();
+    }
+
+    [Fact]
+    public void UnlockSeat_WhenNothingIsLocked_ReportsNoRelease()
+    {
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, Guid.NewGuid(), "anyone").Should().BeFalse();
+    }
+
+    [Fact]
+    public void LockSeat_ReLockBySameConnection_DoesNotRenewTheHoldWindow()
+    {
+        // A17: re-locking must keep the original LockedAt, so the hold still expires 5 minutes after the first lock.
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "conn");
+        var first = LockedAtOf(ShowTimeId1, RoomId1, seat);
+
+        Thread.Sleep(20);
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "conn");
+
+        LockedAtOf(ShowTimeId1, RoomId1, seat).Should().Be(first);
+    }
+
+    [Fact]
+    public void LockSeat_AfterExpiry_TakesANewLockForTheNextConnection()
+    {
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "old-conn");
+        BackdateLock(ShowTimeId1, RoomId1, seat, TimeSpan.FromMinutes(6));
+
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat).Should().BeFalse("the 5-minute lock has expired");
+
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "new-conn");
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, excludeConnectionId: "old-conn").Should().BeTrue();
+    }
+
+    [Fact]
+    public void ReleaseConnectionLocks_RemovesOnlyThatConnectionsSeats()
+    {
+        var mine1 = Guid.NewGuid();
+        var mine2 = Guid.NewGuid();
+        var theirs = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, mine1, "leaving");
+        _sut.LockSeat(ShowTimeId1, RoomId1, mine2, "leaving");
+        _sut.LockSeat(ShowTimeId1, RoomId1, theirs, "staying");
+
+        var released = _sut.ReleaseConnectionLocks("leaving");
+
+        released.Select(r => r.SeatId).Should().BeEquivalentTo(new[] { mine1, mine2 });
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, theirs).Should().BeTrue();
+    }
+
+    // The lock store is a private static dictionary; reach into it to read/age a lock without sleeping 5 minutes.
+    private static System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)> LockStore()
+        => (System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)>)
+            typeof(BookingManager).GetField("_lockedSeats", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .GetValue(null)!;
+
+    private static string KeyFor(Guid showTimeId, Guid roomId, Guid seatId)
+        => (string)typeof(BookingManager).GetMethod("SeatKey", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .Invoke(null, new object[] { showTimeId, roomId, seatId })!;
+
+    private static DateTime LockedAtOf(Guid showTimeId, Guid roomId, Guid seatId)
+        => LockStore()[KeyFor(showTimeId, roomId, seatId)].LockedAt;
+
+    private static void BackdateLock(Guid showTimeId, Guid roomId, Guid seatId, TimeSpan age)
+    {
+        var key = KeyFor(showTimeId, roomId, seatId);
+        var existing = LockStore()[key];
+        LockStore()[key] = (existing.ConnectionId, DateTime.UtcNow - age);
+    }
+
     // ── Promo code validation (code-triggered PromotionProgram) ─────────────────
 
     private PromotionProgram SetupCodeProgram(Action<PromotionProgram>? tweak = null)
