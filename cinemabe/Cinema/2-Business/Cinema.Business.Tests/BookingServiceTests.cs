@@ -14,6 +14,9 @@ using Moq;
 
 namespace Cinema.Business.Tests;
 
+[Trait("Req", "BR-SEAT-01")]
+[Trait("Req", "BR-SEAT-02")]
+[Trait("Req", "BR-PAY-05")]
 public class BookingServiceTests
 {
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();
@@ -1662,7 +1665,7 @@ public class BookingServiceTests
         result.AppliedPromotionTitle.Should().BeNull();
     }
 
-    private async Task<BookingResultDTO> BookWithRedemptionAsync(Guid customerId, User customer, CreateBookingRequest overrides)
+    private async Task<BookingResultDTO> BookWithRedemptionAsync(Guid customerId, User customer, CreateBookingRequest overrides, Action? configure = null)
     {
         var theaterId    = Guid.NewGuid();
         var roomTypeId   = Guid.NewGuid();
@@ -1693,7 +1696,53 @@ public class BookingServiceTests
             GiftCardCode    = overrides.GiftCardCode,
             PaymentMethod   = "Sandbox",
         };
+        configure?.Invoke();
         return await _sut.CreateBookingAsync(customerId, request);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_SeatTakenByAnotherServerAtInsert_IsRolledBackAsJustBooked()
+    {
+        // B7: the DB unique index rejects the ticket insert (a booking on another instance won the seat).
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 0 };
+
+        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest(), () =>
+                _uowMock.Setup(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()))
+                    .ThrowsAsync(new SeatUnavailableException("taken"))))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*just booked*");
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_InactiveGiftCard_IsRejectedAndRolledBack()
+    {
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 0 };
+        var card = new GiftCard { Id = Guid.NewGuid(), Code = "GC1", IsActive = false, Balance = 30000 };
+        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC1")).ReturnsAsync(card);
+
+        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { GiftCardCode = "GC1" }))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("Invalid or expired gift card*");
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.GiftCardStore.TryDrawBalanceAsync(It.IsAny<Guid>(), It.IsAny<double>()), Times.Never);
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ExpiredGiftCard_IsRejectedAndRolledBack()
+    {
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 0 };
+        var card = new GiftCard { Id = Guid.NewGuid(), Code = "GC2", IsActive = true, Balance = 30000, ExpiresAt = DateTime.UtcNow.AddDays(-1) };
+        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC2")).ReturnsAsync(card);
+
+        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { GiftCardCode = "GC2" }))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("Invalid or expired gift card*");
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.GiftCardStore.TryDrawBalanceAsync(It.IsAny<Guid>(), It.IsAny<double>()), Times.Never);
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
     }
 
     [Fact]

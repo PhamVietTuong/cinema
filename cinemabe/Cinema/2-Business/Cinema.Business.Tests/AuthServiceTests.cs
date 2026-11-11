@@ -12,6 +12,7 @@ using Moq;
 
 namespace Cinema.Business.Tests;
 
+[Trait("Req", "BR-AUTH-02")]
 public class AuthServiceTests
 {
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();
@@ -169,6 +170,37 @@ public class AuthServiceTests
 
         await _sut.Invoking(s => s.LoginAsync(new LoginRequest { EmailOrPhone = "test@test.com", Password = "WrongPassword@1" }))
             .Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task Login_FiveWrongPasswords_LocksTheAccount_ThenTheCorrectPasswordIsRefused()
+    {
+        using var hmac = new System.Security.Cryptography.HMACSHA512();
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "lock@test.com",
+            Name = "Lock Test",
+            PasswordSalt = hmac.Key,
+            PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes("CorrectPassword@1")),
+            UserTypeId = Guid.NewGuid(),
+            UserType = new UserType { Name = "User" },
+            EmailConfirmed = true
+        };
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("lock@test.com")).ReturnsAsync(user);
+        _uowMock.Setup(u => u.UserStore.GetByPhoneAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            await _sut.Invoking(s => s.LoginAsync(new LoginRequest { EmailOrPhone = "lock@test.com", Password = "WrongPassword@1" }))
+                .Should().ThrowAsync<UnauthorizedAccessException>();
+        }
+        user.LockoutEndUtc.Should().NotBeNull();
+        user.LockoutEndUtc!.Value.Should().BeAfter(DateTime.UtcNow);
+
+        await _sut.Invoking(s => s.LoginAsync(new LoginRequest { EmailOrPhone = "lock@test.com", Password = "CorrectPassword@1" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("*locked*");
+        _tokenMock.Verify(t => t.GenerateToken(It.IsAny<User>()), Times.Never);
     }
 
     [Fact]

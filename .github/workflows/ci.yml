@@ -22,6 +22,12 @@ jobs:
       - run: dotnet build Cinema.sln --no-restore -c Release
       # xUnit tests use Moq — no database required.
       - run: dotnet test Cinema/2-Business/Cinema.Business.Tests --no-build -c Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory TestResults
+      # Controller architecture, authorization and IPN-contract tests live in their own project.
+      - run: dotnet test Cinema/1-Service/Cinema.Service.WebApiHost.Tests --no-build -c Release --verbosity normal
+      # Coverage ratchet for the business layer (the core). Raise the number as coverage grows; never lower it.
+      - name: Enforce business-layer coverage
+        working-directory: .
+        run: python3 .github/scripts/check-coverage.py 60 Cinema.Business $(find cinemabe/TestResults -name coverage.cobertura.xml)
       - name: Upload backend coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -53,8 +59,10 @@ jobs:
       - run: npx ng test CinemaLib   --watch=false --coverage --coverage-reporters lcovonly --coverage-reporters text-summary
       - run: npx ng test CinemaUser  --watch=false
       - run: npx ng test CinemaAdmin --watch=false
+      - run: npx ng test CinemaStaff --watch=false
       - run: npx ng build CinemaUser --configuration production
       - run: npx ng build CinemaAdmin --configuration production
+      - run: npx ng build CinemaStaff --configuration production
       - name: Upload frontend coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -88,6 +96,10 @@ jobs:
       CINEMA_USER_URL: 'http://localhost:4202'
       CINEMA_ADMIN_URL: 'http://localhost:4201'
       CINEMA_STAFF_URL: 'http://localhost:4203'
+      # A throw-away VNPay merchant for the callback contract specs: the API signs/verifies with this secret and the
+      # specs sign their IPNs with the same value. Not a real credential.
+      VNPAY_TMN_CODE: 'CIE2ETMN'
+      VNPAY_HASH_SECRET: 'ci-only-vnpay-hash-secret-0123456789'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -120,6 +132,11 @@ jobs:
             sqlcmd -C -I -b -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -f 65001 -i "sql/$script.sql"
           done
 
+      - name: Move past showtimes to tomorrow
+        # insert_db.sql builds its showtime grid relative to the day it was written; the booking spec needs an
+        # upcoming one and fails (never skips) without it.
+        run: sqlcmd -C -I -b -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -f 65001 -i e2e/sql/seed-future-showtime.sql
+
       - name: Seed the admin + customer accounts
         working-directory: cinemabe
         env:
@@ -134,6 +151,8 @@ jobs:
           ASPNETCORE_URLS: 'http://localhost:5102'
           # The e2e flow pays through the Sandbox gateway, which is off outside Development by default.
           Payments__EnableSandbox: 'true'
+          Payments__VnPay__TmnCode: ${{ env.VNPAY_TMN_CODE }}
+          Payments__VnPay__HashSecret: ${{ env.VNPAY_HASH_SECRET }}
           AllowedOrigins__0: 'http://localhost:4202'
           AllowedOrigins__1: 'http://localhost:4201'
           AllowedOrigins__2: 'http://localhost:4203'
@@ -165,6 +184,8 @@ jobs:
 
       - name: Run Playwright
         working-directory: e2e
+        env:
+          E2E_VNPAY_HASH_SECRET: ${{ env.VNPAY_HASH_SECRET }}
         run: |
           npm ci
           npx playwright install --with-deps chromium

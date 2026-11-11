@@ -6,6 +6,8 @@ using FluentAssertions;
 
 namespace Cinema.Business.Tests;
 
+[Trait("Req", "BR-PAY-02")]
+[Trait("Req", "BR-PAY-04")]
 public class VnPayGatewayTests
 {
 
@@ -35,6 +37,36 @@ public class VnPayGatewayTests
         var initiation = await gateway.CreatePaymentAsync(Guid.NewGuid(), 100_000, null, "203.0.113.7");
 
         QueryOf(initiation.RedirectUrl)["vnp_IpAddr"].Should().Be("203.0.113.7");
+    }
+
+    // VNPay retries an IPN for 50 minutes unless it gets the exact code it expects, so every business outcome is pinned
+    // to its documented RspCode (the controller serializes this DTO as {"RspCode":"..","Message":".."}).
+    [Theory]
+    [InlineData(PaymentCallbackOutcome.Confirmed, "00")]
+    [InlineData(PaymentCallbackOutcome.PaymentFailedAcknowledged, "00")]   // acknowledged, so VNPay stops retrying
+    [InlineData(PaymentCallbackOutcome.OrderNotFound, "01")]
+    [InlineData(PaymentCallbackOutcome.AlreadyConfirmed, "02")]
+    [InlineData(PaymentCallbackOutcome.NotPending, "02")]
+    [InlineData(PaymentCallbackOutcome.InvalidAmount, "04")]
+    [InlineData(PaymentCallbackOutcome.InvalidSignature, "97")]
+    [InlineData(PaymentCallbackOutcome.Rejected, "99")]
+    [InlineData(PaymentCallbackOutcome.Error, "99")]
+    public void BuildIpnResponse_PinsTheExactRspCodeForEveryOutcome(PaymentCallbackOutcome outcome, string expectedCode)
+    {
+        VnPayGateway.BuildIpnResponse(outcome).RspCode.Should().Be(expectedCode);
+    }
+
+    [Fact]
+    public void BuildIpnResponse_CoversEveryDefinedOutcome()
+    {
+        // Guards the theory above: a new PaymentCallbackOutcome must get an explicit code, not fall into the default.
+        var pinned = new[]
+        {
+            PaymentCallbackOutcome.Confirmed, PaymentCallbackOutcome.PaymentFailedAcknowledged, PaymentCallbackOutcome.OrderNotFound,
+            PaymentCallbackOutcome.AlreadyConfirmed, PaymentCallbackOutcome.NotPending, PaymentCallbackOutcome.InvalidAmount,
+            PaymentCallbackOutcome.InvalidSignature, PaymentCallbackOutcome.Rejected, PaymentCallbackOutcome.Error,
+        };
+        Enum.GetValues<PaymentCallbackOutcome>().Should().BeEquivalentTo(pinned);
     }
 
     [Fact]

@@ -12,6 +12,7 @@ namespace Cinema.Service.WebApiHost.Tests;
 /// Runs the real ASP.NET Core role authorization against the [Authorize] attributes on the staff endpoints. A
 /// signed-in caller whose role is not allowed is a <c>Forbid</c> (HTTP 403), never a 401, which would log them out.
 /// </summary>
+[Trait("Req", "BR-AUTH-01")]
 public class StaffToolsetAuthorizationTests
 {
     private static readonly ServiceProvider _services = new ServiceCollection()

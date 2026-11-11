@@ -2,7 +2,7 @@
 
 > Purpose: Test frameworks, how to run them, and what the existing suites cover.
 > Sources: E:\cinema\CLAUDE.md, E:\cinema\.github\workflows\ci.yml, E:\cinema\cinemabe\Cinema\2-Business\Cinema.Business.Tests\*.cs, E:\cinema\QA-tests\
-> Last reviewed: 2026-11-01
+> Last reviewed: 2026-11-12
 
 ## Backend — `Cinema.Business.Tests`
 
@@ -43,7 +43,7 @@ Verified by listing `cinemabe/Cinema/2-Business/Cinema.Business.Tests/*.cs`:
 | `OmdbRatingsProviderTests.cs` | External OMDb rating lookups |
 | `OperationsBoardAndIncidentTests.cs` | Incident/operations board |
 | `PatronCategoryServiceTests.cs` | Patron category pricing/eligibility |
-| `PaymentCallbackTests.cs` | Generic payment callback handling |
+| `PaymentCallbackTests.cs` | Payment callback handling: idempotency and concurrent IPN delivery, expiry refunds (points, gift card, seats), `InitiatePaymentAsync` ownership/status/zero-amount cases |
 | `PersonManagerTests.cs` | Cast/crew person management |
 | `PromotionProgramServiceTests.cs` | Promotion program logic |
 | `RoleNamesTests.cs` | Role-group → role mapping |
@@ -63,6 +63,52 @@ This list is substantially larger than the four classes named in `CLAUDE.md`
 (`AuthServiceTests`, `BookingServiceTests`, `MovieServiceTests`, `EntityTests`) — those four are
 still present, but the suite has grown well beyond them. <!-- TODO: confirm with team whether CLAUDE.md's test-file list should be updated to avoid underselling coverage. -->
 
+### Web API host tests — `Cinema.Service.WebApiHost.Tests`
+
+| File | Area |
+|---|---|
+| `ControllerArchitectureTests.cs` | Exactly three controllers, each in its own Swagger group |
+| `ControllerAuthorizationCoverageTests.cs` | Every HTTP action has `[Authorize]` (action or controller) or is on the explicit `AnonymousAllowList`; a new unguarded action fails the test by name, a stale allow-list entry fails too |
+| `StaffToolsetAuthorizationTests.cs` | Role matrix for the staff endpoints (403, never 401) |
+| `BookingHubTests.cs` | Seat-lock hub: lock refused when held, unlock broadcasts only a real release, disconnect broadcasts every held seat |
+| `PaymentControllerCallbackTests.cs` | The exact VNPay IPN `{RspCode, Message}` per outcome |
+| `GateControllerTests.cs`, `StaffScopeTests.cs` | Gate scan and theater scoping |
+
+Adding a public endpoint that is meant to be anonymous: add its `Controller.Action` to `AnonymousAllowList` in
+`ControllerAuthorizationCoverageTests.cs` in the same change, and say why in the review.
+
+## Traceability — rule to tests
+
+Every test that proves a business rule carries `[Trait("Req", "BR-xx-nn")]` (xUnit, class or method level) or a
+Playwright `tag: ['@BR-xx-nn']`. The IDs are defined in the table below; the rule text is in
+`docs/01-business/business-rules.md`. Class-level traits are coarse: a filter selects the whole class, not only the
+tests that prove that rule. Filter by rule: `dotnet test --filter "Req=BR-PAY-03"`,
+`npx playwright test --grep @BR-PAY-02`.
+
+| ID | Rule | Section | Tests |
+|---|---|---|---|
+| `BR-PAY-01` | Payments are callback-authoritative; the callback's gateway must match the invoice's | business-rules s3 | `PaymentCallbackTests` |
+| `BR-PAY-02` | The IPN answers 200 with the exact `{RspCode, Message}` per outcome (97 bad signature, 01 unknown order) | s3 | `VnPayGatewayTests`, `PaymentControllerCallbackTests`, e2e `api-payment-callback.spec.ts` |
+| `BR-PAY-03` | Callback idempotency, including two concurrent deliveries: one payment row, points accrued once | s3 | `PaymentCallbackTests` (`..._TwoConcurrentDeliveries_...`). The claim atomicity (`InvoiceStore.TryTransitionStatusAsync`) is exercised only through mocks; there is no real-database test (tracked in `_bmad-output/implementation-artifacts/deferred-work.md`) |
+| `BR-PAY-04` | Amount cross-check (VNPay amount x100) | s3 | `VnPayGatewayTests` |
+| `BR-PAY-05` | Only a Pending invoice can be paid; expiry gives back points, gift card, seats | s2 | `PaymentCallbackTests`, `BookingServiceTests` |
+| `BR-SEAT-01` | Advisory seat lock: refused while held, only the owner unlocks, disconnect releases | s1 | `BookingHubTests`, `BookingServiceTests`, e2e `user-profile-booking.spec.ts` (seat map opens only) |
+| `BR-SEAT-02` | DB anti-double-booking: a lost insert race rolls back as "just booked"; bad/expired gift card or spent points roll back | s1, s5 | `BookingServiceTests` |
+| `BR-AUTH-01` | Every endpoint is guarded or deliberately anonymous; role mismatch is 403 | s6 | `ControllerAuthorizationCoverageTests`, `StaffToolsetAuthorizationTests` |
+| `BR-AUTH-02` | Login lockout, account status, 2FA | s6 | `AuthServiceTests` |
+
+Add a row (and the trait) when a new rule gets a test; do not reuse an ID for a different rule.
+
+## Defect tracking
+
+- Defects are **GitHub Issues**, not text files. `bugs.txt` / `tasks/bugs-to-fix.txt` are retired: copy anything
+  still open into issues and stop editing them.
+- Labels: one severity (`sev:blocker` money or data loss or security, `sev:major` a core flow broken,
+  `sev:minor` workaround exists, `sev:trivial` cosmetic) plus an area (`area:payment`, `area:booking`, `area:auth`,
+  `area:admin`, `area:staff`, `area:user`).
+- Every fix lands with a regression test that fails without it, tagged with the rule ID it protects, and the commit
+  or PR names the issue (`fixes #123`). A fix with no test says why in the PR.
+
 ## Frontend
 
 - Framework: **vitest**, run through Angular's `@angular/build:unit-test` builder via `ng test`.
@@ -75,9 +121,14 @@ ng test CinemaAdmin
 ```
 
 - CI (`.github/workflows/ci.yml`) runs `ng test CinemaLib` with coverage (`lcovonly` +
-  `text-summary` reporters), then `ng test CinemaUser` and `ng test CinemaAdmin` without coverage.
-- `CinemaStaff` is **not** run in CI's frontend job (only `CinemaLib`, `CinemaUser`, `CinemaAdmin`
-  appear in `ci.yml`'s frontend/e2e jobs). <!-- TODO: confirm with team whether this is intentional or an oversight. -->
+  `text-summary` reporters), then `ng test CinemaUser`, `ng test CinemaAdmin` and `ng test CinemaStaff`
+  without coverage; `CinemaUser`, `CinemaAdmin` and `CinemaStaff` are all production-built.
+- Backend CI runs two test projects: `Cinema.Business.Tests` (with coverage) and
+  `Cinema.Service.WebApiHost.Tests` (controller architecture, role authorization, the endpoint-guard coverage
+  check, the SignalR seat-lock hub contract, IPN contract). A coverage
+  ratchet, `.github/scripts/check-coverage.py 60 Cinema.Business`, fails the build when the line coverage of
+  the `Cinema.Business` package drops below 60% (it was 63.4% when the gate was added — raise the number as
+  coverage grows, never lower it).
 
 ## QA-tests harness
 
@@ -117,15 +168,26 @@ uploading `e2e/playwright-report` and `e2e/test-results` as a build artifact. Th
 
 ## Committed E2E suite — `e2e/`
 
-`e2e/` is the tracked Playwright suite (78 tests in `e2e/tests/`, one chromium project, files prefixed
+`e2e/` is the tracked Playwright suite (79 tests in `e2e/tests/`, one chromium project, files prefixed
 `api-` / `user-` / `admin-` / `staff-`; same layout as `augure-fe/e2e`) covering the Web API plus
 CinemaUser/CinemaAdmin/CinemaStaff: auth + route guards, every routed screen, and the VNPay callback
 contract. See `e2e/README.md` for prerequisites and env overrides. It runs serially against a seeded DB;
 the customer account `khach01@cinema.vn` comes from `sql/insert_db.sql`.
 
+Two specs can no longer pass by skipping:
+
+- `api-payment-callback.spec.ts` needs the API to run with `Payments:VnPay:TmnCode` and `HashSecret` set, and
+  `E2E_VNPAY_HASH_SECRET` to hold the same secret (it signs its own IPNs with HMAC-SHA512 over the sorted,
+  URL-encoded params). Bad signature must answer 200 + `97`; a signed IPN for an unknown order must answer 200 + `01`.
+  Locally it is skipped when the variable is absent; with `CI` set it fails instead. The CI e2e job sets a
+  throw-away merchant for both sides.
+- `user-profile-booking.spec.ts` asks `SearchShowTimes` for a movie that has an upcoming showtime, opens it, picks
+  a slot and expects the seat map. With no upcoming showtime it fails, naming `e2e/sql/seed-future-showtime.sql`.
+  That idempotent script moves every showtime that has already started to the same time tomorrow; CI runs it after
+  `insert_db.sql`. Run it by hand on a throw-away e2e database only, it rewrites showtime history.
+
 ## What's not covered (only stated where verifiable)
 
-- No `CinemaStaff` unit tests are run in CI (see above).
 - No dedicated backend integration tests against a real database were found — the CI comment on
   the `dotnet test` step states "xUnit tests use Moq — no database required," i.e. the backend
   suite is unit-level only; database-dependent behavior is exercised only via the CI `e2e` job's
