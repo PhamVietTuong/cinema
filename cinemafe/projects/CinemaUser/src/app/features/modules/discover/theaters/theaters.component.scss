@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 // "Night Screening" — Theaters Page
 // Tokens (from styles.scss): ground #07080b · panel #101319 · ink #e9edf3 · beam #59d9d2 (action) · gel #ff4e8a (premium)
 
@@ -47,8 +49,17 @@
 }
 .theater-cta { width: 100%; justify-content: center; }
 
-@media (max-width: 980px) { .theater-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 640px) { .theater-grid { grid-template-columns: 1fr; } .theaters-page, .page-header-inner { padding-left: 20px; padding-right: 20px; } }
+@include m.tablet { .theater-grid { grid-template-columns: repeat(2, 1fr); } }
+@include m.tablet-small {
+  .theater-grid { grid-template-columns: 1fr; }
+  .theaters-page, .page-header-inner { padding-left: 20px; padding-right: 20px; }
+  .city-select, .near-btn { min-height: 44px; }
+}
+@include m.phone {
+  .theaters-page, .page-header-inner { padding-left: 12px; padding-right: 12px; }
+  .page-title { font-size: 1.6rem; }
+  .city-select { width: 100%; min-width: 0; }
+}
 
 /* Nearest-theater controls */
 .near-btn {

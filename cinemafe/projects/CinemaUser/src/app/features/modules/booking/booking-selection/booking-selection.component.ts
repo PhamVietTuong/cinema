@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Subscription, take } from 'rxjs';
@@ -261,7 +261,40 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  /** Publishes the fixed order bar's real height as `--cx-order-bar-h` on <html> so the spacer and the
+   * chatbot FAB clear it at every width/wrap state; removed again when the bar goes away. */
+  // Only the instance that last published the variable may clear it, so overlapping instances
+  // (e.g. a route transition from the movie-detail inline panel to /booking/seats) cannot wipe it.
+  private static _barOwner?: BookingSelectionComponent;
+  private _barObserver?: ResizeObserver;
+  @ViewChild('orderBar') set orderBar(el: ElementRef<HTMLElement> | undefined) {
+    this._barObserver?.disconnect();
+    this._barObserver = undefined;
+    const root = document.documentElement;
+    if (!el) {
+      this._clearBarHeight();
+      return;
+    }
+    BookingSelectionComponent._barOwner = this;
+    const publish = () => root.style.setProperty('--cx-order-bar-h', `${el.nativeElement.offsetHeight}px`);
+    publish();
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    this._barObserver = new ResizeObserver(publish);
+    this._barObserver.observe(el.nativeElement);
+  }
+
+  private _clearBarHeight(): void {
+    if (BookingSelectionComponent._barOwner === this) {
+      BookingSelectionComponent._barOwner = undefined;
+      document.documentElement.style.removeProperty('--cx-order-bar-h');
+    }
+  }
+
   ngOnDestroy(): void {
+    this._barObserver?.disconnect();
+    this._clearBarHeight();
     this._subs.unsubscribe();
     if (this._holdTimer) {
       clearInterval(this._holdTimer);

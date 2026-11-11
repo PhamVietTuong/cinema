@@ -1,11 +1,12 @@
 // "Admit One" — Register
 @use 'lib/theme/auth-ledger' as authledger;
+@use 'lib/theme/mixins' as m;
 @include authledger.auth-ledger-shell;
 
 // ── Name + phone row ─────────────────────────────────────────────────────────
 .auth-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--cx-space-3); }
 
-@media (max-width: 900px) {
+@include m.tablet-small {
   .auth-row-2 { grid-template-columns: 1fr; }
 }
 

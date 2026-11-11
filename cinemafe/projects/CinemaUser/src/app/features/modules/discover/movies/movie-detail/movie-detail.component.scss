@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 // "Marquee Ledger" — Movie Detail
 
 .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
@@ -192,13 +194,26 @@
 .comment-time { color: var(--ml-muted); font-size: 0.74rem; margin-left: 8px; font-variant-numeric: tabular-nums; }
 .comment-text { color: var(--ml-ink); line-height: 1.6; margin: 6px 0 0; font-size: 0.88rem; }
 
-@media (max-width: 760px) {
+@include m.tablet-small {
   .comment-row.is-reply { margin-left: 22px; }
-}
-
-@media (max-width: 760px) {
+  .hero { min-height: 0; }
   .hero-title { font-size: 2.1rem; }
   .hero-inner, .md-body { padding-left: 20px; padding-right: 20px; }
+  .hero-inner { padding-top: 40px; padding-bottom: 32px; gap: 24px; }
+  .date-tab, .time-slot { min-height: 44px; }
+  .comment-link { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
+@include m.phone {
+  .hero-title { font-size: 1.7rem; }
+  .hero-inner, .md-body { padding-left: 12px; padding-right: 12px; }
+  .hero-actions > * { flex: 1 1 100%; text-align: center; justify-content: center; }
+  .score-ring { width: 88px; height: 88px; }
+  .format-card { padding: 16px 14px; }
+  .date-tab { min-width: 72px; padding: 8px 10px; }
+  .time-slot { min-width: 72px; padding: 8px 12px; }
+  .comment-row.is-reply { margin-left: 12px; }
+  .inline-booking { margin-left: -12px; margin-right: -12px; border-radius: 0; }
 }
 
 // ── Review card, comment actions, reply form ──────────────────────────────
