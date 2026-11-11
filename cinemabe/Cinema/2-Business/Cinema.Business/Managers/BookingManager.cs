@@ -904,14 +904,7 @@ public class BookingManager : IBookingManager
         return FoodStockRestorer.RestoreAsync(_uow, invoices.Select(i => i.Id).ToList(), reason, userId);
     }
 
-    // A cancelled or expired invoice no longer has food to hand over.
-    private static void CancelFoodOrder(Invoice invoice)
-    {
-        if (invoice.FoodStatus != FoodOrderStatus.None)
-        {
-            invoice.FoodStatus = FoodOrderStatus.Cancelled;
-        }
-    }
+    private static void CancelFoodOrder(Invoice invoice) => InvoiceLifecycle.CancelFoodOrder(invoice);
 
     public async Task<PaymentInitiationDTO?> InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl, string? clientIp)
     {
@@ -1135,40 +1128,8 @@ public class BookingManager : IBookingManager
         return user;
     }
 
-    // Loyalty: accrue points on the paid amount and re-evaluate the membership tier (only when the invoice has a
-    // customer), then mark the promo code (if any) as consumed. Does not save; returns the customer, if any.
-    private async Task<User?> ApplyPaidSideEffectsAsync(Invoice invoice)
-    {
-        User? user = null;
-        if (invoice.UserId is Guid customerId)
-        {
-            user = await _uow.UserStore.GetByIdAsync(customerId);
-            if (user is not null)
-            {
-                var (pointsPerUnit, _) = await LoyaltyRates.LoadAsync(_uow, invoice.TheaterId);
-                user.Points += (int)(invoice.FinalAmount / pointsPerUnit);
-                var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
-                var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
-                if (tier is not null)
-                {
-                    user.MemberShipId = tier.Id;
-                }
-                await _uow.UserStore.UpdateAsync(user);
-            }
-        }
-
-        // Mark the promotion program (if any) as consumed.
-        if (invoice.PromotionProgramId is Guid usedProgramId)
-        {
-            var program = await _uow.PromotionProgramStore.GetByIdAsync(usedProgramId);
-            if (program is not null)
-            {
-                program.UsedCount += 1;
-                await _uow.PromotionProgramStore.UpdateAsync(program);
-            }
-        }
-        return user;
-    }
+    private Task<User?> ApplyPaidSideEffectsAsync(Invoice invoice)
+        => InvoiceLifecycle.ApplyPaidSideEffectsAsync(_uow, invoice);
 
     private async Task SendConfirmationAsync(Invoice invoice, User user)
     {
@@ -1836,39 +1797,11 @@ public class BookingManager : IBookingManager
         return true;
     }
 
-    // Returns the loyalty points reserved for a booking that did not complete (cancelled/expired).
-    private async Task RestoreRedeemedPointsAsync(Invoice invoice)
-    {
-        if (invoice.PointsRedeemed <= 0)
-        {
-            return;
-        }
-        if (invoice.UserId is not Guid ownerId)
-        {
-            return;
-        }
-        var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(ownerId);
-        if (user is not null)
-        {
-            user.Points += invoice.PointsRedeemed;
-            await _uow.UserStore.UpdateAsync(user);
-        }
-    }
+    private Task RestoreRedeemedPointsAsync(Invoice invoice)
+        => InvoiceLifecycle.RestoreRedeemedPointsAsync(_uow, invoice);
 
-    // Returns the gift-card balance drawn for a booking that did not complete (cancelled/expired).
-    private async Task RestoreGiftCardAsync(Invoice invoice)
-    {
-        if (invoice.GiftCardId is not Guid giftCardId || invoice.GiftCardAmount <= 0)
-        {
-            return;
-        }
-        var card = await _uow.GiftCardStore.GetByIdAsync(giftCardId);
-        if (card is not null)
-        {
-            card.Balance += invoice.GiftCardAmount;
-            await _uow.GiftCardStore.UpdateAsync(card);
-        }
-    }
+    private Task RestoreGiftCardAsync(Invoice invoice)
+        => InvoiceLifecycle.RestoreGiftCardAsync(_uow, invoice);
 
     public async Task<int> ExpireStalePendingBookingsAsync(TimeSpan age)
     {

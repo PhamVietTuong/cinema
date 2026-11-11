@@ -45,12 +45,12 @@ This is a capability inventory of what exists today (verified against code), not
 | Pricing & promotions | Manage discounts (code-based), promotion programs (fixed-price/percent-off, schedule-scoped, auto-apply rules), per-theater loyalty rates (default 1,000 VND = 1 point; 100 points = 1,000 VND) |
 | Content ops | Moderate comments (approve/reject/delete), manage news, manage notification templates, manage splash banners, upload images |
 | Users | List/create/update/delete users, assign roles (theater-scoped roles require a valid theater) |
-| Invoices | List invoices, override invoice status (no allow-list enforced), delete an invoice (restores food stock if it was Pending), view revenue reports (by day/movie/theater) |
+| Invoices | List invoices, override invoice status (constrained transitions; see business-rules), delete an invoice (restores food stock, redeemed points and gift-card balance if it was Pending), view revenue reports (by day/movie/theater) |
 | Gift cards | Issue, list, activate/deactivate gift cards |
 | Staff/ops oversight | Everything TheaterStaff can do, plus: run sales/occupancy/KPI reports, view audit log, approve seat/room blocking and POS price overrides |
 
 ### Explicitly not supported (Admin)
-- Issuing a refund or reversing a `Paid` invoice's financial state through any dedicated mechanism — only the unconstrained `UpdateInvoiceStatus` exists, which doesn't reverse points/gift-card/stock or touch any gateway.
+- Issuing a refund or reversing a `Paid` invoice's financial state through any dedicated mechanism — only `UpdateInvoiceStatus` exists; moving a `Paid` invoice to `Cancelled/Failed` frees its seats but doesn't refund points, gift-card spend or touch any gateway.
 - Server-side CSV/report file export — reports return JSON; CSV is built client-side in the Admin UI.
 
 ## 4. Cross-cutting / platform requirements
