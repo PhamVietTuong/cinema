@@ -47,8 +47,5 @@
 // Long free-text values (reasons, entity names) wrap inside mobile card rows instead of widening the page.
 .ad-mobile-card-row > span:last-child { min-width: 0; overflow-wrap: anywhere; text-align: right; }
 
-// Material selects/inputs reach the 44px touch target on small screens.
-@include m.tablet-small {
-  .mat-mdc-select, .mat-mdc-form-field-infix { min-height: 44px; }
-  .mat-mdc-select { display: flex; align-items: center; }
-}
+// Material select/input touch targets (44px on <=768px) come from the shared CinemaLib ledger theme; a local
+// min-height on .mat-mdc-select used to stack on the labeled infix padding and make filter selects 76px tall.

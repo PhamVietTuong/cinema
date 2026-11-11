@@ -64,6 +64,6 @@
   </div>
 </form>
 
-<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+<button mat-icon-button type="button" class="dialog-close-btn" [attr.aria-label]="'common.close' | translate" (click)="cancel()">
   <mat-icon>close</mat-icon>
 </button>

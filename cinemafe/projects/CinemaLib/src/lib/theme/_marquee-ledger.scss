@@ -917,6 +917,13 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
   // Swap the ngx-datatable grid for the per-row card list.
   .ad-desktop-only { display: none; }
   .ad-mobile-only { display: block; }
+  // Label-less dialog / toolbar form fields are 40px on desktop; touch targets must be >= 44px.
+  .mat-mdc-text-field-wrapper.mdc-text-field--no-label:not(:has(textarea)):not(:has(.mat-mdc-select-multiple)) { height: 44px; }
+  .mat-mdc-form-field:has(.mdc-text-field--no-label) { --mat-form-field-container-height: 44px; }
+  .mdc-text-field--no-label .mat-mdc-form-field-infix:not(:has(textarea)):not(:has(.mat-mdc-select-multiple)) { height: 44px; }
+  .mdc-text-field--no-label .mat-mdc-form-field-infix:has(.mat-mdc-select-multiple) { min-height: 44px; }
+  // Tab-strip scroll arrows (theater detail tabs).
+  .mat-mdc-tab-header .mat-mdc-tab-header-pagination { min-width: 44px; }
   // Touch targets >= 44px.
   .ad-btn { min-height: 44px; }
   .ad-icon-btn { min-width: 44px; min-height: 44px; }
@@ -945,4 +952,12 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
   .ad-page { padding: 14px 12px 32px; }
   .ad-filter-grid { grid-template-columns: 1fr; }
   .ad-page-header .ad-toolbar > .ad-btn { flex: 1 1 auto; }
+}
+
+// ── Drag-to-scroll containers (cinemaDragScroll directive) ───────────────────
+// Mouse users get click-and-drag panning on wide boards; touch/pen keep native panning.
+@media (pointer: fine) {
+  .cl-drag-scroll--can { cursor: grab; }
+  .cl-drag-scroll--active { cursor: grabbing; user-select: none; }
+  .cl-drag-scroll--active * { cursor: grabbing !important; user-select: none; }
 }

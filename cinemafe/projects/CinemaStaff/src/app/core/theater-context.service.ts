@@ -33,13 +33,26 @@ export class TheaterContextService {
     return this.theaters().find(t => t.id === id)?.name ?? null;
   });
 
-  private _loaded = false;
+  /** Identity the theater list was loaded for, so a different user in the same session reloads it. */
+  private _loadedFor: string | null = null;
 
   constructor() {
     effect(() => {
-      if (this.isAdmin() && !this._loaded) {
-        this._loaded = true;
+      const user = this._user();
+      const key = user ? `${this.isAdmin() ? 'admin' : 'pinned'}:${user.id}:${user.theaterId ?? ''}` : null;
+      if (key === this._loadedFor) {
+        return;
+      }
+      this._loadedFor = key;
+      this.theaters.set([]);
+      if (!user) {
+        return;
+      }
+      if (this.isAdmin()) {
         this._loadTheaters();
+      } else if (user.theaterId) {
+        // A pinned user has no picker, but still needs their own theater name for headings and the home greeting.
+        this._loadOwnTheater(user.theaterId);
       }
     });
   }
@@ -56,6 +69,13 @@ export class TheaterContextService {
     } catch {
       /* storage unavailable — keep the in-memory choice only */
     }
+  }
+
+  private _loadOwnTheater(id: string): void {
+    this._svc.getTheater(id).subscribe({
+      next: theater => this.theaters.set([theater]),
+      error: error => this._store.dispatch(showException({ error })),
+    });
   }
 
   private _loadTheaters(): void {

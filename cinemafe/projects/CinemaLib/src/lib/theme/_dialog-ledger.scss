@@ -331,6 +331,10 @@
         color: var(--ml-action-strong);
       }
     }
+    @include m.tablet-small {
+      // 44px tap target for the step dots; the connecting line flexes to fit.
+      .dlg-step-dot { width: 44px; height: 44px; }
+    }
     .dlg-step-line {
       flex: 1 1 auto;
       height: 2px;

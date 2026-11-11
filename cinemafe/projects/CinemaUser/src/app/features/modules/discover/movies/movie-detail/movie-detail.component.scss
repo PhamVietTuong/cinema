@@ -197,6 +197,14 @@
 @include m.tablet-small {
   .comment-row.is-reply { margin-left: 22px; }
   .hero { min-height: 0; }
+  // The stacked hero is tall, so the text sits over the poster art (ghost "Xem Trailer" and the ratings
+  // were unreadable): tint the whole backdrop with the page ground, strongest behind the text.
+  .hero-scrim {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--ml-paper) 45%, transparent) 0%,
+      color-mix(in srgb, var(--ml-paper) 85%, transparent) 50%,
+      var(--ml-paper) 90%);
+  }
   .hero-title { font-size: 2.1rem; }
   .hero-inner, .md-body { padding-left: 20px; padding-right: 20px; }
   .hero-inner { padding-top: 40px; padding-bottom: 32px; gap: 24px; }

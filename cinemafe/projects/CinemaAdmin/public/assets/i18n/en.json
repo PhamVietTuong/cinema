@@ -44,6 +44,8 @@
     "splashBanners": "Splash Banner Management",
     "invoices": "Invoice Management",
     "auditLog": "Audit Log",
+    "comments": "Comment Moderation",
+    "giftCards": "Gift Card Management",
     "default": "Control Panel"
   },
   "profile": {

@@ -42,7 +42,7 @@
 .loy-grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;
 
-  @include m.tablet-small { grid-template-columns: 1fr; }
+  @include m.tablet-small { grid-template-columns: minmax(0, 1fr); }
 }
 
 .loy-field-card {
@@ -54,7 +54,7 @@
   font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ml-muted);
 }
 
-.loy-input-row { display: flex; align-items: baseline; gap: 10px; }
+.loy-input-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; min-width: 0; }
 
 .loy-input {
   background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-md);
@@ -64,7 +64,7 @@
   &:focus { outline: none; border-color: var(--ml-action); box-shadow: 0 0 0 3px var(--ml-action-ring); }
 }
 
-.loy-input-unit { font-size: 0.85rem; color: var(--ml-muted); white-space: nowrap; }
+.loy-input-unit { font-size: 0.85rem; color: var(--ml-muted); min-width: 0; overflow-wrap: anywhere; }
 
 .loy-example { margin: 0; font-size: 0.82rem; color: var(--ml-ink-2); line-height: 1.5; }
 

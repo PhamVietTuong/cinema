@@ -275,9 +275,9 @@
 // ── Responsive ────────────────────────────────────────────────────────────────
 @include m.tablet-small {
   .pl-page { grid-template-columns: minmax(0, 1fr); padding: 18px 16px 36px; }
-  .pl-id { position: static; }
-  .pl-nav { flex-direction: row; overflow-x: auto; }
-  .pl-nav button { width: auto; flex: none; white-space: nowrap; min-height: 44px; }
+  // Wrap instead of scrolling: a scrolling row hid the third tab (Settings) off-screen on phones.
+  .pl-nav { flex-direction: row; flex-wrap: wrap; }
+  .pl-nav button { width: auto; flex: 1 1 auto; justify-content: center; white-space: nowrap; min-height: 44px; }
   .pl-stats, .pl-stats--4 { grid-template-columns: 1fr 1fr; }
   .pl-row-2, .pl-row-3 { grid-template-columns: 1fr; }
   .pl-h1 { font-size: 21px; }

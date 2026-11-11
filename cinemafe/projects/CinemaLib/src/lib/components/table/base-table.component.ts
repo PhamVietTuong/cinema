@@ -7,6 +7,7 @@ import { Store, select } from '@ngrx/store';
 import { BaseReactiveComponent } from './base-reactive.component';
 import { saveSearchState } from '../../store/actions/search.actions';
 import { selectSearchState } from '../../store/selectors/search.selector';
+import { showException } from '../../store/actions/notification.actions';
 
 /** Shape of the paged result returned by a list endpoint. */
 export interface TablePage<T> {
@@ -143,7 +144,7 @@ export abstract class BaseTableComponent<TRow = any> extends BaseReactiveCompone
 
     this.loadingIndicator = true;
     this._cd.markForCheck();
-    this._search(criteria).pipe(takeUntil(this.ngDestroyed$)).subscribe(data => {
+    this._search(criteria).pipe(takeUntil(this.ngDestroyed$)).subscribe({ next: data => {
       if (Array.isArray(data)) {
         this.pageRows = data;
         this.total = data.length;
@@ -152,7 +153,15 @@ export abstract class BaseTableComponent<TRow = any> extends BaseReactiveCompone
         this.total = data.totalCount ?? 0;
       }
       this._cd.markForCheck();
-    }).add(() => {
+    },
+    // 0/401/403/5xx are already toasted (or redirected) by the error interceptor; anything else (400/404/...)
+    // used to escape as an unhandled error with no feedback.
+    error: (error: { status?: number }) => {
+      const status = error?.status ?? 0;
+      if (status !== 0 && status !== 401 && status !== 403 && status < 500) {
+        this._store.dispatch(showException({ error }));
+      }
+    } }).add(() => {
       this._searchStateByUrl = { ...this._searchStateByUrl, [this._searchStateKey()]: criteria };
       this._store.dispatch(saveSearchState({ searchState: this._searchStateByUrl }));
       this.loadingIndicator = false;

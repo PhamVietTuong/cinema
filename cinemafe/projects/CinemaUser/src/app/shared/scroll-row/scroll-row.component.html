@@ -1,11 +1,19 @@
-<div class="sr-wrap">
-  <button type="button" class="sr-chevron sr-chevron--left" [attr.aria-label]="'home.scrollRow.prev' | translate" (click)="scroll(-1)">
-    <mat-icon>chevron_left</mat-icon>
-  </button>
-  <div class="sr-track" #track>
+<div class="sr-wrap" [class.sr-can-prev]="canPrev()" [class.sr-can-next]="canNext()" [class.sr-dragging]="dragging()">
+  @if (overflowing()) {
+    <button type="button" class="sr-chevron sr-chevron--left" [disabled]="!canPrev()" [attr.aria-label]="'home.scrollRow.prev' | translate" (click)="scroll(-1)">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+  }
+  <div class="sr-track" #track tabindex="0" role="group"
+       (scroll)="update()" (keydown)="onKeydown($event)"
+       (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)"
+       (pointerup)="onPointerEnd($event)" (pointercancel)="onPointerEnd($event)"
+       (dragstart)="$event.preventDefault()">
     <ng-content></ng-content>
   </div>
-  <button type="button" class="sr-chevron sr-chevron--right" [attr.aria-label]="'home.scrollRow.next' | translate" (click)="scroll(1)">
-    <mat-icon>chevron_right</mat-icon>
-  </button>
+  @if (overflowing()) {
+    <button type="button" class="sr-chevron sr-chevron--right" [disabled]="!canNext()" [attr.aria-label]="'home.scrollRow.next' | translate" (click)="scroll(1)">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  }
 </div>

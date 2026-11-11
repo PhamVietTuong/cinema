@@ -27,6 +27,7 @@
 
   @include m.phone {
     mat-icon { display: none; }
-    select { max-width: 56px; padding-left: 6px; padding-right: 18px; }
+    // Up to 92px, narrowing with the viewport so the avatar never leaves the screen at 320px.
+    select { max-width: clamp(56px, calc(100vw - 249px), 92px); padding-left: 6px; padding-right: 18px; text-overflow: ellipsis; }
   }
 }

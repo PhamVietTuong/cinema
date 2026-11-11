@@ -177,6 +177,8 @@
 @include m.tablet-small {
   .two-col > .ad-card { min-width: 0; }
   .card-head { flex-wrap: wrap; }
+  // 44px tap target for the text link.
+  .see-all { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
 }
 @include m.phone {
   .kpi-grid { grid-template-columns: minmax(0, 1fr); }

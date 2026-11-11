@@ -33,6 +33,12 @@ export class App implements OnInit {
     this._store.dispatch(logout());
   }
 
+  /** Picker label: the shared "Cinema " brand prefix is dropped so the name stays readable in the narrow phone topbar. */
+  pickerLabel(name: string | null | undefined): string {
+    const full = name ?? '';
+    return full.replace(/^Cinema\s+/i, '') || full;
+  }
+
   onTheaterPicked(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.theaterContext.select(value || null);

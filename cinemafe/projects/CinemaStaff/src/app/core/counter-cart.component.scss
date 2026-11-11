@@ -66,7 +66,8 @@
 }
 
 @include m.phone {
-  .pos-foods { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pos-foods { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .pos-qty { flex-wrap: wrap; justify-content: center; }
   // Seat map: smaller seats on phones only (default 34px stays for tablet/desktop).
   cl-seat-map { --cl-seat-size: 30px; }
 }

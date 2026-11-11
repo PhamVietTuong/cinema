@@ -23,6 +23,10 @@ export const ProjectionFormValues: { value: CinemaServiceAgent.ProjectionForm; n
 /** The label a customer sees for a screening: room class then dimension, e.g. "IMAX 2D". */
 export function screeningFormatLabel(roomTypeName?: string, form?: CinemaServiceAgent.ProjectionForm): string {
   const dimension = ProjectionFormValues.find(x => x.value === form)?.name ?? '2D';
+  // A room type already named for its dimension ("2D") must not print twice ("2D 2D").
+  if (roomTypeName && roomTypeName.toUpperCase().split(/\s+/).includes(dimension)) {
+    return roomTypeName;
+  }
   return roomTypeName ? `${roomTypeName} ${dimension}` : dimension;
 }
 

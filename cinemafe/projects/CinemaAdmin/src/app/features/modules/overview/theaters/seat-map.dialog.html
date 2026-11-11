@@ -45,7 +45,7 @@
       <span class="screen-label">{{ 'theaters.rooms.screen' | translate }}</span>
     </div>
 
-    <div class="seat-grid" [class.is-removing]="activeTool === 'remove'" *ngIf="seats.length; else noSeats">
+    <div class="seat-grid" cinemaDragScroll [class.is-removing]="activeTool === 'remove'" *ngIf="seats.length; else noSeats">
       <div class="seat-row" *ngFor="let row of seatRows">
         <div class="row-label">{{ row }}</div>
         <div *ngFor="let cell of cellsInRow(row)"
@@ -78,6 +78,6 @@
   </button>
 </div>
 
-<button mat-icon-button type="button" class="dialog-close-btn" (click)="close()">
+<button mat-icon-button type="button" class="dialog-close-btn" [attr.aria-label]="'common.close' | translate" (click)="close()">
   <mat-icon>close</mat-icon>
 </button>

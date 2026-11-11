@@ -102,7 +102,7 @@
         <div class="date-strip">
           <button type="button" class="date-tab" *ngFor="let t of dateTabs; let i = index"
                   [class.active]="t.key === selectedDateKey" (click)="selectDate(t.key)">
-            <span class="date-tab-label">{{ i === 0 ? ('movies.showtimes.today' | translate) : i === 1 ? ('movies.showtimes.tomorrow' | translate) : (t.date | date:'EEE')  }}</span>
+            <span class="date-tab-label">{{ i === 0 ? ('movies.showtimes.today' | translate) : i === 1 ? ('movies.showtimes.tomorrow' | translate) : weekday(t.date, 'short') }}</span>
             <span class="date-tab-date">{{ t.date | date:'dd/MM' }}</span>
             <span class="date-tab-count">{{ 'movies.showtimes.showtimeCount' | translate:{ count: countForDate(movie.showTimes, t.key) } }}</span>
           </button>
@@ -125,7 +125,7 @@
                 <button type="button" class="time-slot" *ngFor="let st of group.items"
                    [class.active]="st.id === selectedShowTimeId"
                    (click)="selectShowTime(st)"
-                   [title]="(st.startTime | date:'EEEE dd/MM/yyyy HH:mm') + ' · ' + st.theaterName + ' · ' + st.roomName">
+                   [title]="(weekday(st.startTime, 'long') + ' ' + (st.startTime | date:'dd/MM/yyyy HH:mm')) + ' · ' + st.theaterName + ' · ' + st.roomName">
                   <span class="slot-time">{{ st.startTime | date:'HH:mm' }}</span>
                   <span class="slot-seats">{{ 'movies.showtimes.seats' | translate:{ count: st.availableSeats } }}</span>
                 </button>

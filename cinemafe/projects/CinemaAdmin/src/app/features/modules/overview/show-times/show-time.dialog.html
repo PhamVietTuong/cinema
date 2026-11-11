@@ -71,7 +71,7 @@
         <div class="dlg-field">
           <label class="dlg-label" id="sh-roomId-lbl">{{ 'showTimes.room' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="roomId" [disabled]="!form.value.theaterId" panelClass="dlg-select-panel" aria-labelledby="sh-roomId-lbl" [placeholder]="'showTimes.selectRoom' | translate">
+            <mat-select formControlName="roomId" panelClass="dlg-select-panel" aria-labelledby="sh-roomId-lbl" [placeholder]="'showTimes.selectRoom' | translate">
               <mat-option *ngFor="let r of roomsForTheater" [value]="r.id">{{ r.name }}</mat-option>
             </mat-select>
             <mat-error *ngIf="form.controls['roomId'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
@@ -109,6 +109,6 @@
   </div>
 </form>
 
-<button mat-icon-button type="button" class="dialog-close-btn" (click)="cancel()">
+<button mat-icon-button type="button" class="dialog-close-btn" [attr.aria-label]="'common.close' | translate" (click)="cancel()">
   <mat-icon>close</mat-icon>
 </button>

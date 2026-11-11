@@ -45,6 +45,7 @@
             [style.left.%]="seg.leftPct"
             [style.width.%]="seg.widthPct"
             [matTooltip]="seg.timeSlot.name + ' ' + seg.timeSlot.startTime + '–' + seg.timeSlot.endTime"
+            [attr.aria-label]="seg.timeSlot.name + ' ' + seg.timeSlot.startTime + '–' + seg.timeSlot.endTime + ' ' + (seg.multiplier | number:'1.1-2') + '×'"
             (click)="openCell(row, seg)">
             {{ seg.timeSlot.name }} {{ seg.multiplier | number:'1.1-2' }}×
           </button>

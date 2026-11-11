@@ -58,7 +58,7 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="chart" *ngIf="revenueTrend.length; else noRevenue">
+      <div class="chart" cinemaDragScroll *ngIf="revenueTrend.length; else noRevenue">
         <div class="bar-col" *ngFor="let d of revenueTrend">
           <div class="bar" [style.height.%]="d.value"></div>
           <span class="bar-day">{{ d.day }}</span>

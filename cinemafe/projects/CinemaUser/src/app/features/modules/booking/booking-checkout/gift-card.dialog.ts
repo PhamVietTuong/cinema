@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -40,6 +40,7 @@ export class GiftCardDialog {
   constructor(
     private _dialogRef: MatDialogRef<GiftCardDialog, GiftCardDialogResult>,
     @Inject(MAT_DIALOG_DATA) public data: GiftCardDialogData,
+    private _cdr: ChangeDetectorRef,
   ) {
     this.code = data.code;
   }
@@ -60,6 +61,7 @@ export class GiftCardDialog {
       this.valid = result.valid;
       this.message = result.message;
       this.checking = false;
+      this._cdr.markForCheck();
     });
   }
 

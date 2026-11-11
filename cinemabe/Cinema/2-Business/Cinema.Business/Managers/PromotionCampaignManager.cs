@@ -88,7 +88,9 @@ public class PromotionCampaignManager : IPromotionCampaignManager
             throw new InvalidOperationException("Campaign name is required.");
         }
         var trimmed = name.Trim();
-        var duplicate = await _uow.PromotionCampaignStore.ExistsAsync(c => c.Name == trimmed && c.Id != (selfId ?? Guid.Empty));
+        // Resolved outside the lambda: EF Core cannot translate a Nullable<Guid> coalesce inside the predicate.
+        var excludedId = selfId ?? Guid.Empty;
+        var duplicate = await _uow.PromotionCampaignStore.ExistsAsync(c => c.Name == trimmed && c.Id != excludedId);
         if (duplicate)
         {
             throw new InvalidOperationException($"A campaign named \"{trimmed}\" already exists.");
