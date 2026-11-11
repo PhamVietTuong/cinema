@@ -61,12 +61,12 @@ export class TheaterFoodComponent extends BaseTableComponent<Dto> {
   }
 
   openCreate(): void {
-    this._dialog.open(FoodAndDrinkDialog, { width: '600px', data: { theaterId: this.theaterId, foodAndDrink: null } })
+    this._dialog.open(FoodAndDrinkDialog, { width: '600px', maxWidth: '100vw', data: { theaterId: this.theaterId, foodAndDrink: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(FoodAndDrinkDialog, { width: '600px', data: { theaterId: this.theaterId, foodAndDrink: item } })
+    this._dialog.open(FoodAndDrinkDialog, { width: '600px', maxWidth: '100vw', data: { theaterId: this.theaterId, foodAndDrink: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

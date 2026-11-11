@@ -80,6 +80,7 @@ export class TheaterTicketPricesComponent implements OnInit {
     const existing = segment.rowId ? this.prices.find(p => p.id === segment.rowId) : undefined;
     this._dialog.open(TicketPriceDialog, {
       width: '480px',
+      maxWidth: '100vw',
       data: {
         theaterId: this.theaterId,
         roomTypeId: this.selectedRoomTypeId,

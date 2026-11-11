@@ -43,12 +43,12 @@ export class PromotionCampaignsManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(PromotionCampaignDialog, { width: '560px', data: { campaign: null } })
+    this._dialog.open(PromotionCampaignDialog, { width: '560px', maxWidth: '100vw', data: { campaign: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(PromotionCampaignDialog, { width: '560px', data: { campaign: item } })
+    this._dialog.open(PromotionCampaignDialog, { width: '560px', maxWidth: '100vw', data: { campaign: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

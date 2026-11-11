@@ -1,4 +1,5 @@
 @use './tokens';
+@use './mixins' as m;
 @use './ledger-tokens' as ledger;
 @use './dialog-ledger' as dialog;
 
@@ -888,8 +889,17 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
   }
 }
 
-// ── Responsive (phones & small tablets) ───────────────────────────────────────
-@media (max-width: 768px) {
+// ── Responsive ───────────────────────────────────────────────────────────────
+// Breakpoints come from the shared mixins (_mixins.scss): tablet <=1024,
+// tablet-small <=768 (drawer nav + card lists), phone <=480.
+@include m.tablet {
+  // Dialogs never touch the viewport edge (their TS configs set maxWidth 100vw).
+  .cdk-overlay-pane.mat-mdc-dialog-panel { max-width: calc(100vw - 16px) !important; }
+  // Filter grid reflows to fewer, narrower columns on tablets.
+  .ad-filter-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+}
+
+@include m.tablet-small {
   .ad-page { padding: 18px 16px 36px; }
   .ad-h1 { font-size: 21px; }
   .ad-page-header { align-items: stretch; }
@@ -897,6 +907,9 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
   // Search grows to fill the row instead of forcing a fixed 240px width.
   .ad-search { flex: 1 1 auto; }
   .ad-search .ad-input { min-width: 0; width: 100%; }
+  // Day navigator: the date field flexes instead of holding 168px.
+  .ad-toolbar.day-nav { flex-wrap: wrap; }
+  .day-nav .ad-input { width: auto; flex: 1 1 140px; min-width: 0; }
   // Catalog create/edit forms collapse to a single column inside the modal.
   .catalog-form { grid-template-columns: 1fr; }
   // Pagination wraps neatly on narrow screens.
@@ -904,8 +917,32 @@ select.ad-filter-input { appearance: none; cursor: pointer; }
   // Swap the ngx-datatable grid for the per-row card list.
   .ad-desktop-only { display: none; }
   .ad-mobile-only { display: block; }
+  // Touch targets >= 44px.
+  .ad-btn { min-height: 44px; }
+  .ad-icon-btn { min-width: 44px; min-height: 44px; }
+  .ad-input, .ad-select { min-height: 44px; }
+  .mdc-button, .mat-mdc-button-base.mdc-button { min-height: 44px; }
+  .mat-mdc-icon-button.mat-mdc-button-base { --mat-icon-button-state-layer-size: 44px; width: 44px; height: 44px; padding: 10px; }
+  // Wide in-card tables scroll inside their own container, never the page.
+  .ad-table-wrap { max-width: 100%; }
+  // Legacy modal cards and MatDialog panels fit the viewport.
+  .modal-card, .modal-card--wide, .modal-card--sm { width: calc(100vw - 16px); max-width: calc(100vw - 16px); }
+  .mat-mdc-dialog-panel { --mat-dialog-container-max-width: calc(100vw - 16px); }
+  .mat-mdc-dialog-container {
+    --mat-dialog-headline-padding: 14px 48px 14px 16px;
+    --mat-dialog-content-padding: 16px;
+    --mat-dialog-with-actions-content-padding: 16px;
+    --mat-dialog-actions-padding: var(--cx-space-3) var(--cx-space-4);
+  }
+  .mat-mdc-dialog-container .mat-mdc-dialog-actions,
+  .mat-mdc-dialog-container .dialog-actions { flex-wrap: wrap; }
+  .mat-mdc-dialog-container .mat-mdc-dialog-actions .mat-mdc-button-base,
+  .mat-mdc-dialog-container .dialog-actions .mat-mdc-button-base { min-height: 44px; }
+  .mat-mdc-dialog-surface button.dialog-close-btn { width: 44px; height: 44px; top: 4px; right: 4px; }
 }
 
-@media (max-width: 720px) {
-  .catalog-form { grid-template-columns: 1fr; }
+@include m.phone {
+  .ad-page { padding: 14px 12px 32px; }
+  .ad-filter-grid { grid-template-columns: 1fr; }
+  .ad-page-header .ad-toolbar > .ad-btn { flex: 1 1 auto; }
 }

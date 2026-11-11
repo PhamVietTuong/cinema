@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 .loy-card { display: flex; flex-direction: column; gap: 24px; }
 
 .loy-head {
@@ -40,7 +42,7 @@
 .loy-grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;
 
-  @media (max-width: 720px) { grid-template-columns: 1fr; }
+  @include m.tablet-small { grid-template-columns: 1fr; }
 }
 
 .loy-field-card {
@@ -57,7 +59,7 @@
 .loy-input {
   background: var(--ml-panel); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-md);
   padding: 10px 14px; font-family: var(--ml-font-head); font-size: 1.5rem; font-weight: 600;
-  color: var(--ml-ink); min-width: 0; width: 140px;
+  color: var(--ml-ink); min-width: 0; width: 140px; max-width: 100%; flex: 1 1 100px;
 
   &:focus { outline: none; border-color: var(--ml-action); box-shadow: 0 0 0 3px var(--ml-action-ring); }
 }
@@ -66,4 +68,4 @@
 
 .loy-example { margin: 0; font-size: 0.82rem; color: var(--ml-ink-2); line-height: 1.5; }
 
-.loy-actions { grid-column: 1 / -1; display: flex; gap: 12px; }
+.loy-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 12px; }

@@ -43,12 +43,12 @@ export class AgeRestrictionsManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(AgeRestrictionDialog, { width: '560px', data: { ageRestriction: null } })
+    this._dialog.open(AgeRestrictionDialog, { width: '560px', maxWidth: '100vw', data: { ageRestriction: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(AgeRestrictionDialog, { width: '560px', data: { ageRestriction: item } })
+    this._dialog.open(AgeRestrictionDialog, { width: '560px', maxWidth: '100vw', data: { ageRestriction: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

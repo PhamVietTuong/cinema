@@ -90,12 +90,12 @@ export class TheaterStaffComponent extends BaseTableComponent<StaffRow> {
   }
 
   openCreate(): void {
-    this._dialog.open(UserDialog, { width: '560px', data: { user: null, lockedTheaterId: this.theaterId } })
+    this._dialog.open(UserDialog, { width: '560px', maxWidth: '100vw', data: { user: null, lockedTheaterId: this.theaterId } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(row: StaffRow): void {
-    this._dialog.open(UserDialog, { width: '560px', data: { user: row.dto, lockedTheaterId: this.theaterId } })
+    this._dialog.open(UserDialog, { width: '560px', maxWidth: '100vw', data: { user: row.dto, lockedTheaterId: this.theaterId } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

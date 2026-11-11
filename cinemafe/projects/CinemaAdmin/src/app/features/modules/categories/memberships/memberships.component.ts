@@ -43,12 +43,12 @@ export class MembershipsManagementComponent extends BaseTableComponent {
   }
 
   openCreate(): void {
-    this._dialog.open(MembershipDialog, { width: '560px', data: { membership: null } })
+    this._dialog.open(MembershipDialog, { width: '560px', maxWidth: '100vw', data: { membership: null } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
-    this._dialog.open(MembershipDialog, { width: '560px', data: { membership: item } })
+    this._dialog.open(MembershipDialog, { width: '560px', maxWidth: '100vw', data: { membership: item } })
       .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
   }
 

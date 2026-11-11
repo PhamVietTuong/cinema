@@ -1,3 +1,5 @@
+@use 'lib/theme/mixins' as m;
+
 // Showtime Scheduler — weekly timetable
 // Colour-coded by showtime type: Normal = marquee gold, Premiere = teal, Special = rust.
 :host {
@@ -15,6 +17,7 @@
 .st-week-label { min-width: 168px; }
 .st-movie-filter {
   width: 200px;
+  max-width: 100%;
   align-self: center;
 
   // This select never shows a hint/error, so the app-wide reserved
@@ -154,3 +157,34 @@
   cursor: default;
 }
 
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+// The 7-day grid keeps a readable per-day width and scrolls INSIDE .st-board
+// (never the page); the time axis and day-head row stay pinned while scrolling.
+.st-board { max-width: 100%; overscroll-behavior-x: contain; }
+
+@include m.tablet-small {
+  .st-page { min-width: 0; }
+  .st-week-nav { width: 100%; justify-content: space-between; }
+  .st-week-label { flex: 1 1 auto; min-width: 0; }
+  .st-movie-filter { width: 100%; flex: 1 1 100%; }
+  .st-legend { flex-wrap: wrap; gap: 8px 16px; }
+
+  .st-board { -webkit-overflow-scrolling: touch; }
+  .st-grid { min-width: 760px; grid-template-columns: var(--st-axis-w) repeat(7, minmax(96px, 1fr)); }
+  .st-corner, .st-axis {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    background: var(--ml-panel);
+  }
+  .st-corner { top: 0; z-index: 5; }
+  .st-dayhead { position: sticky; top: 0; z-index: 3; background: var(--ml-panel); }
+  .st-dayhead.is-today { background: var(--ad-primary-soft); }
+}
+
+@include m.phone {
+  :host { --st-axis-w: 48px; }
+  .st-grid { min-width: 680px; grid-template-columns: var(--st-axis-w) repeat(7, minmax(92px, 1fr)); }
+  .st-block { padding: 4px 6px; }
+}

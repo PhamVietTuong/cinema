@@ -1,3 +1,5 @@
+@use '../../theme/mixins' as m;
+
 :host { display: block; }
 
 .login {
@@ -101,7 +103,7 @@
 
 .login-foot { text-align: center; margin: 22px 0 0; font-size: 12px; color: var(--ad-faint); }
 
-@media (max-width: 860px) {
+@include m.tablet-small {
   .login { grid-template-columns: 1fr; }
   .brand-panel { display: none; }
 }

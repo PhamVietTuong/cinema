@@ -1,6 +1,8 @@
+@use 'lib/theme/mixins' as m;
+
 :host { display: block; }
 
-.role-filter { width: auto; min-width: 160px; }
+.role-filter { width: auto; min-width: min(160px, 100%); }
 
 .stat-chips {
   display: grid;
@@ -25,6 +27,6 @@
 .user-cell { display: flex; align-items: center; gap: 12px;
   .ad-avatar { width: 34px; height: 34px; font-size: 13px; } }
 
-@media (max-width: 720px) {
+@include m.tablet-small {
   .stat-chips { grid-template-columns: 1fr; }
 }

@@ -86,7 +86,7 @@ export class TheaterCombosComponent extends BaseTableComponent<Dto> {
   }
 
   openCreate(): void {
-    this._dialog.open(FoodAndDrinkDialog, { width: '600px', data: { theaterId: this.theaterId, foodAndDrink: null, presetCombo: true } })
+    this._dialog.open(FoodAndDrinkDialog, { width: '600px', maxWidth: '100vw', data: { theaterId: this.theaterId, foodAndDrink: null, presetCombo: true } })
       .afterClosed().subscribe(saved => {
         if (saved) {
           this.triggerSearch();
@@ -95,7 +95,7 @@ export class TheaterCombosComponent extends BaseTableComponent<Dto> {
   }
 
   edit(item: Dto): void {
-    this._dialog.open(FoodAndDrinkDialog, { width: '600px', data: { theaterId: this.theaterId, foodAndDrink: item } })
+    this._dialog.open(FoodAndDrinkDialog, { width: '600px', maxWidth: '100vw', data: { theaterId: this.theaterId, foodAndDrink: item } })
       .afterClosed().subscribe(saved => {
         if (saved) {
           this.triggerSearch();

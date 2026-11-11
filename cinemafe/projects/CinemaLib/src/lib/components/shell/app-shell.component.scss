@@ -1,3 +1,5 @@
+@use '../../theme/mixins' as m;
+
 :host { display: block; }
 
 .admin-shell {
@@ -167,7 +169,7 @@
 
 // ── Responsive ──────────────────────────────────────────────────────────────
 // Tablet: collapse the sidebar to an icon rail.
-@media (max-width: 1024px) and (min-width: 769px) {
+@include m.tablet-only {
   .sidebar { width: 76px; padding: 18px 10px; }
   .brand-text, .nav-item span, .profile-meta, .nav-section { display: none; }
   .brand { justify-content: center; padding: 4px 0 18px; }
@@ -178,13 +180,15 @@
 // Mobile: sidebar becomes an off-canvas mat-sidenav drawer (mode="over") toggled by the
 // hamburger; the drawer's own slide-in animation and backdrop replace what used to be
 // hand-rolled here.
-@media (max-width: 768px) {
-  .menu-toggle { display: inline-flex; }
+@include m.tablet-small {
+  .menu-toggle { display: inline-flex; margin-right: 0; }
 
   .sidebar { width: min(280px, 84vw); }
 
-  .topbar { padding: 0 16px; }
-  .topbar-title { font-size: 16px; }
+  .topbar { padding: 0 12px; gap: 8px; }
+  .topbar-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
+  .topbar-right { gap: 6px; flex: 0 0 auto; }
+  .nav-item { min-height: 44px; }
 }
 
 // ── Shell additions (not used by the admin menu today) ──────────────────────
