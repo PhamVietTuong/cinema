@@ -133,7 +133,7 @@ RoomId (Cascade), RowName (max 5), ColIndex (int), IsActive, SeatGroupId (Guid?,
 TheaterId (Cascade), Kind (SeatKind enum — matched by Kind, never Name), Name (display only), Color (hex, default `#808080`). **Unique** (TheaterId, Kind). Nav `PatronCategories`.
 
 ### ShowTime
-MovieId (Cascade), StartTime/EndTime (DateTime), ProjectionForm (TwoD=1/ThreeD=2 — property of the screening, not the room), ShowTimeType (Normal=0/Premiere=1/Special=2), IsActive. Nav `ShowTimeRooms`.
+MovieId (Cascade), StartTime/EndTime (DateTime, **theater-local GMT+7 wall-clock time**, not UTC — compared against `DateTime.Now`, so the server process must run in GMT+7; the Dockerfile sets `TZ=Asia/Ho_Chi_Minh`), ProjectionForm (TwoD=1/ThreeD=2 — property of the screening, not the room), ShowTimeType (Normal=0/Premiere=1/Special=2), IsActive. Nav `ShowTimeRooms`.
 
 ### ShowTimeRoom (join: a showtime assigned to a room)
 Composite PK (ShowTimeId, RoomId). BasePrice (int — flat per-showtime manual add-on, not the seat's base price). Nav `InvoiceTickets`.

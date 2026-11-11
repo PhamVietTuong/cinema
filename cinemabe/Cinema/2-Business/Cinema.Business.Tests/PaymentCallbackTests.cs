@@ -250,6 +250,35 @@ public class PaymentCallbackTests
     }
 
     [Fact]
+    public async Task ExpireStalePendingBookingsAsync_GivesAnInFlightPaymentTheExtraGraceWindow()
+    {
+        // A5: an invoice whose payment page was opened keeps its seats 15 minutes longer than an untouched one, so a
+        // late IPN can still confirm it instead of arriving after the reaper cancelled it.
+        var untouched = PendingInvoice();
+        untouched.CreationTime = DateTime.UtcNow.AddMinutes(-20);
+        var inFlight = PendingInvoice();
+        inFlight.CreationTime = DateTime.UtcNow.AddMinutes(-20);
+        inFlight.PaymentReference = "txn-in-flight";
+        var longAbandoned = PendingInvoice();
+        longAbandoned.CreationTime = DateTime.UtcNow.AddMinutes(-40);
+        longAbandoned.PaymentReference = "txn-abandoned";
+        _uowMock.Setup(u => u.InvoiceStore.GetStalePendingAsync(It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<Invoice> { untouched, inFlight, longAbandoned });
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(It.IsAny<Guid>(), InvoiceStatus.Pending, InvoiceStatus.Cancelled)).ReturnsAsync(true);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>())).ReturnsAsync((Invoice i) => i);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<StockNetQuantity>());
+
+        var count = await _sut.ExpireStalePendingBookingsAsync(TimeSpan.FromMinutes(15));
+
+        count.Should().Be(2);
+        untouched.Status.Should().Be(InvoiceStatus.Cancelled);
+        longAbandoned.Status.Should().Be(InvoiceStatus.Cancelled);
+        inFlight.Status.Should().Be(InvoiceStatus.Pending);
+    }
+
+    [Fact]
     public async Task HandlePaymentCallbackAsync_Sandbox_MissingInvoiceId_ReturnsRejected()
     {
         var handling = await _sut.HandlePaymentCallbackAsync("Sandbox", new Dictionary<string, string>());

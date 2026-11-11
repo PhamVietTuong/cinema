@@ -11,6 +11,9 @@ WORKDIR /app
 COPY --from=build /app .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+# Showtimes are stored as local (GMT+7) wall-clock time and compared with DateTime.Now, so the process
+# must run in the theater's time zone.
+ENV TZ=Asia/Ho_Chi_Minh
 # JWT:Secret and ConnectionStrings:CinemaDatabase MUST be provided at runtime
 # (env vars JWT__Secret / ConnectionStrings__CinemaDatabase) — the app refuses
 # to start with an empty or default signing key.

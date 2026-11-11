@@ -1815,10 +1815,20 @@ public class BookingManager : IBookingManager
     private Task RestoreGiftCardAsync(Invoice invoice)
         => InvoiceLifecycle.RestoreGiftCardAsync(_uow, invoice);
 
+    // Matches VnPayGateway's vnp_ExpireDate (15 minutes after the payment page is created).
+    private static readonly TimeSpan _paymentGrace = TimeSpan.FromMinutes(15);
+
     public async Task<int> ExpireStalePendingBookingsAsync(TimeSpan age)
     {
         var cutoff = DateTime.UtcNow - age;
-        var stale  = await _uow.InvoiceStore.GetStalePendingAsync(cutoff);
+        var candidates = await _uow.InvoiceStore.GetStalePendingAsync(cutoff);
+        // An invoice whose payment was started has a VNPay payment page that stays valid for _paymentWindow after
+        // initiation, and initiation can happen any time inside the hold window. Reaping it at `age` could cancel
+        // an invoice whose IPN is still on its way (customer charged, no ticket), so it gets the extra window.
+        var paymentCutoff = cutoff - _paymentGrace;
+        var stale = candidates
+            .Where(i => string.IsNullOrEmpty(i.PaymentReference) || i.CreationTime <= paymentCutoff)
+            .ToList();
         if (stale.Count == 0)
         {
             return 0;
