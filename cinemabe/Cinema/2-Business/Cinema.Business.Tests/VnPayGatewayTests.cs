@@ -6,6 +6,8 @@ using FluentAssertions;
 
 namespace Cinema.Business.Tests;
 
+[Trait("Req", "BR-PAY-02")]
+[Trait("Req", "BR-PAY-04")]
 public class VnPayGatewayTests
 {
 

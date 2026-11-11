@@ -12,6 +12,7 @@ using Moq;
 
 namespace Cinema.Business.Tests;
 
+[Trait("Req", "BR-AUTH-02")]
 public class AuthServiceTests
 {
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();

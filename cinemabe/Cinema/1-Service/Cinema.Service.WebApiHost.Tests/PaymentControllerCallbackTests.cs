@@ -12,6 +12,7 @@ namespace Cinema.Service.WebApiHost.Tests;
 /// <summary>Covers the per-provider acknowledgement shape of <see cref="PaymentController.PaymentCallback"/>:
 /// VNPay must always get VNPay's {RspCode, Message} body (including on an unhandled exception), while every
 /// other provider keeps the legacy Ok/BadRequest shape unchanged.</summary>
+[Trait("Req", "BR-PAY-02")]
 public class PaymentControllerCallbackTests
 {
     private readonly Mock<IBookingManager> _bookingManagerMock = new();
