@@ -1,2 +1,7 @@
+@use 'lib/theme/mixins' as m;
 .section { max-width: 520px; margin-bottom: 16px; padding: 16px 24px; }
 .muted { color: var(--ml-muted); }
+
+@include m.phone {
+  .section { padding: 14px 16px; overflow-wrap: anywhere; }
+}

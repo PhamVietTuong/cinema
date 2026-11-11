@@ -19,7 +19,7 @@
     <cl-filter-bar [form]="searchForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
 
     <mat-card class="ad-card--pad-0">
-      <div class="ad-table-wrap">
+      <div class="ad-table-wrap ad-desktop-only">
         <table class="ad-table">
           <thead>
             <tr>
@@ -46,6 +46,19 @@
             }
           </tbody>
         </table>
+      </div>
+      <div class="ad-mobile-only">
+        @for (row of rows; track row.id) {
+          <div class="ad-mobile-card clickable" role="button" tabindex="0" (click)="open(row)" (keydown.enter)="open(row)">
+            <div class="ad-mobile-card-title"><strong>{{ row.title }}</strong></div>
+            <div class="ad-mobile-card-row"><span>{{ 'incidents.fields.category' | translate }}</span><span>{{ categoryLabel(row.category) | translate }}</span></div>
+            <div class="ad-mobile-card-row"><span>{{ 'incidents.fields.severity' | translate }}</span><cl-status-pill kind="incidentSeverity" [value]="row.severity" /></div>
+            <div class="ad-mobile-card-row"><span>{{ 'common.status' | translate }}</span><cl-status-pill kind="incident" [value]="row.status" /></div>
+            <div class="ad-mobile-card-row"><span>{{ 'incidents.fields.location' | translate }}</span><span>{{ row.roomName }} {{ row.seatLabel }}</span></div>
+            <div class="ad-mobile-card-row"><span>{{ 'incidents.fields.reportedBy' | translate }}</span><span>{{ row.reportedByName }}</span></div>
+            <div class="ad-mobile-card-row"><span>{{ 'common.createdAt' | translate }}</span><span>{{ row.creationTime | serverUtc | date: 'dd/MM/yyyy HH:mm' }}</span></div>
+          </div>
+        }
       </div>
       @if (!rows.length && !loading) {
         <cl-empty-state messageKey="incidents.list.empty" />

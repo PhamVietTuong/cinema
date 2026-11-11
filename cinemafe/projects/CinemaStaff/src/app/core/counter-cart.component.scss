@@ -1,3 +1,4 @@
+@use 'lib/theme/mixins' as m;
 @use './counter-shared';
 
 :host { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
@@ -18,7 +19,7 @@
   th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--ml-rule); }
   .num { text-align: right; white-space: nowrap; }
 }
-.pos-cat { min-width: 220px; }
+.pos-cat { min-width: clamp(140px, 14vw, 220px); }
 .pos-row-actions { white-space: nowrap; text-align: right; }
 
 .pos-foods { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
@@ -39,3 +40,33 @@
 .pos-qty { display: flex; align-items: center; gap: 4px; margin-top: auto; span { min-width: 24px; text-align: center; font-weight: 600; } }
 .pos-food-lines { margin-top: 12px; border-top: 1px dashed var(--ml-rule); padding-top: 8px; }
 .pos-food-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+// Tablet/phone: the cart column is narrow, so ticket rows stack as cards (no table overflow).
+@include m.tablet {
+  .pos-tickets {
+    display: block;
+    thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    tbody { display: flex; flex-direction: column; gap: 8px; }
+    tr {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 8px;
+      padding: 8px 10px; border: 1px solid var(--ml-rule); border-radius: var(--ml-r-sm); background: var(--ml-panel);
+    }
+    td { display: block; padding: 0; border: 0; }
+    td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+    .pos-row-actions { display: flex; align-items: center; }
+  }
+  .pos-cat { min-width: 0; width: 100%; min-height: 44px; }
+  .pos-foods { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .pos-showtime { flex: 1 1 130px; min-height: 44px; }
+}
+
+@include m.tablet-small {
+  .pos-qty button { width: 44px; height: 44px; }
+  .pos-food-line { flex-wrap: wrap; }
+}
+
+@include m.phone {
+  .pos-foods { grid-template-columns: 1fr 1fr; gap: 8px; }
+  // Seat map: smaller seats on phones only (default 34px stays for tablet/desktop).
+  cl-seat-map { --cl-seat-size: 30px; }
+}

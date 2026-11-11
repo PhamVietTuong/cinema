@@ -1,3 +1,13 @@
+@use 'lib/theme/mixins' as m;
+
 .gate-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; align-items: start; }
 .gate-grid > * { display: block; min-width: 0; padding: 20px; }
-@media (max-width: 900px) { .gate-grid { grid-template-columns: 1fr; } }
+
+@include m.tablet {
+  .gate-grid { grid-template-columns: 1fr; }
+}
+
+@include m.phone {
+  .gate-grid { gap: 12px; }
+  .gate-grid > * { padding: 14px; }
+}

@@ -1,3 +1,4 @@
+@use 'lib/theme/mixins' as m;
 .muted { color: var(--ml-muted); }
 .step { display: flex; gap: 10px; align-items: center; margin: 14px 0 8px; }
 .step-num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 0.85rem; background: var(--ml-action); color: var(--ml-on-action); }
@@ -23,3 +24,12 @@
 .overlay-actions { margin-top: 32px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 .age-question { width: 100%; font-size: 1.4rem; margin: 0; }
 .big-btn { min-width: 160px; min-height: 48px; font-size: 1.1rem; background: var(--ml-panel); color: var(--ml-ink); }
+
+@include m.phone {
+  .overlay-icon { font-size: 72px; width: 72px; height: 72px; }
+  .overlay-title { font-size: 1.8rem; }
+  .detail.seat { font-size: 2.4rem; }
+  .overlay-actions { gap: 12px; }
+  .big-btn { min-width: 0; flex: 1 1 140px; }
+  .recent-row { flex-wrap: wrap; }
+}

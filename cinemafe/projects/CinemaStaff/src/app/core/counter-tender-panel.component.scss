@@ -1,3 +1,4 @@
+@use 'lib/theme/mixins' as m;
 @use './counter-shared';
 
 .pos-tender { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
@@ -13,4 +14,13 @@
   dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
   .is-warn dd { color: var(--ml-warn-ink); }
   .is-change dd { color: var(--ml-second); font-size: 1.2rem; }
+}
+
+@include m.tablet-small {
+  .pos-tender-method, .pos-tender-amount { flex: 1 1 120px; width: auto; }
+  .pos-tender-add button { min-height: 44px; flex: 1 1 auto; }
+}
+
+@include m.phone {
+  .pos-tender-method, .pos-tender-amount, .pos-tender-ref { flex: 1 1 100%; width: 100%; }
 }
