@@ -71,7 +71,7 @@ Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program
 | Key | Purpose | Required | Default |
 |---|---|---|---|
 | `Serilog:MinimumLevel:Default` / `:Override:*` | Serilog log levels | optional | `Information`, with `Microsoft`/`Microsoft.EntityFrameworkCore` at `Warning` |
-| `Serilog:WriteTo` | Sinks (Console + rolling File) | optional | Console + File at `C:/NetsenGroup/Logs/cinema-.log`, daily rolling |
+| `Serilog:WriteTo` | Sinks (Console + rolling File) | optional | Console + File at `logs/cinema-.log` (relative to the working directory: the project folder under `dotnet run`, `/app` in the container), daily rolling. Override the file path with env var `Serilog__WriteTo__1__Args__path` |
 | `Logging:LogLevel:Default` / `:Microsoft.AspNetCore` | Standard ASP.NET logging config | optional | `Information` / `Warning` |
 
 ## 2. Frontend — Angular `environment.ts` keys (per app)
