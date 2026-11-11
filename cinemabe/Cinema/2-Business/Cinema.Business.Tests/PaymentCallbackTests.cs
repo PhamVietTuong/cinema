@@ -11,6 +11,9 @@ using Moq;
 
 namespace Cinema.Business.Tests;
 
+[Trait("Req", "BR-PAY-01")]
+[Trait("Req", "BR-PAY-03")]
+[Trait("Req", "BR-PAY-05")]
 public class PaymentCallbackTests
 {
     private readonly Mock<IApplicationUnitOfWork> _uowMock = new();
@@ -348,6 +351,155 @@ public class PaymentCallbackTests
 
         await _sut.Invoking(s => s.ValidateTicketAsync("QR", Guid.NewGuid()))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*already been used*");
+    }
+
+    [Fact]
+    public async Task HandlePaymentCallbackAsync_TwoConcurrentDeliveries_ApplyTheSideEffectsExactlyOnce()
+    {
+        // B9: both deliveries read the invoice as Pending and reach the atomic claim at the same time; only one may
+        // win it, so exactly one payment row and one loyalty accrual result, and the loser reports AlreadyConfirmed.
+        var userId = Guid.NewGuid();
+        var user = new User { Id = userId, Points = 0 };
+        var invoice = PendingInvoice();
+        invoice.UserId = userId;
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<MemberShip, bool>>>()))
+            .ReturnsAsync(new List<MemberShip>());
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _uowMock.Setup(u => u.InvoiceStore.GetStatusAsync(invoice.Id)).ReturnsAsync(InvoiceStatus.Paid);
+
+        var arrivals = 0;
+        var bothArrived = new TaskCompletionSource();
+        var claims = 0;
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Paid))
+            .Returns(async () =>
+            {
+                if (Interlocked.Increment(ref arrivals) == 2)
+                {
+                    bothArrived.SetResult();
+                }
+                await bothArrived.Task;                      // hold both callers at the claim until both are there
+                return Interlocked.Increment(ref claims) == 1;   // the database lets exactly one UPDATE change the row
+            });
+        var callback = VnPayTestHelper.SignedIpn(invoice.Id, 10_000_000);
+
+        var outcomes = await Task.WhenAll(
+            _sut.HandlePaymentCallbackAsync("VNPay", callback),
+            _sut.HandlePaymentCallbackAsync("VNPay", callback));
+
+        outcomes.Select(o => o.Outcome).Should().BeEquivalentTo(
+            new[] { PaymentCallbackOutcome.Confirmed, PaymentCallbackOutcome.AlreadyConfirmed });
+        invoice.Payments.Should().HaveCount(1);
+        user.Points.Should().Be(100);   // 100,000 VND at the default 1,000 VND per point, accrued once
+    }
+
+    [Fact]
+    public async Task ExpireStalePendingBookingsAsync_RestoresRedeemedPointsAndGiftCard_AndFreesTheSeats()
+    {
+        // B8: a booking that times out gives back what it reserved; before this was only the food stock that was tested.
+        var userId = Guid.NewGuid();
+        var cardId = Guid.NewGuid();
+        var user = new User { Id = userId, Points = 10 };
+        var card = new GiftCard { Id = cardId, Balance = 5_000 };
+        var invoice = PendingInvoice();
+        invoice.UserId = userId;
+        invoice.PointsRedeemed = 500;
+        invoice.GiftCardId = cardId;
+        invoice.GiftCardAmount = 20_000;
+        invoice.CreationTime = DateTime.UtcNow.AddMinutes(-20);
+        _uowMock.Setup(u => u.InvoiceStore.GetStalePendingAsync(It.IsAny<DateTime>())).ReturnsAsync(new List<Invoice> { invoice });
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Cancelled)).ReturnsAsync(true);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>())).ReturnsAsync((Invoice i) => i);
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.GiftCardStore.GetByIdAsync(cardId)).ReturnsAsync(card);
+        _uowMock.Setup(u => u.GiftCardStore.UpdateAsync(card)).ReturnsAsync(card);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<StockNetQuantity>());
+
+        var count = await _sut.ExpireStalePendingBookingsAsync(TimeSpan.FromMinutes(15));
+
+        count.Should().Be(1);
+        invoice.Status.Should().Be(InvoiceStatus.Cancelled);
+        user.Points.Should().Be(510);
+        card.Balance.Should().Be(25_000);
+        _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task InitiatePaymentAsync_ByANonOwner_ReturnsNull_AndTouchesNothing()
+    {
+        var invoice = PendingInvoice();
+        invoice.UserId = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+
+        var result = await _sut.InitiatePaymentAsync(Guid.NewGuid(), invoice.Id, "Sandbox", null, null);
+
+        result.Should().BeNull();
+        _uowMock.Verify(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(InvoiceStatus.Paid)]
+    [InlineData(InvoiceStatus.Cancelled)]
+    [InlineData(InvoiceStatus.Failed)]
+    public async Task InitiatePaymentAsync_OnANonPendingInvoice_ReturnsNull(InvoiceStatus status)
+    {
+        var userId = Guid.NewGuid();
+        var invoice = PendingInvoice();
+        invoice.UserId = userId;
+        invoice.Status = status;
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+
+        var result = await _sut.InitiatePaymentAsync(userId, invoice.Id, "Sandbox", null, null);
+
+        result.Should().BeNull();
+        _uowMock.Verify(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task InitiatePaymentAsync_FullyCoveredByGiftCard_FinalizesWithoutAnyGateway()
+    {
+        var userId = Guid.NewGuid();
+        var invoice = PendingInvoice(finalAmount: 0);
+        invoice.UserId = userId;
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(new User { Id = userId });
+        _uowMock.Setup(u => u.MemberShipStore.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<MemberShip, bool>>>()))
+            .ReturnsAsync(new List<MemberShip>());
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        var result = await _sut.InitiatePaymentAsync(userId, invoice.Id, "VNPay", null, null);
+
+        result.Should().NotBeNull();
+        result!.AlreadyPaid.Should().BeTrue();
+        result.Provider.Should().Be("None");
+        invoice.Status.Should().Be(InvoiceStatus.Paid);
+        invoice.Payments.Should().BeEmpty("nothing was charged");
+    }
+
+    [Fact]
+    public async Task InitiatePaymentAsync_RecordsTheResolvedGatewayAsTheInvoiceOwner()
+    {
+        var userId = Guid.NewGuid();
+        var invoice = PendingInvoice();
+        invoice.UserId = userId;
+        invoice.PaymentMethod = "VNPay";
+        _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        var result = await _sut.InitiatePaymentAsync(userId, invoice.Id, "Sandbox", null, null);
+
+        result!.Provider.Should().Be("Sandbox");
+        invoice.PaymentMethod.Should().Be("Sandbox");   // later callbacks must come from this provider (A1)
+        invoice.PaymentReference.Should().StartWith("SANDBOX-");
     }
 
     [Fact]
