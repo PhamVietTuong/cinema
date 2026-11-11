@@ -45,7 +45,7 @@ Point at other hosts with `CINEMA_API_URL`, `CINEMA_USER_URL`, `CINEMA_ADMIN_URL
 |---|---|
 | `tests/api-public-catalog.spec.ts` | health, `GetMovies` / `GetTheaters` paging, validation |
 | `tests/api-auth.spec.ts` | login, 401 / 403 on admin endpoints |
-| `tests/api-payment-callback.spec.ts` | VNPay callback contract (bad signature is never `RspCode` `00`) |
+| `tests/api-payment-callback.spec.ts` | VNPay IPN contract: bad signature gives 200 + `97`, signed unknown order gives 200 + `01` (needs `E2E_VNPAY_HASH_SECRET` = the API's `Payments:VnPay:HashSecret`; fails in CI when absent) |
 | `tests/user-auth.spec.ts` | CinemaUser login/register/reset pages, route guards |
 | `tests/user-discover.spec.ts` | home, movies, theaters, promotions, membership, chatbot |
 | `tests/user-profile-booking.spec.ts` | profile, session persistence, showtime → seat map |

@@ -96,6 +96,10 @@ jobs:
       CINEMA_USER_URL: 'http://localhost:4202'
       CINEMA_ADMIN_URL: 'http://localhost:4201'
       CINEMA_STAFF_URL: 'http://localhost:4203'
+      # A throw-away VNPay merchant for the callback contract specs: the API signs/verifies with this secret and the
+      # specs sign their IPNs with the same value. Not a real credential.
+      VNPAY_TMN_CODE: 'CIE2ETMN'
+      VNPAY_HASH_SECRET: 'ci-only-vnpay-hash-secret-0123456789'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -128,6 +132,11 @@ jobs:
             sqlcmd -C -I -b -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -f 65001 -i "sql/$script.sql"
           done
 
+      - name: Move past showtimes to tomorrow
+        # insert_db.sql builds its showtime grid relative to the day it was written; the booking spec needs an
+        # upcoming one and fails (never skips) without it.
+        run: sqlcmd -C -I -b -S localhost,1433 -U sa -P "$SA_PASSWORD" -d Cinema -f 65001 -i e2e/sql/seed-future-showtime.sql
+
       - name: Seed the admin + customer accounts
         working-directory: cinemabe
         env:
@@ -142,6 +151,8 @@ jobs:
           ASPNETCORE_URLS: 'http://localhost:5102'
           # The e2e flow pays through the Sandbox gateway, which is off outside Development by default.
           Payments__EnableSandbox: 'true'
+          Payments__VnPay__TmnCode: ${{ env.VNPAY_TMN_CODE }}
+          Payments__VnPay__HashSecret: ${{ env.VNPAY_HASH_SECRET }}
           AllowedOrigins__0: 'http://localhost:4202'
           AllowedOrigins__1: 'http://localhost:4201'
           AllowedOrigins__2: 'http://localhost:4203'
@@ -173,6 +184,8 @@ jobs:
 
       - name: Run Playwright
         working-directory: e2e
+        env:
+          E2E_VNPAY_HASH_SECRET: ${{ env.VNPAY_HASH_SECRET }}
         run: |
           npm ci
           npx playwright install --with-deps chromium

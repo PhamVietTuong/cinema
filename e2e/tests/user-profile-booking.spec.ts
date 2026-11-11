@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { SESSION, USER_URL, dropToken, login } from './helpers';
+import { API_URL, SESSION, USER_URL, dismissSplashBanner, dropToken, login } from './helpers';
 
 test.use({ baseURL: USER_URL });
 
@@ -18,15 +18,28 @@ test.describe('CinemaUser: signed-in customer', () => {
     await expect(page).toHaveURL(/\/profile/);
   });
 
-  test('booking seat map opens from a movie showtime', async ({ page }) => {
-    await page.goto('/movies');
-    const movie = page.locator('a[href^="/movies/"]').first();
-    test.skip((await movie.count()) === 0, 'No movies seeded');
-    await movie.click();
-    const showtime = page.locator('a[href*="/booking/seats"]').first();
-    test.skip((await showtime.count()) === 0, 'No upcoming showtime seeded');
-    await showtime.click();
-    await expect(page).toHaveURL(/\/booking\/seats/);
+  test('booking seat map opens from a movie showtime', { tag: ['@BR-SEAT-01'] }, async ({ page, request }) => {
+    // Pick a movie that really has an upcoming showtime: most seeded movies have none, so "the first movie" is not
+    // a stable choice. Never skip: no showtime means the seed is stale, and a skipped booking test hides a broken flow.
+    const res = await request.post(`${API_URL}/api/Cinema/SearchShowTimes`, { data: { pageIndex: 1, pageSize: 1 } });
+    expect(res.ok(), 'SearchShowTimes should answer').toBeTruthy();
+    const upcoming = (await res.json()).results as { movieSlug: string }[];
+    expect(
+      upcoming.length,
+      'No upcoming showtime: run e2e/sql/seed-future-showtime.sql against the Cinema database (CI does this after insert_db).'
+    ).toBeGreaterThan(0);
+
+    await page.goto(`/movies/${upcoming[0].movieSlug}`);
+    await dismissSplashBanner(page);
+    // The movie page embeds the seat panel inline: pick a date that has a slot, then the slot.
+    const slots = page.locator('button.time-slot');
+    const dateTabs = page.locator('button.date-tab');
+    await expect(dateTabs.first(), 'The movie page should show its date strip').toBeVisible({ timeout: 15_000 });
+    for (let i = 0; i < (await dateTabs.count()) && (await slots.count()) === 0; i++) {
+      await dateTabs.nth(i).click();
+    }
+    await expect(slots.first(), 'The movie page should list its upcoming showtime').toBeVisible();
+    await slots.first().click();
     await expect(page.locator('cl-seat-map')).toBeVisible();
   });
 

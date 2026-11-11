@@ -99,3 +99,15 @@ export async function bearer(request: APIRequestContext, credentials: Credential
   }
   return { Authorization: `Bearer ${token}` };
 }
+
+/** Closes the marketing splash banner if one is active; it opens on first visit and blocks every click behind it. */
+export async function dismissSplashBanner(page: Page): Promise<void> {
+  const close = page.locator('.sb-close');
+  try {
+    await close.waitFor({ state: 'visible', timeout: 3_000 });
+    await close.click();
+    await close.waitFor({ state: 'hidden' });
+  } catch {
+    // no banner is active
+  }
+}
