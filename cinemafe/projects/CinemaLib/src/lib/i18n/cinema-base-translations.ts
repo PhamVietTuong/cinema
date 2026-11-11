@@ -16,6 +16,8 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       network: 'Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.',
       forbidden: 'Bạn không có quyền thực hiện thao tác này.',
       server: 'Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.',
+      loginFailed: 'Đăng nhập thất bại. Vui lòng thử lại.',
+      registerFailed: 'Đăng ký thất bại. Vui lòng thử lại.',
     },
     nav: { logout: 'Đăng Xuất' },
     seatMap: {
@@ -113,6 +115,8 @@ export const CINEMA_BASE_TRANSLATIONS: Record<string, TranslationObject> = {
       network: 'Cannot reach the server. Please check your connection.',
       forbidden: 'You are not allowed to do this.',
       server: 'A server error occurred. Please try again later.',
+      loginFailed: 'Login failed. Please try again.',
+      registerFailed: 'Registration failed. Please try again.',
     },
     nav: { logout: 'Log Out' },
     seatMap: {

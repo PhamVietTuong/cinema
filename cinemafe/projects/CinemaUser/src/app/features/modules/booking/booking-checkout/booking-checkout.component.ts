@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel, joinSeatLabels } from 'CinemaLib';
+import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel, joinSeatLabels, translateApiError } from 'CinemaLib';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, map, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -234,7 +234,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
           discountAmount: amount,
           message: res?.valid
             ? this._translate.instant('booking.summary.discountSaves', { code, amount: Math.round(amount).toLocaleString('en-US') })
-            : (res?.message ?? this._translate.instant('booking.summary.discountInvalid')),
+            : (res?.message ? translateApiError(res.message) : this._translate.instant('booking.summary.discountInvalid')),
         };
       }),
       catchError(err => of({
@@ -422,7 +422,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       map(res => ({
         valid: !!res?.valid,
         message: res?.message
-          ?? (res?.valid ? this._translate.instant('booking.summary.giftCardBalance', { balance: res?.balance ?? 0 }) : ''),
+          ? translateApiError(res.message)
+          : (res?.valid ? this._translate.instant('booking.summary.giftCardBalance', { balance: res?.balance ?? 0 }) : ''),
       })),
       catchError(err => of({
         valid: false,

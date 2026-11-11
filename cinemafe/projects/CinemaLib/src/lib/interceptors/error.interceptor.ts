@@ -9,6 +9,13 @@ import { ToastService } from '../services/toast.service';
 import { matchApiError } from '../services/api-error-catalog';
 import { rawApiErrorMessage, translateApiError } from '../services/api-error';
 
+/**
+ * 401 from these Identity calls means "wrong credentials / bad code", not "your session expired":
+ * they are either anonymous or re-check a password for a signed-in user, so they must not sign the
+ * user out (nor redirect, which would drop the login page's returnUrl).
+ */
+const CREDENTIAL_CHECK_URL = /\/api\/Identity\/(Login|Register|GoogleLogin|FacebookLogin|VerifyTwoFactor|ForgotPassword|ResetPassword|ConfirmEmail|ResendVerification|ChangePassword)(\?|$)/i;
+
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const store = inject(Store);
@@ -23,7 +30,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   };
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
+      if (error.status === 401 && !CREDENTIAL_CHECK_URL.test(req.url)) {
         store.dispatch(logout());
         router.navigate(['/auth/login']);
       } else if (error.status === 0) {

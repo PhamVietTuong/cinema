@@ -3,6 +3,8 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { apiErrorMessage } from '../../services/api-error';
 import { IdentityServiceAgent } from '../../services/identity-http.service';
 import { StaffHubService } from '../../services/staff-hub.service';
 import { TokenStorage } from './token-storage';
@@ -14,6 +16,7 @@ export class AuthEffects {
   private _identityService = inject(IdentityServiceAgent.HttpService);
   private _router = inject(Router);
   private _staffHub = inject(StaffHubService);
+  private _translate = inject(TranslateService);
 
   login$ = createEffect(() =>
     this.actions$.pipe(
@@ -24,7 +27,7 @@ export class AuthEffects {
           map(response => (response as any)?.token
             ? AuthActions.loginSuccess({ response: response as any, rememberMe })
             : AuthActions.twoFactorRequired()),
-          catchError(err => of(AuthActions.loginFailure({ error: err.error?.error ?? 'Login failed' })))
+          catchError(err => of(AuthActions.loginFailure({ error: apiErrorMessage(err, this._translate.instant('errors.loginFailed')) })))
         )
       )
     )
@@ -36,7 +39,7 @@ export class AuthEffects {
       switchMap(({ request }) =>
         this._identityService.register(IdentityServiceAgent.RegisterRequest.fromJS(request)).pipe(
           map(response => AuthActions.registerSuccess({ response: response as any })),
-          catchError(err => of(AuthActions.registerFailure({ error: err.error?.error ?? 'Registration failed' })))
+          catchError(err => of(AuthActions.registerFailure({ error: apiErrorMessage(err, this._translate.instant('errors.registerFailed')) })))
         )
       )
     )

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subject, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
@@ -55,6 +55,9 @@ export class DiscountCodeDialog implements OnInit {
     private _dialogRef: MatDialogRef<DiscountCodeDialog, DiscountCodeDialogResult>,
     @Inject(MAT_DIALOG_DATA) public data: DiscountCodeDialogData,
     destroyRef: DestroyRef,
+    // Optional so the unit specs can construct the dialog by hand; the app always injects it. Zoneless: the
+    // server verdict arrives outside change detection and must be marked dirty or the dialog never updates.
+    private _cdr?: ChangeDetectorRef,
   ) {
     this.code = data.code;
     // switchMap drops the answer for an older code once a newer one is typed, so a slow reply can't
@@ -62,7 +65,7 @@ export class DiscountCodeDialog implements OnInit {
     this._typed$.pipe(
       debounceTime(DiscountCodeDialog.CHECK_DELAY_MS),
       distinctUntilChanged(),
-      tap(() => { this.checking = true; }),
+      tap(() => { this.checking = true; this._cdr?.markForCheck(); }),
       switchMap(code => this.data.check(code)),
       takeUntilDestroyed(destroyRef),
     ).subscribe(result => this._show(result));
@@ -115,5 +118,6 @@ export class DiscountCodeDialog implements OnInit {
     this.message = result.message;
     this.discountAmount = result.discountAmount;
     this.checking = false;
+    this._cdr?.markForCheck();
   }
 }

@@ -275,3 +275,14 @@
 .mc-btn--trailer { background: var(--ml-panel-3); color: var(--ml-ink); }
 .mc-btn--trailer:hover { background: var(--ml-rule); }
 .mc-btn--book, .mc-btn--notify { background: var(--ml-action); color: var(--ml-on-action); }
+
+// Two-up cards are ~140px wide on a phone: side-by-side buttons crush their labels, so stack them.
+@include m.phone {
+  .mc-action-row { flex-direction: column; }
+  .mc-btn { flex: none; min-height: 44px; }
+}
+
+// 44px hit area for the one-line card title link without moving it: padding is cancelled by the negative top margin.
+@include m.tablet-small {
+  .mc-title--link { padding-block: 10px; margin: -10px 0 0; }
+}

@@ -312,6 +312,12 @@ export class MovieDetailComponent implements OnInit {
   }
 
   /** Number of showtimes on the given local date — used for each date tab's count badge. */
+  /** Weekday name in the UI language (the Angular date pipe has no vi locale registered, so it always printed English). */
+  weekday(value: string | Date, style: 'short' | 'long'): string {
+    const lang = this._translate.currentLang() || 'vi';
+    return new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-US', { weekday: style }).format(new Date(value));
+  }
+
   countForDate(showTimes: any[] | undefined, key: string): number {
     return (showTimes ?? []).filter(st => this.toDateKey(st.startTime) === key).length;
   }

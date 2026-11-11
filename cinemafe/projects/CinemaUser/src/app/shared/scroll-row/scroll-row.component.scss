@@ -10,8 +10,13 @@
   overflow-x: auto;
   padding: 6px 2px 18px;
   scrollbar-width: none;
+  // A horizontal swipe must not trigger browser back/forward; vertical page scroll still passes through.
+  overscroll-behavior-x: contain;
   &::-webkit-scrollbar { display: none; }
+  &:focus-visible { outline: 2px solid var(--ml-ink); outline-offset: 2px; border-radius: 4px; }
 }
+
+.sr-dragging .sr-track { cursor: grabbing; user-select: none; }
 
 .sr-chevron {
   position: absolute;
@@ -29,9 +34,10 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-  transition: transform var(--cx-dur) var(--cx-ease), box-shadow var(--cx-dur) var(--cx-ease);
+  transition: transform var(--cx-dur) var(--cx-ease), box-shadow var(--cx-dur) var(--cx-ease), opacity var(--cx-dur) var(--cx-ease);
 
-  &:hover { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); transform: translateY(-50%) scale(1.06); }
+  &:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); transform: translateY(-50%) scale(1.06); }
+  &:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
 
   mat-icon { font-size: 20px; width: 20px; height: 20px; }
 }
@@ -41,7 +47,7 @@
 
 // A single hint pulse ~1.3s after the row mounts, so first-time visitors notice it scrolls.
 @media (prefers-reduced-motion: no-preference) {
-  .sr-chevron {
+  .sr-chevron:not(:disabled) {
     animation: sr-chevron-hint 0.9s ease-in-out 1;
     animation-delay: 1.3s;
   }
@@ -52,6 +58,31 @@
   50% { transform: translateY(-50%) scale(1.18); }
 }
 
+// Narrow layouts: the -18px overhang would leave the viewport, so keep chevrons inside, and fade the
+// edges that still have content so the row visibly continues.
+@include m.tablet {
+  .sr-chevron--left { left: 4px; }
+  .sr-chevron--right { right: 4px; }
+
+  .sr-can-prev .sr-track {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px);
+    mask-image: linear-gradient(to right, transparent 0, #000 28px);
+  }
+  .sr-can-next .sr-track {
+    -webkit-mask-image: linear-gradient(to left, transparent 0, #000 28px);
+    mask-image: linear-gradient(to left, transparent 0, #000 28px);
+  }
+  .sr-can-prev.sr-can-next .sr-track {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+  }
+}
+
 @include m.tablet-small {
+  .sr-chevron { width: 44px; height: 44px; }
+}
+
+// Touch-only devices swipe; the chevrons would only cover content.
+@media (hover: none) and (pointer: coarse) {
   .sr-chevron { display: none; }
 }

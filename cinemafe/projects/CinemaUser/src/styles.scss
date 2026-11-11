@@ -499,4 +499,8 @@ a {
   button[type='submit'] { min-height: 44px; }
   .forgot-link { display: inline-flex; align-items: center; min-height: 44px; }
   .logo-link, .sf-logo { display: inline-flex; align-items: center; min-height: 44px; }
+  .promo-tab { min-width: 44px; }
+  .promo-toggle, .score-star { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; }
+  .mat-button-toggle-button { min-height: 44px; }
+  .auth-body .mat-mdc-icon-button.mat-mdc-button-base { width: 44px; height: 44px; padding: 10px; }
 }
