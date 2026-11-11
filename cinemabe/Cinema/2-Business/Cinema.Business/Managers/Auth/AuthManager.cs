@@ -65,6 +65,9 @@ public class AuthManager : IAuthManager
             throw new UnauthorizedAccessException("Invalid credentials.");
         }
 
+        // Soft-deleted (Inactive) and Banned accounts must not sign in, however they authenticate.
+        EnsureAccountActive(user);
+
         // Email must be confirmed before a password login is allowed.
         if (!user.EmailConfirmed)
         {
@@ -111,6 +114,16 @@ public class AuthManager : IAuthManager
         }
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
+    }
+
+    // Only Active accounts may obtain a token. DeleteUser only soft-deletes (Inactive) and admins can Ban, so
+    // every sign-in path (password, 2FA, Google, Facebook) checks this.
+    private static void EnsureAccountActive(User user)
+    {
+        if (user.Status != UserStatus.Active)
+        {
+            throw new UnauthorizedAccessException("This account is disabled.");
+        }
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -230,18 +243,44 @@ public class AuthManager : IAuthManager
             throw new UnauthorizedAccessException("Invalid or expired code.");
         }
 
-        if (!user.TwoFactorEnabled
-            || string.IsNullOrEmpty(user.TwoFactorCodeHash)
-            || user.TwoFactorCodeExpiresAt == null
-            || user.TwoFactorCodeExpiresAt < DateTime.UtcNow
+        // Wrong-code guesses share the password lockout window, so a 6-digit code cannot be brute-forced.
+        if (user.LockoutEndUtc is { } lockoutEnd && lockoutEnd > DateTime.UtcNow)
+        {
+            var minutes = (int)Math.Ceiling((lockoutEnd - DateTime.UtcNow).TotalMinutes);
+            throw new UnauthorizedAccessException(
+                $"Account locked due to too many failed attempts. Try again in {minutes} minute(s).");
+        }
+
+        var codePending = user.TwoFactorEnabled
+            && !string.IsNullOrEmpty(user.TwoFactorCodeHash)
+            && user.TwoFactorCodeExpiresAt != null
+            && user.TwoFactorCodeExpiresAt >= DateTime.UtcNow;
+        if (!codePending
             || !CryptographicOperations.FixedTimeEquals(
-                   Convert.FromHexString(user.TwoFactorCodeHash),
+                   Convert.FromHexString(user.TwoFactorCodeHash!),
                    Convert.FromHexString(HashToken(request.Code))))
+        {
+            if (codePending)
+            {
+                await RegisterFailedLoginAsync(user);
+                if (user.LockoutEndUtc != null)
+                {
+                    // Threshold reached: burn the code so the attacker has to pass the password step again.
+                    user.TwoFactorCodeHash = null;
+                    user.TwoFactorCodeExpiresAt = null;
+                    await _uow.UserStore.UpdateAsync(user);
+                    await _uow.SaveChangesAsync();
+                }
+            }
             throw new UnauthorizedAccessException("Invalid or expired code.");
+        }
+
+        EnsureAccountActive(user);
 
         // Consume the code so it can't be replayed.
         user.TwoFactorCodeHash = null;
         user.TwoFactorCodeExpiresAt = null;
+        user.FailedLoginCount = 0;
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
 
@@ -311,6 +350,8 @@ public class AuthManager : IAuthManager
             await _uow.SaveChangesAsync();
         }
 
+        EnsureAccountActive(user);
+
         // Google logins bypass the app's own 2FA (Google enforces its own).
         return BuildAuthResponse(user);
     }
@@ -354,6 +395,8 @@ public class AuthManager : IAuthManager
             await _uow.UserStore.UpdateAsync(user);
             await _uow.SaveChangesAsync();
         }
+
+        EnsureAccountActive(user);
 
         return BuildAuthResponse(user);
     }
@@ -541,6 +584,11 @@ public class AuthManager : IAuthManager
         var targetUserTypeId = request.UserTypeId != Guid.Empty ? request.UserTypeId : user.UserTypeId;
         var theaterId = await ResolveTheaterIdAsync(targetUserTypeId, request.TheaterId);
 
+        // Demoting or deactivating the last active administrator would lock everyone out of admin tools.
+        var targetTypeName = (await _uow.UserTypeStore.GetByIdAsync(targetUserTypeId))?.Name;
+        await EnsureAnotherActiveAdminRemainsAsync(
+            user, staysActiveAdmin: request.Status == UserStatus.Active && targetTypeName == RoleNames.Admin);
+
         user.Name   = request.Name;
         user.Phone  = request.Phone;
         user.Status = request.Status;
@@ -592,10 +640,26 @@ public class AuthManager : IAuthManager
         {
             throw new KeyNotFoundException("User not found.");
         }
+        await EnsureAnotherActiveAdminRemainsAsync(user, staysActiveAdmin: false);
         // Soft-delete: deactivating preserves the user's invoices/comments history.
         user.Status = UserStatus.Inactive;
         await _uow.UserStore.UpdateAsync(user);
         await _uow.SaveChangesAsync();
+    }
+
+    // Throws when `user` is currently an active Admin, would stop being one, and no other active Admin exists.
+    private async Task EnsureAnotherActiveAdminRemainsAsync(User user, bool staysActiveAdmin)
+    {
+        if (staysActiveAdmin || user.Status != UserStatus.Active || user.UserType?.Name != RoleNames.Admin)
+        {
+            return;
+        }
+        var others = await _uow.UserStore.CountAsync(
+            u => u.Id != user.Id && u.Status == UserStatus.Active && u.UserType.Name == RoleNames.Admin);
+        if (others == 0)
+        {
+            throw new InvalidOperationException("Cannot remove, demote or deactivate the last active administrator.");
+        }
     }
 
     private AuthResponse BuildAuthResponse(User user)

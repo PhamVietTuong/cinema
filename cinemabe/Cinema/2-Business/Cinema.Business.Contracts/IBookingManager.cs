@@ -30,11 +30,12 @@ public interface IBookingManager
     /// provider-specific acknowledgement (e.g. VNPay's required {RspCode, Message} IPN response).</summary>
     Task<PaymentCallbackHandlingResult> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData);
     /// <summary>Gate check-in: validates a ticket QR, marks it used (once), returns its details.</summary>
-    Task<TicketValidationDTO>           ValidateTicketAsync(string qrCode);
+    Task<TicketValidationDTO>           ValidateTicketAsync(string qrCode, Guid adminUserId);
     /// <summary>Cancels Pending invoices older than <paramref name="age"/> (frees their held seats). Returns the count expired.</summary>
     Task<int>                           ExpireStalePendingBookingsAsync(TimeSpan age);
     void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
-    void UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
+    /// <summary>True when a lock held by <paramref name="connectionId"/> was removed; false if there was none or it is another connection's.</summary>
+    bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
     bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null);
     /// <summary>Releases every seat still held by the given connection and returns the seats released.</summary>
     IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> ReleaseConnectionLocks(string connectionId);

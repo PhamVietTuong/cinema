@@ -76,6 +76,21 @@
     </div>
   </div>
 
+  <!-- ── CANCELLED / EXPIRED ───────────────────────────────────────────────── -->
+  <div class="return-state" *ngIf="state === 'cancelled'">
+    <div class="pending-icon"><mat-icon>event_busy</mat-icon></div>
+    <h2 class="return-title">{{ 'booking.return.cancelledTitle' | translate }}</h2>
+    <p class="return-sub">{{ 'booking.return.cancelledSub' | translate }}</p>
+    <div class="return-actions">
+      <button mat-raised-button class="btn-primary-cta" (click)="goHome()">
+        <mat-icon>movie</mat-icon> {{ 'booking.return.bookAgain' | translate }}
+      </button>
+      <button mat-stroked-button class="btn-ghost-cta" (click)="goProfile()">
+        <mat-icon>confirmation_number</mat-icon> {{ 'booking.return.checkBookings' | translate }}
+      </button>
+    </div>
+  </div>
+
   <!-- ── PENDING / FAILED ──────────────────────────────────────────────────── -->
   <div class="return-state" *ngIf="state === 'pending'">
     <div class="pending-icon"><mat-icon>schedule</mat-icon></div>

@@ -489,11 +489,11 @@ public class BookingManager : IBookingManager
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is already booked.");
                 }
 
-                // Reject a seat another user is actively holding (SignalR lock). Enforced only when the
-                // client supplies its connection id, so the booker's own held seats still pass. IsSeatLocked
-                // applies the 5-minute lock expiry and the owner (connection) exclusion.
-                if (!string.IsNullOrEmpty(input.ConnectionId)
-                    && IsSeatLocked(showTimeId, roomId, seatItem.SeatId, input.ConnectionId))
+                // Reject a seat another user is actively holding (SignalR lock). With a connection id the
+                // booker's own held seats still pass; without one (a direct API call) no live lock can be the
+                // caller's, so any live lock blocks. IsSeatLocked applies the lock expiry and owner exclusion.
+                var bookerConnection = string.IsNullOrEmpty(input.ConnectionId) ? null : input.ConnectionId;
+                if (IsSeatLocked(showTimeId, roomId, seatItem.SeatId, bookerConnection))
                 {
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
                 }
@@ -643,10 +643,11 @@ public class BookingManager : IBookingManager
                     pointsValue     = pointsRedeemed * pointValueVnd;
                     finalAmount    -= pointsValue;
                     discountAmount += pointsValue;
-                    if (!input.DryRun)
+                    if (!input.DryRun
+                        && !await _uow.UserStore.TryDeductPointsAsync(redeemingUser.Id, pointsRedeemed))
                     {
-                        redeemingUser.Points -= pointsRedeemed;
-                        await _uow.UserStore.UpdateAsync(redeemingUser);
+                        // The atomic spend failed: a concurrent booking used these points since we read the balance.
+                        throw new InvalidOperationException("Not enough loyalty points.");
                     }
                 }
             }
@@ -676,10 +677,11 @@ public class BookingManager : IBookingManager
             {
                 finalAmount    -= giftCardAmount;
                 discountAmount += giftCardAmount;
-                if (!input.DryRun)
+                if (!input.DryRun
+                    && !await _uow.GiftCardStore.TryDrawBalanceAsync(card.Id, giftCardAmount))
                 {
-                    card.Balance -= giftCardAmount;
-                    await _uow.GiftCardStore.UpdateAsync(card);
+                    // The atomic draw failed: a concurrent booking spent the balance since we read the card.
+                    throw new InvalidOperationException("The gift card balance is no longer sufficient.");
                 }
                 giftCardId = card.Id;
             }
@@ -904,14 +906,7 @@ public class BookingManager : IBookingManager
         return FoodStockRestorer.RestoreAsync(_uow, invoices.Select(i => i.Id).ToList(), reason, userId);
     }
 
-    // A cancelled or expired invoice no longer has food to hand over.
-    private static void CancelFoodOrder(Invoice invoice)
-    {
-        if (invoice.FoodStatus != FoodOrderStatus.None)
-        {
-            invoice.FoodStatus = FoodOrderStatus.Cancelled;
-        }
-    }
+    private static void CancelFoodOrder(Invoice invoice) => InvoiceLifecycle.CancelFoodOrder(invoice);
 
     public async Task<PaymentInitiationDTO?> InitiatePaymentAsync(Guid userId, Guid invoiceId, string? provider, string? returnUrl, string? clientIp)
     {
@@ -934,7 +929,10 @@ public class BookingManager : IBookingManager
         // Fully covered (e.g. by a gift card) — nothing to charge, so finalize immediately with no gateway.
         if (invoice.FinalAmount <= 0)
         {
-            await FinalizePaidInvoiceAsync(invoice, "GIFTCARD-FULL");
+            if (!await FinalizePaidInvoiceAsync(invoice, "GIFTCARD-FULL"))
+            {
+                return null;
+            }
             return new PaymentInitiationDTO
             {
                 Provider         = "None",
@@ -987,14 +985,20 @@ public class BookingManager : IBookingManager
         // Verify with the invoice's provider (must succeed and the captured amount must match FinalAmount).
         // Only the dev Sandbox approves this synchronous path; real providers are callback-authoritative, so
         // this returns false for them and the invoice is instead finalized by HandlePaymentCallbackAsync.
-        var verification = await _gateways.Resolve(invoice.PaymentMethod).VerifyPaymentAsync(reference, invoice.FinalAmount);
+        // The resolved gateway must be the invoice's own: Resolve() falls back to the default provider for an
+        // unknown/unconfigured name, which must not let a client-chosen PaymentMethod pick the approving gateway.
+        var gateway = _gateways.Resolve(invoice.PaymentMethod);
+        if (!string.Equals(invoice.PaymentMethod, gateway.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+        var verification = await gateway.VerifyPaymentAsync(reference, invoice.FinalAmount);
         if (!verification.Success)
         {
             return false;
         }
 
-        await FinalizePaidInvoiceAsync(invoice, reference);
-        return true;
+        return await FinalizePaidInvoiceAsync(invoice, reference);
     }
 
     public async Task<PaymentCallbackHandlingResult> HandlePaymentCallbackAsync(string provider, IReadOnlyDictionary<string, string> callbackData)
@@ -1024,6 +1028,14 @@ public class BookingManager : IBookingManager
             return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
         }
 
+        // The callback must come from the provider that owns this invoice (set at InitiatePayment). Otherwise an
+        // unsigned Sandbox callback could finalize an invoice that was meant to be paid through VNPay.
+        if (!string.Equals(invoice.PaymentMethod, gateway.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: provider mismatch for invoice {invoice.Id}. Invoice={invoice.PaymentMethod}, Callback={gateway.Name}");
+            return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
+        }
+
         // Matches VnPayGateway.CreatePaymentAsync's own rounding ((long)Math.Round(amount)) so a genuine
         // payment can't be rejected by a decimal-vs-double rounding mismatch between the two sides.
         var expectedAmount = (decimal)(long)Math.Round(invoice.FinalAmount);
@@ -1049,14 +1061,51 @@ public class BookingManager : IBookingManager
             return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.PaymentFailedAcknowledged);
         }
 
-        await FinalizePaidInvoiceAsync(invoice, result.PaymentReference);
+        if (!await FinalizePaidInvoiceAsync(invoice, result.PaymentReference))
+        {
+            // Lost the race: a duplicate delivery or the expiry job changed the invoice between our read and the
+            // atomic Pending -> Paid claim. Report what the winner did.
+            var current = await _uow.InvoiceStore.GetStatusAsync(invoice.Id);
+            return new PaymentCallbackHandlingResult(gateway.Name,
+                current == InvoiceStatus.Paid ? PaymentCallbackOutcome.AlreadyConfirmed : PaymentCallbackOutcome.NotPending);
+        }
         return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.Confirmed);
     }
 
     /// <summary>Marks the invoice Paid and applies the side effects: loyalty accrual, tier re-eval,
     /// promo-code consumption, and the confirmation notification. Caller must have verified payment.
     /// A walk-in invoice (no customer) skips the loyalty and notification parts.</summary>
-    private async Task FinalizePaidInvoiceAsync(Invoice invoice, string paymentReference)
+    private async Task<bool> FinalizePaidInvoiceAsync(Invoice invoice, string paymentReference)
+    {
+        User? user;
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            // Atomic Pending -> Paid claim: of two concurrent finalizations (duplicate IPN, or an IPN racing the
+            // expiry job) only one proceeds, so loyalty points and the payment row are applied once.
+            if (!await _uow.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Paid))
+            {
+                await _uow.RollbackTransactionAsync();
+                return false;
+            }
+            user = await ApplyPaidAsync(invoice, paymentReference);
+            await _uow.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
+
+        // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
+        if (user is not null)
+        {
+            await SendConfirmationAsync(invoice, user);
+        }
+        return true;
+    }
+
+    private async Task<User?> ApplyPaidAsync(Invoice invoice, string paymentReference)
     {
         invoice.Status           = InvoiceStatus.Paid;
         invoice.PaymentReference = paymentReference;
@@ -1078,48 +1127,11 @@ public class BookingManager : IBookingManager
         var user = await ApplyPaidSideEffectsAsync(invoice);
 
         await _uow.SaveChangesAsync();
-
-        // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
-        if (user is not null)
-        {
-            await SendConfirmationAsync(invoice, user);
-        }
-    }
-
-    // Loyalty: accrue points on the paid amount and re-evaluate the membership tier (only when the invoice has a
-    // customer), then mark the promo code (if any) as consumed. Does not save; returns the customer, if any.
-    private async Task<User?> ApplyPaidSideEffectsAsync(Invoice invoice)
-    {
-        User? user = null;
-        if (invoice.UserId is Guid customerId)
-        {
-            user = await _uow.UserStore.GetByIdAsync(customerId);
-            if (user is not null)
-            {
-                var (pointsPerUnit, _) = await LoyaltyRates.LoadAsync(_uow, invoice.TheaterId);
-                user.Points += (int)(invoice.FinalAmount / pointsPerUnit);
-                var tiers = await _uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
-                var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
-                if (tier is not null)
-                {
-                    user.MemberShipId = tier.Id;
-                }
-                await _uow.UserStore.UpdateAsync(user);
-            }
-        }
-
-        // Mark the promotion program (if any) as consumed.
-        if (invoice.PromotionProgramId is Guid usedProgramId)
-        {
-            var program = await _uow.PromotionProgramStore.GetByIdAsync(usedProgramId);
-            if (program is not null)
-            {
-                program.UsedCount += 1;
-                await _uow.PromotionProgramStore.UpdateAsync(program);
-            }
-        }
         return user;
     }
+
+    private Task<User?> ApplyPaidSideEffectsAsync(Invoice invoice)
+        => InvoiceLifecycle.ApplyPaidSideEffectsAsync(_uow, invoice);
 
     private async Task SendConfirmationAsync(Invoice invoice, User user)
     {
@@ -1434,7 +1446,7 @@ public class BookingManager : IBookingManager
         return end > start && t >= start && t < end;
     }
 
-    public async Task<TicketValidationDTO> ValidateTicketAsync(string qrCode)
+    public async Task<TicketValidationDTO> ValidateTicketAsync(string qrCode, Guid adminUserId)
     {
         var ticket = await _uow.InvoiceStore.GetTicketByQrAsync(qrCode);
         if (ticket == null)
@@ -1445,13 +1457,25 @@ public class BookingManager : IBookingManager
         {
             throw new InvalidOperationException("Ticket has not been paid.");
         }
+        // A ticket of a cancelled/expired booking is deactivated; it must not be admitted even if its invoice reads Paid.
+        if (!ticket.IsActive)
+        {
+            throw new InvalidOperationException("Ticket is no longer valid.");
+        }
         if (ticket.IsUsed)
         {
             throw new InvalidOperationException("Ticket has already been used.");
         }
 
-        ticket.IsUsed = true;
-        await _uow.SaveChangesAsync();
+        // Same atomic admit as the gate scan (UPDATE ... WHERE IsUsed = 0 AND IsActive = 1, stamping UsedAt/UsedByUserId),
+        // so two simultaneous check-ins cannot both succeed. This Admin path does not apply the gate's theater and
+        // time-window checks; staff check in through Gate.Scan.
+        var admitted = await _uow.InvoiceStore.TryAdmitTicketAsync(
+            ticket.InvoiceId, ticket.SeatId, ticket.ShowTimeId, adminUserId, DateTime.UtcNow);
+        if (!admitted)
+        {
+            throw new InvalidOperationException("Ticket has already been used.");
+        }
 
         return new TicketValidationDTO
         {
@@ -1553,6 +1577,16 @@ public class BookingManager : IBookingManager
 
         foreach (var program in candidates)
         {
+            // Same usage cap and movie scope the code path enforces (FindUsableProgramByCodeAsync); an
+            // auto-apply program must not ignore them. Theater/day/time scope is checked just below.
+            if (program.MaxUsage != null && program.UsedCount >= program.MaxUsage)
+            {
+                continue;
+            }
+            if (program.MovieId != null && program.MovieId != showTime.MovieId)
+            {
+                continue;
+            }
             if (program.AllowedChannelsMask is int mask && mask != 0 && (mask & (1 << (int)channel)) == 0)
             {
                 continue;
@@ -1787,44 +1821,26 @@ public class BookingManager : IBookingManager
         return true;
     }
 
-    // Returns the loyalty points reserved for a booking that did not complete (cancelled/expired).
-    private async Task RestoreRedeemedPointsAsync(Invoice invoice)
-    {
-        if (invoice.PointsRedeemed <= 0)
-        {
-            return;
-        }
-        if (invoice.UserId is not Guid ownerId)
-        {
-            return;
-        }
-        var user = invoice.User ?? await _uow.UserStore.GetByIdAsync(ownerId);
-        if (user is not null)
-        {
-            user.Points += invoice.PointsRedeemed;
-            await _uow.UserStore.UpdateAsync(user);
-        }
-    }
+    private Task RestoreRedeemedPointsAsync(Invoice invoice)
+        => InvoiceLifecycle.RestoreRedeemedPointsAsync(_uow, invoice);
 
-    // Returns the gift-card balance drawn for a booking that did not complete (cancelled/expired).
-    private async Task RestoreGiftCardAsync(Invoice invoice)
-    {
-        if (invoice.GiftCardId is not Guid giftCardId || invoice.GiftCardAmount <= 0)
-        {
-            return;
-        }
-        var card = await _uow.GiftCardStore.GetByIdAsync(giftCardId);
-        if (card is not null)
-        {
-            card.Balance += invoice.GiftCardAmount;
-            await _uow.GiftCardStore.UpdateAsync(card);
-        }
-    }
+    private Task RestoreGiftCardAsync(Invoice invoice)
+        => InvoiceLifecycle.RestoreGiftCardAsync(_uow, invoice);
+
+    // Matches VnPayGateway's vnp_ExpireDate (15 minutes after the payment page is created).
+    private static readonly TimeSpan _paymentGrace = TimeSpan.FromMinutes(15);
 
     public async Task<int> ExpireStalePendingBookingsAsync(TimeSpan age)
     {
         var cutoff = DateTime.UtcNow - age;
-        var stale  = await _uow.InvoiceStore.GetStalePendingAsync(cutoff);
+        var candidates = await _uow.InvoiceStore.GetStalePendingAsync(cutoff);
+        // An invoice whose payment was started has a VNPay payment page that stays valid for _paymentWindow after
+        // initiation, and initiation can happen any time inside the hold window. Reaping it at `age` could cancel
+        // an invoice whose IPN is still on its way (customer charged, no ticket), so it gets the extra window.
+        var paymentCutoff = cutoff - _paymentGrace;
+        var stale = candidates
+            .Where(i => string.IsNullOrEmpty(i.PaymentReference) || i.CreationTime <= paymentCutoff)
+            .ToList();
         if (stale.Count == 0)
         {
             return 0;
@@ -1832,8 +1848,16 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
+            var cancelled = new List<Invoice>(stale.Count);
             foreach (var invoice in stale)
             {
+                // Atomic Pending -> Cancelled claim: skip an invoice a concurrent IPN just marked Paid (or another
+                // reaper pass already cancelled) instead of overwriting it.
+                if (!await _uow.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Cancelled))
+                {
+                    continue;
+                }
+                cancelled.Add(invoice);
                 // Cancelling frees the held seats — GetBookedSeatIdsAsync only counts Pending/Paid.
                 invoice.Status = InvoiceStatus.Cancelled;
                 CancelFoodOrder(invoice);
@@ -1843,28 +1867,41 @@ public class BookingManager : IBookingManager
                 await RestoreGiftCardAsync(invoice);
             }
             // One batched ledger read/restock for the whole run, not one per invoice.
-            await RestoreFoodStockAsync(stale.ToList(), "Expired", null);
+            await RestoreFoodStockAsync(cancelled, "Expired", null);
             await _uow.SaveChangesAsync();
             await _uow.CommitTransactionAsync();
+            return cancelled.Count;
         }
         catch
         {
             await _uow.RollbackTransactionAsync();
             throw;
         }
-        return stale.Count;
     }
 
-    public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
-        => _lockedSeats[SeatKey(showTimeId, roomId, seatId)] = (connectionId, DateTime.UtcNow);
+    // How long an advisory seat lock lives before another viewer may take the seat.
+    private static readonly TimeSpan _seatLockTtl = TimeSpan.FromMinutes(5);
 
-    public void UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
+    public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
+        => _lockedSeats.AddOrUpdate(
+            SeatKey(showTimeId, roomId, seatId),
+            _ => (connectionId, DateTime.UtcNow),
+            // Re-locking a seat the connection already holds must not renew it: otherwise one client could keep a
+            // seat for as long as it keeps clicking, instead of the fixed hold window.
+            (_, existing) => existing.ConnectionId == connectionId && DateTime.UtcNow - existing.LockedAt <= _seatLockTtl
+                ? existing
+                : (connectionId, DateTime.UtcNow));
+
+    /// <summary>Releases the lock only when it belongs to <paramref name="connectionId"/>. Returns true when a lock
+    /// was actually removed, so callers broadcast SeatUnlocked only for a real release.</summary>
+    public bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
     {
         var key = SeatKey(showTimeId, roomId, seatId);
         if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId)
         {
-            _lockedSeats.TryRemove(key, out _);
+            return _lockedSeats.TryRemove(key, out _);
         }
+        return false;
     }
 
     public bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null)
@@ -1878,7 +1915,7 @@ public class BookingManager : IBookingManager
         {
             return false;
         }
-        if (DateTime.UtcNow - info.LockedAt > TimeSpan.FromMinutes(5))
+        if (DateTime.UtcNow - info.LockedAt > _seatLockTtl)
         {
             _lockedSeats.TryRemove(key, out _);
             return false;

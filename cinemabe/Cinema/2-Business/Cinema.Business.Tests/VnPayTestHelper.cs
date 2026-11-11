@@ -28,7 +28,7 @@ internal static class VnPayTestHelper
     /// set, signed with the shared secret — not a reuse of the create-request's hash). Pass
     /// <paramref name="includeAmount"/> = false to sign a callback that never had vnp_Amount at all
     /// (removing it from an already-signed set would just make the signature invalid instead).</summary>
-    public static Dictionary<string, string> SignedIpn(Guid invoiceId, long vnpAmount, string responseCode = "00", string transactionStatus = "00", bool includeAmount = true)
+    public static Dictionary<string, string> SignedIpn(Guid invoiceId, long vnpAmount, string responseCode = "00", string transactionStatus = "00", bool includeAmount = true, string? txnRef = null)
     {
         var p = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
@@ -36,7 +36,7 @@ internal static class VnPayTestHelper
             ["vnp_ResponseCode"] = responseCode,
             ["vnp_TransactionNo"] = "13456789",
             ["vnp_TransactionStatus"] = transactionStatus,
-            ["vnp_TxnRef"] = invoiceId.ToString("N"),
+            ["vnp_TxnRef"] = txnRef ?? invoiceId.ToString("N"),
         };
         if (includeAmount)
         {

@@ -6,6 +6,7 @@ using Cinema.Business.Managers.Auth;
 using Cinema.Business.Notifications;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 using FluentAssertions;
 using Moq;
 
@@ -242,5 +243,153 @@ public class AuthServiceTests
 
         await _sut.Invoking(s => s.GetProfileAsync(Guid.NewGuid()))
             .Should().ThrowAsync<KeyNotFoundException>();
+    }
+
+    // ── Account status, 2FA brute force, last-admin guard ───────────────────────
+
+    private static User ActiveUser(string email, UserStatus status = UserStatus.Active, string type = "User")
+    {
+        using var hmac = new System.Security.Cryptography.HMACSHA512();
+        return new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            Name = "Test",
+            PasswordSalt = hmac.Key,
+            PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes("Password@1")),
+            UserTypeId = Guid.NewGuid(),
+            UserType = new UserType { Name = type },
+            EmailConfirmed = true,
+            Status = status,
+        };
+    }
+
+    private static string HashCode(string code)
+        => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(code)));
+
+    [Theory]
+    [InlineData(UserStatus.Inactive)]
+    [InlineData(UserStatus.Banned)]
+    public async Task Login_DisabledAccount_ThrowsUnauthorized_NoToken(UserStatus status)
+    {
+        var user = ActiveUser("gone@test.com", status);
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync("gone@test.com")).ReturnsAsync(user);
+
+        await _sut.Invoking(s => s.LoginAsync(new LoginRequest { EmailOrPhone = "gone@test.com", Password = "Password@1" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("*disabled*");
+        _tokenMock.Verify(t => t.GenerateToken(It.IsAny<User>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GoogleLogin_BannedAccount_ThrowsUnauthorized()
+    {
+        var user = ActiveUser("banned@gmail.com", UserStatus.Banned);
+        _googleMock.Setup(g => g.ValidateAsync("t")).ReturnsAsync(new GoogleUserInfo { Email = user.Email, Name = "B", EmailVerified = true, Subject = "g" });
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+
+        await _sut.Invoking(s => s.LoginWithGoogleAsync(new GoogleLoginRequest { IdToken = "t" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("*disabled*");
+    }
+
+    [Fact]
+    public async Task VerifyTwoFactor_CorrectCodeForDisabledAccount_ThrowsUnauthorized()
+    {
+        var user = ActiveUser("2fa-off@test.com", UserStatus.Inactive);
+        user.TwoFactorEnabled = true;
+        user.TwoFactorCodeHash = HashCode("123456");
+        user.TwoFactorCodeExpiresAt = DateTime.UtcNow.AddMinutes(5);
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+
+        await _sut.Invoking(s => s.VerifyTwoFactorAsync(new VerifyTwoFactorRequest { EmailOrPhone = user.Email, Code = "123456" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("*disabled*");
+    }
+
+    [Fact]
+    public async Task VerifyTwoFactor_FiveWrongCodes_LocksAccountAndBurnsTheCode()
+    {
+        var user = ActiveUser("brute@test.com");
+        user.TwoFactorEnabled = true;
+        user.TwoFactorCodeHash = HashCode("123456");
+        user.TwoFactorCodeExpiresAt = DateTime.UtcNow.AddMinutes(5);
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        for (var i = 0; i < 5; i++)
+        {
+            await _sut.Invoking(s => s.VerifyTwoFactorAsync(new VerifyTwoFactorRequest { EmailOrPhone = user.Email, Code = "000000" }))
+                .Should().ThrowAsync<UnauthorizedAccessException>();
+        }
+
+        user.LockoutEndUtc.Should().NotBeNull().And.BeAfter(DateTime.UtcNow);
+        user.TwoFactorCodeHash.Should().BeNull();
+
+        // Even the right code is refused while the lockout window is active.
+        user.TwoFactorCodeHash = HashCode("123456");
+        user.TwoFactorCodeExpiresAt = DateTime.UtcNow.AddMinutes(5);
+        await _sut.Invoking(s => s.VerifyTwoFactorAsync(new VerifyTwoFactorRequest { EmailOrPhone = user.Email, Code = "123456" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("*locked*");
+    }
+
+    [Fact]
+    public async Task VerifyTwoFactor_CorrectCode_ResetsFailureCounter()
+    {
+        var user = ActiveUser("ok2fa@test.com");
+        user.TwoFactorEnabled = true;
+        user.FailedLoginCount = 3;
+        user.TwoFactorCodeHash = HashCode("123456");
+        user.TwoFactorCodeExpiresAt = DateTime.UtcNow.AddMinutes(5);
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _tokenMock.Setup(t => t.GenerateToken(user)).Returns("jwt");
+        _tokenMock.Setup(t => t.GetTokenExpiry()).Returns(DateTime.UtcNow.AddHours(24));
+
+        var result = await _sut.VerifyTwoFactorAsync(new VerifyTwoFactorRequest { EmailOrPhone = user.Email, Code = "123456" });
+
+        result.Token.Should().Be("jwt");
+        user.FailedLoginCount.Should().Be(0);
+        user.TwoFactorCodeHash.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteUser_LastActiveAdmin_Throws_AndStaysActive()
+    {
+        var admin = ActiveUser("root@test.com", type: "Admin");
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(admin.Id)).ReturnsAsync(admin);
+        _uowMock.Setup(u => u.UserStore.CountAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(0);
+
+        await _sut.Invoking(s => s.DeleteUserAsync(admin.Id))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*last active administrator*");
+        admin.Status.Should().Be(UserStatus.Active);
+        _uowMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteUser_AdminWhenAnotherAdminExists_SoftDeletes()
+    {
+        var admin = ActiveUser("second@test.com", type: "Admin");
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(admin.Id)).ReturnsAsync(admin);
+        _uowMock.Setup(u => u.UserStore.CountAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(1);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        await _sut.DeleteUserAsync(admin.Id);
+
+        admin.Status.Should().Be(UserStatus.Inactive);
+    }
+
+    [Fact]
+    public async Task UpdateUser_DemotingLastActiveAdmin_Throws()
+    {
+        var admin = ActiveUser("root2@test.com", type: "Admin");
+        var customerType = new UserType { Id = Guid.NewGuid(), Name = "Customer" };
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(admin.Id)).ReturnsAsync(admin);
+        _uowMock.Setup(u => u.UserTypeStore.GetByIdAsync(customerType.Id)).ReturnsAsync(customerType);
+        _uowMock.Setup(u => u.UserStore.CountAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(0);
+
+        await _sut.Invoking(s => s.UpdateUserAsync(new UpdateUserRequest
+            {
+                Id = admin.Id, Name = "Root", Phone = "0900000001", Status = UserStatus.Active, UserTypeId = customerType.Id,
+            }))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*last active administrator*");
+        admin.UserType!.Name.Should().Be("Admin");
     }
 }

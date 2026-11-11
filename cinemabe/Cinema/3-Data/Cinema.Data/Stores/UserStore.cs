@@ -15,6 +15,14 @@ public class UserStore : GenericStore<User>, IUserStore
             .Include(u => u.MemberShip)
             .FirstOrDefaultAsync(u => u.Id == id);
 
+    public async Task<bool> TryDeductPointsAsync(Guid userId, int points)
+    {
+        var rows = await Context.User
+            .Where(u => u.Id == userId && u.Points >= points)
+            .ExecuteUpdateAsync(s => s.SetProperty(u => u.Points, u => u.Points - points));
+        return rows == 1;
+    }
+
     public async Task<User?> GetByEmailAsync(string email)
         => await DbSet
             .Include(u => u.UserType)

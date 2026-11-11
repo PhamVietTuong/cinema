@@ -8,6 +8,10 @@ public interface IPromotionProgramStore : IGenericStore<PromotionProgram>
     /// cartesian result across the two collections), for Update.</summary>
     Task<PromotionProgram?> GetByIdWithChildrenAsync(Guid id);
 
+    /// <summary>Atomically counts one more use: a single UPDATE ... SET UsedCount = UsedCount + 1, so two invoices
+    /// paid at the same moment both count (a read-modify-write on the entity would lose one).</summary>
+    Task IncrementUsedCountAsync(Guid programId);
+
     /// <summary>Looks up a program by its promo Code, with Prices and Schedules loaded (split query).</summary>
     Task<PromotionProgram?> GetByCodeAsync(string code);
 

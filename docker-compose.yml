@@ -26,6 +26,8 @@ services:
       ConnectionStrings__CinemaDatabase: "Server=db;Database=Cinema;User ID=sa;Password=Cinema_Dev_Pwd_123!;TrustServerCertificate=True;MultipleActiveResultSets=true"
       # Dev-only signing key for local compose; override for any real deployment.
       JWT__Secret: "compose-dev-signing-key-not-for-production-change-me-1234567890"
+      # Local demo only: the Sandbox gateway approves unsigned callbacks. Never enable it on a real deployment.
+      Payments__EnableSandbox: "true"
       AllowedOrigins__0: "http://localhost:4200"
       AllowedOrigins__1: "http://localhost:4201"
     ports:

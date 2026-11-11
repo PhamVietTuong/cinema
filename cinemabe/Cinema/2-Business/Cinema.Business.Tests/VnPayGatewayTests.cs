@@ -38,6 +38,60 @@ public class VnPayGatewayTests
     }
 
     [Fact]
+    public async Task CreatePayment_EachAttemptGetsAFreshTxnRef_ThatStillStartsWithTheInvoiceId()
+    {
+        // A15: VNPay rejects a reused vnp_TxnRef, so a retry after a failed payment needs a new one.
+        var gateway = VnPayTestHelper.Gateway();
+        var invoiceId = Guid.NewGuid();
+
+        var first = await gateway.CreatePaymentAsync(invoiceId, 100_000, null, null);
+        await Task.Delay(5);
+        var second = await gateway.CreatePaymentAsync(invoiceId, 100_000, null, null);
+
+        first.PaymentReference.Should().StartWith(invoiceId.ToString("N"));
+        second.PaymentReference.Should().StartWith(invoiceId.ToString("N"));
+        second.PaymentReference.Should().NotBe(first.PaymentReference);
+        QueryOf(first.RedirectUrl)["vnp_TxnRef"].Should().Be(first.PaymentReference);
+    }
+
+    [Fact]
+    public async Task CreatePayment_SendsGmtPlus7Timestamps_RegardlessOfServerTimeZone()
+    {
+        // A20: vnp_CreateDate must be Asia/Ho_Chi_Minh wall-clock; DateTime.Now would be UTC in a container.
+        var gateway = VnPayTestHelper.Gateway();
+
+        var initiation = await gateway.CreatePaymentAsync(Guid.NewGuid(), 100_000, null, null);
+
+        var query = QueryOf(initiation.RedirectUrl);
+        var created = DateTime.ParseExact(query["vnp_CreateDate"], "yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture);
+        var expires = DateTime.ParseExact(query["vnp_ExpireDate"], "yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture);
+        created.Should().BeCloseTo(Cinema.Business.Helpers.BusinessCalendar.LocalNow(), TimeSpan.FromMinutes(1));
+        (expires - created).Should().Be(TimeSpan.FromMinutes(15));
+    }
+
+    [Fact]
+    public void ParseCallback_AcceptsAPerAttemptTxnRef_AndReadsTheInvoiceIdFromItsPrefix()
+    {
+        var gateway = VnPayTestHelper.Gateway();
+        var invoiceId = Guid.NewGuid();
+
+        var result = gateway.ParseCallback(VnPayTestHelper.SignedIpn(invoiceId, 10_000_000, txnRef: invoiceId.ToString("N") + "104530123"));
+
+        result.Status.Should().Be(PaymentCallbackStatus.Paid);
+        result.InvoiceId.Should().Be(invoiceId);
+    }
+
+    [Fact]
+    public void ParseCallback_TxnRefShorterThanAnInvoiceId_IsAnInvalidOrderReference()
+    {
+        var gateway = VnPayTestHelper.Gateway();
+
+        var result = gateway.ParseCallback(VnPayTestHelper.SignedIpn(Guid.NewGuid(), 10_000_000, txnRef: "12345"));
+
+        result.Status.Should().Be(PaymentCallbackStatus.InvalidOrderReference);
+    }
+
+    [Fact]
     public async Task CreatePayment_NullClientIp_FallsBackToLoopback()
     {
         var gateway = VnPayTestHelper.Gateway();

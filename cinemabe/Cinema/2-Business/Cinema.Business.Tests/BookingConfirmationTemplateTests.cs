@@ -23,6 +23,7 @@ public class BookingConfirmationTemplateTests
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
         _sut = new BookingManager(_uowMock.Object, gateways, _notifications.Object, _sms.Object, _seatNotifications.Object);
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(It.IsAny<Guid>(), InvoiceStatus.Pending, It.IsAny<InvoiceStatus>())).ReturnsAsync(true);
     }
 
     private static Invoice PendingInvoice(Guid userId)
@@ -33,6 +34,7 @@ public class BookingConfirmationTemplateTests
             Code = "CIN2026101712375",
             UserId = userId,
             Status = InvoiceStatus.Pending,
+            PaymentMethod = "Sandbox",
             FinalAmount = 160000,
             TotalAmount = 160000,
         };

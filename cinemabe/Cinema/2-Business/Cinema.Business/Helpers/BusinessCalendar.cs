@@ -37,6 +37,12 @@ public static class BusinessCalendar
         return TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), _zone.Value);
     }
 
+    /// <summary>Theater local (Asia/Ho_Chi_Minh) wall-clock time now, independent of the server's own time zone.</summary>
+    public static DateTime LocalNow()
+    {
+        return ToLocal(DateTime.UtcNow);
+    }
+
     public static DateTime LocalNow(TimeProvider clock)
     {
         return ToLocal(clock.GetUtcNow().UtcDateTime);

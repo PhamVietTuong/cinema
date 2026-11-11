@@ -35,6 +35,7 @@ public class BookingServiceTests
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
         _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService(), new DevLogSmsNotificationService(), _seatNotificationsMock.Object);
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(It.IsAny<Guid>(), InvoiceStatus.Pending, It.IsAny<InvoiceStatus>())).ReturnsAsync(true);
 
         // Default: no RoomType price overrides for any category. Tests that care about an override
         // set this up explicitly.
@@ -734,6 +735,7 @@ public class BookingServiceTests
 
         var customer = new User { Id = customerId, Points = 50 };
         _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(customerId, It.IsAny<int>())).ReturnsAsync(true);
         _uowMock.Setup(u => u.UserStore.UpdateAsync(customer)).ReturnsAsync(customer);
         // Theater A overrides the global default: 1 point = 2,000 VND here.
         _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId))
@@ -753,7 +755,9 @@ public class BookingServiceTests
         result.PointsRedeemed.Should().Be(5);
         result.DiscountAmount.Should().Be(10000);
         result.FinalAmount.Should().Be(90000);
-        customer.Points.Should().Be(45);
+        // Points are spent through one atomic conditional UPDATE, never by a read-modify-write on the entity.
+        _uowMock.Verify(u => u.UserStore.TryDeductPointsAsync(customerId, 5), Times.Once);
+        customer.Points.Should().Be(50);
     }
 
     [Fact]
@@ -1109,6 +1113,115 @@ public class BookingServiceTests
         _sut.LockSeat(ShowTimeId2, RoomId1, SeatId21, "other-conn");
 
         _sut.IsSeatLocked(ShowTimeId2, RoomId1, SeatId21, excludeConnectionId: "my-conn").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_NoConnectionId_RejectsSeatHeldByAnyone()
+    {
+        // A11: a direct API call without a connection id must not steal a seat someone is actively holding.
+        var heldSeat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, heldSeat, "other-conn");
+
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, Room = new Room { Id = RoomId1, Status = RoomStatus.Active } });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        SetupSeatsById(new Dictionary<Guid, Seat> { [heldSeat] = new() { Id = heldSeat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = heldSeat } },
+            ConnectionId  = null,
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*held by another user*");
+    }
+
+    [Fact]
+    public void UnlockSeat_ByOtherConnection_KeepsTheLockAndReportsNoRelease()
+    {
+        // A18: a non-owner's unlock must not release the seat, and must not be reported as a release.
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "owner");
+
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, seat, "intruder").Should().BeFalse();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat).Should().BeTrue();
+
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, seat, "owner").Should().BeTrue();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat).Should().BeFalse();
+    }
+
+    [Fact]
+    public void UnlockSeat_WhenNothingIsLocked_ReportsNoRelease()
+    {
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, Guid.NewGuid(), "anyone").Should().BeFalse();
+    }
+
+    [Fact]
+    public void LockSeat_ReLockBySameConnection_DoesNotRenewTheHoldWindow()
+    {
+        // A17: re-locking must keep the original LockedAt, so the hold still expires 5 minutes after the first lock.
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "conn");
+        var first = LockedAtOf(ShowTimeId1, RoomId1, seat);
+
+        Thread.Sleep(20);
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "conn");
+
+        LockedAtOf(ShowTimeId1, RoomId1, seat).Should().Be(first);
+    }
+
+    [Fact]
+    public void LockSeat_AfterExpiry_TakesANewLockForTheNextConnection()
+    {
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "old-conn");
+        BackdateLock(ShowTimeId1, RoomId1, seat, TimeSpan.FromMinutes(6));
+
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat).Should().BeFalse("the 5-minute lock has expired");
+
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "new-conn");
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, excludeConnectionId: "old-conn").Should().BeTrue();
+    }
+
+    [Fact]
+    public void ReleaseConnectionLocks_RemovesOnlyThatConnectionsSeats()
+    {
+        var mine1 = Guid.NewGuid();
+        var mine2 = Guid.NewGuid();
+        var theirs = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, mine1, "leaving");
+        _sut.LockSeat(ShowTimeId1, RoomId1, mine2, "leaving");
+        _sut.LockSeat(ShowTimeId1, RoomId1, theirs, "staying");
+
+        var released = _sut.ReleaseConnectionLocks("leaving");
+
+        released.Select(r => r.SeatId).Should().BeEquivalentTo(new[] { mine1, mine2 });
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, theirs).Should().BeTrue();
+    }
+
+    // The lock store is a private static dictionary; reach into it to read/age a lock without sleeping 5 minutes.
+    private static System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)> LockStore()
+        => (System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)>)
+            typeof(BookingManager).GetField("_lockedSeats", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .GetValue(null)!;
+
+    private static string KeyFor(Guid showTimeId, Guid roomId, Guid seatId)
+        => (string)typeof(BookingManager).GetMethod("SeatKey", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .Invoke(null, new object[] { showTimeId, roomId, seatId })!;
+
+    private static DateTime LockedAtOf(Guid showTimeId, Guid roomId, Guid seatId)
+        => LockStore()[KeyFor(showTimeId, roomId, seatId)].LockedAt;
+
+    private static void BackdateLock(Guid showTimeId, Guid roomId, Guid seatId, TimeSpan age)
+    {
+        var key = KeyFor(showTimeId, roomId, seatId);
+        var existing = LockStore()[key];
+        LockStore()[key] = (existing.ConnectionId, DateTime.UtcNow - age);
     }
 
     // ── Promo code validation (code-triggered PromotionProgram) ─────────────────
@@ -1521,6 +1634,97 @@ public class BookingServiceTests
         Prices = new List<PromotionProgramPrice> { new() { Price = price } },
         Schedules = new List<PromotionProgramSchedule>(),
     };
+
+    [Fact]
+    public async Task CreateBookingAsync_AutoApplyProgramAtItsUsageCap_IsNotApplied()
+    {
+        // A13: an auto-apply program must honour MaxUsage like the promo-code path does.
+        var program = FixedPriceProgram(price: 45000);
+        program.MaxUsage = 10;
+        program.UsedCount = 10;
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(80000);
+        result.AppliedPromotionTitle.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AutoApplyProgramScopedToAnotherMovie_IsNotApplied()
+    {
+        // A13: an auto-apply program scoped to one movie must not discount a different movie.
+        var program = FixedPriceProgram(price: 45000);
+        program.MovieId = Guid.NewGuid();
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.FinalAmount.Should().Be(80000);
+        result.AppliedPromotionTitle.Should().BeNull();
+    }
+
+    private async Task<BookingResultDTO> BookWithRedemptionAsync(Guid customerId, User customer, CreateBookingRequest overrides)
+    {
+        var theaterId    = Guid.NewGuid();
+        var roomTypeId   = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var seatA        = Guid.NewGuid();
+        var adultId      = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult", Price = 100000, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(theaterId)).ReturnsAsync((LoyaltySetting?)null);
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId      = ShowTimeId1,
+            RoomId          = RoomId1,
+            Seats           = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
+            PointsToRedeem  = overrides.PointsToRedeem,
+            GiftCardCode    = overrides.GiftCardCode,
+            PaymentMethod   = "Sandbox",
+        };
+        return await _sut.CreateBookingAsync(customerId, request);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_PointsAlreadySpentByAConcurrentBooking_IsRejectedAndRolledBack()
+    {
+        // A14: the atomic spend loses (another booking took the points after we read the balance).
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 50 };
+        _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(customerId, It.IsAny<int>())).ReturnsAsync(false);
+
+        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { PointsToRedeem = 5 }))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*loyalty points*");
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_GiftCardAlreadyDrawnByAConcurrentBooking_IsRejectedAndRolledBack()
+    {
+        // A14: the atomic draw loses (the balance no longer covers the amount).
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 0 };
+        var card = new GiftCard { Id = Guid.NewGuid(), Code = "GC9", IsActive = true, Balance = 30000 };
+        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC9")).ReturnsAsync(card);
+        _uowMock.Setup(u => u.GiftCardStore.TryDrawBalanceAsync(card.Id, It.IsAny<double>())).ReturnsAsync(false);
+
+        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { GiftCardCode = "GC9" }))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*gift card*");
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+    }
 
     [Fact]
     public async Task CreateBookingAsync_FixedPriceEveryoneProgram_AppliesAutomaticallyWithNoCode()

@@ -56,6 +56,7 @@ Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program
 | Key | Purpose | Required | Default |
 |---|---|---|---|
 | `Payments:Provider` | Default gateway name when a client doesn't specify one | optional | `Sandbox` |
+| `Payments:EnableSandbox` | Registers the unsigned Sandbox gateway outside Development. Off by default; only CI e2e and the docker-compose demo set it to `true`. Never enable on a real deployment | optional | `false` |
 | `Payments:VnPay:TmnCode` | VNPay terminal code | optional — gateway reports `IsConfigured=false` if blank | `""` |
 | `Payments:VnPay:HashSecret` | VNPay HMAC-SHA512 signing secret | optional (see above) | `""` |
 | `Payments:VnPay:PayUrl` | VNPay hosted payment page | optional | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html` |

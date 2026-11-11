@@ -132,6 +132,8 @@ jobs:
         env:
           ConnectionStrings__CinemaDatabase: ${{ env.CINEMA_DB }}
           ASPNETCORE_URLS: 'http://localhost:5102'
+          # The e2e flow pays through the Sandbox gateway, which is off outside Development by default.
+          Payments__EnableSandbox: 'true'
           AllowedOrigins__0: 'http://localhost:4202'
           AllowedOrigins__1: 'http://localhost:4201'
           AllowedOrigins__2: 'http://localhost:4203'

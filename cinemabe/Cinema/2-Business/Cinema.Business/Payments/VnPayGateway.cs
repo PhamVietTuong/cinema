@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Cinema.Business.Contracts.Payments;
+using Cinema.Business.Helpers;
 using Cinema.Business.DTO.Invoices;
 using Microsoft.Extensions.Configuration;
 
@@ -50,8 +51,12 @@ public class VnPayGateway : IPaymentGateway
             ipAddr = "127.0.0.1";
         }
 
-        var txnRef = invoiceId.ToString("N");
-        var now    = DateTime.Now;
+        // VNPay requires vnp_CreateDate/vnp_ExpireDate in GMT+7 whatever the server's own time zone is (a UTC
+        // container would otherwise send times 7 hours in the past and the payment page would show as expired).
+        var now    = BusinessCalendar.LocalNow();
+        // The invoice id (32 hex chars) followed by a per-attempt suffix: VNPay rejects a reused vnp_TxnRef, so a
+        // customer retrying after a failed payment needs a fresh one. ParseCallback reads the first 32 chars back.
+        var txnRef = invoiceId.ToString("N") + now.ToString("HHmmssfff");
         var p = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
             ["vnp_Version"]   = "2.1.0",
@@ -60,7 +65,7 @@ public class VnPayGateway : IPaymentGateway
             ["vnp_Amount"]    = ((long)Math.Round(amount) * 100).ToString(),   // VNPay expects amount * 100
             ["vnp_CurrCode"]  = "VND",
             ["vnp_TxnRef"]    = txnRef,
-            ["vnp_OrderInfo"] = $"Thanh toan don hang {txnRef}",
+            ["vnp_OrderInfo"] = $"Thanh toan don hang {invoiceId:N}",
             ["vnp_OrderType"] = "other",
             ["vnp_Locale"]    = "vn",
             ["vnp_ReturnUrl"] = returnUrl ?? _config["Payments:VnPay:ReturnUrl"] ?? "",
@@ -107,7 +112,9 @@ public class VnPayGateway : IPaymentGateway
         var responseOk = data.TryGetValue("vnp_ResponseCode", out var rc) && rc == "00"
                       && (!data.TryGetValue("vnp_TransactionStatus", out var ts) || ts == "00");
         var reference = data.TryGetValue("vnp_TransactionNo", out var tn) ? tn : received;
-        if (!data.TryGetValue("vnp_TxnRef", out var txnRef) || !Guid.TryParseExact(txnRef, "N", out var invoiceId))
+        if (!data.TryGetValue("vnp_TxnRef", out var txnRef)
+            || txnRef.Length < 32
+            || !Guid.TryParseExact(txnRef[..32], "N", out var invoiceId))
         {
             return new PaymentCallbackResult(false, Guid.Empty, reference, "Missing/invalid vnp_TxnRef.") { Status = PaymentCallbackStatus.InvalidOrderReference };
         }
