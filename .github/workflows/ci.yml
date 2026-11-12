@@ -234,7 +234,8 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-          npx playwright test --reporter=list,html
+          # `github` turns every failed test into an annotation on the check run, readable without downloading the report.
+          npx playwright test --reporter=list,html,github
 
       - name: Upload Playwright report
         if: always()
