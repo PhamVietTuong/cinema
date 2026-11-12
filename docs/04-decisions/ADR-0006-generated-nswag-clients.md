@@ -21,3 +21,8 @@ Author to confirm: why generation was chosen over hand-written HTTP services (fo
 - Generated files make large diffs and must be regenerated whenever an endpoint or DTO changes; a stale client would call an old contract. Nothing in CI regenerates and compares them. Author to confirm whether it should.
 - Enum-to-label lookups for the generated enums are centralized in `CinemaLib`'s `cinema.model.ts` (`AGENTS.md`).
 - Regeneration needs the host stopped and a specific working directory, which is an extra manual step.
+
+## Alternatives considered
+
+- **Hand-written HTTP services and DTO types in each app.** Not shown in the repository. Author to confirm: why generation was chosen over them.
+- **One document and client for the whole API.** The repository used a separate `staff` document until `14246b5` removed it, and keeps `cinema`, `identity` and `payment` as separate documents. Author to confirm: why three documents rather than one.

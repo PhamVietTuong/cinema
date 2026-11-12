@@ -4,13 +4,14 @@
 > Sources: `git log` (trailers, dates, paths) as of 2026-11-12, the audit commits cited per row, `.github/workflows/ci.yml`, `docs/05-process/testing.md`, `AGENTS.md`.
 > Last reviewed: 2026-11-12
 
-Everything below is derived from the repository and its git history. Anything that exists only in the author's head (the prompts typed, what was edited by hand, the licence decision) is a visible `Student input needed:` line, never a guess. Rule of thumb for reading the numbers: a `Co-Authored-By: Claude ...` trailer proves the AI co-authored that **commit**. It does not prove which individual lines are AI-written, and the absence of a trailer does not prove a commit has no AI content.
+Everything below is derived from the repository and its git history. This document set (this log, the ADRs, the acceptance criteria, the NFRs and the diagrams) was itself drafted by an AI agent in the group E session. It is checked by the `Checked against` and `Source` citations in each file and by a hash and line-reference script run once at writing time, not by automated tests in CI. Counts are taken at commit `f20f799` (the baseline of this change; `git rev-list --count f20f799` is 502); recompute them with the commands in section 7. Anything that exists only in the author's head (the prompts typed, what was edited by hand, the licence decision) is a visible `Student input needed:` line, never a guess. Rule of thumb for reading the numbers: a `Co-Authored-By: Claude ...` trailer proves the AI co-authored that **commit**. It does not prove which individual lines are AI-written, and the absence of a trailer does not prove a commit has no AI content.
 
 ## 1. Tools and models
 
 | Tool | Evidence | Role |
 |---|---|---|
-| Claude Code (CLI agent) | `Co-Authored-By: Claude ...` trailer on 379 of 502 commits; `AGENTS.md` / `CLAUDE.md` are agent instruction files; `docs/` is maintained by an `/update-docs` workflow (`AGENTS.md`) | Wrote and edited code, tests, SQL and docs in the repository, ran builds and tests |
+| Claude Code (CLI agent) | `Co-Authored-By: Claude ...` trailer on 379 of 502 commits at `f20f799`; `AGENTS.md` / `CLAUDE.md` are agent instruction files; `docs/` is maintained by an `/update-docs` workflow (`AGENTS.md`) | Wrote and edited code, tests, SQL and docs in the repository, ran builds and tests |
+| BMAD agent framework (local, not committed) | `_bmad/` (config, `core`, `bmm`, 23 per-skill override files in `_bmad/custom/*.toml` plus `gen_model_overrides.py`), `_bmad-output/` (`implementation-artifacts/spec-*.md`, `deferred-work.md`, `planning-artifacts/`), and 29 `bmad-*` skills in `.claude/skills/` including the agent personas `bmad-agent-analyst`, `-architect`, `-dev`, `-pm`, `-ux-designer`. All three folders are git-ignored (`.gitignore:26`, `:30-31`), so they are not in the history | Structured the work as specs, builds and reviews. The group B to E specs (for example `spec-group-e-ai-log-and-design-evidence.md`) drove the audit fixes |
 
 Models named in commit trailers (counted with `git log --format=%B | grep "^Co-Authored-By: Claude" | sort | uniq -c`):
 
@@ -30,9 +31,9 @@ Models named in commit trailers (counted with `git log --format=%B | grep "^Co-A
 
 ## 2. Scope: where the AI touched the code
 
-Counted as the number of AI-co-authored commits that touch each path (`git log --grep="Co-Authored-By: Claude" --name-only`), top areas:
+Counted as the number of file touches in AI-co-authored commits per path, at `f20f799` (command in section 7), top areas. `QA-tests` (348, a folder that is git-ignored today) and the root `cinemabe` (160) are left out of the table:
 
-| Path | AI-co-authored commit touches |
+| Path | File touches in AI-co-authored commits |
 |---|---|
 | `cinemabe/Cinema/2-Business` | 1210 |
 | `cinemafe/projects/CinemaAdmin` | 716 |
@@ -44,7 +45,7 @@ Counted as the number of AI-co-authored commits that touch each path (`git log -
 | `docs` | 195 |
 | `e2e` | 49 |
 
-(A commit that touches many files is counted once per file, so these numbers rank areas, they are not line counts.)
+(A file touched by several commits is counted once per commit, so these numbers rank areas, they are not line counts.)
 
 By activity, from commit subjects: feature work across all four layers and the three Angular apps, regenerating NSwag clients (`chore: regenerate NSwag clients ...`), the audit fix groups A to D of 2026-11-11 to 2026-11-12 (section 4), tests, CI gates, and the knowledge base under `docs/` (created by `7bd1808`, 2026-11-01, Claude Sonnet 5).
 
@@ -66,7 +67,7 @@ Every hash below was resolved with `git log` on 2026-11-12.
 | # | Defect | Root cause (as stated in the fixing commit or visible in its diff) | Introduced in | Fixed in | Regression test |
 |---|---|---|---|---|---|
 | 1 | The unsigned Sandbox payment gateway was registered in every environment, including Production | `Program.cs` registered `SandboxPaymentGateway` unconditionally; a callback or confirm was not required to come from the gateway that owns the invoice, so an unsigned Sandbox callback could finalize an invoice. Fix: register Sandbox only in Development or with `Payments:EnableSandbox=true`; require the resolved gateway to own the invoice. | `3c92257` 2026-07-19 (Claude Opus 4.8) | `0f83416` | `PaymentCallbackTests.HandlePaymentCallbackAsync_SandboxCallbackOnVnPayInvoice_IsRejected_NoWrites`, `ConfirmPaymentAsync_InvoiceOwnedByUnavailableProvider_DoesNotFallBackToSandbox` |
-| 2 | Duplicate payment callbacks (or a callback racing the expiry job) could apply loyalty points and the payment row twice | The Pending to Paid / Pending to Cancelled change was a read-then-write, not atomic. Fix: `InvoiceStore.TryTransitionStatusAsync` (a conditional `UPDATE ... WHERE Status = Pending`), finalize inside a transaction, only the claim winner applies side effects, the expiry job skips invoices it lost. | `FinalizePaidInvoiceAsync` first added in `3c92257` (Claude Opus 4.8) | `d1cb811` | `HandlePaymentCallbackAsync_LosesTheClaimRace_ReturnsAlreadyConfirmed_NoSideEffects`, `HandlePaymentCallbackAsync_TwoConcurrentDeliveries_ApplyTheSideEffectsExactlyOnce` (added in `12bd355`) |
+| 2 | Duplicate payment callbacks (or a callback racing the expiry job) could apply loyalty points and the payment row twice | The Pending to Paid / Pending to Cancelled change was a read-then-write, not atomic. Fix: `InvoiceStore.TryTransitionStatusAsync` (a conditional `UPDATE ... WHERE Status = Pending`), finalize inside a transaction, only the claim winner applies side effects, the expiry job skips invoices it lost. | `FinalizePaidInvoiceAsync` first added in `3c92257` (Claude Opus 4.8) | `d1cb811` | `PaymentCallbackTests.HandlePaymentCallbackAsync_LosesTheClaimRace_ReturnsAlreadyConfirmed_NoSideEffects`, `PaymentCallbackTests.HandlePaymentCallbackAsync_TwoConcurrentDeliveries_ApplyTheSideEffectsExactlyOnce` (added in `12bd355`) |
 | 3 | A 6-digit two-factor code could be guessed without limit; disabled accounts could still sign in through some paths; the last active Admin could be demoted or deleted | 2FA failures were not counted toward the login lockout; sign-in paths did not check `User.Status`; no guard on the last Admin. Fix: wrong codes share the lockout and burn the code at the threshold, `EnsureAccountActive` on every sign-in path, `EnsureAnotherActiveAdminRemainsAsync`. | 2FA first added in `f8acfc7` 2026-07-10 (Claude Opus 4.8); the status check and last-Admin guard are new code in the fix | `ab9058b` | `AuthServiceTests.VerifyTwoFactor_FiveWrongCodes_LocksAccountAndBurnsTheCode`, `Login_DisabledAccount_ThrowsUnauthorized_NoToken`, `DeleteUser_LastActiveAdmin_Throws_AndStaysActive` |
 | 4 | Loyalty points and gift-card balance could be overspent by two concurrent bookings; auto-apply promotions ignored `MaxUsage` and movie scope | Points and gift-card spend were read-modify-write; the auto-apply candidate filter did not check the usage cap or the program's movie. Fix: atomic conditional `UPDATE ... WHERE Points >= n` / `Balance >= a`, filters added. | Points redemption first added in `4ea1e63` 2026-07-19 (Claude Opus 4.8); gift cards in `d5ab544` 2026-07-25 (Claude Opus 4.8) | `a3806cd` | `BookingServiceTests.CreateBookingAsync_PointsAlreadySpentByAConcurrentBooking_IsRejectedAndRolledBack`, `..._GiftCardAlreadyDrawnByAConcurrentBooking_...`, `..._AutoApplyProgramAtItsUsageCap_IsNotApplied`, `..._AutoApplyProgramScopedToAnotherMovie_IsNotApplied` |
 | 5 | VNPay rejected a repeated payment attempt, timestamps were wrong in the payment URL, and the 15-minute reaper could cancel an invoice whose payment was still in flight | `vnp_TxnRef` was reused across attempts (VNPay rejects a reused reference), `vnp_CreateDate`/`vnp_ExpireDate` were not in GMT+7, the reaper had no grace for a started payment. Fix: per-attempt TxnRef, GMT+7 timestamps, an extra 15-minute `_paymentGrace`, API runs in GMT+7. | `vnp_TxnRef` first added in `3c92257` (Claude Opus 4.8); reaper in `ed1a067` 2026-07-05 (Claude Opus 4.8) | `5cca599` | `PaymentCallbackTests.ExpireStalePendingBookingsAsync_GivesAnInFlightPaymentTheExtraGraceWindow` |
@@ -91,8 +92,9 @@ What the repository itself shows (each item can be checked):
 3. **Automated gates on every push and pull request** (`.github/workflows/ci.yml`): backend build plus the analyzer warning ratchet, `dotnet test` for both test projects, a 60% line-coverage floor for `Cinema.Business`, frontend lint ratchet, unit tests and production builds for all three apps, a Docker image build, and a Playwright e2e job.
 4. **Secret hygiene.** `.gitleaks.toml` plus a `gitleaks` CI job scanning full history (informational for now, `continue-on-error`); `appsettings.Development.json` is git-ignored (`.gitignore:18`); `AGENTS.md` forbids committing secrets. The committed `ci.yml` and `docker-compose.yml` use throw-away values only.
 5. **Cross-check against official documentation.** Evidence: `2df415b` rebuilt the VNPay IPN handling against VNPay's published `{RspCode, Message}` contract, and `docs/03-technical/integrations.md` records the sandbox test procedure. Student input needed: which other vendor documents (VNPay, Google/Facebook OAuth, Twilio, OMDb) you read yourself before accepting AI output.
-6. **Documentation kept in step with code.** `AGENTS.md` requires the matching `docs/` file to change in the same commit; group D (`6aa0b9a`) re-verified every claim.
+6. **Documentation kept in step with code.** `AGENTS.md` requires the matching `docs/` file to change in the same change; group D (`6aa0b9a`) re-verified every claim.
 7. **Review before merge.** Audit groups were followed by review commits (`20e672b`, `4e0c51e`, `f20f799`).
+8. **BMAD model policy** (local files, not committed). `_bmad/custom/bmad-build.toml:1-2` states: Opus for important work (planning, review), Sonnet for everything else, generated by `_bmad/custom/gen_model_overrides.py`; line 14 sends review, audit and judge subagents to `opus` and search, read and summarize subagents to `sonnet`. The commit trailers show both families in use (section 1). Student input needed: whether the policy was applied to every session, since the trailers alone cannot show that.
 
 What the repository cannot show, and the author must state:
 
@@ -120,10 +122,18 @@ Student input needed: which of these you can explain unaided today, and which yo
 
 ## 7. Reproducing the numbers
 
+Run at the baseline commit `f20f799` (the HEAD before the group E documentation commits). At a later HEAD the numbers include the commits added since.
+
 ```bash
-git rev-list --count HEAD                                   # 502
-git log --format=%B | grep -c "^Co-Authored-By: Claude"     # 379
-git log --format=%B | grep "^Co-Authored-By: Claude" | sort | uniq -c | sort -rn
-git log --format=%ad --date=short | sort | sed -n '1p;$p'   # 2026-05-08 .. 2026-11-12
-git log -S"FinalizePaidInvoiceAsync" --reverse --format='%h %ad %s' --date=short -- cinemabe | head -1
+B=f20f799
+git rev-list --count $B                                                       # 502 commits
+git log $B --grep="^Co-Authored-By: Claude" --format=%H | wc -l               # 379 commits with a Claude trailer
+git log $B --format=%B | grep "^Co-Authored-By: Claude" | sort | uniq -c | sort -rn   # per model (one trailer per commit)
+git log $B --format=%ad --date=short | sort | sed -n '1p;$p'                  # 2026-05-08 .. 2026-11-12
+git log $B --format='%an' | sort | uniq -c                                    # author names: 448 and 54
+# section 2 path table (file touches in AI-co-authored commits)
+git log $B --grep="^Co-Authored-By: Claude" --name-only --format= \
+  | sed -E 's#^((cinemabe/Cinema/[^/]+|cinemafe/projects/[^/]+|[^/]+)).*#\1#' | sort | uniq -c | sort -rn | head -14
+# first commit that added a symbol, with its trailer
+git log -S"FinalizePaidInvoiceAsync" --reverse --format='%h %ad %s | %(trailers:key=Co-Authored-By,valueonly)' --date=short -- cinemabe | head -1
 ```

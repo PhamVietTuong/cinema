@@ -21,3 +21,12 @@ Author to confirm: why this layering was chosen (for example testability with mo
 - Managers are unit-tested with mocked stores and no database (`docs/05-process/testing.md`; the CI comment says "no database required").
 - The `Cinema.Data` to `Cinema.Business.Contracts` reference is a deliberate hole in the strict rule. Adding another upward reference would compile without any test failing.
 - Author to confirm: whether an architecture test should be added for the project-reference direction, as exists for the controller count (ADR-0002).
+
+## Alternatives considered
+
+- **The same projects without numbered layer folders.** The first backend commit `bdc6ab4` moved the existing projects into `1-Service` to `4-Foundation` (the commit shows them as renames), so an unnumbered layout is what the layering replaced. Author to confirm: why the numbered layout was preferred over it.
+- **A strict one-way rule with no exception.** Not what the code does: `Cinema.Data` references `Cinema.Business.Contracts` for `ITokenService` (`Cinema.Data.csproj:5`). Author to confirm: why `ITokenService` was not moved to a lower layer instead.
+
+## Open gap
+
+- No automated test checks the project-reference direction, unlike the controller count (ADR-0002). It is also listed under the known gaps in `docs/05-process/testing.md`.

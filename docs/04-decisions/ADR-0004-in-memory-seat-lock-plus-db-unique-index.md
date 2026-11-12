@@ -26,3 +26,9 @@ Author to confirm: why an in-memory lock was chosen over a shared store, and whe
 - In a multi-instance deployment the lock would not be shared, so viewers on different instances would not see each other's holds. The index would still prevent double sale.
 - An unpaid booking holds its seat for 15 minutes (30 once payment starts) until the reaper cancels it, a separate DB-backed timer (`PendingBookingReaper.cs:12-13`).
 - Defect `5901ccf` (see `docs/05-process/ai-usage-log.md`) fixed three holes in the lock itself: no enforcement without a `ConnectionId`, renewal by re-locking, and a wrong unlock broadcast.
+
+## Alternatives considered
+
+- **An in-process lock only.** This was the state until `333e8d8`, which says the in-memory semaphore "only guards one process"; the database index was added to cover that.
+- **A distributed lock or shared cache (Redis, `IDistributedCache`).** None exists anywhere in the backend (`business-rules.md` section 1). Author to confirm: why it was not chosen.
+- **Database locking only, no advisory lock.** Not shown in the repository. Author to confirm: whether it was considered; the advisory lock exists for the live seat-map feedback.

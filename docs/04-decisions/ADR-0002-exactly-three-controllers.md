@@ -22,3 +22,8 @@ Author to confirm: why the staff controllers were merged (for example one genera
 - A single authorization-coverage test can check every action (`ControllerAuthorizationCoverageTests`).
 - The generated clients stay at three (`cinema`, `identity`, `payment`) and the frontend apps share the merged `CinemaServiceAgent` (`4bc7c3f`).
 - Author to confirm: whether a very large controller is an accepted cost or a known debt.
+
+## Alternatives considered
+
+- **One controller per area (the layout before 2026-10-09).** Separate staff controllers existed (Gate, BoxOffice, Operations, Workforce, StaffReport) and a standalone `staff` Swagger group with its own generated client. They were merged by `74de767`, `25f1e14` and the commits around them (PR `52613ae`) and the group was removed in `9bec328` and `14246b5`.
+- **Splitting `CinemaController` into partial files.** Rejected by `AGENTS.md` ("never ... split `CinemaController` into partial files"). Author to confirm: why partial files were ruled out.

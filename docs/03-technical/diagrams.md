@@ -58,7 +58,7 @@ Checked against: the three apps and ports in `AGENTS.md`; the controllers and hu
 
 ## 2. Data model (ERD)
 
-Core entities and the foreign keys declared in `cinemabe/sql/create_db.sql` (`create_db.sql` creates 43 tables). Not drawn: `Holiday`, `News`, `ComboItem`, `StockMovement`, `ReminderLog`, `GiftCard`, `LoyaltySetting`, `AuditLog`, `Incident`, `Template`, `SplashBanner` and `__EFMigrationsHistory`. `AuditLog` has no foreign keys by design. Primary keys are `Guid`; `InvoiceTicket` has a composite key.
+Core entities and the foreign keys declared in `cinemabe/sql/create_db.sql` (`create_db.sql` creates 43 tables). Not drawn: `ComboItem` (two foreign keys to `FoodAndDrink`: the combo and its component) and `StockMovement` (a foreign key to `FoodAndDrink`); `Holiday`, `News`, `GiftCard`, `Template`, `SplashBanner` and `__EFMigrationsHistory` have no foreign keys; `LoyaltySetting` (`TheaterId`), `ReminderLog` (`UserId`, `ShowTimeId`), `Incident` (theater, room, seat, showtime and user ids) and `AuditLog` (by design) hold plain id columns with no foreign key. Primary keys are `Guid`; `InvoiceTicket` has a composite key.
 
 ```mermaid
 erDiagram
@@ -90,7 +90,7 @@ erDiagram
 
     UserType ||--o{ User : "role of"
     MemberShip ||--o{ User : "tier of"
-    User ||--o{ Invoice : places
+    User |o--o{ Invoice : "places (customer optional)"
     Theater |o--o{ Invoice : "sold at"
     PromotionProgram |o--o{ Invoice : "applied to"
     User ||--o{ Comment : writes
@@ -112,7 +112,7 @@ erDiagram
 
     Invoice {
         Guid Id PK
-        Guid UserId FK
+        Guid UserId FK "nullable: walk-in counter sales have no customer"
         int Status "Pending, Paid, Cancelled, Failed"
         string PaymentMethod
         string PaymentReference
@@ -127,7 +127,7 @@ erDiagram
     }
 ```
 
-Checked against: every relationship line is a `FOREIGN KEY` in `create_db.sql`, inline in a `CREATE TABLE` or added by `ALTER TABLE` (extracted by script on 2026-11-12); the two `Invoice` ones are `create_db.sql:836-843`. Two guarantees worth knowing: the unique filtered index `IX_InvoiceTicket_ActiveSeat` on `(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1` (`create_db.sql:717`) is what stops double booking across server instances, and `Invoice.GiftCardId` is a plain column with no foreign key (`create_db.sql:584`). Field-level detail is in [`database-schema.md`](database-schema.md).
+Checked against: every relationship line is a `FOREIGN KEY` in `create_db.sql`, inline in a `CREATE TABLE` or added by `ALTER TABLE` (extracted by script on 2026-11-12); `FK_Invoice_User_UserId` is inline at `create_db.sql:515`, and the `Theater` and `PromotionProgram` ones are added by `ALTER TABLE` at `create_db.sql:836-843`. `Invoice.UserId` is altered to nullable at `create_db.sql:825-827`. Two guarantees worth knowing: the unique filtered index `IX_InvoiceTicket_ActiveSeat` on `(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1` (`create_db.sql:717`) is what stops double booking across server instances, and `Invoice.GiftCardId` is a plain column with no foreign key (the column is declared at `create_db.sql:507` without a constraint). Field-level detail is in [`database-schema.md`](database-schema.md).
 
 ## 3. Booking, VNPay IPN and confirmation
 
@@ -152,7 +152,8 @@ sequenceDiagram
     B->>D: begin transaction, insert Invoice (Pending) and InvoiceTicket rows
     alt a seat was taken by someone else
         D-->>B: unique index IX_InvoiceTicket_ActiveSeat violated
-        B-->>C: rolled back, "just booked by someone else"
+        B-->>A: rolled back, "just booked by someone else"
+        A-->>C: error shown to the customer
     else seats are free
         B->>D: commit
         B-->>H: SeatBooked broadcast
@@ -162,7 +163,8 @@ sequenceDiagram
     C->>A: InitiatePayment (invoice id)
     A->>B: InitiatePaymentAsync (owner and Pending checked)
     B->>D: store PaymentMethod = VNPay
-    B-->>C: signed pay URL (TxnRef per attempt, expires in 15 min)
+    B-->>A: signed pay URL (TxnRef per attempt, expires in 15 min)
+    A-->>C: redirect URL
     C->>V: pays on the VNPay page
 
     V->>A: IPN api/Payment/PaymentCallback?provider=VNPay (anonymous)
@@ -170,6 +172,8 @@ sequenceDiagram
     B->>B: verify HMAC-SHA512, order, amount x100 equals FinalAmount
     alt bad signature, unknown order or wrong amount
         A-->>V: 200 {"RspCode":"97" or "01" or "04"}
+    else signed IPN reports an unsuccessful payment
+        A-->>V: 200 {"RspCode":"00"} (acknowledged, invoice stays Pending, nothing written)
     else valid
         B->>D: begin transaction, UPDATE Invoice SET Status = Paid WHERE Status = Pending
         alt claim lost (duplicate IPN, or the reaper cancelled it first)
@@ -188,10 +192,10 @@ sequenceDiagram
         A-->>C: Paid, Pending ("payment pending") or Cancelled
     end
 
-    Note over B,D: PendingBookingReaper runs every minute and cancels Pending invoices older than 15 min (30 min once payment was started), freeing seats and restoring points and gift card
+    Note over B,D: An unsuccessful payment never sets Failed, only the admin status override can. PendingBookingReaper runs every minute and cancels Pending invoices older than 15 min (30 min once payment was started), freeing seats and restoring points and gift card
 ```
 
-Checked against: `PaymentController.cs:74` (CreateBooking), `:297`/`:313` (GetInvoice family), `:166` (IPN reply built by `VnPayGateway.BuildIpnResponse`); `BookingManager.cs:1086` (atomic Pending to Paid claim) and `:1831`, `:1856` (reaper claim); the codes 00/01/02/04/97/99 in `business-rules.md` section 3; `BookingHub.cs:22-49` (`SeatLocked`/`SeatUnlocked`; `SeatBooked` is sent from `BookingManager` through `ISeatNotificationService`); `payment-return.component.ts:18-19` (2 s, 15 attempts); `VnPayGateway.cs:74` (15 minute expiry); `PendingBookingReaper.cs:12-13`. Unresolved gateway outcomes (for example a payment confirmed after the invoice was cancelled) answer `RspCode` 02 and produce no ticket (`business-rules.md` section 2).
+Checked against: `PaymentController.cs:74` (CreateBooking), `:297`/`:313` (GetInvoice family), `:166` (IPN reply built by `VnPayGateway.BuildIpnResponse`); `BookingManager.cs:1086` (atomic Pending to Paid claim) and `:1831`, `:1856` (reaper claim); the codes 00/01/02/04/97/99 in `business-rules.md` section 3; `BookingHub.cs:22-49` (`SeatLocked`/`SeatUnlocked`; `SeatBooked` is sent from `BookingManager` through `ISeatNotificationService`); `payment-return.component.ts:18-19` (2 s, 15 attempts); `VnPayGateway.cs:74` (15 minute expiry); `PendingBookingReaper.cs:12-13`. The unsuccessful-payment branch is `BookingManager.cs:1059-1061` (`PaymentFailedAcknowledged`); `InvoiceStatus.Failed` is reached only through `InvoiceAdminManager.UpdateStatusAsync` (`InvoiceAdminManager.cs:42-62`). Unresolved gateway outcomes (for example a payment confirmed after the invoice was cancelled) answer `RspCode` 02 and produce no ticket (`business-rules.md` section 2).
 
 ## 4. Deployment
 
@@ -208,7 +212,7 @@ flowchart TB
     subgraph Compose["docker compose"]
         Init["db-init: runs create_db, upgrade_db, insert_db once, then exits"]
         Db[("db: SQL Server 2022, port 1433, volume cinema-mssql")]
-        Api["api: built from cinemabe/Dockerfile, host port 5102 to container 8080, volume cinema-logs"]
+        Api["api: built from cinemabe/Dockerfile, host port 5102 to container 8080, volume cinema-logs, Payments__EnableSandbox=true (demo only)"]
     end
 
     subgraph GH["GitHub Actions (ci.yml, on push and pull request to master)"]
@@ -216,7 +220,7 @@ flowchart TB
         J2["secrets: gitleaks scan"]
         J3["docker: image build only, no push"]
         J4["frontend: lint ratchet, unit tests, production builds"]
-        J5["e2e: SQL Server service, API and apps, Playwright"]
+        J5["e2e: SQL Server service, API and apps, Playwright, Payments__EnableSandbox=true"]
     end
 
     VNPaySandbox["VNPay sandbox"]
@@ -229,6 +233,7 @@ flowchart TB
     VNPaySandbox -->|IPN to the public ngrok URL| Ngrok
     Ngrok --> Api
     Browser -->|redirect to pay| VNPaySandbox
+    VNPaySandbox -->|redirect back to the return page| Browser
 ```
 
-Checked against: `docker-compose.yml` (services `db`, `db-init`, `api`, ports `1433` and `5102:8080`, volumes `cinema-mssql`, `cinema-logs`, `db-init` starts after `db` is healthy and the `api` after `db-init` completes); `ci.yml` job names and triggers (lines 1-9 and the `backend`, `secrets`, `docker`, `frontend`, `e2e` jobs); `AGENTS.md` for the three dev ports and the ngrok requirement. The compose `api` service runs with `ASPNETCORE_ENVIRONMENT=Production` and `Payments__EnableSandbox=true`, which is for local demos only. Student input needed: where the system is meant to be hosted for the final demonstration, if anywhere beyond a laptop; no hosting target is recorded in the repository.
+Checked against: `docker-compose.yml` (services `db`, `db-init`, `api`, ports `1433` and `5102:8080`, volumes `cinema-mssql`, `cinema-logs`, `db-init` starts after `db` is healthy and the `api` after `db-init` completes); `ci.yml` job names and triggers (lines 1-9 and the `backend`, `secrets`, `docker`, `frontend`, `e2e` jobs); `AGENTS.md` for the three dev ports and the ngrok requirement. The CI `e2e` job sets `Payments__EnableSandbox` at `ci.yml:198` and the compose file sets it too (see ADR-0007). The compose `api` service runs with `ASPNETCORE_ENVIRONMENT=Production` and `Payments__EnableSandbox=true`, which is for local demos only. Student input needed: where the system is meant to be hosted for the final demonstration, if anywhere beyond a laptop; no hosting target is recorded in the repository.

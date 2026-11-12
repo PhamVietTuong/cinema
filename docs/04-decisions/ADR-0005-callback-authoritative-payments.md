@@ -23,3 +23,10 @@ Author to confirm: why this rule was adopted (for example VNPay's own requiremen
 - A payment confirmed after the invoice was cancelled by the reaper gets `RspCode` 02 and no ticket, which is why the reaper adds a 15-minute grace once a payment has started (`BookingManager.cs:1831`).
 - Tests pin the contract: `PaymentControllerCallbackTests`, `VnPayGatewayTests.BuildIpnResponse_PinsTheExactRspCodeForEveryOutcome`, and the committed e2e spec `api-payment-callback.spec.ts` (`docs/05-process/testing.md`, rule BR-PAY-02).
 - Idempotency and concurrency are handled by ADR-0008.
+
+## Alternatives considered
+
+- **Trusting the browser redirect or a synchronous confirm.** Still present for the Sandbox gateway only (`ConfirmPayment`, `SandboxPaymentGateway`), which is why the Sandbox is gated (ADR-0007); a real gateway's `VerifyPaymentAsync` always refuses.
+- **A generic callback response for every provider.** What the code did before `2df415b`; VNPay never saw success and retried.
+- **Other gateways.** MoMo and Stripe sat behind the same `IPaymentGateway` seam and were removed by `3de3d05`, leaving VNPay and Sandbox.
+- Author to confirm: why polling the invoice on the return page was chosen over any other way of showing the result.

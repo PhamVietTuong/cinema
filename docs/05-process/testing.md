@@ -166,6 +166,7 @@ Two specs can no longer pass by skipping:
 
 ## What's not covered (only stated where verifiable)
 
+- No architecture test checks the direction of backend project references (`1-Service` to `2-Business` to `3-Data` to `4-Foundation`, `AGENTS.md`), unlike the controller count (`ControllerArchitectureTests`). The only upward reference is `Cinema.Data` to `Cinema.Business.Contracts` (ADR-0001). Also tracked in `_bmad-output/implementation-artifacts/deferred-work.md`.
 - No dedicated backend integration tests against a real database were found — the CI comment on
   the `dotnet test` step states "xUnit tests use Moq — no database required," i.e. the backend
   suite is unit-level only; database-dependent behavior is exercised only via the CI `e2e` job's

@@ -25,3 +25,9 @@ Author to confirm: why this pattern was preferred over row versioning (EF concur
 - The claim is exercised only through mocks. There is no test against a real database that proves the `UPDATE ... WHERE` behaves as intended; `docs/05-process/testing.md` (rule BR-PAY-03) names this gap.
 - Not every contended write uses the pattern. Example: the promotion `MaxUsage` check happens at booking time but `UsedCount` is incremented only when the invoice turns Paid, so in-flight bookings can exceed the cap by their number, a known, accepted limit (`business-rules.md` section 5).
 - Defects 2, 4 and 8 in `docs/05-process/ai-usage-log.md` are the cases that led to this pattern.
+
+## Alternatives considered
+
+- **Read, check, then write in the manager.** The state before `d1cb811`, `a3806cd` and `dfdcc2c`; it let two requests pass the same check.
+- **An in-process lock.** Used for booking (`SemaphoreSlim` per showtime and room, ADR-0004) but not for payment, points or check-in: it cannot protect two server instances. Author to confirm: whether that was the reason.
+- **EF concurrency tokens, or a stronger transaction isolation level.** Not shown in the repository. Author to confirm: why the conditional `UPDATE` was preferred.

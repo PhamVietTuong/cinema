@@ -23,3 +23,9 @@ Author to confirm: whether the compose demo should keep the Sandbox on, and whet
 - Regression tests: `PaymentCallbackTests.HandlePaymentCallbackAsync_SandboxCallbackOnVnPayInvoice_IsRejected_NoWrites`, `ConfirmPaymentAsync_InvoiceOwnedByUnavailableProvider_DoesNotFallBackToSandbox`.
 - The gateway resolver never hands out an unconfigured gateway (`6c31db5`), so a missing VNPay configuration yields a provider-specific error.
 - This was found by the audit, not by a user report; see defect 1 in `docs/05-process/ai-usage-log.md`.
+
+## Alternatives considered
+
+- **Always register the Sandbox gateway.** The state until `0f83416`; it let an unsigned callback reach a production host.
+- **Never register it, and test with a stub.** Not shown in the repository. Author to confirm: whether it was considered; CI e2e and the compose demo rely on the Sandbox being available behind the switch.
+- **Select it by `Payments:Provider` alone.** That setting picks the default gateway only (`docs/03-technical/configuration.md`); it does not register one.
