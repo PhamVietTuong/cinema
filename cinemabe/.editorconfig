@@ -20,3 +20,7 @@ indent_size = 2
 
 [*.sql]
 indent_size = 4
+
+# xUnit tests are named Method_Scenario_Expected; CA1707 (no underscores) is noise there (593 hits, all in *Tests projects).
+[**/*Tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none

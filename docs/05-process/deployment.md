@@ -19,19 +19,19 @@
 
 ### Ratchets (numbers may only go down)
 
-| Gate | Baseline (2026-11-12) | Where |
-|---|---|---|
-| ESLint warnings | 1,437 (719 prefer-control-flow, 437 prefer-inject, 159 no-explicit-any, 60 prefer-standalone) | `cinemafe/package.json` `lint:ci` (`--max-warnings`); lower the number whenever the count drops. Errors always fail. |
-| .NET analyzer warnings | 1,242 (CA1707 593, CS8618 467, CA1725 37), +5% tolerance | `.github/scripts/analyzer-baseline.txt`, checked by `.github/scripts/check-warnings.py`. |
-| `Cinema.Business` line coverage | 60% | `check-coverage.py` |
+| Gate | Baseline (2026-11-12) | Allowed growth | Where |
+|---|---|---|---|
+| ESLint warnings | 1,437 | none: `--max-warnings 1437` fails on any new warning | `cinemafe/package.json` `lint:ci`; lower the number whenever the count drops. Errors always fail. Top rules: 719 prefer-control-flow, 437 prefer-inject, 159 no-explicit-any, 60 prefer-standalone (partial: 1,375 of 1,437). |
+| .NET analyzer warnings | 641 (compiler + analyzer codes CA/CS/IDE/SYSLIB, de-duplicated) | baseline + 5% (limit 673) | `.github/scripts/analyzer-baseline.txt`, checked by `.github/scripts/check-warnings.py`, which also fails when it parses no warnings and prints a notice when the count is below the baseline (lower the file). Top rules: CS8618 467, CA1725 37, CA1716 23, CA1305 21 (partial). CA1707 (593 xUnit `Method_Scenario_Expected` names) is switched off for `*Tests` projects in `cinemabe/.editorconfig`. |
+| `Cinema.Business` line coverage | 60% | none | `check-coverage.py` |
 
 ### Informational gates (do not fail the build yet)
 
-- **gitleaks** - first run over 411 commits found one false positive (prose in `business/catalog.md`), now allow-listed.
-- **NuGet audit** (`dotnet list package --vulnerable --include-transitive`) - open: `Microsoft.AspNetCore.Http.Connections` 1.2.0 (High) and `Microsoft.AspNetCore.WebUtilities` 2.3.0 (Moderate), transitive in the WebApiHost.
-- **npm audit** (`--audit-level=high`) - open: 67 advisories (25 high, 3 critical), mostly build/tooling transitives.
-
-Remove `continue-on-error` from each once it is clean.
+| Gate | Current state | Flip to blocking when |
+|---|---|---|
+| gitleaks (`secrets` job, pinned `zricethezav/gitleaks:v8.30.1`, full history, `.gitleaks.toml`) | clean locally (412 commits); one false positive allow-listed (prose in `business/catalog.md`) | one clean run on master: remove `continue-on-error` on the job |
+| NuGet audit (`dotnet list package --vulnerable --include-transitive`) | open: `Microsoft.AspNetCore.Http.Connections` 1.2.0 (High) and `Microsoft.AspNetCore.WebUtilities` 2.3.0 (Moderate), both transitive in the WebApiHost; the High finding is tracked in `_bmad-output/implementation-artifacts/deferred-work.md` | the report is clean: remove `continue-on-error` on the step |
+| npm audit (`--audit-level=high`) | open: 67 advisories (25 high, 3 critical), mostly build/tooling transitives | exits 0: remove `continue-on-error` on the step |
 
 ### What is deliberately NOT done
 
@@ -49,9 +49,11 @@ services:
   api:      # build: ./cinemabe, depends_on db-init completing, port 5102:8080
 ```
 
-`docker compose up -d` is the whole first-time setup. `db-init` is idempotent: create_db.sql drops tables, so it is
-skipped when the `AgeRestriction` table already exists (a restart never wipes data). Reset with `docker compose down -v`.
-Verified locally (fresh volume: schema + seed applied; second run: "Schema already present - nothing to do").
+`docker compose up -d` is the whole first-time setup. `db-init` records completion in a `dbo.__DbInit` marker table. Marker present: only the idempotent `upgrade_db.sql` runs.
+No marker and no schema: create -> upgrade -> insert, then the marker is written last. No marker but the schema exists (legacy
+volume or a failed earlier init): `create_db.sql` (which drops tables) is never run; only `upgrade_db.sql`, then the marker.
+Every probe fails the container if `sqlcmd` fails (e.g. wrong password). A half-built database is reset with
+`docker compose down -v`. The SA password is `${CINEMA_DB_PASSWORD}` (default: the dev value), used by `db`, `db-init` and `api`.
 `Payments__EnableSandbox: "true"` is set for the local demo only (off by default outside Development).
 
 The frontend apps are **not** part of `docker-compose.yml` — they're run separately with `ng serve`.
@@ -60,7 +62,7 @@ Notable values baked into `docker-compose.yml` (dev-only, explicitly commented a
 - `JWT__Secret`: `"compose-dev-signing-key-not-for-production-change-me-1234567890"` — comment says
   "override for any real deployment."
 - `AllowedOrigins__0`/`__1`/`__2`: `http://localhost:4202` (CinemaUser), `4201` (CinemaAdmin), `4203` (CinemaStaff).
-- `cinemabe/Dockerfile`: multi-stage, `dotnet/sdk:9.0` publish (Release) -> `dotnet/aspnet:9.0` runtime, port 8080, `TZ=Asia/Ho_Chi_Minh`; built by the CI `docker` job (no push). Logs go to `/app/logs/` (override `Serilog__WriteTo__1__Args__path`).
+- `cinemabe/Dockerfile`: multi-stage, `dotnet/sdk:9.0` publish (Release) -> `dotnet/aspnet:9.0` runtime, port 8080, `TZ=Asia/Ho_Chi_Minh`; built by the CI `docker` job (no push). Logs go to `/app/logs/` (compose mounts the named volume `cinema-logs` there so they persist).
 
 ## Manual build/run commands (from CLAUDE.md, no CI/CD wrapper)
 

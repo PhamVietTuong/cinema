@@ -3,7 +3,7 @@
 Full-stack cinema booking system.
 
 - **`cinemabe/`** — .NET 9 Web API + SQL Server backend (clean architecture, JWT auth, SignalR).
-- **`cinemafe/`** — Angular 21 workspace: `CinemaUser` (:4200), `CinemaAdmin` (:4201), shared `CinemaLib`.
+- **`cinemafe/`** — Angular 21 workspace: `CinemaUser` (:4202), `CinemaAdmin` (:4201), `CinemaStaff` (:4203), shared `CinemaLib`.
 - **`QA-tests/`** — regression harness: flow tests + Playwright E2E.
 
 > Detailed architecture, conventions, and layer rules live in [`CLAUDE.md`](CLAUDE.md).
@@ -17,6 +17,10 @@ Full-stack cinema booking system.
 | SQL Server | 2019+ / Express | Or run via Docker |
 
 ## Backend (`cinemabe/`)
+
+**One command:** `docker compose up -d` starts SQL Server, initialises the schema (idempotent `db-init`) and the API on http://localhost:5102. The frontend apps still run with `ng serve`.
+
+Or run it manually:
 
 Secrets are **not** committed. Provide them once via user-secrets (dev) or environment variables (prod):
 
@@ -47,8 +51,9 @@ dotnet test  Cinema/2-Business/Cinema.Business.Tests             # xUnit
 ```powershell
 nvm use            # 22.12.0
 npm install
-ng serve CinemaUser    # http://localhost:4200
+ng serve CinemaUser    # http://localhost:4202
 ng serve CinemaAdmin   # http://localhost:4201
+ng serve CinemaStaff   # http://localhost:4203
 ng build CinemaLib     # rebuild the shared library after editing it
 ```
 
