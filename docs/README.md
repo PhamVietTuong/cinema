@@ -1,7 +1,7 @@
 # Documentation Index
 
 > Purpose: Index of this project's knowledge base — business, product, and technical.
-> Sources: generated 2026-11-01 from `cinemabe/`, `cinemafe/`, `ROADMAP.md`, `CLAUDE.md`, `.github/workflows/ci.yml`, `docker-compose.yml`.
+> Sources: generated 2026-11-01 from `cinemabe/`, `cinemafe/`, `ROADMAP.md`, `AGENTS.md` (imported by `CLAUDE.md`), `.github/workflows/ci.yml`, `docker-compose.yml`.
 > Last reviewed: 2026-11-12
 
 ## Start here
@@ -19,7 +19,7 @@ The `01-business/` docs are the complete business-rule reference for this projec
 | File | Description |
 |---|---|
 | [vision.md](00-overview/vision.md) | Product vision — owner input needed (not derivable from code). |
-| [stakeholders.md](00-overview/stakeholders.md) | Who's involved — not derivable from code; awaiting human input. |
+| [stakeholders.md](00-overview/stakeholders.md) | Who's involved — owner input needed (not derivable from code). |
 | [glossary.md](00-overview/glossary.md) | Domain + technical terms → meaning → code path. |
 | [open-questions.md](00-overview/open-questions.md) | All unresolved questions/discrepancies found while writing these docs. |
 
@@ -31,8 +31,8 @@ The `01-business/` docs are the complete business-rule reference for this projec
 | [user-stories.md](01-business/user-stories.md) | The same, as user stories. |
 | [business-rules.md](01-business/business-rules.md) | Every business rule — validations, pricing, state machines, limits — with enforcement citations. |
 | [roles-permissions.md](01-business/roles-permissions.md) | The 3-role model (Admin/Customer/TheaterStaff) and what each can do. |
-| [market-research.md](01-business/market-research.md) | Not derivable from code; awaiting human input. |
-| [financial-plan.md](01-business/financial-plan.md) | Not derivable from code; awaiting human input. |
+| [market-research.md](01-business/market-research.md) | Owner input needed (not derivable from code). |
+| [financial-plan.md](01-business/financial-plan.md) | Owner input needed (not derivable from code). |
 
 ## 02-product
 
@@ -64,7 +64,7 @@ The `01-business/` docs are the complete business-rule reference for this projec
 
 | File | Description |
 |---|---|
-| [workflow.md](05-process/workflow.md) | Team process — not derivable from code; awaiting human input. |
+| [workflow.md](05-process/workflow.md) | Git workflow (from `AGENTS.md`) and CI quality gates; owner input needed only for sprint cadence and review ceremonies. |
 | [coding-conventions.md](05-process/coding-conventions.md) | Enforced + observed conventions (cites `CLAUDE.md`). |
 | [testing.md](05-process/testing.md) | Test frameworks, how to run tests, what's covered. |
 | [deployment.md](05-process/deployment.md) | CI pipeline (`.github/workflows/ci.yml`), Docker Compose; no release/deploy pipeline exists today. |

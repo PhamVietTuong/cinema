@@ -132,9 +132,7 @@ ng test CinemaAdmin
 
 ## Local QA harness (not part of the repository)
 
-`QA-tests/` is entirely **git-ignored** (`.gitignore`: `/QA-tests/`), so nothing under it is committed, CI never runs it, and
-it is not project state. It holds a local flow-test playbook and old HTML reports for one developer. Do not rely on it, and
-do not cite it as test coverage. The tracked, CI-run suite is `e2e/` (below). There is no committed `/test-flow` command:
+`QA-tests/` is **git-ignored** (`.gitignore` line 21 `QA-tests/` and line 27 `/QA-tests/`): local scratch, never committed and never run by CI. Do not rely on it or cite it as test coverage. The tracked, CI-run suite is `e2e/` (below). There is no committed `/test-flow` command:
 `.claude/commands/` contains only `update-docs.md`.
 
 ## CI-run E2E
@@ -148,7 +146,7 @@ uploading `e2e/playwright-report` and `e2e/test-results` as a build artifact. Th
 
 ## Committed E2E suite — `e2e/`
 
-`e2e/` is the tracked Playwright suite (78 tests in 9 files in `e2e/tests/`, one chromium project, files prefixed
+`e2e/` is the tracked Playwright suite (78 tests in 9 files in `e2e/tests/` as of 2026-11-12, counted with `npx playwright test --list` from `e2e/`; the number changes whenever specs or their route arrays change, one chromium project, files prefixed
 `api-` / `user-` / `admin-` / `staff-`; same layout as `augure-fe/e2e`) covering the Web API plus
 CinemaUser/CinemaAdmin/CinemaStaff: auth + route guards, every routed screen, and the VNPay callback
 contract. See `e2e/README.md` for prerequisites and env overrides. It runs serially against a seeded DB;

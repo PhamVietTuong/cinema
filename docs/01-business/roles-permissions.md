@@ -26,7 +26,7 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 | `RoleNames.StaffApp` | `Admin,TheaterStaff` | Login to CinemaStaff app; general staff endpoints (seat-map admin read, schedule board, incidents read/report). There are no workforce endpoints |
 | `RoleNames.Sellers` | `Admin,TheaterStaff` | `BoxOffice` region: `Quote`, `Sell`, `GetShowtimesToday`, `FindCustomer` |
 | `RoleNames.GateKeepers` | `Admin,TheaterStaff` | `Gate` region: `Scan`, `Lookup` |
-| `RoleNames.BackOffice` | `Admin,TheaterStaff` | Documented intent for warehouse/inventory staff-app access; narrowed to the caller's own theater in code — no endpoint in the current controller is gated by this constant as of this review |
+| `RoleNames.BackOffice` | `Admin,TheaterStaff` | No controller `[Authorize]` uses it. It is read by `ClaimsPrincipalExtensions._backOfficeRoles` (`TryGetBackOfficeScope`, which pins a non-Admin caller to their own theater; covered by `StaffScopeTests`). Its doc comment still describes warehouse/inventory access |
 | `RoleNames.StockApprovers` | `Admin` only | Documented intent: approve/reject storage plans, change inventory tracking — storage-plan/inventory management was removed from `CinemaStaff`'s current feature set (confirmed absent from the controller and the staff sidebar); no live endpoint uses this constant currently |
 | `RoleNames.Approvers` | `Admin` only | `Operations` region: `BlockSeat`/`BlockRoom`/incident resolve-with-unblock require this role outright (no PIN-based alternate path); POS price overrides (`Sell`) also require it when any line carries an `OverrideUnitPrice` |
 | `RoleNames.Reporting` | `Admin` only | `StaffReport` region: `GetAuditLog`, `GetSales`, `GetOccupancy`, `GetKpis` |

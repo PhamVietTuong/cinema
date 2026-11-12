@@ -127,7 +127,7 @@ Name (100), TheaterId (Cascade), RoomTypeId (Restrict), TotalRows/TotalColumns (
 TheaterId (Cascade), Name (100), Description, SupportsThreeD (bool), ThreeDSurcharge (double), TurnoverBufferMinutes (int, default 0). Nav `Rooms`, `PatronCategoryPrices`.
 
 ### Seat
-RoomId (Cascade), RowName (max 5), ColIndex (int), IsActive, Kind (`SeatKind`, int, default 0 — stores only `Standard` (0) or `Aisle` (2); an aisle is a non-bookable gap cell with `SeatGroupId` null and `IsActive` true; `Seat.cs:14`, `create_db.sql` `[Seat].[Kind]`), SeatGroupId (Guid?, **sole source of truth for Standard vs Double** — non-null links the two seats of a double/couple pair, so `Double` is never stored in `Kind`; read the effective kind via `SeatKinds.EffectiveKind`; no SeatTypeId on Seat). **Unique** (RoomId, RowName, ColIndex). Index on SeatGroupId.
+RoomId (Cascade), RowName (max 5), ColIndex (int), IsActive, Kind (`SeatKind`, int, default 0 — stores only `Standard` (0) or `Aisle` (2); an aisle is a non-bookable gap cell with `SeatGroupId` null and `IsActive` true; `Seat.cs:14`, `create_db.sql` `[Seat].[Kind]`), SeatGroupId (Guid?, **sole source of truth for Standard vs Double** — non-null links the two seats of a double/couple pair, so `Double` is never stored in `Kind`; read the effective kind via `SeatKinds.EffectiveKind` (`cinemabe/Cinema/2-Business/Cinema.Business/Helpers/SeatKinds.cs:17`); no SeatTypeId on Seat). **Unique** (RoomId, RowName, ColIndex). Index on SeatGroupId.
 
 ### SeatType (per-theater: exactly Single + Double)
 TheaterId (Cascade), Kind (SeatKind enum — matched by Kind, never Name), Name (display only), Color (hex, default `#808080`). **Unique** (TheaterId, Kind). Nav `PatronCategories`.

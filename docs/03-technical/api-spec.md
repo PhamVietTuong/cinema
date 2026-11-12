@@ -26,8 +26,8 @@ No class-level `[Authorize]`; actions default to anonymous unless tagged.
 | `Login` | POST | anonymous | `Auth` (10/min/IP) | `LoginRequest{EmailOrPhone, Password}` | `AuthResponse{Token, ExpiresAt, RequiresTwoFactor, User}` — `Token=""` if 2FA required | 401 invalid credentials / locked out / unconfirmed email |
 | `Register` | POST | anonymous | `Auth` | `RegisterRequest{Name, Email, Phone, Password, ConfirmPassword}` | `AuthResponse` with usable JWT immediately (even if unconfirmed) | 400 email/phone in use, missing `Customer` UserType |
 | `ForgotPassword` | POST | anonymous | `AuthEmail` (3/15min/IP) | `ForgotPasswordRequest{Email}` | 204 always (no enumeration) | — |
-| `ResetPassword` | POST | anonymous | `Auth` | `ResetPasswordRequest{Email, Token, NewPassword}` | 200 | 400 invalid/expired token |
-| `ConfirmEmail` | POST | anonymous | `Auth` | `ConfirmEmailRequest{Email, Token}` | 200 | 400 invalid/expired token |
+| `ResetPassword` | POST | anonymous | `Auth` | `ResetPasswordRequest{Email, Token, NewPassword}` | 204 | 400 invalid/expired token |
+| `ConfirmEmail` | POST | anonymous | `Auth` | `ConfirmEmailRequest{Email, Token}` | 204 | 400 invalid/expired token |
 | `ResendVerification` | POST | anonymous | `AuthEmail` | `ResendVerificationRequest{Email}` | 204 always (no enumeration) | — |
 | `GoogleLogin` | POST | anonymous | `Auth` | `GoogleLoginRequest{IdToken}` | `AuthResponse` (2FA always bypassed) | 401 invalid token / email not verified; 400 not configured |
 | `FacebookLogin` | POST | anonymous | `Auth` | `FacebookLoginRequest{AccessToken}` | `AuthResponse` (2FA always bypassed) | 401 invalid token (same message whether bad token or missing email permission) |
@@ -38,10 +38,10 @@ No class-level `[Authorize]`; actions default to anonymous unless tagged.
 | Action | Verb | Auth | Request | Response | Notes |
 |---|---|---|---|---|---|
 | `GetProfile` | GET | `[Authorize]` | — | `UserDTO` | any authenticated role |
-| `UpdateProfile` | PUT | `[Authorize]` | `UpdateProfileRequest` | `UserDTO` | |
-| `UpdateNotificationPreferences` | POST | `[Authorize]` | `UpdateNotificationPreferencesRequest` | 200 | per-channel opt in/out (distinct from admin `Template` CRUD) |
-| `ChangePassword` | POST | `[Authorize]` | `ChangePasswordRequest` | 200 | |
-| `SetTwoFactor` | POST | `[Authorize]` | `SetTwoFactorRequest{Enabled}` | 200 | disabling clears any outstanding code |
+| `UpdateProfile` | PUT | `[Authorize]` | `UpdateProfileRequest` | 204 | |
+| `UpdateNotificationPreferences` | POST | `[Authorize]` | `UpdateNotificationPreferencesRequest` | 204 | per-channel opt in/out (distinct from admin `Template` CRUD) |
+| `ChangePassword` | POST | `[Authorize]` | `ChangePasswordRequest` | 204 | |
+| `SetTwoFactor` | POST | `[Authorize]` | `SetTwoFactorRequest{Enabled}` | 204 | disabling clears any outstanding code |
 
 ### Admin (banner `// ── Admin ──`, `[Authorize(Roles="Admin")]` local const)
 
@@ -50,7 +50,7 @@ No class-level `[Authorize]`; actions default to anonymous unless tagged.
 | `GetUsers` | POST | Admin | `PagingSearchDTO` | `DefaultSearchResults<UserDTO>` — `UserDTO.TheaterName` is batch-resolved from `TheaterId` (null if unset or stale); `Filters["theaterId"]` scopes results to one theater (e.g. a cinema's Staff tab) |
 | `CreateUser` | POST | Admin | `CreateUserRequest` | `UserDTO` — theater-scoped roles require valid `TheaterId` (400 otherwise) |
 | `UpdateUser` | POST | Admin | `UpdateUserRequest` | `UserDTO` |
-| `DeleteUser` | POST | Admin | `[FromQuery] Guid id` | 200/204 |
+| `DeleteUser` | POST | Admin | `[FromQuery] Guid id` | 204 |
 
 ---
 
@@ -98,7 +98,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 
 ## 3. CinemaController (`/swagger/cinema`) — `api/Cinema/*`
 
-2310 lines, organized by `#region`. Reads are public unless noted; writes are `[Authorize(Roles="Admin")]` (local `_adminRole` const) unless a `RoleNames.*` composite is shown.
+2310 lines (as of 2026-11-12), organized by `#region`. Reads are public unless noted; writes are `[Authorize(Roles="Admin")]` (local `_adminRole` const) unless a `RoleNames.*` composite is shown.
 
 ### Movies / Theaters / ShowTimes (no `#region`, top of file)
 
@@ -157,7 +157,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 | `FoodAndDrink` | anonymous | Admin | |
 | `Room` | anonymous | Admin | |
 | `RoomType` | anonymous | Admin | + `GetRoomTypePatronCategoryPrices` / `SaveRoomTypePatronCategoryPrices` (Admin) |
-| `ShowTime` | anonymous list (`GetShowTimeList`) and anonymous `GetShowTime` (`CinemaController.cs:1677`, no `[Authorize]`); `UpdateShowTime`/`DeleteShowTime` are Admin-only | Admin | |
+| `ShowTime` | anonymous list (`GetShowTimeList`) and anonymous `GetShowTime` (`CinemaController.cs:1677`, bare `[HttpGet]`, no `[Authorize]`); `UpdateShowTime`/`DeleteShowTime` are Admin-only. This doc previously listed `GetShowTime` as Admin-only; anonymous is the actual behavior, and `ControllerAuthorizationCoverageTests.AnonymousAllowList` (`:59`) records it as deliberately public. Owner input needed: confirm `GetShowTime` is meant to be public | Admin | |
 | `MovieTypeDetail` | anonymous list | Admin (Create/Delete) | Movie↔MovieType join |
 | `Room seat map` | `GetRoomSeatMap` = `RoleNames.StaffApp` | Admin | `SaveRoomSeatMap`, `ResizeRoomSeatGrid`, `RemoveRoomSeat` |
 | `Invoice (admin)` | Admin | Admin | `GetInvoices`, `UpdateInvoiceStatus` (undefined enum values rejected; transitions constrained, see business-rules), `DeleteInvoice` (restores food stock, redeemed points and gift-card balance if was Pending) |

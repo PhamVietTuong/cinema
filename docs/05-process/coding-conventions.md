@@ -1,7 +1,7 @@
 # Coding Conventions
 
 > Purpose: Enforced and observed coding conventions for the backend and frontend.
-> Sources: E:\cinema\CLAUDE.md, E:\cinema\cinemabe\.editorconfig, E:\cinema\cinemafe\eslint.config.js
+> Sources: E:\cinema\CLAUDE.md, E:\cinema\cinemabe\.editorconfig, E:\cinema\cinemafe\eslint.config.js, E:\cinema\cinemafe\.editorconfig, E:\cinema\cinemafe\.prettierrc
 > Last reviewed: 2026-11-12
 
 Most conventions in this repo are documented in `CLAUDE.md` at the repo root. This page cites
@@ -57,8 +57,7 @@ indent_size = 4
   modifiers required on non-interface members.
 - JSON/YAML/csproj/props: 2-space indent. SQL: 4-space indent.
 
-There is no `.editorconfig` under `cinemafe/` — frontend formatting is governed only by ESLint
-(below) and Prettier defaults where used by the IDE.
+Frontend formatting: `cinemafe/.editorconfig` sets UTF-8, 2-space indent, final newline and trimmed trailing whitespace for all files, single quotes for `*.ts` (plus the IntelliJ `ij_typescript_use_double_quotes = false` hint), and switches off the line-length limit and whitespace trimming for `*.md`. `cinemafe/.prettierrc` sets `printWidth` 100, `singleQuote` true and the `angular` parser for `*.html`. `prettier` is a devDependency (`cinemafe/package.json`) but no npm script or CI step runs it, so both files act as IDE/editor settings; CI enforces only ESLint (below).
 
 ## From `cinemafe/eslint.config.js` — not mentioned in CLAUDE.md
 
@@ -90,4 +89,4 @@ There is no `.editorconfig` under `cinemafe/` — frontend formatting is governe
 - CI (`.github/workflows/ci.yml`) runs `npm run lint:ci` (`eslint . --max-warnings 1437`): it fails on `error`-level violations and on
   any growth of the warn-level backlog above (lower the cap when the count drops).
 
-`cinemafe/.editorconfig` and `cinemafe/.prettierrc` exist alongside ESLint (`cinemafe/eslint.config.js`).
+See the Frontend formatting paragraph above for `cinemafe/.editorconfig` and `cinemafe/.prettierrc`.

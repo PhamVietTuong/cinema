@@ -1,7 +1,7 @@
 # Open Questions
 
 > Purpose: Unresolved questions and discrepancies found while building the knowledge base, for the team to confirm.
-> Sources: grep across E:\cinema\cinemabe and E:\cinema\cinemafe (excluding node_modules/bin/obj), plus cross-checks between CLAUDE.md/README.md/docker-compose.yml/ci.yml/QA-tests
+> Sources: grep across E:\cinema\cinemabe and E:\cinema\cinemafe (excluding node_modules/bin/obj), plus cross-checks between AGENTS.md/README.md/docker-compose.yml/ci.yml
 > Last reviewed: 2026-11-12
 
 | Question | Affects (file) | Why unclear |
@@ -14,8 +14,8 @@
 | Is there a real deployment target (staging/production) for this app outside of developer machines and the CI build/test pipeline? | `docs/05-process/deployment.md` | No `appsettings.Production.json`, no second CI/CD workflow file, and no hosting/infra config of any kind were found in the repository. |
 | Is `PaymentController.ValidateTicket` ([Authorize(Roles="Admin")]) meant to be staff-accessible like `CinemaController`'s `Gate.Scan` action ([Authorize] on `RoleNames.GateKeepers` = `Admin,TheaterStaff`), or is Admin-only a deliberate back-office override distinct from the staff gate terminal? | `docs/03-technical/api-spec.md`, `docs/01-business/business-rules.md` | Both actions validate tickets but are gated differently; `docs/01-business/business-rules.md` §2 documents the Admin-only gate check-in without flagging the asymmetry with the staff-facing scan flow. |
 | Should `PaymentController`'s `GetInvoices`/`GetRevenue`/`GetRevenueByDay`/`GetRevenueByMovie`/`GetRevenueByTheater` admin-reporting family be consolidated with `CinemaController`'s `Invoice (admin)` region and `StaffReport.GetSales`/`GetOccupancy`/`GetKpis`, or do they serve genuinely different consumers? | `docs/03-technical/api-spec.md` | Two overlapping reporting surfaces exist; neither `docs/01-business/business-rules.md` nor `docs/03-technical/codebase-map.md` explains which is canonical for which caller. |
-| Are `RoleNames.BackOffice` and `RoleNames.StockApprovers` reserved for a planned feature (inventory/storage-plan), or safe to remove as dead code? | `docs/01-business/roles-permissions.md`, `docs/00-overview/glossary.md` | Neither constant has a live `[Authorize]` usage (`BackOffice` only appears in a claims-scope helper, `StockApprovers` only in a unit test); their doc comments describe warehouse/inventory and storage-plan approval, which `docs/01-business/roles-permissions.md` says was removed. |
-| Does CinemaAdmin's `discount.dialog.ts` already support a per-theater `TheaterId` scope, or is global-only still the case (ROADMAP marks per-theater promotions as 🆕)? | `docs/02-product/features.md`, `docs/01-business/business-rules.md` | Not verified directly against the dialog's form fields during this pass. |
+| Is `RoleNames.StockApprovers` reserved for a planned feature (storage-plan approval), or safe to remove as dead code? (`RoleNames.BackOffice` is no longer in question: `ClaimsPrincipalExtensions._backOfficeRoles` uses it.) | `docs/01-business/roles-permissions.md`, `docs/00-overview/glossary.md` | `StockApprovers` has no `[Authorize]` usage and appears only in `RoleNamesTests`; its doc comment describes storage-plan approval, which `docs/01-business/roles-permissions.md` says was removed. |
+| ~~Does CinemaAdmin's `discount.dialog.ts` support a per-theater scope?~~ **Resolved 2026-11-12:** obsolete. No `discount.dialog*` file exists under `cinemafe/projects`; discounts were merged into `PromotionProgram`, which already has theater scoping (see `docs/02-product/features.md`). | `docs/02-product/features.md` | Resolved. |
 | ~~`ShowtimeReminderService` interval and lookahead.~~ **Resolved 2026-11-12:** every 5 minutes, lead 60 minutes, scan window 15 minutes (`ShowtimeReminderService.cs:18-20`). | `docs/03-technical/architecture.md` | Resolved. |
 | ~~What happens when `OMDb:ApiKey` is blank?~~ **Resolved 2026-11-12:** `OmdbRatingsProvider.GetRatingsAsync` returns `null` without any HTTP call; ratings are simply absent. | `docs/03-technical/configuration.md` | Resolved. |
 | `AgeRestriction`, `Holiday`, `MemberShip`, `MovieType`, `News`, and `UserType` entities have no dedicated `Configurations/*.cs` Fluent API file (EF conventions only) — is this intentional? | `docs/03-technical/database-schema.md` | Every other entity has an explicit Fluent config; these six rely purely on EF conventions, which may be deliberate (simple shape) or an oversight if constraints are ever needed. |
@@ -23,6 +23,4 @@
 
 ## Notes on documentation written in this pass
 
-- `docs/05-process/coding-conventions.md`, `docs/05-process/testing.md`, and
-  `docs/05-process/deployment.md` each flag their own narrower uncertainties inline with
-  `Owner input needed` lines; they are not duplicated here.
+- Narrower uncertainties are flagged inline with `Owner input needed` lines in `docs/00-overview/vision.md`, `stakeholders.md`, `docs/01-business/financial-plan.md`, `market-research.md`, `roles-permissions.md`, `business-rules.md`, `docs/03-technical/api-spec.md`, `database-schema.md`, `docs/05-process/deployment.md` and `workflow.md`; they are not duplicated here.
