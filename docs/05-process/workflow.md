@@ -1,8 +1,16 @@
 # Workflow
 
 > Purpose: Team process and ways of working (sprints, reviews, ceremonies).
-> Sources: (none — not derivable from code; needs human input)
+> Sources: `AGENTS.md` (Git section), `.github/workflows/ci.yml`. Sprint cadence and review ceremonies are not derivable from the repository.
 > Last reviewed: 2026-11-12
+
+## Git workflow (from `AGENTS.md`)
+
+- Run `git fetch` + `git pull` before creating a branch; work on `feature/<name>`; merge to `master` when the feature is done; ask whether to open a PR after finishing a feature.
+- Commit at each compiling milestone, not one giant commit per task.
+- Generated screenshots go to `E:\cinema\tasks`, run/serve/QA logs to `E:\cinema\logs` (both git-ignored).
+
+Owner input needed: sprint cadence, review ceremonies and who approves merges (nothing in the repository records them).
 
 ## Quality gates a PR must pass
 

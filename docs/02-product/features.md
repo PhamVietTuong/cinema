@@ -2,7 +2,7 @@
 
 > Purpose: Inventory of features actually implemented across CinemaUser, CinemaAdmin, and CinemaStaff, with code locations and status.
 > Sources: cinemafe/projects/{CinemaUser,CinemaAdmin,CinemaStaff,CinemaLib}, E:\cinema\ROADMAP.md, cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs (`#region`s Gate/BoxOffice/StaffReport/Operations/Workforce), cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs
-> Last reviewed: 2026-11-07
+> Last reviewed: 2026-11-12
 
 Status legend: **complete** (wired end-to-end, used in production routes) · **partial** (data/API exists but UI/flow incomplete, or vice versa) · **stubbed** (code present but hidden/unused). Roadmap status (`E:\cinema\ROADMAP.md`, ✅/🟡/🆕) is cited where it adds context — in a few places the code is further along than the roadmap entry suggests (noted below).
 
@@ -78,4 +78,4 @@ The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified dir
 | Promotions scoped per-theater (`PromotionProgram`) | ✅ done | `Discount`/`DiscountType`/`DiscountTheater` were merged into `PromotionProgram`, which already had theater/day/time scoping via `PromotionProgramSchedule` — one promotion screen, one pricing path. |
 | Revenue/advanced stats dashboard | 🆕 partial | Basic reports exist (`modules/overview/reports`); advanced charts not confirmed. |
 | Messaging infra (real email/SMS providers) | 🟡 partial | Providers are implemented but unvalidated against real accounts: `SmtpNotificationService` (email) and `TwilioSmsNotificationService` (SMS) take typed `SmtpOptions`/`TwilioOptions` validated at startup (a half-filled section fails the host start), normalise phone numbers to E.164 (`0900123456` -> `+84900123456`) and enforce send timeouts; unconfigured falls back to the dev-log senders. No outbox/retry queue (a failed send is logged, not retried). Code: `Cinema.Business/Notifications/*`. |
-| Multilingual (i18n) | partial | `@ngx-translate/core` is a dependency and used in components (e.g. `movie-detail.component.ts` uses `_translate.instant`) — <!-- TODO: confirm with team how many languages are actually translated -->. |
+| Multilingual (i18n) | partial | `@ngx-translate/core` is a dependency and used in components (e.g. `movie-detail.component.ts` uses `_translate.instant`) — two languages are translated, Vietnamese and English (`SUPPORTED_LANGUAGES` in `CinemaLib/src/lib/i18n/language.service.ts`; each app ships `public/assets/i18n/{vi,en}.json`). |

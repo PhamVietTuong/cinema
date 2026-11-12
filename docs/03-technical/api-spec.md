@@ -1,8 +1,8 @@
 # API Specification
 
 > Purpose: Enumerate every endpoint on the three backend controllers, with route, auth, request/response shape, and notable error cases.
-> Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/{CinemaController,IdentityController,PaymentController,ApiControllerBase}.cs`, `cinemabe/Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs`, `cinemabe/Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs`, `cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs`
-> Last reviewed: 2026-11-04
+> Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/{CinemaController,IdentityController,PaymentController,ApiControllerBase}.cs`, `.../Hubs/StaffHub.cs`, `.../Helpers/RateLimitPolicies.cs`, `cinemafe/projects/{CinemaAdmin,CinemaStaff}` (consumer check), `cinemabe/Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs`, `cinemabe/Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs`, `cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs`
+> Last reviewed: 2026-11-12
 
 ## Conventions (verified against code)
 
@@ -27,7 +27,7 @@ No class-level `[Authorize]`; actions default to anonymous unless tagged.
 | `Register` | POST | anonymous | `Auth` | `RegisterRequest{Name, Email, Phone, Password, ConfirmPassword}` | `AuthResponse` with usable JWT immediately (even if unconfirmed) | 400 email/phone in use, missing `Customer` UserType |
 | `ForgotPassword` | POST | anonymous | `AuthEmail` (3/15min/IP) | `ForgotPasswordRequest{Email}` | 204 always (no enumeration) | — |
 | `ResetPassword` | POST | anonymous | `Auth` | `ResetPasswordRequest{Email, Token, NewPassword}` | 200 | 400 invalid/expired token |
-| `ConfirmEmail` | POST | anonymous | `AuthEmail` | `ConfirmEmailRequest{Email, Token}` | 200 | 400 invalid/expired token |
+| `ConfirmEmail` | POST | anonymous | `Auth` | `ConfirmEmailRequest{Email, Token}` | 200 | 400 invalid/expired token |
 | `ResendVerification` | POST | anonymous | `AuthEmail` | `ResendVerificationRequest{Email}` | 204 always (no enumeration) | — |
 | `GoogleLogin` | POST | anonymous | `Auth` | `GoogleLoginRequest{IdToken}` | `AuthResponse` (2FA always bypassed) | 401 invalid token / email not verified; 400 not configured |
 | `FacebookLogin` | POST | anonymous | `Auth` | `FacebookLoginRequest{AccessToken}` | `AuthResponse` (2FA always bypassed) | 401 invalid token (same message whether bad token or missing email permission) |
@@ -78,7 +78,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `GetGiftCards` | POST | Admin | `PagingSearchDTO` | `DefaultSearchResults<GiftCardDTO>` |
 | `IssueGiftCard` | POST | Admin | `IssueGiftCardRequest{Amount, ExpiresAt?, IssuedToEmail?}` | `GiftCardDTO` — `Code` auto-generated `"GC-"+12hex` |
 | `SetGiftCardActive` | POST | Admin | `SetGiftCardActiveRequest{Id, IsActive}` | 200 |
-| `ValidateTicket` | POST | Admin | `ValidateTicketRequest{QrCode or similar}` | ticket validation result | requires `Invoice.Status==Paid`, rejects already-used ticket; this is the gate check-in endpoint but gated plain `Admin`, not `RoleNames.GateKeepers` — cross-check against `Gate/Scan` in `CinemaController` which IS staff-accessible (see discrepancy note below) |
+| `ValidateTicket` | POST | Admin | `ValidateTicketRequest{QrCode or similar}` | ticket validation result | requires `Invoice.Status==Paid`, rejects already-used ticket; this is the gate check-in endpoint but gated plain `Admin`, not `RoleNames.GateKeepers` — cross-check against `Gate/Scan` in `CinemaController` which IS staff-accessible (see discrepancy note below). No frontend app calls it (only the generated `payment-http.service.ts` exposes it) |
 
 ### Invoices (banner `// ── Invoices ──`)
 
@@ -92,13 +92,13 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `GetRevenueByMovie` | GET | Admin | `from`, `to` | |
 | `GetRevenueByTheater` | GET | Admin | `from`, `to` | |
 
-<!-- TODO: confirm with team — PaymentController has its own GetRevenue*/GetInvoices(Admin) family that overlaps with CinemaController's StaffReport (GetSales/GetOccupancy/GetKpis) and Invoice-admin regions; not yet resolved whether one is canonical. -->
+Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in purpose with `CinemaController`'s `StaffReport` and `Invoice (admin)` regions. Consumers differ: the `GetRevenue*` family is called by CinemaAdmin's `dashboard` and `reports` components, `StaffReport.GetSales` by CinemaStaff's `sales-reports`. Owner input needed: whether the two surfaces should be consolidated.
 
 ---
 
 ## 3. CinemaController (`/swagger/cinema`) — `api/Cinema/*`
 
-2549 lines, organized by `#region`. Reads are public unless noted; writes are `[Authorize(Roles="Admin")]` (local `_adminRole` const) unless a `RoleNames.*` composite is shown.
+2310 lines, organized by `#region`. Reads are public unless noted; writes are `[Authorize(Roles="Admin")]` (local `_adminRole` const) unless a `RoleNames.*` composite is shown.
 
 ### Movies / Theaters / ShowTimes (no `#region`, top of file)
 
@@ -151,12 +151,13 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | `Holiday` | anonymous | Admin | |
 | `News` | anonymous | Admin | |
 | `Person` | **Admin-only** for CRUD; `GetPeopleByNames` is `[AllowAnonymous]` | Admin | |
+| `PromotionCampaign` | `GetPromotionCampaigns` / `GetPromotionCampaign` (list is `[HttpPost]`) | Admin (`Create`/`Update`/`Delete`) | Campaign grouping for promotions (`#region PromotionCampaign`, `CinemaController.cs:1368`); standard CRUD, no extra actions |
 | `PromotionProgram` | `GetPublishedPromotionPrograms` `[AllowAnonymous]`; `GetPromotionPrograms`/`GetPromotionProgram` Admin | Admin | Single promotion/pricing entity (merged from the former `Discount`/`DiscountType`/`DiscountTheater`); triggered by `Code` xor `AutoApply` |
 | `SplashBanner` | `GetActiveSplashBanner` `[AllowAnonymous]` (returns `List<SplashBannerDTO>`, 0 or 1 items); rest Admin | Admin | |
 | `FoodAndDrink` | anonymous | Admin | |
 | `Room` | anonymous | Admin | |
 | `RoomType` | anonymous | Admin | + `GetRoomTypePatronCategoryPrices` / `SaveRoomTypePatronCategoryPrices` (Admin) |
-| `ShowTime` | anonymous list (`GetShowTimeList`); **`GetShowTime`/Update/Delete are Admin-only** | Admin | |
+| `ShowTime` | anonymous list (`GetShowTimeList`) and anonymous `GetShowTime` (`CinemaController.cs:1677`, no `[Authorize]`); `UpdateShowTime`/`DeleteShowTime` are Admin-only | Admin | |
 | `MovieTypeDetail` | anonymous list | Admin (Create/Delete) | Movie↔MovieType join |
 | `Room seat map` | `GetRoomSeatMap` = `RoleNames.StaffApp` | Admin | `SaveRoomSeatMap`, `ResizeRoomSeatGrid`, `RemoveRoomSeat` |
 | `Invoice (admin)` | Admin | Admin | `GetInvoices`, `UpdateInvoiceStatus` (undefined enum values rejected; transitions constrained, see business-rules), `DeleteInvoice` (restores food stock, redeemed points and gift-card balance if was Pending) |
@@ -169,7 +170,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 |---|---|---|
 | `Gate` | `RoleNames.GateKeepers` (`Admin,TheaterStaff`) | `Scan` (QR scan — a refused scan is still HTTP 200 with `Outcome` field; only auth failures are 403), `Lookup` (find today's paid tickets by invoice code/phone) |
 | `BoxOffice` | `RoleNames.Sellers` (`Admin,TheaterStaff`) | `Quote` (dry-run price), `Sell` (creates `Paid` invoice directly), `GetShowtimesToday`, `FindCustomer` (by exact phone) |
-| `StaffReport` | `RoleNames.Reporting` (`Admin` only) | `GetAuditLog`, `GetSales`, `GetOccupancy`, `GetKpis` — date range capped at 92 days, theater-scoped |
+| `StaffReport` | `RoleNames.Reporting` (`Admin` only) | `GetAuditLog` (paged `PagingSearchDTO`, no 92-day cap), `GetSales`, `GetOccupancy`, `GetKpis` (`StaffReportRequest`: date range capped at 92 days, theater-scoped) |
 | `Operations` | `RoleNames.StaffApp` (`Admin,TheaterStaff`); `BlockSeat`/`BlockRoom` are `RoleNames.Approvers` (`Admin`) only | `GetScheduleBoard`, `ReportIncident`, `GetIncidents`, `GetIncident`, `ResolveIncident`, `BlockSeat`, `BlockRoom` (`BlockSeat`/`BlockRoom` require the `Approvers` role outright — 403 otherwise, no PIN-based alternate path; they set `Incident.BlocksSeat`/`BlocksRoom`, and `ResolveIncident`'s optional `Unblock` flag, which also needs `Approvers`, reopens the seat/room) |
 
 ---
@@ -179,7 +180,7 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 | Hub | Route | Auth | Notes |
 |---|---|---|---|
 | `BookingHub` | `/hubs/booking` | `[Authorize]` | `JoinRoom`, `LockSeat`, `UnlockSeat` (client→hub); `SeatLockFailed` (caller-only), `SeatLocked`/`SeatUnlocked`/`SeatBooked` (group broadcast) |
-| `StaffHub` | `/hubs/staff` | `[Authorize(Roles=RoleNames.StaffApp)]` | `FoodOrderQueued`, `FoodOrderUpdated`, `StockLow`, `IncidentRaised`; `JoinTheater(theaterId)` |
+| `StaffHub` | `/hubs/staff` | `[Authorize(Roles=RoleNames.StaffApp)]` | `IncidentRaised` is the only server-to-client event (`StaffHub.IncidentRaisedEvent`); `JoinTheater(theaterId)` (client-to-hub). The food-order and stock events were removed with their features |
 
 JWT for both is read from the `access_token` query string for any path starting with `/hubs` (configured in `Program.cs`), not the `Authorization` header.
 
@@ -187,5 +188,5 @@ JWT for both is read from the `access_token` query string for any path starting 
 
 ## Discrepancies / things to verify further
 
-- `PaymentController.ValidateTicket` is gated plain `[Authorize(Roles="Admin")]` (local const), while `CinemaController`'s `Gate/Scan` region (the apparent gate-scan flow used by staff) is gated `RoleNames.GateKeepers` (`Admin,TheaterStaff`). If `TheaterStaff` is meant to do gate check-in in practice (the CinemaStaff app's gate-scan UI calls `Gate/Scan`, not `PaymentController.ValidateTicket`), confirm whether the two are the same logical operation exposed twice with different role gates, or two distinct code paths (admin manual override vs. staff gate terminal). <!-- TODO: confirm with team -->
-- `PaymentController` has its own `GetInvoices`(Admin)/`GetRevenue*` family that overlaps in purpose with `CinemaController`'s `Invoice (admin)` region and `StaffReport.GetSales`. Not necessarily a bug (different DTOs/scopes), but worth a deliberate check before assuming one is canonical. <!-- TODO: confirm with team -->
+- `PaymentController.ValidateTicket` is gated plain `[Authorize(Roles="Admin")]` (local const), while `CinemaController`'s `Gate/Scan` region (the apparent gate-scan flow used by staff) is gated `RoleNames.GateKeepers` (`Admin,TheaterStaff`). If `TheaterStaff` is meant to do gate check-in in practice (the CinemaStaff app's gate-scan UI calls `Gate/Scan`, not `PaymentController.ValidateTicket`), confirm whether the two are the same logical operation exposed twice with different role gates, or two distinct code paths (admin manual override vs. staff gate terminal). Owner input needed: whether `ValidateTicket` is an intended admin manual override or a legacy endpoint to retire.
+- `PaymentController` has its own `GetInvoices`(Admin)/`GetRevenue*` family that overlaps in purpose with `CinemaController`'s `Invoice (admin)` region and `StaffReport.GetSales`. Not necessarily a bug (different DTOs/scopes), but consumers differ (see the Invoices section note). Owner input needed: which surface is canonical.

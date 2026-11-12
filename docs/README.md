@@ -2,7 +2,7 @@
 
 > Purpose: Index of this project's knowledge base — business, product, and technical.
 > Sources: generated 2026-11-01 from `cinemabe/`, `cinemafe/`, `ROADMAP.md`, `CLAUDE.md`, `.github/workflows/ci.yml`, `docker-compose.yml`.
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-12
 
 ## Start here
 
@@ -18,7 +18,7 @@ The `01-business/` docs are the complete business-rule reference for this projec
 
 | File | Description |
 |---|---|
-| [vision.md](00-overview/vision.md) | Product vision — not derivable from code; awaiting human input. |
+| [vision.md](00-overview/vision.md) | Product vision — owner input needed (not derivable from code). |
 | [stakeholders.md](00-overview/stakeholders.md) | Who's involved — not derivable from code; awaiting human input. |
 | [glossary.md](00-overview/glossary.md) | Domain + technical terms → meaning → code path. |
 | [open-questions.md](00-overview/open-questions.md) | All unresolved questions/discrepancies found while writing these docs. |
@@ -77,4 +77,4 @@ The `01-business/` docs are the complete business-rule reference for this projec
 
 ---
 
-`docs/` is **not** committed to git (see `.gitignore`). Run `/update-docs` after any session that changes code or business logic to keep it current.
+`docs/` is committed to git (the living knowledge base). Run `/update-docs` after any session that changes code or business logic to keep it current.

@@ -2,7 +2,7 @@
 
 > Purpose: Enforced and observed coding conventions for the backend and frontend.
 > Sources: E:\cinema\CLAUDE.md, E:\cinema\cinemabe\.editorconfig, E:\cinema\cinemafe\eslint.config.js
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-12
 
 Most conventions in this repo are documented in `CLAUDE.md` at the repo root. This page cites
 those directly and adds what's enforced by config files that `CLAUDE.md` doesn't spell out.
@@ -90,4 +90,4 @@ There is no `.editorconfig` under `cinemafe/` — frontend formatting is governe
 - CI (`.github/workflows/ci.yml`) runs `npm run lint:ci` (`eslint . --max-warnings 1437`): it fails on `error`-level violations and on
   any growth of the warn-level backlog above (lower the cap when the count drops).
 
-<!-- TODO: confirm with team whether cinemafe should eventually get its own .editorconfig, or whether ESLint + Prettier is considered sufficient. -->
+`cinemafe/.editorconfig` and `cinemafe/.prettierrc` exist alongside ESLint (`cinemafe/eslint.config.js`).

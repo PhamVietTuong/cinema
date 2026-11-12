@@ -2,7 +2,7 @@
 
 > Purpose: Describe the current role model, capability composites, and how each is enforced in code.
 > Sources: `cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs`; `cinemabe/Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs`; `cinemabe/Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs`; controller `[Authorize]` attributes in `CinemaController.cs`/`IdentityController.cs`/`PaymentController.cs`; `cinemafe/projects/CinemaLib/src/lib/models/roles.models.ts`
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-12
 
 ## 1. The role model
 
@@ -23,7 +23,7 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 | `RoleNames.Admin` | `Admin` | Same as `Admin` literal |
 | `RoleNames.Customer` | `Customer` | Not used in any `[Authorize]` attribute seen — customer-only actions use plain `[Authorize]` + ownership checks by user id instead |
 | `RoleNames.TheaterStaff` | `TheaterStaff` | — |
-| `RoleNames.StaffApp` | `Admin,TheaterStaff` | Login to CinemaStaff app; general staff endpoints (seat-map admin read, schedule board, incidents read/report, workforce self-service reads) |
+| `RoleNames.StaffApp` | `Admin,TheaterStaff` | Login to CinemaStaff app; general staff endpoints (seat-map admin read, schedule board, incidents read/report). There are no workforce endpoints |
 | `RoleNames.Sellers` | `Admin,TheaterStaff` | `BoxOffice` region: `Quote`, `Sell`, `GetShowtimesToday`, `FindCustomer` |
 | `RoleNames.GateKeepers` | `Admin,TheaterStaff` | `Gate` region: `Scan`, `Lookup` |
 | `RoleNames.BackOffice` | `Admin,TheaterStaff` | Documented intent for warehouse/inventory staff-app access; narrowed to the caller's own theater in code — no endpoint in the current controller is gated by this constant as of this review |
@@ -57,8 +57,8 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 - **Scope helpers** (`ClaimsPrincipalExtensions`): `TryGetBackOfficeScope` / `TryGetStaffScope` — Admin gets `isAdmin:true` (unrestricted); a theater-scoped role gets pinned to its `theaterId` claim(s), failing (403, not 401) if the claim is missing or the role doesn't qualify.
 - **403 vs 401 convention (deliberate)**: an authenticated user hitting an endpoint outside their role/theater scope gets **403** (`AccessDeniedException` → `ApiControllerBase.HandleException`, or the framework's own 403 for a plain `[Authorize(Roles=...)]` mismatch). **401 is reserved for "no valid token at all."** This matters because the frontend's `errorInterceptor` force-logs-out the user on any 401 — a role/scope mismatch must not trigger that.
 - **User creation/update** (`AuthManager.ResolveTheaterIdAsync`): any `UserType` in `RoleNames.TheaterScopedRoles` (today, only `TheaterStaff`) requires a valid, existing `TheaterId` → 400 otherwise. Non-scoped roles (`Admin`, `Customer`) force `TheaterId = null` regardless of what the request supplied.
-- **Frontend mirror** (`cinemafe/projects/CinemaLib/src/lib/models/roles.models.ts`): mirrors `RoleNames.cs` 1:1 — `UserRoles.{Admin,Customer,TheaterStaff}` plus the same named composite arrays. Guards: `authGuard` (any authenticated user), `adminGuard` (Admin only, redirects to `/forbidden`, deliberately outside the guarded route tree to avoid redirect loops), `roleGuard(roles)` (factory for arbitrary role lists).
+- **Frontend mirror** (`cinemafe/projects/CinemaLib/src/lib/models/roles.models.ts`): mirrors `RoleNames.cs` — `UserRoles.{Admin,Customer,TheaterStaff}` plus the same named composite arrays — with one exception: `COMPLAINT_ROLES` (= `SELLER_ROLES`, `roles.models.ts:37`) exists only in the frontend; `RoleNames.cs` has no counterpart and no backend `CustomerServiceController` exists (its doc comment is stale). It has no consumer outside `roles.models.ts` in `cinemafe/projects`. Guards: `authGuard` (any authenticated user), `adminGuard` (Admin only, redirects to `/forbidden`, deliberately outside the guarded route tree to avoid redirect loops), `roleGuard(roles)` (factory for arbitrary role lists).
 
 ## 5. Verified discrepancy
 
-`PaymentController.ValidateTicket` is gated `[Authorize(Roles="Admin")]` (the controller's local `_adminRole` constant), **not** `RoleNames.GateKeepers` — meaning a `TheaterStaff` account cannot call it, even though `CinemaController`'s `Gate/Scan` action (apparently the staff-facing gate-scan flow) is gated `RoleNames.GateKeepers` (`Admin,TheaterStaff`). Confirm with the team whether these are two distinct features (an admin manual ticket-validation tool vs. the staff gate terminal) or whether `ValidateTicket`'s role gate is a bug. <!-- TODO: confirm with team -->
+`PaymentController.ValidateTicket` is gated `[Authorize(Roles="Admin")]` (the controller's local `_adminRole` constant), **not** `RoleNames.GateKeepers` — meaning a `TheaterStaff` account cannot call it, even though `CinemaController`'s `Gate/Scan` action (apparently the staff-facing gate-scan flow) is gated `RoleNames.GateKeepers` (`Admin,TheaterStaff`). No frontend app calls `ValidateTicket` (only the generated `payment-http.service.ts` exposes it); CinemaStaff uses `Gate/Scan`. Owner input needed: whether `ValidateTicket` is an intended admin manual override or a legacy endpoint to retire.

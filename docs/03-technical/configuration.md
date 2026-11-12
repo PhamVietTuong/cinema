@@ -2,7 +2,7 @@
 
 > Purpose: Every environment variable / config key used by the backend and frontend apps — purpose, required/optional, default.
 > Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/appsettings.json` (key names only — `appsettings.Development.json`/`appsettings.Production.json` exist but are git-ignored and were not read for values), `Program.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Contexts/CinemaContextDesignTimeFactory.cs`, `cinemafe/projects/*/src/environments/environment*.ts`
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-12
 
 No secret values are reproduced anywhere below — only key names, defaults as committed in `appsettings.json`, and whether the app fails/falls back when a key is blank.
 
@@ -65,7 +65,7 @@ Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program
 ### Movie metadata
 | Key | Purpose | Required | Default |
 |---|---|---|---|
-| `OMDb:ApiKey` | OMDb external-ratings lookup | optional — lookups presumably fail/no-op without it <!-- TODO: confirm exact behavior when OMDb:ApiKey is blank --> | `""` |
+| `OMDb:ApiKey` | OMDb external-ratings lookup | optional — when blank, `OmdbRatingsProvider.GetRatingsAsync` returns `null` immediately (no HTTP call, no error; external ratings are simply absent) | `""` |
 
 ### Logging
 | Key | Purpose | Required | Default |

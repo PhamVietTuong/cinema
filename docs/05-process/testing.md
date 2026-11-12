@@ -1,7 +1,7 @@
 # Testing
 
 > Purpose: Test frameworks, how to run them, and what the existing suites cover.
-> Sources: E:\cinema\CLAUDE.md, E:\cinema\.github\workflows\ci.yml, E:\cinema\cinemabe\Cinema\2-Business\Cinema.Business.Tests\*.cs, E:\cinema\QA-tests\
+> Sources: E:\cinema\AGENTS.md, E:\cinema\.github\workflows\ci.yml, E:\cinema\cinemabe\Cinema\2-Business\Cinema.Business.Tests\*.cs, E:\cinema\e2e\
 > Last reviewed: 2026-11-12
 
 ## Backend — `Cinema.Business.Tests`
@@ -59,9 +59,9 @@ Verified by listing `cinemabe/Cinema/2-Business/Cinema.Business.Tests/*.cs`:
 | `VnPayGatewayTests.cs` (+ `VnPayTestHelper.cs`) | VNPay gateway signature/parsing |
 | `FixedClock.cs` | Test helper (not a test class) |
 
-This list is substantially larger than the four classes named in `CLAUDE.md`
+This list is substantially larger than the four classes named in the former `CLAUDE.md` list
 (`AuthServiceTests`, `BookingServiceTests`, `MovieServiceTests`, `EntityTests`) — those four are
-still present, but the suite has grown well beyond them. <!-- TODO: confirm with team whether CLAUDE.md's test-file list should be updated to avoid underselling coverage. -->
+still present, but the suite has grown well beyond them. `AGENTS.md` (imported by `CLAUDE.md`) no longer lists test files, so the table above is the reference.
 
 ### Web API host tests — `Cinema.Service.WebApiHost.Tests`
 
@@ -130,32 +130,12 @@ ng test CinemaAdmin
   the `Cinema.Business` package drops below 60% (it was 63.4% when the gate was added — raise the number as
   coverage grows, never lower it).
 
-## QA-tests harness
+## Local QA harness (not part of the repository)
 
-`QA-tests/` is entirely **git-ignored** (`.gitignore` lines `QA-tests/` and `/QA-tests/`) — nothing
-under it is committed, so what's on disk locally is a working snapshot, not shared project state.
-`CLAUDE.md` describes two systems:
-
-1. **Flow tests** — `/test-flow <flow-id>` runs static invariant checks + `dotnet build`/`dotnet test`
-   + `ng build` + a manual E2E playbook for a business flow, logging to
-   `QA-tests/FLOW-TEST-RESULTS.md` and `QA-tests/reports/<flow>-<date>/REPORT.html`. CLAUDE.md names
-   four flows: `booking-seat-lock`, `auth-login`, `movie-admin`, `inventory-storage-plan`.
-2. **Playwright E2E** — `QA-tests/playwright/` (CinemaUser :4202, CinemaAdmin :4201), `npm test` →
-   HTML report via `npm run report`.
-
-**What was actually verified on disk** (2026-11-01, this review):
-- `QA-tests/flow-tests/` contains only `inventory-storage-plan.yaml` — no `booking-seat-lock.yaml`,
-  `auth-login.yaml`, or `movie-admin.yaml`, and no `README.md`.
-- `QA-tests/playwright/` contains a `specs/staff/shell.spec.ts` and a `node_modules/`, but no
-  `package.json` or `README.md` at its root.
-- `QA-tests/reports/` contains four historical HTML reports: `auth-login-2026-07-12`,
-  `booking-seat-lock-2026-07-12`, `booking-seat-lock-2026-09-27`, `movie-admin-2026-07-12`.
-- No `.claude/hooks/check-business-invariants.js` file and no hook wiring were found under
-  `.claude/settings.json`.
-
-This is a **discrepancy between CLAUDE.md's description and the current working tree** — see
-`docs/00-overview/open-questions.md`. Because `QA-tests/` is git-ignored, this may simply reflect
-an incomplete local checkout/setup rather than the harness having been removed.
+`QA-tests/` is entirely **git-ignored** (`.gitignore`: `/QA-tests/`), so nothing under it is committed, CI never runs it, and
+it is not project state. It holds a local flow-test playbook and old HTML reports for one developer. Do not rely on it, and
+do not cite it as test coverage. The tracked, CI-run suite is `e2e/` (below). There is no committed `/test-flow` command:
+`.claude/commands/` contains only `update-docs.md`.
 
 ## CI-run E2E
 
@@ -168,7 +148,7 @@ uploading `e2e/playwright-report` and `e2e/test-results` as a build artifact. Th
 
 ## Committed E2E suite — `e2e/`
 
-`e2e/` is the tracked Playwright suite (79 tests in `e2e/tests/`, one chromium project, files prefixed
+`e2e/` is the tracked Playwright suite (78 tests in 9 files in `e2e/tests/`, one chromium project, files prefixed
 `api-` / `user-` / `admin-` / `staff-`; same layout as `augure-fe/e2e`) covering the Web API plus
 CinemaUser/CinemaAdmin/CinemaStaff: auth + route guards, every routed screen, and the VNPay callback
 contract. See `e2e/README.md` for prerequisites and env overrides. It runs serially against a seeded DB;

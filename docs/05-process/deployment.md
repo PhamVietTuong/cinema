@@ -102,4 +102,4 @@ was found in the repo — secrets for any such environment are expected to be su
 (user-secrets or env vars, per `README.md`'s "Prerequisites" section), and there is no committed
 evidence of where/how the app is actually deployed outside of a developer's machine or CI.
 
-<!-- TODO: confirm with team whether a production deployment target exists outside this repo (e.g. a separate ops repo, manual VM deploy, or cloud service) — nothing under E:\cinema indicates one. -->
+Owner input needed: whether a production deployment target exists outside this repository (a separate ops repo, a manual VM deploy or a cloud service). Nothing under `E:\cinema` indicates one.

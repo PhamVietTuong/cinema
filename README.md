@@ -4,9 +4,9 @@ Full-stack cinema booking system.
 
 - **`cinemabe/`** — .NET 9 Web API + SQL Server backend (clean architecture, JWT auth, SignalR).
 - **`cinemafe/`** — Angular 21 workspace: `CinemaUser` (:4202), `CinemaAdmin` (:4201), `CinemaStaff` (:4203), shared `CinemaLib`.
-- **`QA-tests/`** — regression harness: flow tests + Playwright E2E.
+- **`e2e/`** — Playwright end-to-end suite against the real stack (API + DB + the three apps); run by the CI `e2e` job.
 
-> Detailed architecture, conventions, and layer rules live in [`CLAUDE.md`](CLAUDE.md).
+> Detailed architecture, conventions, and layer rules live in [`AGENTS.md`](AGENTS.md) (imported by `CLAUDE.md`); the knowledge base is in [`docs/`](docs/README.md).
 
 ## Prerequisites
 
@@ -35,8 +35,10 @@ Create the database and run:
 
 ```powershell
 # From cinemabe/ — apply the schema + reference data
-#   sql/create_db.sql  → fresh schema
+#   sql/create_db.sql  → baseline schema (drops and recreates tables)
+#   sql/upgrade_db.sql → idempotent; brings the baseline to the current schema
 #   sql/insert_db.sql  → reference data
+# Apply them in that order (this is what CI and docker compose do).
 dotnet build Cinema.sln
 dotnet run   --project Cinema/2-Business/Cinema.Business.Tests   # seed admin@cinema.vn / user@cinema.vn
 dotnet run   --project Cinema/1-Service/Cinema.Service.WebApiHost # http://localhost:5102
@@ -60,9 +62,11 @@ ng build CinemaLib     # rebuild the shared library after editing it
 ## QA
 
 ```powershell
-# Flow regression (static invariants + build/test + manual playbook)
-#   via Claude Code: /test-flow booking-seat-lock | auth-login | movie-admin
-
-# Playwright E2E
-cd QA-tests/playwright && npm test && npm run report
+# Playwright E2E (needs the API and the three apps running; see e2e/README.md for accounts and prerequisites)
+cd e2e
+npm install
+npx playwright install chromium
+npm test
 ```
+
+Unit tests: `dotnet test Cinema/2-Business/Cinema.Business.Tests` and `dotnet test Cinema/1-Service/Cinema.Service.WebApiHost.Tests` from `cinemabe/`; `ng test <project>` from `cinemafe/`.
