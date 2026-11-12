@@ -171,7 +171,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 
 - As a box-office staff member, I want to look up a returning customer by phone, so that I can attach their loyalty account to a counter sale.
 
-- **AC-15.1** (success) Given a Customer account with that phone number, when I look it up, then I get the customer and membership details. Source: `BoxOfficeManager.cs:99-120`.
+- **AC-15.1** (success) Given a Customer account with that phone number, when I look it up, then I get the customer and membership details. Source: `BoxOfficeManager.cs:99-118`.
 - **AC-15.2** (error) Given no account, or an account that is not a Customer, when I look it up, then it fails with "No customer with that phone number." Source: `BoxOfficeManager.cs:105`.
 - **AC-15.3** (error) Given I try to redeem points without attaching a member, when I submit the sale, then it is rejected with "Attach a member to redeem points." Source: `BoxOfficeTests.Sell_RedeemingPointsWithoutAMember_IsRejected`; `BoxOfficeManager.cs:69`.
 
