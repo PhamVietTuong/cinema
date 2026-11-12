@@ -74,7 +74,7 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 
 // Rate limiting for the unauthenticated identity endpoints
-builder.Services.AddCinemaRateLimiting();
+builder.Services.AddCinemaRateLimiting(builder.Configuration);
 
 // Background job: expire abandoned unpaid bookings and free their seats
 builder.Services.AddHostedService<Cinema.Service.WebApiHost.Services.PendingBookingReaper>();

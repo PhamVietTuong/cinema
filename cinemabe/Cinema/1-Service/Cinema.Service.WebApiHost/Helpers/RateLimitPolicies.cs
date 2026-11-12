@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Cinema.Foundation.Logging;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Service.WebApiHost.Helpers;
 
@@ -18,8 +19,25 @@ public static class RateLimitPolicies
     /// <summary>Endpoints that send an email on every call — throttled harder to prevent mail abuse.</summary>
     public const string AuthEmail = "auth-email";
 
-    public static IServiceCollection AddCinemaRateLimiting(this IServiceCollection services)
+    /// <summary>Requests per minute per client IP on the <see cref="Auth"/> policy when nothing is configured.</summary>
+    public const int DefaultAuthPermitLimit = 10;
+
+    /// <summary>Configuration key that overrides <see cref="DefaultAuthPermitLimit"/>. Only the e2e job in CI sets it:
+    /// the suite signs in about 16 times in a few minutes from one IP, which the default would reject at random.</summary>
+    public const string AuthPermitLimitKey = "RateLimiting:AuthPermitLimit";
+
+    /// <summary>The configured <see cref="Auth"/> limit, or <see cref="DefaultAuthPermitLimit"/> when the key is missing,
+    /// not a number or not positive. A bad value never turns the limiter off.</summary>
+    public static int ResolveAuthPermitLimit(IConfiguration configuration)
     {
+        return int.TryParse(configuration[AuthPermitLimitKey], out var configured) && configured > 0
+            ? configured
+            : DefaultAuthPermitLimit;
+    }
+
+    public static IServiceCollection AddCinemaRateLimiting(this IServiceCollection services, IConfiguration configuration)
+    {
+        var authPermitLimit = ResolveAuthPermitLimit(configuration);
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -43,7 +61,7 @@ public static class RateLimitPolicies
                 partitionKey: ClientKey(httpContext),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 10,
+                    PermitLimit = authPermitLimit,
                     Window      = TimeSpan.FromMinutes(1),
                     QueueLimit  = 0
                 }));

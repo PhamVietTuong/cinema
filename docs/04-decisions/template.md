@@ -8,3 +8,7 @@
 ## Decision
 
 ## Consequences
+
+## Alternatives considered
+
+List each rejected option that the repository actually shows (commits, removed code, docs). Where the repository is silent, write `Author to confirm: why X over Y`.

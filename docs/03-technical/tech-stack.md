@@ -2,7 +2,7 @@
 
 > Purpose: Languages, frameworks, and key libraries with versions.
 > Sources: cinemabe/**/*.csproj, cinemafe/package.json
-> Last reviewed: 2026-11-01
+> Last reviewed: 2026-11-12
 
 ## Backend (`cinemabe/`)
 
@@ -51,6 +51,6 @@ Requires Node >= 22.12.0 (see `.nvmrc`; the system default Node is v14 — use `
 | Area | Tool |
 |---|---|
 | Database | SQL Server 2019+ / Express (dev default `.\SQLEXPRESS`, db `Cinema`) |
-| Schema management | Hand-maintained SQL scripts (`cinemabe/sql/create_db.sql`, `upgrade_db.sql`) + EF Core migrations for anything added since the baseline — see `docs/05-process/deployment.md` |
+| Schema management | Hand-maintained SQL scripts (`cinemabe/sql/create_db.sql`, `upgrade_db.sql`); no new EF Core migrations since the `InitialBaseline` (last one dropped in `7065d9c`) — see [`ADR-0003`](../04-decisions/ADR-0003-hand-written-sql-instead-of-ef-migrations.md) |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) — backend build+test, frontend lint+test+build, full e2e |
 | Dev payment testing | ngrok (VNPay sandbox IPN tunnel) |
