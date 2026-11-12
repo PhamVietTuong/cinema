@@ -38,7 +38,7 @@ module.exports = tseslint.config(
       ],
       '@angular-eslint/directive-selector': [
         'error',
-        { type: 'attribute', prefix: ['app', 'cl', 'staff'], style: 'camelCase' },
+        { type: 'attribute', prefix: ['app', 'cl', 'staff', 'cinema'], style: 'camelCase' },
       ],
       // The codebase leans on `any` at the NSwag/store boundary; flagging every use would bury
       // real findings. Left on as a warning so new ones are visible without failing the build.

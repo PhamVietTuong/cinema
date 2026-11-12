@@ -19,7 +19,26 @@ jobs:
         with:
           dotnet-version: '9.0.x'
       - run: dotnet restore Cinema.sln
-      - run: dotnet build Cinema.sln --no-restore -c Release
+      # Analyzers (cinemabe/Directory.Build.props) are a ratchet: the warning count may not grow more than 5% over the baseline.
+      - name: Build
+        shell: bash # pipefail, so a failed build still fails the step despite `| tee`
+        run: dotnet build Cinema.sln --no-restore -c Release | tee "$RUNNER_TEMP/build.log"
+      - name: Analyzer warning ratchet
+        working-directory: .
+        run: python3 .github/scripts/check-warnings.py "$RUNNER_TEMP/build.log" .github/scripts/analyzer-baseline.txt 5
+      # NuGet advisories, direct and transitive. Fails when any vulnerable package is reported. Informational
+      # (continue-on-error) while the 2026-11 backlog is open (Http.Connections 1.2.0 High, WebUtilities 2.3.0 Moderate,
+      # both transitive); remove continue-on-error once it is clean.
+      - name: NuGet vulnerability audit
+        continue-on-error: true
+        shell: bash # pipefail: a failing `dotnet list` fails the step
+        run: |
+          dotnet list Cinema.sln package --vulnerable --include-transitive 2>&1 | tee "$RUNNER_TEMP/vuln.log"
+          if grep -q "has the following vulnerable packages" "$RUNNER_TEMP/vuln.log"; then exit 1; fi
+          if ! grep -q "has no vulnerable packages" "$RUNNER_TEMP/vuln.log"; then
+            echo "::warning::dotnet list printed neither a vulnerable nor a clean verdict - output format changed?"
+            exit 1
+          fi
       # xUnit tests use Moq — no database required.
       - run: dotnet test Cinema/2-Business/Cinema.Business.Tests --no-build -c Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory TestResults
       # Controller architecture, authorization and IPN-contract tests live in their own project.
@@ -35,6 +54,26 @@ jobs:
           name: backend-coverage
           path: cinemabe/TestResults/**/coverage.cobertura.xml
           if-no-files-found: warn
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    # Informational until a clean run is seen on master; then remove continue-on-error to make it blocking.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history: a secret removed later is still a leaked secret
+      - name: Run gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1 detect --source /repo --config /repo/.gitleaks.toml --no-banner --redact
+
+  docker:
+    name: Docker image (build only, no push)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t cinema-api:ci ./cinemabe
 
   frontend:
     name: Frontend (lint + test + build)
@@ -53,7 +92,13 @@ jobs:
       - run: npm ci --legacy-peer-deps
       # Fails on errors only. The config keeps the large pre-existing backlog
       # (prefer-control-flow, a11y labels, prefer-inject) at warning level — see eslint.config.js.
-      - run: npm run lint
+      # lint:ci is `eslint --max-warnings <baseline>`: errors fail, and so does any growth of the warning backlog.
+      - run: npm run lint:ci
+      # Informational while the backlog is open (67 advisories at 2026-11, mostly Angular/tooling transitives);
+      # remove continue-on-error once `npm audit --audit-level=high` is clean.
+      - name: npm audit (high and above)
+        continue-on-error: true
+        run: npm audit --audit-level=high
       # CinemaLib must be built before the apps: the `CinemaLib` path maps to dist/.
       - run: npx ng build CinemaLib
       - run: npx ng test CinemaLib   --watch=false --coverage --coverage-reporters lcovonly --coverage-reporters text-summary

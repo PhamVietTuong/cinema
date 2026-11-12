@@ -2,51 +2,67 @@
 
 > Purpose: Build, environment, and pipeline facts that are actually verifiable from config in the repo.
 > Sources: E:\cinema\docker-compose.yml, E:\cinema\.github\workflows\ci.yml, E:\cinema\CLAUDE.md, E:\cinema\README.md
-> Last reviewed: 2026-11-01
+> Last reviewed: 2026-11-12
 
-## CI/CD pipeline: exists, build/test only — no deploy step
+## CI/CD pipeline: quality gates, no deploy step
 
 `.github/workflows/ci.yml` defines a GitHub Actions workflow (`name: CI`) triggered on push/PR to
-`master`, with three jobs:
+`master`, with these jobs:
 
-| Job | Runs on | What it does |
+| Job | What it does |
+|---|---|
+| `backend` | `dotnet build -c Release` on `Cinema.sln` (analyzers on via `cinemabe/Directory.Build.props`), the **analyzer warning ratchet**, the NuGet vulnerability audit, `dotnet test` on `Cinema.Business.Tests` (with coverage) and `Cinema.Service.WebApiHost.Tests`, the 60% `Cinema.Business` coverage ratchet, `backend-coverage` artifact. |
+| `secrets` | gitleaks over the **full git history** with `.gitleaks.toml` (default rules + an allow-list of documented false positives). `continue-on-error` until a clean run is seen on master, then flip to blocking. |
+| `docker` | `docker build ./cinemabe` (build only, no push) so a broken Dockerfile fails the PR. |
+| `frontend` | `npm ci --legacy-peer-deps`, `npm run lint:ci`, `npm audit --audit-level=high`, builds `CinemaLib`, `ng test` for all four projects, production builds of the three apps, `frontend-coverage` artifact. |
+| `e2e` (30 min) | `mssql/server:2022-latest` service, create -> upgrade -> insert SQL, seed accounts, start API + three apps, Playwright suite, HTML report. |
+
+### Ratchets (numbers may only go down)
+
+| Gate | Baseline (2026-11-12) | Allowed growth | Where |
+|---|---|---|---|
+| ESLint warnings | 1,437 | none: `--max-warnings 1437` fails on any new warning | `cinemafe/package.json` `lint:ci`; lower the number whenever the count drops. Errors always fail. Top rules: 719 prefer-control-flow, 437 prefer-inject, 159 no-explicit-any, 60 prefer-standalone (partial: 1,375 of 1,437). |
+| .NET analyzer warnings | 641 (compiler + analyzer codes CA/CS/IDE/SYSLIB, de-duplicated) | baseline + 5% (limit 673) | `.github/scripts/analyzer-baseline.txt`, checked by `.github/scripts/check-warnings.py`, which also fails when it parses no warnings and prints a notice when the count is below the baseline (lower the file). Top rules: CS8618 467, CA1725 37, CA1716 23, CA1305 21 (partial). CA1707 (593 xUnit `Method_Scenario_Expected` names) is switched off for `*Tests` projects in `cinemabe/.editorconfig`. |
+| `Cinema.Business` line coverage | 60% | none | `check-coverage.py` |
+
+### Informational gates (do not fail the build yet)
+
+| Gate | Current state | Flip to blocking when |
 |---|---|---|
-| `backend` | ubuntu-latest | `dotnet restore`/`build -c Release` on `Cinema.sln`, then `dotnet test` on `Cinema.Business.Tests` (with coverage) and `Cinema.Service.WebApiHost.Tests`, enforces the 60% `Cinema.Business` coverage ratchet, uploads `backend-coverage` artifact. |
-| `frontend` | ubuntu-latest | `npm ci --legacy-peer-deps`, `npm run lint`, builds `CinemaLib`, runs `ng test` for `CinemaLib`/`CinemaUser`/`CinemaAdmin`/`CinemaStaff`, production-builds `CinemaUser`/`CinemaAdmin`/`CinemaStaff`, uploads `frontend-coverage` artifact. |
-| `e2e` | ubuntu-latest (30 min timeout) | Spins up a `mssql/server:2022-latest` service container, creates and seeds the `Cinema` DB from `cinemabe/sql/create_db.sql` + `insert_db.sql`, seeds admin/customer accounts via `dotnet run` on `Cinema.Business.Tests`, starts the Web API and `ng serve`s both `CinemaUser`/`CinemaAdmin`, then runs the Playwright suite in `QA-tests/playwright`, uploading the HTML report. |
+| gitleaks (`secrets` job, pinned `zricethezav/gitleaks:v8.30.1`, full history, `.gitleaks.toml`) | clean locally (412 commits); one false positive allow-listed (prose in `business/catalog.md`) | one clean run on master: remove `continue-on-error` on the job |
+| NuGet audit (`dotnet list package --vulnerable --include-transitive`) | open: `Microsoft.AspNetCore.Http.Connections` 1.2.0 (High) and `Microsoft.AspNetCore.WebUtilities` 2.3.0 (Moderate), both transitive in the WebApiHost; the High finding is tracked in `_bmad-output/implementation-artifacts/deferred-work.md` | the report is clean: remove `continue-on-error` on the step |
+| npm audit (`--audit-level=high`) | open: 67 advisories (25 high, 3 critical), mostly build/tooling transitives | exits 0: remove `continue-on-error` on the step |
 
-**There is no deployment/release job** — no `docker build`/`docker push`, no deploy-to-environment
-step, no versioning/tagging step, and no separate workflow file beyond `ci.yml` under
-`.github/workflows/`. This CI pipeline verifies the build; it does not ship it anywhere.
+### What is deliberately NOT done
 
-`npm run lint` fails the `frontend` job only on ESLint `error`-level rules — see
-`docs/05-process/coding-conventions.md` for which rules are `warn` vs `error` and why.
+- **No deploy or release job**: no image push, no deploy-to-environment step, no versioning/tagging. There is no deploy target in the repo.
+- **No monitoring or alerting**: nothing watches the running API (health endpoint `/health` exists, nothing polls it), no error tracking, no log shipping, no alerts on failed payments or IPN errors.
+- **No mass fix of the lint or analyzer backlog** - only ratcheted so it cannot grow.
+- GitHub repository settings (branch protection) are not changed by the repo; see the recommendation in `workflow.md`.
 
 ## Local/dev stack: `docker-compose.yml`
 
 ```yaml
 services:
-  db:   # mcr.microsoft.com/mssql/server:2022-latest, SA password hardcoded for dev, port 1433
-  api:  # build: ./cinemabe, depends_on: db, port 5102:8080
+  db:       # mssql/server:2022-latest, SA password hardcoded for dev, port 1433, healthcheck (sqlcmd SELECT 1)
+  db-init:  # same image; waits for db healthy, creates DB if missing, runs create -> upgrade -> insert ONLY if the schema is absent
+  api:      # build: ./cinemabe, depends_on db-init completing, port 5102:8080
 ```
 
-Per the comment block at the top of `docker-compose.yml`, the intended first-time setup is:
-
-1. `docker compose up -d db`
-2. Apply `cinemabe/sql/create_db.sql` then `insert_db.sql` against `localhost:1433` (schema is
-   **not** managed by EF migrations in this repo — see `CLAUDE.md`).
-3. `docker compose up -d api`
+`docker compose up -d` is the whole first-time setup. `db-init` records completion in a `dbo.__DbInit` marker table. Marker present: only the idempotent `upgrade_db.sql` runs.
+No marker and no schema: create -> upgrade -> insert, then the marker is written last. No marker but the schema exists (legacy
+volume or a failed earlier init): `create_db.sql` (which drops tables) is never run; only `upgrade_db.sql`, then the marker.
+Every probe fails the container if `sqlcmd` fails (e.g. wrong password). A half-built database is reset with
+`docker compose down -v`. The SA password is `${CINEMA_DB_PASSWORD}` (default: the dev value), used by `db`, `db-init` and `api`.
+`Payments__EnableSandbox: "true"` is set for the local demo only (off by default outside Development).
 
 The frontend apps are **not** part of `docker-compose.yml` — they're run separately with `ng serve`.
 
 Notable values baked into `docker-compose.yml` (dev-only, explicitly commented as such):
 - `JWT__Secret`: `"compose-dev-signing-key-not-for-production-change-me-1234567890"` — comment says
   "override for any real deployment."
-- `AllowedOrigins__0`/`__1`: `http://localhost:4200` and `http://localhost:4201`.
-  **Note**: `4200` here does not match the port CLAUDE.md and `README.md`'s QA section assign to
-  `CinemaUser` elsewhere (`4202`) — see `docs/00-overview/open-questions.md`.
-- No `cinemabe/Dockerfile` content was reviewed as part of this doc (only its existence via
-  `build: ./cinemabe` in compose) — <!-- TODO: confirm with team what the Dockerfile's publish/runtime target is (e.g. which .NET base image, Release vs Debug). -->
+- `AllowedOrigins__0`/`__1`/`__2`: `http://localhost:4202` (CinemaUser), `4201` (CinemaAdmin), `4203` (CinemaStaff).
+- `cinemabe/Dockerfile`: multi-stage, `dotnet/sdk:9.0` publish (Release) -> `dotnet/aspnet:9.0` runtime, port 8080, `TZ=Asia/Ho_Chi_Minh`; built by the CI `docker` job (no push). Logs go to `/app/logs/` (compose mounts the named volume `cinema-logs` there so they persist).
 
 ## Manual build/run commands (from CLAUDE.md, no CI/CD wrapper)
 

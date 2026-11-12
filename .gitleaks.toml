@@ -1,0 +1,12 @@
+# Gitleaks config: default rules plus an allow-list of KNOWN FAKES only.
+# Never allow-list a real credential - rotate it instead.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented false positives"
+condition = "AND"
+# Historic business/catalog.md (commit 3d374d4) has the prose "updating/adding/removing" next to the word "key".
+# Matched by path AND value so a real key in the same file would still be reported.
+paths = ['''^business/catalog\.md$''']
+regexes = ['''updating/adding/removing''']

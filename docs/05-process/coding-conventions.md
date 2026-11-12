@@ -68,8 +68,8 @@ There is no `.editorconfig` under `cinemafe/` — frontend formatting is governe
 - Ignored entirely: `dist/**`, `out-tsc/**`, `coverage/**`, `node_modules/**`, `.angular/**`, `**/*.spec.ts`.
 - Also ignored (generated, never hand-edited): `projects/CinemaLib/src/lib/services/*-http.service.ts`
   (NSwag) and `projects/CinemaLib/src/lib/svg/**` (icon barrel from `npm run generate-icons`).
-- Component/directive selector prefixes are enforced: `app` or `cl`, element selectors kebab-case,
-  attribute selectors camelCase.
+- Component/directive selector prefixes are enforced: `app`, `cl`, `staff` (components, kebab-case) and
+  `app`, `cl`, `staff`, `cinema` (attribute directives, camelCase; `cinema` covers the legacy `cinemaDragScroll` and `cinemaThousands`).
 - **Severity policy** (explicit comment in the file): linting was introduced against an existing
   codebase with 614 pre-existing violations. Rules that were driven to zero are `error`; rules with
   a backlog that is "a refactor of its own" are kept at `warn` so CI stays meaningful without being
@@ -87,7 +87,7 @@ There is no `.editorconfig` under `cinemafe/` — frontend formatting is governe
     (with `argsIgnorePattern`/`varsIgnorePattern: '^_'`, `caughtErrors: 'none'`, `ignoreRestSiblings: true`
     to allow `const { secret, ...rest } = obj`).
   - The file's own comment: "Promote a rule to `error` once its backlog is cleared."
-- CI (`.github/workflows/ci.yml`) runs `npm run lint` and fails only on `error`-level violations —
-  the warn-level backlog above does not fail the build today.
+- CI (`.github/workflows/ci.yml`) runs `npm run lint:ci` (`eslint . --max-warnings 1437`): it fails on `error`-level violations and on
+  any growth of the warn-level backlog above (lower the cap when the count drops).
 
 <!-- TODO: confirm with team whether cinemafe should eventually get its own .editorconfig, or whether ESLint + Prettier is considered sufficient. -->

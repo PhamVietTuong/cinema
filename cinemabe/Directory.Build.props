@@ -1,0 +1,8 @@
+<Project>
+  <!-- Static analysis for every backend project. Warnings are a ratchet, not a gate on zero: CI (.github/scripts/check-warnings.py)
+       fails when the count grows more than 5% over .github/scripts/analyzer-baseline.txt. -->
+  <PropertyGroup>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  </PropertyGroup>
+</Project>
