@@ -62,6 +62,8 @@ flowchart TB
     Data --> Foundation
 ```
 
+The system context, ERD, booking-to-payment sequence and deployment views are in [`diagrams.md`](diagrams.md).
+
 ## 3. Request flow — controller → manager → store → EF Core → DB
 
 1. **Controller** (`CinemaController`, `IdentityController`, or `PaymentController` — see §5) receives a POST, wrapped in the repo-wide try/catch + `LogProvider.Current` pattern (`"{GetType().Name}.{Method} being awakened…"` on entry, `Fatal` + `HandleException` on error).
