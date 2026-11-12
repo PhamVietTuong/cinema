@@ -2,7 +2,7 @@
 
 > Purpose: Every EF Core entity/table — fields, types, constraints, relationships, indexes, and business meaning of non-obvious fields.
 > Sources: `cinemabe/Cinema/3-Data/Cinema.Data.Entities/Entities/*.cs`, `.../Enums/*.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Configurations/*.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Contexts/CinemaContext.cs`, `cinemabe/Cinema/3-Data/Cinema.Data.Entities/Entities/AuditLog.cs`
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-12
 
 ## EF Core quirk — `datetime`, not `datetime2`
 
@@ -127,7 +127,7 @@ Name (100), TheaterId (Cascade), RoomTypeId (Restrict), TotalRows/TotalColumns (
 TheaterId (Cascade), Name (100), Description, SupportsThreeD (bool), ThreeDSurcharge (double), TurnoverBufferMinutes (int, default 0). Nav `Rooms`, `PatronCategoryPrices`.
 
 ### Seat
-RoomId (Cascade), RowName (max 5), ColIndex (int), IsActive, SeatGroupId (Guid?, **sole source of truth for seat kind** — non-null links the two seats of a double/couple pair; no SeatTypeId on Seat). **Unique** (RoomId, RowName, ColIndex). Index on SeatGroupId.
+RoomId (Cascade), RowName (max 5), ColIndex (int), IsActive, Kind (`SeatKind`, int, default 0 — stores only `Standard` (0) or `Aisle` (2); an aisle is a non-bookable gap cell with `SeatGroupId` null and `IsActive` true; `Seat.cs:14`, `create_db.sql` `[Seat].[Kind]`), SeatGroupId (Guid?, **sole source of truth for Standard vs Double** — non-null links the two seats of a double/couple pair, so `Double` is never stored in `Kind`; read the effective kind via `SeatKinds.EffectiveKind` (`cinemabe/Cinema/2-Business/Cinema.Business/Helpers/SeatKinds.cs:17`); no SeatTypeId on Seat). **Unique** (RoomId, RowName, ColIndex). Index on SeatGroupId.
 
 ### SeatType (per-theater: exactly Single + Double)
 TheaterId (Cascade), Kind (SeatKind enum — matched by Kind, never Name), Name (display only), Color (hex, default `#808080`). **Unique** (TheaterId, Kind). Nav `PatronCategories`.
@@ -311,7 +311,7 @@ All enums below are stored as `int`. Several are explicitly append-only with res
 | `SalesChannel` | Online=0, Counter=1 | |
 | `SalesGroupBy` | Day=0, Movie=1, Theater=2, PaymentMethod=3, Staff=4, Channel=5 | staff report API contract; never renumber |
 | `ScanOutcome` | Admitted=0, NotFound=1, NotPaid=2, AlreadyUsed=3, WrongTheater=4, WrongShowTime=5, TooEarly=6, Expired=7, AgeCheckRequired=8 | every value != Admitted means deny entry; AgeCheckRequired does NOT mark the ticket used |
-| `SeatKind` | Standard=0, Double=1 | namespace is `Cinema.Data.Entities`, not `...Enums` (inconsistent with sibling enums) |
+| `SeatKind` | Standard=0, Double=1, Aisle=2 | `Aisle` is valid only on `Seat.Kind` (never a SeatType, PatronCategory or promotion-program seat kind); namespace is `Cinema.Data.Entities`, not `...Enums` (inconsistent with sibling enums) |
 | `SeatStatus` | Available=0, Reserved=1, Occupied=2 | |
 | `ShowTimeType` | Normal=0, Premiere=1, Special=2 | |
 | `StaffReasonCode` | Other=0, CustomerRequest=1, WrongShowtime=2, DuplicateSale=3, ServiceFailure=4, TechnicalIssue=5, PriceMatch=6, Compensation=7 | |
@@ -328,4 +328,4 @@ All enums below are stored as `int`. Several are explicitly append-only with res
 
 SQL Server rejects multiple cascade paths to the same table. Wherever two FKs on a join/child row could both cascade from a common ancestor, exactly one leg is `Restrict`/`NoAction` by design: `PromotionProgramSchedule.TheaterId` (Restrict), `RoomTypePatronCategoryPrice.RoomTypeId` (Restrict). Do not "fix" these to Cascade.
 
-<!-- TODO: confirm with team — some entities (AgeRestriction, Holiday, MemberShip, MovieType, News, UserType) have no dedicated Configurations/*.cs file and rely on EF conventions; verify this is intentional if touched. -->
+AgeRestriction, Holiday, MemberShip, MovieType, News and UserType have no dedicated `Configurations/*.cs` file and rely on EF conventions (verified against `3-Data/Cinema.Data/Configurations/`). Owner input needed: whether this is intentional.

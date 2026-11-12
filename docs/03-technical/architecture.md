@@ -2,7 +2,7 @@
 
 > Purpose: How `cinemabe` is layered, how a request flows end to end, and how auth/realtime/error-handling are wired.
 > Sources: `cinemabe/Cinema/**/*.csproj`, `1-Service/Cinema.Service.WebApiHost/Program.cs`, `2-Business/Cinema.Business/DependencyInjection.cs`, `2-Business/Cinema.Business/Managers/BookingManager.cs`, `3-Data/Cinema.Data/DependencyInjection.cs`, `3-Data/Cinema.Data/ApplicationUnitOfWork.cs`, `3-Data/Cinema.Data/Contexts/CinemaContext.cs`, `3-Data/Cinema.Data/Services/JwtTokenService.cs`, `1-Service/Cinema.Service.WebApiHost/{Controllers,Hubs,Middlewares,Services}/*`, `E:\cinema\CLAUDE.md`
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-12
 
 ## 1. The 4 numbered layers
 
@@ -80,13 +80,13 @@ Two hubs, both mapped in `Program.cs` (`app.MapHub<BookingHub>("/hubs/booking")`
 | Hub | Route | Authorize | Purpose |
 |---|---|---|---|
 | `BookingHub` | `/hubs/booking` | `[Authorize]` (any role) | Live seat-lock broadcast during checkout. Methods: `JoinRoom`, `LockSeat`, `UnlockSeat`; auto-releases a connection's locks `OnDisconnectedAsync`. Backed by `IBookingManager.LockSeat/UnlockSeat/IsSeatLocked/ReleaseConnectionLocks` — two static, process-local `ConcurrentDictionary`s inside `BookingManager` (`_lockedSeats` keyed `"{showTimeId}:{roomId}:{seatId}"`, `_bookingGates` keyed `"{showTimeId}:{roomId}"`). Not distributed: a multi-instance deployment relies on the DB-level filtered unique index on `InvoiceTicket(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1`, not this dictionary, to prevent double-booking. |
-| `StaffHub` | `/hubs/staff` | `[Authorize(Roles = RoleNames.StaffApp)]` | Staff-app events (`FoodOrderQueued`, `FoodOrderUpdated`, `StockLow`, `IncidentRaised`) broadcast per `theater:{id}` group. On connect, a client auto-joins the group for every `theaterId` claim its token carries (Admin has none, joins none automatically); `JoinTheater(theaterId)` lets a client join explicitly, throwing `HubException` if the caller isn't Admin and the theater isn't already in their claims. |
+| `StaffHub` | `/hubs/staff` | `[Authorize(Roles = RoleNames.StaffApp)]` | Staff-app event `IncidentRaised` (the only server-to-client event, `StaffHub.IncidentRaisedEvent`) is broadcast per `theater:{id}` group. On connect, a client auto-joins the group for every `theaterId` claim its token carries (Admin has none, joins none automatically); `JoinTheater(theaterId)` lets a client join explicitly, throwing `HubException` if the caller isn't Admin and the theater isn't already in their claims. |
 
 `ISeatNotificationService`/`IStaffNotificationService` are no-op implementations registered by `AddBusiness()`; `Program.cs` overrides both with real `SignalR*NotificationService` implementations (`Hubs/SignalRSeatNotificationService.cs`, `Hubs/SignalRStaffNotificationService.cs`) so the business layer stays SignalR-agnostic (depends only on the interface).
 
 ## 5. Controllers (exactly 3 — enforced, never add a 4th)
 
-`1-Service/Cinema.Service.WebApiHost/Controllers/`: `ApiControllerBase.cs` (shared `HandleException`), `CinemaController.cs` (catalog/booking/staff — 86+ `[Authorize(Roles="Admin")]` actions plus role-composite-gated `#region`s for Gate/BoxOffice/StaffReport/Operations/Workforce), `IdentityController.cs` (auth/profile), `PaymentController.cs` (gateway initiate/callback/admin). All routes: `api/[controller]/[action]`, HTTP verb POST even for queries. `ControllerArchitectureTests.OnlyThreeControllersExist` enforces the count. See `api-spec.md` for the full role/authorization matrix and `01-business/roles-permissions.md` for the role model.
+`1-Service/Cinema.Service.WebApiHost/Controllers/`: `ApiControllerBase.cs` (shared `HandleException`), `CinemaController.cs` (catalog/booking/staff — 86 `[Authorize(Roles = _adminRole)]` actions (as of 2026-11-12) plus role-composite-gated `#region`s for Gate/BoxOffice/StaffReport/Operations; there is no Workforce region), `IdentityController.cs` (auth/profile), `PaymentController.cs` (gateway initiate/callback/admin). All routes: `api/[controller]/[action]`; list/search endpoints are POST with a `PagingSearchDTO` body, while by-id reads use GET and updates/deletes use PUT/DELETE. `ControllerArchitectureTests.OnlyThreeControllersExist` enforces the count. See `api-spec.md` for the full role/authorization matrix and `01-business/roles-permissions.md` for the role model.
 
 NSwag emits one OpenAPI document per `[ApiExplorerSettings(GroupName=...)]` group (`cinema`, `identity`, `payment` — configured in `Program.cs`), surfaced at `/swagger/{group}/swagger.json`; Swagger UI (`/swagger`) and ReDoc (`/redoc`) are dev-only (`app.Environment.IsDevelopment()`).
 
@@ -113,7 +113,7 @@ Registered via `AddHostedService<T>()` in `Program.cs`:
 | Service | File | Interval | Purpose |
 |---|---|---|---|
 | `PendingBookingReaper` | `Services/PendingBookingReaper.cs` | every 1 minute, `_holdWindow = 15 minutes` | Calls `IBookingManager.ExpireStalePendingBookingsAsync(15min)` to cancel stale `Pending` invoices and free their seats — the cross-instance complement to `BookingHub`'s in-process lock expiry. |
-| `ShowtimeReminderService` | `Services/ShowtimeReminderService.cs` | — <!-- TODO: confirm exact interval/lookahead from file if needed --> | Emails showtime reminders ~1h before start (per CLAUDE.md); dedup via the `ReminderLog` table (unique `(UserId, ShowTimeId)` index — see `database-schema.md` §8), which replaces an in-memory dedup set so a reminder isn't resent after a process restart. |
+| `ShowtimeReminderService` | `Services/ShowtimeReminderService.cs` | every 5 minutes (`_interval`); lead 60 minutes (`_lead`); scan window 15 minutes (`_window`) (`ShowtimeReminderService.cs:18-20`) | Emails showtime reminders ~1h before start; dedup via the `ReminderLog` table (unique `(UserId, ShowTimeId)` index — see `database-schema.md` §8), which replaces an in-memory dedup set so a reminder isn't resent after a process restart. |
 
 ## 9. Other host-level wiring (verified in `Program.cs`, not all mentioned in CLAUDE.md)
 

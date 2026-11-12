@@ -63,7 +63,7 @@ No evidence of a stub beyond what's listed in §1 — both `IPaymentGateway` imp
 | Hub | Route | Purpose |
 |---|---|---|
 | `BookingHub` | `/hubs/booking` | Seat-lock broadcast during checkout (`LockSeat`/`UnlockSeat`/`SeatLocked`/`SeatUnlocked` client events). |
-| `StaffHub` | `/hubs/staff` | Staff-app events: `FoodOrderQueued`, `FoodOrderUpdated`, `StockLow`, `IncidentRaised`, grouped per `theater:{id}`. |
+| `StaffHub` | `/hubs/staff` | Staff-app event `IncidentRaised` (the only one), grouped per `theater:{id}`. |
 
 JWT auth over SignalR uses the `access_token` query-string parameter (browsers can't set custom WebSocket headers) — configured once in `Program.cs`'s `OnMessageReceived`: if the request path starts with `/hubs` and a non-empty `access_token` query value is present, it's used as the bearer token instead of the `Authorization` header; normal HTTP endpoints are unaffected. See `architecture.md` §4. No external dependency; listed here because it's a cross-cutting integration point frontend code must wire into (`CinemaLib`'s `HUB_BASE_URL` token).
 

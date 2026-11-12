@@ -2,7 +2,7 @@
 
 > Purpose: Screen inventory, routing structure, key user flows, and shared CinemaLib components across the three Angular apps.
 > Sources: cinemafe/projects/{CinemaUser,CinemaAdmin,CinemaStaff,CinemaLib}, E:\cinema\CLAUDE.md, E:\cinema\business\admin-staff-and-frontend-flows.md
-> Last reviewed: 2026-11-01
+> Last reviewed: 2026-11-12
 
 ## Apps & routing structure
 
@@ -103,7 +103,7 @@ Per root `CLAUDE.md`'s rule ("menus/shell/topbar/pills/dialogs/tables/seat map u
 
 - **Seat lock**: `services/seat-lock-session.service.ts` — sole client of the backend's SignalR seat-hold broadcasts (`booking-hub.service.ts`); shared between CinemaUser and CinemaStaff.
 - **Staff live updates**: `services/staff-hub.service.ts` — SignalR for staff-side live state (schedule board, incidents).
-- **Theming**: `theme/theme.service.ts` — single shared theme service; dark-mode toggle for CinemaAdmin (ROADMAP 🆕) would plug in here — <!-- TODO: confirm with team whether it's currently wired into any app's shell -->.
+- **Theming**: `theme/theme.service.ts` — single shared theme service; dark/light toggle is wired in all three apps: `AppShellComponent.toggleTheme()` (CinemaAdmin, CinemaStaff) and `CinemaUser`'s `app.ts` `toggleTheme()`; each app calls `ThemeService.init()` at startup (`app.module.ts` / `app.ts`).
 - **NgRx stores actually mounted**: per `app.module.ts` in each app —
   - CinemaUser: `StoreModule.forRoot({ auth: authReducer, movies: moviesReducer })`
   - CinemaAdmin: `StoreModule.forRoot({ auth, movies, searchState: searchReducer, loading: loadingReducer })`
