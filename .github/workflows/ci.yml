@@ -196,6 +196,9 @@ jobs:
           ASPNETCORE_URLS: 'http://localhost:5102'
           # The e2e flow pays through the Sandbox gateway, which is off outside Development by default.
           Payments__EnableSandbox: 'true'
+          # The suite signs in about 16 times from one IP within a few minutes; the default Auth limit (10/min) rejects
+          # the later logins whenever a run is fast, which made `admin lands on /home` fail at random.
+          RateLimiting__AuthPermitLimit: '1000'
           Payments__VnPay__TmnCode: ${{ env.VNPAY_TMN_CODE }}
           Payments__VnPay__HashSecret: ${{ env.VNPAY_HASH_SECRET }}
           AllowedOrigins__0: 'http://localhost:4202'

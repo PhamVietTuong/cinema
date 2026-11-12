@@ -69,8 +69,8 @@ Every value in the first two tables is read from code or configuration and cites
 
 | ID | Category | Requirement | Value | Source (file:line) |
 |---|---|---|---|---|
-| NFR-01 | Security | Login, Register, ResetPassword, ConfirmEmail, GoogleLogin, FacebookLogin and VerifyTwoFactor are rate limited per client | 10 requests per 1 minute (fixed window, no queue; overflow answers 429) | `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Helpers/RateLimitPolicies.cs:46-47`; applied in `IdentityController.cs:32`, `:49`, `:83`, `:100`, `:134`, `:151`, `:168` |
-| NFR-02 | Security | ForgotPassword and ResendVerification (they send an email) are rate limited more tightly | 3 requests per 15 minutes | `RateLimitPolicies.cs:55-56`; applied in `IdentityController.cs:66`, `:117` |
+| NFR-01 | Security | Login, Register, ResetPassword, ConfirmEmail, GoogleLogin, FacebookLogin and VerifyTwoFactor are rate limited per client | 10 requests per 1 minute by default (fixed window, no queue; overflow answers 429); `RateLimiting:AuthPermitLimit` overrides the 10, and a missing or invalid value keeps 10 | `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Helpers/RateLimitPolicies.cs:23-35,64-65`; applied in `IdentityController.cs:32`, `:49`, `:83`, `:100`, `:134`, `:151`, `:168` |
+| NFR-02 | Security | ForgotPassword and ResendVerification (they send an email) are rate limited more tightly | 3 requests per 15 minutes | `RateLimitPolicies.cs:73-74`; applied in `IdentityController.cs:66`, `:117` |
 | NFR-03 | Security | Account lockout after consecutive failed sign-ins (wrong 2FA codes count too) | 5 failures, then locked for 15 minutes | `cinemabe/Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs:42-43` |
 | NFR-04 | Security | Access token lifetime, no refresh and no revocation | 24 hours (`JWT:ExpiryHours`, default 24) | `cinemabe/Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs:50`; `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/appsettings.json:19` |
 | NFR-05 | Security | Two-factor code lifetime (6 digits, SHA-256 hashed, single use) | 5 minutes | `AuthManager.cs:221` |

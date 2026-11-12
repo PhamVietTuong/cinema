@@ -23,7 +23,7 @@ No class-level `[Authorize]`; actions default to anonymous unless tagged.
 
 | Action | Route verb | Auth | Rate limit | Request (key fields) | Response | Notable errors |
 |---|---|---|---|---|---|---|
-| `Login` | POST | anonymous | `Auth` (10/min/IP) | `LoginRequest{EmailOrPhone, Password}` | `AuthResponse{Token, ExpiresAt, RequiresTwoFactor, User}` — `Token=""` if 2FA required | 401 invalid credentials / locked out / unconfirmed email |
+| `Login` | POST | anonymous | `Auth` (10/min/IP by default, `RateLimiting:AuthPermitLimit`) | `LoginRequest{EmailOrPhone, Password}` | `AuthResponse{Token, ExpiresAt, RequiresTwoFactor, User}` — `Token=""` if 2FA required | 401 invalid credentials / locked out / unconfirmed email |
 | `Register` | POST | anonymous | `Auth` | `RegisterRequest{Name, Email, Phone, Password, ConfirmPassword}` | `AuthResponse` with usable JWT immediately (even if unconfirmed) | 400 email/phone in use, missing `Customer` UserType |
 | `ForgotPassword` | POST | anonymous | `AuthEmail` (3/15min/IP) | `ForgotPasswordRequest{Email}` | 204 always (no enumeration) | — |
 | `ResetPassword` | POST | anonymous | `Auth` | `ResetPasswordRequest{Email, Token, NewPassword}` | 204 | 400 invalid/expired token |
