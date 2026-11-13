@@ -37,7 +37,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Order food/drink combos with tickets | Done | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end (out-of-stock handling included) — this roadmap entry was stale. |
 | Manage booked tickets (view / cancel) | Done | - | `profile.component.ts`'s `cancelBooking`/`cancelById` via `PaymentServiceAgent.cancelBooking` — this roadmap entry was stale. |
 | E-tickets + QR codes | Done | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`), not via the `CinemaLib` ticket-card/qr-code components (those are dead code in CinemaUser, used only by CinemaStaff's POS receipt) — this roadmap entry was stale. |
-| Payment gateway (VNPay) | Done | L | VNPay is the only real gateway and the only checkout option. MoMo and Stripe were removed. |
+| Payment gateway (VNPay) | Done | L | VNPay is the only real gateway and the only checkout option. |
 | Order confirmation email/SMS | New | M | Overlaps with reminders — see messaging infra below. |
 
 ## Discovery & engagement

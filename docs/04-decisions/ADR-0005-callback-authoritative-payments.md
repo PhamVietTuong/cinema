@@ -28,5 +28,5 @@ Author to confirm: why this rule was adopted (for example VNPay's own requiremen
 
 - **Trusting the browser redirect or a synchronous confirm.** Still present for the Sandbox gateway only (`ConfirmPayment`, `SandboxPaymentGateway`), which is why the Sandbox is gated (ADR-0007); a real gateway's `VerifyPaymentAsync` always refuses.
 - **A generic callback response for every provider.** What the code did before `2df415b`; VNPay never saw success and retried.
-- **Other gateways.** MoMo and Stripe sat behind the same `IPaymentGateway` seam and were removed by `3de3d05`, leaving VNPay and Sandbox.
+- **Other gateways.** Only VNPay and the dev Sandbox gateway sit behind the `IPaymentGateway` seam.
 - Author to confirm: why polling the invoice on the return page was chosen over any other way of showing the result.

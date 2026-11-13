@@ -35,7 +35,7 @@ Backlog for the multi-theater cinema platform. Status verified directly against 
 | **Order food/drink combos with tickets** | ✅ | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end, including out-of-stock handling. |
 | **Manage booked tickets (view / cancel)** | ✅ | - | `profile.component.ts`'s `cancelBooking`/`cancelById` via `PaymentServiceAgent.cancelBooking`. |
 | **E-tickets + QR codes** | ✅ | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`). |
-| **Payment gateway (VNPay)** | ✅ | L | VNPay is the only real gateway and the only checkout option. MoMo and Stripe were removed. |
+| **Payment gateway (VNPay)** | ✅ | L | VNPay is the only real gateway and the only checkout option. |
 | Order confirmation email/SMS | 🆕 | M | Overlaps with reminders — see messaging infra below. |
 
 ## Discovery & engagement

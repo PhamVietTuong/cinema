@@ -73,7 +73,7 @@ The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified dir
 
 | Feature | Status | Notes |
 |---|---|---|
-| Payment gateway (VNPay) | ✅ done | VNPay is the only real gateway: backend `VnPayGateway` + the only option on the CinemaUser checkout. MoMo and Stripe were removed (gateways, config, checkout options); only the dev `Sandbox` gateway remains besides VNPay. |
+| Payment gateway (VNPay) | ✅ done | VNPay is the only real gateway: backend `VnPayGateway` + the only option on the CinemaUser checkout. Only the dev `Sandbox` gateway exists besides VNPay. |
 | Unified search/filter (theater/date/time/genre/language) | ✅ done | Done: `GetMovies` filters server-side by genre (`movieTypeId`), `language`, `theaterId`, `date` and `status` (now/coming) across all pages; `SearchShowTimes` searches showtimes across movies with `theaterId`/`movieTypeId`/`language`/`date`/`timeFrom`/`timeTo`; `GetMovieLanguages` feeds the language filter. UI: `cl-filter-bar` on CinemaUser `/movies` (incl. a "Showtimes" tab). |
 | Promotions scoped per-theater (`PromotionProgram`) | ✅ done | `Discount`/`DiscountType`/`DiscountTheater` were merged into `PromotionProgram`, which already had theater/day/time scoping via `PromotionProgramSchedule` — one promotion screen, one pricing path. |
 | Revenue/advanced stats dashboard | 🆕 partial | Basic reports exist (`modules/overview/reports`); advanced charts not confirmed. |

@@ -70,11 +70,6 @@ export const mailIcon = {
     name: 'mail' as const
 };
 
-export const momoIcon = {
-    data: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" fill="#a50064" rx="6"/><path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M6.5 16.5V9.8a1.3 1.3 0 0 1 2.6 0V13a1.9 1.9 0 0 1 3.8 0V9.8a1.3 1.3 0 0 1 2.6 0v6.7"/></svg>`,
-    name: 'momo' as const
-};
-
 export const personIcon = {
     data: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>`,
     name: 'person' as const
