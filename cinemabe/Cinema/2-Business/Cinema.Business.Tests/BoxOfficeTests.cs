@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Exceptions;
@@ -65,8 +66,8 @@ public class BoxOfficeTests
         _uowMock.Setup(u => u.UserStore.ExistsAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(true);
 
         // Pricing context: one Standard "Adult" category at 100,000 VND in an Active room of the theater.
-        var showTime = new ShowTime { Id = _showTimeId, StartTime = DateTime.Now.AddHours(1), EndTime = DateTime.Now.AddHours(3), IsActive = true };
-        var room = new Room { Id = _roomId, TheaterId = _theaterId, RoomTypeId = _roomTypeId, Status = RoomStatus.Active };
+        var showTime = new ShowTime { Id = _showTimeId, StartTime = DateTime.Now.AddHours(1), EndTime = DateTime.Now.AddHours(3), IsActive = true, Movie = new Movie { IsActive = true, AgeRestriction = new AgeRestriction { Code = "P", MinAge = 0 } } };
+        var room = new Room { Id = _roomId, TheaterId = _theaterId, RoomTypeId = _roomTypeId, Status = RoomStatus.Active, Theater = new Theater { Id = _theaterId, IsActive = true } };
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(_showTimeId, _roomId))
             .ReturnsAsync(new ShowTimeRoom { ShowTimeId = _showTimeId, RoomId = _roomId, BasePrice = 0, ShowTime = showTime, Room = room });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(_roomId)).ReturnsAsync(room);
@@ -483,6 +484,193 @@ public class BoxOfficeTests
         invoice.Payments.Should().BeEmpty();
         invoice.PaidAt.Should().BeNull();
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    // ── Online checks: age confirmation, open showtime, seat cap, ID-check categories ──
+
+    private ShowTimeRoom SetupOnlineShowTime(
+        int minAge = 0, bool showTimeActive = true, bool movieActive = true, bool theaterActive = true,
+        int maxSeats = 10, double startOffsetMinutes = 60)
+    {
+        var start = DateTime.Now.AddMinutes(startOffsetMinutes);
+        var showTimeRoom = new ShowTimeRoom
+        {
+            ShowTimeId = _showTimeId,
+            RoomId = _roomId,
+            ShowTime = new ShowTime
+            {
+                Id = _showTimeId,
+                StartTime = start,
+                EndTime = start.AddHours(2),
+                IsActive = showTimeActive,
+                Movie = new Movie { IsActive = movieActive, AgeRestriction = new AgeRestriction { Code = "T", MinAge = minAge } }
+            },
+            Room = new Room
+            {
+                Id = _roomId, TheaterId = _theaterId, RoomTypeId = _roomTypeId, Status = RoomStatus.Active,
+                Theater = new Theater { Id = _theaterId, IsActive = theaterActive, MaxSeatsPerBooking = maxSeats }
+            }
+        };
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(_showTimeId, _roomId)).ReturnsAsync(showTimeRoom);
+        _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(_showTimeId)).ReturnsAsync(showTimeRoom.ShowTime);
+        return showTimeRoom;
+    }
+
+    private CreateBookingRequest OnlineRequest(bool ageConfirmed, params Guid[] seatIds)
+    {
+        return new CreateBookingRequest
+        {
+            ShowTimeId = _showTimeId,
+            RoomId = _roomId,
+            Seats = seatIds.Select(id => new BookingSeatItem { SeatId = id, PatronCategoryId = _adultId }).ToList(),
+            PaymentMethod = "Sandbox",
+            AgeConfirmed = ageConfirmed,
+        };
+    }
+
+    [Theory]
+    [InlineData(13)]
+    [InlineData(16)]
+    [InlineData(18)]
+    public async Task OnlineBooking_RatedFilm_WithoutAgeConfirmation_IsRejected(int minAge)
+    {
+        SetupOnlineShowTime(minAge: minAge);
+
+        await FluentActions.Awaiting(() => _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(false, _seatA)))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*age rating*");
+        _created.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task OnlineBooking_RatedFilm_WithAgeConfirmation_IsAccepted()
+    {
+        SetupOnlineShowTime(minAge: 16);
+
+        var result = await _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(true, _seatA));
+
+        result.Status.Should().Be(InvoiceStatus.Pending);
+    }
+
+    [Fact]
+    public async Task OnlineBooking_UnratedFilm_DoesNotNeedAgeConfirmation()
+    {
+        SetupOnlineShowTime(minAge: 0);
+
+        var result = await _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(false, _seatA));
+
+        result.Status.Should().Be(InvoiceStatus.Pending);
+    }
+
+    [Fact]
+    public async Task CounterSale_RatedFilm_DoesNotNeedTheAgeCheckbox()
+    {
+        SetupOnlineShowTime(minAge: 18);
+        var request = SeatSale(_seatA);
+        request.Tenders = new List<TenderLine> { Cash(100000) };
+
+        var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
+
+        result.Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData("showtime")]
+    [InlineData("movie")]
+    [InlineData("theater")]
+    [InlineData("started")]
+    public async Task OnlineBooking_ClosedShowTime_IsRejected(string reason)
+    {
+        SetupOnlineShowTime(
+            showTimeActive: reason != "showtime",
+            movieActive: reason != "movie",
+            theaterActive: reason != "theater",
+            startOffsetMinutes: reason == "started" ? -1 : 60);
+
+        await FluentActions.Awaiting(() => _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(true, _seatA)))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*not open for sale*");
+        _created.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task OnlineBooking_ConfiguredGracePeriodKeepsAStartedShowTimeOpen()
+    {
+        SetupOnlineShowTime(startOffsetMinutes: -5);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Booking:OnlineSalesCloseMinutesAfterStart"] = "15" }).Build();
+        var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
+        var booking = new BookingManager(_uowMock.Object, gateways, _notifications.Object, _sms.Object, _seatNotifications.Object, config: config);
+
+        var result = await booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(true, _seatA));
+
+        result.Status.Should().Be(InvoiceStatus.Pending);
+    }
+
+    [Fact]
+    public async Task OnlineBooking_MoreSeatsThanTheTheaterCap_IsRejectedBeforeDedupe()
+    {
+        SetupOnlineShowTime(maxSeats: 2);
+
+        // The same seat three times would dedupe to one; the cap counts what was requested.
+        await FluentActions.Awaiting(() => _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(true, _seatA, _seatA, _seatA)))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*at most 2 seats*");
+        _created.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task OnlineBooking_AtTheTheaterCap_IsAccepted()
+    {
+        SetupOnlineShowTime(maxSeats: 2);
+
+        var result = await _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(true, _seatA, _seatB));
+
+        result.Status.Should().Be(InvoiceStatus.Pending);
+    }
+
+    [Fact]
+    public async Task CounterSale_IsNotBlockedByTheOnlineSeatCap()
+    {
+        SetupOnlineShowTime(maxSeats: 1);
+        var request = SeatSale(_seatA, _seatB);
+        request.Tenders = new List<TenderLine> { Cash(200000) };
+
+        var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
+
+        result.Should().NotBeNull();
+    }
+
+    private void MakeAdultRequireIdCheck()
+    {
+        var adult = new PatronCategory
+        {
+            Id = _adultId, TheaterId = _theaterId, SeatTypeId = _standardSeatType, Name = "Adult", Price = 100000,
+            IsActive = true, RequiresIdCheck = true, IdCheckMessage = "Show a student card"
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(new List<PatronCategory> { adult });
+    }
+
+    [Fact]
+    public async Task OnlineBooking_IdCheckCategory_IsRejectedServerSide()
+    {
+        SetupOnlineShowTime();
+        MakeAdultRequireIdCheck();
+
+        await FluentActions.Awaiting(() => _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(true, _seatA)))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*ID check*counter*");
+        _created.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CounterSale_IdCheckCategory_IsAllowed()
+    {
+        SetupOnlineShowTime();
+        MakeAdultRequireIdCheck();
+        var request = SeatSale(_seatA);
+        request.Tenders = new List<TenderLine> { Cash(100000) };
+
+        var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
+
+        result.Should().NotBeNull();
     }
 
     // ── Tender rules ─────────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
 using Cinema.Foundation.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Managers;
 
@@ -39,9 +40,11 @@ public class BookingManager : IBookingManager
     private readonly ISeatNotificationService _seatNotifications;
 
     private readonly IStaffNotificationService _staffNotifications;
+    private readonly IConfiguration? _config;
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null)
     {
+        _config = config;
         _uow = uow;
         _gateways = gateways;
         _notifications = notifications;
@@ -153,6 +156,7 @@ public class BookingManager : IBookingManager
                 PointsToRedeem = request.PointsToRedeem,
                 GiftCardCode   = request.GiftCardCode,
                 ConnectionId   = request.ConnectionId,
+                AgeConfirmed   = request.AgeConfirmed,
             });
 
             // An online booking is always created Pending; it becomes Paid only through the payment flow.
@@ -394,6 +398,26 @@ public class BookingManager : IBookingManager
 
     // ── Shared invoice composition ──────────────────────────────────────────────
 
+    private const string _onlineSalesCloseMinutesKey = "Booking:OnlineSalesCloseMinutesAfterStart";
+    /// <summary>Fixed online threshold (T13 and above); CinemaUser mirrors it. The gate has its own configurable key.</summary>
+    private const int _onlineAgeConfirmMinAge = 13;
+
+    /// <summary>Online sale is open while the showtime, its movie and its theater are active and the start (plus the
+    /// configured grace minutes, default 0) has not passed. Showtimes are stored in local time.</summary>
+    private void EnsureOnlineSaleOpen(ShowTimeRoom showTimeRoom)
+    {
+        var showTime = showTimeRoom.ShowTime;
+        var closeMinutes = int.TryParse(_config?[_onlineSalesCloseMinutesKey], out var configured) ? configured : 0;
+        if (showTime is null
+            || !showTime.IsActive
+            || showTime.Movie is null || !showTime.Movie.IsActive
+            || !showTimeRoom.Room.Theater.IsActive
+            || DateTime.Now >= showTime.StartTime.AddMinutes(closeMinutes))
+        {
+            throw new InvalidOperationException("This showtime is not open for sale.");
+        }
+    }
+
     private static double Money(double value, bool wholeVnd)
     {
         return wholeVnd ? Math.Round(value, 0, MidpointRounding.AwayFromZero) : value;
@@ -445,6 +469,21 @@ public class BookingManager : IBookingManager
                 if (showTime is null || !showTime.IsActive || showTime.EndTime <= DateTime.Now)
                 {
                     throw new InvalidOperationException("This showtime is not open for sale.");
+                }
+            }
+            else
+            {
+                EnsureOnlineSaleOpen(showTimeRoom);
+                if (input.Seats.Count > showTimeRoom.Room.Theater.MaxSeatsPerBooking)
+                {
+                    throw new InvalidOperationException(
+                        $"You can book at most {showTimeRoom.Room.Theater.MaxSeatsPerBooking} seats per order at this theater.");
+                }
+                var minAge = showTimeRoom.ShowTime?.Movie?.AgeRestriction?.MinAge ?? 0;
+                if (minAge >= _onlineAgeConfirmMinAge && !input.AgeConfirmed)
+                {
+                    throw new InvalidOperationException(
+                        $"Please confirm that every viewer meets this film's age rating ({minAge}+) before booking.");
                 }
             }
             invoiceTheaterId ??= showTimeRoom.Room.TheaterId;
@@ -528,6 +567,11 @@ public class BookingManager : IBookingManager
                 if (!pricing.ByCategoryId.TryGetValue(patronCategoryId, out var category))
                 {
                     throw new InvalidOperationException("Selected patron category is invalid or unavailable.");
+                }
+                if (!input.IsCounter && category.RequiresIdCheck)
+                {
+                    throw new InvalidOperationException(
+                        $"The '{category.Name}' ticket requires an ID check and can only be bought at the counter.");
                 }
                 if (category.Kind != seatKind)
                 {

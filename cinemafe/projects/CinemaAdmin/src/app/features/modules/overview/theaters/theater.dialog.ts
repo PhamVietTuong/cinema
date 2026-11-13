@@ -42,6 +42,7 @@ export class TheaterDialog {
       email: ['', Validators.email],
       latitude: [data.theater?.latitude ?? null, [Validators.min(-90), Validators.max(90)]],
       longitude: [data.theater?.longitude ?? null, [Validators.min(-180), Validators.max(180)]],
+      maxSeatsPerBooking: [data.theater?.maxSeatsPerBooking ?? 10, [Validators.required, Validators.min(1), Validators.max(50), Validators.pattern(/^\d+$/)]],
       imageUrl: [data.theater?.imageUrl ?? ''],
     });
   }

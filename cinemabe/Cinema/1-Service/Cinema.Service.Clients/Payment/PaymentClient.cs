@@ -2103,6 +2103,9 @@ namespace Cinema.Service.Clients.Payment
         [System.ComponentModel.DataAnnotations.StringLength(64)]
         public string GiftCardCode { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("ageConfirmed", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool AgeConfirmed { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]

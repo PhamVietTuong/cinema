@@ -45,6 +45,11 @@ export function isAdmitted(result: CinemaServiceAgent.ScanTicketResultDTO | null
   return result?.outcome === CinemaServiceAgent.ScanOutcome.Admitted;
 }
 
+/** Rating K: the child is admitted only with a parent or guardian, so the gate shows a banner. */
+export function needsGuardian(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
+  return isAdmitted(result) && result?.guardianRequired === true;
+}
+
 /** Whether the "who/when" of an earlier admission should be shown. */
 export function showsUsageDetails(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
   return result?.outcome === CinemaServiceAgent.ScanOutcome.AlreadyUsed;

@@ -73,6 +73,7 @@ public class TheaterManager : ITheaterManager
 
     public async Task<TheaterDTO> CreateAsync(CreateTheaterRequest request)
     {
+        ValidateMaxSeats(request.MaxSeatsPerBooking);
         var theater = request.ToNewEntity<CreateTheaterRequest, Theater>();
         await _uow.TheaterStore.CreateAsync(theater);
         await _seatTypes.EnsureDefaultsAsync(theater.Id);
@@ -86,6 +87,7 @@ public class TheaterManager : ITheaterManager
         {
             throw new KeyNotFoundException($"Theater {request.Id} not found.");
         }
+        ValidateMaxSeats(request.MaxSeatsPerBooking);
         theater.PatchEntity<Theater, UpdateTheaterRequest>(request);
         await _uow.TheaterStore.UpdateAsync(theater);
         await _uow.SaveChangesAsync();
@@ -102,6 +104,14 @@ public class TheaterManager : ITheaterManager
         theater.IsActive = false;
         await _uow.TheaterStore.UpdateAsync(theater);
         await _uow.SaveChangesAsync();
+    }
+
+    private static void ValidateMaxSeats(int maxSeatsPerBooking)
+    {
+        if (maxSeatsPerBooking < 1 || maxSeatsPerBooking > 50)
+        {
+            throw new InvalidOperationException("Max seats per booking must be between 1 and 50.");
+        }
     }
 
     private static TheaterDTO ToTheaterDTO(Theater theater)

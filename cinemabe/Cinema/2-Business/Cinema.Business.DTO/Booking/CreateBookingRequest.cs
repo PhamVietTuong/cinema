@@ -37,4 +37,7 @@ public class CreateBookingRequest
     /// <summary>Optional gift-card code to apply its balance to this booking.</summary>
     [StringLength(64)]
     public string? GiftCardCode { get; set; }
+
+    /// <summary>The customer confirmed they meet the film's age rating. Required online when the film's MinAge is 13 or more.</summary>
+    public bool AgeConfirmed { get; set; }
 }

@@ -56,6 +56,9 @@
           <div class="detail">{{ 'gate.ageRating' | translate: { code: r.ageRatingCode } }}</div>
         }
       }
+      @if (guardianBanner()) {
+        <div class="guardian-banner" role="status">{{ 'gate.guardianRequired' | translate }}</div>
+      }
       @if (usageDetails()) {
         <div class="detail used">{{ 'gate.usedAt' | translate: { by: r.usedBy ?? '-', at: (r.usedAt | serverUtc | date: 'HH:mm dd/MM/yyyy') } }}</div>
       }

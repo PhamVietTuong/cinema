@@ -37,6 +37,7 @@ export class TheaterDetailComponent implements OnInit {
       imageUrl: [''],
       latitude: [null, [Validators.min(-90), Validators.max(90)]],
       longitude: [null, [Validators.min(-180), Validators.max(180)]],
+      maxSeatsPerBooking: [10, [Validators.required, Validators.min(1), Validators.max(50), Validators.pattern(/^\d+$/)]],
     });
   }
 
@@ -49,7 +50,7 @@ export class TheaterDetailComponent implements OnInit {
     this._cinemaService.getTheater(this.theaterId).subscribe(t => {
       this.form.patchValue({
         name: t.name, city: t.city, address: t.address, phone: t.phone, imageUrl: t.imageUrl,
-        latitude: t.latitude, longitude: t.longitude,
+        latitude: t.latitude, longitude: t.longitude, maxSeatsPerBooking: t.maxSeatsPerBooking,
       });
       this._cdr.markForCheck();
     });

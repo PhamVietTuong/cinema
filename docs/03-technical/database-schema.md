@@ -118,7 +118,7 @@ Relationships: `MovieTypeDetails` (genres join), `ShowTimes` (Cascade), `Comment
 MovieId (Cascade), UserId (Restrict), Score (int), Review (max 1000). **Unique** (MovieId, UserId).
 
 ### Theater
-Name (200), Address (500), City (100), Phone, Email, ImageUrl, IsActive, Latitude/Longitude (double?). Nav `Rooms` (Cascade).
+Name (200), Address (500), City (100), Phone, Email, ImageUrl, IsActive, Latitude/Longitude (double?), MaxSeatsPerBooking (int, NOT NULL, default 10, valid 1-50 — most seats one **online** booking may hold at this theater; counter sales are not capped; added by the idempotent `COL_LENGTH` block in `upgrade_db.sql`). Nav `Rooms` (Cascade).
 
 ### Room
 Name (100), TheaterId (Cascade), RoomTypeId (Restrict), TotalRows/TotalColumns (int), Status (RoomStatus: Active=0/Maintenance=1/Inactive=2). Nav `Seats` (Cascade), `ShowTimeRooms`.
@@ -150,7 +150,7 @@ One row per (Theater, SeatKind-via-SeatType, category name). **Omitting a row fo
 | Name (100), Description | |
 | Price | double, absolute VND — independent per row |
 | IsActive | |
-| RequiresIdCheck | bool, default false, UI notice only, not enforced |
+| RequiresIdCheck | bool, default false. Counter-only category: `BookingManager.ComposeInvoiceAsync` rejects it for online bookings ("requires an ID check and can only be bought at the counter"), CinemaUser hides it, counter sales allow it |
 | IdCheckMessage | max 1000 |
 
 **Unique** (TheaterId, Name, SeatTypeId). Nav `RoomTypePrices`.

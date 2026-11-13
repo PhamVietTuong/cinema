@@ -250,11 +250,42 @@ public class GateManagerTests
     }
 
     [Fact]
-    public async Task Scan_T13Ticket_DoesNotPromptForAge()
+    public async Task Scan_T13Ticket_NeedsAgeCheck_AndIsNotMarkedUsed()
+    {
+        _ticket.AgeRatingCode = "T13";
+        _ticket.MinAge = 13;
+
+        var result = await Scan();
+
+        result.Outcome.Should().Be(ScanOutcome.AgeCheckRequired);
+        _ticket.IsUsed.Should().BeFalse();
+        VerifyNotAdmitted();
+    }
+
+    [Fact]
+    public async Task Scan_T13Ticket_AgeConfirmed_IsAdmitted()
     {
         _ticket.MinAge = 13;
 
-        (await Scan()).Outcome.Should().Be(ScanOutcome.Admitted);
+        (await Scan(new ScanTicketRequest { Code = _qr, AgeConfirmed = true })).Outcome.Should().Be(ScanOutcome.Admitted);
+    }
+
+    [Fact]
+    public async Task Scan_KTicket_IsAdmitted_WithGuardianBanner()
+    {
+        _ticket.AgeRatingCode = "K";
+        _ticket.MinAge = 0;
+
+        var result = await Scan();
+
+        result.Outcome.Should().Be(ScanOutcome.Admitted);
+        result.GuardianRequired.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Scan_PTicket_HasNoGuardianBanner()
+    {
+        (await Scan()).GuardianRequired.Should().BeFalse();
     }
 
     [Fact]

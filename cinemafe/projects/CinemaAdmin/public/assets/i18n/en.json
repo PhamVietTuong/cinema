@@ -256,6 +256,9 @@
       "emptyText": "No theaters yet."
     },
     "form": {
+      "maxSeatsLabel": "Max seats per online booking",
+      "maxSeatsHint": "Applies to online orders only (1-50). Counter sales are not capped.",
+      "maxSeatsInvalid": "Enter a whole number from 1 to 50.",
       "createTitle": "New Theater",
       "editTitle": "Edit Theater",
       "nameLabel": "Theater Name",

@@ -2,14 +2,12 @@ import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChange
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Subscription, take } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
 import {
   SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, selectIsAuthenticated,
   SeatMapComponent, SeatLockSessionService, SelectableSeat, seatRows, seatsByRow, seatLabel, joinSeatLabels, seatGroupOf, isGroupBlocked, physicalSeatPrice, foodOrderCap,
 } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import { BookingCheckoutState, stashPendingCheckout } from '../booking-checkout/booking-checkout.state';
-import { IdCheckNoticeDialog } from './id-check-notice.dialog';
 
 type ShowTimePriceDTO = PaymentServiceAgent.ShowTimePriceDTO;
 
@@ -38,7 +36,9 @@ interface TicketSlot {
   styleUrl: './booking-selection.component.scss'
 })
 export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
+  /** Fallback cap until the theater's own `maxSeatsPerBooking` has loaded. */
   static readonly MAX_TICKETS = 10;
+  private _maxSeats = BookingSelectionComponent.MAX_TICKETS;
 
   @Input({ required: true }) showTimeId = '';
   @Input({ required: true }) roomId = '';
@@ -138,7 +138,6 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     private _hub: BookingHubService,
     private _cdr: ChangeDetectorRef,
     private _translate: TranslateService,
-    private _dialog: MatDialog,
   ) {}
 
   /** The seat-lock session on the booking hub (hold clocks, lock/unlock, room events). Created on
@@ -159,7 +158,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   get maxTickets(): number {
-    return BookingSelectionComponent.MAX_TICKETS;
+    return this._maxSeats;
   }
 
   get totalTickets(): number {
@@ -356,6 +355,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this.categoryWarning = '';
     this._session.forgetAll();
     this._theaterId = '';
+    this._maxSeats = BookingSelectionComponent.MAX_TICKETS;
     this.roomName = '';
     this.loadingSeats = true;
     if (this._holdTimer) {
@@ -400,6 +400,16 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
           this._cdr.markForCheck();
           if (!room?.theaterId) { return; }
           this._theaterId = room.theaterId;
+          this._cinemaService.getTheater(room.theaterId).subscribe({
+            next: t => {
+              if (seq !== this._loadSeq) { return; }
+              if (t?.maxSeatsPerBooking && t.maxSeatsPerBooking > 0) {
+                this._maxSeats = t.maxSeatsPerBooking;
+              }
+              this._cdr.markForCheck();
+            },
+            error: () => { /* keeps the default cap; the server still enforces the real one */ },
+          });
           this._cinemaService.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS(
             { pageIndex: 1, pageSize: 100, filters: { theaterId: room.theaterId } }))
             .subscribe(r => {
@@ -420,7 +430,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     this._paymentService.getShowTimePrices(this.showTimeId, this.roomId).subscribe({
       next: rows => {
         if (seq !== this._loadSeq) { return; }
-        this.showTimePrices = rows ?? [];
+        // ID-check categories (student, senior...) are counter-only: the server rejects them online, so they are not offered.
+        this.showTimePrices = (rows ?? []).filter(row => !row.requiresIdCheck);
         for (const row of this.showTimePrices) {
           this.ticketQty[row.patronCategoryId!] = 0;
         }
@@ -520,23 +531,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     const patronCategoryId = row.patronCategoryId!;
     const prev = this.ticketQty[patronCategoryId] ?? 0;
 
-    if (!row.requiresIdCheck || prev > 0 || !this.canIncrement(row)) {
-      this.setTicketQty(patronCategoryId, prev + 1, !!row.isDouble);
-      return;
-    }
-
-    const seq = this._loadSeq;
-    this._dialog.open(IdCheckNoticeDialog, {
-      data: { categoryName: row.patronCategoryName, customMessage: row.idCheckMessage },
-      width: '440px',
-      maxWidth: '92vw',
-    }).afterClosed().subscribe(result => {
-      if (result !== true || seq !== this._loadSeq) {
-        return;
-      }
-      this.setTicketQty(patronCategoryId, (this.ticketQty[patronCategoryId] ?? 0) + 1, !!row.isDouble);
-      this._cdr.markForCheck();
-    });
+    this.setTicketQty(patronCategoryId, prev + 1, !!row.isDouble);
   }
 
   decTicket(row: ShowTimePriceDTO): void {
@@ -546,7 +541,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   setTicketQty(patronCategoryId: string, qty: number, isDouble: boolean): void {
     const prev = this.ticketQty[patronCategoryId] ?? 0;
     const otherTotal = this.slots.length - prev;
-    const clamped = Math.max(0, Math.min(qty, BookingSelectionComponent.MAX_TICKETS - otherTotal));
+    const clamped = Math.max(0, Math.min(qty, this._maxSeats - otherTotal));
     if (clamped === prev) {
       return;
     }

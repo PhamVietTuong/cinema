@@ -1161,6 +1161,9 @@
             "maxLength": 64,
             "minLength": 0,
             "nullable": true
+          },
+          "ageConfirmed": {
+            "type": "boolean"
           }
         }
       },

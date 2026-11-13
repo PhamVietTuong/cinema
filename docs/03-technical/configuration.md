@@ -68,6 +68,13 @@ Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program
 |---|---|---|---|
 | `OMDb:ApiKey` | OMDb external-ratings lookup | optional — when blank, `OmdbRatingsProvider.GetRatingsAsync` returns `null` immediately (no HTTP call, no error; external ratings are simply absent) | `""` |
 
+### Gate / booking rules (optional, in-code defaults, read with raw `IConfiguration`)
+| Key | Purpose | Required | Default |
+|---|---|---|---|
+| `Gate:AdmitBeforeMinutes` | How long before the showtime start a ticket may be scanned in | optional | `30` |
+| `Gate:AgePromptMinAge` | Minimum age (MinAge of the film) from which the gate prompts for an age check. Gate only: the online age confirmation uses a fixed threshold of 13 | optional | `13` (T13, T16, T18) |
+| `Booking:OnlineSalesCloseMinutesAfterStart` | Online sale stays open this many minutes after the showtime start (0 = closes exactly at start) | optional | `0` |
+
 ### Logging
 | Key | Purpose | Required | Default |
 |---|---|---|---|

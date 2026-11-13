@@ -13,6 +13,8 @@ public class ScanTicketResultDTO
     public string PatronCategory { get; set; } = string.Empty;
     public string? AgeRatingCode { get; set; }
     public int? MinAge { get; set; }
+    /// <summary>True for rating K (under 13 admitted only with a parent or guardian); the gate shows a banner.</summary>
+    public bool GuardianRequired { get; set; }
     /// <summary>For AlreadyUsed: when the ticket was admitted (UTC).</summary>
     public DateTime? UsedAt { get; set; }
     /// <summary>For AlreadyUsed: the name of the staff member who admitted it.</summary>

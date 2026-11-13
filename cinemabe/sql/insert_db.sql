@@ -185,8 +185,7 @@ CROSS JOIN (VALUES
     (N'Người Lớn',              1, 170000, 0),
     (N'Học Sinh - Sinh Viên',   0, 65000,  1),
     (N'Người Cao Tuổi',         0, 60000,  1),
-    (N'Người Cao Tuổi',         1, 115000, 1),
-    (N'Trẻ Em',                 0, 50000,  0)
+    (N'Người Cao Tuổi',         1, 115000, 1)
 ) AS c(Name, Kind, Price, RequiresIdCheck)
 WHERE st.Kind = c.Kind;
 

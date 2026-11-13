@@ -22,6 +22,11 @@
 .detail.seat { font-size: 3rem; font-weight: 700; }
 .detail.used { font-weight: 700; }
 .overlay-actions { margin-top: 32px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.guardian-banner {
+  width: 100%; max-width: 560px; margin: 16px auto 0; padding: 14px 18px; box-sizing: border-box;
+  background: var(--ml-panel); color: var(--ml-ink); border-radius: var(--ml-r-sm);
+  font-size: 1.3rem; font-weight: 700; line-height: 1.4;
+}
 .age-question { width: 100%; font-size: 1.4rem; margin: 0; }
 .big-btn { min-width: 160px; min-height: 48px; font-size: 1.1rem; background: var(--ml-panel); color: var(--ml-ink); }
 
@@ -29,6 +34,7 @@
   .overlay-icon { font-size: 72px; width: 72px; height: 72px; }
   .overlay-title { font-size: 1.8rem; }
   .detail.seat { font-size: 2.4rem; }
+  .guardian-banner { font-size: 1.1rem; }
   .overlay-actions { gap: 12px; }
   .big-btn { min-width: 0; flex: 1 1 140px; }
   .recent-row { flex-wrap: wrap; }

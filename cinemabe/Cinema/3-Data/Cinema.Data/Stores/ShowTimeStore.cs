@@ -121,7 +121,7 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
 
     public async Task<ShowTimeRoom?> GetShowTimeRoomAsync(Guid showTimeId, Guid roomId)
         => await Context.ShowTimeRoom
-            .Include(sr => sr.ShowTime).ThenInclude(s => s.Movie)
+            .Include(sr => sr.ShowTime).ThenInclude(s => s.Movie).ThenInclude(m => m.AgeRestriction)
             .Include(sr => sr.Room).ThenInclude(r => r.Theater)
             .Include(sr => sr.Room).ThenInclude(r => r.RoomType)
             .FirstOrDefaultAsync(sr => sr.ShowTimeId == showTimeId && sr.RoomId == roomId);

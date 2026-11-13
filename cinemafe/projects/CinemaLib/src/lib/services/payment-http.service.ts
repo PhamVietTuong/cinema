@@ -1643,6 +1643,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
     pointsToRedeem?: number;
     connectionId?: string | undefined;
     giftCardCode?: string | undefined;
+    ageConfirmed?: boolean;
 
     constructor(data?: ICreateBookingRequest) {
         if (data) {
@@ -1675,6 +1676,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
             this.pointsToRedeem = _data["pointsToRedeem"];
             this.connectionId = _data["connectionId"];
             this.giftCardCode = _data["giftCardCode"];
+            this.ageConfirmed = _data["ageConfirmed"];
         }
     }
 
@@ -1704,6 +1706,7 @@ export class CreateBookingRequest implements ICreateBookingRequest {
         data["pointsToRedeem"] = this.pointsToRedeem;
         data["connectionId"] = this.connectionId;
         data["giftCardCode"] = this.giftCardCode;
+        data["ageConfirmed"] = this.ageConfirmed;
         return data;
     }
 }
@@ -1718,6 +1721,7 @@ export interface ICreateBookingRequest {
     pointsToRedeem?: number;
     connectionId?: string | undefined;
     giftCardCode?: string | undefined;
+    ageConfirmed?: boolean;
 }
 
 export class BookingSeatItem implements IBookingSeatItem {

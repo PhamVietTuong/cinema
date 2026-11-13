@@ -19,7 +19,7 @@ describe('BookingCheckoutComponent', () => {
     foods: [{ foodAndDrinkId: 'f1', name: 'Popcorn', unitPrice: 50000, quantity: 2 }],
   };
 
-  const build = (historyState: unknown, queryParams: Record<string, string> = {}, loyaltyRate: { pointsPerUnit: number; pointValueVnd: number; isCustom: boolean } | null = { pointsPerUnit: 1000, pointValueVnd: 1000, isCustom: false }) => {
+  const build = (historyState: unknown, queryParams: Record<string, string> = {}, loyaltyRate: { pointsPerUnit: number; pointValueVnd: number; isCustom: boolean } | null = { pointsPerUnit: 1000, pointValueVnd: 1000, isCustom: false }, movie: unknown = { title: 'Test Movie', ageRestrictionCode: 'T13', slug: 'test-movie' }) => {
     Object.defineProperty(window, 'history', { value: { state: historyState }, writable: true });
 
     router = { navigate: vi.fn(), navigateByUrl: vi.fn() };
@@ -34,7 +34,7 @@ describe('BookingCheckoutComponent', () => {
     cdr = { markForCheck: vi.fn() };
     const cinema = {
       getShowTime: vi.fn().mockReturnValue(of({ startTime: new Date(), roomName: '03', movieId: 'm1' })),
-      getMovie: vi.fn().mockReturnValue(of({ title: 'Test Movie', ageRestrictionCode: 'T13', slug: 'test-movie' })),
+      getMovie: vi.fn().mockReturnValue(movie === null ? throwError(() => ({ error: 'unavailable' })) : of(movie)),
       getRoom: vi.fn().mockReturnValue(of({ name: '03', theaterId: 't1' })),
       getTheater: vi.fn().mockReturnValue(of({ name: 'Cinema 1', address: 'Addr' })),
       getEffectiveLoyaltyRate: vi.fn().mockReturnValue(
@@ -50,6 +50,50 @@ describe('BookingCheckoutComponent', () => {
     c.ngOnInit();
     return c;
   };
+
+  describe('age confirmation', () => {
+    const rated = (minAge: number) => ({ title: 'Movie', ageRestrictionCode: 'T' + minAge, ageRestrictionMinAge: minAge, slug: 'movie' });
+
+    it('blocks a 16+ film when the box is unticked and sets the error', () => {
+      const c = build(state, {}, undefined, rated(16));
+
+      c.confirmBooking();
+
+      expect(c.needsAgeConfirmation).toBe(true);
+      expect(payment.createBooking).not.toHaveBeenCalled();
+      expect(c.error).toContain('booking.errors.ageNotConfirmed');
+    });
+
+    it('sends ageConfirmed=true when the box is ticked', () => {
+      const c = build(state, {}, undefined, rated(16));
+      c.ageConfirmed = true;
+
+      c.confirmBooking();
+
+      expect(payment.createBooking).toHaveBeenCalledTimes(1);
+      expect(payment.createBooking.mock.calls[0][0].ageConfirmed).toBe(true);
+    });
+
+    it('needs no checkbox for an unrated film', () => {
+      const c = build(state, {}, undefined, rated(0));
+
+      expect(c.needsAgeConfirmation).toBe(false);
+      c.confirmBooking();
+      expect(payment.createBooking).toHaveBeenCalledTimes(1);
+    });
+
+    it('still shows the checkbox when the movie lookup fails', () => {
+      const c = build(state, {}, undefined, null);
+
+      expect(c.needsAgeConfirmation).toBe(true);
+      c.confirmBooking();
+      expect(payment.createBooking).not.toHaveBeenCalled();
+      expect(c.error).toContain('ageNotConfirmedGeneric');
+      c.ageConfirmed = true;
+      c.confirmBooking();
+      expect(payment.createBooking.mock.calls[0][0].ageConfirmed).toBe(true);
+    });
+  });
 
   it('hydrates seats/foods from navigation state', () => {
     const c = build(state);
