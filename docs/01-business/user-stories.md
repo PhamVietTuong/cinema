@@ -2,13 +2,13 @@
 
 > Purpose: Capabilities of `docs/01-business/requirements.md` restated as user stories with testable acceptance criteria, grouped by role.
 > Sources: `docs/03-technical/api-spec.md`, `docs/01-business/roles-permissions.md`, `docs/01-business/requirements.md`, `docs/01-business/business-rules.md`, and the code and tests cited per criterion
-> Last reviewed: 2026-11-12
+> Last reviewed: 2026-11-14
 
 Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps to a capability that already exists in the current system (verified against code) — this is a description of current behavior, not a backlog of unbuilt features.
 
 ## How to read the acceptance criteria
 
-- Stories are numbered `US-01` to `US-29`; each criterion is `AC-<story>.<n>` (for example `AC-07.3`), so a test, a defect or a review comment can name one.
+- Stories are numbered `US-01` to `US-29` (`US-24`, gift cards, was removed 2026-11-14 and its number is not reused); each criterion is `AC-<story>.<n>` (for example `AC-07.3`), so a test, a defect or a review comment can name one.
 - Each criterion is Given / When / Then and ends with its **Source**: a test (`Class.Method`, under `cinemabe/Cinema/2-Business/Cinema.Business.Tests` unless the path says otherwise) or a `file:line` in the code. Each criterion is tagged **success**, **error**, **boundary** or **gap**.
 - **gap** marks a criterion where the code or the tests do not deliver what the story implies: a flag that is stored but never read, or an endpoint with no test. It is a statement about the code as of this review (2026-11-12), not a requirement to build.
 - Where a criterion says "no test covers" a case, the behavior is read from the code, so it is not protected against regression.
@@ -73,15 +73,15 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - **AC-05.6** (success) Given a seat is on a Pending or Paid invoice, when the seat map loads, then it shows as occupied. Source: `BookingServiceTests.GetSeatsAsync_ReturnsOccupied_WhenSeatIsBooked`.
 - **AC-05.7** (boundary) Given the lock is only advisory and lives in one server process, when two requests race for the same seat, then the unique index on `InvoiceTicket` makes the loser fail with "One or more selected seats were just booked by someone else." Source: `BookingServiceTests.CreateBookingAsync_SeatTakenByAnotherServerAtInsert_IsRolledBackAsJustBooked`; `cinemabe/sql/create_db.sql:717`.
 
-### US-06 Discounts, gift cards and loyalty points
+### US-06 Discounts and loyalty points
 
-- As a Customer, I want to apply a discount code, a gift card, or my loyalty points at checkout, so that I pay less for tickets I'd book anyway.
+- As a Customer, I want to apply a discount code or my loyalty points at checkout, so that I pay less for tickets I'd book anyway.
 
 - **AC-06.1** (success) Given a usable promotion code, when I validate it at checkout, then I see what it takes off, capped at the program's maximum discount. Source: `BookingServiceTests.ValidateDiscountCodeAsync_UsableCode_ReportsWhatItTakesOff`, `ValidateDiscountCodeAsync_CapsTheAmountAtMaxDiscount`.
 - **AC-06.2** (error) Given an unknown, expired or exhausted code, when I validate it, then the answer is "invalid" without an error; booking with an unusable code fails. Source: `BookingServiceTests.ValidateDiscountCodeAsync_UnknownCode_IsInvalidWithoutThrowing`, `ValidateDiscountCodeAsync_ExpiredOrExhaustedCode_IsInvalid`.
-- **AC-06.3** (success) Given a valid gift card, when I book, then its balance covers whatever points did not, up to the amount due, and the balance is reserved immediately. Source: the rule in `business-rules.md` section 5 "Gift card redemption"; the counter-sale path is tested by `BoxOfficeTests.Sell_PointsAndGiftCard_AreRecordedAsPaymentRowsAndReduceTheAmountToTender`. No test covers the successful gift-card draw on the online `CreateBookingAsync` path; the tests named in AC-06.4 and AC-06.5 cover only its failures.
-- **AC-06.4** (error) Given an inactive or expired gift card, when I book with it, then the booking fails and nothing is saved. Source: `BookingServiceTests.CreateBookingAsync_InactiveGiftCard_IsRejectedAndRolledBack`, `CreateBookingAsync_ExpiredGiftCard_IsRejectedAndRolledBack`.
-- **AC-06.5** (boundary) Given my points were spent by another booking at the same moment, when I book, then it fails with "Not enough loyalty points." and rolls back; the same holds for a gift-card balance drawn by a concurrent booking. Source: `BookingServiceTests.CreateBookingAsync_PointsAlreadySpentByAConcurrentBooking_IsRejectedAndRolledBack`, `CreateBookingAsync_GiftCardAlreadyDrawnByAConcurrentBooking_IsRejectedAndRolledBack`.
+- **AC-06.3** (success) Given I am a tier member and no program applies, when I book, then I pay the list price: tiers give no percentage discount. Source: `BookingServiceTests.CreateBookingAsync_TierMemberWithoutProgram_PaysListPrice_NoTierPercentage`.
+- **AC-06.4** (success) Given I am a tier member and a program applies, when I book, then I pay the program price alone, with nothing stacked on top. Source: `BookingServiceTests.CreateBookingAsync_TierMemberWithProgram_PaysProgramPriceAlone`.
+- **AC-06.5** (boundary) Given my points were spent by another booking at the same moment, when I book, then it fails with "Not enough loyalty points." and rolls back. Source: `BookingServiceTests.CreateBookingAsync_PointsAlreadySpentByAConcurrentBooking_IsRejectedAndRolledBack`.
 - **AC-06.6** (success) Given the theater has no custom loyalty rate, when I earn or redeem, then 1,000 VND earns 1 point and 1 point is worth 10 VND (100 points = 1,000 VND); a theater override replaces both rates. Source: `LoyaltyRates.cs:13-14`; `BookingServiceTests.CreateBookingAsync_RedeemsPoints_UsesTheaterLoyaltyOverrideRate`, `ConfirmPaymentAsync_CreditsPoints_FallsBackToGlobalDefaultWhenNoOverride`.
 - **AC-06.7** (boundary) Given an auto-apply promotion that reached its usage cap or is scoped to another movie, when I book, then it is not applied. Source: `BookingServiceTests.CreateBookingAsync_AutoApplyProgramAtItsUsageCap_IsNotApplied`, `CreateBookingAsync_AutoApplyProgramScopedToAnotherMovie_IsNotApplied`.
 
@@ -96,7 +96,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - **AC-07.5** (boundary) Given the same IPN is delivered twice, even at the same moment, when both are processed, then side effects run once and the second gets "already confirmed" (`RspCode` 02). Source: `PaymentCallbackTests.HandlePaymentCallbackAsync_AlreadyPaidInvoice_ReturnsAlreadyConfirmed_NoWrites`, `HandlePaymentCallbackAsync_TwoConcurrentDeliveries_ApplyTheSideEffectsExactlyOnce`.
 - **AC-07.6** (error) Given an unhandled server error while processing a VNPay IPN, when it happens, then the answer is still HTTP 200 with `RspCode` 99, so VNPay does not retry in a storm. Source: `PaymentControllerCallbackTests.PaymentCallback_VnPay_UnhandledException_ReturnsRspCode99_Not500`.
 - **AC-07.7** (error) Given an unsigned Sandbox callback for an invoice owned by VNPay, when it arrives, then it is rejected and nothing is written. Source: `PaymentCallbackTests.HandlePaymentCallbackAsync_SandboxCallbackOnVnPayInvoice_IsRejected_NoWrites`.
-- **AC-07.8** (boundary) Given points and a gift card cover the whole amount, when I start payment, then the invoice is finalized as Paid without calling any gateway. Source: `PaymentCallbackTests.InitiatePaymentAsync_FullyCoveredByGiftCard_FinalizesWithoutAnyGateway`.
+- **AC-07.8** (boundary) Given the amount due is zero or less (only when a theater limit of 100% exists), when I start payment, then the invoice is finalized as Paid without calling any gateway. Source: `PaymentCallbackTests.InitiatePaymentAsync_ZeroAmountDue_FinalizesWithoutAnyGateway`.
 - **AC-07.9** (error) Given an invoice that is not mine, or not Pending, when I start payment, then nothing happens. Source: `PaymentCallbackTests.InitiatePaymentAsync_ByANonOwner_ReturnsNull_AndTouchesNothing`, `InitiatePaymentAsync_OnANonPendingInvoice_ReturnsNull`.
 
 ### US-08 Honest pending state after the redirect
@@ -111,7 +111,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 
 - As a Customer, I want my seat hold to expire automatically if I abandon checkout, so that other customers can book those seats again.
 
-- **AC-09.1** (success) Given a Pending invoice older than 15 minutes with no payment started, when the reaper runs (every minute), then it is cancelled, its seats freed, redeemed points and gift-card balance restored, and food stock restocked. Source: `PaymentCallbackTests.ExpireStalePendingBookingsAsync_RestoresRedeemedPointsAndGiftCard_AndFreesTheSeats`; `PendingBookingReaper.cs:12-13`.
+- **AC-09.1** (success) Given a Pending invoice older than 15 minutes with no payment started, when the reaper runs (every minute), then it is cancelled, its seats freed, redeemed points restored, and food stock restocked. Source: `PaymentCallbackTests.ExpireStalePendingBookingsAsync_RestoresRedeemedPoints_AndFreesTheSeats`; `PendingBookingReaper.cs:12-13`.
 - **AC-09.2** (boundary) Given a payment was started, when the reaper runs, then the invoice gets an extra 15 minutes of grace (30 minutes in all), so a late IPN can still confirm it. Source: `PaymentCallbackTests.ExpireStalePendingBookingsAsync_GivesAnInFlightPaymentTheExtraGraceWindow`; `BookingManager.cs:1831`.
 - **AC-09.3** (boundary) Given an invoice is paid at the moment the reaper looks at it, when both run, then the reaper skips it. Source: `PaymentCallbackTests.ExpireStalePendingBookingsAsync_SkipsInvoiceThatWasJustPaid`.
 - **AC-09.4** (error) Given a customer, when they look for a cancel button on a Pending booking, then there is none: customer cancellation was removed, only the reaper clears a Pending invoice. Source: `requirements.md` section 1, "Explicitly not supported (Customer)".
@@ -258,25 +258,20 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - **AC-23.4** (boundary) Given a reply is posted under an unapproved parent, when it is submitted, then it is rejected, so rejecting a comment also stops new replies to it. Source: `MovieServiceTests.AddCommentAsync_InvalidReplyParent_Throws`; `MovieManager.cs:372`.
 - **AC-23.5** (gap) Given the moderation actions above, when the test suite runs, then nothing checks them: no test class calls `ModerateCommentAsync` or `DeleteCommentAsync`.
 
-### US-24 Gift cards
+### US-24 (removed)
 
-- As an Admin, I want to issue and deactivate gift cards, so that I can run promotions or compensate customers without a refund feature.
-
-- **AC-24.1** (success) Given a positive amount, when I issue a card, then it is created active with balance equal to the amount and a generated code. Source: `GiftCardServiceTests.IssueAsync_CreatesCardWithBalanceEqualToAmount`.
-- **AC-24.2** (error) Given an amount that is zero or negative, when I issue, then it fails with "Gift card amount must be positive." Source: `GiftCardServiceTests.IssueAsync_NonPositiveAmount_Throws`; `GiftCardManager.cs:48`.
-- **AC-24.3** (success) Given an issued card, when I deactivate it, then it can no longer be used at checkout; checkout with it fails with "Invalid or expired gift card." Source: `GiftCardManager.cs:64` (`SetActiveAsync`); the message is thrown at `cinemabe/Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs:668`; `BookingServiceTests.CreateBookingAsync_InactiveGiftCard_IsRejectedAndRolledBack`.
-- **AC-24.4** (boundary) Given a depleted or expired card, when a customer validates it, then the answer is "invalid" with a reason, not an error. Source: `GiftCardServiceTests.ValidateAsync_DepletedCard_ReturnsInvalid`, `ValidateAsync_ExpiredCard_ReturnsInvalid`.
+- Gift cards were removed on 2026-11-14 together with the membership-tier percentage discount; this number is kept so other story ids stay stable.
 
 ### US-25 Invoice override
 
 - As an Admin, I want to view and override an invoice's status when something goes wrong operationally, so that I can correct bookings outside the normal customer/gateway flow (being aware that since `0862cb2` the override is limited to constrained, atomic transitions and does not refund a Paid invoice).
 
-- **AC-25.1** (success) Given a Pending invoice, when I move it to Cancelled, then seats are freed and redeemed points, gift-card balance and food stock are restored. Source: `InvoiceAdminManagerTests.UpdateStatus_PendingToCancelled_FreesSeatsAndRestoresReservations`.
+- **AC-25.1** (success) Given a Pending invoice, when I move it to Cancelled, then seats are freed and redeemed points and food stock are restored. Source: `InvoiceAdminManagerTests.UpdateStatus_PendingToCancelled_FreesSeatsAndRestoresReservations`.
 - **AC-25.2** (success) Given a Pending invoice, when I move it to Paid, then a payment row is added and loyalty points accrue exactly once. Source: `InvoiceAdminManagerTests.UpdateStatus_PendingToPaid_AddsPaymentRowAndAccruesLoyaltyOnce`.
-- **AC-25.3** (boundary) Given a Paid invoice, when I move it to Cancelled, then its tickets are deactivated but points and gift-card spend are not refunded. Source: `InvoiceAdminManagerTests.UpdateStatus_PaidToCancelled_DeactivatesTickets_ButDoesNotRefundPointsOrGiftCard`.
+- **AC-25.3** (boundary) Given a Paid invoice, when I move it to Cancelled, then its tickets are deactivated but points spend is not refunded. Source: `InvoiceAdminManagerTests.UpdateStatus_PaidToCancelled_DeactivatesTickets_ButDoesNotRefundPoints`.
 - **AC-25.4** (error) Given a closed invoice, when I try to reopen it, then it is refused and nothing is written. Source: `InvoiceAdminManagerTests.UpdateStatus_ReopeningAClosedInvoice_Throws_NoWrites`.
 - **AC-25.5** (boundary) Given the invoice changed at the same moment, when I submit, then the losing change throws and rolls back. Source: `InvoiceAdminManagerTests.UpdateStatus_LosesTheClaim_ThrowsAndRollsBack`.
-- **AC-25.6** (success) Given a Pending invoice, when I delete it, then points and gift card are restored; deleting a Paid invoice restores nothing. Source: `InvoiceAdminManagerTests.Delete_PendingInvoice_RestoresPointsAndGiftCard`, `Delete_PaidInvoice_DoesNotRestoreAnything`.
+- **AC-25.6** (success) Given a Pending invoice, when I delete it, then points are restored; deleting a Paid invoice restores nothing. Source: `InvoiceAdminManagerTests.Delete_PendingInvoice_RestoresPoints`, `Delete_PaidInvoice_DoesNotRestoreAnything`.
 
 ### US-26 Reports
 
@@ -318,6 +313,6 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 
 ## Explicitly out of scope (do not plan around these as if they exist)
 
-- Nobody — Customer, TheaterStaff, or Admin — can issue a refund or reverse a `Paid` invoice's financial state today; this was built, then fully reverted. A `Paid` invoice can only be cancelled/overridden via the constrained admin status update, which does not reverse points/gift-card spend or touch any payment gateway.
+- Nobody — Customer, TheaterStaff, or Admin — can issue a refund or reverse a `Paid` invoice's financial state today; this was built, then fully reverted. A `Paid` invoice can only be cancelled/overridden via the constrained admin status update, which does not reverse points spend or touch any payment gateway.
 - No role can export a report as a server-generated file — CSV generation happens client-side in the Admin UI from the same JSON the reports endpoints return.
 - Roster/shift scheduling and the manager-override-PIN mechanism were both removed outright (not just hidden) — blocking/unblocking a seat or room, and POS price overrides, now require the `Approvers` role (Admin) directly, with no self-service PIN or roster screen of any kind.

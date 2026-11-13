@@ -2,7 +2,7 @@
 
 > Purpose: What the system currently lets each user type do, derived from the live API surface and role model.
 > Sources: `docs/03-technical/api-spec.md`, `docs/01-business/roles-permissions.md`, `docs/01-business/business-rules.md`, `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs`
-> Last reviewed: 2026-11-12
+> Last reviewed: 2026-11-14
 
 This is a capability inventory of what exists today (verified against code), not a product backlog. Items the business docs call out as removed are listed under "Explicitly not supported" so they aren't mistaken for gaps to fill.
 
@@ -14,14 +14,13 @@ This is a capability inventory of what exists today (verified against code), not
 | Discovery | Browse now-showing/coming-soon/recommended movies, view movie detail + external ratings (OMDb), browse theaters (incl. by movie), view showtimes | `CinemaController` Movies/Theaters/ShowTimes |
 | Reviews | Rate and comment on a movie, but only after watching it (a Paid invoice for a past showtime of that movie) | `CinemaController.RateMovie`/`AddComment` |
 | Promotions | View published promotions, see the active splash banner once per browser session | `GetPublishedPromotionPrograms`, `GetActiveSplashBanner` |
-| Booking | View seat map + live seat-lock state (SignalR), view prices, lock/unlock a seat in real time, apply a discount code / gift card / loyalty points, create a booking, pay via a gateway (VNPay/Sandbox), poll invoice status post-redirect | `PaymentController.*`, `BookingHub` |
+| Booking | View seat map + live seat-lock state (SignalR), view prices, lock/unlock a seat in real time, apply a discount code / loyalty points, create a booking, pay via a gateway (VNPay/Sandbox), poll invoice status post-redirect | `PaymentController.*`, `BookingHub` |
 | Post-purchase | View own invoices/tickets, see e-ticket confirmation (email/SMS) | `GetMyInvoices`, `GetInvoice` |
 | Profile | Update profile, set notification preferences | `IdentityController.UpdateProfile`/`UpdateNotificationPreferences` |
 
 ### Explicitly not supported (Customer)
 - Self-service refund or cancellation of a `Paid` booking — no refund feature exists in current code.
 - Self-service cancellation of a still-Pending booking — `CancelBookingAsync`/`PaymentController.CancelBooking` were removed outright; a Pending booking now only clears via the 15-min stale-booking reaper (`ExpireStalePendingBookingsAsync`), not customer action.
-- Purchasing a gift card as a customer — gift cards are admin-issued only.
 
 ## 2. Theater staff capabilities (CinemaStaff)
 
@@ -45,12 +44,11 @@ This is a capability inventory of what exists today (verified against code), not
 | Pricing & promotions | Manage discounts (code-based), promotion programs (fixed-price/percent-off, schedule-scoped, auto-apply rules), per-theater loyalty rates (default 1,000 VND = 1 point; 100 points = 1,000 VND) |
 | Content ops | Moderate comments (approve/reject/delete), manage news, manage notification templates, manage splash banners, upload images |
 | Users | List/create/update/delete users, assign roles (theater-scoped roles require a valid theater) |
-| Invoices | List invoices, override invoice status (constrained transitions; see business-rules), delete an invoice (restores food stock, redeemed points and gift-card balance if it was Pending), view revenue reports (by day/movie/theater) |
-| Gift cards | Issue, list, activate/deactivate gift cards |
+| Invoices | List invoices, override invoice status (constrained transitions; see business-rules), delete an invoice (restores food stock, redeemed points if it was Pending), view revenue reports (by day/movie/theater) |
 | Staff/ops oversight | Everything TheaterStaff can do, plus: run sales/occupancy/KPI reports, view audit log, approve seat/room blocking and POS price overrides |
 
 ### Explicitly not supported (Admin)
-- Issuing a refund or reversing a `Paid` invoice's financial state through any dedicated mechanism — only `UpdateInvoiceStatus` exists; moving a `Paid` invoice to `Cancelled/Failed` frees its seats but doesn't refund points, gift-card spend or touch any gateway.
+- Issuing a refund or reversing a `Paid` invoice's financial state through any dedicated mechanism — only `UpdateInvoiceStatus` exists; moving a `Paid` invoice to `Cancelled/Failed` frees its seats but doesn't refund points or touch any gateway.
 - Server-side CSV/report file export — reports return JSON; CSV is built client-side in the Admin UI.
 
 ## 4. Cross-cutting / platform requirements

@@ -2,7 +2,7 @@
 
 > Purpose: Four views of the system as Mermaid diagrams: system context, data model (ERD), the booking-to-VNPay-IPN sequence, and deployment.
 > Sources: `docker-compose.yml`, `.github/workflows/ci.yml`, `cinemabe/sql/create_db.sql`, `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/{Program.cs,Controllers/PaymentController.cs,Hubs/BookingHub.cs,Services/PendingBookingReaper.cs}`, `cinemabe/Cinema/2-Business/Cinema.Business/{Managers/BookingManager.cs,Payments/VnPayGateway.cs}`, `cinemabe/Cinema/3-Data/Cinema.Data/Stores/InvoiceStore.cs`, `docs/03-technical/{architecture,integrations,database-schema}.md`
-> Last reviewed: 2026-11-12
+> Last reviewed: 2026-11-14
 
 The layer dependency graph (a fifth view) is in [`architecture.md`](architecture.md) section 2. Each diagram below lists what it was checked against, so a reader can re-verify it.
 
@@ -58,7 +58,7 @@ Checked against: the three apps and ports in `AGENTS.md`; the controllers and hu
 
 ## 2. Data model (ERD)
 
-Core entities and the foreign keys declared in `cinemabe/sql/create_db.sql` (`create_db.sql` creates 43 tables). Not drawn: `ComboItem` (two foreign keys to `FoodAndDrink`: the combo and its component) and `StockMovement` (a foreign key to `FoodAndDrink`); `Holiday`, `News`, `GiftCard`, `Template`, `SplashBanner` and `__EFMigrationsHistory` have no foreign keys; `LoyaltySetting` (`TheaterId`), `ReminderLog` (`UserId`, `ShowTimeId`), `Incident` (theater, room, seat, showtime and user ids) and `AuditLog` (by design) hold plain id columns with no foreign key. Primary keys are `Guid`; `InvoiceTicket` has a composite key.
+Core entities and the foreign keys declared in `cinemabe/sql/create_db.sql` (`create_db.sql` creates 42 tables). Not drawn: `ComboItem` (two foreign keys to `FoodAndDrink`: the combo and its component) and `StockMovement` (a foreign key to `FoodAndDrink`); `Holiday`, `News`, `Template`, `SplashBanner` and `__EFMigrationsHistory` have no foreign keys; `LoyaltySetting` (`TheaterId`), `ReminderLog` (`UserId`, `ShowTimeId`), `Incident` (theater, room, seat, showtime and user ids) and `AuditLog` (by design) hold plain id columns with no foreign key. Primary keys are `Guid`; `InvoiceTicket` has a composite key.
 
 ```mermaid
 erDiagram
@@ -127,7 +127,7 @@ erDiagram
     }
 ```
 
-Checked against: every relationship line is a `FOREIGN KEY` in `create_db.sql`, inline in a `CREATE TABLE` or added by `ALTER TABLE` (extracted by script on 2026-11-12); `FK_Invoice_User_UserId` is inline at `create_db.sql:515`, and the `Theater` and `PromotionProgram` ones are added by `ALTER TABLE` at `create_db.sql:836-843`. `Invoice.UserId` is altered to nullable at `create_db.sql:825-827`. Two guarantees worth knowing: the unique filtered index `IX_InvoiceTicket_ActiveSeat` on `(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1` (`create_db.sql:717`) is what stops double booking across server instances, and `Invoice.GiftCardId` is a plain column with no foreign key (the column is declared at `create_db.sql:507` without a constraint). Field-level detail is in [`database-schema.md`](database-schema.md).
+Checked against: every relationship line is a `FOREIGN KEY` in `create_db.sql`, inline in a `CREATE TABLE` or added by `ALTER TABLE` (extracted by script on 2026-11-12); `FK_Invoice_User_UserId` is inline at `create_db.sql:515`, and the `Theater` and `PromotionProgram` ones are added by `ALTER TABLE` at `create_db.sql:836-843`. `Invoice.UserId` is altered to nullable at `create_db.sql:825-827`. Two guarantees worth knowing: the unique filtered index `IX_InvoiceTicket_ActiveSeat` on `(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1` (`create_db.sql:717`) is what stops double booking across server instances,. Field-level detail is in [`database-schema.md`](database-schema.md).
 
 ## 3. Booking, VNPay IPN and confirmation
 
@@ -147,7 +147,7 @@ sequenceDiagram
     C->>H: JoinRoom, LockSeat (advisory, 5 min, in memory)
     H-->>C: SeatLocked broadcast to the room
 
-    C->>A: CreateBooking (seats, code, points, gift card)
+    C->>A: CreateBooking (seats, code, points)
     A->>B: CreateBookingAsync
     B->>D: begin transaction, insert Invoice (Pending) and InvoiceTicket rows
     alt a seat was taken by someone else
@@ -192,7 +192,7 @@ sequenceDiagram
         A-->>C: Paid, Pending ("payment pending") or Cancelled
     end
 
-    Note over B,D: An unsuccessful payment never sets Failed, only the admin status override can. PendingBookingReaper runs every minute and cancels Pending invoices older than 15 min (30 min once payment was started), freeing seats and restoring points and gift card
+    Note over B,D: An unsuccessful payment never sets Failed, only the admin status override can. PendingBookingReaper runs every minute and cancels Pending invoices older than 15 min (30 min once payment was started), freeing seats and restoring points
 ```
 
 Checked against: `PaymentController.cs:74` (CreateBooking), `:297`/`:313` (GetInvoice family), `:166` (IPN reply built by `VnPayGateway.BuildIpnResponse`); `BookingManager.cs:1086` (atomic Pending to Paid claim) and `:1831`, `:1856` (reaper claim); the codes 00/01/02/04/97/99 in `business-rules.md` section 3; `BookingHub.cs:22-49` (`SeatLocked`/`SeatUnlocked`; `SeatBooked` is sent from `BookingManager` through `ISeatNotificationService`); `payment-return.component.ts:18-19` (2 s, 15 attempts); `VnPayGateway.cs:74` (15 minute expiry); `PendingBookingReaper.cs:12-13`. The unsuccessful-payment branch is `BookingManager.cs:1059-1061` (`PaymentFailedAcknowledged`); `InvoiceStatus.Failed` is reached only through `InvoiceAdminManager.UpdateStatusAsync` (`InvoiceAdminManager.cs:42-62`). Unresolved gateway outcomes (for example a payment confirmed after the invoice was cancelled) answer `RspCode` 02 and produce no ticket (`business-rules.md` section 2).
