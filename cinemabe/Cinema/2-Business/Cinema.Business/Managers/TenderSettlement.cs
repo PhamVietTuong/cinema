@@ -6,8 +6,8 @@ namespace Cinema.Business.Managers;
 
 /// <summary>
 /// Pure rules for splitting a counter sale's amount due across tenders. Cash is the only tender that may overpay
-/// (change is returned); Card and QrWallet are exact and need a terminal reference. Points and gift cards are not
-/// tenders here: they are applied while pricing the sale (<c>PointsToRedeem</c> / <c>GiftCardCode</c>).
+/// (change is returned); Card and QrWallet are exact and need a terminal reference. Points are not a
+/// tender here: they are applied while pricing the sale (<c>PointsToRedeem</c>).
 /// All amounts are whole VND.
 /// </summary>
 public static class TenderSettlement
@@ -49,7 +49,7 @@ public static class TenderSettlement
                     payments.Add(new InvoicePayment { Method = tender.Method, Amount = amount, Reference = reference });
                     break;
                 default:
-                    throw new InvalidOperationException("Only Cash, Card and QrWallet can be tendered; use points or a gift card code to apply those.");
+                    throw new InvalidOperationException("Only Cash, Card and QrWallet can be tendered; use points to apply those.");
             }
         }
 

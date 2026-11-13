@@ -24,7 +24,7 @@ public class PaymentControllerCallbackTests
         gateway.Setup(g => g.Name).Returns(resolvedGatewayName);
         _gatewaysMock.Setup(r => r.Resolve(It.IsAny<string?>())).Returns(gateway.Object);
 
-        return new PaymentController(_bookingManagerMock.Object, null!, null!, _gatewaysMock.Object)
+        return new PaymentController(_bookingManagerMock.Object, null!, _gatewaysMock.Object)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };

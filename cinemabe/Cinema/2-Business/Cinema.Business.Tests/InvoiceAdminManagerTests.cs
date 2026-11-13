@@ -42,41 +42,31 @@ public class InvoiceAdminManagerTests
     public async Task UpdateStatus_PendingToCancelled_FreesSeatsAndRestoresReservations()
     {
         var userId = Guid.NewGuid();
-        var cardId = Guid.NewGuid();
         var user = new User { Id = userId, Points = 10 };
-        var card = new GiftCard { Id = cardId, Balance = 5_000 };
         var invoice = Setup(InvoiceStatus.Pending, userId);
         invoice.PointsRedeemed = 500;
-        invoice.GiftCardId = cardId;
-        invoice.GiftCardAmount = 20_000;
         _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(user);
         _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
-        _uowMock.Setup(u => u.GiftCardStore.GetByIdAsync(cardId)).ReturnsAsync(card);
-        _uowMock.Setup(u => u.GiftCardStore.UpdateAsync(card)).ReturnsAsync(card);
 
         var dto = await _sut.UpdateStatusAsync(new UpdateInvoiceStatusRequest { Id = invoice.Id, Status = InvoiceStatus.Cancelled });
 
         dto.Status.Should().Be(InvoiceStatus.Cancelled);
         invoice.FoodStatus.Should().Be(FoodOrderStatus.Cancelled);
         user.Points.Should().Be(510);
-        card.Balance.Should().Be(25_000);
         _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task UpdateStatus_PaidToCancelled_DeactivatesTickets_ButDoesNotRefundPointsOrGiftCard()
+    public async Task UpdateStatus_PaidToCancelled_DeactivatesTickets_ButDoesNotRefundPoints()
     {
         var invoice = Setup(InvoiceStatus.Paid, Guid.NewGuid());
         invoice.PointsRedeemed = 500;
-        invoice.GiftCardId = Guid.NewGuid();
-        invoice.GiftCardAmount = 20_000;
 
         await _sut.UpdateStatusAsync(new UpdateInvoiceStatusRequest { Id = invoice.Id, Status = InvoiceStatus.Cancelled });
 
         _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
         _uowMock.Verify(u => u.UserStore.UpdateAsync(It.IsAny<User>()), Times.Never);
-        _uowMock.Verify(u => u.GiftCardStore.UpdateAsync(It.IsAny<GiftCard>()), Times.Never);
     }
 
     [Fact]
@@ -128,25 +118,18 @@ public class InvoiceAdminManagerTests
     }
 
     [Fact]
-    public async Task Delete_PendingInvoice_RestoresPointsAndGiftCard()
+    public async Task Delete_PendingInvoice_RestoresPoints()
     {
         var userId = Guid.NewGuid();
-        var cardId = Guid.NewGuid();
         var user = new User { Id = userId, Points = 0 };
-        var card = new GiftCard { Id = cardId, Balance = 0 };
         var invoice = Setup(InvoiceStatus.Pending, userId);
         invoice.PointsRedeemed = 300;
-        invoice.GiftCardId = cardId;
-        invoice.GiftCardAmount = 15_000;
         _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(user);
         _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
-        _uowMock.Setup(u => u.GiftCardStore.GetByIdAsync(cardId)).ReturnsAsync(card);
-        _uowMock.Setup(u => u.GiftCardStore.UpdateAsync(card)).ReturnsAsync(card);
 
         await _sut.DeleteAsync(invoice.Id);
 
         user.Points.Should().Be(300);
-        card.Balance.Should().Be(15_000);
         _uowMock.Verify(u => u.InvoiceStore.DeleteAsync(invoice.Id), Times.Once);
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }

@@ -51,7 +51,6 @@ public class BoxOfficeTests
         _sut = new BoxOfficeManager(_uowMock.Object, _booking);
         // Points and gift-card balance are spent through atomic conditional UPDATEs; succeed by default.
         _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
-        _uowMock.Setup(u => u.GiftCardStore.TryDrawBalanceAsync(It.IsAny<Guid>(), It.IsAny<double>())).ReturnsAsync(true);
 
         _staff = NewUser(RoleNames.TheaterStaff, _theaterId);
         _manager = NewUser(RoleNames.Admin, _theaterId);
@@ -347,26 +346,22 @@ public class BoxOfficeTests
     }
 
     [Fact]
-    public async Task Sell_PointsAndGiftCard_AreRecordedAsPaymentRowsAndReduceTheAmountToTender()
+    public async Task Sell_Points_AreRecordedAsPaymentRowAndReduceTheAmountToTender()
     {
         var member = NewUser(RoleNames.Customer, null);
         member.Points = 600;
-        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC1"))
-            .ReturnsAsync(new GiftCard { Id = Guid.NewGuid(), Code = "GC1", IsActive = true, Balance = 20000 });
         var request = SeatSale(_seatA);
         request.CustomerUserId = member.Id;
         request.PointsToRedeem = 500;   // default rate: 1 point = 10 VND
-        request.GiftCardCode = "GC1";
-        request.Tenders = new List<TenderLine> { Card(75000) };
+        request.Tenders = new List<TenderLine> { Card(95000) };
 
         var result = await _sut.SellAsync(_theaterId, _staff.Id, false, request);
 
-        result.FinalAmount.Should().Be(75000);
+        result.FinalAmount.Should().Be(95000);
         var invoice = _created.Single();
         invoice.PointsRedeemed.Should().Be(500);
         invoice.Payments.Should().ContainSingle(p => p.Method == PaymentTender.Points && p.Amount == 5000);
-        invoice.Payments.Should().ContainSingle(p => p.Method == PaymentTender.GiftCard && p.Amount == 20000 && p.Reference == "GC1");
-        invoice.Payments.Should().ContainSingle(p => p.Method == PaymentTender.Card && p.Amount == 75000);
+        invoice.Payments.Should().ContainSingle(p => p.Method == PaymentTender.Card && p.Amount == 95000);
     }
 
     // ── Price override ───────────────────────────────────────────────────────────
@@ -422,28 +417,22 @@ public class BoxOfficeTests
     {
         var member = NewUser(RoleNames.Customer, null);
         member.Points = 600;
-        var card = new GiftCard { Id = Guid.NewGuid(), Code = "GC1", IsActive = true, Balance = 20000 };
-        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC1")).ReturnsAsync(card);
         var request = SeatSale(_seatA);
         request.Foods = new List<CounterFoodItem> { new() { FoodAndDrinkId = _cola.Id, Quantity = 2 } };
         request.CustomerUserId = member.Id;
         request.PointsToRedeem = 500;   // default rate: 1 point = 10 VND
-        request.GiftCardCode = "GC1";
 
         var quote = await _sut.QuoteAsync(_theaterId, request);
 
         quote.TotalAmount.Should().Be(160000);
         quote.PointsValue.Should().Be(5000);
-        quote.GiftCardAmount.Should().Be(20000);
         quote.DiscountAmount.Should().Be(0);
-        quote.FinalAmount.Should().Be(135000);
+        quote.FinalAmount.Should().Be(155000);
         quote.Lines.Should().HaveCount(2);
 
         member.Points.Should().Be(600);
-        card.Balance.Should().Be(20000);
         _uowMock.Verify(u => u.FoodAndDrinkStore.TryApplyStockDeltaAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
         _uowMock.Verify(u => u.UserStore.UpdateAsync(It.IsAny<User>()), Times.Never);
-        _uowMock.Verify(u => u.GiftCardStore.UpdateAsync(It.IsAny<GiftCard>()), Times.Never);
         _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
         _uowMock.Verify(u => u.StockMovementStore.CreateRangeAsync(It.IsAny<List<StockMovement>>()), Times.Never);
         _uowMock.Verify(u => u.BeginTransactionAsync(), Times.Never);
@@ -691,7 +680,6 @@ public class BoxOfficeTests
 
     [Theory]
     [InlineData(PaymentTender.Points)]
-    [InlineData(PaymentTender.GiftCard)]
     [InlineData(PaymentTender.Online)]
     public void Settle_OnlyCashCardAndQrCanBeTendered(PaymentTender method)
     {

@@ -242,7 +242,7 @@ BEGIN
     EXEC('CREATE INDEX [IX_Invoice_TheaterId_PaidAt] ON [Invoice] ([TheaterId], [PaidAt])');
 END
 
--- One row per tender applied to an invoice (Method: 0 Cash, 1 Card, 2 QrWallet, 3 GiftCard, 4 Points, 5 Online).
+-- One row per tender applied to an invoice (Method: 0 Cash, 1 Card, 2 QrWallet, 3 retired (never reuse), 4 Points, 5 Online).
 IF OBJECT_ID('dbo.InvoicePayment', 'U') IS NULL
 BEGIN
     CREATE TABLE [InvoicePayment] (
@@ -1217,6 +1217,87 @@ BEGIN
     CREATE UNIQUE INDEX [IX_Evaluation_MovieId_UserId] ON [Evaluation] ([MovieId], [UserId]);
 END
 -- ===== end Evaluation unique (MovieId, UserId) =====
+
+-- ============================================================
+-- Discount simplification (2026-11-14): remove gift cards and the membership-tier percentage discount
+-- ============================================================
+-- Only two mechanisms stay: one PromotionProgram per invoice, then points redemption.
+-- DESTRUCTIVE. Owner decision 2026-11-14: every trace of gift cards goes, including the invoices that used one.
+-- Apply to the local dev database only. Any other environment needs the owner's fresh confirmation and a
+-- verified backup first. Idempotent: each step is guarded and a second run changes nothing.
+
+-- Step 1 (purge): delete each invoice that used a gift card (Invoice.GiftCardAmount > 0, or an InvoicePayment with
+-- Method = 3) together with its tickets, payments and food lines. Runs before the columns/table are dropped.
+-- Dynamic SQL so the batch compiles on a database where the columns are already gone.
+IF COL_LENGTH('dbo.Invoice', 'GiftCardAmount') IS NOT NULL
+BEGIN
+    EXEC('
+    SET QUOTED_IDENTIFIER ON; -- Invoice has a filtered index, which DML requires this for (sqlcmd defaults it OFF)
+    DECLARE @GiftInvoices TABLE ([Id] uniqueidentifier PRIMARY KEY);
+    INSERT INTO @GiftInvoices ([Id])
+    SELECT [Id] FROM [Invoice] WHERE [GiftCardAmount] > 0
+    UNION
+    SELECT [InvoiceId] FROM [InvoicePayment] WHERE [Method] = 3;
+
+    DELETE FROM [InvoiceTicket]       WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
+    DELETE FROM [InvoicePayment]      WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
+    DELETE FROM [InvoiceFoodAndDrink] WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
+    DELETE FROM [Invoice]             WHERE [Id]        IN (SELECT [Id] FROM @GiftInvoices);
+    ');
+END
+
+-- Step 2: drop the gift-card columns on Invoice (the unnamed DEFAULT on GiftCardAmount is looked up by name).
+DECLARE @dc sysname;
+SELECT @dc = dc.[name] FROM sys.default_constraints dc
+JOIN sys.columns c ON c.[object_id] = dc.[parent_object_id] AND c.[column_id] = dc.[parent_column_id]
+WHERE dc.[parent_object_id] = OBJECT_ID('dbo.Invoice') AND c.[name] = 'GiftCardAmount';
+IF @dc IS NOT NULL
+BEGIN
+    EXEC('ALTER TABLE [Invoice] DROP CONSTRAINT [' + @dc + ']');
+END
+IF COL_LENGTH('dbo.Invoice', 'GiftCardAmount') IS NOT NULL
+BEGIN
+    ALTER TABLE [Invoice] DROP COLUMN [GiftCardAmount];
+END
+IF COL_LENGTH('dbo.Invoice', 'GiftCardId') IS NOT NULL
+BEGIN
+    ALTER TABLE [Invoice] DROP COLUMN [GiftCardId];
+END
+
+-- Step 3: drop the GiftCard table (its unique index goes with it).
+IF OBJECT_ID('dbo.GiftCard', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE [GiftCard];
+END
+
+-- Step 4: drop PromotionProgram.StacksWithMembershipDiscount (look up its unnamed DEFAULT first).
+SET @dc = NULL;
+SELECT @dc = dc.[name] FROM sys.default_constraints dc
+JOIN sys.columns c ON c.[object_id] = dc.[parent_object_id] AND c.[column_id] = dc.[parent_column_id]
+WHERE dc.[parent_object_id] = OBJECT_ID('dbo.PromotionProgram') AND c.[name] = 'StacksWithMembershipDiscount';
+IF @dc IS NOT NULL
+BEGIN
+    EXEC('ALTER TABLE [PromotionProgram] DROP CONSTRAINT [' + @dc + ']');
+END
+IF COL_LENGTH('dbo.PromotionProgram', 'StacksWithMembershipDiscount') IS NOT NULL
+BEGIN
+    ALTER TABLE [PromotionProgram] DROP COLUMN [StacksWithMembershipDiscount];
+END
+
+-- Step 5: drop MemberShip.DiscountPercent (the tier percentage discount is gone; tiers keep their point ranges).
+SET @dc = NULL;
+SELECT @dc = dc.[name] FROM sys.default_constraints dc
+JOIN sys.columns c ON c.[object_id] = dc.[parent_object_id] AND c.[column_id] = dc.[parent_column_id]
+WHERE dc.[parent_object_id] = OBJECT_ID('dbo.MemberShip') AND c.[name] = 'DiscountPercent';
+IF @dc IS NOT NULL
+BEGIN
+    EXEC('ALTER TABLE [MemberShip] DROP CONSTRAINT [' + @dc + ']');
+END
+IF COL_LENGTH('dbo.MemberShip', 'DiscountPercent') IS NOT NULL
+BEGIN
+    ALTER TABLE [MemberShip] DROP COLUMN [DiscountPercent];
+END
+-- ===== end discount simplification =====
 
 -- ============================================================
 -- EF Core migrations baseline

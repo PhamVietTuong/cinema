@@ -102,7 +102,6 @@ public class InvoiceAdminManager : IInvoiceAdminManager
                 {
                     // Nothing was paid, so what the booking reserved goes back to the customer.
                     await InvoiceLifecycle.RestoreRedeemedPointsAsync(_uow, invoice);
-                    await InvoiceLifecycle.RestoreGiftCardAsync(_uow, invoice);
                     await FoodStockRestorer.RestoreAsync(_uow, new[] { invoice.Id }, "Cancelled", null);
                 }
             }
@@ -135,7 +134,6 @@ public class InvoiceAdminManager : IInvoiceAdminManager
         {
             await FoodStockRestorer.RestoreAsync(_uow, new[] { id }, "Deleted", null);
             await InvoiceLifecycle.RestoreRedeemedPointsAsync(_uow, invoice);
-            await InvoiceLifecycle.RestoreGiftCardAsync(_uow, invoice);
             await _uow.InvoiceStore.DeleteAsync(id);
             await _uow.CommitTransactionAsync();
         }

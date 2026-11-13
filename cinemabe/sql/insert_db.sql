@@ -38,12 +38,12 @@ DECLARE @MemberGold     uniqueidentifier = NEWID();
 DECLARE @MemberPlatinum uniqueidentifier = NEWID();
 DECLARE @MemberDiamond  uniqueidentifier = NEWID();
 
-INSERT INTO [MemberShip] ([Id], [Name], [MinPoints], [MaxPoints], [DiscountPercent], [CreationTime]) VALUES
-(@MemberBronze,   N'Hạng Đồng',        0,     999,   0,  GETUTCDATE()),
-(@MemberSilver,   N'Hạng Bạc',         1000,  4999,  5,  GETUTCDATE()),
-(@MemberGold,     N'Hạng Vàng',        5000,  9999,  10, GETUTCDATE()),
-(@MemberPlatinum, N'Hạng Bạch Kim',    10000, 19999, 12, GETUTCDATE()),
-(@MemberDiamond,  N'Hạng Kim Cương',   20000, 99999, 15, GETUTCDATE());
+INSERT INTO [MemberShip] ([Id], [Name], [MinPoints], [MaxPoints], [CreationTime]) VALUES
+(@MemberBronze,   N'Hạng Đồng',        0,     999,  GETUTCDATE()),
+(@MemberSilver,   N'Hạng Bạc',         1000,  4999,  GETUTCDATE()),
+(@MemberGold,     N'Hạng Vàng',        5000,  9999, GETUTCDATE()),
+(@MemberPlatinum, N'Hạng Bạch Kim',    10000, 19999, GETUTCDATE()),
+(@MemberDiamond,  N'Hạng Kim Cương',   20000, 99999, GETUTCDATE());
 
 -- ── Movie Types ───────────────────────────────────────────────────────────────
 DECLARE @MTActionMovie uniqueidentifier = NEWID();
@@ -76,28 +76,28 @@ INSERT INTO [MovieType] ([Id], [Name], [CreationTime]) VALUES
 INSERT INTO [PromotionProgram]
     ([Id], [Title], [Summary], [Mechanic], [PercentOff], [Eligibility],
      [StartDate], [EndDate], [MaxUsage], [UsedCount], [IsPublished],
-     [AutoApply], [Code], [MaxDiscountAmount], [MovieId], [StacksWithMembershipDiscount],
+     [AutoApply], [Code], [MaxDiscountAmount], [MovieId],
      [DisplayOrder], [CreationTime])
 VALUES
 (NEWID(), N'Giảm 10% cho thành viên mới', N'Giảm 10% cho thành viên mới', 2, 10, 0,
     GETUTCDATE(), DATEADD(year, 1, GETUTCDATE()), 500, 0, 1,
-    0, N'WELCOME10', 20000, NULL, 1,
+    0, N'WELCOME10', 20000, NULL,
     0, GETUTCDATE()),
 (NEWID(), N'Ưu đãi hè - giảm 20%', N'Ưu đãi hè - giảm 20%', 2, 20, 0,
     GETUTCDATE(), DATEADD(month, 3, GETUTCDATE()), 200, 0, 1,
-    0, N'SUMMER20', 40000, NULL, 1,
+    0, N'SUMMER20', 40000, NULL,
     0, GETUTCDATE()),
 (NEWID(), N'Giảm 15% khi xuất trình thẻ học sinh, sinh viên', N'Giảm 15% khi xuất trình thẻ học sinh, sinh viên', 2, 15, 0,
     GETUTCDATE(), DATEADD(year, 1, GETUTCDATE()), 1000, 0, 1,
-    0, N'STUDENT15', 30000, NULL, 1,
+    0, N'STUDENT15', 30000, NULL,
     0, GETUTCDATE()),
 (NEWID(), N'Giảm 30% cho ghế đôi vào cuối tuần', N'Giảm 30% cho ghế đôi vào cuối tuần', 2, 30, 0,
     GETUTCDATE(), DATEADD(month, 6, GETUTCDATE()), 100, 0, 1,
-    0, N'COUPLE30', 60000, NULL, 1,
+    0, N'COUPLE30', 60000, NULL,
     0, GETUTCDATE()),
 (NEWID(), N'Ưu đãi Ngày Vui Thứ Ba - giảm 25% tất cả vé', N'Ưu đãi Ngày Vui Thứ Ba - giảm 25% tất cả vé', 2, 25, 0,
     GETUTCDATE(), DATEADD(month, 6, GETUTCDATE()), NULL, 0, 1,
-    1, NULL, 50000, NULL, 1,
+    1, NULL, 50000, NULL,
     0, GETUTCDATE());
 
 -- HAPPYTUESDAY is Tuesday-only (DaysOfWeekMask bit2) and applies at every theater (TheaterId NULL).
@@ -15425,44 +15425,44 @@ GO
 INSERT INTO [PromotionProgram]
     ([Id], [Title], [Summary], [Mechanic], [PercentOff], [Eligibility],
      [StartDate], [EndDate], [MaxUsage], [UsedCount], [IsPublished],
-     [AutoApply], [Code], [MaxDiscountAmount], [MovieId], [StacksWithMembershipDiscount],
+     [AutoApply], [Code], [MaxDiscountAmount], [MovieId],
      [DisplayOrder], [CreationTime])
 VALUES
 -- Code promos
-(NEWID(), N'Giảm 5% cho khách hàng mới', N'Giảm 5% cho khách hàng mới', 2, 5, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 1000, 0, 1, 0, N'NEWCUSTOMER5', 15000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 20% cho nhóm từ 4 vé trở lên', N'Giảm 20% cho nhóm từ 4 vé trở lên', 2, 20, 0, GETUTCDATE(), DATEADD(month,6,GETUTCDATE()), 300, 0, 1, 0, N'FAMILY20', 50000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 25% dịp sinh nhật thành viên', N'Giảm 25% dịp sinh nhật thành viên', 2, 25, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 150, 0, 1, 0, N'BIRTHDAY25', 60000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 10% cho hội viên VIP', N'Giảm 10% cho hội viên VIP', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 500, 0, 1, 0, N'VIP10', 30000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Flash sale giảm 50% số lượng có hạn', N'Flash sale giảm 50% số lượng có hạn', 2, 50, 0, GETUTCDATE(), DATEADD(day,14,GETUTCDATE()), 50, 0, 1, 0, N'FLASH50', 80000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 15% khi giới thiệu bạn bè', N'Giảm 15% khi giới thiệu bạn bè', 2, 15, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 400, 0, 1, 0, N'REFER15', 35000, NULL, 1, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 5% cho khách hàng mới', N'Giảm 5% cho khách hàng mới', 2, 5, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 1000, 0, 1, 0, N'NEWCUSTOMER5', 15000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 20% cho nhóm từ 4 vé trở lên', N'Giảm 20% cho nhóm từ 4 vé trở lên', 2, 20, 0, GETUTCDATE(), DATEADD(month,6,GETUTCDATE()), 300, 0, 1, 0, N'FAMILY20', 50000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 25% dịp sinh nhật thành viên', N'Giảm 25% dịp sinh nhật thành viên', 2, 25, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 150, 0, 1, 0, N'BIRTHDAY25', 60000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 10% cho hội viên VIP', N'Giảm 10% cho hội viên VIP', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 500, 0, 1, 0, N'VIP10', 30000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Flash sale giảm 50% số lượng có hạn', N'Flash sale giảm 50% số lượng có hạn', 2, 50, 0, GETUTCDATE(), DATEADD(day,14,GETUTCDATE()), 50, 0, 1, 0, N'FLASH50', 80000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 15% khi giới thiệu bạn bè', N'Giảm 15% khi giới thiệu bạn bè', 2, 15, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 400, 0, 1, 0, N'REFER15', 35000, NULL, 0, GETUTCDATE()),
 -- Auto-apply by day of week (DaysOfWeekMask bit0=Sunday..bit6=Saturday) — applies at every theater
-(NEWID(), N'Ưu đãi cuối tuần - tự động giảm 15%', N'Ưu đãi cuối tuần - tự động giảm 15%', 2, 15, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 40000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Ưu đãi Thứ Hai đầu tuần - tự động giảm 12%', N'Ưu đãi Thứ Hai đầu tuần - tự động giảm 12%', 2, 12, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 30000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Ưu đãi Thứ Tư vui vẻ - tự động giảm 10%', N'Ưu đãi Thứ Tư vui vẻ - tự động giảm 10%', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 25000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Ưu đãi Thứ Sáu cuối tuần - tự động giảm 18%', N'Ưu đãi Thứ Sáu cuối tuần - tự động giảm 18%', 2, 18, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 45000, NULL, 1, 0, GETUTCDATE()),
+(NEWID(), N'Ưu đãi cuối tuần - tự động giảm 15%', N'Ưu đãi cuối tuần - tự động giảm 15%', 2, 15, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 40000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Ưu đãi Thứ Hai đầu tuần - tự động giảm 12%', N'Ưu đãi Thứ Hai đầu tuần - tự động giảm 12%', 2, 12, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 30000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Ưu đãi Thứ Tư vui vẻ - tự động giảm 10%', N'Ưu đãi Thứ Tư vui vẻ - tự động giảm 10%', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 25000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Ưu đãi Thứ Sáu cuối tuần - tự động giảm 18%', N'Ưu đãi Thứ Sáu cuối tuần - tự động giảm 18%', 2, 18, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 45000, NULL, 0, GETUTCDATE()),
 -- Time-of-day windows — applies at every theater
-(NEWID(), N'Suất chiếu sớm (8h-12h) - tự động giảm 10%', N'Suất chiếu sớm (8h-12h) - tự động giảm 10%', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 20000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Suất chiếu buổi trưa các ngày trong tuần - tự động giảm 12%', N'Suất chiếu buổi trưa các ngày trong tuần - tự động giảm 12%', 2, 12, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 25000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Suất chiếu khuya (22h-23h59) - tự động giảm 20%', N'Suất chiếu khuya (22h-23h59) - tự động giảm 20%', 2, 20, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 40000, NULL, 1, 0, GETUTCDATE()),
+(NEWID(), N'Suất chiếu sớm (8h-12h) - tự động giảm 10%', N'Suất chiếu sớm (8h-12h) - tự động giảm 10%', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 20000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Suất chiếu buổi trưa các ngày trong tuần - tự động giảm 12%', N'Suất chiếu buổi trưa các ngày trong tuần - tự động giảm 12%', 2, 12, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 25000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Suất chiếu khuya (22h-23h59) - tự động giảm 20%', N'Suất chiếu khuya (22h-23h59) - tự động giảm 20%', 2, 20, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), NULL, 0, 1, 1, NULL, 40000, NULL, 0, GETUTCDATE()),
 -- Expired
-(NEWID(), N'Khuyến mãi đã kết thúc (demo dữ liệu quá hạn)', N'Khuyến mãi đã kết thúc (demo dữ liệu quá hạn)', 2, 10, 0, DATEADD(month,-6,GETUTCDATE()), DATEADD(month,-2,GETUTCDATE()), 200, 180, 1, 0, N'OLDPROMO1', 20000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Khuyến mãi theo mùa đã kết thúc (demo dữ liệu quá hạn)', N'Khuyến mãi theo mùa đã kết thúc (demo dữ liệu quá hạn)', 2, 15, 0, DATEADD(month,-8,GETUTCDATE()), DATEADD(month,-4,GETUTCDATE()), 150, 120, 1, 0, N'OLDPROMO2', 30000, NULL, 1, 0, GETUTCDATE()),
+(NEWID(), N'Khuyến mãi đã kết thúc (demo dữ liệu quá hạn)', N'Khuyến mãi đã kết thúc (demo dữ liệu quá hạn)', 2, 10, 0, DATEADD(month,-6,GETUTCDATE()), DATEADD(month,-2,GETUTCDATE()), 200, 180, 1, 0, N'OLDPROMO1', 20000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Khuyến mãi theo mùa đã kết thúc (demo dữ liệu quá hạn)', N'Khuyến mãi theo mùa đã kết thúc (demo dữ liệu quá hạn)', 2, 15, 0, DATEADD(month,-8,GETUTCDATE()), DATEADD(month,-4,GETUTCDATE()), 150, 120, 1, 0, N'OLDPROMO2', 30000, NULL, 0, GETUTCDATE()),
 -- Not yet started
-(NEWID(), N'Khuyến mãi sắp diễn ra', N'Khuyến mãi sắp diễn ra', 2, 15, 0, DATEADD(day,30,GETUTCDATE()), DATEADD(day,120,GETUTCDATE()), 300, 0, 1, 0, N'COMINGSOON1', 30000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Khuyến mãi theo mùa sắp diễn ra', N'Khuyến mãi theo mùa sắp diễn ra', 2, 20, 0, DATEADD(day,30,GETUTCDATE()), DATEADD(day,150,GETUTCDATE()), 200, 0, 1, 0, N'COMINGSOON2', 40000, NULL, 1, 0, GETUTCDATE()),
+(NEWID(), N'Khuyến mãi sắp diễn ra', N'Khuyến mãi sắp diễn ra', 2, 15, 0, DATEADD(day,30,GETUTCDATE()), DATEADD(day,120,GETUTCDATE()), 300, 0, 1, 0, N'COMINGSOON1', 30000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Khuyến mãi theo mùa sắp diễn ra', N'Khuyến mãi theo mùa sắp diễn ra', 2, 20, 0, DATEADD(day,30,GETUTCDATE()), DATEADD(day,150,GETUTCDATE()), 200, 0, 1, 0, N'COMINGSOON2', 40000, NULL, 0, GETUTCDATE()),
 -- Inactive (IsPublished = 0)
-(NEWID(), N'Mã khuyến mãi đã bị vô hiệu hóa', N'Mã khuyến mãi đã bị vô hiệu hóa', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 100, 0, 0, 0, N'INACTIVE1', 20000, NULL, 1, 0, GETUTCDATE()),
+(NEWID(), N'Mã khuyến mãi đã bị vô hiệu hóa', N'Mã khuyến mãi đã bị vô hiệu hóa', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 100, 0, 0, 0, N'INACTIVE1', 20000, NULL, 0, GETUTCDATE()),
 -- Used up
-(NEWID(), N'Mã khuyến mãi đã hết lượt sử dụng', N'Mã khuyến mãi đã hết lượt sử dụng', 2, 15, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 100, 100, 1, 0, N'MAXEDOUT', 25000, NULL, 1, 0, GETUTCDATE()),
+(NEWID(), N'Mã khuyến mãi đã hết lượt sử dụng', N'Mã khuyến mãi đã hết lượt sử dụng', 2, 15, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 100, 100, 1, 0, N'MAXEDOUT', 25000, NULL, 0, GETUTCDATE()),
 -- Theater-specific (Schedule rows added below)
-(NEWID(), N'Giảm 10% tại các cụm rạp hàng đầu', N'Giảm 10% tại các cụm rạp hàng đầu', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 500, 0, 1, 0, N'FLAGSHIP10', 30000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 15% tại các rạp khu vực TP. Hồ Chí Minh', N'Giảm 15% tại các rạp khu vực TP. Hồ Chí Minh', 2, 15, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 500, 0, 1, 0, N'SAIGON15', 35000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 12% tại các rạp khu vực Hà Nội', N'Giảm 12% tại các rạp khu vực Hà Nội', 2, 12, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 500, 0, 1, 0, N'HANOI12', 30000, NULL, 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 20% tại các rạp ven biển và cao nguyên', N'Giảm 20% tại các rạp ven biển và cao nguyên', 2, 20, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 300, 0, 1, 0, N'COASTAL20', 40000, NULL, 1, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 10% tại các cụm rạp hàng đầu', N'Giảm 10% tại các cụm rạp hàng đầu', 2, 10, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 500, 0, 1, 0, N'FLAGSHIP10', 30000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 15% tại các rạp khu vực TP. Hồ Chí Minh', N'Giảm 15% tại các rạp khu vực TP. Hồ Chí Minh', 2, 15, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 500, 0, 1, 0, N'SAIGON15', 35000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 12% tại các rạp khu vực Hà Nội', N'Giảm 12% tại các rạp khu vực Hà Nội', 2, 12, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 500, 0, 1, 0, N'HANOI12', 30000, NULL, 0, GETUTCDATE()),
+(NEWID(), N'Giảm 20% tại các rạp ven biển và cao nguyên', N'Giảm 20% tại các rạp ven biển và cao nguyên', 2, 20, 0, GETUTCDATE(), DATEADD(year,1,GETUTCDATE()), 300, 0, 1, 0, N'COASTAL20', 40000, NULL, 0, GETUTCDATE()),
 -- Movie-specific
-(NEWID(), N'Giảm 20% khi xem Wicked', N'Giảm 20% khi xem Wicked', 2, 20, 0, GETUTCDATE(), DATEADD(month,6,GETUTCDATE()), 300, 0, 1, 0, N'WICKEDFAN', 50000, (SELECT Id FROM [Movie] WHERE Slug = N'wicked'), 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 15% khi xem Bố Già cùng gia đình', N'Giảm 15% khi xem Bố Già cùng gia đình', 2, 15, 0, GETUTCDATE(), DATEADD(month,6,GETUTCDATE()), 300, 0, 1, 0, N'BOGIAFAMILY', 30000, (SELECT Id FROM [Movie] WHERE Slug = N'bo-gia'), 1, 0, GETUTCDATE()),
-(NEWID(), N'Giảm 25% khi xem Deadpool & Wolverine', N'Giảm 25% khi xem Deadpool & Wolverine', 2, 25, 0, GETUTCDATE(), DATEADD(month,6,GETUTCDATE()), 200, 0, 1, 0, N'DEADPOOLVIP', 50000, (SELECT Id FROM [Movie] WHERE Slug = N'deadpool-wolverine'), 1, 0, GETUTCDATE());
+(NEWID(), N'Giảm 20% khi xem Wicked', N'Giảm 20% khi xem Wicked', 2, 20, 0, GETUTCDATE(), DATEADD(month,6,GETUTCDATE()), 300, 0, 1, 0, N'WICKEDFAN', 50000, (SELECT Id FROM [Movie] WHERE Slug = N'wicked'), 0, GETUTCDATE()),
+(NEWID(), N'Giảm 15% khi xem Bố Già cùng gia đình', N'Giảm 15% khi xem Bố Già cùng gia đình', 2, 15, 0, GETUTCDATE(), DATEADD(month,6,GETUTCDATE()), 300, 0, 1, 0, N'BOGIAFAMILY', 30000, (SELECT Id FROM [Movie] WHERE Slug = N'bo-gia'), 0, GETUTCDATE()),
+(NEWID(), N'Giảm 25% khi xem Deadpool & Wolverine', N'Giảm 25% khi xem Deadpool & Wolverine', 2, 25, 0, GETUTCDATE(), DATEADD(month,6,GETUTCDATE()), 200, 0, 1, 0, N'DEADPOOLVIP', 50000, (SELECT Id FROM [Movie] WHERE Slug = N'deadpool-wolverine'), 0, GETUTCDATE());
 
 -- ── Part D4b: Cinestar-style named campaigns (C'Student, C'Ten, Happy Hour, ...) ──────
 -- These demonstrate PromotionCampaign grouping: several programs share one campaign name, and the
@@ -15486,55 +15486,55 @@ INSERT INTO [PromotionCampaign] ([Id], [Name], [CreationTime]) VALUES
 
 INSERT INTO [PromotionProgram]
     ([Id], [Title], [Summary], [CampaignId], [Mechanic], [Eligibility], [StartDate], [EndDate],
-     [ExcludeHolidays], [StacksWithMembershipDiscount], [TermsText], [DisplayOrder], [IsPublished],
+     [ExcludeHolidays], [TermsText], [DisplayOrder], [IsPublished],
      [AutoApply], [CreationTime])
 VALUES
 (NEWID(), N'C''Student - Ưu Đãi Học Sinh Sinh Viên', N'Giá vé 45.000đ (2D) dành cho học sinh, sinh viên, giáo viên và người dưới 22 tuổi khi xuất trình thẻ.',
-    @CampStudent, 1, 2, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampStudent, 1, 2, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Mỗi thẻ chỉ áp dụng 1 vé.
 Không áp dụng ngày lễ, Tết và suất chiếu phụ thu của nhà phát hành.', 100, 1, 0, GETUTCDATE()),
 
 (NEWID(), N'C''Ten - Happy Hour Thành Viên', N'Giá vé 45.000đ (2D) / 55.000đ (3D) cho thành viên C''FRIEND, C''VIP trước 10h và sau 22h.',
-    @CampTen, 1, 1, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampTen, 1, 1, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Đặt vé qua app/website hoặc tại quầy rạp.
 Không áp dụng ngày lễ, Tết.', 101, 1, 1, GETUTCDATE()),
 
 (NEWID(), N'C''Monday - Happy Day Thứ 2', N'Giá vé 45.000đ (2D) / 55.000đ (3D) vào Thứ Hai hàng tuần.',
-    @CampMonday, 1, 0, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampMonday, 1, 0, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Đặt vé qua app/website hoặc tại quầy rạp.
 Không áp dụng ngày lễ, Tết.', 102, 1, 1, GETUTCDATE()),
 
 (NEWID(), N'C''Member - Happy Member''s Day Thứ 4', N'Giá vé 45.000đ (2D) / 55.000đ (3D) vào Thứ Tư hàng tuần dành cho thành viên.',
-    @CampMember, 1, 1, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampMember, 1, 1, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Thành viên C''FRIEND được giảm thêm 10% bắp nước, C''VIP được giảm 15%.
 Vẫn được tích điểm khi mua vé.
 Không áp dụng ngày lễ, Tết.', 103, 1, 1, GETUTCDATE()),
 
 (NEWID(), N'C''School - Thứ 2 & Trước 10h', N'Giá vé 45.000đ (2D) / 55.000đ (3D) / 95.000đ (ghế đôi) cho học sinh, sinh viên, U22 và giáo viên.',
-    @CampSchool, 1, 2, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampSchool, 1, 2, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Mỗi thẻ chỉ áp dụng 1 vé/suất chiếu.
 Suất chiếu sớm và đặc biệt áp dụng theo quy định của nhà phát hành.
 Không áp dụng ngày lễ, Tết.', 104, 1, 0, GETUTCDATE()),
 
 (NEWID(), N'C''School - Khung Giờ Còn Lại', N'Giá vé 49.000đ (2D) / 55.000đ (3D) / 99.000đ (ghế đôi) cho học sinh, sinh viên, U22 và giáo viên.',
-    @CampSchool, 1, 2, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampSchool, 1, 2, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Mỗi thẻ chỉ áp dụng 1 vé/suất chiếu.
 Không áp dụng ngày lễ, Tết.', 105, 1, 0, GETUTCDATE()),
 
 (NEWID(), N'Happy Hour - Trước 10h', N'Giá vé 45.000đ (2D) / 55.000đ (3D) / 95.000đ (ghế đôi) cho mọi khách hàng trước 10h.',
-    @CampHappyHr, 1, 0, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampHappyHr, 1, 0, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Không áp dụng ngày lễ, Tết.', 106, 1, 1, GETUTCDATE()),
 
 (NEWID(), N'Happy Hour - Sau 22h', N'Giá vé 49.000đ (2D) / 55.000đ (3D) / 99.000đ (ghế đôi) cho mọi khách hàng sau 22h.',
-    @CampHappyHr, 1, 0, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampHappyHr, 1, 0, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Không áp dụng ngày lễ, Tết.', 107, 1, 1, GETUTCDATE()),
 
 (NEWID(), N'Happy Day - Thứ 2', N'Giá vé 45.000đ (2D) / 55.000đ (3D) / 95.000đ (ghế đôi) vào Thứ Hai hàng tuần.',
-    @CampHappyDy, 1, 0, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampHappyDy, 1, 0, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Không áp dụng ngày lễ, Tết và suất chiếu đặc biệt có phụ thu.', 108, 1, 1, GETUTCDATE()),
 
 (NEWID(), N'Happy Day - Thứ 4', N'Giá vé 45.000đ (2D) / 55.000đ (3D) / 95.000đ (ghế đôi) vào Thứ Tư hàng tuần dành cho thành viên.',
-    @CampMember, 1, 1, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1, 0,
+    @CampMember, 1, 1, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Xuất trình thẻ thành viên hoặc dùng số điện thoại đã đăng ký.
 Vẫn được tích điểm và giảm 10%/15% bắp nước (C''FRIEND/C''VIP).
 Không áp dụng ngày lễ, Tết.', 109, 1, 1, GETUTCDATE());
@@ -15684,15 +15684,14 @@ INSERT INTO [PromotionProgram]
     ([Id], [Title], [Summary], [BannerUrl], [Mechanic], [PercentOff],
      [Eligibility], [MinMemberShipId], [MaxAge], [StartDate], [EndDate],
      [ExcludeHolidays], [AllowedChannelsMask], [MaxTicketsPerTransaction],
-     [StacksWithMembershipDiscount], [TermsText], [DisplayOrder], [IsPublished],
+     [TermsText], [DisplayOrder], [IsPublished],
      [AutoApply], [CreationTime])
 VALUES
 (@PromoMonday, N'Thứ Hai Vui Vẻ - Giảm 50%',
     N'Giảm ngay 50% giá vé cho tất cả suất chiếu vào thứ Hai hàng tuần.', N'http://localhost:5102/seed-assets/promo-banner-monday.png',
     2, 50,
     0, NULL, NULL, GETUTCDATE(), DATEADD(month, 6, GETUTCDATE()),
-    1, NULL, 8,
-    0, N'Áp dụng cho tất cả định dạng phim.
+    1, NULL, 8, N'Áp dụng cho tất cả định dạng phim.
 Không áp dụng vào ngày lễ.
 Không giới hạn số lượng vé.', 1, 1,
     0, GETUTCDATE()),
@@ -15700,8 +15699,7 @@ Không giới hạn số lượng vé.', 1, 1,
     N'Chỉ 45.000đ/vé khi xuất trình thẻ học sinh, sinh viên còn hiệu lực.', N'http://localhost:5102/seed-assets/promo-banner-student.png',
     1, NULL,
     2, NULL, NULL, GETUTCDATE(), DATEADD(year, 1, GETUTCDATE()),
-    0, NULL, 4,
-    0, N'Xuất trình thẻ học sinh/sinh viên tại quầy vé.
+    0, NULL, 4, N'Xuất trình thẻ học sinh/sinh viên tại quầy vé.
 Áp dụng tất cả các ngày trong tuần.', 2, 1,
     0, GETUTCDATE()),
 (@PromoGold, N'Ưu Đãi Hội Viên Hạng Vàng',
@@ -15709,15 +15707,13 @@ Không giới hạn số lượng vé.', 1, 1,
     2, 20,
     1, (SELECT Id FROM [MemberShip] WHERE Name = N'Hạng Vàng'), NULL,
     GETUTCDATE(), DATEADD(year, 1, GETUTCDATE()),
-    0, NULL, NULL,
-    1, N'Áp dụng cho hội viên Hạng Vàng và Hạng Kim Cương.', 3, 1,
+    0, NULL, NULL, N'Áp dụng cho hội viên Hạng Vàng và Hạng Kim Cương.', 3, 1,
     0, GETUTCDATE()),
 (@PromoWeekend, N'Khung Giờ Vàng Cuối Tuần',
     N'Trải nghiệm điện ảnh trọn vẹn với ưu đãi đặc biệt mỗi cuối tuần.', N'http://localhost:5102/seed-assets/promo-banner-weekend.png',
     0, NULL,
     0, NULL, NULL, GETUTCDATE(), DATEADD(month, 6, GETUTCDATE()),
-    0, NULL, NULL,
-    0, N'Áp dụng vào Thứ Bảy và Chủ Nhật, từ 18:00 đến 23:00.', 4, 1,
+    0, NULL, NULL, N'Áp dụng vào Thứ Bảy và Chủ Nhật, từ 18:00 đến 23:00.', 4, 1,
     0, GETUTCDATE());
 
 -- Fixed price for the student promo (any format/seat kind)

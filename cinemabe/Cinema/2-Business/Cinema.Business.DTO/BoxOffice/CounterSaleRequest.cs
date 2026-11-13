@@ -25,9 +25,6 @@ public class CounterSaleRequest
     [StringLength(64)]
     public string? DiscountCode { get; set; }
 
-    [StringLength(64)]
-    public string? GiftCardCode { get; set; }
-
     [Range(0, int.MaxValue)]
     public int PointsToRedeem { get; set; }
 

@@ -112,7 +112,6 @@ public class BoxOfficeManager : IBoxOfficeManager
             Phone = user.Phone,
             Points = user.Points,
             MemberShipName = membership?.Name,
-            DiscountPercent = membership?.DiscountPercent ?? 0,
         };
     }
 }

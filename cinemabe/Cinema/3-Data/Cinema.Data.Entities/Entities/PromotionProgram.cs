@@ -43,7 +43,6 @@ public class PromotionProgram : BaseEntity
     /// <summary>Bitmask of SalesChannel values (bit n = channel n); null = all channels.</summary>
     public int? AllowedChannelsMask { get; set; }
     public int? MaxTicketsPerTransaction { get; set; }
-    public bool StacksWithMembershipDiscount { get; set; }
     /// <summary>Free-text extra terms, one per line.</summary>
     public string? TermsText { get; set; }
 

@@ -6,7 +6,7 @@ public enum PaymentTender
     Cash = 0,
     Card = 1,
     QrWallet = 2,
-    GiftCard = 3,
+    // 3 was retired when gift cards were removed (2026-11-14): never reuse the value, old rows may carry it.
     Points = 4,
     Online = 5
 }

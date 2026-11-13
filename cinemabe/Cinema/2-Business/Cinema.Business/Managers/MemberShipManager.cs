@@ -55,13 +55,6 @@ public class MemberShipManager : IMemberShipManager
                         query = _uow.MemberShipStore.FilterQuery(query, e => e.MinPoints == minPoints);
                     }
                     break;
-
-                case "discountPercent":
-                    if (double.TryParse(filters[key], out var discountPercent))
-                    {
-                        query = _uow.MemberShipStore.FilterQuery(query, e => e.DiscountPercent == discountPercent);
-                    }
-                    break;
             }
         }
         return query;
@@ -79,7 +72,6 @@ public class MemberShipManager : IMemberShipManager
             "name" => _uow.MemberShipStore.OrderQuery(query, e => e.Name, sort.Ascending),
             "minPoints" => _uow.MemberShipStore.OrderQuery(query, e => e.MinPoints, sort.Ascending),
             "maxPoints" => _uow.MemberShipStore.OrderQuery(query, e => e.MaxPoints, sort.Ascending),
-            "discountPercent" => _uow.MemberShipStore.OrderQuery(query, e => e.DiscountPercent, sort.Ascending),
             _ => query,
         };
     }

@@ -14513,9 +14513,6 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("maxPoints", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int MaxPoints { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("discountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double DiscountPercent { get; set; }
-
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -14529,9 +14526,6 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("maxPoints", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int MaxPoints { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("discountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double DiscountPercent { get; set; }
 
     }
 
@@ -14549,9 +14543,6 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("maxPoints", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int MaxPoints { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("discountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double DiscountPercent { get; set; }
 
     }
 
@@ -14866,9 +14857,6 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("maxTicketsPerTransaction", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int? MaxTicketsPerTransaction { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("stacksWithMembershipDiscount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool StacksWithMembershipDiscount { get; set; }
-
         [Newtonsoft.Json.JsonProperty("termsText", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string TermsText { get; set; }
 
@@ -15015,9 +15003,6 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("maxTicketsPerTransaction", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int? MaxTicketsPerTransaction { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("stacksWithMembershipDiscount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool StacksWithMembershipDiscount { get; set; }
-
         [Newtonsoft.Json.JsonProperty("termsText", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.StringLength(2000)]
         public string TermsText { get; set; }
@@ -15102,9 +15087,6 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("maxTicketsPerTransaction", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int? MaxTicketsPerTransaction { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("stacksWithMembershipDiscount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool StacksWithMembershipDiscount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("termsText", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.StringLength(2000)]
@@ -16280,9 +16262,6 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("pointsValue", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double PointsValue { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("giftCardAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double GiftCardAmount { get; set; }
-
         [Newtonsoft.Json.JsonProperty("finalAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double FinalAmount { get; set; }
 
@@ -16335,10 +16314,6 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("discountCode", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.StringLength(64)]
         public string DiscountCode { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("giftCardCode", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(64)]
-        public string GiftCardCode { get; set; }
 
         [Newtonsoft.Json.JsonProperty("pointsToRedeem", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.Range(0, 2147483647)]
@@ -16410,8 +16385,6 @@ namespace Cinema.Service.Clients.Cinema
 
         QrWallet = 2,
 
-        GiftCard = 3,
-
         Points = 4,
 
         Online = 5,
@@ -16435,9 +16408,6 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("pointsValue", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double PointsValue { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("giftCardAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double GiftCardAmount { get; set; }
 
         [Newtonsoft.Json.JsonProperty("finalAmount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double FinalAmount { get; set; }
@@ -16536,9 +16506,6 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("memberShipName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string MemberShipName { get; set; }
-
-        [Newtonsoft.Json.JsonProperty("discountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double DiscountPercent { get; set; }
 
     }
 

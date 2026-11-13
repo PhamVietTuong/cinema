@@ -12,10 +12,10 @@ public interface IBookingManager
     /// theater, with all pricing factors applied. Drives the booking UI's quantity picker directly.</summary>
     Task<List<ShowTimePriceDTO>>        GetShowTimePricesAsync(Guid showTimeId, Guid roomId);
     Task<BookingResultDTO>              CreateBookingAsync(Guid userId, CreateBookingRequest request);
-    /// <summary>Counter sale core (called by <c>IBoxOfficeManager</c>): same seat checks, pricing, stock, points and gift
-    /// card as <see cref="CreateBookingAsync"/>, but the invoice is created Paid with its tenders, in one transaction.</summary>
+    /// <summary>Counter sale core (called by <c>IBoxOfficeManager</c>): same seat checks, pricing, stock and points
+    /// as <see cref="CreateBookingAsync"/>, but the invoice is created Paid with its tenders, in one transaction.</summary>
     Task<CounterSaleResultDTO>          SellAtCounterAsync(CounterSaleContext context);
-    /// <summary>Side-effect-free price quote of a counter sale (no stock, points, gift-card or invoice writes).</summary>
+    /// <summary>Side-effect-free price quote of a counter sale (no stock, points or invoice writes).</summary>
     Task<CounterQuoteDTO>               QuoteCounterAsync(CounterSaleContext context);
     /// <summary>Checks a promo code against a showtime+room using the same rules as booking, and reports
     /// what it would take off <paramref name="total"/> on a per-ticket-unit basis (built from

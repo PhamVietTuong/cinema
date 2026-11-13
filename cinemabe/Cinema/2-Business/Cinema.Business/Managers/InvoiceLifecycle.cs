@@ -30,21 +30,6 @@ internal static class InvoiceLifecycle
         }
     }
 
-    // Returns the gift-card balance drawn for a booking that did not complete (cancelled/expired/deleted).
-    public static async Task RestoreGiftCardAsync(IApplicationUnitOfWork uow, Invoice invoice)
-    {
-        if (invoice.GiftCardId is not Guid giftCardId || invoice.GiftCardAmount <= 0)
-        {
-            return;
-        }
-        var card = await uow.GiftCardStore.GetByIdAsync(giftCardId);
-        if (card is not null)
-        {
-            card.Balance += invoice.GiftCardAmount;
-            await uow.GiftCardStore.UpdateAsync(card);
-        }
-    }
-
     // A cancelled or expired invoice no longer has food to hand over.
     public static void CancelFoodOrder(Invoice invoice)
     {
