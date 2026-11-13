@@ -53,7 +53,7 @@ Registered in `AddBusiness()` as a named `HttpClient` (`OmdbRatingsProvider.Http
 
 Credential: `OMDb:ApiKey`.
 
-**Checkout options:** CinemaUser checkout lists only VNPAY (`methods` in `booking-checkout.component.ts`). MoMo and Stripe were removed entirely.
+**Checkout options:** CinemaUser checkout lists only VNPAY (`methods` in `booking-checkout.component.ts`).
 
 
 No evidence of a stub beyond what's listed in §1 — both `IPaymentGateway` implementations under `Cinema.Business/Payments/` (Sandbox, VNPay) are fully implemented.
