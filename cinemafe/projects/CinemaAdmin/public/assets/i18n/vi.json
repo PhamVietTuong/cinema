@@ -18,7 +18,6 @@
     "splashBanners": "Banner Popup",
     "invoices": "Hóa Đơn",
     "comments": "Kiểm Duyệt",
-    "giftCards": "Thẻ Quà Tặng",
     "auditLog": "Nhật Ký Thao Tác"
   },
   "section": {
@@ -45,7 +44,6 @@
     "invoices": "Quản Lý Hóa Đơn",
     "auditLog": "Nhật Ký Thao Tác",
     "comments": "Kiểm Duyệt Bình Luận",
-    "giftCards": "Quản Lý Thẻ Quà Tặng",
     "default": "Bảng Điều Khiển"
   },
   "profile": {
@@ -584,7 +582,6 @@
     "channelsLabel": "Kênh Đặt Vé Được Áp Dụng",
     "channelsHint": "Không chọn kênh nào = áp dụng cho mọi kênh.",
     "maxTicketsLabel": "Số Vé Tối Đa Mỗi Giao Dịch",
-    "stacksLabel": "Cộng Dồn Với Giảm Giá Thành Viên",
     "termsTextLabel": "Điều Khoản Bổ Sung (mỗi dòng một điều khoản)",
     "termsTextPlaceholder": "VD: Chỉ áp dụng tại các rạp tham gia chương trình.",
     "autoApplyHint": "Khách luôn được tính giá thấp hơn giữa chương trình này và giảm giá thành viên; không bao giờ cộng dồn với mã khuyến mãi, chỉ cộng dồn với giảm giá thành viên khi bật 'Cộng dồn với giảm giá thành viên'.",
@@ -686,10 +683,8 @@
     "newTitle": "Hạng Mới",
     "tierName": "Tên Hạng",
     "namePlaceholder": "VD: Vàng",
-    "discountPercentLabel": "Giảm Giá (%)",
     "minPoints": "Điểm Tối Thiểu",
     "maxPoints": "Điểm Tối Đa",
-    "discount": "Giảm Giá",
     "empty": "Không có hạng thành viên nào.",
     "show": "Hiển thị",
     "page": "Trang {{index}}/{{total}}",
@@ -758,33 +753,6 @@
     "approveSuccess": "Đã duyệt bình luận",
     "hideSuccess": "Đã ẩn bình luận",
     "moderateFailed": "Không thể cập nhật bình luận"
-  },
-  "giftCards": {
-    "title": "Thẻ Quà Tặng",
-    "subtitle": "Phát hành thẻ quà tặng và bật hoặc tắt các thẻ hiện có",
-    "issue": "Phát hành",
-    "issueTitle": "Phát Hành Thẻ Quà Tặng",
-    "amount": "Số tiền (đ)",
-    "expiry": "Hạn dùng",
-    "noExpiry": "Không hết hạn",
-    "recipient": "Email người nhận",
-    "recipientPlaceholder": "Tùy chọn — gửi thẻ tới email khách hàng",
-    "balance": "Số dư",
-    "initial": "Ban đầu",
-    "statusActive": "Đang hoạt động",
-    "statusInactive": "Đã tắt",
-    "enable": "Bật",
-    "disable": "Tắt",
-    "issued": "Đã phát hành thẻ: {{code}}",
-    "issueFailed": "Không thể phát hành thẻ quà tặng",
-    "enabled": "Đã bật thẻ quà tặng",
-    "disabled": "Đã tắt thẻ quà tặng",
-    "updateFailed": "Không thể cập nhật thẻ quà tặng",
-    "empty": "Chưa có thẻ quà tặng",
-    "perPage": "Mỗi trang",
-    "pageInfo": "Trang {{current}} / {{total}}",
-    "prev": "Trước",
-    "next": "Sau"
   },
   "auditLog": {
     "title": "Nhật ký thao tác",

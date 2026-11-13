@@ -17,7 +17,6 @@ export class MembershipComponent implements OnInit {
 
   readonly perks = [
     'membership.perkEarnPoints',
-    'membership.perkTierDiscount',
     'membership.perkBirthday',
     'membership.perkEarlyBooking',
   ];

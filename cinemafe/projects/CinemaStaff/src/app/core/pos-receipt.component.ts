@@ -49,7 +49,6 @@ export class PosReceiptComponent {
     return [
       { labelKey: 'pos.quote.discount', amount: r.discountAmount ?? 0 },
       { labelKey: 'pos.quote.points', amount: r.pointsValue ?? 0 },
-      { labelKey: 'pos.quote.giftCard', amount: r.giftCardAmount ?? 0 },
     ];
   });
 

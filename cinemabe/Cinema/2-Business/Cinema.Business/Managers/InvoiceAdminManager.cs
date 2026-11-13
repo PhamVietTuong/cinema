@@ -120,7 +120,7 @@ public class InvoiceAdminManager : IInvoiceAdminManager
 
     public async Task DeleteAsync(Guid id)
     {
-        // A Pending invoice still holds what the booking reserved (food stock, redeemed points, gift-card balance);
+        // A Pending invoice still holds what the booking reserved (food stock, redeemed points);
         // put it back before the invoice goes away. (Other statuses are completed sales, so those stay spent.)
         var invoice = await _uow.InvoiceStore.GetByIdAsync(id);
         if (invoice is null || invoice.Status != InvoiceStatus.Pending)

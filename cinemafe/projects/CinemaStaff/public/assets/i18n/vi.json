@@ -185,16 +185,14 @@
     },
     "codes": {
       "title": "Mã",
-      "discount": "Mã giảm giá",
-      "giftCard": "Mã thẻ quà tặng"
+      "discount": "Mã giảm giá"
     },
     "quote": {
       "title": "Tổng đơn hàng",
       "empty": "Chọn ghế hoặc bắp nước để bắt đầu.",
       "failed": "Không tính được giá đơn hàng.",
       "discount": "Giảm giá",
-      "points": "Điểm đã đổi",
-      "giftCard": "Thẻ quà tặng"
+      "points": "Điểm đã đổi"
     },
     "pay": {
       "title": "Thanh toán",

@@ -37,7 +37,6 @@ export const ADMIN_MENU: NavSection[] = [
       { icon: 'wallpaper', labelKey: 'nav.splashBanners', route: '/splash-banners', titleKey: 'pageTitle.splashBanners', roles: ADMIN_ONLY },
       { icon: 'receipt_long', labelKey: 'nav.invoices', route: '/invoices', titleKey: 'pageTitle.invoices', roles: ADMIN_ONLY },
       { icon: 'forum', labelKey: 'nav.comments', route: '/comments', titleKey: 'pageTitle.comments', roles: ADMIN_ONLY },
-      { icon: 'card_giftcard', labelKey: 'nav.giftCards', route: '/gift-cards', titleKey: 'pageTitle.giftCards', roles: ADMIN_ONLY },
       { icon: 'fact_check', labelKey: 'nav.auditLog', route: '/audit-log', titleKey: 'pageTitle.auditLog', roles: ADMIN_ONLY },
     ],
   },

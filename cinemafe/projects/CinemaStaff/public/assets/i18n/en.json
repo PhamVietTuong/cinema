@@ -185,16 +185,14 @@
     },
     "codes": {
       "title": "Codes",
-      "discount": "Discount code",
-      "giftCard": "Gift card code"
+      "discount": "Discount code"
     },
     "quote": {
       "title": "Order total",
       "empty": "Pick seats or food to start.",
       "failed": "Could not price this order.",
       "discount": "Discount",
-      "points": "Points redeemed",
-      "giftCard": "Gift card"
+      "points": "Points redeemed"
     },
     "pay": {
       "title": "Payment",

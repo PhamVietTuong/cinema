@@ -3,19 +3,12 @@
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content>
     <div class="dlg-grid">
-      <div class="dlg-row dlg-row--2">
-        <div class="dlg-field">
+      <div class="dlg-row">
+        <div class="dlg-field dlg-field--full">
           <label class="dlg-label" for="mb-name">{{ 'memberships.tierName' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput id="mb-name" formControlName="name" [placeholder]="'memberships.namePlaceholder' | translate">
             <mat-error *ngIf="form.controls['name'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
-        </div>
-        <div class="dlg-field">
-          <label class="dlg-label" for="mb-discountPercent">{{ 'memberships.discountPercentLabel' | translate }}</label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput id="mb-discountPercent" type="number" formControlName="discountPercent" placeholder="10">
-            <mat-error *ngIf="form.controls['discountPercent'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
           </mat-form-field>
         </div>
       </div>

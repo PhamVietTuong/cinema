@@ -49,7 +49,7 @@ public class BoxOfficeTests
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
         _booking = new BookingManager(_uowMock.Object, gateways, _notifications.Object, _sms.Object, _seatNotifications.Object);
         _sut = new BoxOfficeManager(_uowMock.Object, _booking);
-        // Points and gift-card balance are spent through atomic conditional UPDATEs; succeed by default.
+        // Points are spent through atomic conditional UPDATEs; succeed by default.
         _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
 
         _staff = NewUser(RoleNames.TheaterStaff, _theaterId);

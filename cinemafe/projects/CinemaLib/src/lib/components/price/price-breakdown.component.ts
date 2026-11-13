@@ -15,7 +15,7 @@ export interface PriceBreakdownLine {
   listAmount?: number;
 }
 
-/** A deduction (discount, redeemed points, gift card). `amount` is the positive value taken off. */
+/** A deduction (discount, redeemed points). `amount` is the positive value taken off. */
 export interface PriceBreakdownAdjustment {
   /** i18n key of the label. */
   labelKey: string;

@@ -3,7 +3,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { PriceBreakdownComponent, SharedModule } from 'CinemaLib';
 import { CounterCartService } from './counter-cart.service';
 
-/** Member, discount / gift-card codes and the server-quoted totals of the counter cart. */
+/** Member, discount code and the server-quoted totals of the counter cart. */
 @Component({
   selector: 'staff-counter-summary',
   standalone: true,

@@ -11,7 +11,7 @@ const SCREENS: Record<string, string[]> = {
     '/holidays', '/news', '/templates', '/promotion-campaigns',
   ],
   operations: [
-    '/invoices', '/comments', '/gift-cards', '/audit-log',
+    '/invoices', '/comments', '/audit-log',
     '/promotion-programs', '/splash-banners',
   ],
 };

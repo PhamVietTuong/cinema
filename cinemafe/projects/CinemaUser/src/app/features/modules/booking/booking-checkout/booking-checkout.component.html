@@ -36,7 +36,7 @@
 
       <div class="section-rule"></div>
 
-      <!-- Discounts: promo code, gift card, loyalty points -->
+      <!-- Discounts: promo code, loyalty points -->
       <div class="promo-card">
         <button type="button" class="disc-row" [class.on]="discountValid" (click)="openDiscountDialog()">
           <span class="disc-ico"><mat-icon>local_offer</mat-icon></span>
@@ -45,16 +45,6 @@
             <span class="disc-sub">{{ discountValid ? discountMessage : ('booking.summary.discountBannerSub' | translate) }}</span>
           </span>
           <span class="disc-pill" *ngIf="discountValid">−{{ discountAmount | number:'1.0-0' }}đ</span>
-          <mat-icon class="disc-chev">chevron_right</mat-icon>
-        </button>
-
-        <button type="button" class="disc-row" [class.on]="giftCardValid" (click)="openGiftCardDialog()">
-          <span class="disc-ico"><mat-icon>card_giftcard</mat-icon></span>
-          <span class="disc-text">
-            <span class="disc-title">{{ 'booking.summary.giftCardCode' | translate }}</span>
-            <span class="disc-sub">{{ giftCardValid ? giftCardMessage : ('booking.summary.giftCardRowSub' | translate) }}</span>
-          </span>
-          <span class="disc-pill" *ngIf="giftCardValid">{{ 'booking.summary.pillAdded' | translate }}</span>
           <mat-icon class="disc-chev">chevron_right</mat-icon>
         </button>
 

@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 import { DiscountCodeDialog, DiscountCheckResult, DiscountCodeDialogResult } from './discount-code.dialog';
 import { PointsRedeemDialog } from './points-redeem.dialog';
-import { GiftCardDialog, GiftCardCheckResult, GiftCardDialogResult } from './gift-card.dialog';
 import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState, takePendingCheckout } from './booking-checkout.state';
 import { movieDetailUrl } from '../../../../shared/movie-route';
 
@@ -97,9 +96,6 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   discountValid: boolean | null = null;
   discountMessage = '';
   discountAmount = 0;
-  giftCardCode = '';
-  giftCardValid: boolean | null = null;
-  giftCardMessage = '';
 
   theaterId = '';
   /** VND value of 1 loyalty point — fetched from the server for this booking's theater; 0 until loaded. */
@@ -174,9 +170,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   }
 
   /** Estimated points earned on payment: floor(estimated final amount / PointsPerUnit). Only an
-   * estimate — it nets out the promo discount shown here but not the member-tier discount or a
-   * gift card (neither amount is known client-side), so the server's actual credited amount can
-   * be lower. Displayed with "up to" wording for that reason. */
+   * estimate — it nets out the promo discount shown here, but the server's actual credited amount can
+   * differ. Displayed with "up to" wording for that reason. */
   get pointsToEarn(): number {
     if (this.pointsPerUnit <= 0) {
       return 0;
@@ -430,37 +425,6 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this.pointsToRedeem = Math.max(0, Math.min(n, this.maxRedeemablePoints));
   }
 
-  /** Asks the server whether a gift card code is usable; failures come back as an invalid result, never an error. */
-  checkGiftCard(code: string): Observable<GiftCardCheckResult> {
-    return this._paymentService.validateGiftCard(PaymentServiceAgent.ValidateGiftCardRequest.fromJS({ code })).pipe(
-      map(res => ({
-        valid: !!res?.valid,
-        message: res?.message
-          ? translateApiError(res.message)
-          : (res?.valid ? this._translate.instant('booking.summary.giftCardBalance', { balance: res?.balance ?? 0 }) : ''),
-      })),
-      catchError(err => of({
-        valid: false,
-        message: this._err(err, this._translate.instant('booking.summary.giftCardInvalid')),
-      })),
-    );
-  }
-
-  openGiftCardDialog(): void {
-    this._dialog.open(GiftCardDialog, {
-      data: { code: this.giftCardCode, check: (code: string) => this.checkGiftCard(code) },
-      width: '460px',
-      maxWidth: '92vw',
-    }).afterClosed().subscribe((result: GiftCardDialogResult | undefined) => {
-      if (result) {
-        this.giftCardCode = result.code;
-        this.giftCardValid = result.valid;
-        this.giftCardMessage = result.message;
-        this._cdr.markForCheck();
-      }
-    });
-  }
-
   /** Mirrors the server rule (BookingManager): films rated 13+ need the customer's age confirmation. */
   get needsAgeConfirmation(): boolean {
     return this.ageRatingUnknown || this.ageMinAge >= BookingCheckoutComponent.AGE_CONFIRM_MIN_AGE;
@@ -494,7 +458,6 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       })),
       foods,
       discountCode: this.discountCode.trim() || undefined,
-      giftCardCode: this.giftCardCode.trim() || undefined,
       paymentMethod: this.paymentMethod,
       pointsToRedeem: this.pointsToRedeem || undefined,
       // Pass our live hub connection id (carried over from page 1) so the server ignores our own

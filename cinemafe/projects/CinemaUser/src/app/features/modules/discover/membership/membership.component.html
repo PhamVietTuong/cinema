@@ -20,10 +20,6 @@
       <div class="tier-badge" *ngIf="isFeatured(i)">{{ 'membership.popular' | translate }}</div>
       <div class="tier-crown"><mat-icon>workspace_premium</mat-icon></div>
       <h3 class="tier-name">{{ t.name }}</h3>
-      <div class="tier-discount">
-        <span class="disc-value">{{ t.discountPercent }}%</span>
-        <span class="disc-label">{{ 'membership.discountLabel' | translate }}</span>
-      </div>
       <p class="tier-points">{{ t.minPoints | number }}<ng-container *ngIf="t.maxPoints"> – {{ t.maxPoints | number }}</ng-container> {{ 'membership.pointsUnit' | translate }}</p>
       <ul class="tier-perks">
         <li *ngFor="let perk of perks"><mat-icon>check</mat-icon> {{ perk | translate }}</li>

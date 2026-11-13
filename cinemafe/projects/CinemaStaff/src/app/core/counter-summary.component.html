@@ -44,10 +44,6 @@
     <mat-label>{{ 'pos.codes.discount' | translate }}</mat-label>
     <input matInput [ngModel]="cart.discountCode()" (ngModelChange)="cart.discountCode.set($event)">
   </mat-form-field>
-  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-full">
-    <mat-label>{{ 'pos.codes.giftCard' | translate }}</mat-label>
-    <input matInput [ngModel]="cart.giftCardCode()" (ngModelChange)="cart.giftCardCode.set($event)">
-  </mat-form-field>
 </section>
 
 <!-- Totals -->

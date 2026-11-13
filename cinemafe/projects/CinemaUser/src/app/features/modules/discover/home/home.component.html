@@ -151,7 +151,7 @@
       </ul>
       <div class="tier-chips" *ngIf="tiers.length">
         <span class="tier-chip" *ngFor="let t of tiers; let i = index" [class.is-top]="isTopTier(i)">
-          {{ t.name }}<ng-container *ngIf="t.discountPercent"> · {{ t.discountPercent }}%</ng-container>
+          {{ t.name }}
         </span>
       </div>
       <a mat-raised-button routerLink="/auth/register">

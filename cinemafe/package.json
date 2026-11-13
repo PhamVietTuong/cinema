@@ -8,7 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "eslint .",
-    "lint:ci": "eslint . --max-warnings 1437",
+    "lint:ci": "eslint . --max-warnings 1398",
     "generate-icons": "svg-generator"
   },
   "private": true,

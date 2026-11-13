@@ -192,11 +192,7 @@
       "minutes": "{{count}} min",
       "discountSaves": "{{code}} saves {{amount}}đ",
       "discountInvalid": "This code is not valid for this order.",
-      "giftCardNote": "The card balance is deducted from the amount to pay.",
-      "giftCardDialogTitle": "Gift card",
-      "giftCardRemove": "Remove",
-      "giftCardRowSub": "Enter a gift card code",
-      "pillAdded": "Added",
+      "discountRemove": "Remove",
       "pointsAvailableLabel": "points available",
       "pointsDecrease": "Fewer points",
       "pointsIncrease": "More points",
@@ -221,11 +217,6 @@
       "discountCode": "Discount Code",
       "discountPlaceholder": "e.g. SUMMER25",
       "discountNote": "A valid code will be applied at checkout.",
-      "giftCardCode": "Gift Card",
-      "giftCardPlaceholder": "Enter gift card code",
-      "giftCardApply": "Check",
-      "giftCardBalance": "Gift card valid — balance {{balance}}đ",
-      "giftCardInvalid": "This gift card is not valid.",
       "grandTotal": "Grand Total",
       "redeemPoints": "Redeem Points",
       "pointsBalance": "You have {{points}} points available",
@@ -352,11 +343,9 @@
     "pageSubtitle": "Earn points with every booking and unlock the exclusive privileges of Midnight Premium.",
     "emptyText": "No membership tiers yet.",
     "popular": "Popular",
-    "discountLabel": "ticket discount",
     "pointsUnit": "points",
     "registerNow": "Register Now",
     "perkEarnPoints": "Earn points on every ticket purchased",
-    "perkTierDiscount": "Ticket discounts based on your tier",
     "perkBirthday": "Birthday offers & exclusive events",
     "perkEarlyBooking": "Early booking for premiere showtimes"
   },
@@ -587,9 +576,7 @@
       "memberCardRequired": "A valid membership card or account is required.",
       "noHolidays": "Not valid on public holidays.",
       "channels": "Valid for {{channel}} bookings only.",
-      "maxTickets": "Limited to {{n}} ticket(s) per transaction at this price.",
-      "stacksWithMembership": "Combines with your membership discount.",
-      "noStackWithMembership": "Cannot be combined with your membership discount."
+      "maxTickets": "Limited to {{n}} ticket(s) per transaction at this price."
     }
   },
   "promoProgram": {

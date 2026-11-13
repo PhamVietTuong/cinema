@@ -7,8 +7,6 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { InvoicesManagementComponent } from './invoices/invoices.component';
 import { InvoiceStatusDialog } from './invoices/invoice-status.dialog';
 import { CommentsModerationComponent } from './comments/comments.component';
-import { GiftCardsManagementComponent } from './gift-cards/gift-cards.component';
-import { GiftCardDialog } from './gift-cards/gift-card.dialog';
 import { AuditLogManagementComponent } from './audit-log/audit-log.component';
 import { PromotionProgramsManagementComponent } from './promotion-programs/promotion-programs.component';
 import { PromotionProgramDialog } from './promotion-programs/promotion-program.dialog';
@@ -17,7 +15,7 @@ import { SplashBannerDialog } from './splash-banners/splash-banner.dialog';
 
 /**
  * "Vận Hành" (Operations) admin pages: promotion programs, invoices, comment
- * moderation, gift cards, audit log. Each page's component folder lives
+ * moderation, audit log. Each page's component folder lives
  * alongside this module. See categories/catalog-admin.module.ts for the
  * routing convention this follows (one pass-through entry in app.routes.ts,
  * this module's own routes list each page's real path).
@@ -25,7 +23,6 @@ import { SplashBannerDialog } from './splash-banners/splash-banner.dialog';
 const routes: Routes = [
   { path: 'invoices', component: InvoicesManagementComponent },
   { path: 'comments', component: CommentsModerationComponent },
-  { path: 'gift-cards', component: GiftCardsManagementComponent },
   { path: 'audit-log', component: AuditLogManagementComponent },
   { path: 'promotion-programs', component: PromotionProgramsManagementComponent },
   { path: 'splash-banners', component: SplashBannersManagementComponent },
@@ -36,8 +33,6 @@ const routes: Routes = [
     InvoicesManagementComponent,
     InvoiceStatusDialog,
     CommentsModerationComponent,
-    GiftCardsManagementComponent,
-    GiftCardDialog,
     AuditLogManagementComponent,
     PromotionProgramsManagementComponent,
     PromotionProgramDialog,

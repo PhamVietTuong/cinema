@@ -89,7 +89,7 @@ export function foodsTotal(lines: readonly PosFoodLine[]): number {
   return lines.reduce((sum, l) => sum + foodUnitPrice(l) * l.quantity, 0);
 }
 
-/** Sum of tickets and food before any discount, points or gift card. */
+/** Sum of tickets and food before any discount or points. */
 export function selectionTotal(tickets: readonly PosTicket[], rows: readonly PriceRowLike[], foods: readonly PosFoodLine[]): number {
   return ticketsTotal(tickets, rows) + foodsTotal(foods);
 }

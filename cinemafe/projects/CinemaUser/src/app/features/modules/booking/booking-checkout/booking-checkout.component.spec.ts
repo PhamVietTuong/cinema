@@ -4,7 +4,7 @@ import { BookingCheckoutState } from './booking-checkout.state';
 
 describe('BookingCheckoutComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn>; navigateByUrl: ReturnType<typeof vi.fn> };
-  let payment: { createBooking: ReturnType<typeof vi.fn>; validateGiftCard: ReturnType<typeof vi.fn>; initiatePayment: ReturnType<typeof vi.fn>; confirmPayment: ReturnType<typeof vi.fn> };
+  let payment: { createBooking: ReturnType<typeof vi.fn>; initiatePayment: ReturnType<typeof vi.fn>; confirmPayment: ReturnType<typeof vi.fn> };
   let identity: { getProfile: ReturnType<typeof vi.fn> };
   let hub: { connectionId: string; stopConnection: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -25,7 +25,6 @@ describe('BookingCheckoutComponent', () => {
     router = { navigate: vi.fn(), navigateByUrl: vi.fn() };
     payment = {
       createBooking: vi.fn().mockReturnValue(of({ invoiceId: 'inv-1', invoiceCode: 'CIN123' })),
-      validateGiftCard: vi.fn(),
       initiatePayment: vi.fn().mockReturnValue(of({ alreadyPaid: true })),
       confirmPayment: vi.fn(),
     };
