@@ -1032,6 +1032,15 @@ END
 -- ===== end theater latitude/longitude =====
 
 -- ============================================================
+-- Theater.MaxSeatsPerBooking: per-theater cap on seats in one online booking (1-50, default 10)
+-- ============================================================
+IF COL_LENGTH('dbo.Theater', 'MaxSeatsPerBooking') IS NULL
+BEGIN
+    ALTER TABLE [Theater] ADD [MaxSeatsPerBooking] int NOT NULL CONSTRAINT [DF_Theater_MaxSeatsPerBooking] DEFAULT 10;
+END
+-- ===== end theater max seats per booking =====
+
+-- ============================================================
 -- Merge Discount/DiscountType/DiscountTheater into PromotionProgram
 -- ============================================================
 -- PromotionProgram becomes the single pricing entity: a program is triggered by either a

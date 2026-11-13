@@ -11,5 +11,7 @@ public class Theater : BaseEntity
     /// <summary>Geo-coordinates (WGS84 decimal degrees) for "nearest theater" search; null if not set.</summary>
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
+    /// <summary>Most seats one online booking may hold at this theater (1-50, default 10). Counter sales are not capped.</summary>
+    public int MaxSeatsPerBooking { get; set; } = 10;
     public ICollection<Room> Rooms { get; set; } = new List<Room>();
 }

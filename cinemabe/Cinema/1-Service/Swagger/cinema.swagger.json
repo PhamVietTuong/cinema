@@ -6926,6 +6926,10 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "maxSeatsPerBooking": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6967,6 +6971,12 @@
             "maximum": 180.0,
             "minimum": -180.0,
             "nullable": true
+          },
+          "maxSeatsPerBooking": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 50.0,
+            "minimum": 1.0
           }
         }
       },
@@ -7012,6 +7022,12 @@
             "maximum": 180.0,
             "minimum": -180.0,
             "nullable": true
+          },
+          "maxSeatsPerBooking": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 50.0,
+            "minimum": 1.0
           }
         }
       },
@@ -10286,6 +10302,9 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "guardianRequired": {
+            "type": "boolean"
           },
           "usedAt": {
             "type": "string",

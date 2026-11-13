@@ -15,7 +15,8 @@ public class GateManager : IGateManager
     private const string _admitBeforeMinutesKey = "Gate:AdmitBeforeMinutes";
     private const string _agePromptMinAgeKey = "Gate:AgePromptMinAge";
     private const int _defaultAdmitBeforeMinutes = 30;
-    private const int _defaultAgePromptMinAge = 16;
+    private const int _defaultAgePromptMinAge = 13;
+    private const string _guardianRatingCode = "K";
     private const int _visiblePhoneDigits = 3;
     private const int _maxLoggedCodeLength = 200;
 
@@ -228,6 +229,8 @@ public class GateManager : IGateManager
             PatronCategory = ticket.PatronCategoryName ?? string.Empty,
             AgeRatingCode = ticket.AgeRatingCode,
             MinAge = ticket.MinAge,
+            GuardianRequired = outcome == ScanOutcome.Admitted
+                && string.Equals(ticket.AgeRatingCode, _guardianRatingCode, StringComparison.OrdinalIgnoreCase),
             UsedAt = outcome == ScanOutcome.AlreadyUsed ? ticket.UsedAt : null,
             UsedBy = outcome == ScanOutcome.AlreadyUsed ? ticket.UsedByName : null
         };

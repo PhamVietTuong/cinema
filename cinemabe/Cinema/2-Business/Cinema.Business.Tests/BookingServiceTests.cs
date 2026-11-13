@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using System.Linq.Expressions;
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Payments;
@@ -34,10 +35,24 @@ public class BookingServiceTests
     private static readonly Guid SeatId20    = Guid.NewGuid();
     private static readonly Guid SeatId21    = Guid.NewGuid();
 
+    private static ShowTime OpenShowTime(Guid id, DateTime start, ProjectionForm form)
+    {
+        return new ShowTime
+        {
+            Id = id,
+            StartTime = start,
+            EndTime = start.AddHours(2),
+            ProjectionForm = form,
+            IsActive = true,
+            Movie = new Movie { IsActive = true, AgeRestriction = new AgeRestriction { Code = "P", MinAge = 0 } }
+        };
+    }
+
     public BookingServiceTests()
     {
         var gateways = new PaymentGatewayResolver(new IPaymentGateway[] { new SandboxPaymentGateway() }, "Sandbox");
-        _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService(), new DevLogSmsNotificationService(), _seatNotificationsMock.Object);
+        _sut = new BookingManager(_uowMock.Object, gateways, new DevLogNotificationService(), new DevLogSmsNotificationService(), _seatNotificationsMock.Object,
+            config: new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["Booking:OnlineSalesCloseMinutesAfterStart"] = "5256000" }).Build());
         _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(It.IsAny<Guid>(), InvoiceStatus.Pending, It.IsAny<InvoiceStatus>())).ReturnsAsync(true);
 
         // Default: no RoomType price overrides for any category. Tests that care about an override
@@ -203,7 +218,7 @@ public class BookingServiceTests
         IReadOnlyDictionary<SeatKind, Guid>? kindMap = null)
     {
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId))
-            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, Room = new Room { Id = roomId, TheaterId = theaterId, Status = RoomStatus.Active } });
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, ShowTime = OpenShowTime(showTimeId, startTime, projectionForm), Room = new Room { Id = roomId, TheaterId = theaterId, Status = RoomStatus.Active, Theater = new Theater { Id = theaterId, IsActive = true } } });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(roomId))
             .ReturnsAsync(new Room { Id = roomId, TheaterId = theaterId, RoomTypeId = roomTypeId });
         _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(showTimeId))
@@ -540,7 +555,7 @@ public class BookingServiceTests
         _sut.LockSeat(ShowTimeId1, RoomId1, heldSeat, "other-conn");
 
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
-            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, Room = new Room { Id = RoomId1, Status = RoomStatus.Active } });
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, ShowTime = OpenShowTime(ShowTimeId1, new DateTime(2026, 3, 2, 19, 0, 0), default), Room = new Room { Id = RoomId1, Status = RoomStatus.Active, Theater = new Theater { IsActive = true } } });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
         SetupSeatsById(new Dictionary<Guid, Seat> { [heldSeat] = new() { Id = heldSeat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
@@ -628,7 +643,7 @@ public class BookingServiceTests
     {
         SetupBaselineBookingMocks(Guid.NewGuid(), Guid.NewGuid(), ShowTimeId1, RoomId1, 100);
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
-            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, Room = new Room { Id = RoomId1, Status = status } });
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, ShowTime = OpenShowTime(ShowTimeId1, new DateTime(2026, 3, 2, 19, 0, 0), default), Room = new Room { Id = RoomId1, Status = status, Theater = new Theater { IsActive = true } } });
 
         var request = new CreateBookingRequest
         {
@@ -647,7 +662,7 @@ public class BookingServiceTests
     private void SetupBaselineBookingMocks(Guid theaterId, Guid roomTypeId, Guid showTimeId, Guid roomId, int basePrice)
     {
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId))
-            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, Room = new Room { Id = roomId, TheaterId = theaterId, Status = RoomStatus.Active } });
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, ShowTime = OpenShowTime(showTimeId, new DateTime(2026, 3, 2, 19, 0, 0), default), Room = new Room { Id = roomId, TheaterId = theaterId, Status = RoomStatus.Active, Theater = new Theater { Id = theaterId, IsActive = true } } });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(roomId))
             .ReturnsAsync(new Room { Id = roomId, TheaterId = theaterId, RoomTypeId = roomTypeId });
         _uowMock.Setup(u => u.ShowTimeStore.GetByIdAsync(showTimeId))
@@ -1126,7 +1141,7 @@ public class BookingServiceTests
         _sut.LockSeat(ShowTimeId1, RoomId1, heldSeat, "other-conn");
 
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
-            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, Room = new Room { Id = RoomId1, Status = RoomStatus.Active } });
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, ShowTime = OpenShowTime(ShowTimeId1, new DateTime(2026, 3, 2, 19, 0, 0), default), Room = new Room { Id = RoomId1, Status = RoomStatus.Active, Theater = new Theater { IsActive = true } } });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
         SetupSeatsById(new Dictionary<Guid, Seat> { [heldSeat] = new() { Id = heldSeat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });

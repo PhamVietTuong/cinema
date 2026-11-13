@@ -195,6 +195,7 @@ CREATE TABLE [Theater] (
     [IsActive] bit NOT NULL,
     [Latitude] float NULL, -- WGS84 decimal degrees, manually entered; used by "nearest theater" search
     [Longitude] float NULL, -- WGS84 decimal degrees, manually entered; used by "nearest theater" search
+    [MaxSeatsPerBooking] int NOT NULL CONSTRAINT [DF_Theater_MaxSeatsPerBooking] DEFAULT 10, -- online seat cap per order (1-50)
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Theater] PRIMARY KEY ([Id])

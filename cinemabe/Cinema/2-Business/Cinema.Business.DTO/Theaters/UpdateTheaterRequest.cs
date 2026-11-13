@@ -15,4 +15,6 @@ public class UpdateTheaterRequest
     public double? Latitude { get; set; }
     [Range(-180, 180)]
     public double? Longitude { get; set; }
+    [Range(1, 50)]
+    public int MaxSeatsPerBooking { get; set; }
 }

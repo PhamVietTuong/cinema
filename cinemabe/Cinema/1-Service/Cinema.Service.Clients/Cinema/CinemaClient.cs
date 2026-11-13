@@ -13610,6 +13610,9 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("longitude", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double? Longitude { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("maxSeatsPerBooking", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int MaxSeatsPerBooking { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -13640,6 +13643,10 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("longitude", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.Range(-180.0D, 180.0D)]
         public double? Longitude { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("maxSeatsPerBooking", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(1, 50)]
+        public int MaxSeatsPerBooking { get; set; }
 
     }
 
@@ -13674,6 +13681,10 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("longitude", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.Range(-180.0D, 180.0D)]
         public double? Longitude { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("maxSeatsPerBooking", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(1, 50)]
+        public int MaxSeatsPerBooking { get; set; }
 
     }
 
@@ -16143,6 +16154,9 @@ namespace Cinema.Service.Clients.Cinema
 
         [Newtonsoft.Json.JsonProperty("minAge", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int? MinAge { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("guardianRequired", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool GuardianRequired { get; set; }
 
         [Newtonsoft.Json.JsonProperty("usedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.DateTime? UsedAt { get; set; }

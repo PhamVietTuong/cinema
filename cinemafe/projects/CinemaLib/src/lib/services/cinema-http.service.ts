@@ -10205,6 +10205,7 @@ export class TheaterDTO implements ITheaterDTO {
     isActive?: boolean;
     latitude?: number | undefined;
     longitude?: number | undefined;
+    maxSeatsPerBooking?: number;
 
     constructor(data?: ITheaterDTO) {
         if (data) {
@@ -10227,6 +10228,7 @@ export class TheaterDTO implements ITheaterDTO {
             this.isActive = _data["isActive"];
             this.latitude = _data["latitude"];
             this.longitude = _data["longitude"];
+            this.maxSeatsPerBooking = _data["maxSeatsPerBooking"];
         }
     }
 
@@ -10249,6 +10251,7 @@ export class TheaterDTO implements ITheaterDTO {
         data["isActive"] = this.isActive;
         data["latitude"] = this.latitude;
         data["longitude"] = this.longitude;
+        data["maxSeatsPerBooking"] = this.maxSeatsPerBooking;
         return data;
     }
 }
@@ -10264,6 +10267,7 @@ export interface ITheaterDTO {
     isActive?: boolean;
     latitude?: number | undefined;
     longitude?: number | undefined;
+    maxSeatsPerBooking?: number;
 }
 
 export class CreateTheaterRequest implements ICreateTheaterRequest {
@@ -10275,6 +10279,7 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
     imageUrl?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
+    maxSeatsPerBooking?: number;
 
     constructor(data?: ICreateTheaterRequest) {
         if (data) {
@@ -10295,6 +10300,7 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
             this.imageUrl = _data["imageUrl"];
             this.latitude = _data["latitude"];
             this.longitude = _data["longitude"];
+            this.maxSeatsPerBooking = _data["maxSeatsPerBooking"];
         }
     }
 
@@ -10315,6 +10321,7 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
         data["imageUrl"] = this.imageUrl;
         data["latitude"] = this.latitude;
         data["longitude"] = this.longitude;
+        data["maxSeatsPerBooking"] = this.maxSeatsPerBooking;
         return data;
     }
 }
@@ -10328,6 +10335,7 @@ export interface ICreateTheaterRequest {
     imageUrl?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
+    maxSeatsPerBooking?: number;
 }
 
 export class UpdateTheaterRequest implements IUpdateTheaterRequest {
@@ -10340,6 +10348,7 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
     imageUrl?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
+    maxSeatsPerBooking?: number;
 
     constructor(data?: IUpdateTheaterRequest) {
         if (data) {
@@ -10361,6 +10370,7 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
             this.imageUrl = _data["imageUrl"];
             this.latitude = _data["latitude"];
             this.longitude = _data["longitude"];
+            this.maxSeatsPerBooking = _data["maxSeatsPerBooking"];
         }
     }
 
@@ -10382,6 +10392,7 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
         data["imageUrl"] = this.imageUrl;
         data["latitude"] = this.latitude;
         data["longitude"] = this.longitude;
+        data["maxSeatsPerBooking"] = this.maxSeatsPerBooking;
         return data;
     }
 }
@@ -10396,6 +10407,7 @@ export interface IUpdateTheaterRequest {
     imageUrl?: string | undefined;
     latitude?: number | undefined;
     longitude?: number | undefined;
+    maxSeatsPerBooking?: number;
 }
 
 export abstract class BaseSearchResultsOfShowTimeListDTO implements IBaseSearchResultsOfShowTimeListDTO {
@@ -16703,6 +16715,7 @@ export class ScanTicketResultDTO implements IScanTicketResultDTO {
     patronCategory?: string;
     ageRatingCode?: string | undefined;
     minAge?: number | undefined;
+    guardianRequired?: boolean;
     usedAt?: Date | undefined;
     usedBy?: string | undefined;
 
@@ -16726,6 +16739,7 @@ export class ScanTicketResultDTO implements IScanTicketResultDTO {
             this.patronCategory = _data["patronCategory"];
             this.ageRatingCode = _data["ageRatingCode"];
             this.minAge = _data["minAge"];
+            this.guardianRequired = _data["guardianRequired"];
             this.usedAt = _data["usedAt"] ? new Date(_data["usedAt"].toString()) : <any>undefined;
             this.usedBy = _data["usedBy"];
         }
@@ -16749,6 +16763,7 @@ export class ScanTicketResultDTO implements IScanTicketResultDTO {
         data["patronCategory"] = this.patronCategory;
         data["ageRatingCode"] = this.ageRatingCode;
         data["minAge"] = this.minAge;
+        data["guardianRequired"] = this.guardianRequired;
         data["usedAt"] = this.usedAt ? this.usedAt.toISOString() : <any>undefined;
         data["usedBy"] = this.usedBy;
         return data;
@@ -16765,6 +16780,7 @@ export interface IScanTicketResultDTO {
     patronCategory?: string;
     ageRatingCode?: string | undefined;
     minAge?: number | undefined;
+    guardianRequired?: boolean;
     usedAt?: Date | undefined;
     usedBy?: string | undefined;
 }
