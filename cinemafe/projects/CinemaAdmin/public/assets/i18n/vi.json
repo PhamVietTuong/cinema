@@ -256,6 +256,9 @@
       "emptyText": "Chưa có rạp nào."
     },
     "form": {
+      "maxSeatsLabel": "Số ghế tối đa mỗi đơn đặt online",
+      "maxSeatsHint": "Chỉ áp dụng cho đơn đặt online (1-50). Bán tại quầy không giới hạn.",
+      "maxSeatsInvalid": "Nhập số nguyên từ 1 đến 50.",
       "createTitle": "Rạp Mới",
       "editTitle": "Chỉnh Sửa Rạp",
       "nameLabel": "Tên Rạp",

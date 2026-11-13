@@ -45,12 +45,11 @@ describe('BookingSelectionComponent', () => {
     stopConnection: ReturnType<typeof vi.fn>;
   };
   let payment: { getSeats: ReturnType<typeof vi.fn>; getShowTimePrices: ReturnType<typeof vi.fn> };
-  let cinema: { getRoom: ReturnType<typeof vi.fn>; getFoodAndDrinks: ReturnType<typeof vi.fn> };
-  let dialog: { open: ReturnType<typeof vi.fn> };
+  let cinema: { getRoom: ReturnType<typeof vi.fn>; getFoodAndDrinks: ReturnType<typeof vi.fn>; getTheater: ReturnType<typeof vi.fn> };
 
   /** Builds the component targeting st-1/room-1 by default, mirroring the first @Input binding
    * Angular would apply before the initial ngOnChanges/ngOnInit pass. */
-  const build = (seats: Seat[], rows: PriceRow[] = [priceRow({})]) => {
+  const build = (seats: Seat[], rows: PriceRow[] = [priceRow({})], maxSeatsPerBooking?: number) => {
     hub = {
       seatLocked$: new Subject(),
       seatUnlocked$: new Subject(),
@@ -69,6 +68,7 @@ describe('BookingSelectionComponent', () => {
     cinema = {
       getRoom: vi.fn().mockReturnValue(of({ theaterId: 'theater-1' })),
       getFoodAndDrinks: vi.fn().mockReturnValue(of({ results: [] })),
+      getTheater: vi.fn().mockReturnValue(of({ maxSeatsPerBooking })),
     };
     authenticated = true;
     router = { navigate: vi.fn().mockResolvedValue(true), serializeUrl: vi.fn().mockReturnValue('/booking/checkout?showTimeId=st-1&roomId=room-1'), createUrlTree: vi.fn() };
@@ -76,10 +76,9 @@ describe('BookingSelectionComponent', () => {
 
     const cdr = { markForCheck: vi.fn() };
     const translate = { instant: (key: string, params?: any) => `${key}${params ? ':' + JSON.stringify(params) : ''}` };
-    dialog = { open: vi.fn() };
 
     const c = new BookingSelectionComponent(
-      router as never, store as never, payment as never, cinema as never, hub as never, cdr as never, translate as never, dialog as never,
+      router as never, store as never, payment as never, cinema as never, hub as never, cdr as never, translate as never,
     );
     c.showTimeId = 'st-1';
     c.roomId = 'room-1';
@@ -144,6 +143,28 @@ describe('BookingSelectionComponent', () => {
       expect(component.totalTickets).toBe(BookingSelectionComponent.MAX_TICKETS);
     });
 
+    it('lowers the cap to the theater maxSeatsPerBooking (4)', () => {
+      component = build([seat({ id: 's1' })], [priceRow({ patronCategoryId: 'cat-a', patronCategoryName: 'Adult' })], 4);
+      const row = component.priceRows[0];
+
+      component.setTicketQty(row.patronCategoryId!, 9, !!row.isDouble);
+
+      expect(component.maxTickets).toBe(4);
+      expect(component.totalTickets).toBe(4);
+      expect(component.canIncrement(row)).toBe(false);
+    });
+
+    it('raises the cap to the theater maxSeatsPerBooking (20)', () => {
+      component = build([seat({ id: 's1' })], [priceRow({ patronCategoryId: 'cat-a', patronCategoryName: 'Adult' })], 20);
+      const row = component.priceRows[0];
+
+      component.setTicketQty(row.patronCategoryId!, 15, !!row.isDouble);
+
+      expect(component.maxTickets).toBe(20);
+      expect(component.totalTickets).toBe(15);
+      expect(component.canIncrement(row)).toBe(true);
+    });
+
     it('each (category, seat kind) row is its own independent card', () => {
       component = build([seat({ id: 's1' })], [
         priceRow({ patronCategoryId: 'senior-std', patronCategoryName: 'Senior', isDouble: false, price: 60000 }),
@@ -171,72 +192,12 @@ describe('BookingSelectionComponent', () => {
     });
   });
 
-  describe('id check notice', () => {
-    const flaggedRow = priceRow({ patronCategoryId: 'senior-std', patronCategoryName: 'Senior', requiresIdCheck: true } as Partial<PriceRow>);
+  describe('id check categories', () => {
+    it('does not offer a category that requires an ID check online (counter-only)', () => {
+      const flaggedRow = priceRow({ patronCategoryId: 'senior-std', patronCategoryName: 'Senior', requiresIdCheck: true } as Partial<PriceRow>);
+      component = build([seat({ id: 's1' })], [flaggedRow, priceRow({ patronCategoryId: 'adult-std' })]);
 
-    it('opens the dialog and commits the ticket only when confirmed', () => {
-      component = build([seat({ id: 's1' })], [flaggedRow]);
-      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
-
-      component.incTicket(component.priceRows[0]);
-
-      expect(dialog.open).toHaveBeenCalledTimes(1);
-      expect(component.ticketQty['senior-std']).toBe(1);
-    });
-
-    it('leaves the quantity unchanged when the dialog is cancelled', () => {
-      component = build([seat({ id: 's1' })], [flaggedRow]);
-      dialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
-
-      component.incTicket(component.priceRows[0]);
-
-      expect(component.ticketQty['senior-std']).toBe(0);
-      expect(component.slots).toHaveLength(0);
-    });
-
-    it('never reopens on 1 -> 2+, only on the 0 -> 1 transition', () => {
-      component = build([seat({ id: 's1' }), seat({ id: 's2' })], [flaggedRow]);
-      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
-      const row = component.priceRows[0];
-
-      component.incTicket(row); // 0 -> 1, opens
-      component.incTicket(row); // 1 -> 2, should not open
-
-      expect(dialog.open).toHaveBeenCalledTimes(1);
-      expect(component.ticketQty['senior-std']).toBe(2);
-    });
-
-    it('reopens after the quantity drops back to 0', () => {
-      component = build([seat({ id: 's1' })], [flaggedRow]);
-      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
-      const row = component.priceRows[0];
-
-      component.incTicket(row); // 0 -> 1
-      component.decTicket(row); // 1 -> 0, no dialog
-      component.incTicket(row); // 0 -> 1 again, opens again
-
-      expect(dialog.open).toHaveBeenCalledTimes(2);
-    });
-
-    it('never opens the dialog for decTicket', () => {
-      component = build([seat({ id: 's1' })], [flaggedRow]);
-      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
-      const row = component.priceRows[0];
-      component.incTicket(row);
-      dialog.open.mockClear();
-
-      component.decTicket(row);
-
-      expect(dialog.open).not.toHaveBeenCalled();
-    });
-
-    it('never opens the dialog for a category that does not require it', () => {
-      component = build([seat({ id: 's1' })], [priceRow({ patronCategoryId: 'adult-std' })]);
-
-      component.incTicket(component.priceRows[0]);
-
-      expect(dialog.open).not.toHaveBeenCalled();
-      expect(component.ticketQty['adult-std']).toBe(1);
+      expect(component.priceRows.map(r => r.patronCategoryId)).toEqual(['adult-std']);
     });
   });
 
@@ -697,13 +658,13 @@ describe('BookingSelectionComponent', () => {
       cinema = {
         getRoom: vi.fn().mockReturnValue(of({ theaterId: 'theater-1' })),
         getFoodAndDrinks: vi.fn().mockReturnValue(of({ results: [] })),
+        getTheater: vi.fn().mockReturnValue(of({})),
       };
       router = { navigate: vi.fn().mockResolvedValue(true), serializeUrl: vi.fn(), createUrlTree: vi.fn() };
       const store = { select: () => of(true) };
       const cdr = { markForCheck: vi.fn() };
       const translate = { instant: (key: string) => key };
-      const dialog = { open: vi.fn() };
-      const c = new BookingSelectionComponent(router as never, store as never, payment as never, cinema as never, hub as never, cdr as never, translate as never, dialog as never);
+      const c = new BookingSelectionComponent(router as never, store as never, payment as never, cinema as never, hub as never, cdr as never, translate as never);
       c.showTimeId = 'st-1';
       c.roomId = 'room-1';
       c.ngOnChanges(); // kicks off the slow initial load for st-1/room-1; seats still []

@@ -4,6 +4,7 @@ import {
   buildAgeConfirmRequest,
   buildScanRequest,
   isAdmitted,
+  needsGuardian,
   needsAgePrompt,
   normalizeScanCode,
   pushRecentScan,
@@ -84,6 +85,16 @@ describe('scan flow state', () => {
 
   it('does not build a confirmation re-scan for other outcomes', () => {
     expect(buildAgeConfirmRequest('QR-9', result(Outcome.Admitted))).toBeNull();
+  });
+
+  it('asks for a guardian only on an admitted K-rated ticket', () => {
+    const admittedK = result(Outcome.Admitted);
+    admittedK.guardianRequired = true;
+    const usedK = result(Outcome.AlreadyUsed);
+    usedK.guardianRequired = true;
+    expect(needsGuardian(admittedK)).toBe(true);
+    expect(needsGuardian(usedK)).toBe(false);
+    expect(needsGuardian(result(Outcome.Admitted))).toBe(false);
   });
 
   it('flags admitted and already-used results', () => {

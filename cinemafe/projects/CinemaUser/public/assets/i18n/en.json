@@ -186,11 +186,6 @@
       "kindStandard": "Single",
       "kindDouble": "Double"
     },
-    "idCheck": {
-      "title": "ID verification required",
-      "message": "You are purchasing a special ticket category reserved for students, individuals under 22, or senior citizens. Please bring your national ID card (CCCD) or a student ID card (with a photo) for verification before entering the cinema. Cinema staff may deny entry if these requirements are not met. Thank you.",
-      "confirm": "I understand"
-    },
     "summary": {
       "subtotal": "Subtotal ({{count}} seats)",
       "comboTotal": "Total",
@@ -241,6 +236,8 @@
       "pointsToEarn": "You could earn up to {{points}} points from this payment"
     },
     "confirm": {
+      "ageConfirmGeneric": "I confirm that every viewer meets the age rating of this film.",
+      "ageConfirm": "I confirm that every viewer meets the age rating of this film ({{code}} - {{age}}+).",
       "title": "Payment",
       "paymentMethod": "Payment Method",
       "vnpay": "Pay with VNPAY",
@@ -272,6 +269,8 @@
       "bookAgain": "Book Again"
     },
     "errors": {
+      "ageNotConfirmedGeneric": "Please tick the age confirmation before paying.",
+      "ageNotConfirmed": "Please tick the age confirmation before paying: this film is rated {{age}}+.",
       "bookingFailed": "Booking failed. Please try again.",
       "paymentFailed": "Payment could not be started. Please try again.",
       "outOfStock": "Some snacks or combos in your order are sold out or no longer available in that quantity. Go back to adjust your order - your seats are still held.",

@@ -71,6 +71,15 @@
   margin-bottom: 20px;
 }
 
+.age-confirm {
+  display: flex; align-items: flex-start; gap: 12px; cursor: pointer;
+  padding: 14px 16px; margin-bottom: 20px; min-height: 44px;
+  background: var(--ml-panel-2); border: 1px solid var(--ml-rule); border-radius: var(--ml-r-sm);
+  font-size: 0.875rem; line-height: 1.5; color: var(--ml-ink);
+  input { width: 22px; height: 22px; flex: none; margin: 1px 0 0; accent-color: var(--ml-action, currentColor); cursor: pointer; }
+  &--missing { border-color: var(--ml-danger); }
+}
+
 .summary-card {
   background: var(--ml-panel);
   border: 1px solid var(--ml-rule);

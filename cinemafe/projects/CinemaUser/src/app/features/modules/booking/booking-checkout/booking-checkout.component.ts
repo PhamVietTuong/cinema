@@ -77,6 +77,11 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   // Order context for the summary card, loaded after arrival; blank until each lookup answers.
   movieTitle = '';
   ageCode = '';
+  /** Minimum viewer age of the film (0 when unrated); from 13 up the customer must confirm the age rating. */
+  ageMinAge = 0;
+  ageConfirmed = false;
+  /** True when the movie lookup failed: the rating is unknown, so the checkbox is shown with generic wording. */
+  ageRatingUnknown = false;
   moviePosterUrl = '';
   movieDuration = 0;
   movieGenres = '';
@@ -305,6 +310,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
             next: m => {
               this.movieTitle = m.title ?? '';
               this.ageCode = m.ageRestrictionCode ?? '';
+              this.ageMinAge = m.ageRestrictionMinAge ?? 0;
               this.moviePosterUrl = m.posterUrl ?? '';
               this.movieDuration = m.duration ?? 0;
               this.movieGenres = (m.genres ?? []).join(', ');
@@ -312,11 +318,19 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
               this._movieSlug = m.slug ?? '';
               this._cdr.markForCheck();
             },
-            error: () => { /* summary stays without a title */ },
+            error: () => {
+              /* summary stays without a title */
+              this.ageRatingUnknown = true;
+              this._cdr.markForCheck();
+            },
           });
         }
       },
-      error: () => { /* summary stays without showtime details */ },
+      error: () => {
+        /* summary stays without showtime details */
+        this.ageRatingUnknown = true;
+        this._cdr.markForCheck();
+      },
     });
     this._cinemaService.getRoom(this.roomId).subscribe({
       next: room => {
@@ -447,7 +461,21 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Mirrors the server rule (BookingManager): films rated 13+ need the customer's age confirmation. */
+  get needsAgeConfirmation(): boolean {
+    return this.ageRatingUnknown || this.ageMinAge >= BookingCheckoutComponent.AGE_CONFIRM_MIN_AGE;
+  }
+
+  static readonly AGE_CONFIRM_MIN_AGE = 13;
+
   confirmBooking(): void {
+    if (this.needsAgeConfirmation && !this.ageConfirmed) {
+      this.error = this.ageRatingUnknown && this.ageMinAge === 0
+        ? this._translate.instant('booking.errors.ageNotConfirmedGeneric')
+        : this._translate.instant('booking.errors.ageNotConfirmed', { age: this.ageMinAge });
+      this._cdr.markForCheck();
+      return;
+    }
     this.clampPoints();
     this.loading = true;
     this.error = '';
@@ -472,6 +500,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
       // Pass our live hub connection id (carried over from page 1) so the server ignores our own
       // held seats when enforcing locks.
       connectionId: this._hub.connectionId ?? undefined,
+      ageConfirmed: this.ageConfirmed,
     });
     this._paymentService.createBooking(request).subscribe({
       next: res => {
