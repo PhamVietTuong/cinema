@@ -18,8 +18,8 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 | Promotions | `discover/promotions` | complete | |
 | Membership / tiers | `discover/membership` | partial | Displays `MemberShipDTO` tiers (min points, highlighted middle tier); point accrual/voucher redemption logic lives in checkout, not this page. |
 | Showtime selection | `modules/booking/booking-page` | complete | |
-| Seat selection | `modules/booking/booking-selection` | complete | Shared seat map (`CinemaLib` `seat-map`) + `seat-lock-session.service.ts` over SignalR `/hubs/booking`. |
-| Checkout (discounts, gift cards, loyalty points, food/drink combos) | `modules/booking/booking-checkout` | complete | Handles combo/food out-of-stock errors explicitly (`booking-checkout.component.ts` ~line 481). ROADMAP marks food/drink combos 🟡 ("wire into booking flow") — code shows this is wired. |
+| Seat selection | `modules/booking/booking-selection` | complete | Shared seat map (`CinemaLib` `seat-map`) + `seat-lock-session.service.ts` over SignalR `/hubs/booking`. The ticket picker is capped at the theater's `MaxSeatsPerBooking` (10 until loaded) and hides `RequiresIdCheck` categories (counter-only). |
+| Checkout (discounts, gift cards, loyalty points, food/drink combos) | `modules/booking/booking-checkout` | complete | Shows an age-confirmation checkbox for films rated 13+ (also shown, with generic wording, when the rating could not be loaded); `ageConfirmed` is sent and unticked payment is blocked. Handles combo/food out-of-stock errors explicitly (`booking-checkout.component.ts` ~line 481). ROADMAP marks food/drink combos 🟡 ("wire into booking flow") — code shows this is wired. |
 | Payment (VNPay sandbox) | redirect out + `modules/booking/payment-return` | complete | Polls `GetInvoice` for ~30s; IPN-authoritative per root `CLAUDE.md`. |
 | Booking history / my tickets | `features/profile` | complete | |
 | Responsive/functional audit (2026-11) | `shared/scroll-row`, `movie-card`, `profile`, `booking-checkout` dialogs | complete | Scroll-row operable by chevrons/wheel/drag/keyboard/touch at every width; movie-card actions stack on phones; profile tab bar wraps; weekday names follow the UI language; screening-format label no longer doubles ("2D 2D"); gift-card/discount dialogs update under zoneless CD and translate server verdicts; auth effects show localized API errors. |
@@ -35,7 +35,7 @@ Status legend: **complete** (wired end-to-end, used in production routes) · **p
 |---|---|---|---|
 | Dashboard | `modules/overview/dashboard` | complete | ROADMAP ✅. |
 | Movies management | `modules/overview/movies` | complete | |
-| Theaters management (+ tabs: info, rooms, room types, seat types, food, combos, time slots, ticket prices, loyalty, patron categories, staff, holidays) | `modules/overview/theaters/*` (`theater-detail.component.ts` + per-tab components/dialogs) | complete | Matches ROADMAP "Recently shipped": multi-theater catalog, seat-map editor, per-theater pricing. Staff tab (`theater-staff.component.ts`) lists/adds/edits/removes staff scoped to that cinema (`GetUsers` filtered by `theaterId`), reusing `user.dialog.ts` with the theater pre-filled and locked. |
+| Theaters management (+ tabs: info, rooms, room types, seat types, food, combos, time slots, ticket prices, loyalty, patron categories, staff, holidays) | `modules/overview/theaters/*` (`theater-detail.component.ts` + per-tab components/dialogs) | complete | Matches ROADMAP "Recently shipped": multi-theater catalog, seat-map editor, per-theater pricing. The theater dialog and detail page edit `MaxSeatsPerBooking` (max seats per online booking, whole number 1-50). Staff tab (`theater-staff.component.ts`) lists/adds/edits/removes staff scoped to that cinema (`GetUsers` filtered by `theaterId`), reusing `user.dialog.ts` with the theater pre-filled and locked. |
 | Showtimes management | `modules/overview/show-times` | complete | |
 | Users management | `modules/overview/users` | complete | Lists a Cinema column (`UserDTO.TheaterName`, batch-resolved, blank for theater-less users). |
 | Reports (sales/occupancy/KPIs) + CSV export | `modules/overview/reports` | complete | `GetSales`/`GetOccupancy`/`GetKpis` return structured DTOs; CSV built client-side (`_downloadCsv`, UTF-8 BOM, `Blob`/`a.download`) — there is no backend CSV-generation endpoint. |
@@ -60,7 +60,7 @@ The `CinemaStaff` app and the `TheaterStaff` role both still exist (verified dir
 |---|---|---|---|
 | Login | `features/auth/login` | complete | |
 | Home | `features/home` | complete | Role-based landing page (all current roles → `/home`). |
-| Gate: ticket scan | `features/gate/gate-scan*` | complete | `CinemaController.Scan`: a refused scan is still HTTP 200 with `Outcome` carrying the reason (`NotFound`/`NotPaid`/`AlreadyUsed`/`WrongTheater`/`WrongShowTime`/`TooEarly`/`Expired`/`AgeCheckRequired`) — only an auth failure is a non-200 response. |
+| Gate: ticket scan | `features/gate/gate-scan*` | complete | `CinemaController.Scan`: a refused scan is still HTTP 200 with `Outcome` carrying the reason (`NotFound`/`NotPaid`/`AlreadyUsed`/`WrongTheater`/`WrongShowTime`/`TooEarly`/`Expired`/`AgeCheckRequired`) — only an auth failure is a non-200 response. Age prompt from MinAge 13 (T13/T16/T18); a K-rated admit shows a "parent or guardian" banner (`GuardianRequired`) that stays on screen until dismissed. |
 | Gate: lookup | `features/gate/gate-lookup*` | complete | Find paid tickets by invoice code or phone. |
 | Counter sale (POS) | `features/pos` | complete | Quote/sell flow backed by `#region BoxOffice`. |
 | Schedule board | `features/schedule` | complete | Rooms + today's showtimes + status. |
