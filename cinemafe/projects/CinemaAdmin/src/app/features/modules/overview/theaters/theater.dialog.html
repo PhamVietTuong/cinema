@@ -70,7 +70,9 @@
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input matInput id="th-maxSeats" type="number" step="1" min="1" max="50" formControlName="maxSeatsPerBooking" placeholder="10">
             <mat-hint>{{ 'theaters.form.maxSeatsHint' | translate }}</mat-hint>
-            <mat-error *ngIf="form.controls['maxSeatsPerBooking'].invalid">{{ 'theaters.form.maxSeatsInvalid' | translate }}</mat-error>
+            @if (form.controls['maxSeatsPerBooking'].invalid) {
+              <mat-error>{{ 'theaters.form.maxSeatsInvalid' | translate }}</mat-error>
+            }
           </mat-form-field>
         </div>
       </div>

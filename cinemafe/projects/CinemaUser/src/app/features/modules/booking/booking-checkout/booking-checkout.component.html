@@ -72,11 +72,16 @@
         </button>
       </div>
 
-      <label class="age-confirm" *ngIf="needsAgeConfirmation" [class.age-confirm--missing]="error && !ageConfirmed">
-        <input type="checkbox" id="age-confirm" [checked]="ageConfirmed" (change)="ageConfirmed = $any($event.target).checked">
-        <span *ngIf="ageMinAge > 0">{{ 'booking.confirm.ageConfirm' | translate:{ code: ageCode, age: ageMinAge } }}</span>
-        <span *ngIf="ageMinAge === 0">{{ 'booking.confirm.ageConfirmGeneric' | translate }}</span>
-      </label>
+      @if (needsAgeConfirmation) {
+        <label class="age-confirm" [class.age-confirm--missing]="error && !ageConfirmed">
+          <input type="checkbox" id="age-confirm" [checked]="ageConfirmed" (change)="ageConfirmed = $any($event.target).checked">
+          @if (ageMinAge > 0) {
+            <span>{{ 'booking.confirm.ageConfirm' | translate:{ code: ageCode, age: ageMinAge } }}</span>
+          } @else {
+            <span>{{ 'booking.confirm.ageConfirmGeneric' | translate }}</span>
+          }
+        </label>
+      }
 
       <div *ngIf="error" class="error-banner">
         <mat-icon>error</mat-icon> {{ error }}

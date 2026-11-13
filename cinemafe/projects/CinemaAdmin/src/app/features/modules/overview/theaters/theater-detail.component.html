@@ -44,9 +44,11 @@
         <span class="ad-field-err" *ngIf="form.get('longitude')?.touched && form.get('longitude')?.invalid">{{ 'theaters.detail.longitudeInvalid' | translate }}</span>
       </div>
       <div class="ad-field">
-        <label class="ad-label">{{ 'theaters.form.maxSeatsLabel' | translate }}</label>
-        <input class="ad-input" type="number" step="1" min="1" max="50" formControlName="maxSeatsPerBooking" placeholder="10">
-        <span class="ad-field-err" *ngIf="form.get('maxSeatsPerBooking')?.touched && form.get('maxSeatsPerBooking')?.invalid">{{ 'theaters.form.maxSeatsInvalid' | translate }}</span>
+        <label class="ad-label" for="maxSeatsPerBooking">{{ 'theaters.form.maxSeatsLabel' | translate }}</label>
+        <input class="ad-input" id="maxSeatsPerBooking" type="number" step="1" min="1" max="50" formControlName="maxSeatsPerBooking" placeholder="10">
+        @if (form.get('maxSeatsPerBooking')?.touched && form.get('maxSeatsPerBooking')?.invalid) {
+          <span class="ad-field-err">{{ 'theaters.form.maxSeatsInvalid' | translate }}</span>
+        }
       </div>
       <div class="ad-field full-span">
         <label class="ad-label">{{ 'theaters.detail.imageLabel' | translate }}</label>
