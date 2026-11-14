@@ -36,7 +36,7 @@ Movie detail uses a friendly slug (`shared/movie-route.ts`); a legacy `:legacyId
   profile
   (OverviewModule)    dashboard, reports, movies, theaters, theaters/:id, showtimes, users
   (CatalogAdminModule) age-restrictions, discount-types, holidays, memberships, movie-types, news, templates, user-types
-  (OperationsModule)   audit-log, comments, discounts, gift-cards, invoices, promotion-programs, splash-banners
+  (OperationsModule)   audit-log, comments, discounts, invoices, promotion-programs, splash-banners
 /**                -> /auth/login
 ```
 Overview/Catalog/Operations are each one `NgModule` with its own internal route list, mounted via a shared `path: ''` pass-through entry — not one `.module.ts` per page.
@@ -65,13 +65,13 @@ Current roles are exactly `Admin`, `Customer`, `TheaterStaff` (see business doc)
 2. **Movie detail** (`discover/movies/movie-detail`) — friendly slug URL; star rating + threaded comments (pending admin moderation before public visibility).
 3. **Showtime selection** (`booking/booking-page`).
 4. **Seat selection** (`booking/booking-selection`) — shared `seat-map` component + `seat-lock-session.service.ts`, live via SignalR (`/hubs/booking`).
-5. **Checkout** (`booking/booking-checkout`) — discounts, gift cards, loyalty points, food/drink combos; surfaces out-of-stock errors for food/combo items.
+5. **Checkout** (`booking/booking-checkout`) — discounts, loyalty points, food/drink combos; surfaces out-of-stock errors for food/combo items.
 6. **Payment** — redirect to VNPay sandbox; **payment-return** page polls `GetInvoice` for ~30s (IPN-authoritative, not redirect-authoritative — see root `CLAUDE.md`).
 7. **Profile** — booking history, ticket view (QR rendered inline, not via the CinemaLib `ticket-card`/`qr-code` components), notification preferences.
 
 ### CinemaAdmin — catalog & operations management
 - **Catalog**: Movies / Theaters (with nested tabs: rooms, room types, seat types, food, combos, time slots, ticket prices, loyalty, patron categories, holidays) / Showtimes / Users — standard list + dialog CRUD pattern, each with its own list component + `*.dialog.ts`.
-- **Operations**: comment moderation, discounts, gift cards, invoices, promotion programs (with banner upload), splash banners, audit log — all admin-only.
+- **Operations**: comment moderation, discounts, invoices, promotion programs (with banner upload), splash banners, audit log — all admin-only.
 - **Reports**: sales/occupancy/KPI charts; CSV export is generated client-side from the JSON response (no backend file endpoint).
 
 ### CinemaStaff — box office / gate flows

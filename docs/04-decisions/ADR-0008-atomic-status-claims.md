@@ -5,11 +5,11 @@
 
 ## Context
 
-- Several flows had a read-then-write gap that two requests could pass at the same time: a duplicate or racing payment callback, two bookings spending the same loyalty points or gift-card balance, two scanners admitting the same ticket, and a promotion use counter. The commit messages describe the fixes; for example `d1cb811`: "only the claim winner applies loyalty/payment side effects; the expiry job skips invoices it lost".
+- Several flows had a read-then-write gap that two requests could pass at the same time: a duplicate or racing payment callback, two bookings spending the same loyalty points (or gift-card balance, since removed), two scanners admitting the same ticket, and a promotion use counter. The commit messages describe the fixes; for example `d1cb811`: "only the claim winner applies loyalty/payment side effects; the expiry job skips invoices it lost".
 - The fixes all use the same shape, an `ExecuteUpdateAsync` whose `WHERE` clause carries the expected old state, with the number of affected rows as the verdict:
   - `InvoiceStore.TryTransitionStatusAsync` (`cinemabe/Cinema/3-Data/Cinema.Data/Stores/InvoiceStore.cs:181`) claims `Pending` to `Paid` or `Cancelled`.
   - `InvoiceStore.TryAdmitTicketAsync` (`InvoiceStore.cs:169`) admits a ticket once.
-  - `UserStore.TryDeductPointsAsync` and `GiftCardStore.TryDrawBalanceAsync` spend points and balance only while enough remain.
+  - `UserStore.TryDeductPointsAsync` spends points only while enough remain. (It was joined by `GiftCardStore.TryDrawBalanceAsync` for gift-card balances; gift cards were removed on 2026-11-14.)
   - `PromotionProgramStore.IncrementUsedCountAsync` adds one in SQL.
 - Callers run the claim inside a transaction and roll back if they lose (`BookingManager.cs:1086`, `:1856`; `InvoiceAdminManager.cs:71`).
 

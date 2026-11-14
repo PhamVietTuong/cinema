@@ -12,5 +12,4 @@ public class CounterCustomerDTO
     public string Phone { get; set; } = string.Empty;
     public int Points { get; set; }
     public string? MemberShipName { get; set; }
-    public double DiscountPercent { get; set; }
 }

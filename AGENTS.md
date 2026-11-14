@@ -27,6 +27,7 @@ Full-stack cinema booking platform. Monorepo: `cinemabe/` (.NET 9 Web API + EF C
 
 - Backend: `dotnet build Cinema.sln`; run via `dotnet run --project Cinema/1-Service/Cinema.Service.WebApiHost` (http://localhost:5102); tests via `dotnet test Cinema/2-Business/Cinema.Business.Tests`; seed `admin@cinema.vn`/`user@cinema.vn` via `dotnet run --project Cinema/2-Business/Cinema.Business.Tests`.
 - Frontend: system Node is v14 (too old) — use nvm v22.12.0 (`.nvmrc`) to build/serve. Rebuild `CinemaLib` (`ng build CinemaLib`) before consuming apps pick up its changes.
+- In scripted or agent-run commands never call `nvm use`: on Windows it re-creates the `C:\Program Files\nodejs` symlink and raises an admin (UAC) confirmation dialog each time. Node 22.12.0 is already the linked version; to be explicit, prefix the command with `$env:PATH = "$env:APPDATA\nvm\v22.12.0;$env:PATH"` (PowerShell) and check `node -v`.
 - Angular 21 apps are zoneless (no zone.js) — data set in a `subscribe()` callback needs `ChangeDetectorRef.markForCheck()` to render.
 - NSwag regen must run from its own `Generator/` directory with the Web API host stopped, or it fails with path/lock errors.
 - Seeding Vietnamese text via `sqlcmd -i` mangles `N'...'` literals unless run with `-f 65001`; verify with `-o file -u` + a PowerShell Unicode read, not bash terminal output.

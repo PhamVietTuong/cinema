@@ -22,14 +22,12 @@ public class PaymentController : ApiControllerBase
 
     private readonly IBookingManager _bookingManager;
     private readonly IInvoiceManager _invoiceManager;
-    private readonly IGiftCardManager _giftCardManager;
     private readonly IPaymentGatewayResolver _gateways;
 
-    public PaymentController(IBookingManager bookingManager, IInvoiceManager invoiceManager, IGiftCardManager giftCardManager, IPaymentGatewayResolver gateways)
+    public PaymentController(IBookingManager bookingManager, IInvoiceManager invoiceManager, IPaymentGatewayResolver gateways)
     {
         _bookingManager = bookingManager;
         _invoiceManager = invoiceManager;
-        _giftCardManager = giftCardManager;
         _gateways = gateways;
     }
 
@@ -195,81 +193,6 @@ public class PaymentController : ApiControllerBase
         catch (Exception e)
         {
             return HandleException(e, nameof(ValidateDiscountCode));
-        }
-    }
-
-    // ── Gift cards ────────────────────────────────────────────────────────────
-
-    [HttpPost]
-    [ProducesResponseType(typeof(GiftCardValidationDTO), 200)]
-    public async Task<IActionResult> ValidateGiftCard([FromBody] ValidateGiftCardRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.ValidateGiftCard being awakened to process request...");
-        try
-        {
-            var result = await _giftCardManager.ValidateAsync(request.Code);
-            return Ok(result);
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(ValidateGiftCard));
-        }
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(typeof(DefaultSearchResults<GiftCardDTO>), 200)]
-    public async Task<IActionResult> GetGiftCards([FromBody] PagingSearchDTO search)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.GetGiftCards being awakened to process request...");
-        try
-        {
-            var result = await _giftCardManager.GetGiftCardsAsync(search);
-            return Ok(result);
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(GetGiftCards));
-        }
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(typeof(GiftCardDTO), 200)]
-    [ProducesResponseType(400)]
-    public async Task<IActionResult> IssueGiftCard([FromBody] IssueGiftCardRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.IssueGiftCard being awakened to process request...");
-        try
-        {
-            var result = await _giftCardManager.IssueAsync(request);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(IssueGiftCard));
-        }
-    }
-
-    [Authorize(Roles = _adminRole)]
-    [HttpPost]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(404)]
-    public async Task<IActionResult> SetGiftCardActive([FromBody] SetGiftCardActiveRequest request)
-    {
-        LogProvider.Current.Information($"{GetType().Name}.SetGiftCardActive being awakened to process request...");
-        try
-        {
-            var ok = await _giftCardManager.SetActiveAsync(request.Id, request.Active);
-            return ok ? Ok(new { message = "Gift card updated." }) : NotFound(new { error = "Gift card not found." });
-        }
-        catch (Exception e)
-        {
-            return HandleException(e, nameof(SetGiftCardActive));
         }
     }
 

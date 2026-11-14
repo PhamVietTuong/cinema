@@ -30,7 +30,6 @@ export class MembershipDialog {
     this.editingId = data.membership?.id ?? null;
     this.form = this._fb.group({
       name: [data.membership?.name ?? '', Validators.required],
-      discountPercent: [data.membership?.discountPercent ?? 0, [Validators.required, Validators.min(0)]],
       minPoints: [data.membership?.minPoints ?? 0, [Validators.required, Validators.min(0)]],
       maxPoints: [data.membership?.maxPoints ?? 0, [Validators.required, Validators.min(0)]],
     });

@@ -29,7 +29,6 @@ public class CreatePromotionProgramRequest
     public bool ExcludeHolidays { get; set; }
     public int? AllowedChannelsMask { get; set; }
     public int? MaxTicketsPerTransaction { get; set; }
-    public bool StacksWithMembershipDiscount { get; set; }
 
     [StringLength(2000)]
     public string? TermsText { get; set; }

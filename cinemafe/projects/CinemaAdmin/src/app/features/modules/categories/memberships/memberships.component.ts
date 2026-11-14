@@ -33,7 +33,7 @@ export class MembershipsManagementComponent extends BaseTableComponent {
   }
 
   protected override _createSearchForm(): void {
-    this.searchForm = this._formBuilder.group({ name: [''], minPoints: [''], discountPercent: [''] });
+    this.searchForm = this._formBuilder.group({ name: [''], minPoints: [''] });
   }
 
   protected _search(criteria: TableSearchCriteria): Observable<TablePage<Dto>> {

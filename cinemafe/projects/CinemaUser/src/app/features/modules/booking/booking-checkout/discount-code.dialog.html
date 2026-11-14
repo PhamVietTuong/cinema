@@ -20,7 +20,7 @@
 <div class="tk-foot">
   <button type="button" class="tk-btn full" (click)="apply()" [disabled]="!valid">{{ 'booking.summary.discountApply' | translate }}</button>
   @if (data.code) {
-    <button type="button" class="tk-btn text" (click)="remove()">{{ 'booking.summary.giftCardRemove' | translate }}</button>
+    <button type="button" class="tk-btn text" (click)="remove()">{{ 'booking.summary.discountRemove' | translate }}</button>
   }
   <button type="button" class="tk-btn text" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
 </div>

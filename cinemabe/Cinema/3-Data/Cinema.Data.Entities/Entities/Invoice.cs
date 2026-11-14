@@ -16,10 +16,6 @@ public class Invoice : BaseEntity
     /// <summary>Loyalty points spent on this booking, reserved at creation and restored if it is
     /// cancelled or expires.</summary>
     public int PointsRedeemed { get; set; }
-    /// <summary>Gift card applied to this booking (if any) and the amount drawn from it; the amount is
-    /// restored to the card if the booking is cancelled or expires.</summary>
-    public Guid? GiftCardId { get; set; }
-    public double GiftCardAmount { get; set; }
     /// <summary>Vestigial: the old Discount entity has been merged into PromotionProgram and removed.
     /// Historical rows only — no FK, no navigation property. New invoices never set this; see
     /// PromotionProgramId instead.</summary>

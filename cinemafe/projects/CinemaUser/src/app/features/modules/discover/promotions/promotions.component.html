@@ -141,8 +141,6 @@
               <li *ngIf="p.excludeHolidays">{{ 'promotions.terms.noHolidays' | translate }}</li>
               <li *ngFor="let ch of channelLabels(p)">{{ 'promotions.terms.channels' | translate:{ channel: (ch | translate) } }}</li>
               <li *ngIf="p.maxTicketsPerTransaction">{{ 'promotions.terms.maxTickets' | translate:{ n: p.maxTicketsPerTransaction } }}</li>
-              <li *ngIf="p.autoApply && p.stacksWithMembershipDiscount">{{ 'promotions.terms.stacksWithMembership' | translate }}</li>
-              <li *ngIf="p.autoApply && !p.stacksWithMembershipDiscount">{{ 'promotions.terms.noStackWithMembership' | translate }}</li>
               <li *ngFor="let line of termsLines(p)">{{ line }}</li>
             </ul>
           </div>

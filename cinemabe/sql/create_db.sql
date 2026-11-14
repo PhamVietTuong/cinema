@@ -53,7 +53,7 @@ IF OBJECT_ID('dbo.StockMovement', 'U') IS NOT NULL
 DROP TABLE dbo.StockMovement;
 IF OBJECT_ID('dbo.ComboItem', 'U') IS NOT NULL
 DROP TABLE dbo.ComboItem;
-IF OBJECT_ID('dbo.GiftCard', 'U') IS NOT NULL
+IF OBJECT_ID('dbo.GiftCard', 'U') IS NOT NULL -- retired table: a re-run on an older database still removes it
 DROP TABLE dbo.GiftCard;
 IF OBJECT_ID('dbo.LoyaltySetting', 'U') IS NOT NULL
 DROP TABLE dbo.LoyaltySetting;
@@ -149,7 +149,6 @@ CREATE TABLE [MemberShip] (
     [Name] nvarchar(max) NOT NULL,
     [MinPoints] int NOT NULL,
     [MaxPoints] int NOT NULL,
-    [DiscountPercent] float NOT NULL,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_MemberShip] PRIMARY KEY ([Id])
@@ -332,7 +331,6 @@ CREATE TABLE [PromotionProgram] (
     [ExcludeHolidays] bit NOT NULL DEFAULT 0,
     [AllowedChannelsMask] int NULL,
     [MaxTicketsPerTransaction] int NULL,
-    [StacksWithMembershipDiscount] bit NOT NULL DEFAULT 0,
     [TermsText] nvarchar(2000) NULL,
     [DisplayOrder] int NOT NULL DEFAULT 0,
     [IsPublished] bit NOT NULL DEFAULT 0,
@@ -505,8 +503,6 @@ CREATE TABLE [Invoice] (
     [PaymentReference] nvarchar(max) NULL,
     [PaidAt] datetime NULL,
     [PointsRedeemed] int NOT NULL DEFAULT 0,
-    [GiftCardId] uniqueidentifier NULL,
-    [GiftCardAmount] float NOT NULL DEFAULT 0,
     -- Vestigial: the old Discount entity/table is gone. Historical data only — no FK, never written by
     -- new code (see PromotionProgramId below instead).
     [DiscountId] uniqueidentifier NULL,
@@ -582,7 +578,7 @@ CREATE TABLE [InvoiceTicket] (
     [RoomId] uniqueidentifier NOT NULL,
     [SeatId] uniqueidentifier NOT NULL,
     [Price] float NOT NULL,
-    -- Snapshot of the patron category applied at booking time (no FK, like Invoice.GiftCardId) so
+    -- Snapshot of the patron category applied at booking time (no FK, like Invoice.PromotionProgramId) so
     -- reprints/gate check-in/reports stay truthful even if the category is later renamed or deleted.
     [PatronCategoryId] uniqueidentifier NULL,
     [PatronCategoryName] nvarchar(100) NULL,
@@ -667,20 +663,6 @@ CREATE TABLE [ReminderLog] (
     CONSTRAINT [PK_ReminderLog] PRIMARY KEY ([Id])
 );
 
--- Stored-value gift cards / vouchers.
-CREATE TABLE [GiftCard] (
-    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
-    [Code] nvarchar(50) NOT NULL,
-    [InitialBalance] float NOT NULL,
-    [Balance] float NOT NULL,
-    [IsActive] bit NOT NULL DEFAULT 1,
-    [ExpiresAt] datetime NULL,
-    [IssuedToEmail] nvarchar(max) NULL,
-    [CreationTime] datetime NOT NULL,
-    [LastUpdatedTime] datetime NULL,
-    CONSTRAINT [PK_GiftCard] PRIMARY KEY ([Id])
-);
-
 -- Loyalty point conversion rate, one row per theater (no global rate). A theater without a row uses the
 -- built-in default: 1,000 VND spent = 1 point (PointsPerUnit = 1000); 100 points = 1,000 VND (PointValueVnd = 10).
 CREATE TABLE [LoyaltySetting] (
@@ -741,7 +723,6 @@ CREATE UNIQUE INDEX [IX_User_Phone] ON [User] ([Phone]);
 CREATE INDEX [IX_User_UserTypeId] ON [User] ([UserTypeId]);
 CREATE INDEX [IX_User_TheaterId] ON [User] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_ReminderLog_UserId_ShowTimeId] ON [ReminderLog] ([UserId], [ShowTimeId]);
-CREATE UNIQUE INDEX [IX_GiftCard_Code] ON [GiftCard] ([Code]);
 CREATE UNIQUE INDEX [IX_LoyaltySetting_TheaterId] ON [LoyaltySetting] ([TheaterId]);
 
 -- Insert-only audit trail of sensitive staff actions (no FKs, so it survives deletions).
@@ -854,7 +835,7 @@ BEGIN
     EXEC('CREATE INDEX [IX_Invoice_TheaterId_PaidAt] ON [Invoice] ([TheaterId], [PaidAt])');
 END
 
--- One row per tender applied to an invoice (Method: 0 Cash, 1 Card, 2 QrWallet, 3 GiftCard, 4 Points, 5 Online).
+-- One row per tender applied to an invoice (Method: 0 Cash, 1 Card, 2 QrWallet, 3 retired (never reuse), 4 Points, 5 Online).
 IF OBJECT_ID('dbo.InvoicePayment', 'U') IS NULL
 BEGIN
     CREATE TABLE [InvoicePayment] (

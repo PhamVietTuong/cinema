@@ -6,7 +6,7 @@ public class InvoiceTicket
     public Guid RoomId { get; set; }
     public Guid SeatId { get; set; }
     public double Price { get; set; }
-    /// <summary>Snapshot of the patron category applied at booking time (no FK, like Invoice.GiftCardId) —
+    /// <summary>Snapshot of the patron category applied at booking time (no FK, like Invoice.PromotionProgramId) —
     /// stays truthful for reprints/gate check-in/reports even if the category is later renamed or deleted.</summary>
     public Guid? PatronCategoryId { get; set; }
     public string? PatronCategoryName { get; set; }

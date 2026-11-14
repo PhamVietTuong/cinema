@@ -1708,7 +1708,6 @@ public class BookingServiceTests
             RoomId          = RoomId1,
             Seats           = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
             PointsToRedeem  = overrides.PointsToRedeem,
-            GiftCardCode    = overrides.GiftCardCode,
             PaymentMethod   = "Sandbox",
         };
         configure?.Invoke();
@@ -1731,36 +1730,6 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task CreateBookingAsync_InactiveGiftCard_IsRejectedAndRolledBack()
-    {
-        var customerId = Guid.NewGuid();
-        var customer = new User { Id = customerId, Points = 0 };
-        var card = new GiftCard { Id = Guid.NewGuid(), Code = "GC1", IsActive = false, Balance = 30000 };
-        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC1")).ReturnsAsync(card);
-
-        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { GiftCardCode = "GC1" }))
-            .Should().ThrowAsync<InvalidOperationException>().WithMessage("Invalid or expired gift card*");
-        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
-        _uowMock.Verify(u => u.GiftCardStore.TryDrawBalanceAsync(It.IsAny<Guid>(), It.IsAny<double>()), Times.Never);
-        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_ExpiredGiftCard_IsRejectedAndRolledBack()
-    {
-        var customerId = Guid.NewGuid();
-        var customer = new User { Id = customerId, Points = 0 };
-        var card = new GiftCard { Id = Guid.NewGuid(), Code = "GC2", IsActive = true, Balance = 30000, ExpiresAt = DateTime.UtcNow.AddDays(-1) };
-        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC2")).ReturnsAsync(card);
-
-        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { GiftCardCode = "GC2" }))
-            .Should().ThrowAsync<InvalidOperationException>().WithMessage("Invalid or expired gift card*");
-        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
-        _uowMock.Verify(u => u.GiftCardStore.TryDrawBalanceAsync(It.IsAny<Guid>(), It.IsAny<double>()), Times.Never);
-        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
-    }
-
-    [Fact]
     public async Task CreateBookingAsync_PointsAlreadySpentByAConcurrentBooking_IsRejectedAndRolledBack()
     {
         // A14: the atomic spend loses (another booking took the points after we read the balance).
@@ -1770,22 +1739,6 @@ public class BookingServiceTests
 
         await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { PointsToRedeem = 5 }))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*loyalty points*");
-        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
-        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_GiftCardAlreadyDrawnByAConcurrentBooking_IsRejectedAndRolledBack()
-    {
-        // A14: the atomic draw loses (the balance no longer covers the amount).
-        var customerId = Guid.NewGuid();
-        var customer = new User { Id = customerId, Points = 0 };
-        var card = new GiftCard { Id = Guid.NewGuid(), Code = "GC9", IsActive = true, Balance = 30000 };
-        _uowMock.Setup(u => u.GiftCardStore.GetByCodeAsync("GC9")).ReturnsAsync(card);
-        _uowMock.Setup(u => u.GiftCardStore.TryDrawBalanceAsync(card.Id, It.IsAny<double>())).ReturnsAsync(false);
-
-        await FluentActions.Awaiting(() => BookWithRedemptionAsync(customerId, customer, new CreateBookingRequest { GiftCardCode = "GC9" }))
-            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*gift card*");
         _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
         _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
     }
@@ -1823,6 +1776,36 @@ public class BookingServiceTests
         var customerId = Guid.NewGuid();
         var goldUser = new User { Id = customerId, MemberShipId = goldTierId };
         _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(goldTierId)).ReturnsAsync(new MemberShip { Id = goldTierId, Name = "Gold", MinPoints = 1000 });
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program }, customerId: customerId, customer: goldUser);
+
+        result.FinalAmount.Should().Be(45000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_TierMemberWithoutProgram_PaysListPrice_NoTierPercentage()
+    {
+        // The tier percentage discount no longer exists: a member with no program pays the list price.
+        var goldTierId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var goldUser = new User { Id = customerId, MemberShipId = goldTierId };
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(goldTierId)).ReturnsAsync(new MemberShip { Id = goldTierId, Name = "Gold", MinPoints = 1000 });
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram>(), customerId: customerId, customer: goldUser);
+
+        result.FinalAmount.Should().Be(80000);
+        result.AppliedPromotionTitle.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_TierMemberWithProgram_PaysProgramPriceAlone()
+    {
+        // Program alone: total minus the program saving, nothing stacked on top for the tier.
+        var goldTierId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var goldUser = new User { Id = customerId, MemberShipId = goldTierId };
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(goldTierId)).ReturnsAsync(new MemberShip { Id = goldTierId, Name = "Gold", MinPoints = 1000 });
+        var program = FixedPriceProgram(price: 45000);
 
         var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program }, customerId: customerId, customer: goldUser);
 

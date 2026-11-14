@@ -99,7 +99,6 @@ public class PromotionProgramManager : IPromotionProgramManager
             ExcludeHolidays = request.ExcludeHolidays,
             AllowedChannelsMask = request.AllowedChannelsMask,
             MaxTicketsPerTransaction = request.MaxTicketsPerTransaction,
-            StacksWithMembershipDiscount = request.StacksWithMembershipDiscount,
             TermsText = Normalize(request.TermsText),
             DisplayOrder = request.DisplayOrder,
             IsPublished = request.IsPublished,
@@ -140,7 +139,6 @@ public class PromotionProgramManager : IPromotionProgramManager
         entity.ExcludeHolidays = request.ExcludeHolidays;
         entity.AllowedChannelsMask = request.AllowedChannelsMask;
         entity.MaxTicketsPerTransaction = request.MaxTicketsPerTransaction;
-        entity.StacksWithMembershipDiscount = request.StacksWithMembershipDiscount;
         entity.TermsText = Normalize(request.TermsText);
         entity.DisplayOrder = request.DisplayOrder;
         entity.IsPublished = request.IsPublished;

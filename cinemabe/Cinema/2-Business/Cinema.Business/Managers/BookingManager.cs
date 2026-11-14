@@ -154,7 +154,6 @@ public class BookingManager : IBookingManager
                 Foods          = request.Foods,
                 DiscountCode   = request.DiscountCode,
                 PointsToRedeem = request.PointsToRedeem,
-                GiftCardCode   = request.GiftCardCode,
                 ConnectionId   = request.ConnectionId,
                 AgeConfirmed   = request.AgeConfirmed,
             });
@@ -216,7 +215,7 @@ public class BookingManager : IBookingManager
 
     public async Task<CounterQuoteDTO> QuoteCounterAsync(CounterSaleContext context)
     {
-        // Dry run: every check and price is computed, but no stock, points, gift-card or invoice is written, and no
+        // Dry run: every check and price is computed, but no stock, points or invoice is written, and no
         // gate or transaction is taken.
         var composed = await ComposeInvoiceAsync(BuildCounterInput(context, dryRun: true));
         var invoice = composed.Invoice;
@@ -224,9 +223,8 @@ public class BookingManager : IBookingManager
         {
             Lines          = composed.Lines,
             TotalAmount    = invoice.TotalAmount,
-            DiscountAmount = invoice.DiscountAmount - composed.PointsValue - invoice.GiftCardAmount,
+            DiscountAmount = invoice.DiscountAmount - composed.PointsValue,
             PointsValue    = composed.PointsValue,
-            GiftCardAmount = invoice.GiftCardAmount,
             FinalAmount    = invoice.FinalAmount,
         };
     }
@@ -279,15 +277,6 @@ public class BookingManager : IBookingManager
             if (composed.PointsValue > 0)
             {
                 invoice.Payments.Add(new InvoicePayment { Method = PaymentTender.Points, Amount = composed.PointsValue });
-            }
-            if (invoice.GiftCardAmount > 0)
-            {
-                invoice.Payments.Add(new InvoicePayment
-                {
-                    Method    = PaymentTender.GiftCard,
-                    Amount    = invoice.GiftCardAmount,
-                    Reference = request.GiftCardCode?.Trim(),
-                });
             }
             foreach (var payment in settlement.Payments)
             {
@@ -346,9 +335,8 @@ public class BookingManager : IBookingManager
                 InvoiceId      = invoice.Id,
                 InvoiceCode    = invoice.Code,
                 TotalAmount    = invoice.TotalAmount,
-                DiscountAmount = invoice.DiscountAmount - composed.PointsValue - invoice.GiftCardAmount,
+                DiscountAmount = invoice.DiscountAmount - composed.PointsValue,
                 PointsValue    = composed.PointsValue,
-                GiftCardAmount = invoice.GiftCardAmount,
                 FinalAmount    = invoice.FinalAmount,
                 ChangeDue      = settlement.ChangeDue,
                 PaidAt         = paidAt,
@@ -387,7 +375,6 @@ public class BookingManager : IBookingManager
             Foods              = request.Foods.Select(f => new BookingFoodItem { FoodAndDrinkId = f.FoodAndDrinkId, Quantity = f.Quantity }).ToList(),
             DiscountCode       = request.DiscountCode,
             PointsToRedeem     = request.PointsToRedeem,
-            GiftCardCode       = request.GiftCardCode,
             ConnectionId       = request.ConnectionId,
             IsCounter          = true,
             DryRun             = dryRun,
@@ -425,8 +412,8 @@ public class BookingManager : IBookingManager
 
     /// <summary>
     /// Everything between "the client sent a cart" and "an unsaved invoice": seat validation (free, not held by another
-    /// connection, in this room, active, double seats whole), pricing, food lines with the stock reservation, membership
-    /// and promo discounts, points and gift card. It runs inside the CALLER's booking gate and transaction and never
+    /// connection, in this room, active, double seats whole), pricing, food lines with the stock reservation, promo
+    /// discount and points. It runs inside the CALLER's booking gate and transaction and never
     /// commits, so a thrown exception rolls everything back. Online callers pass no <see cref="ComposeInput.TheaterId"/>
     /// and get exactly the pre-counter behavior.
     /// </summary>
@@ -697,40 +684,6 @@ public class BookingManager : IBookingManager
             }
         }
 
-        // Gift card: draw down its balance to cover part (or all) of the remaining amount. Reserved
-        // now and restored if the booking is cancelled or expires. An invalid/expired
-        // code provided by the customer is rejected (so they're never silently charged full price).
-        Guid? giftCardId = null;
-        double giftCardAmount = 0;
-        if (!string.IsNullOrWhiteSpace(input.GiftCardCode))
-        {
-            var card = await _uow.GiftCardStore.GetByCodeAsync(input.GiftCardCode.Trim());
-            var usable = card is not null && card.IsActive
-                         && (card.ExpiresAt is null || card.ExpiresAt > DateTime.UtcNow);
-            if (!usable)
-            {
-                throw new InvalidOperationException("Invalid or expired gift card.");
-            }
-            giftCardAmount = Math.Min(card!.Balance, finalAmount);
-            if (wholeVnd)
-            {
-                // Never round up past the card's balance.
-                giftCardAmount = Math.Floor(giftCardAmount);
-            }
-            if (giftCardAmount > 0)
-            {
-                finalAmount    -= giftCardAmount;
-                discountAmount += giftCardAmount;
-                if (!input.DryRun
-                    && !await _uow.GiftCardStore.TryDrawBalanceAsync(card.Id, giftCardAmount))
-                {
-                    // The atomic draw failed: a concurrent booking spent the balance since we read the card.
-                    throw new InvalidOperationException("The gift card balance is no longer sufficient.");
-                }
-                giftCardId = card.Id;
-            }
-        }
-
         var invoice = new Invoice
         {
             Code                 = GenerateCode(),
@@ -740,8 +693,6 @@ public class BookingManager : IBookingManager
             DiscountAmount       = discountAmount,
             FinalAmount          = finalAmount,
             PointsRedeemed       = pointsRedeemed,
-            GiftCardId           = giftCardId,
-            GiftCardAmount       = giftCardAmount,
             PromotionProgramId   = promotionProgramId,
             InvoiceTickets       = tickets,
             InvoiceFoodAndDrinks = food.Lines,
@@ -970,17 +921,17 @@ public class BookingManager : IBookingManager
             return null;
         }
 
-        // Fully covered (e.g. by a gift card) — nothing to charge, so finalize immediately with no gateway.
+        // Fully covered (a 100% promotion program, or points covering the whole remainder, until the per-theater maximum discount caps it) — nothing to charge, so finalize immediately with no gateway.
         if (invoice.FinalAmount <= 0)
         {
-            if (!await FinalizePaidInvoiceAsync(invoice, "GIFTCARD-FULL"))
+            if (!await FinalizePaidInvoiceAsync(invoice, "ZERO-AMOUNT"))
             {
                 return null;
             }
             return new PaymentInitiationDTO
             {
                 Provider         = "None",
-                PaymentReference = invoice.PaymentReference ?? "GIFTCARD-FULL",
+                PaymentReference = invoice.PaymentReference ?? "ZERO-AMOUNT",
                 RedirectUrl      = null,
                 AlreadyPaid      = true,
             };
@@ -1537,9 +1488,7 @@ public class BookingManager : IBookingManager
     // Pricing: a PromotionProgram is resolved either via its Code (customer-entered, throws on an
     // unusable code) or via auto-apply (unchanged) — never both, since a program is triggered by
     // exactly one of the two (see PromotionProgramManager.ValidateAsync). Its saving is computed on the
-    // ticket units (per-ticket-unit basis, capped by MaxDiscountAmount), then the membership % stacks on
-    // top only when the resolved program allows it; with no program at all, membership still applies
-    // unconditionally (today's walk-away case).
+    // ticket units (per-ticket-unit basis, capped by MaxDiscountAmount). Points redemption comes after.
     private async Task<(double DiscountAmount, double FinalAmount, Guid? PromotionProgramId, string? PromotionTitle)> ComputePricingAsync(
         Guid? userId, double total, string? code, Guid? roomId, Guid? showTimeId, Guid? theaterIdHint,
         SalesChannel channel, IReadOnlyList<TicketUnit> ticketUnits, ShowTime? showTime)
@@ -1572,10 +1521,6 @@ public class BookingManager : IBookingManager
         if (program != null && saving > 0)
         {
             running -= saving;
-        }
-        if (program == null || program.StacksWithMembershipDiscount)
-        {
-            running = await ApplyMembershipDiscountAsync(userId, running);
         }
         if (running < 0)
         {
@@ -1686,7 +1631,7 @@ public class BookingManager : IBookingManager
 
     // Sums the per-unit savings for the N units (N = MaxTicketsPerTransaction, or all of them when
     // unset) with the largest individual savings; the rest pay list price. The summed result is then
-    // capped by the program's MaxDiscountAmount (post-sum, pre-membership-stack).
+    // capped by the program's MaxDiscountAmount (post-sum).
     private static double ComputeProgramSaving(PromotionProgram program, IReadOnlyList<TicketUnit> units)
     {
         var perUnitSavings = units.Select(u => UnitSaving(program, u)).Where(s => s > 0).OrderByDescending(s => s).ToList();
@@ -1743,22 +1688,6 @@ public class BookingManager : IBookingManager
     }
 
     private const string _invalidPromoMessage = "Discount code is invalid or no longer available.";
-
-    // The member's tier discount comes off first, before any promo code.
-    private async Task<double> ApplyMembershipDiscountAsync(Guid? userId, double running)
-    {
-        // A walk-in counter sale has no member discount.
-        var user = userId.HasValue ? await _uow.UserStore.GetByIdAsync(userId.Value) : null;
-        if (user?.MemberShipId is Guid membershipId)
-        {
-            var membership = await _uow.MemberShipStore.GetByIdAsync(membershipId);
-            if (membership is { DiscountPercent: > 0 })
-            {
-                running -= running * (membership.DiscountPercent / 100.0);
-            }
-        }
-        return running;
-    }
 
     // The promo code's program, if it exists, is published, in its date window, under its usage cap
     // and in scope for this booking; otherwise null.
@@ -1868,9 +1797,6 @@ public class BookingManager : IBookingManager
     private Task RestoreRedeemedPointsAsync(Invoice invoice)
         => InvoiceLifecycle.RestoreRedeemedPointsAsync(_uow, invoice);
 
-    private Task RestoreGiftCardAsync(Invoice invoice)
-        => InvoiceLifecycle.RestoreGiftCardAsync(_uow, invoice);
-
     // Matches VnPayGateway's vnp_ExpireDate (15 minutes after the payment page is created).
     private static readonly TimeSpan _paymentGrace = TimeSpan.FromMinutes(15);
 
@@ -1908,7 +1834,6 @@ public class BookingManager : IBookingManager
                 await _uow.InvoiceStore.UpdateAsync(invoice);
                 await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
                 await RestoreRedeemedPointsAsync(invoice);
-                await RestoreGiftCardAsync(invoice);
             }
             // One batched ledger read/restock for the whole run, not one per invoice.
             await RestoreFoodStockAsync(cancelled, "Expired", null);

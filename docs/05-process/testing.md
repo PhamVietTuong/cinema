@@ -2,7 +2,7 @@
 
 > Purpose: Test frameworks, how to run them, and what the existing suites cover.
 > Sources: E:\cinema\AGENTS.md, E:\cinema\.github\workflows\ci.yml, E:\cinema\cinemabe\Cinema\2-Business\Cinema.Business.Tests\*.cs, E:\cinema\e2e\
-> Last reviewed: 2026-11-12
+> Last reviewed: 2026-11-14
 
 ## Backend — `Cinema.Business.Tests`
 
@@ -23,27 +23,28 @@ dotnet test Cinema/2-Business/Cinema.Business.Tests --filter "FullyQualifiedName
 
 ### Test files present (as of this review)
 
+As of 2026-11-14 the business suite has 660 passing tests and the WebApiHost suite 46.
+
 Verified by listing `cinemabe/Cinema/2-Business/Cinema.Business.Tests/*.cs`:
 
 | File | Area |
 |---|---|
 | `AuthServiceTests.cs` | Login/auth flows |
 | `AuthUserTheaterTests.cs` | Staff-theater scoping on auth |
-| `BookingServiceTests.cs` | Booking / seat-lock logic |
+| `BookingServiceTests.cs` | Booking / seat-lock logic, including that tiers give no percentage discount (`TierMemberWithoutProgram_PaysListPrice_NoTierPercentage`, `TierMemberWithProgram_PaysProgramPriceAlone`) |
 | `BookingConfirmationTemplateTests.cs` | Booking confirmation template rendering |
 | `BoxOfficeTests.cs` | Box office / counter sale flow |
 | `ComboServiceTests.cs` | Food & drink combo logic |
 | `DtoValidationTests.cs` | DTO validation rules |
 | `EntityTests.cs` | Entity-level behavior |
 | `GateManagerTests.cs` | Gate admission / ticket scanning |
-| `GiftCardServiceTests.cs` | Gift card issue/redeem |
 | `LoyaltySettingServiceTests.cs` | Loyalty points conversion settings |
 | `MovieCreditModelTests.cs` | Movie cast/crew credit model |
 | `MovieServiceTests.cs` | Movie catalog logic |
 | `OmdbRatingsProviderTests.cs` | External OMDb rating lookups |
 | `OperationsBoardAndIncidentTests.cs` | Incident/operations board |
 | `PatronCategoryServiceTests.cs` | Patron category pricing/eligibility |
-| `PaymentCallbackTests.cs` | Payment callback handling: idempotency and concurrent IPN delivery, expiry refunds (points, gift card, seats), `InitiatePaymentAsync` ownership/status/zero-amount cases |
+| `PaymentCallbackTests.cs` | Payment callback handling: idempotency and concurrent IPN delivery, expiry refunds (points, seats), `InitiatePaymentAsync` ownership/status/zero-amount cases (`ZeroAmountDue_FinalizesWithoutAnyGateway`) |
 | `PersonManagerTests.cs` | Cast/crew person management |
 | `PromotionProgramServiceTests.cs` | Promotion program logic |
 | `RoleNamesTests.cs` | Role-group → role mapping |
@@ -91,9 +92,9 @@ tests that prove that rule. Filter by rule: `dotnet test --filter "Req=BR-PAY-03
 | `BR-PAY-02` | The IPN answers 200 with the exact `{RspCode, Message}` per outcome (97 bad signature, 01 unknown order) | s3 | `VnPayGatewayTests`, `PaymentControllerCallbackTests`, e2e `api-payment-callback.spec.ts` |
 | `BR-PAY-03` | Callback idempotency, including two concurrent deliveries: one payment row, points accrued once | s3 | `PaymentCallbackTests` (`..._TwoConcurrentDeliveries_...`). The claim atomicity (`InvoiceStore.TryTransitionStatusAsync`) is exercised only through mocks; there is no real-database test (tracked in `_bmad-output/implementation-artifacts/deferred-work.md`) |
 | `BR-PAY-04` | Amount cross-check (VNPay amount x100) | s3 | `VnPayGatewayTests` |
-| `BR-PAY-05` | Only a Pending invoice can be paid; expiry gives back points, gift card, seats | s2 | `PaymentCallbackTests`, `BookingServiceTests` |
+| `BR-PAY-05` | Only a Pending invoice can be paid; expiry gives back points, seats | s2 | `PaymentCallbackTests`, `BookingServiceTests` |
 | `BR-SEAT-01` | Advisory seat lock: refused while held, only the owner unlocks, disconnect releases | s1 | `BookingHubTests`, `BookingServiceTests`, e2e `user-profile-booking.spec.ts` (seat map opens only) |
-| `BR-SEAT-02` | DB anti-double-booking: a lost insert race rolls back as "just booked"; bad/expired gift card or spent points roll back | s1, s5 | `BookingServiceTests` |
+| `BR-SEAT-02` | DB anti-double-booking: a lost insert race rolls back as "just booked"; spent points roll back | s1, s5 | `BookingServiceTests` |
 | `BR-AUTH-01` | Every endpoint is guarded or deliberately anonymous; role mismatch is 403 | s6 | `ControllerAuthorizationCoverageTests`, `StaffToolsetAuthorizationTests` |
 | `BR-AUTH-02` | Login lockout, account status, 2FA | s6 | `AuthServiceTests` |
 

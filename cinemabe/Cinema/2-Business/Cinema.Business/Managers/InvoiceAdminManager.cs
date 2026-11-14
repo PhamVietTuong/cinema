@@ -102,7 +102,6 @@ public class InvoiceAdminManager : IInvoiceAdminManager
                 {
                     // Nothing was paid, so what the booking reserved goes back to the customer.
                     await InvoiceLifecycle.RestoreRedeemedPointsAsync(_uow, invoice);
-                    await InvoiceLifecycle.RestoreGiftCardAsync(_uow, invoice);
                     await FoodStockRestorer.RestoreAsync(_uow, new[] { invoice.Id }, "Cancelled", null);
                 }
             }
@@ -121,7 +120,7 @@ public class InvoiceAdminManager : IInvoiceAdminManager
 
     public async Task DeleteAsync(Guid id)
     {
-        // A Pending invoice still holds what the booking reserved (food stock, redeemed points, gift-card balance);
+        // A Pending invoice still holds what the booking reserved (food stock, redeemed points);
         // put it back before the invoice goes away. (Other statuses are completed sales, so those stay spent.)
         var invoice = await _uow.InvoiceStore.GetByIdAsync(id);
         if (invoice is null || invoice.Status != InvoiceStatus.Pending)
@@ -135,7 +134,6 @@ public class InvoiceAdminManager : IInvoiceAdminManager
         {
             await FoodStockRestorer.RestoreAsync(_uow, new[] { id }, "Deleted", null);
             await InvoiceLifecycle.RestoreRedeemedPointsAsync(_uow, invoice);
-            await InvoiceLifecycle.RestoreGiftCardAsync(_uow, invoice);
             await _uow.InvoiceStore.DeleteAsync(id);
             await _uow.CommitTransactionAsync();
         }

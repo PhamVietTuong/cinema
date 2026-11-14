@@ -10,7 +10,7 @@ namespace Cinema.Business.Contracts;
 public interface IBoxOfficeManager
 {
     /// <summary>Prices a counter sale exactly like <see cref="SellAsync"/> but has no side effects
-    /// (no stock, points, gift-card or seat change, no invoice).</summary>
+    /// (no stock, points or seat change, no invoice).</summary>
     Task<CounterQuoteDTO> QuoteAsync(Guid theaterId, CounterSaleRequest request);
 
     /// <summary>Rings up a counter sale: always creates a Paid invoice (never Pending) in one transaction.</summary>

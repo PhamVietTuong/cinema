@@ -12604,7 +12604,6 @@ export class MemberShipDTO implements IMemberShipDTO {
     name?: string;
     minPoints?: number;
     maxPoints?: number;
-    discountPercent?: number;
 
     constructor(data?: IMemberShipDTO) {
         if (data) {
@@ -12621,7 +12620,6 @@ export class MemberShipDTO implements IMemberShipDTO {
             this.name = _data["name"];
             this.minPoints = _data["minPoints"];
             this.maxPoints = _data["maxPoints"];
-            this.discountPercent = _data["discountPercent"];
         }
     }
 
@@ -12638,7 +12636,6 @@ export class MemberShipDTO implements IMemberShipDTO {
         data["name"] = this.name;
         data["minPoints"] = this.minPoints;
         data["maxPoints"] = this.maxPoints;
-        data["discountPercent"] = this.discountPercent;
         return data;
     }
 }
@@ -12648,14 +12645,12 @@ export interface IMemberShipDTO {
     name?: string;
     minPoints?: number;
     maxPoints?: number;
-    discountPercent?: number;
 }
 
 export class CreateMemberShipRequest implements ICreateMemberShipRequest {
     name?: string;
     minPoints?: number;
     maxPoints?: number;
-    discountPercent?: number;
 
     constructor(data?: ICreateMemberShipRequest) {
         if (data) {
@@ -12671,7 +12666,6 @@ export class CreateMemberShipRequest implements ICreateMemberShipRequest {
             this.name = _data["name"];
             this.minPoints = _data["minPoints"];
             this.maxPoints = _data["maxPoints"];
-            this.discountPercent = _data["discountPercent"];
         }
     }
 
@@ -12687,7 +12681,6 @@ export class CreateMemberShipRequest implements ICreateMemberShipRequest {
         data["name"] = this.name;
         data["minPoints"] = this.minPoints;
         data["maxPoints"] = this.maxPoints;
-        data["discountPercent"] = this.discountPercent;
         return data;
     }
 }
@@ -12696,7 +12689,6 @@ export interface ICreateMemberShipRequest {
     name?: string;
     minPoints?: number;
     maxPoints?: number;
-    discountPercent?: number;
 }
 
 export class UpdateMemberShipRequest implements IUpdateMemberShipRequest {
@@ -12704,7 +12696,6 @@ export class UpdateMemberShipRequest implements IUpdateMemberShipRequest {
     name?: string;
     minPoints?: number;
     maxPoints?: number;
-    discountPercent?: number;
 
     constructor(data?: IUpdateMemberShipRequest) {
         if (data) {
@@ -12721,7 +12712,6 @@ export class UpdateMemberShipRequest implements IUpdateMemberShipRequest {
             this.name = _data["name"];
             this.minPoints = _data["minPoints"];
             this.maxPoints = _data["maxPoints"];
-            this.discountPercent = _data["discountPercent"];
         }
     }
 
@@ -12738,7 +12728,6 @@ export class UpdateMemberShipRequest implements IUpdateMemberShipRequest {
         data["name"] = this.name;
         data["minPoints"] = this.minPoints;
         data["maxPoints"] = this.maxPoints;
-        data["discountPercent"] = this.discountPercent;
         return data;
     }
 }
@@ -12748,7 +12737,6 @@ export interface IUpdateMemberShipRequest {
     name?: string;
     minPoints?: number;
     maxPoints?: number;
-    discountPercent?: number;
 }
 
 export abstract class BaseSearchResultsOfHolidayDTO implements IBaseSearchResultsOfHolidayDTO {
@@ -13537,7 +13525,6 @@ export class PromotionProgramDTO implements IPromotionProgramDTO {
     excludeHolidays?: boolean;
     allowedChannelsMask?: number | undefined;
     maxTicketsPerTransaction?: number | undefined;
-    stacksWithMembershipDiscount?: boolean;
     termsText?: string | undefined;
     displayOrder?: number;
     isPublished?: boolean;
@@ -13579,7 +13566,6 @@ export class PromotionProgramDTO implements IPromotionProgramDTO {
             this.excludeHolidays = _data["excludeHolidays"];
             this.allowedChannelsMask = _data["allowedChannelsMask"];
             this.maxTicketsPerTransaction = _data["maxTicketsPerTransaction"];
-            this.stacksWithMembershipDiscount = _data["stacksWithMembershipDiscount"];
             this.termsText = _data["termsText"];
             this.displayOrder = _data["displayOrder"];
             this.isPublished = _data["isPublished"];
@@ -13629,7 +13615,6 @@ export class PromotionProgramDTO implements IPromotionProgramDTO {
         data["excludeHolidays"] = this.excludeHolidays;
         data["allowedChannelsMask"] = this.allowedChannelsMask;
         data["maxTicketsPerTransaction"] = this.maxTicketsPerTransaction;
-        data["stacksWithMembershipDiscount"] = this.stacksWithMembershipDiscount;
         data["termsText"] = this.termsText;
         data["displayOrder"] = this.displayOrder;
         data["isPublished"] = this.isPublished;
@@ -13672,7 +13657,6 @@ export interface IPromotionProgramDTO {
     excludeHolidays?: boolean;
     allowedChannelsMask?: number | undefined;
     maxTicketsPerTransaction?: number | undefined;
-    stacksWithMembershipDiscount?: boolean;
     termsText?: string | undefined;
     displayOrder?: number;
     isPublished?: boolean;
@@ -13811,7 +13795,6 @@ export class CreatePromotionProgramRequest implements ICreatePromotionProgramReq
     excludeHolidays?: boolean;
     allowedChannelsMask?: number | undefined;
     maxTicketsPerTransaction?: number | undefined;
-    stacksWithMembershipDiscount?: boolean;
     termsText?: string | undefined;
     displayOrder?: number;
     isPublished?: boolean;
@@ -13848,7 +13831,6 @@ export class CreatePromotionProgramRequest implements ICreatePromotionProgramReq
             this.excludeHolidays = _data["excludeHolidays"];
             this.allowedChannelsMask = _data["allowedChannelsMask"];
             this.maxTicketsPerTransaction = _data["maxTicketsPerTransaction"];
-            this.stacksWithMembershipDiscount = _data["stacksWithMembershipDiscount"];
             this.termsText = _data["termsText"];
             this.displayOrder = _data["displayOrder"];
             this.isPublished = _data["isPublished"];
@@ -13893,7 +13875,6 @@ export class CreatePromotionProgramRequest implements ICreatePromotionProgramReq
         data["excludeHolidays"] = this.excludeHolidays;
         data["allowedChannelsMask"] = this.allowedChannelsMask;
         data["maxTicketsPerTransaction"] = this.maxTicketsPerTransaction;
-        data["stacksWithMembershipDiscount"] = this.stacksWithMembershipDiscount;
         data["termsText"] = this.termsText;
         data["displayOrder"] = this.displayOrder;
         data["isPublished"] = this.isPublished;
@@ -13931,7 +13912,6 @@ export interface ICreatePromotionProgramRequest {
     excludeHolidays?: boolean;
     allowedChannelsMask?: number | undefined;
     maxTicketsPerTransaction?: number | undefined;
-    stacksWithMembershipDiscount?: boolean;
     termsText?: string | undefined;
     displayOrder?: number;
     isPublished?: boolean;
@@ -13960,7 +13940,6 @@ export class UpdatePromotionProgramRequest implements IUpdatePromotionProgramReq
     excludeHolidays?: boolean;
     allowedChannelsMask?: number | undefined;
     maxTicketsPerTransaction?: number | undefined;
-    stacksWithMembershipDiscount?: boolean;
     termsText?: string | undefined;
     displayOrder?: number;
     isPublished?: boolean;
@@ -13998,7 +13977,6 @@ export class UpdatePromotionProgramRequest implements IUpdatePromotionProgramReq
             this.excludeHolidays = _data["excludeHolidays"];
             this.allowedChannelsMask = _data["allowedChannelsMask"];
             this.maxTicketsPerTransaction = _data["maxTicketsPerTransaction"];
-            this.stacksWithMembershipDiscount = _data["stacksWithMembershipDiscount"];
             this.termsText = _data["termsText"];
             this.displayOrder = _data["displayOrder"];
             this.isPublished = _data["isPublished"];
@@ -14044,7 +14022,6 @@ export class UpdatePromotionProgramRequest implements IUpdatePromotionProgramReq
         data["excludeHolidays"] = this.excludeHolidays;
         data["allowedChannelsMask"] = this.allowedChannelsMask;
         data["maxTicketsPerTransaction"] = this.maxTicketsPerTransaction;
-        data["stacksWithMembershipDiscount"] = this.stacksWithMembershipDiscount;
         data["termsText"] = this.termsText;
         data["displayOrder"] = this.displayOrder;
         data["isPublished"] = this.isPublished;
@@ -14083,7 +14060,6 @@ export interface IUpdatePromotionProgramRequest {
     excludeHolidays?: boolean;
     allowedChannelsMask?: number | undefined;
     maxTicketsPerTransaction?: number | undefined;
-    stacksWithMembershipDiscount?: boolean;
     termsText?: string | undefined;
     displayOrder?: number;
     isPublished?: boolean;
@@ -17006,7 +16982,6 @@ export class CounterQuoteDTO implements ICounterQuoteDTO {
     totalAmount?: number;
     discountAmount?: number;
     pointsValue?: number;
-    giftCardAmount?: number;
     finalAmount?: number;
 
     constructor(data?: ICounterQuoteDTO) {
@@ -17028,7 +17003,6 @@ export class CounterQuoteDTO implements ICounterQuoteDTO {
             this.totalAmount = _data["totalAmount"];
             this.discountAmount = _data["discountAmount"];
             this.pointsValue = _data["pointsValue"];
-            this.giftCardAmount = _data["giftCardAmount"];
             this.finalAmount = _data["finalAmount"];
         }
     }
@@ -17050,7 +17024,6 @@ export class CounterQuoteDTO implements ICounterQuoteDTO {
         data["totalAmount"] = this.totalAmount;
         data["discountAmount"] = this.discountAmount;
         data["pointsValue"] = this.pointsValue;
-        data["giftCardAmount"] = this.giftCardAmount;
         data["finalAmount"] = this.finalAmount;
         return data;
     }
@@ -17061,7 +17034,6 @@ export interface ICounterQuoteDTO {
     totalAmount?: number;
     discountAmount?: number;
     pointsValue?: number;
-    giftCardAmount?: number;
     finalAmount?: number;
 }
 
@@ -17129,7 +17101,6 @@ export class CounterSaleRequest implements ICounterSaleRequest {
     foods?: CounterFoodItem[];
     customerUserId?: string | undefined;
     discountCode?: string | undefined;
-    giftCardCode?: string | undefined;
     pointsToRedeem?: number;
     tenders?: TenderLine[];
     connectionId?: string | undefined;
@@ -17160,7 +17131,6 @@ export class CounterSaleRequest implements ICounterSaleRequest {
             }
             this.customerUserId = _data["customerUserId"];
             this.discountCode = _data["discountCode"];
-            this.giftCardCode = _data["giftCardCode"];
             this.pointsToRedeem = _data["pointsToRedeem"];
             if (Array.isArray(_data["tenders"])) {
                 this.tenders = [] as any;
@@ -17195,7 +17165,6 @@ export class CounterSaleRequest implements ICounterSaleRequest {
         }
         data["customerUserId"] = this.customerUserId;
         data["discountCode"] = this.discountCode;
-        data["giftCardCode"] = this.giftCardCode;
         data["pointsToRedeem"] = this.pointsToRedeem;
         if (Array.isArray(this.tenders)) {
             data["tenders"] = [];
@@ -17215,7 +17184,6 @@ export interface ICounterSaleRequest {
     foods?: CounterFoodItem[];
     customerUserId?: string | undefined;
     discountCode?: string | undefined;
-    giftCardCode?: string | undefined;
     pointsToRedeem?: number;
     tenders?: TenderLine[];
     connectionId?: string | undefined;
@@ -17357,7 +17325,6 @@ export enum PaymentTender {
     Cash = 0,
     Card = 1,
     QrWallet = 2,
-    GiftCard = 3,
     Points = 4,
     Online = 5,
 }
@@ -17368,7 +17335,6 @@ export class CounterSaleResultDTO implements ICounterSaleResultDTO {
     totalAmount?: number;
     discountAmount?: number;
     pointsValue?: number;
-    giftCardAmount?: number;
     finalAmount?: number;
     changeDue?: number;
     paidAt?: Date;
@@ -17391,7 +17357,6 @@ export class CounterSaleResultDTO implements ICounterSaleResultDTO {
             this.totalAmount = _data["totalAmount"];
             this.discountAmount = _data["discountAmount"];
             this.pointsValue = _data["pointsValue"];
-            this.giftCardAmount = _data["giftCardAmount"];
             this.finalAmount = _data["finalAmount"];
             this.changeDue = _data["changeDue"];
             this.paidAt = _data["paidAt"] ? new Date(_data["paidAt"].toString()) : <any>undefined;
@@ -17422,7 +17387,6 @@ export class CounterSaleResultDTO implements ICounterSaleResultDTO {
         data["totalAmount"] = this.totalAmount;
         data["discountAmount"] = this.discountAmount;
         data["pointsValue"] = this.pointsValue;
-        data["giftCardAmount"] = this.giftCardAmount;
         data["finalAmount"] = this.finalAmount;
         data["changeDue"] = this.changeDue;
         data["paidAt"] = this.paidAt ? this.paidAt.toISOString() : <any>undefined;
@@ -17446,7 +17410,6 @@ export interface ICounterSaleResultDTO {
     totalAmount?: number;
     discountAmount?: number;
     pointsValue?: number;
-    giftCardAmount?: number;
     finalAmount?: number;
     changeDue?: number;
     paidAt?: Date;
@@ -17620,7 +17583,6 @@ export class CounterCustomerDTO implements ICounterCustomerDTO {
     phone?: string;
     points?: number;
     memberShipName?: string | undefined;
-    discountPercent?: number;
 
     constructor(data?: ICounterCustomerDTO) {
         if (data) {
@@ -17638,7 +17600,6 @@ export class CounterCustomerDTO implements ICounterCustomerDTO {
             this.phone = _data["phone"];
             this.points = _data["points"];
             this.memberShipName = _data["memberShipName"];
-            this.discountPercent = _data["discountPercent"];
         }
     }
 
@@ -17656,7 +17617,6 @@ export class CounterCustomerDTO implements ICounterCustomerDTO {
         data["phone"] = this.phone;
         data["points"] = this.points;
         data["memberShipName"] = this.memberShipName;
-        data["discountPercent"] = this.discountPercent;
         return data;
     }
 }
@@ -17667,7 +17627,6 @@ export interface ICounterCustomerDTO {
     phone?: string;
     points?: number;
     memberShipName?: string | undefined;
-    discountPercent?: number;
 }
 
 export class FindCustomerRequest implements IFindCustomerRequest {

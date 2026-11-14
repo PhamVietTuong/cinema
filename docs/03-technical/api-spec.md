@@ -2,7 +2,7 @@
 
 > Purpose: Enumerate every endpoint on the three backend controllers, with route, auth, request/response shape, and notable error cases.
 > Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/{CinemaController,IdentityController,PaymentController,ApiControllerBase}.cs`, `.../Hubs/StaffHub.cs`, `.../Helpers/RateLimitPolicies.cs`, `cinemafe/projects/{CinemaAdmin,CinemaStaff}` (consumer check), `cinemabe/Cinema/2-Business/Cinema.Business/Managers/BookingManager.cs`, `cinemabe/Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs`, `cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs`
-> Last reviewed: 2026-11-12
+> Last reviewed: 2026-11-14
 
 ## Conventions (verified against code)
 
@@ -64,20 +64,11 @@ Class-level `[Authorize]` — every action requires a JWT unless marked `[AllowA
 |---|---|---|---|---|---|
 | `GetSeats` | POST | `[AllowAnonymous]` | `PagingSearchDTO` (filters: showTimeId, roomId) | `DefaultSearchResults<SeatDTO>` — `Status` Available/Reserved/Occupied | |
 | `GetShowTimePrices` | POST | `[AllowAnonymous]` | `showTimeId`, `roomId` (query) | per-PatronCategory resolved price list | |
-| `CreateBooking` | POST | `[Authorize]` (owner = caller) | `CreateBookingRequest{ShowTimeId, RoomId, Seats[], ConnectionId?, DiscountCode?, GiftCardCode?, PointsToRedeem?, Foods[], AgeConfirmed, DryRun?}` | invoice/pricing result | 400 with one of the exact strings: `"Seat {id} is already booked."`, `"Seat {id} is being held by another user."` (only checked when `ConnectionId` is supplied), `"A double seat must be booked together with its partner."`, `"A patron category is required for every seat."` / `"Seat {id} is not available for the selected patron category."`, `"This showtime is not open for sale."` (inactive showtime/movie/theater, or now >= start + `Booking:OnlineSalesCloseMinutesAfterStart`), `"You can book at most {n} seats per order at this theater."` (`Theater.MaxSeatsPerBooking`, checked on the requested seat count before dedupe), `"Please confirm that every viewer meets this film's age rating ({n}+) before booking."` (film MinAge >= 13, `AgeConfirmed=false`), `"The '{category}' ticket requires an ID check and can only be bought at the counter."`, `"Invalid or expired gift card."`, `"Discount code is invalid or no longer available."`; a DB unique-index race surfaces as `"One or more selected seats were just booked by someone else."` |
+| `CreateBooking` | POST | `[Authorize]` (owner = caller) | `CreateBookingRequest{ShowTimeId, RoomId, Seats[], ConnectionId?, DiscountCode?, PointsToRedeem?, Foods[], AgeConfirmed, DryRun?}` | invoice/pricing result | 400 with one of the exact strings: `"Seat {id} is already booked."`, `"Seat {id} is being held by another user."` (only checked when `ConnectionId` is supplied), `"A double seat must be booked together with its partner."`, `"A patron category is required for every seat."` / `"Seat {id} is not available for the selected patron category."`, `"This showtime is not open for sale."` (inactive showtime/movie/theater, or now >= start + `Booking:OnlineSalesCloseMinutesAfterStart`), `"You can book at most {n} seats per order at this theater."` (`Theater.MaxSeatsPerBooking`, checked on the requested seat count before dedupe), `"Please confirm that every viewer meets this film's age rating ({n}+) before booking."` (film MinAge >= 13, `AgeConfirmed=false`), `"The '{category}' ticket requires an ID check and can only be bought at the counter."`, `"Discount code is invalid or no longer available."`; a DB unique-index race surfaces as `"One or more selected seats were just booked by someone else."` |
 | `ConfirmPayment` | POST | `[Authorize]` (owner) | `ConfirmPaymentRequest{InvoiceId, PaymentReference}` | bool/invoice result | only succeeds for Sandbox gateway — VNPay always returns false (callback-authoritative) |
-| `InitiatePayment` | POST | `[Authorize]` (owner) | `InitiatePaymentRequest{InvoiceId, Provider?}` | `PaymentInitiationDTO{Provider, PaymentReference, RedirectUrl?}` | `FinalAmount<=0` (gift card/points fully cover) finalizes immediately, no gateway call, `Provider="None"`, `PaymentReference="GIFTCARD-FULL"` |
+| `InitiatePayment` | POST | `[Authorize]` (owner) | `InitiatePaymentRequest{InvoiceId, Provider?}` | `PaymentInitiationDTO{Provider, PaymentReference, RedirectUrl?}` | `FinalAmount<=0` (reachable with a 100% promotion program or when points cover the whole remainder, until the per-theater maximum discount follow-up caps it) finalizes immediately, no gateway call, `Provider="None"`, `PaymentReference="ZERO-AMOUNT"` |
 | `PaymentCallback` | GET/POST | `[AllowAnonymous]` | `provider` query + gateway-specific query/form/raw-body fields | VNPay: `{"RspCode","Message"}`; others: generic `{message}`/`{error}` | signature-verified per gateway; idempotent; amount cross-checked; `[AllowAnonymous]` by design (called by the gateway's servers) |
 | `ValidateDiscountCode` | POST | `[Authorize]` | `ValidateDiscountCodeRequest{Code, RoomId, ShowTimeId, Total, Seats[]}` (wire name kept for FE compat; resolves a `PromotionProgram` by `Code`) | non-throwing usability/amount result | `Seats[]` lets the server compute the per-ticket-unit saving the same way booking does; empty for a food-only quote (saving is 0, but the code's existence/window/usage is still validated) |
-| `ValidateGiftCard` | POST | `[Authorize]` | `ValidateGiftCardRequest{Code}` | `GiftCardValidationDTO{Valid, Message, Balance}` | non-throwing |
-
-### Gift cards (banner `// ── Gift cards ──`, Admin-only)
-
-| Action | Verb | Auth | Request | Response |
-|---|---|---|---|---|
-| `GetGiftCards` | POST | Admin | `PagingSearchDTO` | `DefaultSearchResults<GiftCardDTO>` |
-| `IssueGiftCard` | POST | Admin | `IssueGiftCardRequest{Amount, ExpiresAt?, IssuedToEmail?}` | `GiftCardDTO` — `Code` auto-generated `"GC-"+12hex` |
-| `SetGiftCardActive` | POST | Admin | `SetGiftCardActiveRequest{Id, IsActive}` | 200 |
 | `ValidateTicket` | POST | Admin | `ValidateTicketRequest{QrCode or similar}` | ticket validation result | requires `Invoice.Status==Paid`, rejects already-used ticket; this is the gate check-in endpoint but gated plain `Admin`, not `RoleNames.GateKeepers` — cross-check against `Gate/Scan` in `CinemaController` which IS staff-accessible (see discrepancy note below). No frontend app calls it (only the generated `payment-http.service.ts` exposes it) |
 
 ### Invoices (banner `// ── Invoices ──`)
@@ -160,7 +151,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 | `ShowTime` | anonymous list (`GetShowTimeList`) and anonymous `GetShowTime` (`CinemaController.cs:1677`, bare `[HttpGet]`, no `[Authorize]`); `UpdateShowTime`/`DeleteShowTime` are Admin-only. This doc previously listed `GetShowTime` as Admin-only; anonymous is the actual behavior, and `ControllerAuthorizationCoverageTests.AnonymousAllowList` (`:59`) records it as deliberately public. Owner input needed: confirm `GetShowTime` is meant to be public | Admin | |
 | `MovieTypeDetail` | anonymous list | Admin (Create/Delete) | Movie↔MovieType join |
 | `Room seat map` | `GetRoomSeatMap` = `RoleNames.StaffApp` | Admin | `SaveRoomSeatMap`, `ResizeRoomSeatGrid`, `RemoveRoomSeat` |
-| `Invoice (admin)` | Admin | Admin | `GetInvoices`, `UpdateInvoiceStatus` (undefined enum values rejected; transitions constrained, see business-rules), `DeleteInvoice` (restores food stock, redeemed points and gift-card balance if was Pending) |
+| `Invoice (admin)` | Admin | Admin | `GetInvoices`, `UpdateInvoiceStatus` (undefined enum values rejected; transitions constrained, see business-rules), `DeleteInvoice` (restores food stock, redeemed points if was Pending) |
 | `Loyalty` | `GetEffectiveLoyaltyRate` anonymous; rest Admin | Admin | `SaveLoyaltySetting` (requires `TheaterId`), `ResetTheaterLoyaltyToDefault`; `GetEffectiveLoyaltyRate?theaterId=` (required) returns `{pointsPerUnit, pointValueVnd, isCustom}`. No global-setting endpoints |
 | `Combo` | `GetComboComponents` `[AllowAnonymous]` | `RoleNames.Admin` | `SaveComboComposition` |
 

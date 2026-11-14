@@ -17,7 +17,7 @@ public class SalesReportRowDTO
     public int InvoiceCount { get; set; }
     public double? TicketRevenue { get; set; }
     public double? FoodRevenue { get; set; }
-    /// <summary>Invoice-level discounts (points, gift card, vouchers); null where not attributable.</summary>
+    /// <summary>Invoice-level discounts (points, promotion programs); null where not attributable.</summary>
     public double? DiscountAmount { get; set; }
     /// <summary>Amount actually taken: ticket + food - discount.</summary>
     public double NetRevenue { get; set; }

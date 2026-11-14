@@ -8117,10 +8117,6 @@
           "maxPoints": {
             "type": "integer",
             "format": "int32"
-          },
-          "discountPercent": {
-            "type": "number",
-            "format": "double"
           }
         }
       },
@@ -8138,10 +8134,6 @@
           "maxPoints": {
             "type": "integer",
             "format": "int32"
-          },
-          "discountPercent": {
-            "type": "number",
-            "format": "double"
           }
         }
       },
@@ -8163,10 +8155,6 @@
           "maxPoints": {
             "type": "integer",
             "format": "int32"
-          },
-          "discountPercent": {
-            "type": "number",
-            "format": "double"
           }
         }
       },
@@ -8586,9 +8574,6 @@
             "format": "int32",
             "nullable": true
           },
-          "stacksWithMembershipDiscount": {
-            "type": "boolean"
-          },
           "termsText": {
             "type": "string",
             "nullable": true
@@ -8797,9 +8782,6 @@
             "format": "int32",
             "nullable": true
           },
-          "stacksWithMembershipDiscount": {
-            "type": "boolean"
-          },
           "termsText": {
             "type": "string",
             "maxLength": 2000,
@@ -8923,9 +8905,6 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
-          },
-          "stacksWithMembershipDiscount": {
-            "type": "boolean"
           },
           "termsText": {
             "type": "string",
@@ -10461,10 +10440,6 @@
             "type": "number",
             "format": "double"
           },
-          "giftCardAmount": {
-            "type": "number",
-            "format": "double"
-          },
           "finalAmount": {
             "type": "number",
             "format": "double"
@@ -10536,12 +10511,6 @@
             "nullable": true
           },
           "discountCode": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 0,
-            "nullable": true
-          },
-          "giftCardCode": {
             "type": "string",
             "maxLength": 64,
             "minLength": 0,
@@ -10640,7 +10609,6 @@
           "Cash",
           "Card",
           "QrWallet",
-          "GiftCard",
           "Points",
           "Online"
         ],
@@ -10648,7 +10616,6 @@
           0,
           1,
           2,
-          3,
           4,
           5
         ]
@@ -10673,10 +10640,6 @@
             "format": "double"
           },
           "pointsValue": {
-            "type": "number",
-            "format": "double"
-          },
-          "giftCardAmount": {
             "type": "number",
             "format": "double"
           },
@@ -10804,10 +10767,6 @@
           "memberShipName": {
             "type": "string",
             "nullable": true
-          },
-          "discountPercent": {
-            "type": "number",
-            "format": "double"
           }
         }
       },

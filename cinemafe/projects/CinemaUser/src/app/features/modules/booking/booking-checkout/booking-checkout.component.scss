@@ -152,7 +152,7 @@
   padding: 18px 20px; margin-bottom: 20px;
 }
 .promo-card { display: flex; flex-direction: column; gap: 10px; }
-// Three identical rows (discount code, gift card, points): icon, title + status line, optional pill, chevron.
+// Two identical rows (discount code, points): icon, title + status line, optional pill, chevron.
 .disc-row {
   display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer;
   padding: 12px 14px; border-radius: var(--ml-r-md);

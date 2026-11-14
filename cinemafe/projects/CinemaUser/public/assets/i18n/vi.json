@@ -192,11 +192,7 @@
       "minutes": "{{count}} phút",
       "discountSaves": "{{code}} giảm {{amount}}đ",
       "discountInvalid": "Mã này không dùng được cho đơn hàng này.",
-      "giftCardNote": "Số dư thẻ sẽ được trừ vào số tiền cần thanh toán.",
-      "giftCardDialogTitle": "Thẻ quà tặng",
-      "giftCardRemove": "Xóa",
-      "giftCardRowSub": "Nhập mã thẻ quà tặng",
-      "pillAdded": "Đã thêm",
+      "discountRemove": "Xóa",
       "pointsAvailableLabel": "điểm khả dụng",
       "pointsDecrease": "Giảm điểm",
       "pointsIncrease": "Tăng điểm",
@@ -221,11 +217,6 @@
       "discountCode": "Mã Giảm Giá",
       "discountPlaceholder": "VD: SUMMER25",
       "discountNote": "Mã hợp lệ sẽ được trừ khi thanh toán.",
-      "giftCardCode": "Thẻ Quà Tặng",
-      "giftCardPlaceholder": "Nhập mã thẻ quà tặng",
-      "giftCardApply": "Kiểm tra",
-      "giftCardBalance": "Thẻ hợp lệ — số dư {{balance}}đ",
-      "giftCardInvalid": "Thẻ quà tặng không hợp lệ.",
       "grandTotal": "Tổng Cộng",
       "redeemPoints": "Đổi Điểm Thưởng",
       "pointsBalance": "Bạn có {{points}} điểm khả dụng",
@@ -352,11 +343,9 @@
     "pageSubtitle": "Tích điểm qua mỗi lần đặt vé và mở khóa những đặc quyền độc quyền của Midnight Premium.",
     "emptyText": "Chưa có hạng thành viên nào.",
     "popular": "Phổ biến",
-    "discountLabel": "giảm giá vé",
     "pointsUnit": "điểm",
     "registerNow": "Đăng Ký Ngay",
     "perkEarnPoints": "Tích điểm trên mỗi vé đã mua",
-    "perkTierDiscount": "Giảm giá vé theo hạng thành viên",
     "perkBirthday": "Ưu đãi sinh nhật & sự kiện độc quyền",
     "perkEarlyBooking": "Đặt vé sớm cho các suất công chiếu"
   },
@@ -587,9 +576,7 @@
       "memberCardRequired": "Yêu cầu thẻ thành viên hoặc tài khoản hợp lệ.",
       "noHolidays": "Không áp dụng vào các ngày lễ.",
       "channels": "Chỉ áp dụng cho đặt vé {{channel}}.",
-      "maxTickets": "Giới hạn {{n}} vé mỗi giao dịch với giá này.",
-      "stacksWithMembership": "Cộng dồn với giảm giá thành viên của bạn.",
-      "noStackWithMembership": "Không cộng dồn với giảm giá thành viên của bạn."
+      "maxTickets": "Giới hạn {{n}} vé mỗi giao dịch với giá này."
     }
   },
   "promoProgram": {

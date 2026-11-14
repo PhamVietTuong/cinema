@@ -111,7 +111,6 @@ export class PromotionProgramDialog implements OnInit {
 
       excludeHolidays: [item?.excludeHolidays ?? false],
       maxTicketsPerTransaction: [item?.maxTicketsPerTransaction ?? null],
-      stacksWithMembershipDiscount: [item?.stacksWithMembershipDiscount ?? false],
       termsText: [item?.termsText ?? ''],
 
       autoApply: [item?.autoApply ?? false],
@@ -374,7 +373,6 @@ export class PromotionProgramDialog implements OnInit {
       excludeHolidays: !!v.excludeHolidays,
       allowedChannelsMask: channelsListToMask([...this.channelSelection]),
       maxTicketsPerTransaction: v.maxTicketsPerTransaction || null,
-      stacksWithMembershipDiscount: !!v.stacksWithMembershipDiscount,
       termsText: v.termsText?.trim() || null,
       // triggerMode is the single source of truth for Code-xor-AutoApply — see _applyTriggerMode.
       autoApply: mode === 'auto',

@@ -5,8 +5,8 @@ using Cinema.Data.Enums;
 
 namespace Cinema.Business.DTO.BoxOffice;
 
-/// <summary>One payment the customer hands over. Only Cash, Card and QrWallet are accepted here: points and gift cards
-/// are applied through <see cref="CounterSaleRequest.PointsToRedeem"/> / <see cref="CounterSaleRequest.GiftCardCode"/>.</summary>
+/// <summary>One payment the customer hands over. Only Cash, Card and QrWallet are accepted here: points are
+/// applied through <see cref="CounterSaleRequest.PointsToRedeem"/>.</summary>
 public class TenderLine
 {
     public PaymentTender Method { get; set; }

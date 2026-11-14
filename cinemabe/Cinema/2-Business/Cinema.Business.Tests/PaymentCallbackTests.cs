@@ -397,26 +397,20 @@ public class PaymentCallbackTests
     }
 
     [Fact]
-    public async Task ExpireStalePendingBookingsAsync_RestoresRedeemedPointsAndGiftCard_AndFreesTheSeats()
+    public async Task ExpireStalePendingBookingsAsync_RestoresRedeemedPoints_AndFreesTheSeats()
     {
         // B8: a booking that times out gives back what it reserved; before this was only the food stock that was tested.
         var userId = Guid.NewGuid();
-        var cardId = Guid.NewGuid();
         var user = new User { Id = userId, Points = 10 };
-        var card = new GiftCard { Id = cardId, Balance = 5_000 };
         var invoice = PendingInvoice();
         invoice.UserId = userId;
         invoice.PointsRedeemed = 500;
-        invoice.GiftCardId = cardId;
-        invoice.GiftCardAmount = 20_000;
         invoice.CreationTime = DateTime.UtcNow.AddMinutes(-20);
         _uowMock.Setup(u => u.InvoiceStore.GetStalePendingAsync(It.IsAny<DateTime>())).ReturnsAsync(new List<Invoice> { invoice });
         _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Cancelled)).ReturnsAsync(true);
         _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>())).ReturnsAsync((Invoice i) => i);
         _uowMock.Setup(u => u.UserStore.GetByIdAsync(userId)).ReturnsAsync(user);
         _uowMock.Setup(u => u.UserStore.UpdateAsync(user)).ReturnsAsync(user);
-        _uowMock.Setup(u => u.GiftCardStore.GetByIdAsync(cardId)).ReturnsAsync(card);
-        _uowMock.Setup(u => u.GiftCardStore.UpdateAsync(card)).ReturnsAsync(card);
         _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
         _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new List<StockNetQuantity>());
@@ -426,7 +420,6 @@ public class PaymentCallbackTests
         count.Should().Be(1);
         invoice.Status.Should().Be(InvoiceStatus.Cancelled);
         user.Points.Should().Be(510);
-        card.Balance.Should().Be(25_000);
         _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }
@@ -463,7 +456,7 @@ public class PaymentCallbackTests
     }
 
     [Fact]
-    public async Task InitiatePaymentAsync_FullyCoveredByGiftCard_FinalizesWithoutAnyGateway()
+    public async Task InitiatePaymentAsync_ZeroAmountDue_FinalizesWithoutAnyGateway()
     {
         var userId = Guid.NewGuid();
         var invoice = PendingInvoice(finalAmount: 0);
@@ -480,6 +473,7 @@ public class PaymentCallbackTests
         result.Should().NotBeNull();
         result!.AlreadyPaid.Should().BeTrue();
         result.Provider.Should().Be("None");
+        result.PaymentReference.Should().Be("ZERO-AMOUNT").And.NotContainEquivalentOf("gift");
         invoice.Status.Should().Be(InvoiceStatus.Paid);
         invoice.Payments.Should().BeEmpty("nothing was charged");
     }

@@ -18,7 +18,7 @@ export type CounterFood = CinemaServiceAgent.FoodAndDrinkDTO;
 
 /**
  * The counter cart: today's showtimes, the seat map with its live locks, tickets with their patron category, food and combos,
- * the attached member, discount / gift-card codes, price overrides and the server Quote that drives every total.
+ * the attached member, discount code, price overrides and the server Quote that drives every total.
  * Provided by the page or dialog that hosts the counter (POS, exchange) together with `SeatLockSessionService`; the
  * `staff-counter-cart` / `staff-counter-summary` components render it and the host adds its own payment step.
  */
@@ -65,7 +65,6 @@ export class CounterCartService implements OnDestroy {
   readonly customerError = signal('');
   readonly points = signal(0);
   readonly discountCode = signal('');
-  readonly giftCardCode = signal('');
 
   // ---- quote
   readonly quote = signal<CinemaServiceAgent.CounterQuoteDTO | null>(null);
@@ -87,7 +86,6 @@ export class CounterCartService implements OnDestroy {
     return [
       { labelKey: 'pos.quote.discount', amount: q?.discountAmount ?? 0 },
       { labelKey: 'pos.quote.points', amount: q?.pointsValue ?? 0 },
-      { labelKey: 'pos.quote.giftCard', amount: q?.giftCardAmount ?? 0 },
     ];
   });
 
@@ -108,7 +106,6 @@ export class CounterCartService implements OnDestroy {
       foods: foodItems(foods),
       customerUserId: this.customer()?.id,
       discountCode: this.discountCode().trim() || undefined,
-      giftCardCode: this.giftCardCode().trim() || undefined,
       pointsToRedeem: this.customer() ? this.points() : 0,
     };
   });
@@ -514,7 +511,6 @@ export class CounterCartService implements OnDestroy {
     this._foodOverrides.set({});
     this.detachMember();
     this.discountCode.set('');
-    this.giftCardCode.set('');
     this.quote.set(null);
     this.quoteError.set('');
   }

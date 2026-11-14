@@ -29,7 +29,6 @@ public class PromotionProgramDTO
     /// <summary>Bitmask of SalesChannel values; null = all channels.</summary>
     public int? AllowedChannelsMask { get; set; }
     public int? MaxTicketsPerTransaction { get; set; }
-    public bool StacksWithMembershipDiscount { get; set; }
     public string? TermsText { get; set; }
 
     public int DisplayOrder { get; set; }
