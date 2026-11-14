@@ -135,3 +135,59 @@ export function buildWeekRows(
 
   return { rows, invalidSlots };
 }
+
+/** A slot starting at or after this time of day (22:00) counts as late night. */
+const LATE_NIGHT_START_MINUTES = 22 * 60;
+
+/** True when the slot starts at 22:00 or later. */
+export function isLateNightSlot(slot: TimeSlotDTO): boolean {
+  const start = parseMinutes(slot.startTime);
+  return start !== null && start >= LATE_NIGHT_START_MINUTES;
+}
+
+/**
+ * For a late-night slot: the multiplier in force on each weekday for the slot immediately before it
+ * (default 1 when that slot has no price row, or when the late-night slot is the first of the day).
+ * Returns null when the slot is not late night, so the dialog never warns for it.
+ */
+export function precedingMultipliers(
+  timeSlots: TimeSlotDTO[],
+  prices: TicketPriceDTO[],
+  slot: TimeSlotDTO,
+): Record<number, number> | null {
+  if (!isLateNightSlot(slot)) {
+    return null;
+  }
+  const start = parseMinutes(slot.startTime)!;
+  let preceding: TimeSlotDTO | undefined;
+  let precedingStart = -1;
+  for (const candidate of timeSlots) {
+    const candidateStart = parseMinutes(candidate.startTime);
+    const candidateEnd = parseMinutes(candidate.endTime);
+    if (candidateStart === null || candidateEnd === null || candidateEnd <= candidateStart || candidate.id === slot.id) {
+      continue;
+    }
+    if (candidateStart < start && candidateStart > precedingStart) {
+      preceding = candidate;
+      precedingStart = candidateStart;
+    }
+  }
+  const result: Record<number, number> = {};
+  for (const d of DayOfWeekValues) {
+    const row = preceding ? prices.find(p => p.timeSlotId === preceding!.id && p.dayOfWeek === d.value) : undefined;
+    result[d.value] = row?.priceMultiplier ?? 1;
+  }
+  return result;
+}
+
+/** True when the multiplier is above the preceding slot's multiplier on any of the selected days. */
+export function exceedsPrecedingSlot(
+  multiplier: number,
+  days: DayOfWeek[],
+  preceding: Record<number, number> | null | undefined,
+): boolean {
+  if (!preceding || !Number.isFinite(multiplier)) {
+    return false;
+  }
+  return days.some(day => multiplier > (preceding[day] ?? 1) + 1e-9);
+}

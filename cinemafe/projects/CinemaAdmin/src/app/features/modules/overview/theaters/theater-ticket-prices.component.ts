@@ -6,7 +6,7 @@ import {
   showLoading, hideLoading, showException,
 } from 'CinemaLib';
 import { TicketPriceDialog } from './ticket-price.dialog';
-import { buildWeekRows, todayIsoLocal, TimelineSegmentVm, WeekRowVm } from './ticket-price-timeline';
+import { buildWeekRows, precedingMultipliers, todayIsoLocal, TimelineSegmentVm, WeekRowVm } from './ticket-price-timeline';
 
 type RoomTypeDTO = CinemaServiceAgent.RoomTypeDTO;
 type TimeSlotDTO = CinemaServiceAgent.TimeSlotDTO;
@@ -36,6 +36,7 @@ export class TheaterTicketPricesComponent implements OnInit {
   holidays: HolidayDTO[] = [];
   weekRows: WeekRowVm[] = [];
   invalidSlots: TimeSlotDTO[] = [];
+  private _pricesLoading = false;
   readonly legend = MultiplierBandSpecs;
   readonly legendBands: MultiplierBand[] = ['low', 'standard', 'peak', 'holiday'];
   readonly rulerHours = [0, 4, 8, 12, 16, 20, 24];
@@ -73,7 +74,7 @@ export class TheaterTicketPricesComponent implements OnInit {
   }
 
   openCell(row: WeekRowVm, segment: TimelineSegmentVm): void {
-    if (!this.selectedRoomTypeId) {
+    if (!this.selectedRoomTypeId || this._pricesLoading) {
       return;
     }
     const roomTypeName = this.roomTypes.find(rt => rt.id === this.selectedRoomTypeId)?.name ?? '';
@@ -88,6 +89,7 @@ export class TheaterTicketPricesComponent implements OnInit {
         timeSlot: segment.timeSlot,
         day: row.day,
         existing,
+        precedingMultipliers: precedingMultipliers(this.timeSlots, this.prices, segment.timeSlot),
       },
     }).afterClosed().subscribe(saved => { if (saved) { this._loadPrices(); } });
   }
@@ -110,6 +112,7 @@ export class TheaterTicketPricesComponent implements OnInit {
       this._rebuild();
       return;
     }
+    this._pricesLoading = true;
     this._store.dispatch(showLoading());
     this._svc.getTicketPrices(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: 1, pageSize: 200,
@@ -120,7 +123,10 @@ export class TheaterTicketPricesComponent implements OnInit {
         this._rebuild();
       },
       error: error => this._store.dispatch(showException({ error })),
-    }).add(() => this._store.dispatch(hideLoading()));
+    }).add(() => {
+      this._pricesLoading = false;
+      this._store.dispatch(hideLoading());
+    });
   }
 
   private _loadHolidays(): void {

@@ -36,6 +36,12 @@
             <button type="button" mat-icon-button (click)="adjustMultiplier(0.05)"><mat-icon>add</mat-icon></button>
           </div>
           <mat-hint class="tp-hint">{{ 'theaters.ticketPrices.multiplierHint' | translate }}</mat-hint>
+          @if (showLateNightWarning) {
+            <div class="tp-warning" role="status" data-testid="late-night-warning">
+              <mat-icon class="tp-warning-icon" aria-hidden="true">warning_amber</mat-icon>
+              <span>{{ 'theaters.ticketPrices.lateNightWarning' | translate }}</span>
+            </div>
+          }
         </div>
       </div>
     </div>

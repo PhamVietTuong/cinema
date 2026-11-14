@@ -449,6 +449,7 @@
       "prereq": "Cần có ít nhất một loại phòng và một khung giờ trước khi thiết lập giá vé.",
       "multiplierLabel": "Hệ số (×)",
       "multiplierHint": "Áp dụng lên giá vé gốc của suất chiếu, ví dụ 1.2 = +20%.",
+      "lateNightWarning": "Suất khuya (sau 22:00) thường có giá thấp hơn khung giờ tối. Hệ số này cao hơn khung giờ liền trước. Bạn vẫn có thể lưu.",
       "editCellTitle": "Chỉnh Sửa Giá Vé",
       "daysLabel": "Ngày trong tuần",
       "resetDefault": "Đặt lại mặc định (×1.0)",

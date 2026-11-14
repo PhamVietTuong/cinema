@@ -449,6 +449,7 @@
       "prereq": "You need at least one room type and one time slot before setting ticket prices.",
       "multiplierLabel": "Multiplier (×)",
       "multiplierHint": "Applied to the showtime's base price, e.g. 1.2 = +20%.",
+      "lateNightWarning": "Late-night showtimes (after 22:00) usually sell below the evening rate. This multiplier is higher than the slot before it. You can still save.",
       "editCellTitle": "Edit Ticket Price",
       "daysLabel": "Days of week",
       "resetDefault": "Reset to default (×1.0)",

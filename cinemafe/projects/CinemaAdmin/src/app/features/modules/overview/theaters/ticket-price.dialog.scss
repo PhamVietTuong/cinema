@@ -41,6 +41,26 @@
 
 .tp-hint { color: var(--ml-muted); }
 
+.tp-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: var(--ml-r-md);
+  border: 1px solid var(--ml-warn);
+  background: var(--ml-warn-soft);
+  color: var(--ml-warn-ink);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.tp-warning-icon {
+  flex: 0 0 auto;
+  color: var(--ml-warn);
+}
+
 .tp-actions-spacer { flex: 1 1 auto; }
 
 @include m.tablet-small {

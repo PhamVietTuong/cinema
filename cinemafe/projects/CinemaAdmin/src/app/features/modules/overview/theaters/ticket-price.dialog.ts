@@ -6,6 +6,7 @@ import {
   CinemaServiceAgent, DayOfWeekValues, DialogService,
   showLoading, hideLoading, showSuccess, showException,
 } from 'CinemaLib';
+import { exceedsPrecedingSlot } from './ticket-price-timeline';
 
 type TimeSlotDTO = CinemaServiceAgent.TimeSlotDTO;
 type TicketPriceDTO = CinemaServiceAgent.TicketPriceDTO;
@@ -18,6 +19,8 @@ export interface TicketPriceDialogData {
   timeSlot: TimeSlotDTO;
   day: DayOfWeek;
   existing?: TicketPriceDTO;
+  /** Late-night slots only: the preceding slot's multiplier per weekday (supplied by the parent); null/absent otherwise. */
+  precedingMultipliers?: Record<number, number> | null;
 }
 
 /**
@@ -47,6 +50,15 @@ export class TicketPriceDialog {
       daysOfWeek: [[data.day], Validators.required],
       priceMultiplier: [data.existing?.priceMultiplier ?? 1, [Validators.required, Validators.min(0.05)]],
     });
+  }
+
+  /** Non-blocking hint: a late-night slot priced above the slot before it, on any selected day. */
+  get showLateNightWarning(): boolean {
+    return exceedsPrecedingSlot(
+      Number(this.form.controls['priceMultiplier'].value),
+      this.form.controls['daysOfWeek'].value ?? [],
+      this.data.precedingMultipliers,
+    );
   }
 
   toggleDay(day: DayOfWeek): void {

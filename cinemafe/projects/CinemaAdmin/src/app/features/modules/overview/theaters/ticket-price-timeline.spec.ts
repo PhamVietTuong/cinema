@@ -1,5 +1,5 @@
 import { CinemaServiceAgent } from 'CinemaLib';
-import { buildWeekRows, holidayIso, todayIsoLocal } from './ticket-price-timeline';
+import { buildWeekRows, exceedsPrecedingSlot, holidayIso, isLateNightSlot, precedingMultipliers, todayIsoLocal } from './ticket-price-timeline';
 
 type TimeSlotDTO = CinemaServiceAgent.TimeSlotDTO;
 type TicketPriceDTO = CinemaServiceAgent.TicketPriceDTO;
@@ -96,5 +96,53 @@ describe('buildWeekRows', () => {
     const h = holiday('Far Holiday', '2026-10-20', 1.8);
     const { rows } = buildWeekRows([morning], [], [h], '2026-10-06');
     expect(rows.every(r => r.holiday === undefined)).toBe(true);
+  });
+});
+
+describe('late-night warning helpers', () => {
+  const morning = slot('ts-m', 'Sáng', '08:00', '12:00');
+  const evening = slot('ts-e', 'Tối', '18:00', '22:00');
+  const late = slot('ts-l', 'Khuya', '22:00', '23:59');
+  const Mon = CinemaServiceAgent.DayOfWeek.Monday;
+  const Tue = CinemaServiceAgent.DayOfWeek.Tuesday;
+
+  it('treats 22:00 and later as late night, earlier as not', () => {
+    expect(isLateNightSlot(late)).toBe(true);
+    expect(isLateNightSlot(evening)).toBe(false);
+  });
+
+  it('returns null preceding multipliers for a non-late slot', () => {
+    expect(precedingMultipliers([morning, evening, late], [], evening)).toBeNull();
+  });
+
+  it('uses the multiplier of the slot immediately before, defaulting to 1', () => {
+    const p = precedingMultipliers([late, morning, evening], [price('ts-e', Mon, 1.2)], late)!;
+    expect(p[Mon]).toBe(1.2);
+    expect(p[Tue]).toBe(1);
+  });
+
+  it('defaults to 1 when the late slot is the first of the day', () => {
+    const p = precedingMultipliers([late], [], late)!;
+    expect(p[Mon]).toBe(1);
+  });
+
+  it('warns only when strictly above the preceding multiplier', () => {
+    const p = { [Mon]: 1.2, [Tue]: 1.2 };
+    expect(exceedsPrecedingSlot(1.3, [Mon], p)).toBe(true);
+    expect(exceedsPrecedingSlot(1.2, [Mon], p)).toBe(false);
+    expect(exceedsPrecedingSlot(0.85, [Mon], p)).toBe(false);
+    expect(exceedsPrecedingSlot(1.3, [Mon], null)).toBe(false);
+  });
+
+  it('warns when any selected day is exceeded', () => {
+    const p = { [Mon]: 1.5, [Tue]: 1.0 };
+    expect(exceedsPrecedingSlot(1.2, [Mon, Tue], p)).toBe(true);
+    expect(exceedsPrecedingSlot(1.2, [Mon], p)).toBe(false);
+  });
+
+  it('ignores a wrapping slot and compares against the slot before the late-night one', () => {
+    const wrapping = slot('ts-w', 'Wrap', '20:00', '02:00');
+    const p = precedingMultipliers([morning, evening, wrapping, late], [price('ts-e', Mon, 1.2), price('ts-w', Mon, 2)], late)!;
+    expect(p[Mon]).toBe(1.2);
   });
 });

@@ -245,10 +245,11 @@ CROSS JOIN (VALUES
 ) AS ts(Name, StartTime, EndTime);
 
 -- ── Ticket prices (time-of-day/day-of-week multiplier per theater/room type/time slot) ──
+-- Time-of-day factors: Sáng 0.9, Chiều 1.0, Tối 1.2, Khuya 0.85 (late-night/after-22:00 is discounted, as Vietnamese chains do).
 -- Holiday pricing is not seeded here: it comes from the Holiday table by calendar date.
 INSERT INTO [TicketPrice] ([Id], [TheaterId], [RoomTypeId], [TimeSlotId], [DayOfWeek], [PriceMultiplier], [CreationTime])
 SELECT NEWID(), rt.TheaterId, rt.Id, ts.Id, d.DayOfWeek,
-    (CASE ts.Name WHEN N'Tối' THEN 1.2 WHEN N'Khuya' THEN 1.3 WHEN N'Sáng' THEN 0.9 ELSE 1.0 END)
+    (CASE ts.Name WHEN N'Tối' THEN 1.2 WHEN N'Khuya' THEN 0.85 WHEN N'Sáng' THEN 0.9 ELSE 1.0 END)
     * (CASE rt.Name WHEN N'IMAX' THEN 1.5 WHEN N'4DX' THEN 1.8 WHEN N'Deluxe' THEN 1.4 WHEN N'3D' THEN 1.2 ELSE 1.0 END),
     GETUTCDATE()
 FROM [RoomType] rt
