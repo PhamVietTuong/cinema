@@ -524,7 +524,7 @@
     "greeting": "Xin chào! Mình là trợ lý CINEMA. Mình có thể giúp gì cho bạn?",
     "answerBooking": "Chọn phim → suất chiếu → ghế → thanh toán. Vé điện tử (mã QR) sẽ nằm trong \"Tài khoản → Lịch Sử Đặt Vé\".",
     "answerShowtimes": "Lịch chiếu hiển thị trong trang chi tiết từng phim, nhóm theo định dạng 2D/3D/IMAX/4DX.",
-    "answerCancel": "Bạn có thể hủy vé khi đơn còn ở trạng thái \"Chờ Thanh Toán\" trong mục Lịch Sử Đặt Vé.",
+    "answerCancel": "Hiện chưa hỗ trợ khách tự hủy vé đặt trực tuyến. Đơn chưa thanh toán sẽ tự động được nhả ghế sau 15 phút (lâu hơn một chút nếu trang thanh toán đã được mở).",
     "answerMembership": "Bạn tích điểm trên mỗi lần thanh toán (mặc định 1.000đ chi tiêu = 1 điểm, 100 điểm = 1.000đ; mỗi rạp có thể đặt mức riêng, hiển thị khi thanh toán); hạng thành viên tự nâng theo điểm. Nhập mã giảm giá ở bước thanh toán.",
     "answerNearby": "Vào trang \"Rạp Chiếu\" và bấm \"Tìm rạp gần nhất\" để sắp xếp theo khoảng cách tới bạn.",
     "answerPayment": "Hỗ trợ thanh toán qua VNPAY ở bước thanh toán.",
