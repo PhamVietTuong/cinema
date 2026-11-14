@@ -16,8 +16,8 @@
   } @else {
     <p class="tk-note">{{ 'booking.summary.discountNote' | translate }}</p>
   }
-  @if (valid && capPercent > 0) {
-    <p class="tk-cap" role="note">{{ 'booking.summary.discountCapped' | translate: { percent: capPercent } }}</p>
+  @if (valid && capped) {
+    <p class="tk-cap" role="note">{{ (capPercent > 0 ? 'booking.summary.discountCapped' : 'booking.summary.discountCappedNone') | translate: { percent: capPercent } }}</p>
   }
 </div>
 <div class="tk-foot">

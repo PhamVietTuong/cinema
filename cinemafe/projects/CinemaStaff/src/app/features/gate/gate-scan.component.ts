@@ -13,8 +13,8 @@ import {
   RecentScan,
   buildAgeConfirmRequest,
   buildScanRequest,
-  isAdmitted,
   needsAgePrompt,
+  autoClearsAfterAdmit,
   needsGuardian,
   needsIdCheck,
   normalizeScanCode,
@@ -164,7 +164,7 @@ export class GateScanComponent implements AfterViewInit, OnDestroy {
         this.recent.set(pushRecentScan(this.recent(), request.code, result, new Date()));
         this._cue(result);
         // A K-rated or ID-check admit stays on screen (no auto-clear) so the gate keeper reads the banner.
-        if (isAdmitted(result) && !needsGuardian(result) && !needsIdCheck(result)) {
+        if (autoClearsAfterAdmit(result)) {
           this._autoClear = setTimeout(() => this.dismiss(), ADMITTED_AUTO_CLEAR_MS);
         }
       },

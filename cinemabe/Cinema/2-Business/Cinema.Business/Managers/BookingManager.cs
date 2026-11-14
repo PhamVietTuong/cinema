@@ -1782,14 +1782,15 @@ public class BookingManager : IBookingManager
             capPercent = await GetPromotionCapPercentAsync(bookingTheaterId, showTime);
             saving = CapPromotionSaving(saving, ticketUnits, capPercent);
         }
-        var capped = saving < uncapped;
         var amount = Math.Round(Math.Min(saving, total), 2);
+        var uncappedAmount = Math.Round(Math.Min(uncapped, total), 2);
+        var capped = amount < uncappedAmount;
         return new DiscountCodeValidationDTO
         {
             Valid = true,
             DiscountAmount = amount,
             Capped = capped,
-            UncappedAmount = capped ? Math.Round(Math.Min(uncapped, total), 2) : amount,
+            UncappedAmount = uncappedAmount,
             CapPercent = capped ? capPercent : 0
         };
     }

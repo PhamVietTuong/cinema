@@ -192,6 +192,7 @@
       "minutes": "{{count}} min",
       "discountSaves": "{{code}} saves {{amount}}đ",
       "discountCapped": "The theater limits this promotion to {{percent}}% of the ticket price.",
+      "discountCappedNone": "The theater does not allow promotions on its tickets.",
       "discountInvalid": "This code is not valid for this order.",
       "discountRemove": "Remove",
       "pointsAvailableLabel": "points available",

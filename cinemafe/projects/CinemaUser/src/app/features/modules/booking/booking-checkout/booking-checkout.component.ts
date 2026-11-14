@@ -98,6 +98,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   discountAmount = 0;
   /** The theater's promotion cap in percent when it reduced the applied code's saving (0 otherwise). */
   discountCapPercent = 0;
+  /** True when the theater cap reduced the applied code's saving (the percent may be 0). */
+  discountCapped = false;
 
   theaterId = '';
   /** VND value of 1 loyalty point — fetched from the server for this booking's theater; 0 until loaded. */
@@ -234,6 +236,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         return {
           valid: !!res?.valid,
           discountAmount: amount,
+          capped: !!res?.valid && res.capped === true,
           capPercent: res?.valid && res.capped ? (res.capPercent ?? 0) : 0,
           message: res?.valid
             ? this._translate.instant('booking.summary.discountSaves', { code, amount: Math.round(amount).toLocaleString('en-US') })
@@ -260,6 +263,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         this.discountMessage = result.message;
         this.discountAmount = result.discountAmount;
         this.discountCapPercent = result.capPercent;
+        this.discountCapped = result.capped;
         this._cdr.markForCheck();
       }
     });

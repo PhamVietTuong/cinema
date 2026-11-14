@@ -16,7 +16,7 @@ public class ScanTicketResultDTO
     /// <summary>True for rating K (under 13 admitted only with a parent or guardian); the gate shows a banner.</summary>
     public bool GuardianRequired { get; set; }
     /// <summary>True when the ticket was sold under an ID-check patron category (student, senior); the gate shows a
-    /// non-blocking reminder to check the holder's ID. Set for every outcome that identifies a ticket.</summary>
+    /// non-blocking reminder to check the holder's ID. Set on the outcomes that show ticket details (not NotFound, NotPaid or WrongTheater).</summary>
     public bool RequiresIdCheck { get; set; }
     /// <summary>For AlreadyUsed: when the ticket was admitted (UTC).</summary>
     public DateTime? UsedAt { get; set; }

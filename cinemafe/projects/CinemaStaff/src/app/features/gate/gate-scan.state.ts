@@ -58,6 +58,14 @@ export function needsIdCheck(result: CinemaServiceAgent.ScanTicketResultDTO | nu
   return result?.requiresIdCheck === true;
 }
 
+/**
+ * An admitted result clears itself after a moment, except when it carries a banner the gate keeper must read
+ * (K-rated guardian or ID-check reminder). Anything that was not an admit is never auto-cleared.
+ */
+export function autoClearsAfterAdmit(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
+  return isAdmitted(result) && !needsGuardian(result) && !needsIdCheck(result);
+}
+
 /** Whether the "who/when" of an earlier admission should be shown. */
 export function showsUsageDetails(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
   return result?.outcome === CinemaServiceAgent.ScanOutcome.AlreadyUsed;

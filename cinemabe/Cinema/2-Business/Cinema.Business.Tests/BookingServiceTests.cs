@@ -1875,6 +1875,35 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task ValidateDiscountCodeAsync_TotalLimitsBothAmounts_IsNotFlaggedCapped()
+    {
+        SetupTheaterCaps(50, 100);
+        SetupCodeProgram(p => p.PercentOff = 70);
+        var seats = SetupOneSeat(200000);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 80000, seats);
+
+        result.DiscountAmount.Should().Be(80000);
+        result.UncappedAmount.Should().Be(80000);
+        result.Capped.Should().BeFalse();
+        result.CapPercent.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_ZeroPercentCap_IsCappedWithZeroPercent()
+    {
+        SetupTheaterCaps(0, 100);
+        SetupCodeProgram(p => p.PercentOff = 30);
+        var seats = SetupOneSeat(200000);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, seats);
+
+        result.DiscountAmount.Should().Be(0);
+        result.Capped.Should().BeTrue();
+        result.CapPercent.Should().Be(0);
+    }
+
+    [Fact]
     public async Task ValidateDiscountCodeAsync_WithinTheCap_IsNotFlaggedCapped()
     {
         SetupTheaterCaps(50, 100);

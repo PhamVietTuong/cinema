@@ -4,6 +4,7 @@ import {
   buildAgeConfirmRequest,
   buildScanRequest,
   isAdmitted,
+  autoClearsAfterAdmit,
   needsGuardian,
   needsIdCheck,
   needsAgePrompt,
@@ -107,6 +108,18 @@ describe('scan flow state', () => {
     expect(needsIdCheck(early)).toBe(true);
     expect(needsIdCheck(result(Outcome.Admitted))).toBe(false);
     expect(needsIdCheck(null)).toBe(false);
+  });
+
+  it('auto-clears a plain admit but keeps a K-rated or ID-check admit on screen', () => {
+    const plain = result(Outcome.Admitted);
+    const kRated = result(Outcome.Admitted);
+    kRated.guardianRequired = true;
+    const idCheck = result(Outcome.Admitted);
+    idCheck.requiresIdCheck = true;
+    expect(autoClearsAfterAdmit(plain)).toBe(true);
+    expect(autoClearsAfterAdmit(kRated)).toBe(false);
+    expect(autoClearsAfterAdmit(idCheck)).toBe(false);
+    expect(autoClearsAfterAdmit(result(Outcome.TooEarly))).toBe(false);
   });
 
   it('flags admitted and already-used results', () => {

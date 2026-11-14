@@ -47,8 +47,8 @@
           <span class="disc-pill" *ngIf="discountValid">−{{ discountAmount | number:'1.0-0' }}đ</span>
           <mat-icon class="disc-chev">chevron_right</mat-icon>
         </button>
-        @if (discountValid && discountCapPercent > 0) {
-          <p class="disc-cap" role="note">{{ 'booking.summary.discountCapped' | translate: { percent: discountCapPercent } }}</p>
+        @if (discountValid && discountCapped) {
+          <p class="disc-cap" role="note">{{ (discountCapPercent > 0 ? 'booking.summary.discountCapped' : 'booking.summary.discountCappedNone') | translate: { percent: discountCapPercent } }}</p>
         }
 
         <button type="button" class="disc-row" [class.on]="pointsToRedeem > 0" (click)="openPointsDialog()" [disabled]="maxRedeemablePoints === 0">
