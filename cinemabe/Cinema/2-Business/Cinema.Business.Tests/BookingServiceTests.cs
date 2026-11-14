@@ -1602,7 +1602,7 @@ public class BookingServiceTests
     /// auto-apply PromotionProgram candidates in scope. Monday 2026-03-02 19:00 (see SetupBaselineBookingMocks).</summary>
     private async Task<BookingResultDTO> BookOneSeatWithProgramsAsync(
         double listPrice, List<PromotionProgram> candidates, Guid? customerId = null, User? customer = null,
-        List<Holiday>? holidays = null, string? code = null, int pointsToRedeem = 0, (int Normal, int Holiday)? bookingTheaterCaps = null)
+        List<Holiday>? holidays = null, string? code = null, int pointsToRedeem = 0, (int Normal, int Holiday)? bookingTheaterCaps = null, bool theaterMissing = false)
     {
         var theaterId    = Guid.NewGuid();
         var roomTypeId   = Guid.NewGuid();
@@ -1633,6 +1633,10 @@ public class BookingServiceTests
         {
             _uowMock.Setup(u => u.TheaterStore.GetByIdAsync(theaterId))
                 .ReturnsAsync(new Theater { Id = theaterId, MaxPromotionDiscountPercent = caps.Normal, MaxHolidayPromotionDiscountPercent = caps.Holiday });
+        }
+        if (theaterMissing)
+        {
+            _uowMock.Setup(u => u.TheaterStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Theater?)null);
         }
         if (customer != null)
         {
@@ -1708,6 +1712,20 @@ public class BookingServiceTests
         var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram>(), code: "SUMMER25");
 
         result.DiscountAmount.Should().Be(40000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_TheaterCannotBeResolved_FallsBackToTheFiftyPercentCap()
+    {
+        // The theater store returns null: the cap must fall back to 50% of the summed ticket list prices
+        // (the 70% program saving is cut), never to "uncapped".
+        SetupCodeProgram(p => p.PercentOff = 70);
+
+        var result = await BookOneSeatWithProgramsAsync(
+            listPrice: 80000, candidates: new List<PromotionProgram>(), code: "SUMMER25", theaterMissing: true);
+
+        result.DiscountAmount.Should().Be(40000);
+        result.FinalAmount.Should().Be(40000);
     }
 
     [Fact]
@@ -1851,6 +1869,24 @@ public class BookingServiceTests
         var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, seats);
 
         result.DiscountAmount.Should().Be(100000);
+        result.Capped.Should().BeTrue();
+        result.UncappedAmount.Should().Be(140000);
+        result.CapPercent.Should().Be(50);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_WithinTheCap_IsNotFlaggedCapped()
+    {
+        SetupTheaterCaps(50, 100);
+        SetupCodeProgram(p => p.PercentOff = 30);
+        var seats = SetupOneSeat(200000);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, seats);
+
+        result.DiscountAmount.Should().Be(60000);
+        result.Capped.Should().BeFalse();
+        result.UncappedAmount.Should().Be(60000);
+        result.CapPercent.Should().Be(0);
     }
 
     [Fact]

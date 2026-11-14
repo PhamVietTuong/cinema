@@ -289,6 +289,43 @@ public class GateManagerTests
     }
 
     [Fact]
+    public async Task Scan_IdCheckCategoryTicket_IsAdmitted_WithIdReminder()
+    {
+        _ticket.RequiresIdCheck = true;
+        _ticket.PatronCategoryName = "Student";
+
+        var result = await Scan();
+
+        result.Outcome.Should().Be(ScanOutcome.Admitted);
+        result.RequiresIdCheck.Should().BeTrue();
+        result.PatronCategory.Should().Be("Student");
+    }
+
+    [Fact]
+    public async Task Scan_NoIdCheckCategory_HasNoIdReminder()
+    {
+        (await Scan()).RequiresIdCheck.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Scan_IdCheckTicket_TooEarlyOrUsed_KeepsOutcomeAndFlagsReminder()
+    {
+        _ticket.RequiresIdCheck = true;
+        _ticket.StartTime = _now.AddMinutes(120);
+        _ticket.EndTime = _now.AddMinutes(240);
+        var early = await Scan();
+        early.Outcome.Should().Be(ScanOutcome.TooEarly);
+        early.RequiresIdCheck.Should().BeTrue();
+
+        _ticket.StartTime = _now.AddMinutes(10);
+        _ticket.EndTime = _now.AddMinutes(130);
+        _ticket.IsUsed = true;
+        var used = await Scan();
+        used.Outcome.Should().Be(ScanOutcome.AlreadyUsed);
+        used.RequiresIdCheck.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task Scan_ConcurrentDoubleScan_AdmitsExactlyOnce()
     {
         // The atomic UPDATE changes the row for exactly one caller, whatever the interleaving.
