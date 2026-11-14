@@ -22,5 +22,9 @@ public enum AuditAction
     TicketAdmitOverride = 15,
     // 16 reserved (was UserTheatersChanged) — do not reuse.
     /// <summary>A gate ticket scan attempt (every outcome, not just admits). Best-effort, not transactional.</summary>
-    GateScan = 17
+    GateScan = 17,
+    /// <summary>A customer's promotional-email consent was given or withdrawn (sign-up or profile). DataJson: channel, value, source.</summary>
+    ConsentChanged = 18,
+    /// <summary>An online booking of a 13+ film was made with the age confirmation ticked. DataJson: rating code, minimum age, invoice id.</summary>
+    AgeConfirmed = 19
 }

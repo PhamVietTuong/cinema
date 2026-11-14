@@ -23,6 +23,7 @@ public class AuthServiceTests
 
     public AuthServiceTests()
     {
+        _uowMock.Setup(u => u.AuditLogStore.Stage(It.IsAny<AuditLog>()));
         _sut = new AuthManager(_uowMock.Object, _tokenMock.Object, new DevLogNotificationService(), new DevLogSmsNotificationService(), _googleMock.Object, _facebookMock.Object);
     }
 

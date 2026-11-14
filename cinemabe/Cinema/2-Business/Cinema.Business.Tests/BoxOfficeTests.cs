@@ -540,6 +540,62 @@ public class BoxOfficeTests
         result.Status.Should().Be(InvoiceStatus.Pending);
     }
 
+    [Theory]
+    [InlineData(13)]
+    [InlineData(18)]
+    public async Task OnlineBooking_RatedFilm_WithAgeConfirmation_WritesOneAgeConfirmedRow(int minAge)
+    {
+        SetupOnlineShowTime(minAge: minAge);
+        var userId = Guid.NewGuid();
+
+        await _booking.CreateBookingAsync(userId, OnlineRequest(true, _seatA));
+
+        var invoice = _created.Should().ContainSingle().Subject;
+        var row = _audits.Should().ContainSingle(a => a.Action == AuditAction.AgeConfirmed).Subject;
+        row.ActorUserId.Should().Be(userId);
+        row.EntityType.Should().Be(nameof(Invoice));
+        row.EntityId.Should().Be(invoice.Id);
+        row.TheaterId.Should().Be(_theaterId);
+        var data = System.Text.Json.JsonDocument.Parse(row.DataJson!).RootElement;
+        data.GetProperty("RatingCode").GetString().Should().Be("T");
+        data.GetProperty("MinAge").GetInt32().Should().Be(minAge);
+        data.GetProperty("InvoiceId").GetGuid().Should().Be(invoice.Id);
+        _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task OnlineBooking_RatedFilm_WithoutConfirmation_WritesNoAgeConfirmedRow()
+    {
+        SetupOnlineShowTime(minAge: 16);
+
+        await FluentActions.Awaiting(() => _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(false, _seatA)))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        _audits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task OnlineBooking_UnratedFilm_WritesNoAgeConfirmedRow()
+    {
+        SetupOnlineShowTime(minAge: 0);
+
+        await _booking.CreateBookingAsync(Guid.NewGuid(), OnlineRequest(true, _seatA));
+
+        _audits.Should().NotContain(a => a.Action == AuditAction.AgeConfirmed);
+    }
+
+    [Fact]
+    public async Task CounterSale_RatedFilm_WritesNoAgeConfirmedRow()
+    {
+        SetupOnlineShowTime(minAge: 18);
+        var request = SeatSale(_seatA);
+        request.Tenders = new List<TenderLine> { Cash(100000) };
+
+        await _sut.SellAsync(_theaterId, _staff.Id, false, request);
+
+        _audits.Should().NotContain(a => a.Action == AuditAction.AgeConfirmed);
+    }
+
     [Fact]
     public async Task OnlineBooking_UnratedFilm_DoesNotNeedAgeConfirmation()
     {

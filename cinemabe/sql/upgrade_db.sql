@@ -1336,6 +1336,23 @@ BEGIN
 END
 -- ===== end discount simplification =====
 
+-- ===== consent records =====
+-- New accounts default to no promotional email. Only the column's DEFAULT constraint is replaced;
+-- existing users' preferences are never updated. Guarded: re-running is a no-op once the default is 0.
+DECLARE @consentDc sysname, @consentDef nvarchar(max);
+SELECT @consentDc = dc.[name], @consentDef = dc.[definition] FROM sys.default_constraints dc
+JOIN sys.columns c ON c.[object_id] = dc.[parent_object_id] AND c.[column_id] = dc.[parent_column_id]
+WHERE dc.[parent_object_id] = OBJECT_ID('dbo.User') AND c.[name] = 'NotifyPromotionEmails';
+IF @consentDc IS NULL OR @consentDef <> '((0))'
+BEGIN
+    IF @consentDc IS NOT NULL
+    BEGIN
+        EXEC('ALTER TABLE [User] DROP CONSTRAINT [' + @consentDc + ']');
+    END
+    ALTER TABLE [User] ADD CONSTRAINT [DF_User_NotifyPromotionEmails] DEFAULT 0 FOR [NotifyPromotionEmails];
+END
+-- ===== end consent records =====
+
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================

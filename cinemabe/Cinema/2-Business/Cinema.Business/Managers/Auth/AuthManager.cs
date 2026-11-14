@@ -1,10 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Auth;
 using Cinema.Business.DTO;
 using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Requests;
+using Cinema.Business.DTO.Staff;
 using Cinema.Business.Extensions;
 using Cinema.Business.Security;
 using Cinema.Data.Contracts;
@@ -21,6 +23,7 @@ public class AuthManager : IAuthManager
     private readonly ISmsNotificationService _sms;
     private readonly IGoogleTokenValidator _googleValidator;
     private readonly IFacebookTokenValidator _facebookValidator;
+    private readonly IAuditLogger _audit;
 
     public AuthManager(
         IApplicationUnitOfWork uow,
@@ -28,7 +31,8 @@ public class AuthManager : IAuthManager
         INotificationService notifications,
         ISmsNotificationService sms,
         IGoogleTokenValidator googleValidator,
-        IFacebookTokenValidator facebookValidator)
+        IFacebookTokenValidator facebookValidator,
+        IAuditLogger? audit = null)
     {
         _uow = uow;
         _tokenService = tokenService;
@@ -36,6 +40,30 @@ public class AuthManager : IAuthManager
         _sms = sms;
         _googleValidator = googleValidator;
         _facebookValidator = facebookValidator;
+        _audit = audit ?? new AuditLogger(uow);
+    }
+
+    private const string ConsentChannelPromotionEmail = "PromotionEmail";
+    private const string ConsentSourceRegistration = "registration";
+    private const string ConsentSourceProfile = "profile";
+
+    // Consent evidence: the audit row's own timestamp is the time consent was given or withdrawn. Staged on the
+    // unit of work, so it persists with the caller's next SaveChanges (the user insert or the preference update).
+    private Task StageInitialConsentAsync(User user)
+    {
+        return StageConsentAsync(user, user.NotifyPromotionEmails, ConsentSourceRegistration);
+    }
+
+    private Task StageConsentAsync(User user, bool value, string source)
+    {
+        return _audit.LogAsync(new AuditEntry
+        {
+            ActorUserId = user.Id,
+            Action = AuditAction.ConsentChanged,
+            EntityType = nameof(User),
+            EntityId = user.Id,
+            DataJson = JsonSerializer.Serialize(new { Channel = ConsentChannelPromotionEmail, Value = value, Source = source })
+        });
     }
 
     // Account-lockout policy: lock after this many consecutive failures, for this long.
@@ -160,6 +188,7 @@ public class AuthManager : IAuthManager
             EmailVerificationExpiresAt = DateTime.UtcNow.AddDays(1),
         };
 
+        await StageInitialConsentAsync(user);
         await _uow.UserStore.CreateAsync(user);
         await SendVerificationEmailAsync(user, rawToken);
 
@@ -339,7 +368,8 @@ public class AuthManager : IAuthManager
                 UserTypeId = customerType.Id,
                 EmailConfirmed = true, // Google already verified the address
             };
-            await _uow.UserStore.CreateAsync(user);
+            await StageInitialConsentAsync(user);
+        await _uow.UserStore.CreateAsync(user);
             user = await _uow.UserStore.GetByEmailAsync(info.Email) ?? user;
         }
         else if (!user.EmailConfirmed)
@@ -386,7 +416,8 @@ public class AuthManager : IAuthManager
                 UserTypeId = customerType.Id,
                 EmailConfirmed = true, // Facebook already verified the address
             };
-            await _uow.UserStore.CreateAsync(user);
+            await StageInitialConsentAsync(user);
+        await _uow.UserStore.CreateAsync(user);
             user = await _uow.UserStore.GetByEmailAsync(info.Email) ?? user;
         }
         else if (!user.EmailConfirmed)
@@ -431,6 +462,10 @@ public class AuthManager : IAuthManager
             throw new KeyNotFoundException("User not found.");
         }
         user.NotifyBookingEmails   = request.NotifyBookingEmails;
+        if (user.NotifyPromotionEmails != request.NotifyPromotionEmails)
+        {
+            await StageConsentAsync(user, request.NotifyPromotionEmails, ConsentSourceProfile);
+        }
         user.NotifyPromotionEmails = request.NotifyPromotionEmails;
         user.NotifyReminderEmails  = request.NotifyReminderEmails;
         await _uow.UserStore.UpdateAsync(user);
@@ -570,6 +605,7 @@ public class AuthManager : IAuthManager
             TheaterId    = theaterId,
             Status       = request.Status,
         };
+        await StageInitialConsentAsync(user);
         await _uow.UserStore.CreateAsync(user);
         return ToUserDTO(await _uow.UserStore.GetByIdAsync(user.Id) ?? user);
     }
