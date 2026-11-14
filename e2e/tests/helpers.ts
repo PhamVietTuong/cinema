@@ -69,10 +69,29 @@ export async function clearSession(page: Page): Promise<void> {
   });
 }
 
+/**
+ * Seeded theaters and movies point their images at third-party hosts (picsum.photos and similar). On a CI runner those
+ * requests can stay pending for a long time, so `networkidle` never arrives and the page checks time out for a reason
+ * that has nothing to do with the app. Only same-machine media is loaded; the page layout is still rendered.
+ */
+export async function blockExternalMedia(page: Page): Promise<void> {
+  await page.route('**/*', (route) => {
+    const request = route.request();
+    const host = new URL(request.url()).hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    const isMedia = ['image', 'media', 'font'].includes(request.resourceType());
+    if (!isLocal && isMedia) {
+      return route.abort();
+    }
+    return route.continue();
+  });
+}
+
 /** Opens a route and asserts it rendered: stayed on the path, no uncaught errors, non-empty body. */
 export async function expectRouteRenders(page: Page, route: string): Promise<void> {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  await blockExternalMedia(page);
 
   await page.goto(route);
   await page.waitForLoadState('networkidle');
