@@ -405,7 +405,7 @@ CREATE TABLE [User] (
     [MemberShipId] uniqueidentifier NULL,
     [Points] int NOT NULL,
     [NotifyBookingEmails] bit NOT NULL DEFAULT 1,
-    [NotifyPromotionEmails] bit NOT NULL DEFAULT 0,
+    [NotifyPromotionEmails] bit NOT NULL CONSTRAINT [DF_User_NotifyPromotionEmails] DEFAULT 0,
     [NotifyReminderEmails] bit NOT NULL DEFAULT 1,
     [PasswordResetTokenHash] nvarchar(max) NULL,
     [PasswordResetExpiresAt] datetime NULL,

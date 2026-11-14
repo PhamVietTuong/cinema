@@ -369,7 +369,7 @@ public class AuthManager : IAuthManager
                 EmailConfirmed = true, // Google already verified the address
             };
             await StageInitialConsentAsync(user);
-        await _uow.UserStore.CreateAsync(user);
+            await _uow.UserStore.CreateAsync(user);
             user = await _uow.UserStore.GetByEmailAsync(info.Email) ?? user;
         }
         else if (!user.EmailConfirmed)
@@ -417,7 +417,7 @@ public class AuthManager : IAuthManager
                 EmailConfirmed = true, // Facebook already verified the address
             };
             await StageInitialConsentAsync(user);
-        await _uow.UserStore.CreateAsync(user);
+            await _uow.UserStore.CreateAsync(user);
             user = await _uow.UserStore.GetByEmailAsync(info.Email) ?? user;
         }
         else if (!user.EmailConfirmed)
@@ -605,7 +605,6 @@ public class AuthManager : IAuthManager
             TheaterId    = theaterId,
             Status       = request.Status,
         };
-        await StageInitialConsentAsync(user);
         await _uow.UserStore.CreateAsync(user);
         return ToUserDTO(await _uow.UserStore.GetByIdAsync(user.Id) ?? user);
     }

@@ -478,7 +478,7 @@ public class BoxOfficeTests
     // ── Online checks: age confirmation, open showtime, seat cap, ID-check categories ──
 
     private ShowTimeRoom SetupOnlineShowTime(
-        int minAge = 0, bool showTimeActive = true, bool movieActive = true, bool theaterActive = true,
+        int minAge = 0, string ratingCode = "T", bool showTimeActive = true, bool movieActive = true, bool theaterActive = true,
         int maxSeats = 10, double startOffsetMinutes = 60)
     {
         var start = DateTime.Now.AddMinutes(startOffsetMinutes);
@@ -492,7 +492,7 @@ public class BoxOfficeTests
                 StartTime = start,
                 EndTime = start.AddHours(2),
                 IsActive = showTimeActive,
-                Movie = new Movie { IsActive = movieActive, AgeRestriction = new AgeRestriction { Code = "T", MinAge = minAge } }
+                Movie = new Movie { IsActive = movieActive, AgeRestriction = new AgeRestriction { Code = ratingCode, MinAge = minAge } }
             },
             Room = new Room
             {
@@ -541,11 +541,15 @@ public class BoxOfficeTests
     }
 
     [Theory]
-    [InlineData(13)]
-    [InlineData(18)]
-    public async Task OnlineBooking_RatedFilm_WithAgeConfirmation_WritesOneAgeConfirmedRow(int minAge)
+    [InlineData(13, "T13")]
+    [InlineData(18, "T18")]
+    public async Task OnlineBooking_RatedFilm_WithAgeConfirmation_WritesOneAgeConfirmedRow(int minAge, string ratingCode)
     {
-        SetupOnlineShowTime(minAge: minAge);
+        SetupOnlineShowTime(minAge: minAge, ratingCode: ratingCode);
+        var order = new List<string>();
+        _uowMock.Setup(u => u.AuditLogStore.Stage(It.IsAny<AuditLog>())).Callback<AuditLog>(a => { _audits.Add(a); order.Add($"stage:{a.Action}"); });
+        _uowMock.Setup(u => u.SaveChangesAsync()).Callback(() => order.Add("save")).ReturnsAsync(1);
+        _uowMock.Setup(u => u.CommitTransactionAsync()).Callback(() => order.Add("commit")).Returns(Task.CompletedTask);
         var userId = Guid.NewGuid();
 
         await _booking.CreateBookingAsync(userId, OnlineRequest(true, _seatA));
@@ -557,9 +561,10 @@ public class BoxOfficeTests
         row.EntityId.Should().Be(invoice.Id);
         row.TheaterId.Should().Be(_theaterId);
         var data = System.Text.Json.JsonDocument.Parse(row.DataJson!).RootElement;
-        data.GetProperty("RatingCode").GetString().Should().Be("T");
+        data.GetProperty("RatingCode").GetString().Should().Be(ratingCode);
         data.GetProperty("MinAge").GetInt32().Should().Be(minAge);
         data.GetProperty("InvoiceId").GetGuid().Should().Be(invoice.Id);
+        order.Should().ContainInOrder("stage:AgeConfirmed", "save", "commit");
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }
 

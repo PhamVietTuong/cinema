@@ -149,10 +149,10 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - As a Customer, I want to opt out of promotional/reminder emails while keeping booking confirmations, so that I control what I'm notified about.
 
 - **AC-13.1** (success) Given I turn showtime-reminder emails off, when the reminder job runs, then I get no reminder email. Source: `ShowtimeReminderService.cs:55`.
-- **AC-13.2** (success) Given any preference setting, when I save, then the three flags `NotifyBookingEmails`, `NotifyPromotionEmails` and `NotifyReminderEmails` are stored on my account. Source: `AuthManager.cs:433-435`.
+- **AC-13.2** (success) Given any preference setting, when I save, then the three flags `NotifyBookingEmails`, `NotifyPromotionEmails` and `NotifyReminderEmails` are stored on my account. Source: `AuthManager.UpdateNotificationPreferencesAsync`.
+- **AC-13.3** (gap) Given I turn promotional emails off, when the system sends mail, then there is nothing to suppress: no promotional email is sent anywhere, so the flag is stored only. Source: a repository-wide search finds `NotifyPromotionEmails` only in `AuthManager` (`UpdateNotificationPreferencesAsync` and the consent record it writes), the DTOs and the entity; no send path reads it.
+- **AC-13.4** (gap) Given I turn booking emails off, when a booking is confirmed, then the confirmation is still sent: the flag `NotifyBookingEmails` is stored but not read by any send path. Source: the same search finds it only in `AuthManager.UpdateNotificationPreferencesAsync`, the DTOs and the entity.
 - **AC-13.5** (success) Given I create a new account, when it is saved, then promotional email is off and an audit row (`ConsentChanged`, source `registration`) records it; when I later turn it on or off in my profile, then one more row (source `profile`, with the new value and a timestamp) is written, and none is written when the promotional value is unchanged. Source: `AuthManager.StageConsentAsync`.
-- **AC-13.3** (gap) Given I turn promotional emails off, when the system sends mail, then there is nothing to suppress: no promotional email is sent anywhere, so the flag is stored only. Source: a repository-wide search finds `NotifyPromotionEmails` only in `AuthManager.cs:434`, the DTOs and the entity.
-- **AC-13.4** (gap) Given I turn booking emails off, when a booking is confirmed, then the confirmation is still sent: the flag `NotifyBookingEmails` is stored but not read by any send path. Source: the same search finds it only in `AuthManager.cs:433`, the DTOs and the entity.
 
 ## TheaterStaff
 
