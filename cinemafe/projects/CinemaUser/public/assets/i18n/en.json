@@ -191,6 +191,7 @@
       "comboTotal": "Total",
       "minutes": "{{count}} min",
       "discountSaves": "{{code}} saves {{amount}}đ",
+      "discountCapped": "The theater limits this promotion to {{percent}}% of the ticket price.",
       "discountInvalid": "This code is not valid for this order.",
       "discountRemove": "Remove",
       "pointsAvailableLabel": "points available",

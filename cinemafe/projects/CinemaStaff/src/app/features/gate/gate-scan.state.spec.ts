@@ -5,6 +5,7 @@ import {
   buildScanRequest,
   isAdmitted,
   needsGuardian,
+  needsIdCheck,
   needsAgePrompt,
   normalizeScanCode,
   pushRecentScan,
@@ -95,6 +96,17 @@ describe('scan flow state', () => {
     expect(needsGuardian(admittedK)).toBe(true);
     expect(needsGuardian(usedK)).toBe(false);
     expect(needsGuardian(result(Outcome.Admitted))).toBe(false);
+  });
+
+  it('reminds to check ID whenever the ticket is of an ID-check category, whatever the outcome', () => {
+    const admitted = result(Outcome.Admitted);
+    admitted.requiresIdCheck = true;
+    const early = result(Outcome.TooEarly);
+    early.requiresIdCheck = true;
+    expect(needsIdCheck(admitted)).toBe(true);
+    expect(needsIdCheck(early)).toBe(true);
+    expect(needsIdCheck(result(Outcome.Admitted))).toBe(false);
+    expect(needsIdCheck(null)).toBe(false);
   });
 
   it('flags admitted and already-used results', () => {

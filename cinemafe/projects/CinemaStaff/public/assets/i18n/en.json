@@ -63,6 +63,7 @@
     "recentEmpty": "No tickets scanned yet.",
     "ageRating": "Age rating: {{code}}",
     "guardianRequired": "Rated K: admit only with a parent or guardian.",
+    "idCheck": "Check the holder's ID ({{category}}).",
     "usedAt": "Used by {{by}} at {{at}}",
     "ageQuestion": "This film is rated {{age}}+. Did you check the patron's age?",
     "confirmAge": "Age confirmed - admit",

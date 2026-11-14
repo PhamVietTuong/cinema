@@ -10,7 +10,7 @@
 .recent-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--ml-panel-3, rgba(0, 0, 0, 0.08)); }
 .recent-movie { flex: 1; color: var(--ml-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recent-time { color: var(--ml-muted); font-variant-numeric: tabular-nums; }
-.overlay { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--ml-chrome-ink); padding: 24px; }
+.overlay { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: safe center; overflow-y: auto; justify-content: center; text-align: center; color: var(--ml-chrome-ink); padding: 24px; }
 .tone-success { background: var(--ml-success); }
 .tone-warn { background: var(--ml-warn); }
 .tone-danger { background: var(--ml-danger); }

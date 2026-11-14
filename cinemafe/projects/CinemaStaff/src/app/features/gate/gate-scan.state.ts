@@ -50,6 +50,14 @@ export function needsGuardian(result: CinemaServiceAgent.ScanTicketResultDTO | n
   return isAdmitted(result) && result?.guardianRequired === true;
 }
 
+/**
+ * The ticket was sold under an ID-check category (student, senior): the gate shows a reminder to check the
+ * holder's document. Never blocks admission; shown for every outcome that identifies a ticket.
+ */
+export function needsIdCheck(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
+  return result?.requiresIdCheck === true;
+}
+
 /** Whether the "who/when" of an earlier admission should be shown. */
 export function showsUsageDetails(result: CinemaServiceAgent.ScanTicketResultDTO | null | undefined): boolean {
   return result?.outcome === CinemaServiceAgent.ScanOutcome.AlreadyUsed;
