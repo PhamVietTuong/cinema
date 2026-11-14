@@ -158,30 +158,37 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   /** Point count used to phrase the redeem rate in the summary ("100 points = 1.000đ"). */
   readonly ratePoints = 100;
 
+  /** Order total after the applied promotion code, never below 0. The server applies the promotion
+   * first and redeems points only against what remains, so every amount below builds on this one. */
+  get afterPromotion(): number {
+    // Whole VND, like the server, which rounds before redeeming points.
+    return Math.round(Math.max(0, this.grandTotal - (this.discountValid ? this.discountAmount : 0)));
+  }
+
   get maxRedeemablePoints(): number {
     if (this.pointValue <= 0) {
       return 0;
     }
-    return Math.min(this.pointsBalance, Math.floor(this.grandTotal / this.pointValue));
+    return Math.min(this.pointsBalance, Math.floor(this.afterPromotion / this.pointValue));
   }
 
   get pointsDiscount(): number {
     return (this.pointsToRedeem || 0) * this.pointValue;
   }
 
+  /** Amount to pay: promotion first, then points up to the remainder. The single source for the summary,
+   * the success ticket and the points-to-earn estimate. */
   get finalTotal(): number {
-    return Math.max(0, this.grandTotal - this.pointsDiscount);
+    return Math.max(0, this.afterPromotion - this.pointsDiscount);
   }
 
-  /** Estimated points earned on payment: floor(estimated final amount / PointsPerUnit). Only an
-   * estimate — it nets out the promo discount shown here, but the server's actual credited amount can
-   * differ. Displayed with "up to" wording for that reason. */
+  /** Estimated points earned on payment: floor(amount to pay / PointsPerUnit). Only an estimate — the
+   * server's actual credited amount can differ. Displayed with "up to" wording for that reason. */
   get pointsToEarn(): number {
     if (this.pointsPerUnit <= 0) {
       return 0;
     }
-    const estimatedFinal = Math.max(0, this.finalTotal - this.discountAmount);
-    return Math.floor(estimatedFinal / this.pointsPerUnit);
+    return Math.floor(this.finalTotal / this.pointsPerUnit);
   }
 
   ngOnInit(): void {
@@ -264,6 +271,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         this.discountAmount = result.discountAmount;
         this.discountCapPercent = result.capPercent;
         this.discountCapped = result.capped;
+        // A new or removed code changes the remainder points can cover — re-clamp what was entered.
+        this.clampPoints();
         this._cdr.markForCheck();
       }
     });

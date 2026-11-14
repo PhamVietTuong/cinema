@@ -323,4 +323,109 @@ describe('BookingCheckoutComponent', () => {
 
     expect(c.pointsToEarn).toBe(0);
   });
+
+  describe('amount to pay: promotion first, then points', () => {
+    // grandTotal is 275000; one point is worth 1000đ.
+    const apply = (c: BookingCheckoutComponent, discountAmount: number) => {
+      c.discountCode = 'CODE';
+      c.discountValid = true;
+      c.discountAmount = discountAmount;
+    };
+
+    it('leaves the amounts unchanged with no code', () => {
+      const c = build(state);
+      c.pointsBalance = 1500;
+      c.pointsToRedeem = 40;
+
+      expect(c.afterPromotion).toBe(275000);
+      expect(c.maxRedeemablePoints).toBe(275);
+      expect(c.finalTotal).toBe(235000);
+    });
+
+    it('subtracts an applied code from the amount to pay', () => {
+      const c = build(state);
+      apply(c, 100000);
+
+      expect(c.finalTotal).toBe(175000);
+    });
+
+    it('caps the points maximum by the remainder after the promotion and never subtracts the code twice', () => {
+      const c = build(state);
+      c.pointsBalance = 1500;
+      apply(c, 100000);
+
+      // Remainder 175000 -> at most 175 points, not the 275 the pre-promotion total would allow.
+      expect(c.maxRedeemablePoints).toBe(175);
+      c.pointsToRedeem = 1000;
+      c.clampPoints();
+      expect(c.pointsToRedeem).toBe(175);
+      expect(c.finalTotal).toBe(0);
+
+      c.pointsToRedeem = 50;
+      expect(c.finalTotal).toBe(125000);
+    });
+
+    it('re-clamps entered points when the code is removed or changed', () => {
+      const dialogResult = (r: unknown) => ({ afterClosed: () => of(r) });
+      const open = vi.fn();
+      const c = build(state);
+      (c as unknown as { _dialog: { open: typeof open } })._dialog = { open };
+      c.pointsBalance = 1500;
+      apply(c, 100000);
+      c.pointsToRedeem = 175;
+
+      // Replace the code with a bigger discount: the old 175 points no longer fit.
+      open.mockReturnValueOnce(dialogResult({ code: 'BIG', valid: true, message: '', discountAmount: 200000 }));
+      c.openDiscountDialog();
+      expect(c.maxRedeemablePoints).toBe(75);
+      expect(c.pointsToRedeem).toBe(75);
+      expect(c.finalTotal).toBe(0);
+
+      // Removing the code frees the remainder again; points are never raised, only clamped.
+      open.mockReturnValueOnce(dialogResult({ code: '', valid: null, message: '', discountAmount: 0 }));
+      c.openDiscountDialog();
+      expect(c.maxRedeemablePoints).toBe(275);
+      expect(c.pointsToRedeem).toBe(75);
+      expect(c.finalTotal).toBe(200000);
+    });
+
+    it('shows 0 to pay when the code covers the whole total, and keeps points at 0', () => {
+      const c = build(state);
+      c.pointsBalance = 1500;
+      apply(c, 275000);
+      c.pointsToRedeem = 30;
+      c.clampPoints();
+
+      expect(c.afterPromotion).toBe(0);
+      expect(c.maxRedeemablePoints).toBe(0);
+      expect(c.pointsToRedeem).toBe(0);
+      expect(c.finalTotal).toBe(0);
+      expect(c.pointsToEarn).toBe(0);
+    });
+
+    it('rounds the amount after the promotion to whole VND before the points maximum', () => {
+      const c = build(state);
+      c.pointsBalance = 1500;
+      apply(c, 100000.4);
+
+      expect(c.afterPromotion).toBe(175000);
+      expect(c.maxRedeemablePoints).toBe(175);
+      expect(c.finalTotal).toBe(175000);
+    });
+
+    it('ignores the amount of a code that failed validation', () => {
+      const c = build(state);
+      c.discountValid = false;
+      c.discountAmount = 100000;
+
+      expect(c.finalTotal).toBe(275000);
+    });
+
+    it('estimates points to earn from the amount to pay without subtracting the code again', () => {
+      const c = build(state, {}, { pointsPerUnit: 1000, pointValueVnd: 1000, isCustom: false });
+      apply(c, 100000);
+
+      expect(c.pointsToEarn).toBe(175);
+    });
+  });
 });
