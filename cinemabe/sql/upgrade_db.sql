@@ -1326,40 +1326,61 @@ END
 -- ============================================================
 -- Remove the child ticket category (2026-11-14)
 -- ============================================================
--- DESTRUCTIVE. Owner decision 2026-11-14: no child ticket is sold, so the PatronCategory named Tre Em (with its
--- Vietnamese diacritics; matched by LIKE N'Tr% Em' so the diacritics are not typed here) goes, including every invoice
--- that has a ticket sold under it. Apply to the local dev database only. Any other environment needs the owner's
--- fresh confirmation and a verified backup first. Idempotent: once the categories are gone it matches nothing.
--- One transaction (XACT_ABORT + TRY/CATCH): all of it or none of it. Order: invoices with their tickets, payments,
--- food lines and StockMovement rows (StockMovement.InvoiceId has no FK, so it is deleted explicitly), then the
--- RoomTypePatronCategoryPrice rows, then the categories. Not reversed: loyalty points, PromotionProgram.UsedCount, food stock.
+-- DESTRUCTIVE, ONE-SHOT. Owner decision 2026-11-14: no child ticket is sold, so the PatronCategory named Tre Em
+-- (exact name with its Vietnamese diacritics, built from NCHAR(7867) so no non-ASCII literal is typed) goes,
+-- including every invoice that has a ticket sold under it. Apply to the local dev database only, with the API
+-- stopped (no payment in flight). Any other environment needs the owner's fresh confirmation and a verified
+-- backup first. One-shot, not "matches nothing the second time": it records the database extended property
+-- purge_child_ticket_done in the same transaction and skips itself whenever that property exists, so a category
+-- created later with the same name is never purged. One transaction (XACT_ABORT + TRY/CATCH): all of it or none.
+-- Order: survivors' ExchangedFromInvoiceId pointing at a purged invoice is nulled (no FK); redeemed points of purged
+-- Pending invoices go back to their users; the invoices with their tickets, payments, food lines and StockMovement
+-- rows (StockMovement.InvoiceId has no FK, so it is deleted explicitly); then the RoomTypePatronCategoryPrice rows;
+-- then the categories. Not reversed: points earned on purged Paid invoices, PromotionProgram.UsedCount, food stock.
+-- InvoiceStatus: 0 Pending.
 SET QUOTED_IDENTIFIER ON; -- Invoice has a filtered index, which DML requires this for (sqlcmd defaults it OFF)
 SET XACT_ABORT ON;
-BEGIN TRY
-    BEGIN TRANSACTION;
-    DECLARE @ChildCategories TABLE ([Id] uniqueidentifier PRIMARY KEY);
-    INSERT INTO @ChildCategories ([Id])
-    SELECT [Id] FROM [PatronCategory] WHERE [Name] LIKE N'Tr% Em';
+IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE [class] = 0 AND [name] = N'purge_child_ticket_done')
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        DECLARE @ChildCategories TABLE ([Id] uniqueidentifier PRIMARY KEY);
+        INSERT INTO @ChildCategories ([Id])
+        SELECT [Id] FROM [PatronCategory] WHERE [Name] = N'Tr' + NCHAR(7867) + N' Em';
 
-    DECLARE @ChildInvoices TABLE ([Id] uniqueidentifier PRIMARY KEY);
-    INSERT INTO @ChildInvoices ([Id])
-    SELECT [InvoiceId] FROM [InvoiceTicket]
-    WHERE [PatronCategoryName] LIKE N'Tr% Em'
-       OR [PatronCategoryId] IN (SELECT [Id] FROM @ChildCategories);
+        DECLARE @ChildInvoices TABLE ([Id] uniqueidentifier PRIMARY KEY);
+        INSERT INTO @ChildInvoices ([Id])
+        SELECT DISTINCT [InvoiceId] FROM [InvoiceTicket]
+        WHERE [PatronCategoryName] = N'Tr' + NCHAR(7867) + N' Em'
+           OR [PatronCategoryId] IN (SELECT [Id] FROM @ChildCategories);
 
-    DELETE FROM [StockMovement]       WHERE [InvoiceId] IN (SELECT [Id] FROM @ChildInvoices);
-    DELETE FROM [InvoiceTicket]       WHERE [InvoiceId] IN (SELECT [Id] FROM @ChildInvoices);
-    DELETE FROM [InvoicePayment]      WHERE [InvoiceId] IN (SELECT [Id] FROM @ChildInvoices);
-    DELETE FROM [InvoiceFoodAndDrink] WHERE [InvoiceId] IN (SELECT [Id] FROM @ChildInvoices);
-    DELETE FROM [Invoice]             WHERE [Id]        IN (SELECT [Id] FROM @ChildInvoices);
-    DELETE FROM [RoomTypePatronCategoryPrice] WHERE [PatronCategoryId] IN (SELECT [Id] FROM @ChildCategories);
-    DELETE FROM [PatronCategory]      WHERE [Id]        IN (SELECT [Id] FROM @ChildCategories);
-    COMMIT TRANSACTION;
-END TRY
-BEGIN CATCH
-    IF @@TRANCOUNT > 0 BEGIN ROLLBACK TRANSACTION; END;
-    THROW;
-END CATCH
+        UPDATE [Invoice] SET [ExchangedFromInvoiceId] = NULL
+        WHERE [ExchangedFromInvoiceId] IN (SELECT [Id] FROM @ChildInvoices)
+          AND [Id] NOT IN (SELECT [Id] FROM @ChildInvoices);
+
+        UPDATE u SET u.[Points] = u.[Points] + p.[Total]
+        FROM [User] u
+        JOIN (SELECT i.[UserId], SUM(i.[PointsRedeemed]) AS [Total]
+              FROM [Invoice] i JOIN @ChildInvoices g ON g.[Id] = i.[Id]
+              WHERE i.[Status] = 0 AND i.[UserId] IS NOT NULL AND i.[PointsRedeemed] > 0
+              GROUP BY i.[UserId]) p ON p.[UserId] = u.[Id];
+
+        DELETE FROM [StockMovement]       WHERE [InvoiceId] IN (SELECT [Id] FROM @ChildInvoices);
+        DELETE FROM [InvoiceTicket]       WHERE [InvoiceId] IN (SELECT [Id] FROM @ChildInvoices);
+        DELETE FROM [InvoicePayment]      WHERE [InvoiceId] IN (SELECT [Id] FROM @ChildInvoices);
+        DELETE FROM [InvoiceFoodAndDrink] WHERE [InvoiceId] IN (SELECT [Id] FROM @ChildInvoices);
+        DELETE FROM [Invoice]             WHERE [Id]        IN (SELECT [Id] FROM @ChildInvoices);
+        DELETE FROM [RoomTypePatronCategoryPrice] WHERE [PatronCategoryId] IN (SELECT [Id] FROM @ChildCategories);
+        DELETE FROM [PatronCategory]      WHERE [Id]        IN (SELECT [Id] FROM @ChildCategories);
+
+        EXEC sys.sp_addextendedproperty @name = N'purge_child_ticket_done', @value = N'2026-11-14';
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 BEGIN ROLLBACK TRANSACTION; END;
+        THROW;
+    END CATCH
+END
 -- ===== end remove child ticket category =====
 
 -- ============================================================
