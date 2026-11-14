@@ -4,10 +4,11 @@ import { BookingCheckoutState } from './booking-checkout.state';
 
 describe('BookingCheckoutComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn>; navigateByUrl: ReturnType<typeof vi.fn> };
-  let payment: { createBooking: ReturnType<typeof vi.fn>; initiatePayment: ReturnType<typeof vi.fn>; confirmPayment: ReturnType<typeof vi.fn> };
+  let payment: { createBooking: ReturnType<typeof vi.fn>; initiatePayment: ReturnType<typeof vi.fn>; confirmPayment: ReturnType<typeof vi.fn>; validateDiscountCode: ReturnType<typeof vi.fn> };
   let identity: { getProfile: ReturnType<typeof vi.fn> };
   let hub: { connectionId: string; stopConnection: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+  let dialog: { open: ReturnType<typeof vi.fn> };
 
   const state: BookingCheckoutState = {
     showTimeId: 'st-1',
@@ -27,7 +28,9 @@ describe('BookingCheckoutComponent', () => {
       createBooking: vi.fn().mockReturnValue(of({ invoiceId: 'inv-1', invoiceCode: 'CIN123' })),
       initiatePayment: vi.fn().mockReturnValue(of({ alreadyPaid: true })),
       confirmPayment: vi.fn(),
+      validateDiscountCode: vi.fn(),
     };
+    dialog = { open: vi.fn() };
     identity = { getProfile: vi.fn().mockReturnValue(of({ points: 10 })) };
     hub = { connectionId: 'my-connection', stopConnection: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -44,7 +47,7 @@ describe('BookingCheckoutComponent', () => {
     const translate = { instant: (key: string, params?: any) => `${key}${params ? ':' + JSON.stringify(params) : ''}` };
 
     const c = new BookingCheckoutComponent(
-      route as never, router as never, payment as never, identity as never, hub as never, cdr as never, translate as never, cinema as never, { open: vi.fn() } as never,
+      route as never, router as never, payment as never, identity as never, hub as never, cdr as never, translate as never, cinema as never, dialog as never,
     );
     c.ngOnInit();
     return c;
@@ -91,6 +94,51 @@ describe('BookingCheckoutComponent', () => {
       c.ageConfirmed = true;
       c.confirmBooking();
       expect(payment.createBooking.mock.calls[0][0].ageConfirmed).toBe(true);
+    });
+  });
+
+  describe('capped promotion notice', () => {
+    it('hands the cap percent of a capped code over from the server answer', () => {
+      const c = build(state);
+      payment.validateDiscountCode.mockReturnValue(of({ valid: true, discountAmount: 40000, capped: true, capPercent: 50 }));
+
+      let result: { capped?: boolean; capPercent?: number } | undefined;
+      c.checkDiscountCode('SUMMER').subscribe(r => (result = r));
+
+      expect(result?.capped).toBe(true);
+      expect(result?.capPercent).toBe(50);
+    });
+
+    it('reports not capped when the cap did not reduce the saving', () => {
+      const c = build(state);
+      payment.validateDiscountCode.mockReturnValue(of({ valid: true, discountAmount: 20000, capped: false, capPercent: 0 }));
+
+      let result: { capped?: boolean; capPercent?: number } | undefined;
+      c.checkDiscountCode('SUMMER').subscribe(r => (result = r));
+
+      expect(result?.capped).toBe(false);
+      expect(result?.capPercent).toBe(0);
+    });
+
+    it('stores the cap fields of the dialog result on the checkout', () => {
+      const c = build(state);
+      dialog.open.mockReturnValue({ afterClosed: () => of({ code: 'SUMMER', valid: true, message: 'ok', discountAmount: 40000, capPercent: 50, capped: true }) });
+
+      c.openDiscountDialog();
+
+      expect(c.discountCapped).toBe(true);
+      expect(c.discountCapPercent).toBe(50);
+      expect(c.discountAmount).toBe(40000);
+    });
+
+    it('clears the cap fields when the code is removed', () => {
+      const c = build(state);
+      dialog.open.mockReturnValue({ afterClosed: () => of({ code: '', valid: null, message: '', discountAmount: 0, capPercent: 0, capped: false }) });
+
+      c.openDiscountDialog();
+
+      expect(c.discountCapped).toBe(false);
+      expect(c.discountCapPercent).toBe(0);
     });
   });
 

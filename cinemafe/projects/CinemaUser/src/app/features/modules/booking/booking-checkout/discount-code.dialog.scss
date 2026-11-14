@@ -1,2 +1,4 @@
 .input-wrap { position: relative; }
 .spin { position: absolute; right: 12px; top: 14px; }
+
+.tk-cap { margin: 0; padding: 10px 12px; border-radius: var(--ml-r-lg); font-size: 0.85rem; line-height: 1.4; background: var(--ml-warn-soft, var(--ml-panel-2)); color: var(--ml-ink); overflow-wrap: anywhere; }

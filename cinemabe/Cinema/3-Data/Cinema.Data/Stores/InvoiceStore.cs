@@ -153,6 +153,8 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
                 UsedAt = t.UsedAt,
                 UsedByName = Context.User.Where(u => u.Id == t.UsedByUserId).Select(u => u.Name).FirstOrDefault(),
                 PatronCategoryName = t.PatronCategoryName,
+                RequiresIdCheck = t.PatronCategoryId != null
+                    && Context.PatronCategory.Any(c => c.Id == t.PatronCategoryId && c.RequiresIdCheck),
                 InvoiceStatus = t.Invoice.Status,
                 InvoiceCode = t.Invoice.Code,
                 SeatLabel = t.Seat.RowName + t.Seat.ColIndex,

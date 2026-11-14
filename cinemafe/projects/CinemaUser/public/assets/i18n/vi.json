@@ -191,6 +191,8 @@
       "comboTotal": "Tổng cộng",
       "minutes": "{{count}} phút",
       "discountSaves": "{{code}} giảm {{amount}}đ",
+      "discountCapped": "Rạp giới hạn khuyến mãi này tối đa {{percent}}% giá vé.",
+      "discountCappedNone": "Rạp không áp dụng khuyến mãi cho vé.",
       "discountInvalid": "Mã này không dùng được cho đơn hàng này.",
       "discountRemove": "Xóa",
       "pointsAvailableLabel": "điểm khả dụng",

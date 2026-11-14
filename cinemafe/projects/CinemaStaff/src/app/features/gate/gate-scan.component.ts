@@ -13,9 +13,10 @@ import {
   RecentScan,
   buildAgeConfirmRequest,
   buildScanRequest,
-  isAdmitted,
   needsAgePrompt,
+  autoClearsAfterAdmit,
   needsGuardian,
+  needsIdCheck,
   normalizeScanCode,
   pushRecentScan,
   showsUsageDetails,
@@ -70,6 +71,7 @@ export class GateScanComponent implements AfterViewInit, OnDestroy {
   readonly outcomeKey = computed(() => scanOutcomeSpec(this.result()?.outcome).labelKey);
   readonly agePrompt = computed(() => needsAgePrompt(this.result()));
   readonly guardianBanner = computed(() => needsGuardian(this.result()));
+  readonly idCheckBanner = computed(() => needsIdCheck(this.result()));
   readonly usageDetails = computed(() => showsUsageDetails(this.result()));
   readonly icon = computed(() => {
     switch (this.tone()) {
@@ -161,8 +163,8 @@ export class GateScanComponent implements AfterViewInit, OnDestroy {
         this.result.set(result);
         this.recent.set(pushRecentScan(this.recent(), request.code, result, new Date()));
         this._cue(result);
-        // A K-rated admit stays on screen (no auto-clear) so the gate keeper reads the guardian banner.
-        if (isAdmitted(result) && !needsGuardian(result)) {
+        // A K-rated or ID-check admit stays on screen (no auto-clear) so the gate keeper reads the banner.
+        if (autoClearsAfterAdmit(result)) {
           this._autoClear = setTimeout(() => this.dismiss(), ADMITTED_AUTO_CLEAR_MS);
         }
       },

@@ -13,6 +13,8 @@ public sealed class GateTicketRow
     public DateTime? UsedAt { get; set; }
     public string? UsedByName { get; set; }
     public string? PatronCategoryName { get; set; }
+    /// <summary>True when the ticket's patron category (found by id) still exists and requires an ID check.</summary>
+    public bool RequiresIdCheck { get; set; }
     public InvoiceStatus InvoiceStatus { get; set; }
     public string InvoiceCode { get; set; } = string.Empty;
     public string SeatLabel { get; set; } = string.Empty;

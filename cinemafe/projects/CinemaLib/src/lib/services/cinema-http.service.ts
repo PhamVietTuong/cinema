@@ -16716,6 +16716,7 @@ export class ScanTicketResultDTO implements IScanTicketResultDTO {
     ageRatingCode?: string | undefined;
     minAge?: number | undefined;
     guardianRequired?: boolean;
+    requiresIdCheck?: boolean;
     usedAt?: Date | undefined;
     usedBy?: string | undefined;
 
@@ -16740,6 +16741,7 @@ export class ScanTicketResultDTO implements IScanTicketResultDTO {
             this.ageRatingCode = _data["ageRatingCode"];
             this.minAge = _data["minAge"];
             this.guardianRequired = _data["guardianRequired"];
+            this.requiresIdCheck = _data["requiresIdCheck"];
             this.usedAt = _data["usedAt"] ? new Date(_data["usedAt"].toString()) : <any>undefined;
             this.usedBy = _data["usedBy"];
         }
@@ -16764,6 +16766,7 @@ export class ScanTicketResultDTO implements IScanTicketResultDTO {
         data["ageRatingCode"] = this.ageRatingCode;
         data["minAge"] = this.minAge;
         data["guardianRequired"] = this.guardianRequired;
+        data["requiresIdCheck"] = this.requiresIdCheck;
         data["usedAt"] = this.usedAt ? this.usedAt.toISOString() : <any>undefined;
         data["usedBy"] = this.usedBy;
         return data;
@@ -16781,6 +16784,7 @@ export interface IScanTicketResultDTO {
     ageRatingCode?: string | undefined;
     minAge?: number | undefined;
     guardianRequired?: boolean;
+    requiresIdCheck?: boolean;
     usedAt?: Date | undefined;
     usedBy?: string | undefined;
 }

@@ -10319,6 +10319,9 @@
           "guardianRequired": {
             "type": "boolean"
           },
+          "requiresIdCheck": {
+            "type": "boolean"
+          },
           "usedAt": {
             "type": "string",
             "format": "date-time",
