@@ -2,7 +2,7 @@
 
 > Purpose: Describe the current role model, capability composites, and how each is enforced in code.
 > Sources: `cinemabe/Cinema/2-Business/Cinema.Business.DTO/Auth/RoleNames.cs`; `cinemabe/Cinema/2-Business/Cinema.Business/Managers/Auth/AuthManager.cs`; `cinemabe/Cinema/3-Data/Cinema.Data/Services/JwtTokenService.cs`; controller `[Authorize]` attributes in `CinemaController.cs`/`IdentityController.cs`/`PaymentController.cs`; `cinemafe/projects/CinemaLib/src/lib/models/roles.models.ts`
-> Last reviewed: 2026-11-12
+> Last reviewed: 2026-11-14
 
 ## 1. The role model
 
@@ -11,7 +11,7 @@ Exactly **3 roles** exist, each a `UserType.Name` value and the sole JWT role cl
 | Role | Meaning | Theater-scoped? |
 |---|---|---|
 | `Admin` | Full access to everything; no theater scoping. | No |
-| `TheaterStaff` | Single consolidated staff role. Absorbed what used to be 5 separate roles (box office, gate, concession, warehouse, manager) — those are now capability composites in code, not distinct UserTypes/roles. The concession/kitchen-pickup-queue composite itself was later removed along with the feature. | Yes — requires a `theaterId` JWT claim |
+| `TheaterStaff` | Single consolidated staff role. Box office, gate and operations are capability composites in code, not distinct UserTypes/roles. | Yes — requires a `theaterId` JWT claim |
 | `Customer` | Default role for self-registered / social-login users. | No |
 
 There is **no permission table in the database** — `[Authorize(Roles=...)]` composites are hard-coded string constants in `RoleNames.cs`. A future reintroduction of finer-grained staff roles would only require editing that file, not every controller action.
@@ -26,9 +26,9 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 | `RoleNames.StaffApp` | `Admin,TheaterStaff` | Login to CinemaStaff app; general staff endpoints (seat-map admin read, schedule board, incidents read/report). There are no workforce endpoints |
 | `RoleNames.Sellers` | `Admin,TheaterStaff` | `BoxOffice` region: `Quote`, `Sell`, `GetShowtimesToday`, `FindCustomer` |
 | `RoleNames.GateKeepers` | `Admin,TheaterStaff` | `Gate` region: `Scan`, `Lookup` |
-| `RoleNames.BackOffice` | `Admin,TheaterStaff` | No controller `[Authorize]` uses it. It is read by `ClaimsPrincipalExtensions._backOfficeRoles` (`TryGetBackOfficeScope`, which pins a non-Admin caller to their own theater; covered by `StaffScopeTests`). Its doc comment still describes warehouse/inventory access |
-| `RoleNames.StockApprovers` | `Admin` only | Documented intent: approve/reject storage plans, change inventory tracking — storage-plan/inventory management was removed from `CinemaStaff`'s current feature set (confirmed absent from the controller and the staff sidebar); no live endpoint uses this constant currently |
-| `RoleNames.Approvers` | `Admin` only | `Operations` region: `BlockSeat`/`BlockRoom`/incident resolve-with-unblock require this role outright (no PIN-based alternate path); POS price overrides (`Sell`) also require it when any line carries an `OverrideUnitPrice` |
+| `RoleNames.BackOffice` | `Admin,TheaterStaff` | No controller `[Authorize]` uses it. It is read by `ClaimsPrincipalExtensions._backOfficeRoles` (`TryGetBackOfficeScope`, which pins a non-Admin caller to their own theater; covered by `StaffScopeTests`). Its doc comment mentions warehouse/inventory access, which no endpoint offers |
+| `RoleNames.StockApprovers` | `Admin` only | Documented intent: approve/reject storage plans, change inventory tracking — there is no storage-plan/inventory management in the controller or the staff sidebar; no live endpoint uses this constant |
+| `RoleNames.Approvers` | `Admin` only | `Operations` region: `BlockSeat`/`BlockRoom`/incident resolve-with-unblock require this role outright (there is no PIN-based alternate path); POS price overrides (`Sell`) also require it when any line carries an `OverrideUnitPrice` |
 | `RoleNames.Reporting` | `Admin` only | `StaffReport` region: `GetAuditLog`, `GetSales`, `GetOccupancy`, `GetKpis` |
 | `RoleNames.TheaterScopedRoles` | `TheaterStaff` | Not an authz filter — used by `AuthManager.ResolveTheaterIdAsync` to decide which `UserType`s *require* a non-null `TheaterId` on create/update |
 
@@ -61,4 +61,4 @@ There is **no permission table in the database** — `[Authorize(Roles=...)]` co
 
 ## 5. Verified discrepancy
 
-`PaymentController.ValidateTicket` is gated `[Authorize(Roles="Admin")]` (the controller's local `_adminRole` constant), **not** `RoleNames.GateKeepers` — meaning a `TheaterStaff` account cannot call it, even though `CinemaController`'s `Gate/Scan` action (apparently the staff-facing gate-scan flow) is gated `RoleNames.GateKeepers` (`Admin,TheaterStaff`). No frontend app calls `ValidateTicket` (only the generated `payment-http.service.ts` exposes it); CinemaStaff uses `Gate/Scan`. Owner input needed: whether `ValidateTicket` is an intended admin manual override or a legacy endpoint to retire.
+`PaymentController.ValidateTicket` is gated `[Authorize(Roles="Admin")]` (the controller's local `_adminRole` constant), **not** `RoleNames.GateKeepers` — meaning a `TheaterStaff` account cannot call it, even though `CinemaController`'s `Gate/Scan` action (apparently the staff-facing gate-scan flow) is gated `RoleNames.GateKeepers` (`Admin,TheaterStaff`). No frontend app calls `ValidateTicket` (only the generated `payment-http.service.ts` exposes it); CinemaStaff uses `Gate/Scan`. Owner input needed: whether `ValidateTicket` is an intended admin manual override or an unused endpoint to retire.

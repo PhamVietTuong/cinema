@@ -60,9 +60,7 @@ Verified by listing `cinemabe/Cinema/2-Business/Cinema.Business.Tests/*.cs`:
 | `VnPayGatewayTests.cs` (+ `VnPayTestHelper.cs`) | VNPay gateway signature/parsing |
 | `FixedClock.cs` | Test helper (not a test class) |
 
-This list is substantially larger than the four classes named in the former `CLAUDE.md` list
-(`AuthServiceTests`, `BookingServiceTests`, `MovieServiceTests`, `EntityTests`) — those four are
-still present, but the suite has grown well beyond them. `AGENTS.md` (imported by `CLAUDE.md`) no longer lists test files, so the table above is the reference.
+`AGENTS.md` (imported by `CLAUDE.md`) does not list test files, so the table above is the reference.
 
 ### Web API host tests — `Cinema.Service.WebApiHost.Tests`
 
@@ -102,8 +100,7 @@ Add a row (and the trait) when a new rule gets a test; do not reuse an ID for a 
 
 ## Defect tracking
 
-- Defects are **GitHub Issues**, not text files. `bugs.txt` / `tasks/bugs-to-fix.txt` are retired: copy anything
-  still open into issues and stop editing them.
+- Defects are **GitHub Issues**, not text files (`bugs.txt` / `tasks/bugs-to-fix.txt` are not used).
 - Labels: one severity (`sev:blocker` money or data loss or security, `sev:major` a core flow broken,
   `sev:minor` workaround exists, `sev:trivial` cosmetic) plus an area (`area:payment`, `area:booking`, `area:auth`,
   `area:admin`, `area:staff`, `area:user`).
@@ -142,8 +139,8 @@ ng test CinemaAdmin
 spins up SQL Server in a container, builds and seeds the database, starts the Web API and the
 `CinemaUser`/`CinemaAdmin`/`CinemaStaff` dev servers, then runs the committed `e2e/` suite
 (`npm ci && npx playwright install --with-deps chromium && npx playwright test --reporter=list,html`),
-uploading `e2e/playwright-report` and `e2e/test-results` as a build artifact. The old git-ignored
-`QA-tests/playwright/` harness is no longer run in CI.
+uploading `e2e/playwright-report` and `e2e/test-results` as a build artifact. The git-ignored
+`QA-tests/playwright/` harness is local only and never runs in CI.
 
 ## Committed E2E suite — `e2e/`
 
@@ -153,7 +150,7 @@ CinemaUser/CinemaAdmin/CinemaStaff: auth + route guards, every routed screen, an
 contract. See `e2e/README.md` for prerequisites and env overrides. It runs serially against a seeded DB;
 the customer account `khach01@cinema.vn` comes from `sql/insert_db.sql`.
 
-Two specs can no longer pass by skipping:
+Two specs cannot pass by skipping:
 
 - `api-payment-callback.spec.ts` needs the API to run with `Payments:VnPay:TmnCode` and `HashSecret` set, and
   `E2E_VNPAY_HASH_SECRET` to hold the same secret (it signs its own IPNs with HMAC-SHA512 over the sorted,

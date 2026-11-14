@@ -2,7 +2,7 @@
 
 > Purpose: Index of this project's knowledge base — business, product, and technical.
 > Sources: generated 2026-11-01 from `cinemabe/`, `cinemafe/`, `ROADMAP.md`, `AGENTS.md` (imported by `CLAUDE.md`), `.github/workflows/ci.yml`, `docker-compose.yml`.
-> Last reviewed: 2026-11-12
+> Last reviewed: 2026-11-14
 
 ## Start here
 
@@ -28,10 +28,10 @@ The `01-business/` docs are the complete business-rule reference for this projec
 | File | Description |
 |---|---|
 | [requirements.md](01-business/requirements.md) | What each user type can currently do, by capability, plus quantified non-functional requirements (section 5) with file:line sources. |
-| [user-stories.md](01-business/user-stories.md) | The same, as 29 user stories (`US-nn`) with Given/When/Then acceptance criteria (`AC-nn.n`) citing tests and code. |
+| [user-stories.md](01-business/user-stories.md) | The same, as 28 user stories (`US-01` to `US-29`, `US-24` unused) with Given/When/Then acceptance criteria (`AC-nn.n`) citing tests and code. |
 | [business-rules.md](01-business/business-rules.md) | Every business rule — validations, pricing, state machines, limits — with enforcement citations. |
 | [roles-permissions.md](01-business/roles-permissions.md) | The 3-role model (Admin/Customer/TheaterStaff) and what each can do. |
-| [market-research.md](01-business/market-research.md) | Owner input needed (not derivable from code). |
+| [market-research.md](01-business/market-research.md) | Benchmarks against Vietnamese chains and the legal rules the business rules follow, each with its source (`UNVERIFIED` where it could not be read). |
 | [financial-plan.md](01-business/financial-plan.md) | Owner input needed (not derivable from code). |
 
 ## 02-product
@@ -39,7 +39,7 @@ The `01-business/` docs are the complete business-rule reference for this projec
 | File | Description |
 |---|---|
 | [features.md](02-product/features.md) | Every implemented feature per app, with status vs. ROADMAP.md. |
-| [roadmap.md](02-product/roadmap.md) | Restructured feature backlog (from root `ROADMAP.md`). |
+| [roadmap.md](02-product/roadmap.md) | What is done and the open priority items. |
 | [ui-ux-notes.md](02-product/ui-ux-notes.md) | Screens, routes, key flows, shared CinemaLib components. |
 
 ## 03-technical
@@ -80,6 +80,7 @@ The ADRs are drafts reconstructed from the repository; each marks what only the 
 | [testing.md](05-process/testing.md) | Test frameworks, how to run tests, what's covered. |
 | [ai-usage-log.md](05-process/ai-usage-log.md) | AI tools and models used, scope, defects caught in AI-assisted code with fixing commits, output-control process, modules the author must be able to explain. |
 | [deployment.md](05-process/deployment.md) | CI pipeline (`.github/workflows/ci.yml`), Docker Compose; no release/deploy pipeline exists today. |
+| [history.md](05-process/history.md) | Append-only work log, newest first: what was removed or changed in the system, why, and the pull request or commit. The other docs describe only the current system. |
 
 ## 06-meeting-notes
 

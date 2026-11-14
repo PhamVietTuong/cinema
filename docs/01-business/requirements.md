@@ -4,7 +4,7 @@
 > Sources: `docs/03-technical/api-spec.md`, `docs/01-business/roles-permissions.md`, `docs/01-business/business-rules.md`, `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/Controllers/CinemaController.cs`
 > Last reviewed: 2026-11-14
 
-This is a capability inventory of what exists today (verified against code), not a product backlog. Items the business docs call out as removed are listed under "Explicitly not supported" so they aren't mistaken for gaps to fill.
+This is a capability inventory of what exists today (verified against code), not a product backlog. Things the system deliberately does not do are listed under "Explicitly not supported" so they aren't mistaken for gaps to fill.
 
 ## 1. Customer-facing capabilities (CinemaUser)
 
@@ -19,8 +19,8 @@ This is a capability inventory of what exists today (verified against code), not
 | Profile | Update profile, set notification preferences | `IdentityController.UpdateProfile`/`UpdateNotificationPreferences` |
 
 ### Explicitly not supported (Customer)
-- Self-service refund or cancellation of a `Paid` booking — no refund feature exists in current code.
-- Self-service cancellation of a still-Pending booking — `CancelBookingAsync`/`PaymentController.CancelBooking` were removed outright; a Pending booking now only clears via the 15-min stale-booking reaper (`ExpireStalePendingBookingsAsync`), not customer action.
+- Self-service refund or cancellation of a `Paid` booking.
+- Self-service cancellation of a still-Pending booking: a Pending booking only clears via the 15-min stale-booking reaper (`ExpireStalePendingBookingsAsync`), not customer action.
 
 ## 2. Theater staff capabilities (CinemaStaff)
 
@@ -32,7 +32,7 @@ This is a capability inventory of what exists today (verified against code), not
 | Seat map | View (not edit) the room seat map | `RoleNames.StaffApp` |
 
 ### Explicitly not supported (TheaterStaff)
-- Cash drawer close / daily close, time clock, tasks/checklists, inventory/storage-plan management, customer-service/after-sales desk, refund/exchange UI (exchange field `ExchangedFromInvoiceId` still exists on `Invoice`, but no exchange workflow UI was found), kitchen pickup queue / low-stock alerts (removed along with `RoleNames.Concession`) — all confirmed removed from `CinemaStaff`'s current feature tree and sidebar.
+- Cash drawer close / daily close, time clock, tasks/checklists, inventory/storage-plan management, customer-service/after-sales desk, refund/exchange UI (the `Invoice.ExchangedFromInvoiceId` field exists, but no exchange workflow is exposed), kitchen pickup queue / low-stock alerts — none of these is in `CinemaStaff`'s feature tree or sidebar.
 - Running sales/occupancy/KPI reports (`StaffReport` region is Admin-only despite the name).
 - Any catalog/pricing/theater/movie/promotion write — all gated `Admin` literal, not `TheaterStaff`.
 
@@ -41,7 +41,7 @@ This is a capability inventory of what exists today (verified against code), not
 | Area | Capability |
 |---|---|
 | Catalog | Full CRUD: movies (incl. cast/crew credits, genres), theaters, rooms, room types (+ patron-category price overrides), seat types (rename/recolor only — no create/delete), patron categories, time slots, ticket-price matrix, showtimes, age restrictions, movie types, holidays, people (cast/crew), food & drink (incl. combos) |
-| Pricing & promotions | Manage discounts (code-based), promotion programs (fixed-price/percent-off, schedule-scoped, auto-apply rules), per-theater loyalty rates (default 1,000 VND = 1 point; 100 points = 1,000 VND), per-theater promotion discount caps (max percent of ticket list price a promotion may take off: normal 0-50, holiday 0-100, default 50; points are not capped) |
+| Pricing & promotions | Manage promotion programs (code-based or auto-apply, fixed-price/percent-off, schedule-scoped), per-theater loyalty rates (default 1,000 VND = 1 point; 100 points = 1,000 VND), per-theater promotion discount caps (max percent of ticket list price a promotion may take off: normal 0-50, holiday 0-100, default 50; points are not capped) |
 | Content ops | Moderate comments (approve/reject/delete), manage news, manage notification templates, manage splash banners, upload images |
 | Users | List/create/update/delete users, assign roles (theater-scoped roles require a valid theater) |
 | Invoices | List invoices, override invoice status (constrained transitions; see business-rules), delete an invoice (restores food stock, redeemed points if it was Pending), view revenue reports (by day/movie/theater) |

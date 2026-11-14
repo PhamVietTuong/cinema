@@ -2,23 +2,33 @@
 
 > Purpose: Feature backlog and status for the multi-theater cinema platform, restructured from the repo-root roadmap.
 > Sources: E:\cinema\ROADMAP.md
-> Last reviewed: 2026-11-06
+> Last reviewed: 2026-11-14
 
-Status verified directly against the code on 2026-11-06.
+Status verified directly against the code on 2026-11-14.
 
 **Legend** — done · partial (data layer exists, needs business/API/UI) · new
 Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 
-## Recently shipped (multi-theater-catalog-pricing branch)
+## Recently shipped
 
-- Multi-theater catalog: seat types, food & drinks, rooms are per-theater.
-- Theater detail page with tabs (info, rooms, room types, seat types, food, time slots, ticket prices).
-- Ticket pricing: explicit price by room type x seat type x time slot x holiday, per theater.
-- Screening room types (2D/3D/IMAX/4DX) per theater.
-- Seat-map editor with add/remove rows & columns.
+- Market-fit fixes (2026-11-14): age rating enforced online and at the gate (confirmation from 13, K-rated guardian banner), online sale checks (open showtime, per-theater `MaxSeatsPerBooking`), ID-check categories counter-only online.
+- Discount simplification (2026-11-14): one `PromotionProgram` per invoice plus points redemption; no tier percentage, no gift cards.
+- Per-theater promotion cap (2026-11-14): `MaxPromotionDiscountPercent` (0-50) and `MaxHolidayPromotionDiscountPercent` (0-100) per theater.
+- Late-night price seed 0.85 with an admin warning (2026-11-14).
+- Consent and age-attestation records in `AuditLog`, promotional email opt-in (2026-11-14).
+- Multi-theater catalog: seat types, food & drinks, rooms are per-theater; theater detail page with tabs; ticket pricing by room type x seat type x time slot x holiday; screening room types; seat-map editor.
+- Docs cleanup (2026-11-14): topical docs describe only the current system, removals are logged in `docs/05-process/history.md`, `market-research.md` filled.
 
-> Pending action noted in `ROADMAP.md`: these schema changes require a DB reset & reseed
-> (`create_db.sql` + `insert_db.sql`) before running.
+## Open priority items
+
+| Item | Status | Size | Notes |
+|---|---|---|---|
+| E-invoice and VAT | New | L | No tax invoice or VAT breakdown exists. Rates and rules are not researched yet (`01-business/market-research.md`, `UNVERIFIED`). |
+| Data retention and anonymisation | New | M | No retention rule for phone, email, points or `AuditLog`; no way for a customer to have data removed. Consent evidence already exists. |
+| VIP seat kinds | New | M | `SeatKind` has `Standard`, `Double` and `Aisle`; no VIP kind. Scope not defined. |
+| Holiday pricing review | New | S | Holiday pricing is unchanged (a `Holiday` multiplier). The owner parked mapping holidays to the weekend row or per-holiday per-slot prices; revisit later. |
+| Minimum-discount groups (Decree 131/2022 article 10) | New | M | Not enforced: nothing forces at least 20% off for the listed groups. See `01-business/market-research.md`. |
+| Test hardening (deferred) | Partial | M | Database-backed tests for the new store paths and the `Pending -> Paid` transition claim, host-level startup tests for the SMTP/Twilio sections, Playwright specs for reviews/filters, a CI check that upgrades an old schema, a layer-reference architecture test, an atomic `BookingHub.LockSeat`, a `FallbackPolicy` requiring authentication. The full list is in `_bmad-output/implementation-artifacts/deferred-work.md`. |
 
 ## Auth & accounts
 
@@ -26,7 +36,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 |---|---|---|---|
 | Google login | Done | - | `AuthManager` + `GoogleTokenValidator`; OTP/2FA, email verify, lockout also done. |
 | Facebook login | Done | - | Implemented end-to-end (`login.component.ts`'s `loginWithFacebook()`, backend `IdentityController.FacebookLogin`) but gated behind `facebookEnabled = !!environment.facebookAppId`; both env files ship an empty App ID, so the button stays hidden until a real Facebook App ID/secret is configured. |
-| Role-based access (admin / theater staff / customer) | Done | - | **Note**: this roadmap entry is stale — `TheaterStaff` is already a live third role (`RoleNames.cs`, `UserType.Name`), always theater-scoped via a `theaterId` JWT claim, with a full box-office/gate/workforce feature set wired into `CinemaController` and the `CinemaStaff` app. See `docs/01-business/roles-permissions.md` for the full role model and capability composites (see open questions for the stale-roadmap discrepancy). |
+| Role-based access (admin / theater staff / customer) | Done | - | `TheaterStaff` is the third role (`RoleNames.cs`, `UserType.Name`), always theater-scoped via a `theaterId` JWT claim, with a box-office/gate/operations feature set in `CinemaController` and the `CinemaStaff` app. See `docs/01-business/roles-permissions.md`. |
 
 ## Booking & tickets
 
@@ -34,9 +44,9 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 |---|---|---|---|
 | Seat hold/lock during checkout | Done | - | Static `ConcurrentDictionary` in `BookingManager` (process-local). |
 | Real-time seat availability | Done | - | SignalR `BookingHub`. |
-| Order food/drink combos with tickets | Done | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end (out-of-stock handling included) — this roadmap entry was stale. |
-| Manage booked tickets (view / cancel) | Done | - | `profile.component.ts`'s `cancelBooking`/`cancelById` via `PaymentServiceAgent.cancelBooking` — this roadmap entry was stale. |
-| E-tickets + QR codes | Done | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`), not via the `CinemaLib` ticket-card/qr-code components (those are dead code in CinemaUser, used only by CinemaStaff's POS receipt) — this roadmap entry was stale. |
+| Order food/drink combos with tickets | Done | - | `InvoiceFoodAndDrink` is wired into `booking-checkout.component.ts` end-to-end (out-of-stock handling included). |
+| View booked tickets | Done | - | Booking history in `profile.component.ts`; customers cannot cancel (only the 15-minute reaper clears a Pending invoice). |
+| E-tickets + QR codes | Done | - | Rendered inline in `profile.component.ts` (`qrMap`/`_buildQrCodes`), not via the `CinemaLib` ticket-card/qr-code components (those are dead code in CinemaUser, used only by CinemaStaff's POS receipt). |
 | Payment gateway (VNPay) | Done | L | VNPay is the only real gateway and the only checkout option. |
 | Order confirmation email/SMS | New | M | Overlaps with reminders — see messaging infra below. |
 
@@ -53,7 +63,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
-| Membership / points / vouchers | Done | - | `MemberShip` tiers + `PromotionProgram` (code/auto-apply, merged from the former `Discount`/`DiscountType`) exist; point accrual on purchase and tier upgrades are wired (`BookingManager.ApplyPaidSideEffectsAsync`). |
+| Membership / points / promotion codes | Done | - | `MemberShip` tiers + `PromotionProgram` (code/auto-apply) exist; point accrual on purchase and tier upgrades are wired (`BookingManager.ApplyPaidSideEffectsAsync`). |
 | Promotions scoped system-wide OR per-theater | Done | - | `PromotionProgramSchedule` rows scope a program to specific theaters/days/times (zero rows = system-wide); enforced at redemption in `BookingManager.MatchesProgramScope`. |
 
 ## Admin & reporting
@@ -61,22 +71,23 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
 | Dashboard | Done | - | Basic dashboard exists. |
-| Revenue statistics & detailed reports | New | M | Revenue by movie / theater / time slot, ticketing trends. Define report set + date ranges + charts. |
-| Advanced stats dashboard | New | M | Extends the above with richer charts. |
-| Dark mode (admin) | New | S | Theme toggle; admin already uses CSS variables (`--ad-*`). |
+| Revenue statistics & detailed reports | Partial | M | Sales, occupancy and KPI reports exist (`modules/overview/reports`); a fuller report set (time slot, ticketing trends) is not defined. |
+| Advanced stats dashboard | New | M | Richer charts on top of the reports above. |
+| Dark mode (admin) | Done | - | Toggle in the shared `cl-app-shell` backed by `ThemeService`. |
 
 ## Platform / infra
 
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
 | Messaging (email/SMS) | Partial | M | Providers are implemented but unvalidated against real accounts: `SmtpNotificationService` (email) and `TwilioSmsNotificationService` (SMS) take typed `SmtpOptions`/`TwilioOptions` validated at startup (a half-filled section fails the host start), normalise phone numbers to E.164 (`0900123456` -> `+84900123456`) and enforce send timeouts; unconfigured falls back to the dev-log senders. No outbox/retry queue (a failed send is logged, not retried). |
-| Showtime reminders | New | M | Depends on messaging; needs a scheduler (e.g. background job) to send before showtime. |
-| Multilingual (i18n) | New | L | Angular i18n or a runtime translation lib across CinemaUser + CinemaAdmin. Decide languages + approach. |
+| Showtime reminders | Done | - | `ShowtimeReminderService` runs every 5 minutes and reminds about 60 minutes before start (`business-rules.md`); delivery depends on the messaging providers above. |
+| Multilingual (i18n) | Partial | L | `@ngx-translate/core` with Vietnamese and English files per app; coverage of every screen is not audited. |
 | Support chatbot | Done | - | Rule-based, no LLM/API key: keyword-matched against a canned FAQ (booking, showtimes, cancel, membership, nearby theater, payment, combo) in `CinemaUser/shared/chatbot`. |
 
-## Suggested next steps (small, high-value, low-dependency)
+## Suggested next steps
 
-1. Messaging infra (Partial, M) — exercise the SMTP/Twilio providers against real accounts; add an outbox if delivery guarantees are needed.
-3. Revenue statistics & detailed reports (New, M) — basic reports exist, add the full report set.
+1. Messaging infra (Partial, M): exercise the SMTP/Twilio providers against real accounts; add an outbox if delivery guarantees are needed.
+2. Revenue statistics & detailed reports (Partial, M): define the full report set.
+3. The open priority items above, in the owner's order.
 
-Ratings & reviews, search & filter, Facebook login, food/drink combos, movie recommendations, nearest theater, and the support chatbot are all already done. Larger tracks (payments, i18n) are best scheduled on their own.
+Larger tracks (e-invoice and VAT, i18n coverage) are best scheduled on their own.
