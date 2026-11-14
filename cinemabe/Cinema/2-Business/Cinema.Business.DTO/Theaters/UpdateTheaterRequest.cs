@@ -17,4 +17,10 @@ public class UpdateTheaterRequest
     public double? Longitude { get; set; }
     [Range(1, 50)]
     public int MaxSeatsPerBooking { get; set; }
+    /// <summary>Null keeps the stored value; a set value must be 0-50.</summary>
+    [Range(0, 50)]
+    public int? MaxPromotionDiscountPercent { get; set; }
+    /// <summary>Null keeps the stored value; a set value must be 0-100.</summary>
+    [Range(0, 100)]
+    public int? MaxHolidayPromotionDiscountPercent { get; set; }
 }

@@ -6930,6 +6930,14 @@
           "maxSeatsPerBooking": {
             "type": "integer",
             "format": "int32"
+          },
+          "maxPromotionDiscountPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxHolidayPromotionDiscountPercent": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6977,6 +6985,18 @@
             "format": "int32",
             "maximum": 50.0,
             "minimum": 1.0
+          },
+          "maxPromotionDiscountPercent": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 50.0,
+            "minimum": 0.0
+          },
+          "maxHolidayPromotionDiscountPercent": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100.0,
+            "minimum": 0.0
           }
         }
       },
@@ -7028,6 +7048,20 @@
             "format": "int32",
             "maximum": 50.0,
             "minimum": 1.0
+          },
+          "maxPromotionDiscountPercent": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "nullable": true
+          },
+          "maxHolidayPromotionDiscountPercent": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "nullable": true
           }
         }
       },

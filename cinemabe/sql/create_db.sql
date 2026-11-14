@@ -195,6 +195,8 @@ CREATE TABLE [Theater] (
     [Latitude] float NULL, -- WGS84 decimal degrees, manually entered; used by "nearest theater" search
     [Longitude] float NULL, -- WGS84 decimal degrees, manually entered; used by "nearest theater" search
     [MaxSeatsPerBooking] int NOT NULL CONSTRAINT [DF_Theater_MaxSeatsPerBooking] DEFAULT 10, -- online seat cap per order (1-50)
+    [MaxPromotionDiscountPercent] int NOT NULL CONSTRAINT [DF_Theater_MaxPromotionDiscountPercent] DEFAULT 50, -- promotion saving cap, % of ticket list price (0-50)
+    [MaxHolidayPromotionDiscountPercent] int NOT NULL CONSTRAINT [DF_Theater_MaxHolidayPromotionDiscountPercent] DEFAULT 50, -- same cap on a Holiday date (0-100)
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_Theater] PRIMARY KEY ([Id])

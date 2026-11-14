@@ -12,4 +12,6 @@ public class TheaterDTO
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public int MaxSeatsPerBooking { get; set; } = 10;
+    public int MaxPromotionDiscountPercent { get; set; } = 50;
+    public int MaxHolidayPromotionDiscountPercent { get; set; } = 50;
 }
