@@ -10,6 +10,7 @@ using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.BoxOffice;
 using Cinema.Business.DTO.Invoices;
 using Cinema.Business.DTO.Requests;
+using Cinema.Business.DTO.Staff;
 using Cinema.Business.Extensions;
 using Cinema.Business.Helpers;
 using Cinema.Business.Notifications;
@@ -24,6 +25,7 @@ namespace Cinema.Business.Managers;
 public class BookingManager : IBookingManager
 {
     private readonly IApplicationUnitOfWork _uow;
+    private readonly IAuditLogger _auditLogger;
     // connectionId -> (connectionId, lockedAt)
     private static readonly ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)> _lockedSeats = new();
     // Process-local booking gate keyed by {showTimeId}:{roomId}. Serializes the read-booked-then-insert
@@ -42,7 +44,7 @@ public class BookingManager : IBookingManager
     private readonly IStaffNotificationService _staffNotifications;
     private readonly IConfiguration? _config;
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null, IAuditLogger? auditLogger = null)
     {
         _config = config;
         _uow = uow;
@@ -51,6 +53,7 @@ public class BookingManager : IBookingManager
         _sms = sms;
         _seatNotifications = seatNotifications;
         _staffNotifications = staffNotifications ?? new NoOpStaffNotificationService();
+        _auditLogger = auditLogger ?? new AuditLogger(uow);
     }
 
     public async Task<DefaultSearchResults<SeatDTO>> GetSeatsAsync(PagingSearchDTO search)
@@ -166,6 +169,20 @@ public class BookingManager : IBookingManager
 
             await _uow.InvoiceStore.CreateAsync(invoice);
             await RecordSaleMovementsAsync(composed.StockDemand, invoice, userId);
+            if (composed.AgeAttestation is { } attestation)
+            {
+                // Evidence that the customer ticked the age confirmation; same transaction as the invoice.
+                await _auditLogger.LogAsync(new AuditEntry
+                {
+                    TheaterId = invoice.TheaterId,
+                    ActorUserId = userId,
+                    Action = AuditAction.AgeConfirmed,
+                    EntityType = nameof(Invoice),
+                    EntityId = invoice.Id,
+                    DataJson = JsonSerializer.Serialize(new { RatingCode = attestation.Code, MinAge = attestation.MinAge, InvoiceId = invoice.Id })
+                });
+                await _uow.SaveChangesAsync();
+            }
             await _uow.CommitTransactionAsync();
 
             // Clear the booker's own advisory locks on the seats just booked (SeatBooked below supersedes
@@ -428,6 +445,7 @@ public class BookingManager : IBookingManager
         var ticketUnits = new List<TicketUnit>();
         Guid? invoiceTheaterId = input.TheaterId;
         ShowTime? bookingShowTime = null;
+        (string Code, int MinAge)? ageAttestation = null;
 
         // An online booking always has a showtime and room; a counter sale only when it sells seats.
         var hasSeatSection = !input.IsCounter || input.Seats.Count > 0;
@@ -471,6 +489,10 @@ public class BookingManager : IBookingManager
                 {
                     throw new InvalidOperationException(
                         $"Please confirm that every viewer meets this film's age rating ({minAge}+) before booking.");
+                }
+                if (minAge >= _onlineAgeConfirmMinAge)
+                {
+                    ageAttestation = (showTimeRoom.ShowTime?.Movie?.AgeRestriction?.Code ?? string.Empty, minAge);
                 }
             }
             invoiceTheaterId ??= showTimeRoom.Room.TheaterId;
@@ -708,6 +730,7 @@ public class BookingManager : IBookingManager
             Overrides   = overrides,
             PointsValue = pointsValue,
             PromotionTitle = promotionTitle,
+            AgeAttestation = ageAttestation,
         };
     }
 

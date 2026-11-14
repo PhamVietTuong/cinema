@@ -22,6 +22,7 @@ public class AuthUserTheaterTests
 
     public AuthUserTheaterTests()
     {
+        _uowMock.Setup(u => u.AuditLogStore.Stage(It.IsAny<AuditLog>()));
         _sut = new AuthManager(
             _uowMock.Object,
             new Mock<ITokenService>().Object,

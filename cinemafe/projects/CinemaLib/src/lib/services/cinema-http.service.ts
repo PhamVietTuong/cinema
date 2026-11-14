@@ -17875,6 +17875,8 @@ export enum AuditAction {
     BlockRoom = 14,
     TicketAdmitOverride = 15,
     GateScan = 17,
+    ConsentChanged = 18,
+    AgeConfirmed = 19,
 }
 
 export enum StaffReasonCode {

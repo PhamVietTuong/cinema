@@ -14,4 +14,6 @@ internal sealed class ComposedInvoice
     public List<PriceOverrideLine> Overrides { get; init; } = new();
     public double PointsValue { get; init; }
     public string? PromotionTitle { get; init; }
+    /// <summary>Set for an online booking that required the age confirmation: (rating code, minimum age).</summary>
+    public (string Code, int MinAge)? AgeAttestation { get; init; }
 }

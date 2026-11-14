@@ -16,9 +16,9 @@ public class User : BaseEntity
     public Guid? MemberShipId { get; set; }
     public int Points { get; set; } = 0;
 
-    // Notification preferences (opt-out). Default on so existing users keep receiving mail.
+    // Notification preferences. Booking/reminder mail is opt-out (default on); promotional mail needs consent (default off).
     public bool NotifyBookingEmails { get; set; } = true;
-    public bool NotifyPromotionEmails { get; set; } = true;
+    public bool NotifyPromotionEmails { get; set; } = false;
     public bool NotifyReminderEmails { get; set; } = true;
     // Password reset: SHA-256 hash of the emailed token + its expiry (both null when no reset is pending).
     public string? PasswordResetTokenHash { get; set; }
