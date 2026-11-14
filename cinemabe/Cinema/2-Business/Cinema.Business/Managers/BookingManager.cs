@@ -921,7 +921,7 @@ public class BookingManager : IBookingManager
             return null;
         }
 
-        // Fully covered (a 100% discount limit) — nothing to charge, so finalize immediately with no gateway.
+        // Fully covered (a 100% promotion program, or points covering the whole remainder, until the per-theater maximum discount caps it) — nothing to charge, so finalize immediately with no gateway.
         if (invoice.FinalAmount <= 0)
         {
             if (!await FinalizePaidInvoiceAsync(invoice, "ZERO-AMOUNT"))

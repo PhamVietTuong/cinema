@@ -127,7 +127,7 @@ erDiagram
     }
 ```
 
-Checked against: every relationship line is a `FOREIGN KEY` in `create_db.sql`, inline in a `CREATE TABLE` or added by `ALTER TABLE` (extracted by script on 2026-11-12); `FK_Invoice_User_UserId` is inline at `create_db.sql:515`, and the `Theater` and `PromotionProgram` ones are added by `ALTER TABLE` at `create_db.sql:836-843`. `Invoice.UserId` is altered to nullable at `create_db.sql:825-827`. Two guarantees worth knowing: the unique filtered index `IX_InvoiceTicket_ActiveSeat` on `(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1` (`create_db.sql:717`) is what stops double booking across server instances,. Field-level detail is in [`database-schema.md`](database-schema.md).
+Checked against: every relationship line is a `FOREIGN KEY` in `create_db.sql`, inline in a `CREATE TABLE` or added by `ALTER TABLE` (extracted by script on 2026-11-12); `FK_Invoice_User_UserId` is inline at `create_db.sql:512`, and the `Theater` and `PromotionProgram` ones are added by `ALTER TABLE` at `create_db.sql:818-827`. `Invoice.UserId` is altered to nullable at `create_db.sql:809`. One guarantee worth knowing: the unique filtered index `IX_InvoiceTicket_ActiveSeat` on `(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1` (`create_db.sql:700`) is what stops double booking across server instances. Field-level detail is in [`database-schema.md`](database-schema.md).
 
 ## 3. Booking, VNPay IPN and confirmation
 

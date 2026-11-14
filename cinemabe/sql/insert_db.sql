@@ -15506,8 +15506,7 @@ Không áp dụng ngày lễ, Tết.', 102, 1, 1, GETUTCDATE()),
 
 (NEWID(), N'C''Member - Happy Member''s Day Thứ 4', N'Giá vé 45.000đ (2D) / 55.000đ (3D) vào Thứ Tư hàng tuần dành cho thành viên.',
     @CampMember, 1, 1, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
-    N'Thành viên C''FRIEND được giảm thêm 10% bắp nước, C''VIP được giảm 15%.
-Vẫn được tích điểm khi mua vé.
+    N'Vẫn được tích điểm khi mua vé.
 Không áp dụng ngày lễ, Tết.', 103, 1, 1, GETUTCDATE()),
 
 (NEWID(), N'C''School - Thứ 2 & Trước 10h', N'Giá vé 45.000đ (2D) / 55.000đ (3D) / 95.000đ (ghế đôi) cho học sinh, sinh viên, U22 và giáo viên.',
@@ -15536,7 +15535,7 @@ Không áp dụng ngày lễ, Tết.', 105, 1, 0, GETUTCDATE()),
 (NEWID(), N'Happy Day - Thứ 4', N'Giá vé 45.000đ (2D) / 55.000đ (3D) / 95.000đ (ghế đôi) vào Thứ Tư hàng tuần dành cho thành viên.',
     @CampMember, 1, 1, GETUTCDATE(), DATEADD(year, 2, GETUTCDATE()), 1,
     N'Xuất trình thẻ thành viên hoặc dùng số điện thoại đã đăng ký.
-Vẫn được tích điểm và giảm 10%/15% bắp nước (C''FRIEND/C''VIP).
+Vẫn được tích điểm.
 Không áp dụng ngày lễ, Tết.', 109, 1, 1, GETUTCDATE());
 
 -- Prices (ProjectionForm/SeatKind NULL = any). ProjectionForm: TwoD=1, ThreeD=2. SeatKind: Double=1.

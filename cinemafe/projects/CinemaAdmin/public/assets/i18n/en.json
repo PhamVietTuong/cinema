@@ -584,7 +584,7 @@
     "maxTicketsLabel": "Max tickets per transaction",
     "termsTextLabel": "Extra terms (one per line)",
     "termsTextPlaceholder": "e.g. Valid at participating theaters only.",
-    "autoApplyHint": "Customer is always charged the better of this program or a membership discount; never combined with a promo code, and combined with the membership discount only when 'Stacks with membership discount' is on.",
+    "autoApplyHint": "Applied automatically when the booking qualifies; never combined with a promo code.",
     "autoApplyDisabledHint": "Requires identity verification or is informational-only — cannot be auto-applied.",
     "campaignLabel": "Campaign",
     "noCampaign": "No campaign",

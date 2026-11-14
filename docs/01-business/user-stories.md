@@ -10,7 +10,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 
 - Stories are numbered `US-01` to `US-29` (`US-24`, gift cards, was removed 2026-11-14 and its number is not reused); each criterion is `AC-<story>.<n>` (for example `AC-07.3`), so a test, a defect or a review comment can name one.
 - Each criterion is Given / When / Then and ends with its **Source**: a test (`Class.Method`, under `cinemabe/Cinema/2-Business/Cinema.Business.Tests` unless the path says otherwise) or a `file:line` in the code. Each criterion is tagged **success**, **error**, **boundary** or **gap**.
-- **gap** marks a criterion where the code or the tests do not deliver what the story implies: a flag that is stored but never read, or an endpoint with no test. It is a statement about the code as of this review (2026-11-12), not a requirement to build.
+- **gap** marks a criterion where the code or the tests do not deliver what the story implies: a flag that is stored but never read, or an endpoint with no test. It is a statement about the code as of this review (2026-11-14), not a requirement to build.
 - Where a criterion says "no test covers" a case, the behavior is read from the code, so it is not protected against regression.
 - Thresholds quoted here (5 minutes, 15 minutes, 5 failures and so on) are also listed with their file:line in `requirements.md` section 5.
 
@@ -96,7 +96,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - **AC-07.5** (boundary) Given the same IPN is delivered twice, even at the same moment, when both are processed, then side effects run once and the second gets "already confirmed" (`RspCode` 02). Source: `PaymentCallbackTests.HandlePaymentCallbackAsync_AlreadyPaidInvoice_ReturnsAlreadyConfirmed_NoWrites`, `HandlePaymentCallbackAsync_TwoConcurrentDeliveries_ApplyTheSideEffectsExactlyOnce`.
 - **AC-07.6** (error) Given an unhandled server error while processing a VNPay IPN, when it happens, then the answer is still HTTP 200 with `RspCode` 99, so VNPay does not retry in a storm. Source: `PaymentControllerCallbackTests.PaymentCallback_VnPay_UnhandledException_ReturnsRspCode99_Not500`.
 - **AC-07.7** (error) Given an unsigned Sandbox callback for an invoice owned by VNPay, when it arrives, then it is rejected and nothing is written. Source: `PaymentCallbackTests.HandlePaymentCallbackAsync_SandboxCallbackOnVnPayInvoice_IsRejected_NoWrites`.
-- **AC-07.8** (boundary) Given the amount due is zero or less (only when a theater limit of 100% exists), when I start payment, then the invoice is finalized as Paid without calling any gateway. Source: `PaymentCallbackTests.InitiatePaymentAsync_ZeroAmountDue_FinalizesWithoutAnyGateway`.
+- **AC-07.8** (boundary) Given the amount due is zero or less (a 100% promotion program, or points covering the whole remainder, until the per-theater maximum discount follow-up caps it), when I start payment, then the invoice is finalized as Paid without calling any gateway. Source: `PaymentCallbackTests.InitiatePaymentAsync_ZeroAmountDue_FinalizesWithoutAnyGateway`.
 - **AC-07.9** (error) Given an invoice that is not mine, or not Pending, when I start payment, then nothing happens. Source: `PaymentCallbackTests.InitiatePaymentAsync_ByANonOwner_ReturnsNull_AndTouchesNothing`, `InitiatePaymentAsync_OnANonPendingInvoice_ReturnsNull`.
 
 ### US-08 Honest pending state after the redirect

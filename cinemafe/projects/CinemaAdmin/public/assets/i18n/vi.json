@@ -584,7 +584,7 @@
     "maxTicketsLabel": "Số Vé Tối Đa Mỗi Giao Dịch",
     "termsTextLabel": "Điều Khoản Bổ Sung (mỗi dòng một điều khoản)",
     "termsTextPlaceholder": "VD: Chỉ áp dụng tại các rạp tham gia chương trình.",
-    "autoApplyHint": "Khách luôn được tính giá thấp hơn giữa chương trình này và giảm giá thành viên; không bao giờ cộng dồn với mã khuyến mãi, chỉ cộng dồn với giảm giá thành viên khi bật 'Cộng dồn với giảm giá thành viên'.",
+    "autoApplyHint": "Tự động áp dụng khi đơn đặt vé đủ điều kiện; không bao giờ cộng dồn với mã khuyến mãi.",
     "autoApplyDisabledHint": "Yêu cầu xác minh danh tính hoặc chỉ mang tính thông tin — không thể tự động áp dụng.",
     "campaignLabel": "Chiến Dịch",
     "noCampaign": "Không có chiến dịch",

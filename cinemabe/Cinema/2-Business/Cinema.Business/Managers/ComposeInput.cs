@@ -18,7 +18,7 @@ internal sealed class ComposeInput
     public bool IsCounter { get; init; }
     /// <summary>Online only: the customer ticked the age confirmation.</summary>
     public bool AgeConfirmed { get; init; }
-    /// <summary>Quote: run every check but write nothing (no stock, or points change, no invoice).</summary>
+    /// <summary>Quote: run every check but write nothing (no stock or points change, no invoice).</summary>
     public bool DryRun { get; init; }
     public IReadOnlyDictionary<Guid, double> SeatPriceOverrides { get; init; } = new Dictionary<Guid, double>();
     public IReadOnlyDictionary<Guid, double> FoodPriceOverrides { get; init; } = new Dictionary<Guid, double>();

@@ -703,7 +703,8 @@ END
 
 -- ============================================================
 -- Promotion programs: customer-facing promo cards (Cinestar-style), separate from Discount.
--- Identical in create_db.sql and upgrade_db.sql (idempotent).
+-- Idempotent. Historical: this creates StacksWithMembershipDiscount, which the "Discount simplification" block below drops again
+-- (create_db.sql no longer has the column).
 -- ============================================================
 IF OBJECT_ID('dbo.PromotionProgram', 'U') IS NULL
 BEGIN
@@ -1227,22 +1228,45 @@ END
 -- verified backup first. Idempotent: each step is guarded and a second run changes nothing.
 
 -- Step 1 (purge): delete each invoice that used a gift card (Invoice.GiftCardAmount > 0, or an InvoicePayment with
--- Method = 3) together with its tickets, payments and food lines. Runs before the columns/table are dropped.
+-- Method = 3) together with its tickets, payments, food lines and StockMovement rows (StockMovement.InvoiceId has no FK,
+-- so it is deleted explicitly). The redeemed points of a purged Pending invoice are given back to its customer. Runs
+-- before the columns/table are dropped, as ONE transaction (XACT_ABORT + TRY/CATCH): all of it or none of it.
+-- Deliberately NOT reversed: loyalty points earned on purged Paid invoices, PromotionProgram.UsedCount, food stock
+-- (the sale/restock ledger rows go, the FoodAndDrink quantities stay as they are) and historical revenue, which drops
+-- by the purged invoices. InvoiceStatus: 0 Pending.
 -- Dynamic SQL so the batch compiles on a database where the columns are already gone.
 IF COL_LENGTH('dbo.Invoice', 'GiftCardAmount') IS NOT NULL
 BEGIN
     EXEC('
     SET QUOTED_IDENTIFIER ON; -- Invoice has a filtered index, which DML requires this for (sqlcmd defaults it OFF)
-    DECLARE @GiftInvoices TABLE ([Id] uniqueidentifier PRIMARY KEY);
-    INSERT INTO @GiftInvoices ([Id])
-    SELECT [Id] FROM [Invoice] WHERE [GiftCardAmount] > 0
-    UNION
-    SELECT [InvoiceId] FROM [InvoicePayment] WHERE [Method] = 3;
+    SET XACT_ABORT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        DECLARE @GiftInvoices TABLE ([Id] uniqueidentifier PRIMARY KEY);
+        INSERT INTO @GiftInvoices ([Id])
+        SELECT [Id] FROM [Invoice] WHERE [GiftCardAmount] > 0
+        UNION
+        SELECT [InvoiceId] FROM [InvoicePayment] WHERE [Method] = 3;
 
-    DELETE FROM [InvoiceTicket]       WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
-    DELETE FROM [InvoicePayment]      WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
-    DELETE FROM [InvoiceFoodAndDrink] WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
-    DELETE FROM [Invoice]             WHERE [Id]        IN (SELECT [Id] FROM @GiftInvoices);
+        -- Pending invoices still hold the points they reserved: give them back.
+        UPDATE u SET u.[Points] = u.[Points] + p.[Total]
+        FROM [User] u
+        JOIN (SELECT i.[UserId], SUM(i.[PointsRedeemed]) AS [Total]
+              FROM [Invoice] i JOIN @GiftInvoices g ON g.[Id] = i.[Id]
+              WHERE i.[Status] = 0 AND i.[UserId] IS NOT NULL AND i.[PointsRedeemed] > 0
+              GROUP BY i.[UserId]) p ON p.[UserId] = u.[Id];
+
+        DELETE FROM [StockMovement]       WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
+        DELETE FROM [InvoiceTicket]       WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
+        DELETE FROM [InvoicePayment]      WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
+        DELETE FROM [InvoiceFoodAndDrink] WHERE [InvoiceId] IN (SELECT [Id] FROM @GiftInvoices);
+        DELETE FROM [Invoice]             WHERE [Id]        IN (SELECT [Id] FROM @GiftInvoices);
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 BEGIN ROLLBACK TRANSACTION; END;
+        THROW;
+    END CATCH
     ');
 END
 

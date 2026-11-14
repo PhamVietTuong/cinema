@@ -680,6 +680,7 @@ public class BoxOfficeTests
 
     [Theory]
     [InlineData(PaymentTender.Points)]
+    [InlineData((PaymentTender)3)]   // retired GiftCard value must stay rejected
     [InlineData(PaymentTender.Online)]
     public void Settle_OnlyCashCardAndQrCanBeTendered(PaymentTender method)
     {
