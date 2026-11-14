@@ -1115,6 +1115,17 @@
             "type": "number",
             "format": "double"
           },
+          "capped": {
+            "type": "boolean"
+          },
+          "uncappedAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "capPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
           "message": {
             "type": "string",
             "nullable": true

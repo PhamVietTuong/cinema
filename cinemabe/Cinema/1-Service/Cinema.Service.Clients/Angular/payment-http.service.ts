@@ -1777,6 +1777,9 @@ export interface IInitiatePaymentRequest {
 export class DiscountCodeValidationDTO implements IDiscountCodeValidationDTO {
     valid?: boolean;
     discountAmount?: number;
+    capped?: boolean;
+    uncappedAmount?: number;
+    capPercent?: number;
     message?: string | undefined;
 
     constructor(data?: IDiscountCodeValidationDTO) {
@@ -1792,6 +1795,9 @@ export class DiscountCodeValidationDTO implements IDiscountCodeValidationDTO {
         if (_data) {
             this.valid = _data["valid"];
             this.discountAmount = _data["discountAmount"];
+            this.capped = _data["capped"];
+            this.uncappedAmount = _data["uncappedAmount"];
+            this.capPercent = _data["capPercent"];
             this.message = _data["message"];
         }
     }
@@ -1807,6 +1813,9 @@ export class DiscountCodeValidationDTO implements IDiscountCodeValidationDTO {
         data = typeof data === 'object' ? data : {};
         data["valid"] = this.valid;
         data["discountAmount"] = this.discountAmount;
+        data["capped"] = this.capped;
+        data["uncappedAmount"] = this.uncappedAmount;
+        data["capPercent"] = this.capPercent;
         data["message"] = this.message;
         return data;
     }
@@ -1815,6 +1824,9 @@ export class DiscountCodeValidationDTO implements IDiscountCodeValidationDTO {
 export interface IDiscountCodeValidationDTO {
     valid?: boolean;
     discountAmount?: number;
+    capped?: boolean;
+    uncappedAmount?: number;
+    capPercent?: number;
     message?: string | undefined;
 }
 
