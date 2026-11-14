@@ -165,6 +165,7 @@ Two specs cannot pass by skipping:
 ## What's not covered (only stated where verifiable)
 
 - No architecture test checks the direction of backend project references (`1-Service` to `2-Business` to `3-Data` to `4-Foundation`, `AGENTS.md`), unlike the controller count (`ControllerArchitectureTests`). The only upward reference is `Cinema.Data` to `Cinema.Business.Contracts` (ADR-0001). Also tracked in `_bmad-output/implementation-artifacts/deferred-work.md`.
+- The CI `db-upgrade` job (`cinemabe/sql/tests/`: `run-upgrade-harness.sh`, `seed-old-schema.sql`, `assert-after-upgrade.sql`) upgrades a database built from the old `create_db.sql` (commit `3656d73`) with the current `upgrade_db.sql`, twice, and asserts the purges, drops and defaults. Run it locally with `SQL_PASSWORD` (and `SQL_SERVER`, `SQL_USER`) set; it uses the scratch database `CinemaUpgradeHarness`.
 - No dedicated backend integration tests against a real database were found — the CI comment on
   the `dotnet test` step states "xUnit tests use Moq — no database required," i.e. the backend
   suite is unit-level only; database-dependent behavior is exercised only via the CI `e2e` job's

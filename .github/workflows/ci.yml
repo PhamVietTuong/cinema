@@ -116,6 +116,50 @@ jobs:
           path: cinemafe/coverage/**
           if-no-files-found: warn
 
+  db-upgrade:
+    name: DB upgrade (old schema -> upgrade_db.sql)
+    runs-on: ubuntu-latest
+    # Builds the OLD create_db.sql from git history, seeds rows the destructive guarded blocks of upgrade_db.sql must act
+    # on, runs upgrade_db.sql twice and asserts the result (cinemabe/sql/tests/). The e2e job starts from the CURRENT
+    # create_db.sql, where those blocks are no-ops.
+    timeout-minutes: 15
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: 'Cinema_CI_Pwd_123!'
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Cinema_CI_Pwd_123!' -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      SA_PASSWORD: 'Cinema_CI_Pwd_123!'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the old create_db.sql is read from history (git show <commit>:...)
+
+      - name: Install sqlcmd
+        run: |
+          curl -sSL https://packages.microsoft.com/keys/microsoft.asc \
+            | sudo gpg --yes --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" \
+            | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
+          echo "/opt/mssql-tools18/bin" >> "$GITHUB_PATH"
+
+      - name: Upgrade an old-schema database
+        env:
+          SQL_SERVER: localhost,1433
+          SQL_USER: sa
+          SQL_PASSWORD: ${{ env.SA_PASSWORD }}
+        run: bash cinemabe/sql/tests/run-upgrade-harness.sh
+
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
