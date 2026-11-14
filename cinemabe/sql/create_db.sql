@@ -635,8 +635,8 @@ CREATE TABLE [TicketPrice] (
 
 -- A RoomType's patron-category allow-list: a RoomType offers EXACTLY the categories that have a row
 -- here, at that row's Price. Zero rows means the RoomType offers nothing — there is no "unrestricted,
--- falls back to the theater-wide default" state. (e.g. Room Type 1 = Adult Standard + Child Standard;
--- Room Type 2 = Child Double + Child Standard + Senior Standard.) RoomTypeManager.CreateAsync seeds a
+-- falls back to the theater-wide default" state. (e.g. Room Type 1 = Adult Standard + Student Standard;
+-- Room Type 2 = Student Double + Student Standard + Senior Standard.) RoomTypeManager.CreateAsync seeds a
 -- new RoomType with one row per active theater-wide PatronCategory so it's bookable immediately; the
 -- admin then removes the ones that shouldn't be offered there.
 CREATE TABLE [RoomTypePatronCategoryPrice] (

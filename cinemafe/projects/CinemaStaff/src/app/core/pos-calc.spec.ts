@@ -108,7 +108,7 @@ describe('defaultPriceRow', () => {
     const list = [
       { patronCategoryId: 'student', patronCategoryName: 'Học Sinh', price: 65000 },
       { patronCategoryId: 'adult', patronCategoryName: 'Người Lớn', price: 90000 },
-      { patronCategoryId: 'child', patronCategoryName: 'Trẻ Em', price: 50000 },
+      { patronCategoryId: 'senior', patronCategoryName: 'Người Cao Tuổi', price: 50000 },
     ];
     expect(defaultPriceRow(list)?.patronCategoryId).toBe('adult');
   });

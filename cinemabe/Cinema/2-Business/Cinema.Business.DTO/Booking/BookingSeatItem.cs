@@ -7,7 +7,7 @@ public class BookingSeatItem
     [NotEmptyGuid]
     public Guid SeatId { get; set; }
 
-    /// <summary>Self-reported patron category for this seat (Adult/Student/Senior/Child) — REQUIRED,
+    /// <summary>Self-reported patron category for this seat (Adult/Student/Senior) — REQUIRED,
     /// since PatronCategory.Price is now the only source of a ticket's price. Checked visually
     /// (ID/student card) at the theater, not verified by this system. The category's own seat kind
     /// (Standard/Double) must match the seat being booked, or the booking is rejected — this is the

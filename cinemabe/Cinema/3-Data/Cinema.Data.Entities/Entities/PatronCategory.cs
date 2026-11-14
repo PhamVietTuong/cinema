@@ -9,7 +9,7 @@ namespace Cinema.Data.Entities;
 /// row's price is NOT computed from the Single row (a couple seat may cost more than 2x single for
 /// the seating privacy, so an admin sets it explicitly).
 /// The API models this per seat (CreateBookingRequest.BookingSeatItem.PatronCategoryId) so a single
-/// order can mix categories (e.g. 2 Adult + 2 Child), mirroring how Vietnamese chains sell tickets.
+/// order can mix categories (e.g. 2 Adult + 2 Student), mirroring how Vietnamese chains sell tickets.
 /// </summary>
 public class PatronCategory : BaseEntity
 {
