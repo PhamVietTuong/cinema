@@ -274,12 +274,12 @@ describe('BookingSelectionComponent', () => {
         [seat({ id: 'standard-seat', colIndex: 1, isDouble: false })],
         [
           priceRow({ patronCategoryId: 'adult-std', patronCategoryName: 'Adult', isDouble: false, price: 100000 }),
-          priceRow({ patronCategoryId: 'child-std', patronCategoryName: 'Child', isDouble: false, price: 50000 }),
+          priceRow({ patronCategoryId: 'senior-std', patronCategoryName: 'Senior', isDouble: false, price: 50000 }),
         ],
       );
-      const [adult, child] = component.priceRows;
+      const [adult, senior] = component.priceRows;
       component.incTicket(adult);
-      component.incTicket(child);
+      component.incTicket(senior);
 
       component.toggleSeat(component.seats.find(s => s.id === 'standard-seat')!);
 
@@ -290,7 +290,7 @@ describe('BookingSelectionComponent', () => {
     it('marks a seat unavailable when no chosen card has its kind', () => {
       component = build(
         [seat({ id: 'double-seat', isDouble: true })],
-        [priceRow({ patronCategoryId: 'child-std', patronCategoryName: 'Child', isDouble: false })],
+        [priceRow({ patronCategoryId: 'senior-std', patronCategoryName: 'Senior', isDouble: false })],
       );
       component.incTicket(component.priceRows[0]);
 
