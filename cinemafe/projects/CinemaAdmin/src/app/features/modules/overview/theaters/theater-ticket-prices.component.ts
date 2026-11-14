@@ -6,7 +6,7 @@ import {
   showLoading, hideLoading, showException,
 } from 'CinemaLib';
 import { TicketPriceDialog } from './ticket-price.dialog';
-import { buildWeekRows, todayIsoLocal, TimelineSegmentVm, WeekRowVm } from './ticket-price-timeline';
+import { buildWeekRows, precedingMultipliers, todayIsoLocal, TimelineSegmentVm, WeekRowVm } from './ticket-price-timeline';
 
 type RoomTypeDTO = CinemaServiceAgent.RoomTypeDTO;
 type TimeSlotDTO = CinemaServiceAgent.TimeSlotDTO;
@@ -88,6 +88,7 @@ export class TheaterTicketPricesComponent implements OnInit {
         timeSlot: segment.timeSlot,
         day: row.day,
         existing,
+        precedingMultipliers: precedingMultipliers(this.timeSlots, this.prices, segment.timeSlot),
       },
     }).afterClosed().subscribe(saved => { if (saved) { this._loadPrices(); } });
   }
