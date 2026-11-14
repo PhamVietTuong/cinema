@@ -12,6 +12,10 @@ export interface DiscountCheckResult {
   message: string;
   /** What the code would take off the order, in VND (0 when invalid). */
   discountAmount: number;
+  /** The theater's promotion cap in percent when it reduced the saving; absent or 0 when it did not. */
+  capPercent?: number;
+  /** True when the theater cap reduced the saving (the percent may be 0 for a theater that allows none). */
+  capped?: boolean;
 }
 
 export interface DiscountCodeDialogData {
@@ -25,6 +29,8 @@ export interface DiscountCodeDialogResult {
   valid: boolean | null;
   message: string;
   discountAmount: number;
+  capPercent: number;
+  capped: boolean;
 }
 
 /**
@@ -47,6 +53,8 @@ export class DiscountCodeDialog implements OnInit {
   valid: boolean | null = null;
   message = '';
   discountAmount = 0;
+  capPercent = 0;
+  capped = false;
   checking = false;
 
   private _typed$ = new Subject<string>();
@@ -83,6 +91,8 @@ export class DiscountCodeDialog implements OnInit {
     this.valid = null;
     this.message = '';
     this.discountAmount = 0;
+    this.capPercent = 0;
+    this.capped = false;
     this.checking = false;
     const code = value.trim();
     if (code) {
@@ -101,12 +111,12 @@ export class DiscountCodeDialog implements OnInit {
 
   apply(): void {
     if (this.valid) {
-      this._dialogRef.close({ code: this.code.trim(), valid: true, message: this.message, discountAmount: this.discountAmount });
+      this._dialogRef.close({ code: this.code.trim(), valid: true, message: this.message, discountAmount: this.discountAmount, capPercent: this.capPercent, capped: this.capped });
     }
   }
 
   remove(): void {
-    this._dialogRef.close({ code: '', valid: null, message: '', discountAmount: 0 });
+    this._dialogRef.close({ code: '', valid: null, message: '', discountAmount: 0, capPercent: 0, capped: false });
   }
 
   cancel(): void {
@@ -117,6 +127,8 @@ export class DiscountCodeDialog implements OnInit {
     this.valid = result.valid;
     this.message = result.message;
     this.discountAmount = result.discountAmount;
+    this.capped = result.valid && result.capped === true;
+    this.capPercent = this.capped ? (result.capPercent ?? 0) : 0;
     this.checking = false;
     this._cdr?.markForCheck();
   }

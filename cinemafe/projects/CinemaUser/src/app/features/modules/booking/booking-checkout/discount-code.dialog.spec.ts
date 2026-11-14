@@ -9,7 +9,7 @@ describe('DiscountCodeDialog', () => {
   const build = (code = '') => {
     close = vi.fn();
     check = vi.fn().mockImplementation((c: string) =>
-      of(c === 'GOOD' ? { valid: true, message: 'GOOD saves 20,000đ', discountAmount: 20000 } : { valid: false, message: 'Invalid', discountAmount: 0 }));
+      of(c === 'CAPPED' ? { valid: true, message: 'CAPPED saves 40,000đ', discountAmount: 40000, capPercent: 50, capped: true } : c === 'ZERO' ? { valid: true, message: 'ZERO saves 0', discountAmount: 0, capPercent: 0, capped: true } : c === 'GOOD' ? { valid: true, message: 'GOOD saves 20,000đ', discountAmount: 20000 } : { valid: false, message: 'Invalid', discountAmount: 0 }));
     return new DiscountCodeDialog({ close } as never, { code, check: check as never }, destroyRef as never);
   };
 
@@ -50,7 +50,7 @@ describe('DiscountCodeDialog', () => {
 
     d.apply();
 
-    expect(close).toHaveBeenCalledWith({ code: 'GOOD', valid: true, message: 'GOOD saves 20,000đ', discountAmount: 20000 });
+    expect(close).toHaveBeenCalledWith({ code: 'GOOD', valid: true, message: 'GOOD saves 20,000đ', discountAmount: 20000, capPercent: 0, capped: false });
   });
 
   it('clears an earlier verdict as soon as the code is edited', () => {
@@ -72,5 +72,38 @@ describe('DiscountCodeDialog', () => {
 
     expect(check).toHaveBeenCalledWith('GOOD');
     expect(d.valid).toBe(true);
+  });
+
+  it('keeps the cap percent of a capped code and passes it on apply, and drops it on edit', () => {
+    const d = build();
+    d.code = 'CAPPED';
+    d.onCodeChange('CAPPED');
+    vi.advanceTimersByTime(DiscountCodeDialog.CHECK_DELAY_MS + 10);
+    expect(d.capPercent).toBe(50);
+    expect(d.capped).toBe(true);
+
+    d.apply();
+    expect(close).toHaveBeenCalledWith({ code: 'CAPPED', valid: true, message: 'CAPPED saves 40,000đ', discountAmount: 40000, capPercent: 50, capped: true });
+
+    d.onCodeChange('CAPPEDX');
+    expect(d.capPercent).toBe(0);
+    expect(d.capped).toBe(false);
+  });
+
+  it('still reports capped for a theater whose cap is 0%', () => {
+    const d = build();
+    d.code = 'ZERO';
+    d.onCodeChange('ZERO');
+    vi.advanceTimersByTime(DiscountCodeDialog.CHECK_DELAY_MS + 10);
+
+    expect(d.capped).toBe(true);
+    expect(d.capPercent).toBe(0);
+  });
+
+  it('has no cap percent for a code the cap did not reduce', () => {
+    const d = build('GOOD');
+    d.ngOnInit();
+    expect(d.capPercent).toBe(0);
+    expect(d.capped).toBe(false);
   });
 });

@@ -1775,13 +1775,24 @@ public class BookingManager : IBookingManager
 
         var ticketUnits = await BuildTicketUnitsAsync(roomId, showTimeId, seats ?? new(), showTime);
         var saving = ComputeProgramSaving(program, ticketUnits);
+        var uncapped = saving;
+        var capPercent = 0;
         if (ticketUnits.Count > 0 && showTime != null)
         {
-            var capPercent = await GetPromotionCapPercentAsync(bookingTheaterId, showTime);
+            capPercent = await GetPromotionCapPercentAsync(bookingTheaterId, showTime);
             saving = CapPromotionSaving(saving, ticketUnits, capPercent);
         }
         var amount = Math.Round(Math.Min(saving, total), 2);
-        return new DiscountCodeValidationDTO { Valid = true, DiscountAmount = amount };
+        var uncappedAmount = Math.Round(Math.Min(uncapped, total), 2);
+        var capped = amount < uncappedAmount;
+        return new DiscountCodeValidationDTO
+        {
+            Valid = true,
+            DiscountAmount = amount,
+            Capped = capped,
+            UncappedAmount = uncappedAmount,
+            CapPercent = capped ? capPercent : 0
+        };
     }
 
     // Builds TicketUnit rows for a promo-code preview from the seats the client already has selected

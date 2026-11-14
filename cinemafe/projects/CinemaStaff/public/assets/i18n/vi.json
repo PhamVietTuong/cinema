@@ -63,6 +63,7 @@
     "recentEmpty": "Chưa quét vé nào.",
     "ageRating": "Phân loại độ tuổi: {{code}}",
     "guardianRequired": "Phim K: chỉ cho vào khi có cha mẹ hoặc người giám hộ đi cùng.",
+    "idCheck": "Kiểm tra giấy tờ tùy thân của người giữ vé ({{category}}).",
     "usedAt": "Đã dùng bởi {{by}} lúc {{at}}",
     "ageQuestion": "Phim này giới hạn {{age}}+. Bạn đã kiểm tra độ tuổi của khách chưa?",
     "confirmAge": "Đã xác nhận tuổi - cho vào",

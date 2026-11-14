@@ -59,6 +59,9 @@
       @if (guardianBanner()) {
         <div class="guardian-banner" role="status">{{ 'gate.guardianRequired' | translate }}</div>
       }
+      @if (idCheckBanner()) {
+        <div class="guardian-banner id-check-banner" role="status">{{ 'gate.idCheck' | translate: { category: r.patronCategory || '-' } }}</div>
+      }
       @if (usageDetails()) {
         <div class="detail used">{{ 'gate.usedAt' | translate: { by: r.usedBy ?? '-', at: (r.usedAt | serverUtc | date: 'HH:mm dd/MM/yyyy') } }}</div>
       }

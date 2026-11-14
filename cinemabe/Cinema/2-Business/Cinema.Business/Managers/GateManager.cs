@@ -228,6 +228,7 @@ public class GateManager : IGateManager
             ShowTime = ticket.StartTime,
             PatronCategory = ticket.PatronCategoryName ?? string.Empty,
             AgeRatingCode = ticket.AgeRatingCode,
+            RequiresIdCheck = ticket.RequiresIdCheck,
             MinAge = ticket.MinAge,
             GuardianRequired = outcome == ScanOutcome.Admitted
                 && string.Equals(ticket.AgeRatingCode, _guardianRatingCode, StringComparison.OrdinalIgnoreCase),
