@@ -791,7 +791,9 @@
       "blockSeat": "Khóa ghế",
       "blockRoom": "Khóa phòng",
       "ticketAdmitOverride": "Cho vào ngoại lệ",
-      "gateScan": "Quét vé cổng"
+      "gateScan": "Quét vé cổng",
+      "consentChanged": "Thay đổi đồng ý nhận tin",
+      "ageConfirmed": "Xác nhận độ tuổi"
     }
   },
   "news": {

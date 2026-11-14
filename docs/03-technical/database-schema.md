@@ -39,7 +39,8 @@ Schema changes are hand-written into `cinemabe/sql/create_db.sql` / `upgrade_db.
 | TheaterId | Guid? | FK → Theater (shadow, no inverse nav), `SetNull`; set only for `TheaterStaff` |
 | MemberShipId | Guid? | FK → MemberShip, `SetNull` |
 | Points | int | loyalty balance, default 0 |
-| NotifyBookingEmails / NotifyPromotionEmails / NotifyReminderEmails | bool | default true (opt-out) |
+| NotifyBookingEmails / NotifyReminderEmails | bool | default true (opt-out) |
+| NotifyPromotionEmails | bool | default **false** (opt-in); column default constraint `DF_User_NotifyPromotionEmails` = 0; users created before 2026-11-14 keep their stored value |
 | PasswordResetTokenHash | string? | SHA-256 of emailed token |
 | PasswordResetExpiresAt | DateTime? | |
 | FailedLoginCount | int | default 0 |
@@ -291,7 +292,7 @@ All enums below are stored as `int`. Several are explicitly append-only with res
 
 | Enum | Values | Notes |
 |---|---|---|
-| `AuditAction` | Other=0, OverrideFailed=1, OverridePinChanged=2, PriceOverride=3, (4 reserved, was Refund), Exchange=5, Reprint=6, VoidSale=7, CashPayOut=8, DrawerReconcile=9, Compensation=10, PointsAdjust=11, ResendTicket=12, BlockSeat=13, BlockRoom=14, TicketAdmitOverride=15, (16 reserved, was UserTheatersChanged), GateScan=17 | Append-only; never renumber; gaps are intentional |
+| `AuditAction` | Other=0, OverrideFailed=1, OverridePinChanged=2, PriceOverride=3, (4 reserved, was Refund), Exchange=5, Reprint=6, VoidSale=7, CashPayOut=8, DrawerReconcile=9, Compensation=10, PointsAdjust=11, ResendTicket=12, BlockSeat=13, BlockRoom=14, TicketAdmitOverride=15, (16 reserved, was UserTheatersChanged), GateScan=17, ConsentChanged=18 (DataJson: Channel, Value, Source), AgeConfirmed=19 (DataJson: RatingCode, MinAge, InvoiceId) | Append-only; never renumber; gaps are intentional |
 | `CreditType` | Director=1, Actor=2 | role on a MovieCredit |
 | `FoodOrderStatus` | None=0, Pending=1, Preparing=2, Ready=3, HandedOver=4, Cancelled=5 | allowed moves: Pending→Preparing→Ready→HandedOver, or Ready→HandedOver directly |
 | `IncidentCategory` | Other=0, Seat=1, Room=2, Projection=3, Sound=4, Safety=5, Customer=6, Cleanliness=7 | |

@@ -129,7 +129,9 @@
       "blockSeat": "Block seat",
       "blockRoom": "Block room",
       "ticketAdmitOverride": "Ticket admit override",
-      "gateScan": "Gate scan"
+      "gateScan": "Gate scan",
+      "consentChanged": "Consent changed",
+      "ageConfirmed": "Age confirmed"
     }
   },
   "profile": {

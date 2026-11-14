@@ -10941,7 +10941,9 @@
           "BlockSeat",
           "BlockRoom",
           "TicketAdmitOverride",
-          "GateScan"
+          "GateScan",
+          "ConsentChanged",
+          "AgeConfirmed"
         ],
         "enum": [
           0,
@@ -10959,7 +10961,9 @@
           13,
           14,
           15,
-          17
+          17,
+          18,
+          19
         ]
       },
       "StaffReasonCode": {
