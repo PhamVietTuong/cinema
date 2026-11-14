@@ -21,9 +21,7 @@ Every entity inherits `BaseEntity`: `Id` (`Guid`, client-generated, not DB-ident
 
 Schema changes are hand-written into `cinemabe/sql/create_db.sql` / `upgrade_db.sql` (see root `CLAUDE.md`), not generated via `dotnet ef migrations add` — the Fluent `Configurations/` below still describe the model EF expects, kept in sync by hand.
 
-**Destructive one-shot upgrade (2026-11-14, child ticket removal).** The "Remove the child ticket category" block of `upgrade_db.sql` permanently deletes every invoice that has a ticket sold under the child patron category (exact `PatronCategory.Name` / ticket `PatronCategoryName`, matched by name or `PatronCategoryId`) together with its tickets, payments, food lines and `StockMovement` rows, then that category's `RoomTypePatronCategoryPrice` rows and the category itself, in one transaction. Redeemed points of purged Pending invoices go back to their users, and surviving invoices whose `ExchangedFromInvoiceId` pointed at a purged one get it set to NULL. It is one-shot, not merely idempotent: it records the database extended property `purge_child_ticket_done` in the same transaction and skips itself when that property exists, so a later category with the same name is never purged. Not reversed: points earned on purged Paid invoices, `PromotionProgram.UsedCount`, food stock. Run it with the API stopped (no payment in flight), and never on a non-dev database without the owner's confirmation and a verified backup.
-
-**Destructive upgrade (2026-11-14, discount simplification).** The "Discount simplification" block of `upgrade_db.sql` permanently deletes every invoice that used a gift card (`Invoice.GiftCardAmount > 0`, or an `InvoicePayment` with `Method = 3`) together with its tickets, payments, food lines and `StockMovement` rows, in one transaction, and gives the redeemed points of purged Pending invoices back to their users. It then drops `Invoice.GiftCardId/GiftCardAmount`, the `GiftCard` table, `PromotionProgram.StacksWithMembershipDiscount` and `MemberShip.DiscountPercent`. Not reversed: loyalty points earned on purged Paid invoices, `PromotionProgram.UsedCount`, food stock, and historical revenue, which drops by the purged invoices. Apply it to the local dev database only; any other environment needs the owner's fresh confirmation and a verified backup first.
+`upgrade_db.sql` also holds two guarded, destructive purge blocks, the child-ticket one a one-shot (marker `purge_child_ticket_done`) and the gift-card one idempotent (guarded by `COL_LENGTH`/`OBJECT_ID`); they delete invoices together with their tickets, payments, food lines and `StockMovement` rows). Their scope, guards and what they do not reverse are recorded in [`../05-process/history.md`](../05-process/history.md). Apply `upgrade_db.sql` to the local dev database only; any other environment needs the owner's fresh confirmation and a verified backup first.
 
 ## 1. Identity / Users
 
@@ -65,7 +63,7 @@ Nav: `Users` (1:many).
 | Field | Type | Notes |
 |---|---|---|
 | Name | string | |
-| MinPoints, MaxPoints | int | points range of the tier; tiers carry no percentage discount (`DiscountPercent` removed 2026-11-14) |
+| MinPoints, MaxPoints | int | points range of the tier; tiers carry no percentage discount |
 
 Nav: `Users`. Also referenced by `PromotionProgram.MinMemberShipId` as a minimum-tier gate.
 
@@ -155,7 +153,7 @@ One row per (Theater, SeatKind-via-SeatType, category name). **Omitting a row fo
 | Price | double, absolute VND — independent per row |
 | IsActive | |
 | RequiresIdCheck | bool, default false. Counter-only category: `BookingManager.ComposeInvoiceAsync` rejects it for online bookings ("requires an ID check and can only be bought at the counter"), CinemaUser hides it, counter sales allow it |
-| IdCheckMessage | max 1000 |
+| IdCheckMessage | max 1000. Editable in the CinemaAdmin patron-category dialog and returned with the showtime prices, but no app displays it: an ID-check category cannot be bought online and the counter shows no notice |
 
 **Unique** (TheaterId, Name, SeatTypeId). Nav `RoomTypePrices`.
 
@@ -174,15 +172,14 @@ Name, Date (DateOnly), PriceMultiplier (double, default 1.5). No TheaterId — g
 ## 4. Promotions / Loyalty
 
 ### PromotionProgram (single promotion/pricing entity — campaign-card display + code/auto-apply pricing)
-Formerly two separate entities (this one and the flat-percent `Discount`/`DiscountType`/`DiscountTheater`,
-now removed); merged so there is one pricing path and one admin screen. A program is triggered by
+It is the only promotion/pricing entity: one pricing path and one admin screen. A program is triggered by
 exactly one of `Code` (customer-entered) **xor** `AutoApply=true`, enforced in
 `PromotionProgramManager.ValidateAsync`.
 
 | Field | Notes |
 |---|---|
 | Title (200), Summary (500)?, BannerUrl? | |
-| CampaignId? | FK → PromotionCampaign, SetNull — optional customer-facing grouping/filter; replaces the old fixed 3-value `Category` enum (Promotion/Seasonal/Membership), which in practice was nearly always "Promotion" and served no real grouping purpose |
+| CampaignId? | FK → PromotionCampaign, SetNull — optional customer-facing grouping/filter |
 | Mechanic | enum: Info=0/FixedPrice=1/PercentOff=2 |
 | PercentOff? | double, required iff Mechanic=PercentOff, (0,100] |
 | Eligibility | enum: Everyone=0/Members=1/StudentOrTeacher=2/AgeLimit=3 |
@@ -196,14 +193,12 @@ exactly one of `Code` (customer-entered) **xor** `AutoApply=true`, enforced in
 | AutoApply | bool; requires Mechanic != Info, Eligibility in (Everyone, Members), Code null |
 | Code? | string, max 50, unique when present (filtered unique index `WHERE [Code] IS NOT NULL`) — mutually exclusive with AutoApply |
 | MaxUsage? / UsedCount | int, UsedCount default 0 — incremented on every paid invoice whose `PromotionProgramId` points here, regardless of trigger (code or auto-apply) |
-| MaxDiscountAmount? | double — caps the *summed* per-unit saving (post-`ComputeProgramSaving`, after the program is resolved), migrated from `Discount.MaxDiscountAmount` |
-| MovieId? | FK → Movie, **SetNull** — optional movie scope; migrated from `Discount.MovieId`. Theater/day/time scope is expressed via `Schedules` instead (no separate fields here) |
+| MaxDiscountAmount? | double — caps the *summed* per-unit saving (post-`ComputeProgramSaving`, after the program is resolved) |
+| MovieId? | FK → Movie, **SetNull** — optional movie scope. Theater/day/time scope is expressed via `Schedules` instead (no separate fields here) |
 
 Index: (IsPublished, EndDate), MinMemberShipId, Code (filtered unique), MovieId. Nav `Prices`, `Schedules`.
 
-`Invoice.DiscountId` is vestigial: the column stays (historical data only, no FK, never written by new
-code) so old invoices keep their value; `Invoice.PromotionProgramId` is the only pricing-source column
-new code writes.
+`Invoice.PromotionProgramId` is the only pricing-source column code writes (`Invoice.DiscountId` is an unused column, see the Invoice table).
 
 ### PromotionCampaign (admin-managed named grouping, e.g. "C'Student", "Happy Hour")
 Name (100, unique), referenced by `PromotionProgram.CampaignId`. Managed via its own CRUD screen (Catalog > Promotion Campaigns) rather than being a fixed enum, so new campaign families can be added without a code change. Drives the dynamically-built filter tabs on the customer Promotions page.
@@ -229,23 +224,23 @@ TheaterId (Guid, required, **unique** — one row per theater; no global row), P
 | Code | string | max 50, **unique** |
 | UserId | Guid? | FK → User, Restrict; null = walk-in counter sale |
 | TotalAmount, DiscountAmount, FinalAmount | double | column type `float`; DiscountAmount default 0 |
-| DiscountId | Guid? | **Vestigial** — the `Discount` entity/table is gone; no FK, historical data only, never written by new code |
+| DiscountId | Guid? | Unused column: exists in `create_db.sql` and on the entity, but EF ignores it (`InvoiceConfiguration` `b.Ignore`), it has no FK and no code writes it |
 | PromotionProgramId | Guid? | FK → PromotionProgram, SetNull; the pricing source for any invoice that used a program (code or auto-apply) |
-| Status | InvoiceStatus | Pending=0/Paid=1/Cancelled=2/Failed=3 (4 reserved, "Refunded", never reused) |
+| Status | InvoiceStatus | Pending=0/Paid=1/Cancelled=2/Failed=3 (4 is reserved, never reused) |
 | PaymentMethod?, PaymentReference? | string | |
 | PaidAt | DateTime? | |
 | PointsRedeemed | int | reserved at creation, restored on cancel/expire |
 | TheaterId | Guid? | FK (shadow), Restrict; null only on rows predating the column |
 | Channel | SalesChannel | Online=0/Counter=1 |
 | SoldByUserId | Guid? | no FK |
-| CashDrawerSessionId | Guid? | no FK. Vestigial — cash drawer close/daily close UI was removed from CinemaStaff (see `features.md`), same kind of leftover as `FoodStatus` below. |
-| FoodStatus | FoodOrderStatus | None=0/Pending=1/Preparing=2/Ready=3/HandedOver=4/Cancelled=5. Vestigial beyond Pending/HandedOver since the kitchen pickup queue feature was removed — a counter sale now moves it straight to HandedOver; Preparing/Ready/Cancelled are never set by any remaining code path. |
+| CashDrawerSessionId | Guid? | no FK. Unused: no code reads or writes it (there is no cash drawer or daily close). |
+| FoodStatus | FoodOrderStatus | None=0/Pending=1/Preparing=2/Ready=3/HandedOver=4/Cancelled=5. Code sets `Pending` on creation when the order has food (`None` otherwise), `HandedOver` on a counter sale, and `Cancelled` when an invoice is cancelled or expires; `Preparing` and `Ready` are never set. |
 | FoodHandedOverAt / FoodHandedOverByUserId | | Stamped on the counter-sale HandedOver transition only. |
 | ExchangedFromInvoiceId | Guid? | no FK |
 
 Index: (TheaterId, PaidAt). Nav `InvoiceTickets`, `InvoiceFoodAndDrinks`, `Payments`.
 
-**No Refund entity exists.** `InvoiceStatus` value 4 and `AuditAction.Refund` (value 4) are reserved/retired — a refund system (customer/staff-initiated, gateway-side refund calls, `Refunded`/`PartiallyRefunded` invoice states) was built across several commits and then fully reverted (`9660958 feat(cinemabe): remove online refund feature`, `f0e4fe7 feat(cinemafe): remove refund UI, shared enum labels and error-catalog entries`). No `Refund` symbol exists anywhere in `cinemabe` today; a cancelled/expired invoice only reverses points/food-stock via `InvoiceStatus.Cancelled`, never a dedicated refund row. If refund work is requested again it needs to be designed fresh — see `01-business/business-rules.md` and `02-product/roadmap.md`.
+**No refund entity exists.** A cancelled/expired invoice only reverses points/food-stock via `InvoiceStatus.Cancelled`, never a dedicated refund row. `InvoiceStatus` value 4 and `AuditAction` value 4 are reserved gaps (section 9). See `01-business/business-rules.md`.
 
 ### InvoiceTicket (one sold seat; no own Id)
 PK: composite (InvoiceId, ShowTimeId, RoomId, SeatId). Price (double), PatronCategoryId (Guid?, **no FK**, snapshot), PatronCategoryName (max 100, snapshot), PatronDiscountPercent (double), QrCode?, IsUsed (bool, default false) + UsedAt (DateTime?) + UsedByUserId (Guid?, no FK), IsActive (bool, default true), SeatLabel (max 16, frozen at sale time, never recomputed).
@@ -256,12 +251,12 @@ PK: composite (InvoiceId, ShowTimeId, RoomId, SeatId). Price (double), PatronCat
 PK (InvoiceId, FoodAndDrinkId). Quantity (int), UnitPrice/TotalPrice (double). Invoice (Cascade), FoodAndDrink (Restrict).
 
 ### InvoicePayment (one tender line)
-InvoiceId (Cascade), Method (PaymentTender: Cash=0/Card=1/QrWallet=2/Points=4/Online=5; 3 was GiftCard, retired, never reuse), Amount (double), TenderedAmount/ChangeAmount (double?, cash only), Reference (string?, max 100).
+InvoiceId (Cascade), Method (PaymentTender: Cash=0/Card=1/QrWallet=2/Points=4/Online=5; 3 is reserved, never reuse), Amount (double), TenderedAmount/ChangeAmount (double?, cash only), Reference (string?, max 100).
 
 ## 6. Catalog / Inventory
 
 ### FoodAndDrink
-TheaterId (Cascade), Name (200), Price (double), ImageUrl?, Description?, IsAvailable (bool, default true), TrackInventory (bool), QuantityOnHand (int, **check constraint `>= 0`**), LowStockThreshold (int), TargetStockLevel (int, 0=unset), IsCombo (bool). `LowStockThreshold`/`TargetStockLevel` are vestigial since the kitchen pickup queue / low-stock alert feature was removed — no endpoint reads them today. Nav `InvoiceFoodAndDrinks`, `ComboItems`.
+TheaterId (Cascade), Name (200), Price (double), ImageUrl?, Description?, IsAvailable (bool, default true), TrackInventory (bool), QuantityOnHand (int, **check constraint `>= 0`**), LowStockThreshold (int), TargetStockLevel (int, 0=unset), IsCombo (bool). `LowStockThreshold`/`TargetStockLevel` are unused: no endpoint reads them (there are no low-stock alerts). Nav `InvoiceFoodAndDrinks`, `ComboItems`.
 
 ### ComboItem
 ComboId (Cascade, FK → FoodAndDrink "Combo"), ComponentId (NoAction, FK → FoodAndDrink "Component"), Quantity (int, default 1). **Unique** (ComboId, ComponentId). Check constraints: `Quantity > 0`, `ComboId <> ComponentId`.
@@ -290,18 +285,18 @@ Title, Content, ThumbnailUrl?, Author?, IsPublished (default false), PublishedAt
 
 ## 9. Enums reference
 
-All enums below are stored as `int`. Several are explicitly append-only with reserved/retired gaps that must never be renumbered or reused.
+All enums below are stored as `int`. Several are append-only with reserved gaps that must never be renumbered or reused.
 
 | Enum | Values | Notes |
 |---|---|---|
-| `AuditAction` | Other=0, OverrideFailed=1, OverridePinChanged=2, PriceOverride=3, (4 reserved, was Refund), Exchange=5, Reprint=6, VoidSale=7, CashPayOut=8, DrawerReconcile=9, Compensation=10, PointsAdjust=11, ResendTicket=12, BlockSeat=13, BlockRoom=14, TicketAdmitOverride=15, (16 reserved, was UserTheatersChanged), GateScan=17, ConsentChanged=18 (DataJson: Channel, Value, Source), AgeConfirmed=19 (DataJson: RatingCode, MinAge, InvoiceId) | Append-only; never renumber; gaps are intentional |
+| `AuditAction` | Other=0, OverrideFailed=1, OverridePinChanged=2, PriceOverride=3, (4 reserved), Exchange=5, Reprint=6, VoidSale=7, CashPayOut=8, DrawerReconcile=9, Compensation=10, PointsAdjust=11, ResendTicket=12, BlockSeat=13, BlockRoom=14, TicketAdmitOverride=15, (16 reserved), GateScan=17, ConsentChanged=18 (DataJson: Channel, Value, Source), AgeConfirmed=19 (DataJson: RatingCode, MinAge, InvoiceId) | Append-only; never renumber; gaps are intentional |
 | `CreditType` | Director=1, Actor=2 | role on a MovieCredit |
-| `FoodOrderStatus` | None=0, Pending=1, Preparing=2, Ready=3, HandedOver=4, Cancelled=5 | allowed moves: Pending→Preparing→Ready→HandedOver, or Ready→HandedOver directly |
+| `FoodOrderStatus` | None=0, Pending=1, Preparing=2, Ready=3, HandedOver=4, Cancelled=5 | set by code: None/Pending (creation), HandedOver (counter sale), Cancelled (cancel/expiry); Preparing and Ready are never set |
 | `IncidentCategory` | Other=0, Seat=1, Room=2, Projection=3, Sound=4, Safety=5, Customer=6, Cleanliness=7 | |
 | `IncidentSeverity` | Low=0, Medium=1, High=2, Critical=3 | |
 | `IncidentStatus` | Open=0, Resolved=1 | |
-| `InvoiceStatus` | Pending=0, Paid=1, Cancelled=2, Failed=3 | (4 reserved, was Refunded) |
-| `PaymentTender` | Cash=0, Card=1, QrWallet=2, Points=4, Online=5 | never renumber; 3 (was GiftCard) is retired and must not be reused |
+| `InvoiceStatus` | Pending=0, Paid=1, Cancelled=2, Failed=3 | 4 reserved |
+| `PaymentTender` | Cash=0, Card=1, QrWallet=2, Points=4, Online=5 | never renumber; 3 is reserved and must not be reused |
 | `ProjectionForm` | TwoD=1, ThreeD=2 | property of screening, not room |
 | `PromotionEligibility` | Everyone=0, Members=1, StudentOrTeacher=2, AgeLimit=3 | only Everyone/Members are safe to AutoApply (system can't verify the other two online) |
 | `PromotionMechanic` | Info=0, FixedPrice=1, PercentOff=2 | Info never affects price |

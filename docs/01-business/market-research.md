@@ -1,7 +1,33 @@
 # Market Research
 
-> Purpose: Competitive landscape and market context for the Cinema platform.
-> Sources: none yet. Not derivable from the repository; the owner has to supply it.
-> Last reviewed: 2026-11-12
+> Purpose: Benchmarks from Vietnamese cinema practice and law that the business rules were checked against, each with its source.
+> Sources: Decree 81/2018/NĐ-CP (as amended by 128/2024/NĐ-CP) and Decree 131/2022/NĐ-CP, read on the web pages named in the Source column on 2026-11-14; the market-fit review notes in `_bmad-output/implementation-artifacts/deferred-work.md` and the specs in the same folder; `.claude/agents/market-fit-reviewer.md`. Anything that could not be read at its source is tagged `UNVERIFIED`; no figure is estimated.
+> Last reviewed: 2026-11-14
 
-Owner input needed: the target market, competitors and positioning.
+Scope: the reference chains are CGV, Lotte, Galaxy, BHD, Beta and Cinestar. This file records what was checked and where the platform follows it; it is not a competitor price list. The owner's decisions that came out of it are in `docs/05-process/history.md`.
+
+## 1. Legal benchmarks
+
+| Topic | What the source says | Source | Status | How the platform applies it |
+|---|---|---|---|---|
+| Cap on a sales-promotion discount | Decree 81/2018 article 6 caps the discount at 50% of the price just before the promotion; Decree 128/2024 amends article 6 and keeps 50% for discounts. Concentrated promotion periods (the lunar new year and similar) may go up to 100%. | [lsvn.vn](https://lsvn.vn/giam-gia-khuyen-mai-hang-hoa-dich-vu-khong-duoc-vuot-qua-50-gia-ban-a148560.html), [hethongphapluat.com article 6](https://hethongphapluat.com/nghi-dinh-81-2018-nd-cp-huong-dan-luat-thuong-mai-ve-hoat-dong-xuc-tien-thuong-mai.html/dieu-6) | `UNVERIFIED` for the exact current article 6 text and exceptions: search summaries only, the consolidated text was not opened. The notes also say to verify the Decree 239/2026 consolidated text before relying on it. | Per-theater cap on the promotion saving: `Theater.MaxPromotionDiscountPercent` 0-50 (default 50), and `MaxHolidayPromotionDiscountPercent` 0-100 on a `Holiday` date (see `business-rules.md`). |
+| Points redemption and the cap | The review notes say points under article 14 are exempt from the 50% cap. | Review notes in `deferred-work.md` | `UNVERIFIED`: the underlying report is not in the repository and article 14 was not re-read. | Points redemption and earning are not capped; points can pay up to 100% of the remainder. |
+| Minimum ticket discounts | Decree 131/2022 article 10 clause 1: elderly people, people with revolutionary merit, children, people in especially difficult circumstances and other groups set by law get at least 20% off when they attend in person. Clause 2: people with severe disability get at least 50% off and people with especially severe disability get free tickets. The article gives no ages; chains set their own thresholds. | [hethongphapluat.com article 10](https://hethongphapluat.com/nghi-dinh-131-2022-nd-cp-huong-dan-luat-dien-anh/dieu-10) | Read on the page. Whether the platform meets it is not verified: patron categories are priced per theater by the admin (`PatronCategory`), there is no rule that forces a 20% or 50% reduction, and no child category exists. | Open item, see `02-product/roadmap.md`. |
+| Age ratings | Vietnamese film law uses the ratings P, K, T13, T16, T18 and C. The platform prompts at the gate from 13 and asks for an online confirmation. | Film-law summary in `.claude/agents/market-fit-reviewer.md` and the age-rating spec | `UNVERIFIED`: statute text not opened in this work. | Gate prompt from `Gate:AgePromptMinAge` (default 13), online confirmation for `MinAge >= 13`, K-rated guardian banner (`business-rules.md` section 2). |
+| Personal data | Decree 13/2023 was replaced from 2026-01-01 by Law 91/2025/QH15 and Decree 356/2025/NĐ-CP; the penalty decree is 330 (from 2026-08-19). Consent should be provable. | `.claude/agents/market-fit-reviewer.md`, `spec-consent-records.md` | `UNVERIFIED`: the notes tell the reader to verify the current text before citing; it was not opened here. | Promotional email is opt-in and every consent change plus every online age confirmation is an `AuditLog` row (`ConsentChanged`, `AgeConfirmed`). Retention and anonymisation are not defined (open item). |
+| VAT and e-invoice | The review named VAT and the electronic-invoice (hóa đơn điện tử) rules as relevant; no rate or rule was read. | none read | `UNVERIFIED`; deliberately out of scope for this work: no rate was researched and nothing in the platform issues a tax invoice. | Open item, see `02-product/roadmap.md`. |
+
+## 2. Chain practice
+
+| Topic | Practice noted | Source | Status | How the platform applies it |
+|---|---|---|---|---|
+| Late-night pricing | Vietnamese chains sell after-22:00 shows below the evening rate. | Problem statement of `spec-late-night-price.md`; no chain page recorded | `UNVERIFIED`: no chain price list was saved with the spec. The owner accepted the finding on 2026-11-14. | Seeded `Khuya` factor 0.85 against `Tối` 1.2, plus an admin warning when a late-night slot is priced above the slot before it. |
+| Stacking promotions | Chains do not let promotions stack. | Review notes in `deferred-work.md` | `UNVERIFIED`: no chain page recorded. | At most one `PromotionProgram` per invoice, then points. |
+| Paying with points | Lotte allows paying the whole bill with points, with a minimum of 1000 points per transaction. | Review notes in `deferred-work.md` | `UNVERIFIED`: no page recorded. | Points can cover up to 100% of the remainder; no minimum-points column exists (the owner decided against one). Earning: 1 point per 1,000 VND, redemption: 1 point = 10 VND by default, per-theater override. |
+| Student and senior ticket ratios | The review looked at how chains price student and senior tickets against the adult ticket. | none | `UNVERIFIED`, and no ratio is stated: the ratios were not saved in the repository, so none is quoted. | Student and senior categories are priced per theater and room type by the admin. |
+| Refunds | Market chains mostly refuse refunds once a ticket is paid. | `.claude/agents/market-fit-reviewer.md` (reviewer brief, not a chain source) | `UNVERIFIED` | No refund flow exists (`business-rules.md` section 2). |
+| Hold and payment windows | Not benchmarked against a chain. Only the +15-minute grace once a payment has started is tied to VNPay's `vnp_ExpireDate`; the 5-minute lock and the 15-minute hold were not benchmarked. | `business-rules.md` section 1 | n/a | 5-minute advisory seat lock, 15-minute Pending hold, +15 minutes once payment starts. |
+
+## 3. Out of scope for this file
+
+Competitor ticket price lists, market size, target segments and positioning are not recorded anywhere in the repository. They need the owner's input. The membership-tier rework that the review suggested (12-month spend, points expiry, tier-based accrual) was dropped by the owner on 2026-11-14.

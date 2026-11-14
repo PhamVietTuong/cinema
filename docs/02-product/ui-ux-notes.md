@@ -2,7 +2,7 @@
 
 > Purpose: Screen inventory, routing structure, key user flows, and shared CinemaLib components across the three Angular apps.
 > Sources: cinemafe/projects/{CinemaUser,CinemaAdmin,CinemaStaff,CinemaLib}, E:\cinema\CLAUDE.md, E:\cinema\business\admin-staff-and-frontend-flows.md
-> Last reviewed: 2026-11-12
+> Last reviewed: 2026-11-14
 
 ## Apps & routing structure
 
@@ -35,8 +35,8 @@ Movie detail uses a friendly slug (`shared/movie-route.ts`); a legacy `:legacyId
   ''               homeRedirectGuard -> /dashboard (Admin) or /forbidden (everyone else)
   profile
   (OverviewModule)    dashboard, reports, movies, theaters, theaters/:id, showtimes, users
-  (CatalogAdminModule) age-restrictions, discount-types, holidays, memberships, movie-types, news, templates, user-types
-  (OperationsModule)   audit-log, comments, discounts, invoices, promotion-programs, splash-banners
+  (CatalogAdminModule) age-restrictions, holidays, memberships, movie-types, news, promotion-campaigns, templates, user-types
+  (OperationsModule)   audit-log, comments, invoices, promotion-programs, splash-banners
 /**                -> /auth/login
 ```
 Overview/Catalog/Operations are each one `NgModule` with its own internal route list, mounted via a shared `path: ''` pass-through entry — not one `.module.ts` per page.
@@ -77,8 +77,8 @@ Current roles are exactly `Admin`, `Customer`, `TheaterStaff` (see business doc)
 ### CinemaStaff — box office / gate flows
 - **Counter sale (POS)**: `pos.component.ts` — quote then sell a ticket (always resolves to a Paid invoice directly, never leaves a Pending one), reuses the shared seat map (`room-seat-picker`) and `counter-cart`/`counter-summary`/`counter-tender-panel` core services.
 - **Gate**: `gate-scan` (QR scan; a refused scan is still HTTP 200 with an `Outcome` reason) and `gate-lookup` (find today's paid tickets by invoice code or phone).
-- **Incidents / blocking**: report/list/detail an incident; `BlockSeat`/`BlockRoom`, and resolve-with-unblock, require the `Approvers` role (Admin only) — the former PIN-based alternate path for non-approvers has been removed.
-- **Schedule board**: today's rooms/showtimes + status, live via `staff-live.service` (SignalR).
+- **Incidents / blocking**: report/list/detail an incident; `BlockSeat`/`BlockRoom`, and resolve-with-unblock, require the `Approvers` role (Admin only); non-approvers have no PIN-based alternate path.
+- **Schedule board**: today's rooms/showtimes + status, loaded when the page opens and reloaded when an Admin switches the topbar theater; there is no live push (`StaffHub` only sends `IncidentRaised`).
 
 ## Shared components (CinemaLib) — used by 2+ apps
 

@@ -2,7 +2,7 @@
 
 > Purpose: Domain and technical terms mapped to their meaning and corresponding code location.
 > Sources: E:\cinema\cinemabe\Cinema\3-Data\Cinema.Data.Entities, E:\cinema\cinemabe\Cinema\2-Business\Cinema.Business\Services\PendingBookingReaper.cs, E:\cinema\CLAUDE.md
-> Last reviewed: 2026-11-04
+> Last reviewed: 2026-11-14
 
 ## Business / domain terms
 
@@ -16,7 +16,7 @@
 | SeatType | Per-theater, exactly `Single` + `Double`, keyed by `SeatKind` enum (matched by Kind, never by Name). | `Cinema.Data.Entities/Entities/SeatType.cs` |
 | SeatKind | Enum: `Standard=0`, `Double=1`. Lives in `Cinema.Data.Entities` namespace, not `...Enums` like sibling enums (documented inconsistency). | `Cinema.Data.Entities/SeatKind.cs` |
 | MemberShip | Loyalty tier: `Name`, `MinPoints`/`MaxPoints` (a points range; no percentage discount). Also referenced by `PromotionProgram.MinMemberShipId` as a minimum-tier gate. | `Cinema.Data.Entities/Entities/MemberShip.cs` |
-| PromotionProgram | Single promotion/pricing entity ("campaign card", Cinestar-style). Drives CinemaUser's promotions page and lowers checkout price when triggered by exactly one of `Code` (customer-entered) or `AutoApply`. Formerly two separate entities (this one and the flat-percent `Discount`), merged into one. | `Cinema.Data.Entities/Entities/PromotionProgram.cs` |
+| PromotionProgram | Single promotion/pricing entity ("campaign card", Cinestar-style). Drives CinemaUser's promotions page and lowers checkout price when triggered by exactly one of `Code` (customer-entered) or `AutoApply`. It is the only promotion/pricing entity. | `Cinema.Data.Entities/Entities/PromotionProgram.cs` |
 | Holiday | Global (no TheaterId) calendar-date price multiplier (default 1.5) that overrides `TicketPrice`'s day-of-week multiplier for that date. | `Cinema.Data.Entities/Entities/Holiday.cs` |
 | TicketPrice | Time-of-day/day-of-week price multiplier keyed by (TheaterId, RoomTypeId, TimeSlotId, DayOfWeek). | `Cinema.Data.Entities/Entities/TicketPrice.cs` |
 | ShowTimeRoom | Join of a ShowTime to the Room it's screened in; carries `BasePrice` (flat per-showtime manual adjustment, not the seat's base price). | `Cinema.Data.Entities/Entities/ShowTimeRoom.cs` |
