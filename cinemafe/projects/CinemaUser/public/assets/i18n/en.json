@@ -524,7 +524,7 @@
     "greeting": "Hello! I'm the CINEMA assistant. How can I help you?",
     "answerBooking": "Choose a movie → showtime → seats → payment. Your e-ticket (QR code) will be in \"Account → Booking History\".",
     "answerShowtimes": "Showtimes appear on each movie's detail page, grouped by format 2D/3D/IMAX/4DX.",
-    "answerCancel": "You can cancel a ticket while the order is still in \"Pending Payment\" status under Booking History.",
+    "answerCancel": "Customers cannot cancel an online booking. An order that is not paid is released automatically after 15 minutes (a little longer if the payment page was already opened).",
     "answerMembership": "You earn points on every payment (by default 1.000đ spent = 1 point, and 100 points = 1.000đ; each theater can set its own rate, shown at checkout); your membership tier upgrades automatically with points. Enter a discount code at the payment step.",
     "answerNearby": "Go to the \"Theaters\" page and tap \"Find nearest theater\" to sort by distance to you.",
     "answerPayment": "We support VNPAY at the payment step.",
