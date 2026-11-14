@@ -13613,6 +13613,12 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("maxSeatsPerBooking", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int MaxSeatsPerBooking { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("maxPromotionDiscountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int MaxPromotionDiscountPercent { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("maxHolidayPromotionDiscountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int MaxHolidayPromotionDiscountPercent { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -13647,6 +13653,14 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("maxSeatsPerBooking", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.Range(1, 50)]
         public int MaxSeatsPerBooking { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("maxPromotionDiscountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, 50)]
+        public int MaxPromotionDiscountPercent { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("maxHolidayPromotionDiscountPercent", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, 100)]
+        public int MaxHolidayPromotionDiscountPercent { get; set; }
 
     }
 
@@ -13685,6 +13699,14 @@ namespace Cinema.Service.Clients.Cinema
         [Newtonsoft.Json.JsonProperty("maxSeatsPerBooking", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.Range(1, 50)]
         public int MaxSeatsPerBooking { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("maxPromotionDiscountPercent", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, 50)]
+        public int? MaxPromotionDiscountPercent { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("maxHolidayPromotionDiscountPercent", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, 100)]
+        public int? MaxHolidayPromotionDiscountPercent { get; set; }
 
     }
 

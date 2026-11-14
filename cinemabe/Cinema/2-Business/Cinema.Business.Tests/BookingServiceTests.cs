@@ -77,6 +77,15 @@ public class BookingServiceTests
             .ReturnsAsync(new List<PromotionProgram>());
         _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<Expression<Func<Holiday, bool>>>()))
             .ReturnsAsync(new List<Holiday>());
+        // Default: a theater with the entity defaults (50% promotion cap, 50% holiday cap).
+        _uowMock.Setup(u => u.TheaterStore.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new Theater());
+    }
+
+    private void SetupTheaterCaps(int normalPercent, int holidayPercent)
+    {
+        _uowMock.Setup(u => u.TheaterStore.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new Theater { MaxPromotionDiscountPercent = normalPercent, MaxHolidayPromotionDiscountPercent = holidayPercent });
     }
 
     private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId)
@@ -1593,7 +1602,7 @@ public class BookingServiceTests
     /// auto-apply PromotionProgram candidates in scope. Monday 2026-03-02 19:00 (see SetupBaselineBookingMocks).</summary>
     private async Task<BookingResultDTO> BookOneSeatWithProgramsAsync(
         double listPrice, List<PromotionProgram> candidates, Guid? customerId = null, User? customer = null,
-        List<Holiday>? holidays = null, string? code = null)
+        List<Holiday>? holidays = null, string? code = null, int pointsToRedeem = 0, (int Normal, int Holiday)? bookingTheaterCaps = null)
     {
         var theaterId    = Guid.NewGuid();
         var roomTypeId   = Guid.NewGuid();
@@ -1618,7 +1627,12 @@ public class BookingServiceTests
         _uowMock.Setup(u => u.PromotionProgramStore.GetAutoApplyCandidatesAsync(It.IsAny<DateOnly>())).ReturnsAsync(candidates);
         if (holidays != null)
         {
-            _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<Expression<Func<Holiday, bool>>>())).ReturnsAsync(holidays);
+            SetupHolidays(holidays);
+        }
+        if (bookingTheaterCaps is { } caps)
+        {
+            _uowMock.Setup(u => u.TheaterStore.GetByIdAsync(theaterId))
+                .ReturnsAsync(new Theater { Id = theaterId, MaxPromotionDiscountPercent = caps.Normal, MaxHolidayPromotionDiscountPercent = caps.Holiday });
         }
         if (customer != null)
         {
@@ -1632,6 +1646,7 @@ public class BookingServiceTests
             Seats = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
             PaymentMethod = "Sandbox",
             DiscountCode = code,
+            PointsToRedeem = pointsToRedeem,
         };
 
         return await _sut.CreateBookingAsync(customerId ?? Guid.NewGuid(), request);
@@ -1652,6 +1667,216 @@ public class BookingServiceTests
         Prices = new List<PromotionProgramPrice> { new() { Price = price } },
         Schedules = new List<PromotionProgramSchedule>(),
     };
+
+    // ── Per-theater promotion cap (percent of the summed ticket list prices) ────
+
+    private static Holiday HolidayOn(DateTime date) => new() { Id = Guid.NewGuid(), Date = DateOnly.FromDateTime(date), PriceMultiplier = 1 };
+
+    // The showtime SetupBaselineBookingMocks gives every BookOneSeatWithProgramsAsync booking.
+    private static readonly DateTime _bookingShowTime = new(2026, 3, 2, 19, 0, 0);
+
+    // A HolidayStore that really evaluates the lookup predicate, so a holiday on the wrong date does not match.
+    private void SetupHolidays(IReadOnlyList<Holiday> holidays)
+    {
+        _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<Expression<Func<Holiday, bool>>>()))
+            .ReturnsAsync((Expression<Func<Holiday, bool>> predicate) => holidays.Where(predicate.Compile()).ToList());
+    }
+
+    private async Task<DateTime> PreviewShowTimeAsync()
+    {
+        return (await _uowMock.Object.ShowTimeStore.GetByIdAsync(ShowTimeId1))!.StartTime;
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ProgramOverTheCap_IsCappedAtCapPercentOfListPrice()
+    {
+        SetupTheaterCaps(50, 100);
+        var program = FixedPriceProgram(price: 24000); // would save 56,000 = 70% of 80,000
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.DiscountAmount.Should().Be(40000);
+        result.FinalAmount.Should().Be(40000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_CodeProgramOverTheCap_IsCapped()
+    {
+        SetupTheaterCaps(50, 100);
+        SetupCodeProgram(p => p.PercentOff = 70);
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram>(), code: "SUMMER25");
+
+        result.DiscountAmount.Should().Be(40000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ProgramUnderTheCap_IsUnchanged()
+    {
+        SetupTheaterCaps(50, 100);
+        var program = FixedPriceProgram(price: 56000); // saves 24,000 = 30%
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        result.DiscountAmount.Should().Be(24000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_HolidayShowtime_UsesTheHolidayCap()
+    {
+        SetupTheaterCaps(50, 100);
+        var program = FixedPriceProgram(price: 24000);
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program },
+            holidays: new List<Holiday> { HolidayOn(_bookingShowTime) });
+
+        result.DiscountAmount.Should().Be(56000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_HolidayOneDayOffTheShowtime_UsesTheNormalCap()
+    {
+        SetupTheaterCaps(50, 100);
+        var program = FixedPriceProgram(price: 24000);
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program },
+            holidays: new List<Holiday> { HolidayOn(_bookingShowTime.AddDays(1)) });
+
+        result.DiscountAmount.Should().Be(40000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_CapComesFromTheBookingsOwnTheater()
+    {
+        // Any other theater would answer 50/50; only the booking's own theater answers 20/100.
+        var program = FixedPriceProgram(price: 24000); // would save 70%
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program },
+            bookingTheaterCaps: (20, 100));
+
+        result.DiscountAmount.Should().Be(16000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_CodeOnHolidayShowtime_UsesHolidayCapAndMatchesThePreview()
+    {
+        SetupTheaterCaps(50, 100);
+        SetupCodeProgram(p => p.PercentOff = 70);
+
+        var booked = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram>(), code: "SUMMER25",
+            holidays: new List<Holiday> { HolidayOn(_bookingShowTime) });
+
+        booked.DiscountAmount.Should().Be(56000);
+
+        // Same code and the same list price, previewed: the amount equals the real discount.
+        var seats = SetupOneSeat(80000);
+        SetupHolidays(new List<Holiday> { HolidayOn(await PreviewShowTimeAsync()) });
+        var preview = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 80000, seats);
+
+        preview.DiscountAmount.Should().Be(booked.DiscountAmount);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_CodeWithCapOfZero_IsNotApplied()
+    {
+        SetupTheaterCaps(0, 100);
+        SetupCodeProgram(p => p.PercentOff = 70);
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram>(), code: "SUMMER25");
+
+        result.DiscountAmount.Should().Be(0);
+        result.FinalAmount.Should().Be(80000);
+        result.AppliedPromotionTitle.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AutoApply_CappedSavingDecidesTheWinner()
+    {
+        // The program with the larger raw saving (70,000) has its own MaxDiscountAmount of 15,000, below its
+        // rival's 30,000; neither reaches the 40,000 theater cap, so the rival wins on the capped saving.
+        SetupTheaterCaps(50, 100);
+        var rawBigger = FixedPriceProgram(price: 10000);
+        rawBigger.Title = "RawBigger";
+        rawBigger.MaxDiscountAmount = 15000;
+        var rival = FixedPriceProgram(price: 50000); // saves 30,000
+        rival.Title = "Rival";
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { rawBigger, rival });
+
+        result.AppliedPromotionTitle.Should().Be("Rival");
+        result.DiscountAmount.Should().Be(30000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AutoApply_TwoProgramsOverTheCap_TieBrokenByDisplayOrder()
+    {
+        SetupTheaterCaps(50, 100);
+        var first = FixedPriceProgram(price: 10000, displayOrder: 1);
+        first.Title = "First";
+        var second = FixedPriceProgram(price: 20000, displayOrder: 0);
+        second.Title = "Second";
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { first, second });
+
+        result.DiscountAmount.Should().Be(40000);
+        result.AppliedPromotionTitle.Should().Be("Second");
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_PointsAfterCappedPromotion_StillCoverTheWholeRemainder()
+    {
+        SetupTheaterCaps(50, 100);
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 100000 };
+        _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(customerId, It.IsAny<int>())).ReturnsAsync(true);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(customer)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(It.IsAny<Guid>())).ReturnsAsync((LoyaltySetting?)null);
+        var program = FixedPriceProgram(price: 10000); // capped to 40,000 off 80,000, leaving 40,000
+
+        // Default rate: 1 point = 10 VND, so 4,000 points cover the 40,000 remainder in full.
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program },
+            customerId: customerId, customer: customer, pointsToRedeem: 4000);
+
+        result.PointsRedeemed.Should().Be(4000);
+        result.FinalAmount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_OverTheCap_PreviewMatchesTheRealDiscount()
+    {
+        SetupTheaterCaps(50, 100);
+        SetupCodeProgram(p => p.PercentOff = 70);
+        var seats = SetupOneSeat(200000);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, seats);
+
+        result.DiscountAmount.Should().Be(100000);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_HolidayShowtime_UsesTheHolidayCap()
+    {
+        SetupTheaterCaps(50, 100);
+        SetupCodeProgram(p => p.PercentOff = 70);
+        var seats = SetupOneSeat(200000);
+        SetupHolidays(new List<Holiday> { HolidayOn(await PreviewShowTimeAsync()) });
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, seats);
+
+        result.DiscountAmount.Should().Be(140000);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_FoodOnly_DoesNotLookUpTheTheater()
+    {
+        SetupCodeProgram();
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 50000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeTrue();
+        result.DiscountAmount.Should().Be(0);
+        _uowMock.Verify(u => u.TheaterStore.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
+    }
 
     [Fact]
     public async Task CreateBookingAsync_AutoApplyProgramAtItsUsageCap_IsNotApplied()
@@ -1841,11 +2066,11 @@ public class BookingServiceTests
     public async Task CreateBookingAsync_TwoAutoApplyPrograms_BiggerSavingWins()
     {
         var cheaper = FixedPriceProgram(price: 70000); // saves 10,000 off 80,000
-        var pricier = FixedPriceProgram(price: 20000); // saves 60,000 off 80,000
+        var pricier = FixedPriceProgram(price: 50000); // saves 30,000 off 80,000 (under the 50% cap)
 
         var result = await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { cheaper, pricier });
 
-        result.FinalAmount.Should().Be(20000);
+        result.FinalAmount.Should().Be(50000);
         result.AppliedPromotionTitle.Should().Be("Happy Hour");
     }
 

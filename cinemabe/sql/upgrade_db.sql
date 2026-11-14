@@ -1042,6 +1042,19 @@ END
 -- ===== end theater max seats per booking =====
 
 -- ============================================================
+-- Theater promotion discount caps: % of summed ticket list prices (normal 0-50, holiday 0-100, default 50)
+-- ============================================================
+IF COL_LENGTH('dbo.Theater', 'MaxPromotionDiscountPercent') IS NULL
+BEGIN
+    ALTER TABLE [Theater] ADD [MaxPromotionDiscountPercent] int NOT NULL CONSTRAINT [DF_Theater_MaxPromotionDiscountPercent] DEFAULT 50;
+END
+IF COL_LENGTH('dbo.Theater', 'MaxHolidayPromotionDiscountPercent') IS NULL
+BEGIN
+    ALTER TABLE [Theater] ADD [MaxHolidayPromotionDiscountPercent] int NOT NULL CONSTRAINT [DF_Theater_MaxHolidayPromotionDiscountPercent] DEFAULT 50;
+END
+-- ===== end theater promotion caps =====
+
+-- ============================================================
 -- Merge Discount/DiscountType/DiscountTheater into PromotionProgram
 -- ============================================================
 -- PromotionProgram becomes the single pricing entity: a program is triggered by either a

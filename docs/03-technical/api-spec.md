@@ -115,7 +115,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 | `GetTheaters` | POST | anonymous | `PagingSearchDTO` | `DefaultSearchResults<TheaterDTO>` |
 | `GetTheater` | GET | anonymous | `id` query | `TheaterDTO` |
 | `GetTheatersByMovie` | POST | anonymous | `PagingSearchDTO` | theaters currently screening a movie |
-| `CreateTheater` / `UpdateTheater` / `DeleteTheater` | POST/PUT/DELETE | Admin | `Create/UpdateTheaterRequest` / `id` | `TheaterDTO` / 204 — requests carry `MaxSeatsPerBooking` (1-50, default 10, 400 otherwise) |
+| `CreateTheater` / `UpdateTheater` / `DeleteTheater` | POST/PUT/DELETE | Admin | `Create/UpdateTheaterRequest` / `id` | `TheaterDTO` / 204 — requests carry `MaxSeatsPerBooking` (1-50, default 10, 400 otherwise), `MaxPromotionDiscountPercent` (0-50) and `MaxHolidayPromotionDiscountPercent` (0-100); both default to 50 on create; on update an omitted (null) field keeps the stored value, and a value out of range is a 400 (`"Max promotion discount must be between 0 and 50 percent."` / `"Max holiday promotion discount must be between 0 and 100 percent."`) |
 | `GetShowTimes` | POST | anonymous | `PagingSearchDTO` | `DefaultSearchResults<ShowTimeListDTO>` |
 
 ### Comment moderation (admin, inline before numbered regions)

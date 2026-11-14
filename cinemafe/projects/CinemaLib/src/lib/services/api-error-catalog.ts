@@ -78,6 +78,8 @@ export const API_ERROR_RULES: readonly ApiErrorRule[] = [
   { key: 'showTimeOtherTheater', exact: 'This showtime does not belong to your theater.' },
   { key: 'showTimeNotOpenForSale', exact: 'This showtime is not open for sale.' },
   { key: 'maxSeatsPerBooking', pattern: /^You can book at most (?<max>\d+) seats per order at this theater\.$/ },
+  { key: 'promotionCapRange', exact: 'Max promotion discount must be between 0 and 50 percent.' },
+  { key: 'holidayPromotionCapRange', exact: 'Max holiday promotion discount must be between 0 and 100 percent.' },
   { key: 'ageNotConfirmed', pattern: /^Please confirm that every viewer meets this film's age rating \((?<age>\d+)\+\) before booking\.$/ },
   { key: 'idCheckCounterOnly', pattern: /^The '(?<name>.+)' ticket requires an ID check and can only be bought at the counter\.$/ },
   { key: 'doubleSeatPartner', exact: 'A double seat must be booked together with its partner.' },

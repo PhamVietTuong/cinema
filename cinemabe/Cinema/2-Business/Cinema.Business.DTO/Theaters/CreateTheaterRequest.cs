@@ -15,4 +15,8 @@ public class CreateTheaterRequest
     public double? Longitude { get; set; }
     [Range(1, 50)]
     public int MaxSeatsPerBooking { get; set; } = 10;
+    [Range(0, 50)]
+    public int MaxPromotionDiscountPercent { get; set; } = 50;
+    [Range(0, 100)]
+    public int MaxHolidayPromotionDiscountPercent { get; set; } = 50;
 }

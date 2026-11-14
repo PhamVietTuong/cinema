@@ -13,5 +13,9 @@ public class Theater : BaseEntity
     public double? Longitude { get; set; }
     /// <summary>Most seats one online booking may hold at this theater (1-50, default 10). Counter sales are not capped.</summary>
     public int MaxSeatsPerBooking { get; set; } = 10;
+    /// <summary>Most the promotion saving may take off, as a percent of the summed ticket list prices (0-50, default 50).</summary>
+    public int MaxPromotionDiscountPercent { get; set; } = 50;
+    /// <summary>Same cap on a showtime date that has a Holiday row (0-100, default 50).</summary>
+    public int MaxHolidayPromotionDiscountPercent { get; set; } = 50;
     public ICollection<Room> Rooms { get; set; } = new List<Room>();
 }

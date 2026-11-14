@@ -121,7 +121,7 @@ Relationships: `MovieTypeDetails` (genres join), `ShowTimes` (Cascade), `Comment
 MovieId (Cascade), UserId (Restrict), Score (int), Review (max 1000). **Unique** (MovieId, UserId).
 
 ### Theater
-Name (200), Address (500), City (100), Phone, Email, ImageUrl, IsActive, Latitude/Longitude (double?), MaxSeatsPerBooking (int, NOT NULL, default 10, valid 1-50 — most seats one **online** booking may hold at this theater; counter sales are not capped; added by the idempotent `COL_LENGTH` block in `upgrade_db.sql`). Nav `Rooms` (Cascade).
+Name (200), Address (500), City (100), Phone, Email, ImageUrl, IsActive, Latitude/Longitude (double?), MaxSeatsPerBooking (int, NOT NULL, default 10, valid 1-50 — most seats one **online** booking may hold at this theater; counter sales are not capped; added by the idempotent `COL_LENGTH` block in `upgrade_db.sql`), MaxPromotionDiscountPercent (int, NOT NULL, default 50, valid 0-50) and MaxHolidayPromotionDiscountPercent (int, NOT NULL, default 50, valid 0-100) — the most the promotion saving may take off, as a percent of the summed ticket list prices, on a normal day and on a showtime date with a `Holiday` row (own idempotent `COL_LENGTH` block in `upgrade_db.sql`). Nav `Rooms` (Cascade).
 
 ### Room
 Name (100), TheaterId (Cascade), RoomTypeId (Restrict), TotalRows/TotalColumns (int), Status (RoomStatus: Active=0/Maintenance=1/Inactive=2). Nav `Seats` (Cascade), `ShowTimeRooms`.
