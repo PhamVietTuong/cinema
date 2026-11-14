@@ -1,7 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { API_URL, SESSION, USER_URL, dismissSplashBanner, dropToken, login } from './helpers';
+import { API_URL, SESSION, USER_URL, blockExternalMedia, dismissSplashBanner, dropToken, login } from './helpers';
 
 test.use({ baseURL: USER_URL });
+
+// Seeded posters and theater images live on third-party hosts; never wait for them (see blockExternalMedia).
+test.beforeEach(async ({ page }) => {
+  await blockExternalMedia(page);
+});
 
 test.describe('CinemaUser: signed-in customer', () => {
   test.use({ storageState: SESSION.user });

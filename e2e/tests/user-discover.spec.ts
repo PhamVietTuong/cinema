@@ -1,7 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { USER_URL, expectRouteRenders } from './helpers';
+import { USER_URL, blockExternalMedia, expectRouteRenders } from './helpers';
 
 test.use({ baseURL: USER_URL });
+
+// Seeded posters and theater images live on third-party hosts; never wait for them (see blockExternalMedia).
+test.beforeEach(async ({ page }) => {
+  await blockExternalMedia(page);
+});
 
 test.describe('CinemaUser: public discovery pages', () => {
   for (const route of ['/', '/movies', '/theaters', '/promotions', '/membership']) {
