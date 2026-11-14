@@ -38,6 +38,8 @@ export class TheaterDetailComponent implements OnInit {
       latitude: [null, [Validators.min(-90), Validators.max(90)]],
       longitude: [null, [Validators.min(-180), Validators.max(180)]],
       maxSeatsPerBooking: [10, [Validators.required, Validators.min(1), Validators.max(50), Validators.pattern(/^\d+$/)]],
+      maxPromotionDiscountPercent: [50, [Validators.required, Validators.min(0), Validators.max(50), Validators.pattern(/^\d+$/)]],
+      maxHolidayPromotionDiscountPercent: [50, [Validators.required, Validators.min(0), Validators.max(100), Validators.pattern(/^\d+$/)]],
     });
   }
 
@@ -51,6 +53,7 @@ export class TheaterDetailComponent implements OnInit {
       this.form.patchValue({
         name: t.name, city: t.city, address: t.address, phone: t.phone, imageUrl: t.imageUrl,
         latitude: t.latitude, longitude: t.longitude, maxSeatsPerBooking: t.maxSeatsPerBooking,
+        maxPromotionDiscountPercent: t.maxPromotionDiscountPercent, maxHolidayPromotionDiscountPercent: t.maxHolidayPromotionDiscountPercent,
       });
       this._cdr.markForCheck();
     });

@@ -50,6 +50,20 @@
           <span class="ad-field-err">{{ 'theaters.form.maxSeatsInvalid' | translate }}</span>
         }
       </div>
+      <div class="ad-field">
+        <label class="ad-label" for="maxPromotionDiscountPercent">{{ 'theaters.form.promoCapLabel' | translate }}</label>
+        <input class="ad-input" id="maxPromotionDiscountPercent" type="number" step="1" min="0" max="50" formControlName="maxPromotionDiscountPercent" placeholder="50">
+        @if (form.get('maxPromotionDiscountPercent')?.touched && form.get('maxPromotionDiscountPercent')?.invalid) {
+          <span class="ad-field-err">{{ 'theaters.form.promoCapInvalid' | translate }}</span>
+        }
+      </div>
+      <div class="ad-field">
+        <label class="ad-label" for="maxHolidayPromotionDiscountPercent">{{ 'theaters.form.holidayPromoCapLabel' | translate }}</label>
+        <input class="ad-input" id="maxHolidayPromotionDiscountPercent" type="number" step="1" min="0" max="100" formControlName="maxHolidayPromotionDiscountPercent" placeholder="50">
+        @if (form.get('maxHolidayPromotionDiscountPercent')?.touched && form.get('maxHolidayPromotionDiscountPercent')?.invalid) {
+          <span class="ad-field-err">{{ 'theaters.form.holidayPromoCapInvalid' | translate }}</span>
+        }
+      </div>
       <div class="ad-field full-span">
         <label class="ad-label">{{ 'theaters.detail.imageLabel' | translate }}</label>
         <input class="ad-input" formControlName="imageUrl" [placeholder]="'theaters.detail.imagePlaceholder' | translate">

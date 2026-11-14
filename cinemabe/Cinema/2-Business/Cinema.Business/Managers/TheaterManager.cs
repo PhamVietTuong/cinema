@@ -74,6 +74,7 @@ public class TheaterManager : ITheaterManager
     public async Task<TheaterDTO> CreateAsync(CreateTheaterRequest request)
     {
         ValidateMaxSeats(request.MaxSeatsPerBooking);
+        ValidatePromotionCaps(request.MaxPromotionDiscountPercent, request.MaxHolidayPromotionDiscountPercent);
         var theater = request.ToNewEntity<CreateTheaterRequest, Theater>();
         await _uow.TheaterStore.CreateAsync(theater);
         await _seatTypes.EnsureDefaultsAsync(theater.Id);
@@ -88,7 +89,17 @@ public class TheaterManager : ITheaterManager
             throw new KeyNotFoundException($"Theater {request.Id} not found.");
         }
         ValidateMaxSeats(request.MaxSeatsPerBooking);
+        ValidatePromotionCaps(request.MaxPromotionDiscountPercent, request.MaxHolidayPromotionDiscountPercent);
         theater.PatchEntity<Theater, UpdateTheaterRequest>(request);
+        // PatchEntity skips nullable-to-int properties, so the optional caps are applied here; null keeps the stored value.
+        if (request.MaxPromotionDiscountPercent.HasValue)
+        {
+            theater.MaxPromotionDiscountPercent = request.MaxPromotionDiscountPercent.Value;
+        }
+        if (request.MaxHolidayPromotionDiscountPercent.HasValue)
+        {
+            theater.MaxHolidayPromotionDiscountPercent = request.MaxHolidayPromotionDiscountPercent.Value;
+        }
         await _uow.TheaterStore.UpdateAsync(theater);
         await _uow.SaveChangesAsync();
         return ToTheaterDTO(theater);
@@ -104,6 +115,18 @@ public class TheaterManager : ITheaterManager
         theater.IsActive = false;
         await _uow.TheaterStore.UpdateAsync(theater);
         await _uow.SaveChangesAsync();
+    }
+
+    internal static void ValidatePromotionCaps(int? maxPercent, int? maxHolidayPercent)
+    {
+        if (maxPercent < 0 || maxPercent > 50)
+        {
+            throw new InvalidOperationException("Max promotion discount must be between 0 and 50 percent.");
+        }
+        if (maxHolidayPercent < 0 || maxHolidayPercent > 100)
+        {
+            throw new InvalidOperationException("Max holiday promotion discount must be between 0 and 100 percent.");
+        }
     }
 
     private static void ValidateMaxSeats(int maxSeatsPerBooking)
