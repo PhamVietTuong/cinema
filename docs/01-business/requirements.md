@@ -41,7 +41,7 @@ This is a capability inventory of what exists today (verified against code), not
 | Area | Capability |
 |---|---|
 | Catalog | Full CRUD: movies (incl. cast/crew credits, genres), theaters, rooms, room types (+ patron-category price overrides), seat types (rename/recolor only — no create/delete), patron categories, time slots, ticket-price matrix, showtimes, age restrictions, movie types, holidays, people (cast/crew), food & drink (incl. combos) |
-| Pricing & promotions | Manage discounts (code-based), promotion programs (fixed-price/percent-off, schedule-scoped, auto-apply rules), per-theater loyalty rates (default 1,000 VND = 1 point; 100 points = 1,000 VND) |
+| Pricing & promotions | Manage discounts (code-based), promotion programs (fixed-price/percent-off, schedule-scoped, auto-apply rules), per-theater loyalty rates (default 1,000 VND = 1 point; 100 points = 1,000 VND), per-theater promotion discount caps (max percent of ticket list price a promotion may take off: normal 0-50, holiday 0-100, default 50; points are not capped) |
 | Content ops | Moderate comments (approve/reject/delete), manage news, manage notification templates, manage splash banners, upload images |
 | Users | List/create/update/delete users, assign roles (theater-scoped roles require a valid theater) |
 | Invoices | List invoices, override invoice status (constrained transitions; see business-rules), delete an invoice (restores food stock, redeemed points if it was Pending), view revenue reports (by day/movie/theater) |
