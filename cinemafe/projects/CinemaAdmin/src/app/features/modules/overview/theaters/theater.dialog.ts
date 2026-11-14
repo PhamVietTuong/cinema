@@ -43,6 +43,8 @@ export class TheaterDialog {
       latitude: [data.theater?.latitude ?? null, [Validators.min(-90), Validators.max(90)]],
       longitude: [data.theater?.longitude ?? null, [Validators.min(-180), Validators.max(180)]],
       maxSeatsPerBooking: [data.theater?.maxSeatsPerBooking ?? 10, [Validators.required, Validators.min(1), Validators.max(50), Validators.pattern(/^\d+$/)]],
+      maxPromotionDiscountPercent: [data.theater?.maxPromotionDiscountPercent ?? 50, [Validators.required, Validators.min(0), Validators.max(50), Validators.pattern(/^\d+$/)]],
+      maxHolidayPromotionDiscountPercent: [data.theater?.maxHolidayPromotionDiscountPercent ?? 50, [Validators.required, Validators.min(0), Validators.max(100), Validators.pattern(/^\d+$/)]],
       imageUrl: [data.theater?.imageUrl ?? ''],
     });
   }

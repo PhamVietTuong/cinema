@@ -77,6 +77,29 @@
         </div>
       </div>
 
+      <div class="dlg-row dlg-row--2">
+        <div class="dlg-field">
+          <label class="dlg-label" for="th-promoCap">{{ 'theaters.form.promoCapLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="th-promoCap" type="number" step="1" min="0" max="50" formControlName="maxPromotionDiscountPercent" placeholder="50">
+            <mat-hint>{{ 'theaters.form.promoCapHint' | translate }}</mat-hint>
+            @if (form.controls['maxPromotionDiscountPercent'].invalid) {
+              <mat-error>{{ 'theaters.form.promoCapInvalid' | translate }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        <div class="dlg-field">
+          <label class="dlg-label" for="th-holidayPromoCap">{{ 'theaters.form.holidayPromoCapLabel' | translate }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput id="th-holidayPromoCap" type="number" step="1" min="0" max="100" formControlName="maxHolidayPromotionDiscountPercent" placeholder="50">
+            <mat-hint>{{ 'theaters.form.holidayPromoCapHint' | translate }}</mat-hint>
+            @if (form.controls['maxHolidayPromotionDiscountPercent'].invalid) {
+              <mat-error>{{ 'theaters.form.holidayPromoCapInvalid' | translate }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+
       <div class="dlg-row">
         <div class="dlg-field">
           <label class="dlg-label" for="th-imageUrl">{{ 'theaters.form.imageLabel' | translate }}</label>
