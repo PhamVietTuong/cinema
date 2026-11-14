@@ -24,7 +24,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Item | Status | Size | Notes |
 |---|---|---|---|
 | E-invoice and VAT | New | L | No tax invoice or VAT breakdown exists. Rates and rules are not researched yet (`01-business/market-research.md`, `UNVERIFIED`). |
-| Data retention and anonymisation | New | M | No retention rule for phone, email, points or `AuditLog`; no way for a customer to have data removed. Consent evidence already exists. |
+| Data retention and anonymisation | New | M | No retention rule for phone, email, points or `AuditLog`; no self-service removal for a customer (an Admin can delete a user through `IdentityController.DeleteUser`). Consent evidence already exists. |
 | VIP seat kinds | New | M | `SeatKind` has `Standard`, `Double` and `Aisle`; no VIP kind. Scope not defined. |
 | Holiday pricing review | New | S | Holiday pricing is unchanged (a `Holiday` multiplier). The owner parked mapping holidays to the weekend row or per-holiday per-slot prices; revisit later. |
 | Minimum-discount groups (Decree 131/2022 article 10) | New | M | Not enforced: nothing forces at least 20% off for the listed groups. See `01-business/market-research.md`. |
@@ -80,7 +80,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 | Feature | Status | Size | Notes / open questions |
 |---|---|---|---|
 | Messaging (email/SMS) | Partial | M | Providers are implemented but unvalidated against real accounts: `SmtpNotificationService` (email) and `TwilioSmsNotificationService` (SMS) take typed `SmtpOptions`/`TwilioOptions` validated at startup (a half-filled section fails the host start), normalise phone numbers to E.164 (`0900123456` -> `+84900123456`) and enforce send timeouts; unconfigured falls back to the dev-log senders. No outbox/retry queue (a failed send is logged, not retried). |
-| Showtime reminders | Done | - | `ShowtimeReminderService` runs every 5 minutes and reminds about 60 minutes before start (`business-rules.md`); delivery depends on the messaging providers above. |
+| Showtime reminders | Done | - | `ShowtimeReminderService` runs every 5 minutes and reminds about 60 minutes before start (`03-technical/architecture.md`, `01-business/requirements.md` NFR-16); delivery depends on the messaging providers above. |
 | Multilingual (i18n) | Partial | L | `@ngx-translate/core` with Vietnamese and English files per app; coverage of every screen is not audited. |
 | Support chatbot | Done | - | Rule-based, no LLM/API key: keyword-matched against a canned FAQ (booking, showtimes, cancel, membership, nearby theater, payment, combo) in `CinemaUser/shared/chatbot`. |
 

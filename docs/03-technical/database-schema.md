@@ -21,7 +21,7 @@ Every entity inherits `BaseEntity`: `Id` (`Guid`, client-generated, not DB-ident
 
 Schema changes are hand-written into `cinemabe/sql/create_db.sql` / `upgrade_db.sql` (see root `CLAUDE.md`), not generated via `dotnet ef migrations add` — the Fluent `Configurations/` below still describe the model EF expects, kept in sync by hand.
 
-`upgrade_db.sql` also holds two guarded, destructive, one-shot purge blocks (they delete invoices together with their tickets, payments, food lines and `StockMovement` rows). Their scope, guards and what they do not reverse are recorded in [`../05-process/history.md`](../05-process/history.md). Apply `upgrade_db.sql` to the local dev database only; any other environment needs the owner's fresh confirmation and a verified backup first.
+`upgrade_db.sql` also holds two guarded, destructive purge blocks, the child-ticket one a one-shot (marker `purge_child_ticket_done`) and the gift-card one idempotent (guarded by `COL_LENGTH`/`OBJECT_ID`); they delete invoices together with their tickets, payments, food lines and `StockMovement` rows). Their scope, guards and what they do not reverse are recorded in [`../05-process/history.md`](../05-process/history.md). Apply `upgrade_db.sql` to the local dev database only; any other environment needs the owner's fresh confirmation and a verified backup first.
 
 ## 1. Identity / Users
 

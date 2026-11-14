@@ -93,18 +93,18 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 
 ### Movies / Theaters / ShowTimes (no `#region`, top of file)
 
-| Action | Verb | Auth | Request | Response |
-|---|---|---|---|---|
-| `UploadImage` | POST | Admin | `IFormFile` (jpg/png/webp/gif, ≤5MB) | `UploadResultDTO{Url}` |
-| `GetRecommendedMovies` | POST | anonymous | `count` query (default 8) | `List<MovieDTO>` — personalized if signed in |
-| `GetMovies` | POST | anonymous | `PagingSearchDTO` (filters `search`, `director`, `movieTypeId`, `language`, `theaterId`, `date`, `status` = `now`/`coming`) | `DefaultSearchResults<MovieDTO>` |
-| `GetNowShowingMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsNowShowing` filter |
-| `GetComingSoonMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsComingSoon` filter |
-| `GetMovie` | GET | anonymous | `id` query | `MovieDetailDTO` (personalized `CanReview` if signed in) |
-| `GetMovieBySlug` | GET | anonymous | `slug` query | `MovieDetailDTO` |
-| `CreateMovie` | POST | Admin | `CreateMovieRequest` | `MovieDetailDTO` |
-| `UpdateMovie` | PUT | Admin | `UpdateMovieRequest` | `MovieDetailDTO` (slug never regenerated) |
-| `DeleteMovie` | DELETE | Admin | `id` query | 204 — soft delete (`IsActive=false`) |
+| Action | Verb | Auth | Request | Response | Notes |
+|---|---|---|---|---|---|
+| `UploadImage` | POST | Admin | `IFormFile` (jpg/png/webp/gif, ≤5MB) | `UploadResultDTO{Url}` | |
+| `GetRecommendedMovies` | POST | anonymous | `count` query (default 8) | `List<MovieDTO>` — personalized if signed in | |
+| `GetMovies` | POST | anonymous | `PagingSearchDTO` (filters `search`, `director`, `movieTypeId`, `language`, `theaterId`, `date`, `status` = `now`/`coming`) | `DefaultSearchResults<MovieDTO>` | |
+| `GetNowShowingMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsNowShowing` filter | |
+| `GetComingSoonMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsComingSoon` filter | |
+| `GetMovie` | GET | anonymous | `id` query | `MovieDetailDTO` (personalized `CanReview` if signed in) | |
+| `GetMovieBySlug` | GET | anonymous | `slug` query | `MovieDetailDTO` | |
+| `CreateMovie` | POST | Admin | `CreateMovieRequest` | `MovieDetailDTO` | |
+| `UpdateMovie` | PUT | Admin | `UpdateMovieRequest` | `MovieDetailDTO` (slug never regenerated) | |
+| `DeleteMovie` | DELETE | Admin | `id` query | 204 — soft delete (`IsActive=false`) | |
 | `AddComment` | POST | `[Authorize]` | `movieId` query + `AddCommentRequest{Content, ParentId?}` | `CommentDTO` | gated by `EnsureCanReviewAsync` (must have watched the movie, else 403); content 1-2000 chars (400); `ParentId` must be an approved top-level comment of the same movie (400) |
 | `RateMovie` | POST | `[Authorize]` | `movieId` query + `RateMovieRequest{Score, Review?}` | 204 | same watch-gate (403); `Score` must be 1-10 (400); `Review` max 1000, `null` keeps the saved review, blank clears it; one row per (movie, user) |
 | `GetMovieComments` | POST | anonymous | `movieId` query + `PagingSearchDTO` | `DefaultSearchResults<CommentDTO>` | approved top-level comments newest first, each with replies; `isMine` set for a signed-in caller |
@@ -112,11 +112,11 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 | `DeleteOwnComment` | DELETE | `[Authorize]` | `commentId` query | 204 | author only (403 otherwise); its replies are removed too |
 | `SearchShowTimes` | POST | anonymous | `PagingSearchDTO` (filters `movieId`, `theaterId`, `movieTypeId`, `language`, `date` yyyy-MM-dd, `timeFrom`/`timeTo` HH:mm) | `DefaultSearchResults<ShowTimeSearchResultDTO>` | upcoming showtime x room rows ordered by start; `timeFrom` after `timeTo` is 400 |
 | `GetMovieLanguages` | GET | anonymous | - | `string[]` | distinct languages of active movies |
-| `GetTheaters` | POST | anonymous | `PagingSearchDTO` | `DefaultSearchResults<TheaterDTO>` |
-| `GetTheater` | GET | anonymous | `id` query | `TheaterDTO` |
-| `GetTheatersByMovie` | POST | anonymous | `PagingSearchDTO` | theaters currently screening a movie |
-| `CreateTheater` / `UpdateTheater` / `DeleteTheater` | POST/PUT/DELETE | Admin | `Create/UpdateTheaterRequest` / `id` | `TheaterDTO` / 204 — requests carry `MaxSeatsPerBooking` (1-50, default 10, 400 otherwise), `MaxPromotionDiscountPercent` (0-50) and `MaxHolidayPromotionDiscountPercent` (0-100); both default to 50 on create; on update an omitted (null) field keeps the stored value, and a value out of range is a 400 (`"Max promotion discount must be between 0 and 50 percent."` / `"Max holiday promotion discount must be between 0 and 100 percent."`) |
-| `GetShowTimes` | POST | anonymous | `PagingSearchDTO` | `DefaultSearchResults<ShowTimeListDTO>` |
+| `GetTheaters` | POST | anonymous | `PagingSearchDTO` | `DefaultSearchResults<TheaterDTO>` | |
+| `GetTheater` | GET | anonymous | `id` query | `TheaterDTO` | |
+| `GetTheatersByMovie` | POST | anonymous | `PagingSearchDTO` | theaters currently screening a movie | |
+| `CreateTheater` / `UpdateTheater` / `DeleteTheater` | POST/PUT/DELETE | Admin | `Create/UpdateTheaterRequest` / `id` | `TheaterDTO` / 204 — requests carry `MaxSeatsPerBooking` (1-50, default 10, 400 otherwise), `MaxPromotionDiscountPercent` (0-50) and `MaxHolidayPromotionDiscountPercent` (0-100); both default to 50 on create; on update an omitted (null) field keeps the stored value, and a value out of range is a 400 (`"Max promotion discount must be between 0 and 50 percent."` / `"Max holiday promotion discount must be between 0 and 100 percent."`) | |
+| `GetShowTimes` | POST | anonymous | `PagingSearchDTO` | `DefaultSearchResults<ShowTimeListDTO>` | |
 
 ### Comment moderation (admin, inline before numbered regions)
 

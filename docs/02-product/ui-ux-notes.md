@@ -78,7 +78,7 @@ Current roles are exactly `Admin`, `Customer`, `TheaterStaff` (see business doc)
 - **Counter sale (POS)**: `pos.component.ts` — quote then sell a ticket (always resolves to a Paid invoice directly, never leaves a Pending one), reuses the shared seat map (`room-seat-picker`) and `counter-cart`/`counter-summary`/`counter-tender-panel` core services.
 - **Gate**: `gate-scan` (QR scan; a refused scan is still HTTP 200 with an `Outcome` reason) and `gate-lookup` (find today's paid tickets by invoice code or phone).
 - **Incidents / blocking**: report/list/detail an incident; `BlockSeat`/`BlockRoom`, and resolve-with-unblock, require the `Approvers` role (Admin only); non-approvers have no PIN-based alternate path.
-- **Schedule board**: today's rooms/showtimes + status, live via `staff-live.service` (SignalR).
+- **Schedule board**: today's rooms/showtimes + status, loaded when the page opens and reloaded when an Admin switches the topbar theater; there is no live push (`StaffHub` only sends `IncidentRaised`).
 
 ## Shared components (CinemaLib) — used by 2+ apps
 
