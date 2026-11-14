@@ -139,4 +139,10 @@ describe('late-night warning helpers', () => {
     expect(exceedsPrecedingSlot(1.2, [Mon, Tue], p)).toBe(true);
     expect(exceedsPrecedingSlot(1.2, [Mon], p)).toBe(false);
   });
+
+  it('ignores a wrapping slot and compares against the slot before the late-night one', () => {
+    const wrapping = slot('ts-w', 'Wrap', '20:00', '02:00');
+    const p = precedingMultipliers([morning, evening, wrapping, late], [price('ts-e', Mon, 1.2), price('ts-w', Mon, 2)], late)!;
+    expect(p[Mon]).toBe(1.2);
+  });
 });
