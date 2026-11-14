@@ -15,6 +15,7 @@
 | `secrets` | gitleaks over the **full git history** with `.gitleaks.toml` (default rules + an allow-list of documented false positives). `continue-on-error` until a clean run is seen on master, then flip to blocking. |
 | `docker` | `docker build ./cinemabe` (build only, no push) so a broken Dockerfile fails the PR. |
 | `frontend` | `npm ci --legacy-peer-deps`, `npm run lint:ci`, `npm audit --audit-level=high`, builds `CinemaLib`, `ng test` for all four projects, production builds of the three apps, `frontend-coverage` artifact. |
+| `db-upgrade` (15 min) | `mssql/server:2022-latest` service; `cinemabe/sql/tests/run-upgrade-harness.sh` builds the OLD `create_db.sql` from git history (commit `3656d73`, needs `fetch-depth: 0`), seeds gift-card / child-ticket / consent rows, runs `upgrade_db.sql` twice and asserts the result, so the destructive guarded blocks are tested. |
 | `e2e` (30 min) | `mssql/server:2022-latest` service, create -> upgrade -> insert SQL, seed accounts, start API + three apps, Playwright suite, HTML report. |
 
 ### Ratchets (numbers may only go down)
