@@ -355,6 +355,16 @@ describe('BookingCheckoutComponent', () => {
       expect(c.pointsToEarn).toBe(0);
     });
 
+    it('rounds the amount after the promotion to whole VND before the points maximum', () => {
+      const c = build(state);
+      c.pointsBalance = 1500;
+      apply(c, 100000.4);
+
+      expect(c.afterPromotion).toBe(175000);
+      expect(c.maxRedeemablePoints).toBe(175);
+      expect(c.finalTotal).toBe(175000);
+    });
+
     it('ignores the amount of a code that failed validation', () => {
       const c = build(state);
       c.discountValid = false;

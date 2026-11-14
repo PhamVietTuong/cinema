@@ -157,7 +157,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   /** Order total after the applied promotion code, never below 0. The server applies the promotion
    * first and redeems points only against what remains, so every amount below builds on this one. */
   get afterPromotion(): number {
-    return Math.max(0, this.grandTotal - (this.discountValid ? this.discountAmount : 0));
+    // Whole VND, like the server, which rounds before redeeming points.
+    return Math.round(Math.max(0, this.grandTotal - (this.discountValid ? this.discountAmount : 0)));
   }
 
   get maxRedeemablePoints(): number {
