@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, inject, viewChild } from '@angular/core';
 import { SharedModule } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -17,6 +17,8 @@ interface ChatMsg { from: 'bot' | 'user'; text: string; }
 })
 export class ChatbotComponent {
   private _translate = inject(TranslateService);
+  private _injector = inject(Injector);
+  private readonly _body = viewChild<ElementRef<HTMLElement>>('body');
 
   open = false;
   input = '';
@@ -47,6 +49,8 @@ export class ChatbotComponent {
     this.open = !this.open;
     if (this.open && !this.messages.length) {
       this._bot('chatbot.greeting');
+    } else if (this.open) {
+      this._scrollToBottom();
     }
   }
 
@@ -55,6 +59,7 @@ export class ChatbotComponent {
     const t = (text ?? this.input).trim();
     if (!t) { return; }
     this.messages.push({ from: 'user', text: t });
+    this._scrollToBottom();
     this.input = '';
     this._bot(this._answer(matchText ?? t));
   }
@@ -70,5 +75,16 @@ export class ChatbotComponent {
   }
   private _bot(key: string): void {
     this.messages.push({ from: 'bot', text: this._translate.instant(key) });
+    this._scrollToBottom();
+  }
+
+  /** Scrolls the message list to the newest message once the view has rendered (zoneless-safe). */
+  private _scrollToBottom(): void {
+    afterNextRender(() => {
+      const el = this._body()?.nativeElement;
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+      }
+    }, { injector: this._injector });
   }
 }

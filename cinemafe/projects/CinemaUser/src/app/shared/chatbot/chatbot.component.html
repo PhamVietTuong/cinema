@@ -10,7 +10,7 @@
     <button mat-icon-button type="button" class="cb-close" (click)="toggle()" [attr.aria-label]="'common.close' | translate"><mat-icon>close</mat-icon></button>
   </div>
 
-  <div class="cb-body">
+  <div class="cb-body" #body>
     <div class="cb-msg" *ngFor="let m of messages" [class.cb-msg--user]="m.from === 'user'">
       <span class="cb-bubble">{{ m.text }}</span>
     </div>
