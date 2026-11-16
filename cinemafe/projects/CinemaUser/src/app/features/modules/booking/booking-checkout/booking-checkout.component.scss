@@ -329,13 +329,18 @@
 @include m.tablet-small {
   .method-row, .disc-row { min-height: 44px; }
   .btn-back { min-height: 44px; }
+  // Breadcrumb links: a 44px touch target; the negative margin keeps the row looking the same.
+  .breadcrumb a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin: 0 -6px; }
+  // Room for the floating chat button at the end of the page, so it never covers the total.
+  .checkout-page { padding-bottom: 88px; }
   .ticket-info-grid { grid-template-columns: 1fr; }
 }
 
 @include m.phone {
   .page-header-inner { padding: 0 12px; }
   .page-title { font-size: 1.15rem; }
-  .checkout-page { padding: 0 12px 24px; }
+  // The bottom padding leaves room for the floating chat button, which covered the total at the end of the page.
+  .checkout-page { padding: 0 12px 88px; }
   .form-card, .summary-card { padding: 16px; }
   .form-card.center { padding: 28px 16px; }
   .action-row { flex-direction: column-reverse; }

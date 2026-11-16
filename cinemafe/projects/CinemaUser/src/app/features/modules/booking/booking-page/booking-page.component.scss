@@ -27,6 +27,10 @@
 @include m.tablet {
   .page-header-inner { padding-left: 20px; padding-right: 20px; }
 }
+@include m.tablet-small {
+  // Breadcrumb links: a 44px touch target; the negative margin keeps the row looking the same.
+  .breadcrumb a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin: 0 -6px; }
+}
 @include m.phone {
   .page-header-inner { padding-left: 12px; padding-right: 12px; }
   .page-title { font-size: var(--cx-text-lg); overflow-wrap: anywhere; }

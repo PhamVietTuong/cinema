@@ -20,6 +20,8 @@
 }
 .panel-close {
   display: flex; align-items: center; justify-content: center;
+  // flex: none, or the header's flex row squeezes it narrower than its own 44px touch size on a phone.
+  flex: none;
   width: 32px; height: 32px; border-radius: var(--ml-r-sm); cursor: pointer;
   background: var(--ml-panel); border: 1px solid var(--ml-rule); color: var(--ml-muted);
   &:hover { border-color: var(--ml-action-ring); color: var(--ml-action-strong); }

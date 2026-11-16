@@ -41,6 +41,13 @@
   // literal square needs no override; the slight radius just softens the corners.
   border-radius: 8px;
   color: #fff;
+  // A full 44px touch target (the Material icon button is 40 x 30 once the dialog shrinks it).
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
   z-index: 1;
   animation: sb-fade-in 280ms ease-out 180ms both;
   transition: transform 180ms ease, background-color 220ms ease;
