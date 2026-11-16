@@ -608,8 +608,7 @@ N'<div style="background:#f7f2ea;padding:32px 12px;font-family:Work Sans,Segoe U
         <div style="font-size:14px;margin:0 0 16px;">{{TicketTypes}}</div>
         <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 6px;">Ghế</div>
         <div style="margin:0 0 16px;"><span style="display:inline-block;background:#e8e0d0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;">{{SeatLabels}}</span></div>
-        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Bắp nước</div>
-        <div style="font-size:14px;margin:0 0 16px;">{{Concessions}}</div>
+        {{ConcessionsSection}}
         <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Tổng tiền</div>
         <div style="font-size:16px;font-weight:700;margin:0 0 24px;">{{TotalAmount}}</div>
         <div style="text-align:center;">{{QrImages}}</div>
@@ -672,8 +671,7 @@ SET [Body] = N'<div style="background:#f7f2ea;padding:32px 12px;font-family:Work
         <div style="font-size:14px;margin:0 0 16px;">{{TicketTypes}}</div>
         <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 6px;">Ghế</div>
         <div style="margin:0 0 16px;"><span style="display:inline-block;background:#e8e0d0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;">{{SeatLabels}}</span></div>
-        <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Bắp nước</div>
-        <div style="font-size:14px;margin:0 0 16px;">{{Concessions}}</div>
+        {{ConcessionsSection}}
         <div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Tổng tiền</div>
         <div style="font-size:16px;font-weight:700;margin:0 0 24px;">{{TotalAmount}}</div>
         <div style="text-align:center;">{{QrImages}}</div>
@@ -692,6 +690,16 @@ SET [Body] = N'<div style="background:#f7f2ea;padding:32px 12px;font-family:Work
 WHERE [Code] = N'BookingConfirmationEmail'
   AND [Body] LIKE N'%max-width:600px;margin:0 auto;background:#faf6f0;padding:24px;%'
   AND [Body] NOT LIKE N'%icon-check@cinema%';
+
+-- Hide the "Bắp nước" block when the booking has no concessions: swap the stock label + {{Concessions}} lines for
+-- {{ConcessionsSection}} (empty without food). Only the exact stock lines are replaced; other customizations stay.
+UPDATE [Template]
+SET [Body] = REPLACE([Body], N'<div style="font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;">Bắp nước</div>
+        <div style="font-size:14px;margin:0 0 16px;">{{Concessions}}</div>', N'{{ConcessionsSection}}'),
+    [LastUpdatedTime] = GETUTCDATE()
+WHERE [Code] = N'BookingConfirmationEmail'
+  AND [Body] LIKE N'%<div style="font-size:14px;margin:0 0 16px;">{{Concessions}}</div>%'
+  AND [Body] NOT LIKE N'%{{ConcessionsSection}}%';
 
 IF NOT EXISTS (SELECT 1 FROM [Template] WHERE [Code] = N'BookingConfirmationSms')
 BEGIN
