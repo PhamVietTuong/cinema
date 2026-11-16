@@ -222,6 +222,7 @@
       "pointsBalance": "Bạn có {{points}} điểm khả dụng",
       "pointsPlaceholder": "Số điểm muốn đổi",
       "pointsHint": "Tối đa {{max}} điểm (1 điểm = {{value}}đ)",
+      "promoDiscount": "Giảm giá khuyến mãi",
       "pointsDiscount": "Giảm giá từ điểm ({{points}} điểm)",
       "pointsRate": "{{spend}}đ chi tiêu = 1 điểm · {{points}} điểm = {{amount}}đ tại rạp này",
       "pointsToEarn": "Bạn có thể nhận tối đa {{points}} điểm từ lần thanh toán này"
@@ -257,7 +258,9 @@
       "checkBookings": "Kiểm Tra Vé Của Tôi",
       "cancelledTitle": "Đơn đặt vé đã hết hạn hoặc bị hủy",
       "cancelledSub": "Đơn này chưa được thanh toán kịp thời hoặc thanh toán thất bại nên ghế đã được trả lại. Nếu tiền đã bị trừ, vui lòng liên hệ rạp kèm mã đặt vé.",
-      "bookAgain": "Đặt Vé Lại"
+      "bookAgain": "Đặt Vé Lại",
+      "failedTitle": "Thanh toán chưa hoàn tất",
+      "failedSub": "Thanh toán đã bị hủy hoặc bị từ chối nên chưa có khoản tiền nào bị trừ. Ghế và số điểm bạn đã dùng được giữ lại trong vài phút và sẽ tự động hoàn trả nếu đơn không được thanh toán."
     },
     "errors": {
       "ageNotConfirmedGeneric": "Vui lòng tích xác nhận độ tuổi trước khi thanh toán.",

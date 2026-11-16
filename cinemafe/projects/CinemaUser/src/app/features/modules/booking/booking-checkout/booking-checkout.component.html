@@ -148,6 +148,13 @@
           <div class="info-value">{{ foodSummary }}</div>
         </div>
 
+        @if (discountValid && discountAmount > 0) {
+          <div class="summary-row">
+            <span>{{ 'booking.summary.promoDiscount' | translate }}</span>
+            <span>−{{ discountAmount | number:'1.0-0' }}đ</span>
+          </div>
+        }
+
         <div class="summary-row" *ngIf="pointsToRedeem > 0">
           <span>{{ 'booking.summary.pointsDiscount' | translate:{ points: pointsToRedeem } }}</span>
           <span>−{{ pointsDiscount | number:'1.0-0' }}đ</span>

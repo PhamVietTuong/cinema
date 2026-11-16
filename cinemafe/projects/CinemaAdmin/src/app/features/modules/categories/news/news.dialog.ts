@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
+import { toDateInput } from '../../../../shared/date-input';
 
 type Dto = CinemaServiceAgent.NewsDTO;
 
@@ -37,7 +38,7 @@ export class NewsDialog {
     this.form = this._fb.group({
       title: [data.news?.title ?? '', Validators.required],
       author: [data.news?.author ?? ''],
-      publishedAt: [data.news?.publishedAt ? new Date(data.news.publishedAt).toISOString().split('T')[0] : ''],
+      publishedAt: [toDateInput(data.news?.publishedAt)],
       thumbnailUrl: [data.news?.thumbnailUrl ?? ''],
       content: [data.news?.content ?? '', Validators.required],
       isPublished: [data.news?.isPublished ?? false],
