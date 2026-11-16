@@ -13,7 +13,7 @@ Size: S (~half day) · M (1-2 days) · L (3+ days / infra)
 
 - Market-fit fixes (2026-11-14): age rating enforced online and at the gate (confirmation from 13, K-rated guardian banner), online sale checks (open showtime, per-theater `MaxSeatsPerBooking`), ID-check categories counter-only online.
 - Discount simplification (2026-11-14): one `PromotionProgram` per invoice plus points redemption; no tier percentage, no gift cards.
-- Per-theater promotion cap (2026-11-14): `MaxPromotionDiscountPercent` (0-50) and `MaxHolidayPromotionDiscountPercent` (0-100) per theater.
+- Per-theater promotion cap (added 2026-11-14) removed again (2026-11-16): a promotion saving is no longer limited per theater; only a program's own `MaxDiscountAmount` caps it.
 - Late-night price seed 0.85 with an admin warning (2026-11-14).
 - Consent and age-attestation records in `AuditLog`, promotional email opt-in (2026-11-14).
 - Multi-theater catalog: seat types, food & drinks, rooms are per-theater; theater detail page with tabs; ticket pricing by room type x seat type x time slot x holiday; screening room types; seat-map editor.

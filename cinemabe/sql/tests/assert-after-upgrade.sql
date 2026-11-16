@@ -63,11 +63,12 @@ IF COL_LENGTH('dbo.MemberShip', 'DiscountPercent') IS NOT NULL BEGIN THROW 50015
 IF COL_LENGTH('dbo.PromotionProgram', 'StacksWithMembershipDiscount') IS NOT NULL BEGIN THROW 50016, 'PromotionProgram.StacksWithMembershipDiscount still exists', 1; END
 PRINT 'ok: GiftCard table and gift-card / discount columns dropped';
 
--- 7. Theater columns added with their defaults
-IF NOT EXISTS (SELECT 1 FROM [Theater] WHERE [Id] = '10000000-0000-0000-0000-000000000001'
-               AND [MaxSeatsPerBooking] = 10 AND [MaxPromotionDiscountPercent] = 50 AND [MaxHolidayPromotionDiscountPercent] = 50)
-BEGIN THROW 50017, 'Theater MaxSeatsPerBooking / MaxPromotionDiscountPercent / MaxHolidayPromotionDiscountPercent not 10/50/50', 1; END
-PRINT 'ok: Theater limits are 10 / 50 / 50';
+-- 7. Theater column added with its default; the removed promotion-cap columns are not there
+IF NOT EXISTS (SELECT 1 FROM [Theater] WHERE [Id] = '10000000-0000-0000-0000-000000000001' AND [MaxSeatsPerBooking] = 10)
+BEGIN THROW 50017, 'Theater MaxSeatsPerBooking not 10', 1; END
+IF COL_LENGTH('dbo.Theater', 'MaxPromotionDiscountPercent') IS NOT NULL OR COL_LENGTH('dbo.Theater', 'MaxHolidayPromotionDiscountPercent') IS NOT NULL
+BEGIN THROW 50040, 'Theater promotion-cap columns still exist', 1; END
+PRINT 'ok: Theater MaxSeatsPerBooking is 10 and the promotion-cap columns are gone';
 
 -- 8. consent default is 0 under its name; the stored value is unchanged (old default was 1)
 DECLARE @dcName sysname, @dcDef nvarchar(100);

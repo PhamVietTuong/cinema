@@ -97,48 +97,27 @@ describe('BookingCheckoutComponent', () => {
     });
   });
 
-  describe('capped promotion notice', () => {
-    it('hands the cap percent of a capped code over from the server answer', () => {
+  describe('discount code', () => {
+    it('stores the applied code and its saving from the dialog result', () => {
       const c = build(state);
-      payment.validateDiscountCode.mockReturnValue(of({ valid: true, discountAmount: 40000, capped: true, capPercent: 50 }));
-
-      let result: { capped?: boolean; capPercent?: number } | undefined;
-      c.checkDiscountCode('SUMMER').subscribe(r => (result = r));
-
-      expect(result?.capped).toBe(true);
-      expect(result?.capPercent).toBe(50);
-    });
-
-    it('reports not capped when the cap did not reduce the saving', () => {
-      const c = build(state);
-      payment.validateDiscountCode.mockReturnValue(of({ valid: true, discountAmount: 20000, capped: false, capPercent: 0 }));
-
-      let result: { capped?: boolean; capPercent?: number } | undefined;
-      c.checkDiscountCode('SUMMER').subscribe(r => (result = r));
-
-      expect(result?.capped).toBe(false);
-      expect(result?.capPercent).toBe(0);
-    });
-
-    it('stores the cap fields of the dialog result on the checkout', () => {
-      const c = build(state);
-      dialog.open.mockReturnValue({ afterClosed: () => of({ code: 'SUMMER', valid: true, message: 'ok', discountAmount: 40000, capPercent: 50, capped: true }) });
+      dialog.open.mockReturnValue({ afterClosed: () => of({ code: 'SUMMER', valid: true, message: 'ok', discountAmount: 40000 }) });
 
       c.openDiscountDialog();
 
-      expect(c.discountCapped).toBe(true);
-      expect(c.discountCapPercent).toBe(50);
+      expect(c.discountCode).toBe('SUMMER');
+      expect(c.discountValid).toBe(true);
       expect(c.discountAmount).toBe(40000);
     });
 
-    it('clears the cap fields when the code is removed', () => {
+    it('clears the saving when the code is removed', () => {
       const c = build(state);
-      dialog.open.mockReturnValue({ afterClosed: () => of({ code: '', valid: null, message: '', discountAmount: 0, capPercent: 0, capped: false }) });
+      c.discountAmount = 40000;
+      dialog.open.mockReturnValue({ afterClosed: () => of({ code: '', valid: null, message: '', discountAmount: 0 }) });
 
       c.openDiscountDialog();
 
-      expect(c.discountCapped).toBe(false);
-      expect(c.discountCapPercent).toBe(0);
+      expect(c.discountCode).toBe('');
+      expect(c.discountAmount).toBe(0);
     });
   });
 
