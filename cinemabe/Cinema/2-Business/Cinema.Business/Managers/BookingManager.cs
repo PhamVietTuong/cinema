@@ -1285,6 +1285,7 @@ public class BookingManager : IBookingManager
             ["SeatLabels"] = JoinOrDash(tickets.Select(t => t.SeatLabel)),
             ["TicketCount"] = tickets.Count.ToString(CultureInfo.InvariantCulture),
             ["Concessions"] = JoinOrDash(foods.Select(f => $"{f.Quantity} × {f.Name}")),
+            [ConcessionsSectionKey] = BuildConcessionsSectionHtml(foods),
             ["TicketsUrl"] = PublicSiteUrl + "/profile",
             ["HomeUrl"] = PublicSiteUrl,
             ["SubTotal"] = Money(invoice.TotalAmount),
@@ -1315,7 +1316,21 @@ public class BookingManager : IBookingManager
         (Environment.GetEnvironmentVariable("CINEMA_PUBLIC_URL") ?? "http://localhost:4202").TrimEnd('/');
 
     private const string QrImagesKey = "QrImages";
-    private static readonly HashSet<string> QrImageKeys = new() { QrImagesKey };
+    private const string ConcessionsSectionKey = "ConcessionsSection";
+    private static readonly HashSet<string> QrImageKeys = new() { QrImagesKey, ConcessionsSectionKey };
+
+    // The whole "Bắp nước" block of the email; empty when the booking has no food so the label isn't shown with a dash.
+    private static string BuildConcessionsSectionHtml(IReadOnlyList<BookingConfirmationFoodRow> foods)
+    {
+        if (foods.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var items = WebUtility.HtmlEncode(string.Join(", ", foods.Select(f => $"{f.Quantity} × {f.Name}")));
+        return "<div style=\"font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:#8a8176;margin:0 0 4px;\">Bắp nước</div>"
+            + $"<div style=\"font-size:14px;margin:0 0 16px;\">{items}</div>";
+    }
 
     private static string QrContentId(int index)
     {
