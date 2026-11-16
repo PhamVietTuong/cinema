@@ -126,6 +126,12 @@ public class ShowTimeManager : IShowTimeManager
 
     public async Task DeleteAsync(Guid id)
     {
+        // A showtime that was ever sold is referenced by invoice tickets (the database refuses the delete, which used
+        // to surface as a bare 500). Say so, and point at the alternative: deactivate it.
+        if (await _uow.InvoiceStore.AnyTicketForShowTimeAsync(id))
+        {
+            throw new InvalidOperationException("This showtime already has bookings and cannot be deleted. Deactivate it instead.");
+        }
         await _uow.ShowTimeStore.DeleteAsync(id);
     }
 

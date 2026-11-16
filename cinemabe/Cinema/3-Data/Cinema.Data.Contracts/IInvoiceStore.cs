@@ -18,6 +18,14 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     /// <summary>Pending invoices created before <paramref name="olderThan"/> (abandoned/unpaid holds).</summary>
     Task<IReadOnlyList<Invoice>> GetStalePendingAsync(DateTime olderThan);
 
+    /// <summary>True when any invoice, whatever its status, has a ticket for this showtime (so deleting the showtime
+    /// would orphan sales history).</summary>
+    Task<bool> AnyTicketForShowTimeAsync(Guid showTimeId);
+
+    /// <summary>True when any invoice was priced with this promotion program (so deleting the program would erase
+    /// which promotion those sales used).</summary>
+    Task<bool> AnyForPromotionProgramAsync(Guid programId);
+
     /// <summary>The user's own Pending invoice that currently holds exactly this set of seats for the showtime and room
     /// (tickets loaded, not tracked), or null. Lets a customer who left the payment page come back to the booking they
     /// already hold instead of being refused a seat they themselves are holding.</summary>

@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
+import { phoneWithSeparators } from '../../../../shared/phone-validator';
 
 type Dto = CinemaServiceAgent.TheaterDTO;
 
@@ -38,7 +39,7 @@ export class TheaterDialog {
       name: [data.theater?.name ?? '', Validators.required],
       city: [data.theater?.city ?? '', Validators.required],
       address: [data.theater?.address ?? '', Validators.required],
-      phone: [data.theater?.phone ?? '', Validators.pattern(/^(?:\+84|0)\d{9,10}$/)],
+      phone: [data.theater?.phone ?? '', phoneWithSeparators],
       email: ['', Validators.email],
       latitude: [data.theater?.latitude ?? null, [Validators.min(-90), Validators.max(90)]],
       longitude: [data.theater?.longitude ?? null, [Validators.min(-180), Validators.max(180)]],

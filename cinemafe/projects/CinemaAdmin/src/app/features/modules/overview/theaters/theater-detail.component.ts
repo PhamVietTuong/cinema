@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CinemaServiceAgent } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
+import { phoneWithSeparators } from '../../../../shared/phone-validator';
 
 /** Theater detail page: info on top, per-theater management tabs below. */
 @Component({
@@ -32,7 +33,7 @@ export class TheaterDetailComponent implements OnInit {
       name: ['', Validators.required],
       city: ['', Validators.required],
       address: ['', Validators.required],
-      phone: ['', Validators.pattern(/^(?:\+84|0)\d{9,10}$/)],
+      phone: ['', phoneWithSeparators],
       email: ['', Validators.email],
       imageUrl: [''],
       latitude: [null, [Validators.min(-90), Validators.max(90)]],

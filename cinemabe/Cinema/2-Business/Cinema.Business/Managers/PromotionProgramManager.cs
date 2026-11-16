@@ -158,6 +158,12 @@ public class PromotionProgramManager : IPromotionProgramManager
 
     public async Task DeleteAsync(Guid id)
     {
+        // Deleting a program that sales used would blank the PromotionProgramId of those invoices, so the record of
+        // which promotion they used would be lost. Keep it, and unpublish it to stop it being used.
+        if (await _uow.InvoiceStore.AnyForPromotionProgramAsync(id))
+        {
+            throw new InvalidOperationException("This promotion program has been used on invoices and cannot be deleted. Unpublish it instead.");
+        }
         await _uow.PromotionProgramStore.DeleteAsync(id);
     }
 
