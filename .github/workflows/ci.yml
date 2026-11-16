@@ -10,6 +10,20 @@ jobs:
   backend:
     name: Backend (build + test)
     runs-on: ubuntu-latest
+    # Real SQL Server for Cinema.Service.WebApiHost.IntegrationTests: each run creates and drops its own database.
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: 'Cinema_CI_Pwd_123!'
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Cinema_CI_Pwd_123!' -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
     defaults:
       run:
         working-directory: cinemabe
@@ -43,6 +57,10 @@ jobs:
       - run: dotnet test Cinema/2-Business/Cinema.Business.Tests --no-build -c Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory TestResults
       # Controller architecture, authorization and IPN-contract tests live in their own project.
       - run: dotnet test Cinema/1-Service/Cinema.Service.WebApiHost.Tests --no-build -c Release --verbosity normal
+      # Integration tests: the real API in-process against a real SQL Server built from create_db.sql + insert_db.sql.
+      - run: dotnet test Cinema/1-Service/Cinema.Service.WebApiHost.IntegrationTests --no-build -c Release --verbosity normal
+        env:
+          CINEMA_IT_SERVER_CONNECTION: 'Server=localhost,1433;User Id=sa;Password=Cinema_CI_Pwd_123!;TrustServerCertificate=True'
       # Coverage ratchet for the business layer (the core). Raise the number as coverage grows; never lower it.
       - name: Enforce business-layer coverage
         working-directory: .

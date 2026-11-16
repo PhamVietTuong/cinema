@@ -170,3 +170,20 @@ Two specs cannot pass by skipping:
   the `dotnet test` step states "xUnit tests use Moq — no database required," i.e. the backend
   suite is unit-level only; database-dependent behavior is exercised only via the CI `e2e` job's
   Playwright run (`e2e/`).
+
+## Integration tests against a real SQL Server
+
+`cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost.IntegrationTests` hosts the real Web API in-process
+(`WebApplicationFactory<Program>`) on a throw-away database built from `sql/create_db.sql` + `sql/insert_db.sql`, and drops it
+afterwards. It proves what the Moq suites cannot: EF queries translate to SQL on the committed schema, the seed data is
+queryable, the JWT/authorization pipeline works end to end, and VNPay callbacks never mark anything paid.
+
+```powershell
+# Needs a SQL Server login that can CREATE/DROP DATABASE. Without the variable every test is skipped, not failed.
+$env:CINEMA_IT_SERVER_CONNECTION = "Server=.;Integrated Security=True;TrustServerCertificate=True"
+dotnet test Cinema/1-Service/Cinema.Service.WebApiHost.IntegrationTests
+```
+
+CI runs it in the `backend` job against a SQL Server service container. Findings the first run surfaced: registration
+requires a seeded `Customer` user type, and a new account cannot sign in until its email is verified (both now asserted).
+The dev database is never touched. Adding a business flow (booking, payment) to this suite is the next step.
