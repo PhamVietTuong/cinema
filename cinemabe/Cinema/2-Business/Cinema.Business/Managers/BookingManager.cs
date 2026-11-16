@@ -422,9 +422,12 @@ public class BookingManager : IBookingManager
         }
     }
 
-    private static double Money(double value, bool wholeVnd)
+    // Every invoice amount is a whole number of dong, whatever the channel: VND has no minor unit, the gateway is
+    // charged a whole amount and the checkout page rounds the same way, so a fractional server amount would leave the
+    // page, the invoice and the payment link disagreeing (a 0.06 "remainder" shown as 0 but sent to the gateway as 0).
+    private static double WholeVnd(double value)
     {
-        return wholeVnd ? Math.Round(value, 0, MidpointRounding.AwayFromZero) : value;
+        return Math.Round(value, 0, MidpointRounding.AwayFromZero);
     }
 
     /// <summary>
@@ -436,7 +439,6 @@ public class BookingManager : IBookingManager
     /// </summary>
     private async Task<ComposedInvoice> ComposeInvoiceAsync(ComposeInput input)
     {
-        var wholeVnd = input.IsCounter;
         double ticketTotal = 0;
         var tickets     = new List<InvoiceTicket>();
         var ticketItems = new List<TicketItemDTO>();
@@ -591,7 +593,7 @@ public class BookingManager : IBookingManager
                 // whole-seat price) but is still two physical Seat rows, each needing its own
                 // InvoiceTicket for occupancy tracking — split the price across the pair so
                 // the two halves sum to the single price the customer was quoted for one seat.
-                var listPrice = Money(seatKind == SeatKind.Double ? category.Price / 2 : category.Price, wholeVnd);
+                var listPrice = WholeVnd(seatKind == SeatKind.Double ? category.Price / 2 : category.Price);
                 var price = listPrice;
                 var seatLabel = SeatNumbering.Label(seat.RowName, displayNumbers[seat.Id]);
                 var hasOverride = input.SeatPriceOverrides.TryGetValue(seatItem.SeatId, out var seatOverride);
@@ -661,20 +663,17 @@ public class BookingManager : IBookingManager
                 foodTheaterId = room.TheaterId;
             }
         }
-        var food = await BuildFoodLinesAndReserveStockAsync(input.Foods, foodTheaterId, input.DryRun, input.FoodPriceOverrides, wholeVnd);
+        var food = await BuildFoodLinesAndReserveStockAsync(input.Foods, foodTheaterId, input.DryRun, input.FoodPriceOverrides);
         lines.AddRange(food.QuoteLines);
         overrides.AddRange(food.Overrides);
 
-        var total = Money(ticketTotal + food.Total, wholeVnd);
+        var total = WholeVnd(ticketTotal + food.Total);
         var channel = input.IsCounter ? SalesChannel.Counter : SalesChannel.Online;
         var (discountAmount, finalAmount, promotionProgramId, promotionTitle) =
             await ComputePricingAsync(input.CustomerUserId, total, input.DiscountCode, hasSeatSection ? input.RoomId : null,
                 hasSeatSection ? input.ShowTimeId : null, input.TheaterId, channel, ticketUnits, bookingShowTime);
-        if (wholeVnd)
-        {
-            finalAmount    = Money(finalAmount, true);
-            discountAmount = total - finalAmount;
-        }
+        finalAmount    = WholeVnd(finalAmount);
+        discountAmount = total - finalAmount;
 
         // Count this booking against the program's MaxUsage now, atomically: the use is given back if the booking is
         // cancelled or expires. Counting only when the invoice was paid let several pending bookings all take the
@@ -702,7 +701,9 @@ public class BookingManager : IBookingManager
                 pointsRedeemed = Math.Min(input.PointsToRedeem, Math.Min(maxByBalance, maxByAmount));
                 if (pointsRedeemed > 0)
                 {
-                    pointsValue     = pointsRedeemed * pointValueVnd;
+                    // Whole dong, so a theater rate with a fraction cannot leave a fractional remainder. It never
+                    // exceeds finalAmount (a whole number): pointsRedeemed is capped at finalAmount / rate above.
+                    pointsValue     = WholeVnd(pointsRedeemed * pointValueVnd);
                     finalAmount    -= pointsValue;
                     discountAmount += pointsValue;
                     if (!input.DryRun
@@ -759,7 +760,7 @@ public class BookingManager : IBookingManager
     // the caller's catch rolls every stock change back. Fixed query count regardless of line count:
     // foods (1) + combo recipes (1) + component foods (1). A dry run (quote) checks the stock level but takes none.
     private async Task<FoodBuild> BuildFoodLinesAndReserveStockAsync(
-        IReadOnlyList<BookingFoodItem> foodItems, Guid theaterId, bool dryRun, IReadOnlyDictionary<Guid, double> priceOverrides, bool wholeVnd)
+        IReadOnlyList<BookingFoodItem> foodItems, Guid theaterId, bool dryRun, IReadOnlyDictionary<Guid, double> priceOverrides)
     {
         var lines = new List<InvoiceFoodAndDrink>();
         var demand = new List<StockDemand>();
@@ -787,14 +788,14 @@ public class BookingManager : IBookingManager
             }
             EnsureOrderable(food, theaterId);
 
-            var listUnitPrice = Money(food.Price, wholeVnd);
+            var listUnitPrice = WholeVnd(food.Price);
             var unitPrice = listUnitPrice;
             if (priceOverrides.TryGetValue(foodId, out var foodOverride))
             {
                 unitPrice = ValidateOverride(foodOverride, listUnitPrice, food.Name);
                 overrides.Add(new PriceOverrideLine("Food", foodId, food.Name, quantity, listUnitPrice, unitPrice));
             }
-            var lineTotal = Money(unitPrice * quantity, wholeVnd);
+            var lineTotal = WholeVnd(unitPrice * quantity);
 
             lines.Add(new InvoiceFoodAndDrink
             {
@@ -1451,7 +1452,8 @@ public class BookingManager : IBookingManager
             {
                 continue;
             }
-            var price = Math.Round(roomTypePrice * priceFactor + threeDSurcharge + showTimeRoom.BasePrice, 2);
+            // Whole dong, the same rounding the invoice uses, so the quote and the code preview see the same price.
+            var price = WholeVnd(roomTypePrice * priceFactor + threeDSurcharge + showTimeRoom.BasePrice);
             var kind  = kindBySeatTypeId.TryGetValue(c.SeatTypeId, out var k) ? k : SeatKind.Standard;
             byCategoryId[c.Id] = new ResolvedCategory(c.Id, c.Name, c.SeatTypeId, kind, price, c.RequiresIdCheck, c.IdCheckMessage);
         }
@@ -1762,10 +1764,13 @@ public class BookingManager : IBookingManager
 
         var ticketUnits = await BuildTicketUnitsAsync(roomId, showTimeId, seats ?? new(), showTime);
         var saving = ComputeProgramSaving(program, ticketUnits);
+        // Same formula as the booking (the discount is what is left out of the whole-dong remainder), so the
+        // preview shows exactly what the invoice will take off.
+        var remainder = WholeVnd(Math.Max(0, total - saving));
         return new DiscountCodeValidationDTO
         {
             Valid = true,
-            DiscountAmount = Math.Round(Math.Min(saving, total), 2)
+            DiscountAmount = total - remainder
         };
     }
 
