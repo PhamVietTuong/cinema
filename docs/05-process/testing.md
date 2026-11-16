@@ -181,3 +181,7 @@ Two specs cannot pass by skipping:
 Accessibility is a ratchet: serious/critical axe violations fail the test except the rule ids in `KNOWN_BACKLOG`
 (`link-name`, `button-name`, `label-content-name-mismatch`, found 2026-11-16). Fix them and shrink the list; never grow it.
 Colour contrast is excluded until the design tokens are audited. Penetration testing (e.g. OWASP ZAP) is not automated.
+
+Fuzz finding (2026-11-16, low severity, open): ASP.NET's stock 400 body for an unparsable number names a CLR type
+(`... could not be converted to System.Int32. Path: $.pageIndex`). No stack trace or SQL text leaks, so the fuzz suite
+does not gate on it; fix by returning a custom `ProblemDetails` for model-binding errors if this matters.
