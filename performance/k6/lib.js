@@ -8,10 +8,10 @@ const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
 export function browseCatalog() {
   const paging = JSON.stringify({ pageIndex: 1, pageSize: 10 });
   const responses = http.batch([
-    ['POST', `${API}/api/Cinema/GetNowShowingMovies`, paging, JSON_HEADERS],
-    ['POST', `${API}/api/Cinema/GetComingSoonMovies`, paging, JSON_HEADERS],
-    ['POST', `${API}/api/Cinema/GetTheaters`, paging, JSON_HEADERS],
-    ['POST', `${API}/api/Cinema/GetShowTimes`, paging, JSON_HEADERS],
+    ['POST', `${API}/api/Cinema/GetNowShowingMovies`, paging, { headers: JSON_HEADERS.headers, tags: { name: 'GetNowShowingMovies' } }],
+    ['POST', `${API}/api/Cinema/GetComingSoonMovies`, paging, { headers: JSON_HEADERS.headers, tags: { name: 'GetComingSoonMovies' } }],
+    ['POST', `${API}/api/Cinema/GetTheaters`, paging, { headers: JSON_HEADERS.headers, tags: { name: 'GetTheaters' } }],
+    ['POST', `${API}/api/Cinema/GetShowTimes`, paging, { headers: JSON_HEADERS.headers, tags: { name: 'GetShowTimes' } }],
   ]);
   for (const res of responses) {
     check(res, { 'status is 200': (r) => r.status === 200 });
