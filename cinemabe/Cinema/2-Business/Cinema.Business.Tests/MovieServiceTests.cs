@@ -715,14 +715,31 @@ public class MovieServiceTests
     }
 
     [Fact]
-    public async Task GetNowShowingAsync_ReturnsMappedList()
+    public async Task GetNowShowingAsync_PagesInTheStoreAndMapsTheResult()
     {
         var movies = new List<Movie> { new() { Id = Guid.NewGuid(), Title = "Now Showing" } };
-        _uowMock.Setup(u => u.MovieStore.GetNowShowingAsync()).ReturnsAsync(movies);
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(It.Is<MovieSearchFilter>(f => f.Status == "now"), 2, 5))
+            .ReturnsAsync((movies, 11));
 
-        var result = await _sut.GetNowShowingAsync(new PagingSearchDTO());
+        var result = await _sut.GetNowShowingAsync(new PagingSearchDTO { PageIndex = 2, PageSize = 5 });
 
         result.Results.Should().HaveCount(1);
+        result.TotalCount.Should().Be(11);
+        result.Page.Should().Be(2);
+        result.CountPerPage.Should().Be(5);
+    }
+
+    [Fact]
+    public async Task GetNowShowingAsync_PageSizeZero_ReturnsEverythingAsOnePage()
+    {
+        var movies = new List<Movie> { new() { Id = Guid.NewGuid() }, new() { Id = Guid.NewGuid() } };
+        _uowMock.Setup(u => u.MovieStore.GetPagedAsync(It.Is<MovieSearchFilter>(f => f.Status == "now"), 1, int.MaxValue))
+            .ReturnsAsync((movies, 2));
+
+        var result = await _sut.GetNowShowingAsync(new PagingSearchDTO { PageSize = 0 });
+
+        result.Results.Should().HaveCount(2);
+        result.CountPerPage.Should().Be(2);
     }
 
     [Fact]

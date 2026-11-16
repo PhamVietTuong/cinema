@@ -14,7 +14,6 @@ public interface IMovieStore : IGenericStore<Movie>
     Task<Movie?> GetDetailAsync(Guid id);
     Task<Movie?> GetDetailBySlugAsync(string slug);
     Task<Movie?> GetForUpdateAsync(Guid id);
-    Task<IEnumerable<Movie>> GetNowShowingAsync();
     Task<IEnumerable<Movie>> GetComingSoonAsync();
     Task<double> GetAverageRatingAsync(Guid movieId);
 
