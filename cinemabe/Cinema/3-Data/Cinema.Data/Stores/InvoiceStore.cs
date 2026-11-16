@@ -131,6 +131,12 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             .Where(i => i.Status == InvoiceStatus.Pending && i.CreationTime < olderThan)
             .ToListAsync();
 
+    public Task<bool> AnyTicketForShowTimeAsync(Guid showTimeId)
+        => Context.InvoiceTicket.AnyAsync(t => t.ShowTimeId == showTimeId);
+
+    public Task<bool> AnyForPromotionProgramAsync(Guid programId)
+        => DbSet.AnyAsync(i => i.PromotionProgramId == programId);
+
     public async Task<Invoice?> FindOwnPendingForSeatsAsync(Guid userId, Guid showTimeId, Guid roomId, IReadOnlyCollection<Guid> seatIds)
     {
         var candidates = await DbSet

@@ -568,11 +568,16 @@ public class BookingManager : IBookingManager
                 }
             }
 
+            // What the customer sees on the seat map (E7), never the seat's id.
+            string SeatName(Guid id) => seatsById.TryGetValue(id, out var named) && displayNumbers.TryGetValue(named.Id, out var number)
+                ? SeatNumbering.Label(named.RowName, number)
+                : "A selected seat";
+
             foreach (var seatItem in input.Seats)
             {
                 if (bookedIds.Contains(seatItem.SeatId))
                 {
-                    throw new InvalidOperationException($"Seat {seatItem.SeatId} is already booked.");
+                    throw new InvalidOperationException($"Seat {SeatName(seatItem.SeatId)} is already booked.");
                 }
 
                 // Reject a seat another user is actively holding (SignalR lock). With a connection id the
@@ -581,7 +586,7 @@ public class BookingManager : IBookingManager
                 var bookerConnection = string.IsNullOrEmpty(input.ConnectionId) ? null : input.ConnectionId;
                 if (IsSeatLocked(showTimeId, roomId, seatItem.SeatId, bookerConnection))
                 {
-                    throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
+                    throw new InvalidOperationException($"Seat {SeatName(seatItem.SeatId)} is being held by another user.");
                 }
 
                 if (!seatsById.TryGetValue(seatItem.SeatId, out var seat))
@@ -622,7 +627,7 @@ public class BookingManager : IBookingManager
                 }
                 if (category.Kind != seatKind)
                 {
-                    throw new InvalidOperationException($"Seat {seatItem.SeatId} is not available for the selected patron category.");
+                    throw new InvalidOperationException($"Seat {SeatName(seatItem.SeatId)} is not available for the selected patron category.");
                 }
 
                 // A Double seat is one bookable unit priced once as a whole (category.Price is that

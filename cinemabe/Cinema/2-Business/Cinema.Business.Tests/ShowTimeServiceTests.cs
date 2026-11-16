@@ -479,4 +479,26 @@ public class ShowTimeServiceTests
 
         _uowMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
+
+    [Fact]
+    public async Task DeleteAsync_ShowTimeWithBookings_IsRefusedWithAClearMessage()
+    {
+        var id = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.AnyTicketForShowTimeAsync(id)).ReturnsAsync(true);
+
+        await _sut.Invoking(s => s.DeleteAsync(id))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*already has bookings*Deactivate*");
+        _uowMock.Verify(u => u.ShowTimeStore.DeleteAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShowTimeNeverSold_IsDeleted()
+    {
+        var id = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.AnyTicketForShowTimeAsync(id)).ReturnsAsync(false);
+
+        await _sut.DeleteAsync(id);
+
+        _uowMock.Verify(u => u.ShowTimeStore.DeleteAsync(id), Times.Once);
+    }
 }

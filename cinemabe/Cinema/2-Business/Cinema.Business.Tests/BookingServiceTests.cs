@@ -1769,6 +1769,38 @@ public class BookingServiceTests
         result.DiscountAmount.Should().Be(0);
     }
 
+    [Fact]
+    public async Task CreateBookingAsync_SeatAlreadyBooked_NamesTheSeatNotItsId()
+    {
+        var theaterId    = Guid.NewGuid();
+        var roomTypeId   = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var seatA        = Guid.NewGuid();
+        var adultId      = Guid.NewGuid();
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult", Price = 80000, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>())).ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "E", ColIndex = 7 } });
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid> { seatA });
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId = ShowTimeId1, RoomId = RoomId1, PaymentMethod = "Sandbox",
+            Seats = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
+        };
+
+        var thrown = await _sut.Invoking(s => s.CreateBookingAsync(Guid.NewGuid(), request))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        thrown.Which.Message.Should().StartWith("Seat E").And.EndWith("is already booked.");
+        thrown.Which.Message.Should().NotContain(seatA.ToString());
+    }
+
     // ── Coming back to an unpaid booking for the same seats ─────────────────────
 
     [Fact]

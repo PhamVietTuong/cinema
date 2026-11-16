@@ -234,6 +234,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - **AC-20.7** (success) Given a holiday, when a showtime falls on it, then the holiday multiplier wins outright and the weekday matrix is not applied; the 3D surcharge and per-showtime base price are added flat afterwards. Source: `BookingServiceTests.GetShowTimePricesAsync_Holiday_OverridesWeekdayMatrixRow`, `GetShowTimePricesAsync_FullFormula_MatchesWorkedExample`.
 - **AC-20.8** (error) Given a category with no price row for a room class, when a customer books it there, then it is rejected, with no fallback price. Source: `BookingServiceTests.CreateBookingAsync_RejectsCategoryNotIncludedInRoomType`.
 - **AC-20.9** (error) Given a caller who is not an Admin, when they call a catalog write endpoint, then the answer is 403. Source: `Cinema.Service.WebApiHost.Tests/ControllerAuthorizationCoverageTests.cs` (every action guarded or allow-listed); `docs/01-business/roles-permissions.md`.
+- **AC-20.10** (error) Given a showtime that already has bookings, when I delete it, then I am told it has bookings and to deactivate it instead (400), not shown a server error. Source: `ShowTimeServiceTests.DeleteAsync_ShowTimeWithBookings_IsRefusedWithAClearMessage`.
 
 ### US-21 Promotion programs
 
@@ -244,6 +245,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - **AC-21.3** (error) Given a duplicate code, a fixed-price program with no price rows, a percent outside range, or an end date before the start, when I save, then it is rejected. Source: `PromotionProgramServiceTests.CreateAsync_DuplicateCode_Rejected`, `CreateAsync_FixedPriceWithNoPriceRows_Rejected`, `CreateAsync_PercentOffOutOfRange_Rejected`, `CreateAsync_EndBeforeStart_Rejected`.
 - **AC-21.4** (boundary) Given two auto-apply programs both qualify, when a booking is priced, then the one with the bigger saving wins; a fixed price above the list price gives no saving. Source: `BookingServiceTests.CreateBookingAsync_TwoAutoApplyPrograms_BiggerSavingWins`, `CreateBookingAsync_FixedPriceAboveListPrice_GivesNoSaving`.
 - **AC-21.5** (boundary) Given a program excludes holidays or is limited to another day or to the counter channel, when a booking is priced, then it is not applied. Source: `BookingServiceTests.CreateBookingAsync_ProgramExcludesHolidays_NotAppliedOnHolidayShowtime`, `CreateBookingAsync_ProgramScheduleRestrictedToOtherDay_NotApplied`, `CreateBookingAsync_ProgramChannelRestrictedToCounterOnly_NotAppliedOnline`.
+- **AC-21.6** (error) Given a promotion program that was used on invoices, when I delete it, then it is refused and I am told to unpublish it instead, so those invoices keep the record of the promotion they used; a never-used program can be deleted. Source: `PromotionProgramServiceTests.DeleteAsync_ProgramUsedOnInvoices_IsRefusedWithAClearMessage`, `DeleteAsync_ProgramNeverUsed_IsDeleted`.
 
 ### US-22 Loyalty rates
 

@@ -216,4 +216,26 @@ public class PromotionProgramServiceTests
 
         dto.Prices.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task DeleteAsync_ProgramUsedOnInvoices_IsRefusedWithAClearMessage()
+    {
+        var id = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.AnyForPromotionProgramAsync(id)).ReturnsAsync(true);
+
+        await _sut.Invoking(s => s.DeleteAsync(id))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*used on invoices*Unpublish*");
+        _uowMock.Verify(u => u.PromotionProgramStore.DeleteAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ProgramNeverUsed_IsDeleted()
+    {
+        var id = Guid.NewGuid();
+        _uowMock.Setup(u => u.InvoiceStore.AnyForPromotionProgramAsync(id)).ReturnsAsync(false);
+
+        await _sut.DeleteAsync(id);
+
+        _uowMock.Verify(u => u.PromotionProgramStore.DeleteAsync(id), Times.Once);
+    }
 }
