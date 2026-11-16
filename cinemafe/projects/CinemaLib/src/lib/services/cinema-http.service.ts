@@ -10206,8 +10206,6 @@ export class TheaterDTO implements ITheaterDTO {
     latitude?: number | undefined;
     longitude?: number | undefined;
     maxSeatsPerBooking?: number;
-    maxPromotionDiscountPercent?: number;
-    maxHolidayPromotionDiscountPercent?: number;
 
     constructor(data?: ITheaterDTO) {
         if (data) {
@@ -10231,8 +10229,6 @@ export class TheaterDTO implements ITheaterDTO {
             this.latitude = _data["latitude"];
             this.longitude = _data["longitude"];
             this.maxSeatsPerBooking = _data["maxSeatsPerBooking"];
-            this.maxPromotionDiscountPercent = _data["maxPromotionDiscountPercent"];
-            this.maxHolidayPromotionDiscountPercent = _data["maxHolidayPromotionDiscountPercent"];
         }
     }
 
@@ -10256,8 +10252,6 @@ export class TheaterDTO implements ITheaterDTO {
         data["latitude"] = this.latitude;
         data["longitude"] = this.longitude;
         data["maxSeatsPerBooking"] = this.maxSeatsPerBooking;
-        data["maxPromotionDiscountPercent"] = this.maxPromotionDiscountPercent;
-        data["maxHolidayPromotionDiscountPercent"] = this.maxHolidayPromotionDiscountPercent;
         return data;
     }
 }
@@ -10274,8 +10268,6 @@ export interface ITheaterDTO {
     latitude?: number | undefined;
     longitude?: number | undefined;
     maxSeatsPerBooking?: number;
-    maxPromotionDiscountPercent?: number;
-    maxHolidayPromotionDiscountPercent?: number;
 }
 
 export class CreateTheaterRequest implements ICreateTheaterRequest {
@@ -10288,8 +10280,6 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
     latitude?: number | undefined;
     longitude?: number | undefined;
     maxSeatsPerBooking?: number;
-    maxPromotionDiscountPercent?: number;
-    maxHolidayPromotionDiscountPercent?: number;
 
     constructor(data?: ICreateTheaterRequest) {
         if (data) {
@@ -10311,8 +10301,6 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
             this.latitude = _data["latitude"];
             this.longitude = _data["longitude"];
             this.maxSeatsPerBooking = _data["maxSeatsPerBooking"];
-            this.maxPromotionDiscountPercent = _data["maxPromotionDiscountPercent"];
-            this.maxHolidayPromotionDiscountPercent = _data["maxHolidayPromotionDiscountPercent"];
         }
     }
 
@@ -10334,8 +10322,6 @@ export class CreateTheaterRequest implements ICreateTheaterRequest {
         data["latitude"] = this.latitude;
         data["longitude"] = this.longitude;
         data["maxSeatsPerBooking"] = this.maxSeatsPerBooking;
-        data["maxPromotionDiscountPercent"] = this.maxPromotionDiscountPercent;
-        data["maxHolidayPromotionDiscountPercent"] = this.maxHolidayPromotionDiscountPercent;
         return data;
     }
 }
@@ -10350,8 +10336,6 @@ export interface ICreateTheaterRequest {
     latitude?: number | undefined;
     longitude?: number | undefined;
     maxSeatsPerBooking?: number;
-    maxPromotionDiscountPercent?: number;
-    maxHolidayPromotionDiscountPercent?: number;
 }
 
 export class UpdateTheaterRequest implements IUpdateTheaterRequest {
@@ -10365,8 +10349,6 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
     latitude?: number | undefined;
     longitude?: number | undefined;
     maxSeatsPerBooking?: number;
-    maxPromotionDiscountPercent?: number | undefined;
-    maxHolidayPromotionDiscountPercent?: number | undefined;
 
     constructor(data?: IUpdateTheaterRequest) {
         if (data) {
@@ -10389,8 +10371,6 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
             this.latitude = _data["latitude"];
             this.longitude = _data["longitude"];
             this.maxSeatsPerBooking = _data["maxSeatsPerBooking"];
-            this.maxPromotionDiscountPercent = _data["maxPromotionDiscountPercent"];
-            this.maxHolidayPromotionDiscountPercent = _data["maxHolidayPromotionDiscountPercent"];
         }
     }
 
@@ -10413,8 +10393,6 @@ export class UpdateTheaterRequest implements IUpdateTheaterRequest {
         data["latitude"] = this.latitude;
         data["longitude"] = this.longitude;
         data["maxSeatsPerBooking"] = this.maxSeatsPerBooking;
-        data["maxPromotionDiscountPercent"] = this.maxPromotionDiscountPercent;
-        data["maxHolidayPromotionDiscountPercent"] = this.maxHolidayPromotionDiscountPercent;
         return data;
     }
 }
@@ -10430,8 +10408,6 @@ export interface IUpdateTheaterRequest {
     latitude?: number | undefined;
     longitude?: number | undefined;
     maxSeatsPerBooking?: number;
-    maxPromotionDiscountPercent?: number | undefined;
-    maxHolidayPromotionDiscountPercent?: number | undefined;
 }
 
 export abstract class BaseSearchResultsOfShowTimeListDTO implements IBaseSearchResultsOfShowTimeListDTO {

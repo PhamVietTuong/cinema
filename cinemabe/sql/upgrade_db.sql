@@ -1042,17 +1042,25 @@ END
 -- ===== end theater max seats per booking =====
 
 -- ============================================================
--- Theater promotion discount caps: % of summed ticket list prices (normal 0-50, holiday 0-100, default 50)
+-- Theater promotion discount caps were removed: drop the two columns (and their default constraints) where they exist
 -- ============================================================
-IF COL_LENGTH('dbo.Theater', 'MaxPromotionDiscountPercent') IS NULL
+IF OBJECT_ID('dbo.DF_Theater_MaxPromotionDiscountPercent', 'D') IS NOT NULL
 BEGIN
-    ALTER TABLE [Theater] ADD [MaxPromotionDiscountPercent] int NOT NULL CONSTRAINT [DF_Theater_MaxPromotionDiscountPercent] DEFAULT 50;
+    ALTER TABLE [Theater] DROP CONSTRAINT [DF_Theater_MaxPromotionDiscountPercent];
 END
-IF COL_LENGTH('dbo.Theater', 'MaxHolidayPromotionDiscountPercent') IS NULL
+IF COL_LENGTH('dbo.Theater', 'MaxPromotionDiscountPercent') IS NOT NULL
 BEGIN
-    ALTER TABLE [Theater] ADD [MaxHolidayPromotionDiscountPercent] int NOT NULL CONSTRAINT [DF_Theater_MaxHolidayPromotionDiscountPercent] DEFAULT 50;
+    ALTER TABLE [Theater] DROP COLUMN [MaxPromotionDiscountPercent];
 END
--- ===== end theater promotion caps =====
+IF OBJECT_ID('dbo.DF_Theater_MaxHolidayPromotionDiscountPercent', 'D') IS NOT NULL
+BEGIN
+    ALTER TABLE [Theater] DROP CONSTRAINT [DF_Theater_MaxHolidayPromotionDiscountPercent];
+END
+IF COL_LENGTH('dbo.Theater', 'MaxHolidayPromotionDiscountPercent') IS NOT NULL
+BEGIN
+    ALTER TABLE [Theater] DROP COLUMN [MaxHolidayPromotionDiscountPercent];
+END
+-- ===== end theater promotion caps removed =====
 
 -- ============================================================
 -- Merge Discount/DiscountType/DiscountTheater into PromotionProgram

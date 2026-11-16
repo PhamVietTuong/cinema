@@ -1535,10 +1535,9 @@ public class BookingManager : IBookingManager
             // bad code still errors), but it has nothing to compute a saving against.
             if (ticketUnits.Count > 0 && showTime != null)
             {
-                var capPercent = await GetPromotionCapPercentAsync(bookingTheaterId, showTime);
-                saving = CapPromotionSaving(ComputeProgramSaving(program, ticketUnits), ticketUnits, capPercent);
+                saving = ComputeProgramSaving(program, ticketUnits);
             }
-            // A program that ends up saving nothing (for example a cap of 0) is not applied: no invoice link, no usage count.
+            // A program that ends up saving nothing is not applied: no invoice link, no usage count.
             if (saving <= 0)
             {
                 program = null;
@@ -1576,7 +1575,6 @@ public class BookingManager : IBookingManager
         }
 
         var isHoliday = (await _uow.HolidayStore.FindAsync(h => h.Date == showDate)).Any();
-        var capPercent = await GetPromotionCapPercentAsync(bookingTheaterId, showTime, isHoliday);
 
         int? userMinPoints = null;
         if (userId.HasValue && candidates.Any(c => c.Eligibility == PromotionEligibility.Members))
@@ -1638,7 +1636,7 @@ public class BookingManager : IBookingManager
                 }
             }
 
-            var saving = CapPromotionSaving(ComputeProgramSaving(program, units), units, capPercent);
+            var saving = ComputeProgramSaving(program, units);
             if (saving <= 0)
             {
                 continue;
@@ -1651,26 +1649,6 @@ public class BookingManager : IBookingManager
         }
 
         return (best, bestSaving);
-    }
-
-    // The legal ceiling on the promotion saving, as a percent of the summed ticket list prices: the theater's
-    // holiday cap when a Holiday row exists on the showtime date, else its normal cap. A missing theater falls
-    // back to the 50% default. Points redemption and earning are never capped.
-    private async Task<int> GetPromotionCapPercentAsync(Guid? theaterId, ShowTime showTime, bool? isHoliday = null)
-    {
-        var holiday = isHoliday ?? (await _uow.HolidayStore.FindAsync(h => h.Date == DateOnly.FromDateTime(showTime.StartTime))).Any();
-        var theater = theaterId.HasValue ? await _uow.TheaterStore.GetByIdAsync(theaterId.Value) : null;
-        if (theater is null)
-        {
-            return 50;
-        }
-        return holiday ? theater.MaxHolidayPromotionDiscountPercent : theater.MaxPromotionDiscountPercent;
-    }
-
-    private static double CapPromotionSaving(double saving, IReadOnlyList<TicketUnit> units, int capPercent)
-    {
-        var ceiling = Math.Round(units.Sum(u => u.ListUnitPrice) * capPercent / 100.0, 2);
-        return saving > ceiling ? ceiling : saving;
     }
 
     private static bool IsBetterTiebreak(PromotionProgram candidate, PromotionProgram current)
@@ -1775,23 +1753,10 @@ public class BookingManager : IBookingManager
 
         var ticketUnits = await BuildTicketUnitsAsync(roomId, showTimeId, seats ?? new(), showTime);
         var saving = ComputeProgramSaving(program, ticketUnits);
-        var uncapped = saving;
-        var capPercent = 0;
-        if (ticketUnits.Count > 0 && showTime != null)
-        {
-            capPercent = await GetPromotionCapPercentAsync(bookingTheaterId, showTime);
-            saving = CapPromotionSaving(saving, ticketUnits, capPercent);
-        }
-        var amount = Math.Round(Math.Min(saving, total), 2);
-        var uncappedAmount = Math.Round(Math.Min(uncapped, total), 2);
-        var capped = amount < uncappedAmount;
         return new DiscountCodeValidationDTO
         {
             Valid = true,
-            DiscountAmount = amount,
-            Capped = capped,
-            UncappedAmount = uncappedAmount,
-            CapPercent = capped ? capPercent : 0
+            DiscountAmount = Math.Round(Math.Min(saving, total), 2)
         };
     }
 
