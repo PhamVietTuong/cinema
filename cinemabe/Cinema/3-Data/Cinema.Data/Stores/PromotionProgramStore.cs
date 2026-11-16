@@ -8,11 +8,19 @@ namespace Cinema.Data.Stores;
 
 public class PromotionProgramStore : GenericStore<PromotionProgram>, IPromotionProgramStore
 {
-    public async Task IncrementUsedCountAsync(Guid programId)
+    public async Task<bool> TryReserveUseAsync(Guid programId)
+    {
+        var rows = await Context.PromotionProgram
+            .Where(p => p.Id == programId && (p.MaxUsage == null || p.UsedCount < p.MaxUsage))
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.UsedCount, p => p.UsedCount + 1));
+        return rows > 0;
+    }
+
+    public async Task ReleaseUseAsync(Guid programId)
     {
         await Context.PromotionProgram
-            .Where(p => p.Id == programId)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.UsedCount, p => p.UsedCount + 1));
+            .Where(p => p.Id == programId && p.UsedCount > 0)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.UsedCount, p => p.UsedCount - 1));
     }
 
     public PromotionProgramStore(CinemaContext db) : base(db)

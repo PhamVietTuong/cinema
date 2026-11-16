@@ -80,6 +80,8 @@ public class BookingServiceTests
         // Default: a theater with the entity defaults.
         _uowMock.Setup(u => u.TheaterStore.GetByIdAsync(It.IsAny<Guid>()))
             .ReturnsAsync(new Theater());
+        // Default: the program still has a free use, so the atomic reservation succeeds unless a test makes it fail.
+        _uowMock.Setup(u => u.PromotionProgramStore.TryReserveUseAsync(It.IsAny<Guid>())).ReturnsAsync(true);
     }
 
     private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId)
@@ -1762,6 +1764,65 @@ public class BookingServiceTests
 
         result.Valid.Should().BeTrue();
         result.DiscountAmount.Should().Be(0);
+    }
+
+    // ── A program's MaxUsage is reserved when the booking is created ────────────
+
+    [Fact]
+    public async Task CreateBookingAsync_CodeProgram_ReservesItsUse()
+    {
+        var program = SetupCodeProgram(p => p.PercentOff = 10);
+
+        await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram>(), code: "SUMMER25");
+
+        _uowMock.Verify(u => u.PromotionProgramStore.TryReserveUseAsync(program.Id), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_AutoApplyProgram_ReservesItsUse()
+    {
+        var program = FixedPriceProgram(price: 45000);
+
+        await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram> { program });
+
+        _uowMock.Verify(u => u.PromotionProgramStore.TryReserveUseAsync(program.Id), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_NoProgramApplies_ReservesNothing()
+    {
+        await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram>());
+
+        _uowMock.Verify(u => u.PromotionProgramStore.TryReserveUseAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_LastUseTakenByAnotherBooking_IsRejectedAndNothingIsSaved()
+    {
+        // The code looked usable when it was checked, but a concurrent booking took the last use before this one
+        // could reserve it: the atomic reservation reports false and the whole booking is rolled back.
+        var program = SetupCodeProgram(p => { p.PercentOff = 10; p.MaxUsage = 1; p.UsedCount = 0; });
+        _uowMock.Setup(u => u.PromotionProgramStore.TryReserveUseAsync(program.Id)).ReturnsAsync(false);
+        var act = async () =>
+        {
+            await BookOneSeatWithProgramsAsync(listPrice: 80000, candidates: new List<PromotionProgram>(), code: "SUMMER25");
+        };
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*invalid or no longer available*");
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+        _uowMock.Verify(u => u.RollbackTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_UseReservedByAPendingBooking_CountsAgainstMaxUsage()
+    {
+        // The reserved use is already in UsedCount, so the preview of a code whose last use is held is invalid.
+        SetupCodeProgram(p => { p.MaxUsage = 1; p.UsedCount = 1; });
+        var seats = SetupOneSeat(200000);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, seats);
+
+        result.Valid.Should().BeFalse();
     }
 
     [Fact]

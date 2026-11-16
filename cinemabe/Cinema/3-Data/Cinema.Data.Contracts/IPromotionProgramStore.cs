@@ -8,9 +8,13 @@ public interface IPromotionProgramStore : IGenericStore<PromotionProgram>
     /// cartesian result across the two collections), for Update.</summary>
     Task<PromotionProgram?> GetByIdWithChildrenAsync(Guid id);
 
-    /// <summary>Atomically counts one more use: a single UPDATE ... SET UsedCount = UsedCount + 1, so two invoices
-    /// paid at the same moment both count (a read-modify-write on the entity would lose one).</summary>
-    Task IncrementUsedCountAsync(Guid programId);
+    /// <summary>Atomically reserves one use for a booking: a single conditional UPDATE ... SET UsedCount = UsedCount + 1
+    /// WHERE the program has no MaxUsage or UsedCount is still below it. Returns false when the program is used up,
+    /// so two bookings racing for the last use cannot both get it (a read-then-write check would let them).</summary>
+    Task<bool> TryReserveUseAsync(Guid programId);
+
+    /// <summary>Gives back a reserved use (single UPDATE, never below 0) when the booking is cancelled or expires.</summary>
+    Task ReleaseUseAsync(Guid programId);
 
     /// <summary>Looks up a program by its promo Code, with Prices and Schedules loaded (split query).</summary>
     Task<PromotionProgram?> GetByCodeAsync(string code);

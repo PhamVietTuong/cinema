@@ -676,6 +676,15 @@ public class BookingManager : IBookingManager
             discountAmount = total - finalAmount;
         }
 
+        // Count this booking against the program's MaxUsage now, atomically: the use is given back if the booking is
+        // cancelled or expires. Counting only when the invoice was paid let several pending bookings all take the
+        // last use of a limited code.
+        if (!input.DryRun && promotionProgramId is Guid programToReserve
+            && !await _uow.PromotionProgramStore.TryReserveUseAsync(programToReserve))
+        {
+            throw new InvalidOperationException(_invalidPromoMessage);
+        }
+
         // Loyalty redemption: spend points for a discount. The points are reserved (deducted) now and
         // restored if the booking is cancelled or expires. 1 point = this theater's PointValueVnd rate
         // (its own override, or the global default), capped at the customer's balance and the order
@@ -1829,8 +1838,8 @@ public class BookingManager : IBookingManager
         return true;
     }
 
-    private Task RestoreRedeemedPointsAsync(Invoice invoice)
-        => InvoiceLifecycle.RestoreRedeemedPointsAsync(_uow, invoice);
+    private Task ReleaseReservationsAsync(Invoice invoice)
+        => InvoiceLifecycle.ReleaseReservationsAsync(_uow, invoice);
 
     // Matches VnPayGateway's vnp_ExpireDate (15 minutes after the payment page is created).
     private static readonly TimeSpan _paymentGrace = TimeSpan.FromMinutes(15);
@@ -1868,7 +1877,7 @@ public class BookingManager : IBookingManager
                 CancelFoodOrder(invoice);
                 await _uow.InvoiceStore.UpdateAsync(invoice);
                 await _uow.InvoiceStore.DeactivateTicketsAsync(invoice.Id);
-                await RestoreRedeemedPointsAsync(invoice);
+                await ReleaseReservationsAsync(invoice);
             }
             // One batched ledger read/restock for the whole run, not one per invoice.
             await RestoreFoodStockAsync(cancelled, "Expired", null);

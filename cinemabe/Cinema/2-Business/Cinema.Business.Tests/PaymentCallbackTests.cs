@@ -58,19 +58,20 @@ public class PaymentCallbackTests
     }
 
     [Fact]
-    public async Task HandlePaymentCallbackAsync_ValidPayment_CountsThePromotionUseWithAnAtomicIncrement()
+    public async Task HandlePaymentCallbackAsync_ValidPayment_DoesNotCountThePromotionUseAgain()
     {
+        // The use was already reserved when the booking was created, so paying must not count it a second time.
         var invoice = PendingInvoice();
         var programId = Guid.NewGuid();
         invoice.PromotionProgramId = programId;
-        _uowMock.Setup(u => u.PromotionProgramStore.IncrementUsedCountAsync(programId)).Returns(Task.CompletedTask);
         _uowMock.Setup(u => u.InvoiceStore.GetByIdAsync(invoice.Id)).ReturnsAsync(invoice);
         _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(invoice)).ReturnsAsync(invoice);
         _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         await _sut.HandlePaymentCallbackAsync("VNPay", VnPayTestHelper.SignedIpn(invoice.Id, 10_000_000));
 
-        _uowMock.Verify(u => u.PromotionProgramStore.IncrementUsedCountAsync(programId), Times.Once);
+        _uowMock.Verify(u => u.PromotionProgramStore.TryReserveUseAsync(It.IsAny<Guid>()), Times.Never);
+        _uowMock.Verify(u => u.PromotionProgramStore.ReleaseUseAsync(It.IsAny<Guid>()), Times.Never);
         _uowMock.Verify(u => u.PromotionProgramStore.UpdateAsync(It.IsAny<PromotionProgram>()), Times.Never);
     }
 
@@ -422,6 +423,26 @@ public class PaymentCallbackTests
         user.Points.Should().Be(510);
         _uowMock.Verify(u => u.InvoiceStore.DeactivateTicketsAsync(invoice.Id), Times.Once);
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExpireStalePendingBookingsAsync_GivesBackThePromotionUse()
+    {
+        var programId = Guid.NewGuid();
+        var invoice = PendingInvoice();
+        invoice.PromotionProgramId = programId;
+        invoice.CreationTime = DateTime.UtcNow.AddMinutes(-20);
+        _uowMock.Setup(u => u.PromotionProgramStore.ReleaseUseAsync(programId)).Returns(Task.CompletedTask);
+        _uowMock.Setup(u => u.InvoiceStore.GetStalePendingAsync(It.IsAny<DateTime>())).ReturnsAsync(new List<Invoice> { invoice });
+        _uowMock.Setup(u => u.InvoiceStore.TryTransitionStatusAsync(invoice.Id, InvoiceStatus.Pending, InvoiceStatus.Cancelled)).ReturnsAsync(true);
+        _uowMock.Setup(u => u.InvoiceStore.UpdateAsync(It.IsAny<Invoice>())).ReturnsAsync((Invoice i) => i);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _uowMock.Setup(u => u.StockMovementStore.GetNetSaleQuantitiesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(new List<StockNetQuantity>());
+
+        await _sut.ExpireStalePendingBookingsAsync(TimeSpan.FromMinutes(15));
+
+        _uowMock.Verify(u => u.PromotionProgramStore.ReleaseUseAsync(programId), Times.Once);
     }
 
     [Fact]

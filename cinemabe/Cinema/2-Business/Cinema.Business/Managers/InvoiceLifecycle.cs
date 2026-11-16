@@ -30,6 +30,17 @@ internal static class InvoiceLifecycle
         }
     }
 
+    // Gives back everything a booking reserved when it did not complete (cancelled/expired/deleted): the loyalty
+    // points and the use of the promotion program it counted against MaxUsage when it was created.
+    public static async Task ReleaseReservationsAsync(IApplicationUnitOfWork uow, Invoice invoice)
+    {
+        await RestoreRedeemedPointsAsync(uow, invoice);
+        if (invoice.PromotionProgramId is Guid programId)
+        {
+            await uow.PromotionProgramStore.ReleaseUseAsync(programId);
+        }
+    }
+
     // A cancelled or expired invoice no longer has food to hand over.
     public static void CancelFoodOrder(Invoice invoice)
     {
@@ -40,7 +51,8 @@ internal static class InvoiceLifecycle
     }
 
     // Loyalty: accrue points on the paid amount and re-evaluate the membership tier (only when the invoice has a
-    // customer), then mark the promo code (if any) as consumed. Does not save; returns the customer, if any.
+    // customer). The promotion use was already counted when the invoice was created. Does not save; returns the
+    // customer, if any.
     public static async Task<User?> ApplyPaidSideEffectsAsync(IApplicationUnitOfWork uow, Invoice invoice)
     {
         User? user = null;
@@ -59,12 +71,6 @@ internal static class InvoiceLifecycle
                 }
                 await uow.UserStore.UpdateAsync(user);
             }
-        }
-
-        // Mark the promotion program (if any) as consumed — an atomic increment, not a read-modify-write.
-        if (invoice.PromotionProgramId is Guid usedProgramId)
-        {
-            await uow.PromotionProgramStore.IncrementUsedCountAsync(usedProgramId);
         }
         return user;
     }

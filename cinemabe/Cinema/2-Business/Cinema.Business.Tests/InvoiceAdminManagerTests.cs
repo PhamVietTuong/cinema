@@ -58,6 +58,42 @@ public class InvoiceAdminManagerTests
     }
 
     [Fact]
+    public async Task UpdateStatus_PendingToCancelled_GivesBackThePromotionUse()
+    {
+        var programId = Guid.NewGuid();
+        var invoice = Setup(InvoiceStatus.Pending);
+        invoice.PromotionProgramId = programId;
+        _uowMock.Setup(u => u.PromotionProgramStore.ReleaseUseAsync(programId)).Returns(Task.CompletedTask);
+
+        await _sut.UpdateStatusAsync(new UpdateInvoiceStatusRequest { Id = invoice.Id, Status = InvoiceStatus.Cancelled });
+
+        _uowMock.Verify(u => u.PromotionProgramStore.ReleaseUseAsync(programId), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateStatus_PaidToCancelled_KeepsThePromotionUse()
+    {
+        var invoice = Setup(InvoiceStatus.Paid, Guid.NewGuid());
+        invoice.PromotionProgramId = Guid.NewGuid();
+
+        await _sut.UpdateStatusAsync(new UpdateInvoiceStatusRequest { Id = invoice.Id, Status = InvoiceStatus.Cancelled });
+
+        _uowMock.Verify(u => u.PromotionProgramStore.ReleaseUseAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateStatus_PendingToPaid_DoesNotCountThePromotionUseAgain()
+    {
+        var invoice = Setup(InvoiceStatus.Pending);
+        invoice.PromotionProgramId = Guid.NewGuid();
+
+        await _sut.UpdateStatusAsync(new UpdateInvoiceStatusRequest { Id = invoice.Id, Status = InvoiceStatus.Paid });
+
+        _uowMock.Verify(u => u.PromotionProgramStore.TryReserveUseAsync(It.IsAny<Guid>()), Times.Never);
+        _uowMock.Verify(u => u.PromotionProgramStore.ReleaseUseAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
     public async Task UpdateStatus_PaidToCancelled_DeactivatesTickets_ButDoesNotRefundPoints()
     {
         var invoice = Setup(InvoiceStatus.Paid, Guid.NewGuid());
@@ -132,6 +168,19 @@ public class InvoiceAdminManagerTests
         user.Points.Should().Be(300);
         _uowMock.Verify(u => u.InvoiceStore.DeleteAsync(invoice.Id), Times.Once);
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task Delete_PendingInvoice_GivesBackThePromotionUse()
+    {
+        var programId = Guid.NewGuid();
+        var invoice = Setup(InvoiceStatus.Pending);
+        invoice.PromotionProgramId = programId;
+        _uowMock.Setup(u => u.PromotionProgramStore.ReleaseUseAsync(programId)).Returns(Task.CompletedTask);
+
+        await _sut.DeleteAsync(invoice.Id);
+
+        _uowMock.Verify(u => u.PromotionProgramStore.ReleaseUseAsync(programId), Times.Once);
     }
 
     [Fact]
