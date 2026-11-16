@@ -51,6 +51,9 @@ public class BoxOfficeTests
         _sut = new BoxOfficeManager(_uowMock.Object, _booking);
         // Points are spent through atomic conditional UPDATEs; succeed by default.
         _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(It.IsAny<Guid>(), It.IsAny<int>())).ReturnsAsync(true);
+        // The online path first looks for an unpaid booking of the same customer on the same seats: none by default.
+        _uowMock.Setup(u => u.InvoiceStore.FindOwnPendingForSeatsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync((Invoice?)null);
 
         _staff = NewUser(RoleNames.TheaterStaff, _theaterId);
         _manager = NewUser(RoleNames.Admin, _theaterId);

@@ -97,6 +97,9 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   discountMessage = '';
   discountAmount = 0;
 
+  /** Set when the seats are held by the customer's own earlier unpaid booking whose amount differs from this page. */
+  resumeOffer: { invoiceId: string; code: string; amount: number } | null = null;
+
   theaterId = '';
   /** VND value of 1 loyalty point — fetched from the server for this booking's theater; 0 until loaded. */
   pointValue = 0;
@@ -483,6 +486,16 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
           this._showSuccess(code);
           return;
         }
+        // The server handed back the customer's earlier unpaid booking for these seats (they left the payment page).
+        // Its amounts were fixed when it was made: pay it straight away only when it is the amount this page shows,
+        // otherwise let the customer decide, so nobody is sent to pay a different amount without being told.
+        const resumedAmount = Math.round(res?.finalAmount ?? 0);
+        if (res?.resumed && resumedAmount !== Math.round(this.finalTotal)) {
+          this.resumeOffer = { invoiceId, code, amount: resumedAmount };
+          this.loading = false;
+          this._cdr.markForCheck();
+          return;
+        }
         this._initiatePayment(invoiceId, code);
       },
       error: err => {
@@ -492,6 +505,23 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
         this._cdr.markForCheck();
       },
     });
+  }
+
+  /** Pays the earlier unpaid booking the customer chose to continue (see the resume offer in confirmBooking). */
+  continueResumedPayment(): void {
+    const offer = this.resumeOffer;
+    if (!offer) {
+      return;
+    }
+    this.resumeOffer = null;
+    this.loading = true;
+    this._cdr.markForCheck();
+    this._initiatePayment(offer.invoiceId, offer.code);
+  }
+
+  dismissResumeOffer(): void {
+    this.resumeOffer = null;
+    this._cdr.markForCheck();
   }
 
   /** True when a server error message reports an out-of-stock / insufficient-quantity food or combo. */

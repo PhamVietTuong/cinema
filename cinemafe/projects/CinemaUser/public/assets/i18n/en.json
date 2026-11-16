@@ -262,6 +262,12 @@
       "failedTitle": "Payment not completed",
       "failedSub": "The payment was cancelled or declined, so no money was taken. Your seats and any points you used stay reserved for a few minutes and are returned automatically if the booking is not paid."
     },
+    "resume": {
+      "title": "You already have an unpaid booking for these seats",
+      "text": "It was made earlier and its amount is {{amount}}đ, which is not the amount on this page. You can continue paying it, or go back and wait a few minutes for it to be released.",
+      "continue": "Continue and pay {{amount}}đ",
+      "dismiss": "Not now"
+    },
     "errors": {
       "ageNotConfirmedGeneric": "Please tick the age confirmation before paying.",
       "ageNotConfirmed": "Please tick the age confirmation before paying: this film is rated {{age}}+.",

@@ -100,6 +100,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - **AC-07.7** (error) Given an unsigned Sandbox callback for an invoice owned by VNPay, when it arrives, then it is rejected and nothing is written. Source: `PaymentCallbackTests.HandlePaymentCallbackAsync_SandboxCallbackOnVnPayInvoice_IsRejected_NoWrites`.
 - **AC-07.8** (boundary) Given the amount due is zero or less (a 100% promotion or points covering the whole remainder), when I start payment, then the invoice is finalized as Paid without calling any gateway. Source: `PaymentCallbackTests.InitiatePaymentAsync_ZeroAmountDue_FinalizesWithoutAnyGateway`.
 - **AC-07.9** (error) Given an invoice that is not mine, or not Pending, when I start payment, then nothing happens. Source: `PaymentCallbackTests.InitiatePaymentAsync_ByANonOwner_ReturnsNull_AndTouchesNothing`, `InitiatePaymentAsync_OnANonPendingInvoice_ReturnsNull`.
+- **AC-07.10** (success) Given I left the VNPay page and book the same seats again while my earlier booking is still unpaid, when I confirm, then I am not told the seats are taken: if the earlier booking has the amount shown on the page I am sent to pay it, and if its amount differs I see that amount and choose to continue or go back. Source: `BookingServiceTests.CreateBookingAsync_OwnPendingBookingForTheSameSeats_IsHandedBackNotRecreated`, `booking-checkout.component.spec.ts` ("an earlier unpaid booking").
 
 ### US-08 Honest pending state after the redirect
 

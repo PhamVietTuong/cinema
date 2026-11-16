@@ -79,6 +79,18 @@
       <div *ngIf="stockProblem" class="error-banner">
         <mat-icon>inventory_2</mat-icon> {{ 'booking.errors.outOfStock' | translate }}
       </div>
+      @if (resumeOffer) {
+        <div class="resume-offer" role="alert">
+          <p class="resume-title"><mat-icon>history</mat-icon> {{ 'booking.resume.title' | translate }}</p>
+          <p class="resume-text">{{ 'booking.resume.text' | translate:{ amount: (resumeOffer.amount | number:'1.0-0') } }}</p>
+          <div class="resume-actions">
+            <button type="button" mat-raised-button class="btn-primary-cta resume-btn" (click)="continueResumedPayment()">
+              {{ 'booking.resume.continue' | translate:{ amount: (resumeOffer.amount | number:'1.0-0') } }}
+            </button>
+            <button type="button" class="btn-back" (click)="dismissResumeOffer()">{{ 'booking.resume.dismiss' | translate }}</button>
+          </div>
+        </div>
+      }
 
       <div class="action-row">
         <button type="button" class="btn-back" (click)="backToSeats()">{{ 'booking.checkout.backToSeats' | translate }}</button>
