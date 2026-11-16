@@ -224,6 +224,7 @@
       "pointsBalance": "You have {{points}} points available",
       "pointsPlaceholder": "Points to redeem",
       "pointsHint": "Max {{max}} points (1 point = {{value}}đ)",
+      "promoDiscount": "Promotion discount",
       "pointsDiscount": "Points discount ({{points}} pts)",
       "pointsRate": "{{spend}}đ spent = 1 point · {{points}} points = {{amount}}đ at this theater",
       "pointsToEarn": "You could earn up to {{points}} points from this payment"
@@ -259,7 +260,9 @@
       "checkBookings": "Check My Bookings",
       "cancelledTitle": "Booking expired or cancelled",
       "cancelledSub": "This booking was not paid in time, or the payment failed, so your seats were released. If money was taken from your account, please contact the cinema with your booking code.",
-      "bookAgain": "Book Again"
+      "bookAgain": "Book Again",
+      "failedTitle": "Payment not completed",
+      "failedSub": "The payment was cancelled or declined, so no money was taken. Your seats and any points you used stay reserved for a few minutes and are returned automatically if the booking is not paid."
     },
     "errors": {
       "ageNotConfirmedGeneric": "Please tick the age confirmation before paying.",

@@ -4,7 +4,10 @@ import { SharedModule, PaymentServiceAgent, uniqueSeatLabels } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import * as QRCode from 'qrcode';
 
-type ReturnState = 'verifying' | 'success' | 'pending' | 'cancelled';
+type ReturnState = 'verifying' | 'success' | 'pending' | 'cancelled' | 'failed';
+
+/** vnp_ResponseCode VNPay puts on the browser redirect when the payment succeeded. */
+const VNPAY_SUCCESS_CODE = '00';
 
 @Component({
   selector: 'app-payment-return',
@@ -42,6 +45,16 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
     if (!this.invoiceId) {
       // Nothing to verify against — send the user to their bookings.
       this.state = 'pending';
+      this._cdr.markForCheck();
+      return;
+    }
+    // The redirect carries VNPay's own verdict. It is only used to explain the outcome sooner: it never marks
+    // anything Paid (only the signed IPN does), and the invoice is left as it is (it keeps its seats and points
+    // until it is paid or expires). A non-"00" code (user pressed cancel, card declined, ...) means no money was
+    // taken, so polling for 30 seconds and then saying "we haven't confirmed your payment" only confuses people.
+    const gatewayCode = this._route.snapshot.queryParamMap.get('vnp_ResponseCode');
+    if (gatewayCode && gatewayCode !== VNPAY_SUCCESS_CODE) {
+      this.state = 'failed';
       this._cdr.markForCheck();
       return;
     }
