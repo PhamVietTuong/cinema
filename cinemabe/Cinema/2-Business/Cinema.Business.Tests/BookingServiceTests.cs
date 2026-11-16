@@ -1766,6 +1766,60 @@ public class BookingServiceTests
         result.DiscountAmount.Should().Be(0);
     }
 
+    // ── Every invoice amount is a whole number of dong ──────────────────────────
+
+    [Fact]
+    public async Task CreateBookingAsync_PercentWithFraction_GivesWholeDongAmounts()
+    {
+        // 33.3333% of 183,000 is 60,999.94: the invoice must carry whole dong, not 122,000.06.
+        SetupCodeProgram(p => p.PercentOff = 33.3333);
+
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 183000, candidates: new List<PromotionProgram>(), code: "SUMMER25");
+
+        result.FinalAmount.Should().Be(122000);
+        result.DiscountAmount.Should().Be(61000);
+        result.TotalAmount.Should().Be(183000);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_PointsAfterFractionalPromotion_LeaveAWholeRemainder()
+    {
+        // The case that sent a zero-dong payment link: promotion with a fraction, then every point spent.
+        var customerId = Guid.NewGuid();
+        var customer = new User { Id = customerId, Points = 100000 };
+        _uowMock.Setup(u => u.UserStore.TryDeductPointsAsync(customerId, It.IsAny<int>())).ReturnsAsync(true);
+        _uowMock.Setup(u => u.UserStore.UpdateAsync(customer)).ReturnsAsync(customer);
+        _uowMock.Setup(u => u.LoyaltySettingStore.GetOverrideAsync(It.IsAny<Guid>())).ReturnsAsync((LoyaltySetting?)null);
+        SetupCodeProgram(p => p.PercentOff = 33.3333);
+
+        // Remainder 122,000 at 10 VND a point is 12,200 points: nothing is left, and what is left is a whole number.
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 183000, candidates: new List<PromotionProgram>(), code: "SUMMER25",
+            customerId: customerId, customer: customer, pointsToRedeem: 100000);
+
+        result.PointsRedeemed.Should().Be(12200);
+        result.FinalAmount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_PriceWithCents_IsRoundedToWholeDong()
+    {
+        var result = await BookOneSeatWithProgramsAsync(listPrice: 80000.6, candidates: new List<PromotionProgram>());
+
+        result.TotalAmount.Should().Be(80001);
+        result.FinalAmount.Should().Be(80001);
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_PercentWithFraction_MatchesTheWholeDongBooking()
+    {
+        SetupCodeProgram(p => p.PercentOff = 33.3333);
+        var seats = SetupOneSeat(183000);
+
+        var preview = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 183000, seats);
+
+        preview.DiscountAmount.Should().Be(61000);
+    }
+
     // ── A program's MaxUsage is reserved when the booking is created ────────────
 
     [Fact]
