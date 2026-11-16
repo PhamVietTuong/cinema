@@ -882,6 +882,9 @@
           "status": {
             "$ref": "#/components/schemas/InvoiceStatus"
           },
+          "resumed": {
+            "type": "boolean"
+          },
           "paymentUrl": {
             "type": "string",
             "nullable": true

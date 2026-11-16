@@ -17,6 +17,11 @@ public interface IInvoiceStore : IGenericStore<Invoice>
     Task<IReadOnlyDictionary<string, double>> GetRevenueByTheaterAsync(DateTime from, DateTime to);
     /// <summary>Pending invoices created before <paramref name="olderThan"/> (abandoned/unpaid holds).</summary>
     Task<IReadOnlyList<Invoice>> GetStalePendingAsync(DateTime olderThan);
+
+    /// <summary>The user's own Pending invoice that currently holds exactly this set of seats for the showtime and room
+    /// (tickets loaded, not tracked), or null. Lets a customer who left the payment page come back to the booking they
+    /// already hold instead of being refused a seat they themselves are holding.</summary>
+    Task<Invoice?> FindOwnPendingForSeatsAsync(Guid userId, Guid showTimeId, Guid roomId, IReadOnlyCollection<Guid> seatIds);
     /// <summary>Loads a ticket by its QR token, with invoice + seat + showtime/room details, for gate check-in.</summary>
     Task<InvoiceTicket?> GetTicketByQrAsync(string qrCode);
     /// <summary>No-tracking projection of a ticket by QR token with its invoice, seat, showtime, room theater and

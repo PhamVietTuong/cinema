@@ -131,6 +131,23 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             .Where(i => i.Status == InvoiceStatus.Pending && i.CreationTime < olderThan)
             .ToListAsync();
 
+    public async Task<Invoice?> FindOwnPendingForSeatsAsync(Guid userId, Guid showTimeId, Guid roomId, IReadOnlyCollection<Guid> seatIds)
+    {
+        var candidates = await DbSet
+            .AsNoTracking()
+            .Include(i => i.InvoiceTickets)
+            .Where(i => i.UserId == userId
+                        && i.Status == InvoiceStatus.Pending
+                        && i.InvoiceTickets.Any(t => t.IsActive && t.ShowTimeId == showTimeId && t.RoomId == roomId && seatIds.Contains(t.SeatId)))
+            .ToListAsync();
+        // Same seats exactly: a different selection that merely overlaps is a new booking, not a resumed one.
+        return candidates.FirstOrDefault(i => i.InvoiceTickets
+            .Where(t => t.IsActive)
+            .Select(t => t.SeatId)
+            .ToHashSet()
+            .SetEquals(seatIds));
+    }
+
     public async Task<InvoiceTicket?> GetTicketByQrAsync(string qrCode)
         => await Context.InvoiceTicket
             .Include(t => t.Invoice)

@@ -12,6 +12,10 @@ public class BookingResultDTO
     /// <summary>Loyalty points spent on this booking (part of DiscountAmount).</summary>
     public int PointsRedeemed { get; set; }
     public InvoiceStatus Status { get; set; }
+    /// <summary>True when this is the customer's earlier unpaid booking for the same seats, handed back instead of a new
+    /// one (nothing was created or reserved again). Its amounts are the ones fixed when it was made, which can differ
+    /// from what the customer sees now, so the client must check them before paying.</summary>
+    public bool Resumed { get; set; }
     public string? PaymentUrl { get; set; }
     /// <summary>Title of the auto-apply PromotionProgram that produced this price, if any (null when a
     /// Discount — code or auto-apply — was the cheaper source instead, or neither applied).</summary>

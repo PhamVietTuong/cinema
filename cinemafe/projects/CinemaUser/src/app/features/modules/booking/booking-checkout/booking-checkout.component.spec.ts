@@ -230,6 +230,56 @@ describe('BookingCheckoutComponent', () => {
     expect(request.provider).toBe('VNPay');
   });
 
+  describe('an earlier unpaid booking for the same seats', () => {
+    it('is paid straight away when its amount is the amount on this page', () => {
+      const c = build(state);
+      payment.createBooking.mockReturnValue(of({ invoiceId: 'inv-old', invoiceCode: 'CIN-OLD', resumed: true, finalAmount: c.finalTotal }));
+
+      c.confirmBooking();
+
+      expect(c.resumeOffer).toBeNull();
+      expect(payment.initiatePayment.mock.calls[0][0].invoiceId).toBe('inv-old');
+    });
+
+    it('is offered, not paid, when its amount differs, and paid once the customer continues', () => {
+      const c = build(state);
+      const earlier = c.finalTotal - 30000;
+      payment.createBooking.mockReturnValue(of({ invoiceId: 'inv-old', invoiceCode: 'CIN-OLD', resumed: true, finalAmount: earlier }));
+
+      c.confirmBooking();
+
+      expect(payment.initiatePayment).not.toHaveBeenCalled();
+      expect(c.resumeOffer).toEqual({ invoiceId: 'inv-old', code: 'CIN-OLD', amount: earlier });
+      expect(c.loading).toBe(false);
+
+      c.continueResumedPayment();
+
+      expect(c.resumeOffer).toBeNull();
+      expect(payment.initiatePayment.mock.calls[0][0].invoiceId).toBe('inv-old');
+    });
+
+    it('is left unpaid when the customer dismisses the offer', () => {
+      const c = build(state);
+      payment.createBooking.mockReturnValue(of({ invoiceId: 'inv-old', invoiceCode: 'CIN-OLD', resumed: true, finalAmount: c.finalTotal - 30000 }));
+      c.confirmBooking();
+
+      c.dismissResumeOffer();
+
+      expect(c.resumeOffer).toBeNull();
+      expect(payment.initiatePayment).not.toHaveBeenCalled();
+    });
+
+    it('is not mistaken for an offer on a normal new booking', () => {
+      const c = build(state);
+      payment.createBooking.mockReturnValue(of({ invoiceId: 'inv-new', invoiceCode: 'CIN-NEW', resumed: false, finalAmount: c.finalTotal - 30000 }));
+
+      c.confirmBooking();
+
+      expect(c.resumeOffer).toBeNull();
+      expect(payment.initiatePayment.mock.calls[0][0].invoiceId).toBe('inv-new');
+    });
+  });
+
   it('does not flag a stock problem for other booking failures', () => {
     const c = build(state);
     payment.createBooking.mockReturnValue(throwError(() => ({ error: 'Seat is locked' })));

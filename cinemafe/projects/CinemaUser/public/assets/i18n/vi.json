@@ -262,6 +262,12 @@
       "failedTitle": "Thanh toán chưa hoàn tất",
       "failedSub": "Thanh toán đã bị hủy hoặc bị từ chối nên chưa có khoản tiền nào bị trừ. Ghế và số điểm bạn đã dùng được giữ lại trong vài phút và sẽ tự động hoàn trả nếu đơn không được thanh toán."
     },
+    "resume": {
+      "title": "Bạn đang có một đơn chưa thanh toán cho các ghế này",
+      "text": "Đơn này được tạo trước đó với số tiền {{amount}}đ, khác với số tiền trên trang này. Bạn có thể tiếp tục thanh toán đơn đó, hoặc quay lại và chờ vài phút để đơn được giải phóng.",
+      "continue": "Tiếp tục và thanh toán {{amount}}đ",
+      "dismiss": "Để sau"
+    },
     "errors": {
       "ageNotConfirmedGeneric": "Vui lòng tích xác nhận độ tuổi trước khi thanh toán.",
       "ageNotConfirmed": "Vui lòng tích xác nhận độ tuổi trước khi thanh toán: phim này giới hạn {{age}}+.",

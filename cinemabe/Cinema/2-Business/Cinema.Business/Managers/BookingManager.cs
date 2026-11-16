@@ -148,6 +148,16 @@ public class BookingManager : IBookingManager
         await _uow.BeginTransactionAsync();
         try
         {
+            // The customer left the payment page (Back button, closed tab) and is booking the same seats again: those
+            // seats are held by their own unpaid booking, which would otherwise refuse them. Hand that booking back.
+            var held = await _uow.InvoiceStore.FindOwnPendingForSeatsAsync(
+                userId, request.ShowTimeId, request.RoomId, request.Seats.Select(s => s.SeatId).ToList());
+            if (held is not null)
+            {
+                await _uow.RollbackTransactionAsync();
+                return ToResumedBooking(held);
+            }
+
             var composed = await ComposeInvoiceAsync(new ComposeInput
             {
                 CustomerUserId = userId,
@@ -226,6 +236,32 @@ public class BookingManager : IBookingManager
         {
             gate.Release();
         }
+    }
+
+    private static BookingResultDTO ToResumedBooking(Invoice invoice)
+    {
+        var tickets = invoice.InvoiceTickets.Where(t => t.IsActive).ToList();
+        // A double seat is two physical seats that share one label, so a repeated label means "Double".
+        var doubleLabels = tickets.GroupBy(t => t.SeatLabel).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet();
+        return new BookingResultDTO
+        {
+            InvoiceId      = invoice.Id,
+            InvoiceCode    = invoice.Code,
+            TotalAmount    = invoice.TotalAmount,
+            DiscountAmount = invoice.DiscountAmount,
+            FinalAmount    = invoice.FinalAmount,
+            PointsRedeemed = invoice.PointsRedeemed,
+            Status         = InvoiceStatus.Pending,
+            Resumed        = true,
+            Tickets        = tickets.Select(t => new TicketItemDTO
+            {
+                SeatLabel      = t.SeatLabel ?? string.Empty,
+                SeatType       = doubleLabels.Contains(t.SeatLabel) ? "Double" : "Single",
+                Price          = t.Price,
+                PatronCategory = t.PatronCategoryName ?? string.Empty,
+                QrCode         = t.QrCode,
+            }).ToList(),
+        };
     }
 
     // ── Counter (box office) sale ───────────────────────────────────────────────

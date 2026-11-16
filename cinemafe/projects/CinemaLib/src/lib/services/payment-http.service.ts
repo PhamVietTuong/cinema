@@ -1280,6 +1280,7 @@ export class BookingResultDTO implements IBookingResultDTO {
     finalAmount?: number;
     pointsRedeemed?: number;
     status?: InvoiceStatus;
+    resumed?: boolean;
     paymentUrl?: string | undefined;
     appliedPromotionTitle?: string | undefined;
     tickets?: TicketItemDTO[];
@@ -1302,6 +1303,7 @@ export class BookingResultDTO implements IBookingResultDTO {
             this.finalAmount = _data["finalAmount"];
             this.pointsRedeemed = _data["pointsRedeemed"];
             this.status = _data["status"];
+            this.resumed = _data["resumed"];
             this.paymentUrl = _data["paymentUrl"];
             this.appliedPromotionTitle = _data["appliedPromotionTitle"];
             if (Array.isArray(_data["tickets"])) {
@@ -1328,6 +1330,7 @@ export class BookingResultDTO implements IBookingResultDTO {
         data["finalAmount"] = this.finalAmount;
         data["pointsRedeemed"] = this.pointsRedeemed;
         data["status"] = this.status;
+        data["resumed"] = this.resumed;
         data["paymentUrl"] = this.paymentUrl;
         data["appliedPromotionTitle"] = this.appliedPromotionTitle;
         if (Array.isArray(this.tickets)) {
@@ -1347,6 +1350,7 @@ export interface IBookingResultDTO {
     finalAmount?: number;
     pointsRedeemed?: number;
     status?: InvoiceStatus;
+    resumed?: boolean;
     paymentUrl?: string | undefined;
     appliedPromotionTitle?: string | undefined;
     tickets?: TicketItemDTO[];

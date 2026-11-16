@@ -82,6 +82,9 @@ public class BookingServiceTests
             .ReturnsAsync(new Theater());
         // Default: the program still has a free use, so the atomic reservation succeeds unless a test makes it fail.
         _uowMock.Setup(u => u.PromotionProgramStore.TryReserveUseAsync(It.IsAny<Guid>())).ReturnsAsync(true);
+        // Default: the customer holds no unpaid booking for the seats they pick.
+        _uowMock.Setup(u => u.InvoiceStore.FindOwnPendingForSeatsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync((Invoice?)null);
     }
 
     private static PagingSearchDTO SeatSearch(Guid showTimeId, Guid roomId)
@@ -1764,6 +1767,68 @@ public class BookingServiceTests
 
         result.Valid.Should().BeTrue();
         result.DiscountAmount.Should().Be(0);
+    }
+
+    // ── Coming back to an unpaid booking for the same seats ─────────────────────
+
+    [Fact]
+    public async Task CreateBookingAsync_OwnPendingBookingForTheSameSeats_IsHandedBackNotRecreated()
+    {
+        var userId = Guid.NewGuid();
+        var seatId = Guid.NewGuid();
+        var held = new Invoice
+        {
+            Id = Guid.NewGuid(), Code = "CIN-HELD", UserId = userId, Status = InvoiceStatus.Pending,
+            TotalAmount = 183000, DiscountAmount = 30000, FinalAmount = 153000, PointsRedeemed = 0,
+            InvoiceTickets = new List<InvoiceTicket>
+            {
+                new() { SeatId = seatId, Price = 183000, PatronCategoryName = "Adult", SeatLabel = "E7", IsActive = true, QrCode = "qr" },
+            },
+        };
+        _uowMock.Setup(u => u.InvoiceStore.FindOwnPendingForSeatsAsync(userId, ShowTimeId1, RoomId1, It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(held);
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId = ShowTimeId1, RoomId = RoomId1, PaymentMethod = "VNPay",
+            Seats = new List<BookingSeatItem> { new() { SeatId = seatId } },
+        };
+
+        var result = await _sut.CreateBookingAsync(userId, request);
+
+        result.Resumed.Should().BeTrue();
+        result.InvoiceId.Should().Be(held.Id);
+        result.FinalAmount.Should().Be(153000);
+        result.Status.Should().Be(InvoiceStatus.Pending);
+        result.Tickets.Should().ContainSingle(t => t.SeatLabel == "E7" && t.SeatType == "Single");
+        _uowMock.Verify(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()), Times.Never);
+        _uowMock.Verify(u => u.PromotionProgramStore.TryReserveUseAsync(It.IsAny<Guid>()), Times.Never);
+        _uowMock.Verify(u => u.UserStore.TryDeductPointsAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_HandedBackDoubleSeat_IsReportedAsDouble()
+    {
+        var userId = Guid.NewGuid();
+        var held = new Invoice
+        {
+            Id = Guid.NewGuid(), UserId = userId, Status = InvoiceStatus.Pending,
+            InvoiceTickets = new List<InvoiceTicket>
+            {
+                new() { SeatId = Guid.NewGuid(), Price = 100000, SeatLabel = "K3", IsActive = true },
+                new() { SeatId = Guid.NewGuid(), Price = 100000, SeatLabel = "K3", IsActive = true },
+            },
+        };
+        _uowMock.Setup(u => u.InvoiceStore.FindOwnPendingForSeatsAsync(userId, ShowTimeId1, RoomId1, It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(held);
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId = ShowTimeId1, RoomId = RoomId1, PaymentMethod = "VNPay",
+            Seats = new List<BookingSeatItem> { new() { SeatId = Guid.NewGuid() }, new() { SeatId = Guid.NewGuid() } },
+        };
+
+        var result = await _sut.CreateBookingAsync(userId, request);
+
+        result.Tickets.Should().OnlyContain(t => t.SeatType == "Double");
     }
 
     // ── Every invoice amount is a whole number of dong ──────────────────────────
