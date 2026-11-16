@@ -192,7 +192,7 @@ exactly one of `Code` (customer-entered) **xor** `AutoApply=true`, enforced in
 | TermsText (2000)?, DisplayOrder, IsPublished | |
 | AutoApply | bool; requires Mechanic != Info, Eligibility in (Everyone, Members), Code null |
 | Code? | string, max 50, unique when present (filtered unique index `WHERE [Code] IS NOT NULL`) — mutually exclusive with AutoApply |
-| MaxUsage? / UsedCount | int, UsedCount default 0 — incremented on every paid invoice whose `PromotionProgramId` points here, regardless of trigger (code or auto-apply) |
+| MaxUsage? / UsedCount | int, UsedCount default 0 — a use is reserved (atomic conditional UPDATE, only while below `MaxUsage`) when an invoice whose `PromotionProgramId` points here is created, regardless of trigger (code or auto-apply), and given back when that invoice is cancelled, expires or is deleted while Pending |
 | MaxDiscountAmount? | double — caps the *summed* per-unit saving (post-`ComputeProgramSaving`, after the program is resolved) |
 | MovieId? | FK → Movie, **SetNull** — optional movie scope. Theater/day/time scope is expressed via `Schedules` instead (no separate fields here) |
 

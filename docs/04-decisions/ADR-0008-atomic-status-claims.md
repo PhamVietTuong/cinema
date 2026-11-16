@@ -10,7 +10,7 @@
   - `InvoiceStore.TryTransitionStatusAsync` (`cinemabe/Cinema/3-Data/Cinema.Data/Stores/InvoiceStore.cs:181`) claims `Pending` to `Paid` or `Cancelled`.
   - `InvoiceStore.TryAdmitTicketAsync` (`InvoiceStore.cs:169`) admits a ticket once.
   - `UserStore.TryDeductPointsAsync` spends points only while enough remain. (It was joined by `GiftCardStore.TryDrawBalanceAsync` for gift-card balances; gift cards were removed on 2026-11-14.)
-  - `PromotionProgramStore.IncrementUsedCountAsync` adds one in SQL.
+  - `PromotionProgramStore.TryReserveUseAsync` reserves a promotion use only while `MaxUsage` allows (amended 2026-11-16; it used to be `IncrementUsedCountAsync`, run when the invoice turned Paid).
 - Callers run the claim inside a transaction and roll back if they lose (`BookingManager.cs:1086`, `:1856`; `InvoiceAdminManager.cs:71`).
 
 ## Decision
@@ -23,7 +23,7 @@ Author to confirm: why this pattern was preferred over row versioning (EF concur
 
 - The business-rule outcomes for concurrent callbacks are deterministic and documented (`business-rules.md` section 3).
 - The claim is exercised only through mocks. There is no test against a real database that proves the `UPDATE ... WHERE` behaves as intended; `docs/05-process/testing.md` (rule BR-PAY-03) names this gap.
-- Not every contended write uses the pattern. Example: the promotion `MaxUsage` check happens at booking time but `UsedCount` is incremented only when the invoice turns Paid, so in-flight bookings can exceed the cap by their number, a known, accepted limit (`business-rules.md` section 5).
+- Amendment 2026-11-16: the promotion `MaxUsage` was the example of a write that did not use the pattern (the check ran at booking time but `UsedCount` was incremented only when the invoice turned Paid, so in-flight bookings could exceed the cap, a limit accepted at the time). Browser testing showed two Pending bookings both taking the last use of a one-use code and both getting paid, so the use is now reserved with a conditional UPDATE when the booking is created and released when it is cancelled or expires (`business-rules.md` section 5).
 - Defects 2, 4 and 8 in `docs/05-process/ai-usage-log.md` are the cases that led to this pattern.
 
 ## Alternatives considered
