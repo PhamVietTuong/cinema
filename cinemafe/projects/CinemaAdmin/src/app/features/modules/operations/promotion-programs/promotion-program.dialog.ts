@@ -8,6 +8,7 @@ import {
   daysMaskToList, daysListToMask, channelsMaskToList, channelsListToMask,
 } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
+import { toDateInput } from '../../../../shared/date-input';
 
 type Dto = CinemaServiceAgent.PromotionProgramDTO;
 type Mechanic = CinemaServiceAgent.PromotionMechanic;
@@ -106,8 +107,8 @@ export class PromotionProgramDialog implements OnInit {
       minMemberShipId: [item?.minMemberShipId ?? null],
       maxAge: [item?.maxAge ?? null],
 
-      startDate: [item?.startDate ? new Date(item.startDate).toISOString().split('T')[0] : '', Validators.required],
-      endDate: [item?.endDate ? new Date(item.endDate).toISOString().split('T')[0] : '', Validators.required],
+      startDate: [toDateInput(item?.startDate), Validators.required],
+      endDate: [toDateInput(item?.endDate), Validators.required],
 
       excludeHolidays: [item?.excludeHolidays ?? false],
       maxTicketsPerTransaction: [item?.maxTicketsPerTransaction ?? null],
