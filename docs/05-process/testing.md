@@ -188,6 +188,21 @@ CI runs it in the `backend` job against a SQL Server service container. Findings
 requires a seeded `Customer` user type, and a new account cannot sign in until its email is verified (both now asserted).
 The dev database is never touched. Adding a business flow (booking, payment) to this suite is the next step.
 
+## Security and accessibility tests (e2e)
+
+| Type | Where | Run |
+|---|---|---|
+| Security: fuzz, access control (IDOR), forged tokens, garbage IPN | `e2e/tests/api-security-fuzz.spec.ts` | `cd e2e && npm run test:security` |
+| Usability / accessibility (axe-core WCAG 2.1 A/AA) | `e2e/tests/a11y-axe.spec.ts` (`@a11y`) | `npm run test:a11y` |
+
+Accessibility is a ratchet: serious/critical axe violations fail the test except the rule ids in `KNOWN_BACKLOG`
+(`link-name`, `button-name`, `label-content-name-mismatch`, found 2026-11-16). Fix them and shrink the list; never grow it.
+Colour contrast is excluded until the design tokens are audited. Penetration testing (e.g. OWASP ZAP) is not automated.
+
+Fuzz finding (2026-11-16, low severity, open): ASP.NET's stock 400 body for an unparsable number names a CLR type
+(`... could not be converted to System.Int32. Path: $.pageIndex`). No stack trace or SQL text leaks, so the fuzz suite
+does not gate on it; fix by returning a custom `ProblemDetails` for model-binding errors if this matters.
+
 
 ## Test types — coverage against the standard taxonomy
 
