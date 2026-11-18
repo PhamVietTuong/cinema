@@ -9,6 +9,8 @@
     "test:user": "playwright test user-",
     "test:admin": "playwright test admin-",
     "test:staff": "playwright test staff-",
+    "test:security": "playwright test api-security-fuzz",
+    "test:a11y": "playwright test --grep @a11y",
     "test:smoke": "playwright test --grep @smoke",
     "test:sanity": "playwright test --grep @sanity",
     "test:compat": "cross-env E2E_COMPAT=1 playwright test --grep @smoke",
@@ -17,6 +19,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.48.0",
     "@types/node": "^22.0.0",
     "cross-env": "^7.0.3",
