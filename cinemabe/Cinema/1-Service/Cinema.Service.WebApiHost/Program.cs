@@ -240,3 +240,6 @@ app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.Health
 });
 
 app.Run();
+
+// Lets WebApplicationFactory<Program> in the integration tests host the real app.
+public partial class Program { }
