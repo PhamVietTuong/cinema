@@ -9,6 +9,9 @@
     "test:user": "playwright test user-",
     "test:admin": "playwright test admin-",
     "test:staff": "playwright test staff-",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:sanity": "playwright test --grep @sanity",
+    "test:compat": "cross-env E2E_COMPAT=1 playwright test --grep @smoke",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "typecheck": "tsc --noEmit"
@@ -16,6 +19,7 @@
   "devDependencies": {
     "@playwright/test": "^1.48.0",
     "@types/node": "^22.0.0",
+    "cross-env": "^7.0.3",
     "typescript": "^5.6.0"
   }
 }

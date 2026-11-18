@@ -187,3 +187,15 @@ dotnet test Cinema/1-Service/Cinema.Service.WebApiHost.IntegrationTests
 CI runs it in the `backend` job against a SQL Server service container. Findings the first run surfaced: registration
 requires a seeded `Customer` user type, and a new account cannot sign in until its email is verified (both now asserted).
 The dev database is never touched. Adding a business flow (booking, payment) to this suite is the next step.
+
+
+## Test types — coverage against the standard taxonomy
+
+| Type | Where | Run |
+|---|---|---|
+| Unit | `Cinema.Business.Tests`, Angular `*.spec.ts` | `dotnet test`, `ng test` |
+| Smoke | `e2e/tests/smoke.spec.ts` (`@smoke`) | `cd e2e && npm run test:smoke` |
+| Sanity | any e2e spec tagged `@sanity` | `npm run test:sanity` |
+| Compatibility (cross-browser / cross-platform) | `e2e/playwright.config.ts`: Firefox, WebKit, Pixel 7, iPhone 14 when `E2E_COMPAT=1` | `npm run test:compat` (needs `npx playwright install firefox webkit`) |
+
+The default `npm test` stays chromium-only so CI is not slowed; compat runs are opt-in.
