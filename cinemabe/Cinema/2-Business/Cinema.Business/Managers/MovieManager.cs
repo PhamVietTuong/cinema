@@ -92,8 +92,20 @@ public class MovieManager : IMovieManager
 
     public async Task<DefaultSearchResults<MovieDTO>> GetNowShowingAsync(PagingSearchDTO search)
     {
-        var movies = (await _uow.MovieStore.GetNowShowingAsync()).Select(ToMovieDTO).ToList();
-        return Paginate(movies, search);
+        // Paged in SQL on a no-tracking query. This used to load every now-showing movie (plus all its evaluations, which
+        // the DTO never read) as tracked entities and slice the page in memory.
+        var page     = search.PageIndex > 0 ? search.PageIndex : 1;
+        var hasSize  = search.PageSize > 0;
+        var (items, total) = await _uow.MovieStore.GetPagedAsync(
+            new MovieSearchFilter(Status: "now"), page, hasSize ? search.PageSize : int.MaxValue);
+
+        return new DefaultSearchResults<MovieDTO>
+        {
+            Results      = items.Select(ToMovieDTO).ToList(),
+            TotalCount   = total,
+            CountPerPage = hasSize ? search.PageSize : total,
+            Page         = page
+        };
     }
 
     public async Task<DefaultSearchResults<MovieDTO>> GetComingSoonAsync(PagingSearchDTO search)

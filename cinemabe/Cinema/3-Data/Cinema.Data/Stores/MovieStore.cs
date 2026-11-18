@@ -123,21 +123,6 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
         return movie;
     }
 
-    public async Task<IEnumerable<Movie>> GetNowShowingAsync()
-    {
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        return await DbSet
-            .Include(m => m.AgeRestriction)
-            .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
-            .Include(m => m.Evaluations)
-            .Where(m => m.IsActive && m.ReleaseDate <= today && (m.EndDate == null || m.EndDate >= today))
-            .OrderByDescending(m => m.ReleaseDate)
-            // Genres and evaluations are independent collections: in one query each movie's rows
-            // become genres x ratings, which grows with every rating a film receives.
-            .AsSplitQuery()
-            .ToListAsync();
-    }
-
     public async Task<IEnumerable<Movie>> GetComingSoonAsync()
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
