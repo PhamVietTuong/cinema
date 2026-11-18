@@ -185,3 +185,15 @@ Colour contrast is excluded until the design tokens are audited. Penetration tes
 Fuzz finding (2026-11-16, low severity, open): ASP.NET's stock 400 body for an unparsable number names a CLR type
 (`... could not be converted to System.Int32. Path: $.pageIndex`). No stack trace or SQL text leaks, so the fuzz suite
 does not gate on it; fix by returning a custom `ProblemDetails` for model-binding errors if this matters.
+
+
+## Test types — coverage against the standard taxonomy
+
+| Type | Where | Run |
+|---|---|---|
+| Unit | `Cinema.Business.Tests`, Angular `*.spec.ts` | `dotnet test`, `ng test` |
+| Smoke | `e2e/tests/smoke.spec.ts` (`@smoke`) | `cd e2e && npm run test:smoke` |
+| Sanity | any e2e spec tagged `@sanity` | `npm run test:sanity` |
+| Compatibility (cross-browser / cross-platform) | `e2e/playwright.config.ts`: Firefox, WebKit, Pixel 7, iPhone 14 when `E2E_COMPAT=1` | `npm run test:compat` (needs `npx playwright install firefox webkit`) |
+
+The default `npm test` stays chromium-only so CI is not slowed; compat runs are opt-in.
