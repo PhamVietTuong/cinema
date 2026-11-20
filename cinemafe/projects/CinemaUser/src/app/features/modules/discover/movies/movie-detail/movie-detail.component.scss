@@ -243,3 +243,6 @@
 .reply-form .composer-actions, .comment-card .composer-actions { gap: 14px; align-items: center; }
 .comment-more { display: flex; justify-content: center; margin-top: 18px; }
 @keyframes dt-pop { 0% { transform: scale(0.92); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+
+// Target of the poster -> detail view transition (the clicked card's poster carries the same name).
+.hero-backdrop { view-transition-name: movie-poster; }

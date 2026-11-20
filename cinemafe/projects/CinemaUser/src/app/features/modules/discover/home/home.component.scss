@@ -5,11 +5,26 @@
 // Shared buttons (.btn-primary-cta / .btn-ghost-cta) are defined globally in styles.scss.
 
 // ── Hero ──────────────────────────────────────────────────────────────────────
-// Flat ticket-paper ground — this direction has no radial spill/glow.
+// Flat ticket-paper ground, with one soft tint taken from the featured poster (--hero-glow, set by
+// appAmbientGlow). It is a low-alpha wash behind the content, not a spill: the paper stays the ground.
 .hero {
   background: var(--ml-paper);
   display: flex;
   align-items: center;
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(60% 90% at 78% 45%, color-mix(in srgb, var(--hero-glow) 26%, transparent), transparent 72%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero { transition: --hero-glow 1.2s ease; }
 }
 
 .hero-inner {

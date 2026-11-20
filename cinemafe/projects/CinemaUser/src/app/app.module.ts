@@ -1,7 +1,7 @@
 import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ViewTransitionInfo, provideRouter, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
@@ -27,7 +27,7 @@ import { ChatbotComponent } from './shared/chatbot/chatbot.component';
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
-    RouterModule.forRoot(routes),
+    RouterModule,
     CinemaLibModule,
     ChatbotComponent,
     StoreModule.forRoot({ auth: authReducer, movies: moviesReducer }),
@@ -35,6 +35,25 @@ import { ChatbotComponent } from './shared/chatbot/chatbot.component';
     StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: environment.production }),
   ],
   providers: [
+    provideRouter(routes, withViewTransitions({
+      // Poster -> detail hero morph. Only runs when a movie card was clicked (it is marked in App) and
+      // motion is allowed; every other navigation keeps the normal page-in animation.
+      skipInitialTransition: true,
+      onViewTransitionCreated: ({ transition }: ViewTransitionInfo) => {
+        const root = document.documentElement;
+        const marked = document.querySelector<HTMLElement>('[data-vt-poster]');
+        if (!marked || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          transition.skipTransition();
+          return;
+        }
+        root.classList.add('vt-active');
+        transition.finished.finally(() => {
+          root.classList.remove('vt-active');
+          marked.removeAttribute('data-vt-poster');
+          marked.style.viewTransitionName = '';
+        });
+      },
+    })),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideCinemaTranslation(),
     ...provideCinemaSvgIcons(),

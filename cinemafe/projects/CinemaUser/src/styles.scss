@@ -606,3 +606,15 @@ a {
   .cu-rise.is-revealed { animation: cu-rise-in 0.55s var(--cx-ease, ease) backwards; }
 }
 @keyframes cu-rise-in { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+
+// ── Poster -> detail view transition (see AppModule / App) ──────────────────────
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(movie-poster) { animation-duration: 0.55s; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+  // Keep the poster's aspect ratio while it grows into the hero instead of stretching.
+  ::view-transition-old(movie-poster), ::view-transition-new(movie-poster) { height: 100%; width: 100%; object-fit: cover; }
+  // The browser is already animating the page; do not also run the page-in on top of it.
+  html.vt-active router-outlet + * { animation: none; }
+}
+
+// ── Hero ambient glow (registered so the colour can transition) ───────────────
+@property --hero-glow { syntax: '<color>'; inherits: true; initial-value: transparent; }
