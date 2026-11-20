@@ -8,8 +8,8 @@
     <div class="seat-grid-hint">{{ 'seatMap.selectTicketTypeFirst' | translate }}</div>
   }
     <div class="seat-grid" [class.not-ready]="!ready">
-    @for (row of rows; track row) {
-      <div class="seat-row">
+    @for (row of rows; track row; let r = $index) {
+      <div class="seat-row" [style.--row]="r">
         <div class="row-label">{{ row }}</div>
         @for (cell of cellsOf(row); track cell.key) {
           @if (cell.isAisle) {

@@ -13,10 +13,12 @@ type ProgramDTO = CinemaServiceAgent.PromotionProgramDTO;
  * shows under "All". */
 type CampaignFilter = 'all' | string;
 
+import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.directive';
+
 @Component({
   selector: 'app-promotions',
   standalone: true,
-  imports: [SharedModule, RouterLink],
+  imports: [SharedModule, RouterLink, RevealOnScrollDirective],
   templateUrl: './promotions.component.html',
   styleUrl: './promotions.component.scss',
 })

@@ -82,3 +82,25 @@
 .qr-instruction { font-size: 0.85rem; opacity: 0.7; text-align: center; margin: 0; }
 
 .return-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+// Success: the tick pops with a ring, confetti bursts, and the ticket slides up.
+.success-icon-wrap { position: relative; }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti i { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px; border-radius: 2px; background: var(--mp-gold-deep, #e6a82e); opacity: 0; }
+.confetti i:nth-child(3n) { background: #34c759; }
+.confetti i:nth-child(3n + 1) { background: var(--mp-red, #e5484d); }
+@media (prefers-reduced-motion: no-preference) {
+  .success-icon { animation: pr-pop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) backwards; position: relative; }
+  .success-icon::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid #34c759; animation: pr-ring 1s ease-out 0.3s backwards; }
+  .success-icon mat-icon { animation: pr-tick 0.4s ease 0.25s backwards; }
+  .confetti i { animation: pr-confetti 0.9s cubic-bezier(0.1, 0.8, 0.3, 1) var(--d, 0s) both; }
+  .ticket-card { animation: pr-ticket 0.6s var(--cx-ease, ease) 0.35s backwards; }
+}
+@keyframes pr-pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+@keyframes pr-ring { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 0; transform: scale(1.9); } }
+@keyframes pr-tick { 0% { transform: scale(0) rotate(-30deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes pr-confetti {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-70px) scale(0.5); }
+}
+@keyframes pr-ticket { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }

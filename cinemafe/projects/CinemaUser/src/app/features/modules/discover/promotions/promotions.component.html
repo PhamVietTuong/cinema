@@ -22,7 +22,13 @@
     </button>
   </nav>
 
-  <div *ngIf="loading" class="spinner-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+  @if (loading) {
+    <div class="cu-skeleton-grid" aria-busy="true">
+      @for (s of [0, 1, 2, 3]; track s) {
+        <div class="cu-skeleton-card"><i class="cu-sk cu-sk--poster"></i><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></div>
+      }
+    </div>
+  }
 
   <div *ngIf="!loading && !programs.length" class="empty">
     <mat-icon>campaign</mat-icon>
@@ -35,7 +41,7 @@
   </div>
 
   <div class="ticket-list">
-    <article class="ticket" *ngFor="let p of visible">
+    <article class="ticket cu-rise" appRevealOnScroll *ngFor="let p of visible">
 
       <div class="ticket-stub" [class.ticket-stub--img]="p.bannerUrl">
         <span class="notch notch--top" aria-hidden="true"></span>
