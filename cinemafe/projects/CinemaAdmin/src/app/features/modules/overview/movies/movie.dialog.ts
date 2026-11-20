@@ -316,6 +316,48 @@ export class MovieDialog implements OnInit {
     }).add(() => this._store.dispatch(hideLoading()));
   }
 
+  /** Candidates from the last "Find IMDb ID" lookup; null = no lookup done yet, [] = nothing found. */
+  imdbMatches: CinemaServiceAgent.ImdbMatchDTO[] | null = null;
+  searchingImdb = false;
+
+  /** Looks the title (+ release year when set) up on OMDb so the admin can pick the id instead of typing it. */
+  findImdbId(): void {
+    const title = (this.form.value.title ?? '').trim();
+    if (!title || this.searchingImdb) {
+      return;
+    }
+    const year = this._releaseYear();
+    const filters: Record<string, string> = { title };
+    if (year) {
+      filters['year'] = String(year);
+    }
+    this.searchingImdb = true;
+    this._svc.searchImdbMatches(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 10, filters })).subscribe({
+      next: r => {
+        this.imdbMatches = r.results ?? [];
+        this.searchingImdb = false;
+        this._cdr.markForCheck();
+      },
+      error: error => {
+        this.searchingImdb = false;
+        this._store.dispatch(showException({ error }));
+        this._cdr.markForCheck();
+      },
+    });
+  }
+
+  pickImdbMatch(match: CinemaServiceAgent.ImdbMatchDTO): void {
+    this.form.patchValue({ imdbId: match.imdbId });
+    this.form.controls['imdbId'].markAsDirty();
+    this.imdbMatches = null;
+  }
+
+  private _releaseYear(): number | null {
+    const raw: string = this.form.value.releaseDate ?? '';
+    const year = parseInt(raw.slice(0, 4), 10);
+    return Number.isFinite(year) && year > 1800 ? year : null;
+  }
+
   cancel(): void {
     this._dialogRef.close(false);
   }

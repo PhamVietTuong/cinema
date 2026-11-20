@@ -48,6 +48,7 @@ Both use `Google.Apis.Auth` / Facebook Graph API (`/me?fields=id,name,email`, `d
 | Piece | File | Purpose |
 |---|---|---|
 | `IExternalRatingsProvider` / `OmdbRatingsProvider` | `Cinema.Business/ExternalRatings/OmdbRatingsProvider.cs` | Live lookup of external ratings (RottenTomatoes/IMDb/Metascore) for the movie detail page. Matched by `Movie.ImdbId` when present, else title+year. Not entity-backed — result is a runtime DTO (`ExternalRatingsDTO`), never persisted. |
+| `IExternalRatingsProvider.SearchImdbAsync` | same file | Admin "Find IMDb ID" in the movie dialog: OMDb `?s=<title>&y=<year>&type=movie` → up to 10 `ImdbMatchDTO` (id, title, year, poster). Exposed as `CinemaController.SearchImdbMatches` (admin only, `PagingSearchDTO` filters `title`, optional `year`). Same cache TTLs and never-throws rule (empty list on any failure). |
 
 Registered in `AddBusiness()` as a named `HttpClient` (`OmdbRatingsProvider.HttpClientName`, base address `https://www.omdbapi.com`, 3s timeout) plus `IExternalRatingsProvider` singleton.
 
