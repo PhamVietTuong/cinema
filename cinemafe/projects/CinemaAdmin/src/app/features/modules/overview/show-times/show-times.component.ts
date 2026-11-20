@@ -86,7 +86,18 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       lookupPageSize,
       t => t.id,
     ).pipe(takeUntil(this._destroy$))
-      .subscribe(theaters => { this.theaters = theaters; this._cdr.markForCheck(); });
+      .subscribe({
+        next: theaters => {
+          this.theaters = theaters;
+          // A whole week across every cinema is thousands of overlapping blocks nobody can read, so open
+          // on one cinema; "All cinemas" stays selectable. The first load waits for this lookup so the
+          // page never fetches the unfiltered week first.
+          this.filterTheaterId = theaters.find(t => !!t.id)?.id ?? '';
+          this.load();
+        },
+        // Without the lookup there is nothing to default to; still show the week rather than a blank grid.
+        error: () => this.load(),
+      });
 
     fetchAllPages<CinemaServiceAgent.RoomDTO>(
       pageIndex => this._svc.getRooms(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize: lookupPageSize })),
@@ -94,8 +105,6 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       r => r.id,
     ).pipe(takeUntil(this._destroy$))
       .subscribe(rooms => { this.rooms = rooms; this._cdr.markForCheck(); });
-
-    this.load();
   }
 
   ngOnDestroy(): void {
