@@ -1674,6 +1674,14 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetShowTimeList), () => _showTimes.GetAsync(search));
     }
 
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<ShowTimeCalendarItemDTO>), 200)]
+    public Task<IActionResult> GetShowTimeCalendar([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetShowTimeCalendar), () => _showTimes.GetCalendarAsync(search));
+    }
+
     [HttpGet]
     [ProducesResponseType(typeof(ShowTimeDTO), 200)]
     public async Task<IActionResult> GetShowTime([FromQuery] Guid id)

@@ -143,6 +143,7 @@ export interface IHttpService {
     getRoomTypePatronCategoryPrices(roomTypeId?: string | undefined): Observable<RoomTypePatronCategoryPriceDTO[]>;
     saveRoomTypePatronCategoryPrices(request: SaveRoomTypePatronCategoryPricesRequest): Observable<void>;
     getShowTimeList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeDTO>;
+    getShowTimeCalendar(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeCalendarItemDTO>;
     getShowTime(id?: string | undefined): Observable<ShowTimeDTO>;
     createShowTime(request: CreateShowTimeRequest): Observable<ShowTimeDTO>;
     updateShowTime(request: UpdateShowTimeRequest): Observable<ShowTimeDTO>;
@@ -6554,6 +6555,58 @@ export class HttpService implements IHttpService {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = DefaultSearchResultsOfShowTimeDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getShowTimeCalendar(search: PagingSearchDTO): Observable<DefaultSearchResultsOfShowTimeCalendarItemDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetShowTimeCalendar";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetShowTimeCalendar(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetShowTimeCalendar(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfShowTimeCalendarItemDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfShowTimeCalendarItemDTO>;
+        }));
+    }
+
+    protected processGetShowTimeCalendar(response: HttpResponseBase): Observable<DefaultSearchResultsOfShowTimeCalendarItemDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfShowTimeCalendarItemDTO.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -15645,6 +15698,151 @@ export interface IShowTimeDTO {
     roomName?: string | undefined;
     roomTypeName?: string | undefined;
     basePrice?: number;
+    turnoverBufferMinutes?: number;
+}
+
+export abstract class BaseSearchResultsOfShowTimeCalendarItemDTO implements IBaseSearchResultsOfShowTimeCalendarItemDTO {
+    results?: ShowTimeCalendarItemDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfShowTimeCalendarItemDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(ShowTimeCalendarItemDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfShowTimeCalendarItemDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfShowTimeCalendarItemDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfShowTimeCalendarItemDTO {
+    results?: ShowTimeCalendarItemDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfShowTimeCalendarItemDTO extends BaseSearchResultsOfShowTimeCalendarItemDTO implements IDefaultSearchResultsOfShowTimeCalendarItemDTO {
+
+    constructor(data?: IDefaultSearchResultsOfShowTimeCalendarItemDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfShowTimeCalendarItemDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfShowTimeCalendarItemDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfShowTimeCalendarItemDTO extends IBaseSearchResultsOfShowTimeCalendarItemDTO {
+}
+
+export class ShowTimeCalendarItemDTO implements IShowTimeCalendarItemDTO {
+    id?: string;
+    movieId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    showTimeType?: ShowTimeType;
+    roomId?: string | undefined;
+    turnoverBufferMinutes?: number;
+
+    constructor(data?: IShowTimeCalendarItemDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.movieId = _data["movieId"];
+            this.startTime = _data["startTime"] ? new Date(_data["startTime"].toString()) : <any>undefined;
+            this.endTime = _data["endTime"] ? new Date(_data["endTime"].toString()) : <any>undefined;
+            this.projectionForm = _data["projectionForm"];
+            this.showTimeType = _data["showTimeType"];
+            this.roomId = _data["roomId"];
+            this.turnoverBufferMinutes = _data["turnoverBufferMinutes"];
+        }
+    }
+
+    static fromJS(data: any): ShowTimeCalendarItemDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ShowTimeCalendarItemDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["movieId"] = this.movieId;
+        data["startTime"] = this.startTime ? this.startTime.toISOString() : <any>undefined;
+        data["endTime"] = this.endTime ? this.endTime.toISOString() : <any>undefined;
+        data["projectionForm"] = this.projectionForm;
+        data["showTimeType"] = this.showTimeType;
+        data["roomId"] = this.roomId;
+        data["turnoverBufferMinutes"] = this.turnoverBufferMinutes;
+        return data;
+    }
+}
+
+export interface IShowTimeCalendarItemDTO {
+    id?: string;
+    movieId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    projectionForm?: ProjectionForm;
+    showTimeType?: ShowTimeType;
+    roomId?: string | undefined;
     turnoverBufferMinutes?: number;
 }
 

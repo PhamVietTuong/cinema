@@ -172,6 +172,37 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
         return (items, total);
     }
 
+    public async Task<(IReadOnlyList<ShowTimeCalendarRow> Items, int Total)> SearchCalendarAsync(
+        Guid? movieId, Guid? theaterId, ProjectionForm? projectionForm, DateTime? from, DateTime? to, int page, int pageSize)
+    {
+        var query = DbSet.AsNoTracking().AsQueryable();
+
+        if (movieId.HasValue) { query = query.Where(s => s.MovieId == movieId.Value); }
+        if (theaterId.HasValue) { query = query.Where(s => s.ShowTimeRooms.Any(sr => sr.Room.TheaterId == theaterId.Value)); }
+        if (projectionForm.HasValue) { query = query.Where(s => s.ProjectionForm == projectionForm.Value); }
+        if (from.HasValue) { query = query.Where(s => s.StartTime >= from.Value); }
+        if (to.HasValue) { query = query.Where(s => s.StartTime < to.Value); }
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderBy(s => s.StartTime)
+            .ThenBy(s => s.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(s => new ShowTimeCalendarRow(
+                s.Id,
+                s.MovieId,
+                s.StartTime,
+                s.EndTime,
+                s.ProjectionForm,
+                s.ShowTimeType,
+                s.ShowTimeRooms.Select(sr => (Guid?)sr.RoomId).FirstOrDefault(),
+                s.ShowTimeRooms.Select(sr => sr.Room.RoomType.TurnoverBufferMinutes).FirstOrDefault()))
+            .ToListAsync();
+
+        return (items, total);
+    }
+
     public async Task<ShowTime?> GetByIdWithRoomsAsync(Guid id)
         => await DbSet
             .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.RoomType)

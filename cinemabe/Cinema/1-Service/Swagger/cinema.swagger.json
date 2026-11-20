@@ -4559,6 +4559,45 @@
         ]
       }
     },
+    "/api/Cinema/GetShowTimeCalendar": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetShowTimeCalendar",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfShowTimeCalendarItemDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/GetShowTime": {
       "get": {
         "tags": [
@@ -9746,6 +9785,79 @@
           "basePrice": {
             "type": "integer",
             "format": "int32"
+          },
+          "turnoverBufferMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DefaultSearchResultsOfShowTimeCalendarItemDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfShowTimeCalendarItemDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfShowTimeCalendarItemDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowTimeCalendarItemDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ShowTimeCalendarItemDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "movieId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "projectionForm": {
+            "$ref": "#/components/schemas/ProjectionForm"
+          },
+          "showTimeType": {
+            "$ref": "#/components/schemas/ShowTimeType"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           },
           "turnoverBufferMinutes": {
             "type": "integer",
