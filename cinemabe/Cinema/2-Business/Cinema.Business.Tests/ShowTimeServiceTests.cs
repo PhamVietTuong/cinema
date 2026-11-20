@@ -1,4 +1,5 @@
 using Cinema.Business.DTO.Catalog;
+using Cinema.Business.DTO.Requests;
 using Cinema.Business.Managers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
@@ -61,6 +62,55 @@ public class ShowTimeServiceTests
             RoomId         = RoomId,
             BasePrice      = 100,
         };
+    }
+
+    [Fact]
+    public async Task GetCalendarAsync_PassesFiltersToStore_AndCapsPageSize()
+    {
+        var theaterId = Guid.NewGuid();
+        var row = new ShowTimeCalendarRow(
+            Guid.NewGuid(), MovieId, new DateTime(2026, 11, 23, 10, 0, 0), new DateTime(2026, 11, 23, 12, 0, 0),
+            ProjectionForm.ThreeD, ShowTimeType.Normal, RoomId, 15);
+        _uowMock.Setup(u => u.ShowTimeStore.SearchCalendarAsync(
+                MovieId, theaterId, ProjectionForm.ThreeD,
+                new DateTime(2026, 11, 23), new DateTime(2026, 11, 30), 2, 200))
+            .ReturnsAsync((new List<ShowTimeCalendarRow> { row }, 1500));
+
+        var result = await _sut.GetCalendarAsync(new PagingSearchDTO
+        {
+            PageIndex = 2,
+            PageSize = 5_000, // above the cap (model validation normally rejects this first)
+            Filters = new Dictionary<string, string>
+            {
+                ["movieId"] = MovieId.ToString(),
+                ["theaterId"] = theaterId.ToString(),
+                ["projectionForm"] = nameof(ProjectionForm.ThreeD),
+                ["from"] = "2026-11-23T00:00:00",
+                ["to"] = "2026-11-30T00:00:00",
+            },
+        });
+
+        result.TotalCount.Should().Be(1500);
+        result.CountPerPage.Should().Be(200);
+        result.Page.Should().Be(2);
+        var item = result.Results.Should().ContainSingle().Subject;
+        item.Id.Should().Be(row.Id);
+        item.RoomId.Should().Be(RoomId);
+        item.TurnoverBufferMinutes.Should().Be(15);
+        item.ProjectionForm.Should().Be(ProjectionForm.ThreeD);
+    }
+
+    [Fact]
+    public async Task GetCalendarAsync_WithoutFilters_DefaultsToFirstPage()
+    {
+        _uowMock.Setup(u => u.ShowTimeStore.SearchCalendarAsync(null, null, null, null, null, 1, 20))
+            .ReturnsAsync((new List<ShowTimeCalendarRow>(), 0));
+
+        var result = await _sut.GetCalendarAsync(null!);
+
+        result.Results.Should().BeEmpty();
+        result.Page.Should().Be(1);
+        result.CountPerPage.Should().Be(20);
     }
 
     [Fact]

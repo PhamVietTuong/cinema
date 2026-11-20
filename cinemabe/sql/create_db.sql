@@ -717,6 +717,7 @@ CREATE INDEX [IX_RoomType_TheaterId] ON [RoomType] ([TheaterId]);
 CREATE INDEX [IX_Room_RoomTypeId] ON [Room] ([RoomTypeId]);
 CREATE INDEX [IX_ShowTimeRoom_RoomId] ON [ShowTimeRoom] ([RoomId]);
 CREATE INDEX [IX_ShowTime_MovieId] ON [ShowTime] ([MovieId]);
+CREATE INDEX [IX_ShowTime_StartTime] ON [ShowTime] ([StartTime]);
 CREATE UNIQUE INDEX [IX_User_Email] ON [User] ([Email]);
 CREATE INDEX [IX_User_MemberShipId] ON [User] ([MemberShipId]);
 CREATE UNIQUE INDEX [IX_User_Phone] ON [User] ([Phone]);

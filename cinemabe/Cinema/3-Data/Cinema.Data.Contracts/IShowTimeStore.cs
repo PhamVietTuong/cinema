@@ -1,4 +1,5 @@
 using Cinema.Data.Entities;
+using Cinema.Data.Enums;
 
 namespace Cinema.Data.Contracts;
 
@@ -18,6 +19,11 @@ public interface IShowTimeStore : IGenericStore<ShowTime>
     /// <paramref name="from"/>/<paramref name="to"/> bound StartTime as a half-open range: from &lt;= StartTime &lt; to.</summary>
     Task<(IReadOnlyList<ShowTime> Items, int Total)> SearchAsync(
         Guid? movieId, Guid? roomId, bool? isActive, DateTime? from, DateTime? to, int page, int pageSize);
+    /// <summary>Slim, DB-side filtered and paged showtime rows for the admin week calendar (no entity graph is loaded).
+    /// <paramref name="from"/>/<paramref name="to"/> bound StartTime as a half-open range; <paramref name="theaterId"/>
+    /// keeps showtimes assigned to a room of that theater.</summary>
+    Task<(IReadOnlyList<ShowTimeCalendarRow> Items, int Total)> SearchCalendarAsync(
+        Guid? movieId, Guid? theaterId, ProjectionForm? projectionForm, DateTime? from, DateTime? to, int page, int pageSize);
     Task<ShowTime?> GetByIdWithRoomsAsync(Guid id);
     /// <summary>True if an active showtime already occupies <paramref name="roomId"/> for any part of
     /// [startTime, endTime], or comes within <paramref name="bufferMinutes"/> of it on either side.

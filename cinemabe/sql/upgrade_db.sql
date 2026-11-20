@@ -1430,6 +1430,13 @@ BEGIN
 END
 -- ===== end remove child ticket category =====
 
+-- ===== ShowTime.StartTime index (admin week calendar) =====
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_ShowTime_StartTime' AND object_id = OBJECT_ID('ShowTime'))
+BEGIN
+    CREATE INDEX [IX_ShowTime_StartTime] ON [ShowTime] ([StartTime]);
+END
+-- ===== end ShowTime.StartTime index =====
+
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================

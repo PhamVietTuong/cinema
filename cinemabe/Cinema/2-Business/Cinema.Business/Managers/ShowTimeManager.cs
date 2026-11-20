@@ -45,6 +45,43 @@ public class ShowTimeManager : IShowTimeManager
         };
     }
 
+    /// <summary>Page size the calendar endpoint serves by default. Matches the <c>[Range(0, 200)]</c> cap on
+    /// <see cref="PagingSearchDTO.PageSize"/>, which model validation enforces before this code runs.</summary>
+    private const int CalendarMaxPageSize = 200;
+
+    public async Task<DefaultSearchResults<ShowTimeCalendarItemDTO>> GetCalendarAsync(PagingSearchDTO search)
+    {
+        search ??= new PagingSearchDTO();
+        var page = search.PageIndex > 0 ? search.PageIndex : 1;
+        var pageSize = search.PageSize > 0 ? Math.Min(search.PageSize, CalendarMaxPageSize) : CalendarMaxPageSize;
+
+        var (items, total) = await _uow.ShowTimeStore.SearchCalendarAsync(
+            search.Filters.GetGuid("movieId"),
+            search.Filters.GetGuid("theaterId"),
+            search.Filters.GetEnum<ProjectionForm>("projectionForm"),
+            search.Filters.GetDateTime("from"),
+            search.Filters.GetDateTime("to"),
+            page, pageSize);
+
+        return new DefaultSearchResults<ShowTimeCalendarItemDTO>
+        {
+            Results = items.Select(r => new ShowTimeCalendarItemDTO
+            {
+                Id = r.Id,
+                MovieId = r.MovieId,
+                StartTime = r.StartTime,
+                EndTime = r.EndTime,
+                ProjectionForm = r.ProjectionForm,
+                ShowTimeType = r.ShowTimeType,
+                RoomId = r.RoomId,
+                TurnoverBufferMinutes = r.TurnoverBufferMinutes
+            }).ToList(),
+            TotalCount = total,
+            CountPerPage = pageSize,
+            Page = page
+        };
+    }
+
     public async Task<ShowTimeDTO> GetByIdAsync(Guid id)
     {
         var entity = await _uow.ShowTimeStore.GetByIdWithRoomsAsync(id);
