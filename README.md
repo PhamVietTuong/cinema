@@ -55,6 +55,36 @@ Never re-run `create_db.sql` on a database that holds data: it drops and recreat
 - Swagger UI: `http://localhost:5102/swagger` · ReDoc: `/redoc`
 - Health check: `http://localhost:5102/health`
 
+### Optional configuration
+
+Everything below is optional; without it the app falls back to dev behaviour. Set via user-secrets / environment variables (never commit). Full list: [`docs/03-technical/configuration.md`](docs/03-technical/configuration.md).
+
+| Key | Purpose |
+|-----|---------|
+| `AllowedOrigins` | CORS allow-list (default `localhost:4200`–`4203`) |
+| `Smtp:Host` / `Port` / `User` / `Password` / `From` | Real email; empty = emails are only written to the log |
+| `Sms:Twilio:AccountSid` / `AuthToken` / `FromNumber` | Real SMS; empty = dev-log sender |
+| `Payments:Provider` | Default gateway (`Sandbox` in dev) |
+| `Payments:VnPay:TmnCode` / `HashSecret` / `ReturnUrl` | VNPay sandbox (see ngrok below) |
+
+### Test accounts
+
+After the seed step: `admin@cinema.vn` and `user@cinema.vn` (dev-only passwords `Admin@123` / `User@123`, defined in `Cinema.Business.Tests/Program.cs`; if login returns 401 the DB was seeded differently).
+
+### Testing VNPay payments locally (ngrok)
+
+VNPay is **callback-authoritative**: an invoice only becomes *Paid* when VNPay's servers call the signed IPN endpoint (`PaymentController.PaymentCallback?provider=VNPay`), never from the browser redirect. VNPay's servers cannot reach `localhost`, so a public tunnel is required. The default `Sandbox` gateway needs no tunnel.
+
+1. Install ngrok and add your authtoken once: `winget install ngrok.ngrok`, then `ngrok config add-authtoken <token>`.
+2. Start the API (http://localhost:5102), then in another terminal: `ngrok http 5102`.
+3. Copy the printed `https://….ngrok-free.dev` URL.
+4. In the VNPay sandbox merchant portal (`sandbox.vnpayment.vn`), set the **IPN URL** for your terminal (`Payments:VnPay:TmnCode`) to `<ngrok-url>/api/Payment/PaymentCallback?provider=VNPay`.
+5. The free plan issues a **new URL on every restart** — repeat step 4 each time.
+6. Make sure `Payments:VnPay:TmnCode`, `HashSecret` and `ReturnUrl` (default `http://localhost:4202/booking/payment-return`) are set, and choose `VNPay` as the provider at checkout.
+7. Sandbox test card: bank **NCB**, number `9704198526191432198`, name `NGUYEN VAN A`, issue date `07/15`, OTP `123456`.
+
+More detail: [`docs/03-technical/integrations.md`](docs/03-technical/integrations.md) §5.
+
 ## Frontend (`cinemafe/`)
 
 ```powershell
@@ -82,3 +112,20 @@ npx playwright show-report
 ```
 
 Frontend unit tests: `ng test <project>` from `cinemafe/`. Backend unit tests are listed under Backend above.
+
+### Performance (k6)
+
+Load/stress/spike/soak tests of the public catalog endpoints live in `performance/` — install with `winget install k6`, start the API, then e.g. `k6 run performance/k6/load.js`. See [`performance/README.md`](performance/README.md).
+
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs backend build + tests, frontend lint + test + build, and the full e2e suite. Run the same jobs locally and get them green before pushing.
+
+## Troubleshooting
+
+- **`nvm use` asks for admin (UAC) on Windows** — instead put Node 22 on PATH: `$env:PATH = "$env:APPDATA\nvm\v22.12.0;$env:PATH"` then check `node -v`.
+- **Angular app shows stale shared UI** — run `ng build CinemaLib` first; apps consume the built library.
+- **Vietnamese text is garbled after seeding** — run `sqlcmd` with `-f 65001`.
+- **No upcoming showtime on a fresh DB** — see `e2e/sql/seed-future-showtime.sql` above (throw-away DBs only).
+- **NSwag client regeneration fails** — stop the Web API first and run `Generator/GenerateNswag.ps1` from its own directory (`cinemabe/Cinema/1-Service/Cinema.Service.Clients/Generator`). Never hand-edit generated clients.
+- **Seat locks are process-local** — they live in memory in the API process, so a restart clears them and running multiple API instances is not supported yet.
