@@ -81,7 +81,7 @@ Nav: `Users`. Also referenced by `PromotionProgram.MinMemberShipId` as a minimum
 | Director | string | max 200 |
 | Cast | string | max 1000, legacy free-text; cast is also modeled relationally via `MovieCredit` |
 | Language, Subtitle | string | |
-| ImdbId | string? | max 20, used to match OMDb ratings; falls back to title+year |
+| ImdbId | string? | max 20, used to match OMDb ratings; falls back to title+year. Admin can auto-fill it via the movie dialog's "Find IMDb ID" button (OMDb title search) |
 | IsActive | bool | |
 | AgeRestrictionId | Guid | FK → AgeRestriction, `Restrict` |
 

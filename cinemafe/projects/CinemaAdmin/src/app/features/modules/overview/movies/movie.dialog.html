@@ -106,6 +106,23 @@
             <input matInput id="mv-imdbId" formControlName="imdbId" placeholder="tt1234567">
             <mat-error *ngIf="form.controls['imdbId'].hasError('pattern')">{{ 'movies.form.imdbIdInvalid' | translate }}</mat-error>
           </mat-form-field>
+          <div class="imdb-find-row">
+            <button type="button" class="ad-btn ad-btn--ghost" (click)="findImdbId()"
+                    [disabled]="searchingImdb || !form.value.title?.trim()">
+              <mat-icon>search</mat-icon> {{ 'movies.form.imdbFind' | translate }}
+            </button>
+            <span class="img-upload-status" *ngIf="searchingImdb">{{ 'movies.form.imdbSearching' | translate }}</span>
+            <span class="img-upload-status" *ngIf="imdbMatches && imdbMatches.length === 0">{{ 'movies.form.imdbNoMatch' | translate }}</span>
+          </div>
+          <ul class="imdb-matches" *ngIf="imdbMatches && imdbMatches.length > 0">
+            <li *ngFor="let m of imdbMatches">
+              <button type="button" class="imdb-match" (click)="pickImdbMatch(m)">
+                <img *ngIf="m.posterUrl" [src]="m.posterUrl" alt="" loading="lazy">
+                <span class="imdb-match__text"><strong>{{ m.title }}</strong> ({{ m.year }})</span>
+                <code>{{ m.imdbId }}</code>
+              </button>
+            </li>
+          </ul>
         </div>
       </div>
 

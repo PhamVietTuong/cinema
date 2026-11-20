@@ -41,7 +41,7 @@ Verified by listing `cinemabe/Cinema/2-Business/Cinema.Business.Tests/*.cs`:
 | `LoyaltySettingServiceTests.cs` | Loyalty points conversion settings |
 | `MovieCreditModelTests.cs` | Movie cast/crew credit model |
 | `MovieServiceTests.cs` | Movie catalog logic |
-| `OmdbRatingsProviderTests.cs` | External OMDb rating lookups |
+| `OmdbRatingsProviderTests.cs` | External OMDb rating lookups and IMDb-id title search (`SearchImdbAsync`) |
 | `OperationsBoardAndIncidentTests.cs` | Incident/operations board |
 | `PatronCategoryServiceTests.cs` | Patron category pricing/eligibility |
 | `PaymentCallbackTests.cs` | Payment callback handling: idempotency and concurrent IPN delivery, expiry refunds (points, seats), `InitiatePaymentAsync` ownership/status/zero-amount cases (`ZeroAmountDue_FinalizesWithoutAnyGateway`) |

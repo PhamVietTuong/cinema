@@ -37,6 +37,30 @@ public class MovieManager : IMovieManager
         _externalRatings = externalRatings;
     }
 
+    public async Task<DefaultSearchResults<ImdbMatchDTO>> SearchImdbMatchesAsync(PagingSearchDTO search)
+    {
+        var title = search.Filters.GetString("title");
+        int? year = null;
+        if (int.TryParse(search.Filters.GetString("year"), out var parsedYear) && parsedYear > 0)
+        {
+            year = parsedYear;
+        }
+
+        IReadOnlyList<ImdbMatchDTO> matches = new List<ImdbMatchDTO>();
+        if (!string.IsNullOrWhiteSpace(title))
+        {
+            matches = await _externalRatings.SearchImdbAsync(title, year);
+        }
+
+        return new DefaultSearchResults<ImdbMatchDTO>
+        {
+            Results      = matches.ToList(),
+            TotalCount   = matches.Count,
+            CountPerPage = matches.Count,
+            Page         = 1
+        };
+    }
+
     public async Task<DefaultSearchResults<MovieDTO>> GetMoviesAsync(PagingSearchDTO search)
     {
         var page     = search.PageIndex > 0 ? search.PageIndex : 1;

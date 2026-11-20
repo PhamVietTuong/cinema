@@ -281,6 +281,24 @@ public class CinemaController : ApiControllerBase
         }
     }
 
+    /// <summary>Admin: candidate IMDb ids for a title (filters: title, year) to auto-fill the movie form.</summary>
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<ImdbMatchDTO>), 200)]
+    public async Task<IActionResult> SearchImdbMatches([FromBody] PagingSearchDTO search)
+    {
+        LogProvider.Current.Information($"{GetType().Name}.SearchImdbMatches being awakened to process request...");
+        try
+        {
+            var result = await _movieManager.SearchImdbMatchesAsync(search);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return HandleException(e, nameof(SearchImdbMatches));
+        }
+    }
+
     [Authorize(Roles = _adminRole)]
     [HttpPost]
     [ProducesResponseType(typeof(MovieDetailDTO), 200)]

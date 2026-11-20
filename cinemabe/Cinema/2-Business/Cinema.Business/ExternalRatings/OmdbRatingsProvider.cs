@@ -99,6 +99,141 @@ public class OmdbRatingsProvider : IExternalRatingsProvider
         return FetchAsync(titleUrl, titleCacheKey, $"'{trimmedTitle}' ({year})", cancellationToken);
     }
 
+    /// <summary>Title search via OMDb <c>?s=</c> (max 10 hits, first page). Same caching/never-throws
+    /// rules as <see cref="GetRatingsAsync"/>: a hit list is cached 24h, "not found" 6h, a failure 10 min.</summary>
+    public async Task<IReadOnlyList<ImdbMatchDTO>> SearchImdbAsync(string title, int? year, CancellationToken cancellationToken = default)
+    {
+        var empty = new List<ImdbMatchDTO>();
+
+        var apiKey = GetApiKey();
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return empty;
+        }
+
+        string trimmedTitle;
+        if (title == null)
+        {
+            trimmedTitle = "";
+        }
+        else
+        {
+            trimmedTitle = title.Trim();
+        }
+        if (trimmedTitle.Length == 0)
+        {
+            return empty;
+        }
+
+        var url = $"/?apikey={Uri.EscapeDataString(apiKey)}&s={Uri.EscapeDataString(trimmedTitle)}&type=movie";
+        var cacheKey = $"omdb:search:{trimmedTitle.ToLowerInvariant()}";
+        if (year.HasValue && year.Value > 0)
+        {
+            url += $"&y={year.Value}";
+            cacheKey += $":{year.Value}";
+        }
+        var lookupLabel = $"search '{trimmedTitle}'";
+
+        if (_cache.TryGetValue(cacheKey, out List<ImdbMatchDTO>? cached) && cached != null)
+        {
+            return cached;
+        }
+
+        try
+        {
+            var http = _httpFactory.CreateClient(HttpClientName);
+            using var response = await http.GetAsync(url, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                CacheSearchFailure(cacheKey, lookupLabel, $"HTTP {(int)response.StatusCode}", null);
+                return empty;
+            }
+
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+            var omdbResponse = GetStringProperty(root, "Response");
+
+            if (!string.Equals(omdbResponse, "True", StringComparison.OrdinalIgnoreCase))
+            {
+                var error = GetStringProperty(root, "Error");
+                if (error == null)
+                {
+                    error = "";
+                }
+                if (error.Contains("key", StringComparison.OrdinalIgnoreCase) ||
+                    error.Contains("limit", StringComparison.OrdinalIgnoreCase))
+                {
+                    CacheSearchFailure(cacheKey, lookupLabel, error, null);
+                    return empty;
+                }
+                _cache.Set(cacheKey, empty, NotFoundTtl);
+                return empty;
+            }
+
+            var matches = BuildMatches(root);
+            _cache.Set(cacheKey, matches, FoundTtl);
+            return matches;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            CacheSearchFailure(cacheKey, lookupLabel, "timeout", null);
+            return empty;
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            CacheSearchFailure(cacheKey, lookupLabel, e.Message, e);
+            return empty;
+        }
+    }
+
+    private void CacheSearchFailure(string cacheKey, string lookupLabel, string reason, Exception? exception)
+    {
+        if (exception == null)
+        {
+            LogProvider.Current.Warning($"OmdbRatingsProvider.SearchImdbAsync failed for {lookupLabel}: {reason}");
+        }
+        else
+        {
+            LogProvider.Current.Warning(exception, $"OmdbRatingsProvider.SearchImdbAsync failed for {lookupLabel}: {reason}");
+        }
+        _cache.Set(cacheKey, new List<ImdbMatchDTO>(), FailureTtl);
+    }
+
+    private static List<ImdbMatchDTO> BuildMatches(JsonElement root)
+    {
+        var matches = new List<ImdbMatchDTO>();
+        if (!root.TryGetProperty("Search", out var searchArray) || searchArray.ValueKind != JsonValueKind.Array)
+        {
+            return matches;
+        }
+
+        foreach (var entry in searchArray.EnumerateArray())
+        {
+            var imdbId = NormalizeValue(GetStringProperty(entry, "imdbID"));
+            var matchTitle = NormalizeValue(GetStringProperty(entry, "Title"));
+            if (imdbId == null || matchTitle == null)
+            {
+                continue;
+            }
+
+            var matchYear = NormalizeValue(GetStringProperty(entry, "Year"));
+            if (matchYear == null)
+            {
+                matchYear = "";
+            }
+
+            matches.Add(new ImdbMatchDTO
+            {
+                ImdbId = imdbId,
+                Title = matchTitle,
+                Year = matchYear,
+                PosterUrl = NormalizeValue(GetStringProperty(entry, "Poster")),
+            });
+        }
+        return matches;
+    }
+
     private async Task<ExternalRatingsDTO?> FetchAsync(string relativeUrl, string cacheKey, string lookupLabel, CancellationToken cancellationToken)
     {
         if (_cache.TryGetValue(cacheKey, out CacheEntry? cached) && cached != null)

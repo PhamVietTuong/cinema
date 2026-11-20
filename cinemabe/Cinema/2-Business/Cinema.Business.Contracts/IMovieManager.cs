@@ -10,6 +10,8 @@ public interface IMovieManager
     Task<DefaultSearchResults<ShowTimeListDTO>> GetShowTimesAsync(PagingSearchDTO search);
     Task<MovieDetailDTO>                       GetDetailAsync(Guid id, Guid? userId);
     Task<MovieDetailDTO>                       GetDetailBySlugAsync(string slug, Guid? userId);
+    /// <summary>Admin: candidate IMDb ids for a movie title. Filters: "title" (required, otherwise empty result), "year" (optional int).</summary>
+    Task<DefaultSearchResults<ImdbMatchDTO>>   SearchImdbMatchesAsync(PagingSearchDTO search);
     Task<MovieDTO>                             CreateAsync(CreateMovieRequest request);
     Task<MovieDTO>                             UpdateAsync(UpdateMovieRequest request);
     Task                                       DeleteAsync(Guid id);

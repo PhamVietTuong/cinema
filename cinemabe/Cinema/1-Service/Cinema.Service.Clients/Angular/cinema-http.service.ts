@@ -27,6 +27,7 @@ export interface IHttpService {
     getComingSoonMovies(search: PagingSearchDTO): Observable<DefaultSearchResultsOfMovieDTO>;
     getMovie(id?: string | undefined): Observable<MovieDetailDTO>;
     getMovieBySlug(slug?: string | undefined): Observable<MovieDetailDTO>;
+    searchImdbMatches(search: PagingSearchDTO): Observable<DefaultSearchResultsOfImdbMatchDTO>;
     createMovie(request: CreateMovieRequest): Observable<MovieDetailDTO>;
     updateMovie(request: UpdateMovieRequest): Observable<MovieDetailDTO>;
     deleteMovie(id?: string | undefined): Observable<void>;
@@ -555,6 +556,58 @@ export class HttpService implements IHttpService {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
             result200 = MovieDetailDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    searchImdbMatches(search: PagingSearchDTO): Observable<DefaultSearchResultsOfImdbMatchDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/SearchImdbMatches";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchImdbMatches(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchImdbMatches(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfImdbMatchDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfImdbMatchDTO>;
+        }));
+    }
+
+    protected processSearchImdbMatches(response: HttpResponseBase): Observable<DefaultSearchResultsOfImdbMatchDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfImdbMatchDTO.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -9233,6 +9286,135 @@ export interface IExternalRatingsDTO {
     rottenTomatoes?: string | undefined;
     imdbRating?: string | undefined;
     metascore?: string | undefined;
+}
+
+export abstract class BaseSearchResultsOfImdbMatchDTO implements IBaseSearchResultsOfImdbMatchDTO {
+    results?: ImdbMatchDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfImdbMatchDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(ImdbMatchDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfImdbMatchDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfImdbMatchDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfImdbMatchDTO {
+    results?: ImdbMatchDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfImdbMatchDTO extends BaseSearchResultsOfImdbMatchDTO implements IDefaultSearchResultsOfImdbMatchDTO {
+
+    constructor(data?: IDefaultSearchResultsOfImdbMatchDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfImdbMatchDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfImdbMatchDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfImdbMatchDTO extends IBaseSearchResultsOfImdbMatchDTO {
+}
+
+export class ImdbMatchDTO implements IImdbMatchDTO {
+    imdbId?: string;
+    title?: string;
+    year?: string;
+    posterUrl?: string | undefined;
+
+    constructor(data?: IImdbMatchDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.imdbId = _data["imdbId"];
+            this.title = _data["title"];
+            this.year = _data["year"];
+            this.posterUrl = _data["posterUrl"];
+        }
+    }
+
+    static fromJS(data: any): ImdbMatchDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new ImdbMatchDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["imdbId"] = this.imdbId;
+        data["title"] = this.title;
+        data["year"] = this.year;
+        data["posterUrl"] = this.posterUrl;
+        return data;
+    }
+}
+
+export interface IImdbMatchDTO {
+    imdbId?: string;
+    title?: string;
+    year?: string;
+    posterUrl?: string | undefined;
 }
 
 export class CreateMovieRequest implements ICreateMovieRequest {

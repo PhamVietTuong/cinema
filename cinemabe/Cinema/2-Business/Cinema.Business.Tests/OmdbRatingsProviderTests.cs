@@ -254,6 +254,76 @@ public class OmdbRatingsProviderTests
         handler.CallCount.Should().Be(2);
     }
 
+    [Fact]
+    public async Task SearchImdbAsync_ReturnsCandidates_WithIdTitleYearPoster()
+    {
+        const string json = """
+            {"Response":"True","totalResults":"2","Search":[
+              {"Title":"Puss in Boots","Year":"2011","imdbID":"tt0448694","Type":"movie","Poster":"https://img/1.jpg"},
+              {"Title":"Puss in Boots: The Last Wish","Year":"2022","imdbID":"tt3915174","Type":"movie","Poster":"N/A"}
+            ]}
+            """;
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, json));
+
+        var result = await sut.SearchImdbAsync("Puss in Boots", null);
+
+        result.Should().HaveCount(2);
+        result[0].ImdbId.Should().Be("tt0448694");
+        result[0].Year.Should().Be("2011");
+        result[0].PosterUrl.Should().Be("https://img/1.jpg");
+        result[1].PosterUrl.Should().BeNull();
+        handler.LastRequestUri!.Query.Should().Contain("s=Puss%20in%20Boots");
+        handler.LastRequestUri.Query.Should().NotContain("&y=");
+    }
+
+    [Fact]
+    public async Task SearchImdbAsync_WithYear_SendsYear()
+    {
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, """{"Response":"False","Error":"Movie not found!"}"""));
+
+        await sut.SearchImdbAsync("Puss in Boots", 2011);
+
+        handler.LastRequestUri!.Query.Should().Contain("y=2011");
+    }
+
+    [Fact]
+    public async Task SearchImdbAsync_NotFound_ReturnsEmpty_AndNegativeCaches()
+    {
+        var (sut, handler) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, """{"Response":"False","Error":"Movie not found!"}"""));
+
+        var first  = await sut.SearchImdbAsync("zzzz", null);
+        var second = await sut.SearchImdbAsync("ZZZZ", null);
+
+        first.Should().BeEmpty();
+        second.Should().BeEmpty();
+        handler.CallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SearchImdbAsync_BlankTitleOrBlankKey_MakesNoHttpCall()
+    {
+        var (blankTitle, handler1) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, "{}"));
+        var (blankKey, handler2) = CreateSut("", Respond(HttpStatusCode.OK, "{}"));
+
+        (await blankTitle.SearchImdbAsync("  ", null)).Should().BeEmpty();
+        (await blankKey.SearchImdbAsync("Inception", null)).Should().BeEmpty();
+
+        handler1.CallCount.Should().Be(0);
+        handler2.CallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SearchImdbAsync_MalformedJsonOrServerError_ReturnsEmpty_DoesNotThrow()
+    {
+        var (badJson, _) = CreateSut(ApiKey, Respond(HttpStatusCode.OK, "{not json"));
+        var (serverError, _) = CreateSut(ApiKey, Respond(HttpStatusCode.InternalServerError, ""));
+        var (throwing, _) = CreateSut(ApiKey, new ThrowingHandler());
+
+        (await badJson.SearchImdbAsync("Inception", null)).Should().BeEmpty();
+        (await serverError.SearchImdbAsync("Inception", null)).Should().BeEmpty();
+        (await throwing.SearchImdbAsync("Inception", null)).Should().BeEmpty();
+    }
+
     private static string FullPayloadJson()
     {
         return """

@@ -102,6 +102,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 | `GetComingSoonMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsComingSoon` filter | |
 | `GetMovie` | GET | anonymous | `id` query | `MovieDetailDTO` (personalized `CanReview` if signed in) | |
 | `GetMovieBySlug` | GET | anonymous | `slug` query | `MovieDetailDTO` | |
+| `SearchImdbMatches` | POST | Admin | `PagingSearchDTO` (filters `title` required, `year` optional) | `DefaultSearchResults<ImdbMatchDTO>` — up to 10 OMDb title matches (`imdbId`, `title`, `year`, `posterUrl`); empty when OMDb key is blank/unreachable | Powers the movie dialog's "Find IMDb ID" button |
 | `CreateMovie` | POST | Admin | `CreateMovieRequest` | `MovieDetailDTO` | |
 | `UpdateMovie` | PUT | Admin | `UpdateMovieRequest` | `MovieDetailDTO` (slug never regenerated) | |
 | `DeleteMovie` | DELETE | Admin | `id` query | 204 — soft delete (`IsActive=false`) | |
