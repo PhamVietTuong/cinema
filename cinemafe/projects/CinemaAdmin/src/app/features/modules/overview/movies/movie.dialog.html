@@ -111,18 +111,28 @@
                     [disabled]="searchingImdb || !form.value.title?.trim()">
               <mat-icon>search</mat-icon> {{ 'movies.form.imdbFind' | translate }}
             </button>
-            <span class="img-upload-status" *ngIf="searchingImdb">{{ 'movies.form.imdbSearching' | translate }}</span>
-            <span class="img-upload-status" *ngIf="imdbMatches && imdbMatches.length === 0">{{ 'movies.form.imdbNoMatch' | translate }}</span>
+            @if (searchingImdb) {
+              <span class="img-upload-status">{{ 'movies.form.imdbSearching' | translate }}</span>
+            }
+            @if (imdbMatches && imdbMatches.length === 0) {
+              <span class="img-upload-status">{{ 'movies.form.imdbNoMatch' | translate }}</span>
+            }
           </div>
-          <ul class="imdb-matches" *ngIf="imdbMatches && imdbMatches.length > 0">
-            <li *ngFor="let m of imdbMatches">
-              <button type="button" class="imdb-match" (click)="pickImdbMatch(m)">
-                <img *ngIf="m.posterUrl" [src]="m.posterUrl" alt="" loading="lazy">
-                <span class="imdb-match__text"><strong>{{ m.title }}</strong> ({{ m.year }})</span>
-                <code>{{ m.imdbId }}</code>
-              </button>
-            </li>
-          </ul>
+          @if (imdbMatches && imdbMatches.length > 0) {
+            <ul class="imdb-matches">
+              @for (m of imdbMatches; track m.imdbId) {
+                <li>
+                  <button type="button" class="imdb-match" (click)="pickImdbMatch(m)">
+                    @if (m.posterUrl) {
+                      <img [src]="m.posterUrl" alt="" loading="lazy">
+                    }
+                    <span class="imdb-match__text"><strong>{{ m.title }}</strong> ({{ m.year }})</span>
+                    <code>{{ m.imdbId }}</code>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
         </div>
       </div>
 
