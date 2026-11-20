@@ -13,6 +13,9 @@ export class RevealOnScrollDirective implements OnInit, OnDestroy {
   private readonly _el = inject(ElementRef<HTMLElement>);
   private readonly _renderer = inject(Renderer2);
   private _observer: IntersectionObserver | null = null;
+  private _timer: ReturnType<typeof setTimeout> | null = null;
+  /** Next free slot (ms, performance.now clock) so cards revealed together cascade ~70ms apart. */
+  private static _nextSlot = 0;
 
   ngOnInit(): void {
     const host = this._el.nativeElement;
@@ -25,8 +28,12 @@ export class RevealOnScrollDirective implements OnInit, OnDestroy {
     this._observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting) {
-          this._renderer.addClass(host, 'is-revealed');
           this._observer?.unobserve(host);
+          const now = performance.now();
+          const start = Math.max(now, RevealOnScrollDirective._nextSlot);
+          const delay = Math.min(start - now, 560);
+          RevealOnScrollDirective._nextSlot = start + 70;
+          this._timer = setTimeout(() => this._renderer.addClass(host, 'is-revealed'), delay);
         }
       }
     }, { threshold: 0.15 });
@@ -35,5 +42,8 @@ export class RevealOnScrollDirective implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this._observer?.disconnect();
+    if (this._timer) {
+      clearTimeout(this._timer);
+    }
   }
 }

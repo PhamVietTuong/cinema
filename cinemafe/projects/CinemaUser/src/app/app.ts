@@ -32,6 +32,14 @@ export class App implements OnInit {
   ngOnInit(): void {
     this._store.dispatch(loadUserFromStorage());
     this._splashBanner.init();
+    // Compact topbar once scrolled. Toggles a class directly on the element (no change detection) —
+    // the app is zoneless and this is purely visual.
+    window.addEventListener('scroll', () => {
+      const bar = document.querySelector<HTMLElement>('.topbar');
+      bar?.classList.toggle('is-scrolled', window.scrollY > 24);
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      bar?.style.setProperty('--cu-scroll', String(max > 0 ? Math.min(window.scrollY / max, 1) : 0));
+    }, { passive: true });
   }
 
   toggleMenu(): void { this.menuOpen = !this.menuOpen; }

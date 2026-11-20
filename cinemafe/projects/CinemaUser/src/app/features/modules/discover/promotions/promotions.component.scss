@@ -24,7 +24,14 @@
   font-family: var(--mp-font-display); font-size: .84rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase;
   color: var(--mp-muted); background: none; border: none; cursor: pointer;
   padding: 0 2px 12px; border-bottom: 2px solid transparent; flex: 0 0 auto;
+  position: relative;
   &.is-active { color: var(--mp-ink); border-color: var(--mp-red); }
+  @media (prefers-reduced-motion: no-preference) {
+    // The red underline grows in instead of snapping on.
+    &.is-active { border-color: transparent; }
+    &::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--mp-red); transform: scaleX(0); transition: transform 0.28s ease; }
+    &.is-active::after { transform: scaleX(1); }
+  }
   &:focus-visible { outline: 2px solid var(--mp-gold-deep); outline-offset: 2px; }
 }
 

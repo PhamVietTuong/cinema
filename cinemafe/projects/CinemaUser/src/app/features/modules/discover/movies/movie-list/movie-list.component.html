@@ -27,9 +27,13 @@
   <cl-filter-bar class="movie-filters" titleKey="movies.filters.title"
                  [form]="filterForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
 
-  <div *ngIf="isLoading && loadedCount === 0" class="spinner-wrap">
-    <mat-spinner diameter="40"></mat-spinner>
-  </div>
+  @if (isLoading && loadedCount === 0) {
+    <div class="cu-skeleton-grid" aria-busy="true">
+      @for (s of [0, 1, 2, 3, 4, 5, 6, 7]; track s) {
+        <div class="cu-skeleton-card"><i class="cu-sk cu-sk--poster"></i><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></div>
+      }
+    </div>
+  }
 
   <!-- Movies -->
   <div class="movie-grid" *ngIf="!isShowtimes">
