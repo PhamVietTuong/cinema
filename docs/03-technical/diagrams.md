@@ -4,7 +4,7 @@
 > Sources: `docker-compose.yml`, `.github/workflows/ci.yml`, `cinemabe/sql/create_db.sql`, `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/{Program.cs,Controllers/PaymentController.cs,Hubs/BookingHub.cs,Services/PendingBookingReaper.cs}`, `cinemabe/Cinema/2-Business/Cinema.Business/{Managers/BookingManager.cs,Payments/VnPayGateway.cs}`, `cinemabe/Cinema/3-Data/Cinema.Data/Stores/InvoiceStore.cs`, `docs/03-technical/{architecture,integrations,database-schema}.md`
 > Last reviewed: 2026-11-14
 
-A draw.io version of these views (architecture, ERD, swimlane, sequence, state machines, use cases) for Word or slides is in [`drawio/cinema.drawio`](drawio/cinema.drawio); open it in app.diagrams.net and export PNG/SVG.
+A draw.io set (13 pages) for Word or slides is in [`drawio/cinema.drawio`](drawio/cinema.drawio); open it in app.diagrams.net and export PNG/SVG. Pages 1-7 are technical (architecture, ERD, booking swimlane, VNPay sequence, state machines, use cases); pages 8-13 are business (pricing, promotions and loyalty, counter sale and gate scan, showtime scheduling, sign-in and 2FA, business model canvas). The canvas marks the cells the docs cannot fill (revenue model, costs, market size) as owner input.
 
 The layer dependency graph (a fifth view) is in [`architecture.md`](architecture.md) section 2. Each diagram below lists what it was checked against, so a reader can re-verify it.
 
