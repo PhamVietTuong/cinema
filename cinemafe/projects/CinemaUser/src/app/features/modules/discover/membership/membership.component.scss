@@ -71,3 +71,31 @@
   .page-title { font-size: 1.7rem; }
   .tier-card { padding: 24px 16px; }
 }
+
+// ── Points progress toward the next tier ───────────────────────────────────────
+.mem-progress {
+  background: var(--mp-card); border: 1px solid var(--mp-line-2); border-radius: 16px;
+  padding: 20px 24px; margin-bottom: 28px;
+}
+.mem-progress-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.mem-progress-label { font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--mp-muted); }
+.mem-progress-points { font-family: var(--mp-font-display); font-size: 1.4rem; color: var(--mp-ink); font-variant-numeric: tabular-nums; }
+.mem-progress-bar { height: 10px; border-radius: 999px; background: var(--mp-line-2); overflow: hidden; }
+.mem-progress-fill {
+  position: relative; overflow: hidden; height: 100%; width: var(--fill, 0%); border-radius: inherit;
+  background: linear-gradient(90deg, var(--mp-gold), var(--mp-gold-deep, var(--mp-gold)));
+}
+.mem-progress-note { margin: 10px 0 0; font-size: 0.86rem; color: var(--mp-muted); }
+.tier-card.is-current { border-color: var(--mp-gold-deep, var(--mp-gold)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mp-gold) 35%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .mem-progress-fill { animation: mem-fill 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s backwards; }
+  .mem-progress-fill::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.45) 50%, transparent 70%);
+    transform: translateX(-100%); animation: mem-shine 2.6s ease-in-out 1.5s infinite;
+  }
+  .tier-card.is-current { animation: mem-glow 2.4s ease-in-out infinite; }
+}
+@keyframes mem-fill { from { width: 0; } }
+@keyframes mem-shine { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
+@keyframes mem-glow { 0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--mp-gold) 25%, transparent); } 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--mp-gold) 20%, transparent); } }

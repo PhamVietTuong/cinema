@@ -343,6 +343,11 @@
   "membership": {
     "eyebrow": "PREMIUM EXPERIENCE",
     "pageTitle": "Membership Tiers",
+    "progress": {
+      "yourPoints": "Your points",
+      "toNext": "{{ n }} more points to reach {{ tier }}",
+      "topTier": "You are at the top tier"
+    },
     "pageSubtitle": "Earn points with every booking and unlock the exclusive privileges of Midnight Premium.",
     "emptyText": "No membership tiers yet.",
     "popular": "Popular",

@@ -343,6 +343,11 @@
   "membership": {
     "eyebrow": "TRẢI NGHIỆM CAO CẤP",
     "pageTitle": "Hạng Thành Viên",
+    "progress": {
+      "yourPoints": "Điểm của bạn",
+      "toNext": "Còn {{ n }} điểm để lên {{ tier }}",
+      "topTier": "Bạn đang ở hạng cao nhất"
+    },
     "pageSubtitle": "Tích điểm qua mỗi lần đặt vé và mở khóa những đặc quyền độc quyền của Midnight Premium.",
     "emptyText": "Chưa có hạng thành viên nào.",
     "popular": "Phổ biến",

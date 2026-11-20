@@ -104,3 +104,17 @@
   100% { opacity: 0; transform: rotate(var(--a)) translateY(-70px) scale(0.5); }
 }
 @keyframes pr-ticket { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+
+// The stub tears along the perforation after the ticket has landed: a dashed line rips left to right,
+// then the stub drops a little and settles. (overflow stays hidden on the card, so no big rotation.)
+.ticket-qr-section { position: relative; }
+@media (prefers-reduced-motion: no-preference) {
+  .ticket-qr-section::before {
+    content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 3px; pointer-events: none;
+    background: repeating-linear-gradient(90deg, var(--mp-gold-deep, #e6a82e) 0 9px, transparent 9px 15px);
+    transform-origin: left; animation: pr-rip 0.7s ease 1.3s both;
+  }
+  .ticket-qr-section { animation: pr-drop 0.8s cubic-bezier(0.3, 1.5, 0.5, 1) 1.55s backwards; }
+}
+@keyframes pr-rip { 0% { transform: scaleX(0); opacity: 1; } 70% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+@keyframes pr-drop { 0% { transform: translateY(0); } 35% { transform: translateY(12px) rotate(-0.8deg); } 100% { transform: none; } }

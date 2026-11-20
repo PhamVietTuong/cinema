@@ -15,8 +15,29 @@
     <p>{{ 'membership.emptyText' | translate }}</p>
   </div>
 
+  @if (user$ | async; as user) {
+    @if (tiers.length) {
+      <section class="mem-progress" [attr.aria-label]="'membership.progress.yourPoints' | translate">
+        <div class="mem-progress-head">
+          <span class="mem-progress-label">{{ 'membership.progress.yourPoints' | translate }}</span>
+          <strong class="mem-progress-points"><span [appCountUp]="user.points ?? 0" [group]="true"></span> {{ 'membership.pointsUnit' | translate }}</strong>
+        </div>
+        <div class="mem-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="progressPercent(user.points ?? 0) | number:'1.0-0'">
+          <div class="mem-progress-fill" [style.--fill]="progressPercent(user.points ?? 0) + '%'"></div>
+        </div>
+        <p class="mem-progress-note">
+          @if (nextTier(user.points ?? 0); as next) {
+            {{ 'membership.progress.toNext' | translate:{ n: ((next.minPoints ?? 0) - (user.points ?? 0)) | number, tier: next.name } }}
+          } @else {
+            {{ 'membership.progress.topTier' | translate }}
+          }
+        </p>
+      </section>
+    }
+  }
+
   <div class="tier-grid">
-    <div class="tier-card" *ngFor="let t of tiers; let i = index" [class.featured]="isFeatured(i)">
+    <div class="tier-card" *ngFor="let t of tiers; let i = index" [class.featured]="isFeatured(i)" [class.is-current]="(user$ | async) && currentTierIndex((user$ | async)?.points ?? 0) === i">
       <div class="tier-badge" *ngIf="isFeatured(i)">{{ 'membership.popular' | translate }}</div>
       <div class="tier-crown"><mat-icon>workspace_premium</mat-icon></div>
       <h3 class="tier-name">{{ t.name }}</h3>
