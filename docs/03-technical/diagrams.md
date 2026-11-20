@@ -4,6 +4,8 @@
 > Sources: `docker-compose.yml`, `.github/workflows/ci.yml`, `cinemabe/sql/create_db.sql`, `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/{Program.cs,Controllers/PaymentController.cs,Hubs/BookingHub.cs,Services/PendingBookingReaper.cs}`, `cinemabe/Cinema/2-Business/Cinema.Business/{Managers/BookingManager.cs,Payments/VnPayGateway.cs}`, `cinemabe/Cinema/3-Data/Cinema.Data/Stores/InvoiceStore.cs`, `docs/03-technical/{architecture,integrations,database-schema}.md`
 > Last reviewed: 2026-11-14
 
+A draw.io version of these views (architecture, ERD, swimlane, sequence, state machines, use cases) for Word or slides is in [`drawio/cinema.drawio`](drawio/cinema.drawio); open it in app.diagrams.net and export PNG/SVG.
+
 The layer dependency graph (a fifth view) is in [`architecture.md`](architecture.md) section 2. Each diagram below lists what it was checked against, so a reader can re-verify it.
 
 ## 1. System context
