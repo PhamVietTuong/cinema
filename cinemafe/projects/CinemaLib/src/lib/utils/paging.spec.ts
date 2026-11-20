@@ -1,4 +1,5 @@
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, timer } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { fetchAllPages, FetchablePage } from './paging';
 
 interface Row { id: number; }
@@ -65,6 +66,23 @@ describe('fetchAllPages', () => {
     );
     expect(calls).toBe(1);
     expect(items.length).toBe(1);
+  });
+
+  it('requests the remaining pages in parallel, capped by concurrency, and keeps page order', async () => {
+    const pages = makePages(1000, 100); // 10 pages
+    let inFlight = 0;
+    let maxInFlight = 0;
+    // Later pages answer sooner, so a naive "append as they arrive" would reverse the order.
+    const fetchPage = (pageIndex: number) => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      return timer(pageIndex === 1 ? 0 : (11 - pageIndex) * 3).pipe(
+        map(() => { inFlight--; return pages[pageIndex - 1]; }),
+      );
+    };
+    const items = await firstValueFrom(fetchAllPages<Row>(fetchPage, 100, r => r.id, 3));
+    expect(maxInFlight).toBe(3);
+    expect(items.map(r => r.id)).toEqual(Array.from({ length: 1000 }, (_, i) => i));
   });
 
   it('de-duplicates rows with the same id across pages', async () => {

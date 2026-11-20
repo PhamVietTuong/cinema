@@ -1,5 +1,5 @@
-import { EMPTY, Observable } from 'rxjs';
-import { expand, map, reduce } from 'rxjs/operators';
+import { Observable, from, of } from 'rxjs';
+import { map, mergeMap, switchMap, toArray } from 'rxjs/operators';
 
 /** The subset of a paged search result that `fetchAllPages` needs to decide whether to keep going. */
 export interface FetchablePage<T> {
@@ -7,45 +7,57 @@ export interface FetchablePage<T> {
   totalCount?: number;
 }
 
-interface PageState<T> {
-  items: T[];
-  pageIndex: number;
-  done: boolean;
-}
+/** How many page requests `fetchAllPages` keeps in flight at once after the first page. */
+export const DEFAULT_PAGE_CONCURRENCY = 6;
 
 /**
- * Repeatedly calls `fetchPage` (1-based page index) until every row of the underlying search has
- * been collected, then emits the combined array once. Stops when a page is empty, when a page comes
- * back shorter than `pageSize` (the last page), or when `totalCount` is missing (unknown total).
+ * Collects every row of a paged search and emits the combined array once.
+ *
+ * Page 1 (1-based `fetchPage` index) is fetched first because its `totalCount` says how many more
+ * pages exist; the remaining pages are then requested in parallel, at most `concurrency` at a time,
+ * instead of one after another. Rows come back in page order. Nothing more is fetched when page 1
+ * is empty, shorter than `pageSize` (the last page), or has no `totalCount` (unknown total).
  * Rows are de-duplicated by `getId` as a safety net against an unstable sort on the server.
  */
 export function fetchAllPages<T>(
   fetchPage: (pageIndex: number) => Observable<FetchablePage<T>>,
   pageSize: number,
   getId: (item: T) => unknown,
+  concurrency: number = DEFAULT_PAGE_CONCURRENCY,
 ): Observable<T[]> {
-  const toState = (page: FetchablePage<T>, pageIndex: number): PageState<T> => {
-    const items = page.results ?? [];
-    const collected = pageIndex * pageSize;
-    const done = items.length === 0 || items.length < pageSize || page.totalCount === undefined || collected >= page.totalCount;
-    return { items, pageIndex, done };
-  };
-
   return fetchPage(1).pipe(
-    map(page => toState(page, 1)),
-    expand(state => state.done
-      ? EMPTY
-      : fetchPage(state.pageIndex + 1).pipe(map(page => toState(page, state.pageIndex + 1)))),
-    reduce((acc, state) => {
-      for (const item of state.items) {
-        const id = getId(item);
-        if (!acc.seen.has(id)) {
-          acc.seen.add(id);
-          acc.items.push(item);
+    switchMap(first => {
+      const firstItems = first.results ?? [];
+      const total = first.totalCount;
+      const single = firstItems.length === 0 || firstItems.length < pageSize || total === undefined || pageSize <= 0;
+      const pageCount = single ? 1 : Math.ceil((total ?? 0) / pageSize);
+      if (pageCount <= 1) {
+        return of([firstItems]);
+      }
+
+      const rest$ = from(Array.from({ length: pageCount - 1 }, (_, i) => i + 2)).pipe(
+        mergeMap(
+          pageIndex => fetchPage(pageIndex).pipe(map(page => ({ pageIndex, items: page.results ?? [] }))),
+          Math.max(1, concurrency),
+        ),
+        toArray(),
+        map(pages => pages.sort((a, b) => a.pageIndex - b.pageIndex).map(p => p.items)),
+      );
+      return rest$.pipe(map(restItems => [firstItems, ...restItems]));
+    }),
+    map(pages => {
+      const seen = new Set<unknown>();
+      const items: T[] = [];
+      for (const page of pages) {
+        for (const item of page) {
+          const id = getId(item);
+          if (!seen.has(id)) {
+            seen.add(id);
+            items.push(item);
+          }
         }
       }
-      return acc;
-    }, { items: [] as T[], seen: new Set<unknown>() }),
-    map(acc => acc.items),
+      return items;
+    }),
   );
 }
