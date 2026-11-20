@@ -93,13 +93,13 @@
         {{ 'booking.tickets.selectMore' | translate:{ count: remainingTickets } }}
       </span>
     </div>
-    <div class="order-hold" *ngIf="holdActive" [class.expired]="holdExpired">
+    <div class="order-hold" *ngIf="holdActive" [class.expired]="holdExpired" [class.is-urgent]="!holdExpired && holdSecondsLeft > 0 && holdSecondsLeft <= 60">
       <span class="order-hold-label">{{ (holdExpired ? 'booking.holdExpiredShort' : 'booking.holdLabel') | translate }}</span>
       <span class="order-hold-time" *ngIf="!holdExpired">{{ holdCountdown }}</span>
     </div>
     <div class="order-total">
       <span class="order-total-label">{{ 'booking.summary.comboTotal' | translate }}</span>
-      <span class="total-amount">{{ grandTotal | number:'1.0-0' }}đ</span>
+      <span class="total-amount" [appCountUp]="grandTotal" [fromPrevious]="true" [group]="true" suffix="đ" [durationMs]="450"></span>
       <button class="btn-primary-cta order-cta" [disabled]="!canProceed" (click)="proceedToCheckout()">
         {{ 'booking.tickets.continueCta' | translate }}
       </button>

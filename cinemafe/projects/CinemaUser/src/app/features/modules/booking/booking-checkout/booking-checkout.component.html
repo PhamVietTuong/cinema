@@ -97,7 +97,7 @@
       <div class="summary-card">
         <div class="summary-head">
           <h3 class="summary-title">{{ movieTitle || ('booking.summary.orderTitle' | translate) }}<span class="age-tag" *ngIf="ageCode"> ({{ ageCode }})</span></h3>
-          <span class="hold-chip" [class.expired]="holdExpired">
+          <span class="hold-chip" [class.expired]="holdExpired" [class.is-urgent]="!holdExpired && holdSecondsLeft > 0 && holdSecondsLeft <= 60">
             <ng-container *ngIf="!holdExpired">{{ 'booking.holdLabel' | translate }} <b>{{ holdCountdown }}</b></ng-container>
             <ng-container *ngIf="holdExpired">{{ 'booking.holdExpiredShort' | translate }}</ng-container>
           </span>
