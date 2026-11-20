@@ -32,6 +32,20 @@ export class App implements OnInit {
   ngOnInit(): void {
     this._store.dispatch(loadUserFromStorage());
     this._splashBanner.init();
+    // Mark the clicked card's poster as the shared element for the poster -> detail view transition.
+    // Only one element may carry a view-transition-name at a time, so the previous mark is cleared first.
+    document.addEventListener('click', (e) => {
+      const card = (e.target as HTMLElement | null)?.closest?.('.mc-card');
+      document.querySelectorAll<HTMLElement>('[data-vt-poster]').forEach(el => {
+        el.removeAttribute('data-vt-poster');
+        el.style.viewTransitionName = '';
+      });
+      const img = card?.querySelector<HTMLElement>('.mc-poster img');
+      if (img) {
+        img.setAttribute('data-vt-poster', '');
+        img.style.viewTransitionName = 'movie-poster';
+      }
+    }, true);
     // Compact topbar once scrolled. Toggles a class directly on the element (no change detection) —
     // the app is zoneless and this is purely visual.
     window.addEventListener('scroll', () => {

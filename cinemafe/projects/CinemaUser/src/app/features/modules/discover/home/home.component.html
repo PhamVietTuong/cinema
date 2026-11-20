@@ -2,7 +2,7 @@
 <section class="hero">
   <ng-container *ngIf="featuredMovie$ | async as fm; else heroDefault">
     @for (f of [fm]; track f.id) {
-    <div class="hero-inner">
+    <div class="hero-inner" [appAmbientGlow]="f.posterUrl" [glowSeed]="f.title">
       <div class="hero-corner-badges">
         <span class="badge-pill badge-age hero-fade-up" style="animation-delay:0.05s" *ngIf="f.ageRestrictionCode">{{ f.ageRestrictionCode }}</span>
         <span class="badge-pill badge-genre hero-fade-up" style="animation-delay:0.1s" *ngIf="f.genres?.length">{{ f.genres[0] }}</span>
