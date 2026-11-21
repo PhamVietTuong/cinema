@@ -61,6 +61,8 @@ IF OBJECT_ID('dbo.ReminderLog', 'U') IS NOT NULL
 DROP TABLE dbo.ReminderLog;
 IF OBJECT_ID('dbo.RoomTypePatronCategoryPrice', 'U') IS NOT NULL
 DROP TABLE dbo.RoomTypePatronCategoryPrice;
+IF OBJECT_ID('dbo.HolidayTimeSlotPrice', 'U') IS NOT NULL
+DROP TABLE dbo.HolidayTimeSlotPrice;
 IF OBJECT_ID('dbo.TicketPrice', 'U') IS NOT NULL
 DROP TABLE dbo.TicketPrice;
 IF OBJECT_ID('dbo.TimeSlot', 'U') IS NOT NULL
@@ -631,6 +633,22 @@ CREATE TABLE [TicketPrice] (
     CONSTRAINT [FK_TicketPrice_TimeSlot_TimeSlotId] FOREIGN KEY ([TimeSlotId]) REFERENCES [TimeSlot] ([Id]) ON DELETE NO ACTION
 );
 
+-- A holiday's price factor for one theater time slot. Holiday.PriceMultiplier is the holiday's default
+-- factor; a row here overrides it for showtimes starting inside that slot on the holiday's date (so the
+-- morning, evening and late-night slots of one holiday can be priced differently). TimeSlot is per
+-- theater, so a row is implicitly scoped to that theater. Like the weekday matrix, it is never stacked.
+CREATE TABLE [HolidayTimeSlotPrice] (
+    [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+    [HolidayId] uniqueidentifier NOT NULL,
+    [TimeSlotId] uniqueidentifier NOT NULL,
+    [PriceMultiplier] float NOT NULL DEFAULT 1,
+    [CreationTime] datetime NOT NULL,
+    [LastUpdatedTime] datetime NULL,
+    CONSTRAINT [PK_HolidayTimeSlotPrice] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_HolidayTimeSlotPrice_Holiday_HolidayId] FOREIGN KEY ([HolidayId]) REFERENCES [Holiday] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_HolidayTimeSlotPrice_TimeSlot_TimeSlotId] FOREIGN KEY ([TimeSlotId]) REFERENCES [TimeSlot] ([Id]) ON DELETE CASCADE
+);
+
 -- A RoomType's patron-category allow-list: a RoomType offers EXACTLY the categories that have a row
 -- here, at that row's Price. Zero rows means the RoomType offers nothing — there is no "unrestricted,
 -- falls back to the theater-wide default" state. (e.g. Room Type 1 = Adult Standard + Student Standard;
@@ -713,6 +731,8 @@ CREATE INDEX [IX_TimeSlot_TheaterId] ON [TimeSlot] ([TheaterId]);
 CREATE INDEX [IX_TicketPrice_RoomTypeId] ON [TicketPrice] ([RoomTypeId]);
 CREATE INDEX [IX_TicketPrice_TimeSlotId] ON [TicketPrice] ([TimeSlotId]);
 CREATE UNIQUE INDEX [IX_TicketPrice_TheaterId_RoomTypeId_TimeSlotId_DayOfWeek] ON [TicketPrice] ([TheaterId], [RoomTypeId], [TimeSlotId], [DayOfWeek]);
+CREATE INDEX [IX_HolidayTimeSlotPrice_TimeSlotId] ON [HolidayTimeSlotPrice] ([TimeSlotId]);
+CREATE UNIQUE INDEX [IX_HolidayTimeSlotPrice_HolidayId_TimeSlotId] ON [HolidayTimeSlotPrice] ([HolidayId], [TimeSlotId]);
 CREATE INDEX [IX_RoomType_TheaterId] ON [RoomType] ([TheaterId]);
 CREATE INDEX [IX_Room_RoomTypeId] ON [Room] ([RoomTypeId]);
 CREATE INDEX [IX_ShowTimeRoom_RoomId] ON [ShowTimeRoom] ([RoomId]);

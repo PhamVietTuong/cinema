@@ -98,6 +98,8 @@ export interface IHttpService {
     createHoliday(request: CreateHolidayRequest): Observable<HolidayDTO>;
     updateHoliday(request: UpdateHolidayRequest): Observable<HolidayDTO>;
     deleteHoliday(id?: string | undefined): Observable<void>;
+    getHolidayTimeSlotPrices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfHolidayTimeSlotPriceDTO>;
+    upsertHolidayTimeSlotPrices(request: UpsertHolidayTimeSlotPricesRequest): Observable<HolidayTimeSlotPriceDTO[]>;
     getNewsList(search: PagingSearchDTO): Observable<DefaultSearchResultsOfNewsDTO>;
     getNews(id?: string | undefined): Observable<NewsDTO>;
     createNews(request: CreateNewsRequest): Observable<NewsDTO>;
@@ -4236,6 +4238,117 @@ export class HttpService implements IHttpService {
         if (status === 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return _observableOf(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getHolidayTimeSlotPrices(search: PagingSearchDTO): Observable<DefaultSearchResultsOfHolidayTimeSlotPriceDTO> {
+        let url_ = this.baseUrl + "/api/Cinema/GetHolidayTimeSlotPrices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(search);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetHolidayTimeSlotPrices(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetHolidayTimeSlotPrices(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DefaultSearchResultsOfHolidayTimeSlotPriceDTO>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DefaultSearchResultsOfHolidayTimeSlotPriceDTO>;
+        }));
+    }
+
+    protected processGetHolidayTimeSlotPrices(response: HttpResponseBase): Observable<DefaultSearchResultsOfHolidayTimeSlotPriceDTO> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DefaultSearchResultsOfHolidayTimeSlotPriceDTO.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    upsertHolidayTimeSlotPrices(request: UpsertHolidayTimeSlotPricesRequest): Observable<HolidayTimeSlotPriceDTO[]> {
+        let url_ = this.baseUrl + "/api/Cinema/UpsertHolidayTimeSlotPrices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpsertHolidayTimeSlotPrices(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpsertHolidayTimeSlotPrices(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<HolidayTimeSlotPriceDTO[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<HolidayTimeSlotPriceDTO[]>;
+        }));
+    }
+
+    protected processUpsertHolidayTimeSlotPrices(response: HttpResponseBase): Observable<HolidayTimeSlotPriceDTO[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(HolidayTimeSlotPriceDTO.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -13193,6 +13306,227 @@ export interface IUpdateHolidayRequest {
     name?: string;
     date?: Date;
     priceMultiplier?: number;
+}
+
+export abstract class BaseSearchResultsOfHolidayTimeSlotPriceDTO implements IBaseSearchResultsOfHolidayTimeSlotPriceDTO {
+    results?: HolidayTimeSlotPriceDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+
+    constructor(data?: IBaseSearchResultsOfHolidayTimeSlotPriceDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(HolidayTimeSlotPriceDTO.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+            this.countPerPage = _data["countPerPage"];
+            this.page = _data["page"];
+        }
+    }
+
+    static fromJS(data: any): BaseSearchResultsOfHolidayTimeSlotPriceDTO {
+        data = typeof data === 'object' ? data : {};
+        throw new Error("The abstract class 'BaseSearchResultsOfHolidayTimeSlotPriceDTO' cannot be instantiated.");
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        data["countPerPage"] = this.countPerPage;
+        data["page"] = this.page;
+        return data;
+    }
+}
+
+export interface IBaseSearchResultsOfHolidayTimeSlotPriceDTO {
+    results?: HolidayTimeSlotPriceDTO[];
+    totalCount?: number;
+    countPerPage?: number;
+    page?: number;
+}
+
+export class DefaultSearchResultsOfHolidayTimeSlotPriceDTO extends BaseSearchResultsOfHolidayTimeSlotPriceDTO implements IDefaultSearchResultsOfHolidayTimeSlotPriceDTO {
+
+    constructor(data?: IDefaultSearchResultsOfHolidayTimeSlotPriceDTO) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+    }
+
+    static override fromJS(data: any): DefaultSearchResultsOfHolidayTimeSlotPriceDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new DefaultSearchResultsOfHolidayTimeSlotPriceDTO();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDefaultSearchResultsOfHolidayTimeSlotPriceDTO extends IBaseSearchResultsOfHolidayTimeSlotPriceDTO {
+}
+
+export class HolidayTimeSlotPriceDTO implements IHolidayTimeSlotPriceDTO {
+    id?: string;
+    holidayId?: string;
+    timeSlotId?: string;
+    priceMultiplier?: number;
+
+    constructor(data?: IHolidayTimeSlotPriceDTO) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.holidayId = _data["holidayId"];
+            this.timeSlotId = _data["timeSlotId"];
+            this.priceMultiplier = _data["priceMultiplier"];
+        }
+    }
+
+    static fromJS(data: any): HolidayTimeSlotPriceDTO {
+        data = typeof data === 'object' ? data : {};
+        let result = new HolidayTimeSlotPriceDTO();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["holidayId"] = this.holidayId;
+        data["timeSlotId"] = this.timeSlotId;
+        data["priceMultiplier"] = this.priceMultiplier;
+        return data;
+    }
+}
+
+export interface IHolidayTimeSlotPriceDTO {
+    id?: string;
+    holidayId?: string;
+    timeSlotId?: string;
+    priceMultiplier?: number;
+}
+
+export class UpsertHolidayTimeSlotPricesRequest implements IUpsertHolidayTimeSlotPricesRequest {
+    holidayId?: string;
+    theaterId?: string;
+    items?: HolidayTimeSlotPriceItem[];
+
+    constructor(data?: IUpsertHolidayTimeSlotPricesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.holidayId = _data["holidayId"];
+            this.theaterId = _data["theaterId"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(HolidayTimeSlotPriceItem.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): UpsertHolidayTimeSlotPricesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpsertHolidayTimeSlotPricesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["holidayId"] = this.holidayId;
+        data["theaterId"] = this.theaterId;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IUpsertHolidayTimeSlotPricesRequest {
+    holidayId?: string;
+    theaterId?: string;
+    items?: HolidayTimeSlotPriceItem[];
+}
+
+export class HolidayTimeSlotPriceItem implements IHolidayTimeSlotPriceItem {
+    timeSlotId?: string;
+    priceMultiplier?: number | undefined;
+
+    constructor(data?: IHolidayTimeSlotPriceItem) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.timeSlotId = _data["timeSlotId"];
+            this.priceMultiplier = _data["priceMultiplier"];
+        }
+    }
+
+    static fromJS(data: any): HolidayTimeSlotPriceItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new HolidayTimeSlotPriceItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["timeSlotId"] = this.timeSlotId;
+        data["priceMultiplier"] = this.priceMultiplier;
+        return data;
+    }
+}
+
+export interface IHolidayTimeSlotPriceItem {
+    timeSlotId?: string;
+    priceMultiplier?: number | undefined;
 }
 
 export abstract class BaseSearchResultsOfNewsDTO implements IBaseSearchResultsOfNewsDTO {

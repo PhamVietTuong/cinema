@@ -167,7 +167,10 @@ RoomTypeId (Restrict), PatronCategoryId (Cascade), Price (double). **Unique** (R
 TheaterId (Cascade), Name, StartTime/EndTime (string "HH:mm"). Nav `TicketPrices`.
 
 ### Holiday
-Name, Date (DateOnly), PriceMultiplier (double, default 1.5). No TheaterId — global.
+Name, Date (DateOnly), PriceMultiplier (double, default 1.5). No TheaterId — global. `PriceMultiplier` is the holiday's **default** factor; per-time-slot overrides live in `HolidayTimeSlotPrice`. `Date` is not unique, so two holidays can share a date (booking takes the first match).
+
+### HolidayTimeSlotPrice
+HolidayId (Cascade), TimeSlotId (Cascade), PriceMultiplier (double, default 1). Unique `(HolidayId, TimeSlotId)`. Overrides `Holiday.PriceMultiplier` for showtimes that start inside that `TimeSlot` on the holiday's date. `TimeSlot` is per theater, so a row is implicitly scoped to that slot's theater. Deleting the holiday or the slot removes its rows. No room-type dimension: one factor per slot for every room type. Created by the idempotent block in `upgrade_db.sql`.
 
 ## 4. Promotions / Loyalty
 
