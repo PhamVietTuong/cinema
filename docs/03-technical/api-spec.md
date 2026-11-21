@@ -140,7 +140,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 | `TicketPrice` | anonymous | Admin | + `UpsertTicketPrices` (batch, one multiplier across several days) |
 | `UserType` | **Admin-only even to list/get** | Admin | |
 | `MemberShip` | anonymous | Admin | |
-| `Holiday` | anonymous | Admin | |
+| `Holiday` | anonymous | Admin | + `GetHolidayTimeSlotPrices` (`[HttpPost]` `PagingSearchDTO`, filters `holidayId` / `theaterId`) and `UpsertHolidayTimeSlotPrices` (batch for one holiday + theater; an item with a `null` `priceMultiplier` removes that slot's override). **Both Admin-only**, including the read. Rejects non-positive factors, duplicate slots in one request, and slots of another theater |
 | `News` | anonymous | Admin | |
 | `Person` | **Admin-only** for CRUD; `GetPeopleByNames` is `[AllowAnonymous]` | Admin | |
 | `PromotionCampaign` | `GetPromotionCampaigns` / `GetPromotionCampaign` (list is `[HttpPost]`) | Admin (`Create`/`Update`/`Delete`) | Campaign grouping for promotions (`#region PromotionCampaign`, `CinemaController.cs:1368`); standard CRUD, no extra actions |
