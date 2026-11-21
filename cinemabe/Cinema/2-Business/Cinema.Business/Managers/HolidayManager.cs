@@ -5,6 +5,7 @@ using Cinema.Business.Extensions;
 using Cinema.Business.Helpers;
 using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Business.Managers;
 
@@ -133,6 +134,119 @@ public class HolidayManager : IHolidayManager
 
     public async Task DeleteAsync(Guid id)
     {
+        // The per-slot overrides go with the holiday through the FK's ON DELETE CASCADE.
         await _uow.HolidayStore.DeleteAsync(id);
+    }
+
+    public async Task<DefaultSearchResults<HolidayTimeSlotPriceDTO>> GetTimeSlotPricesAsync(PagingSearchDTO search)
+    {
+        search ??= new PagingSearchDTO();
+        var (page, pageSize) = PagingHelper.ResolvePaging(search);
+
+        var query = _uow.HolidayTimeSlotPriceStore.GetQuery();
+        if (search.Filters != null)
+        {
+            if (search.Filters.TryGetValue("holidayId", out var holidayRaw) && Guid.TryParse(holidayRaw, out var holidayId))
+            {
+                query = _uow.HolidayTimeSlotPriceStore.FilterQuery(query, e => e.HolidayId == holidayId);
+            }
+            if (search.Filters.TryGetValue("theaterId", out var theaterRaw) && Guid.TryParse(theaterRaw, out var theaterId))
+            {
+                query = _uow.HolidayTimeSlotPriceStore.FilterQuery(query, e => e.TimeSlot.TheaterId == theaterId);
+            }
+        }
+
+        var total = await _uow.HolidayTimeSlotPriceStore.CountAsync(query);
+        var items = await _uow.HolidayTimeSlotPriceStore.AllPageAsync(query, page - 1, pageSize);
+        return PagingHelper.ToPagedResult<HolidayTimeSlotPrice, HolidayTimeSlotPriceDTO>(items, total, page, pageSize);
+    }
+
+    public async Task<List<HolidayTimeSlotPriceDTO>> UpsertTimeSlotPricesAsync(UpsertHolidayTimeSlotPricesRequest request)
+    {
+        var items = request.Items ?? new List<HolidayTimeSlotPriceItem>();
+        if (items.GroupBy(i => i.TimeSlotId).Any(g => g.Count() > 1))
+        {
+            throw new InvalidOperationException("A time slot can only be listed once.");
+        }
+        if (items.Any(i => i.PriceMultiplier is <= 0))
+        {
+            throw new InvalidOperationException($"{nameof(HolidayTimeSlotPrice.PriceMultiplier)} must be greater than 0.");
+        }
+        if (!await _uow.HolidayStore.ExistsAsync(h => h.Id == request.HolidayId))
+        {
+            throw new KeyNotFoundException($"Holiday {request.HolidayId} not found.");
+        }
+
+        // Every listed slot must belong to the named theater, so one theater's editor can never
+        // write another theater's prices. One query for all slots, not one per item.
+        var slotIds = items.Select(i => i.TimeSlotId).ToList();
+        var validSlotCount = await _uow.TimeSlotStore.CountAsync(t => t.TheaterId == request.TheaterId && slotIds.Contains(t.Id));
+        if (validSlotCount != slotIds.Count)
+        {
+            throw new InvalidOperationException("TimeSlot does not belong to this theater.");
+        }
+
+        await _uow.BeginTransactionAsync();
+        try
+        {
+            var existing = (await _uow.HolidayTimeSlotPriceStore.FindAllAsync(e =>
+                e.HolidayId == request.HolidayId && slotIds.Contains(e.TimeSlotId))).ToList();
+            var existingBySlot = existing.ToDictionary(e => e.TimeSlotId);
+
+            var toCreate = new List<HolidayTimeSlotPrice>();
+            var toUpdate = new List<HolidayTimeSlotPrice>();
+            foreach (var item in items)
+            {
+                existingBySlot.TryGetValue(item.TimeSlotId, out var row);
+                if (item.PriceMultiplier is not double multiplier)
+                {
+                    if (row is not null)
+                    {
+                        await _uow.HolidayTimeSlotPriceStore.DeleteAsync(row);
+                        existing.Remove(row);
+                    }
+                    continue;
+                }
+                if (row is null)
+                {
+                    toCreate.Add(new HolidayTimeSlotPrice
+                    {
+                        HolidayId = request.HolidayId,
+                        TimeSlotId = item.TimeSlotId,
+                        PriceMultiplier = multiplier,
+                    });
+                }
+                else
+                {
+                    row.PriceMultiplier = multiplier;
+                    toUpdate.Add(row);
+                }
+            }
+            if (toUpdate.Count > 0)
+            {
+                await _uow.HolidayTimeSlotPriceStore.UpdateRangeAsync(toUpdate);
+            }
+            if (toCreate.Count > 0)
+            {
+                await _uow.HolidayTimeSlotPriceStore.CreateRangeAsync(toCreate);
+            }
+
+            await _uow.CommitTransactionAsync();
+            return existing.Concat(toCreate)
+                .Select(e => e.ToDTO<HolidayTimeSlotPrice, HolidayTimeSlotPriceDTO>())
+                .ToList();
+        }
+        catch (DbUpdateException)
+        {
+            // A concurrent save inserted one of these slots first — the unique index is the source of
+            // truth, so surface a translated message instead of a raw 500.
+            await _uow.RollbackTransactionAsync();
+            throw new InvalidOperationException("A holiday price already exists for this time slot.");
+        }
+        catch
+        {
+            await _uow.RollbackTransactionAsync();
+            throw;
+        }
     }
 }

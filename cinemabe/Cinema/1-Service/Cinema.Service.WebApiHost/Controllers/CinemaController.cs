@@ -1196,6 +1196,22 @@ public class CinemaController : ApiControllerBase
         }
         return await RunNoContent(nameof(DeleteHoliday), () => _holidays.DeleteAsync(id));
     }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(DefaultSearchResults<HolidayTimeSlotPriceDTO>), 200)]
+    public Task<IActionResult> GetHolidayTimeSlotPrices([FromBody] PagingSearchDTO search)
+    {
+        return Run(nameof(GetHolidayTimeSlotPrices), () => _holidays.GetTimeSlotPricesAsync(search));
+    }
+
+    [Authorize(Roles = _adminRole)]
+    [HttpPost]
+    [ProducesResponseType(typeof(List<HolidayTimeSlotPriceDTO>), 200)]
+    public Task<IActionResult> UpsertHolidayTimeSlotPrices([FromBody] UpsertHolidayTimeSlotPricesRequest request)
+    {
+        return Run(nameof(UpsertHolidayTimeSlotPrices), () => _holidays.UpsertTimeSlotPricesAsync(request));
+    }
     #endregion
 
     #region News
