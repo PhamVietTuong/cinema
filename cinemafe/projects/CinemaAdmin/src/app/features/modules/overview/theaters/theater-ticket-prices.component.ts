@@ -169,7 +169,7 @@ export class TheaterTicketPricesComponent implements OnInit {
 
   private _loadHolidayPrices(): void {
     this._svc.getHolidayTimeSlotPrices(CinemaServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: 1, pageSize: 500,
+      pageIndex: 1, pageSize: 200,
       filters: { theaterId: this.theaterId },
     })).subscribe({
       next: r => {
