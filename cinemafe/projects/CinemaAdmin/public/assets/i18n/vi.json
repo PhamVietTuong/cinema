@@ -453,6 +453,13 @@
       "confirmReset": "Đặt lại ngày này về giá mặc định (×1.0)?",
       "showRegular": "Xem giá ngày thường",
       "showHoliday": "Xem giá ngày lễ",
+      "holidayDefault": "Mặc định lễ",
+      "holidayAllRoomTypes": "áp dụng cho mọi loại phòng của rạp",
+      "editHolidayCellTitle": "Chỉnh Sửa Giá Ngày Lễ",
+      "useHolidayDefault": "Dùng mặc định ngày lễ",
+      "confirmHolidayReset": "Bỏ giá riêng của khung giờ này và dùng hệ số mặc định của ngày lễ?",
+      "decrease": "Giảm",
+      "increase": "Tăng",
       "invalidSlots": "Không hiển thị (vắt qua nửa đêm)",
       "bands": {
         "low": "Thấp",

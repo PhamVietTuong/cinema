@@ -6,12 +6,14 @@ import {
   showLoading, hideLoading, showException,
 } from 'CinemaLib';
 import { TicketPriceDialog } from './ticket-price.dialog';
-import { buildWeekRows, precedingMultipliers, todayIsoLocal, TimelineSegmentVm, WeekRowVm } from './ticket-price-timeline';
+import { HolidaySlotPriceDialog } from './holiday-slot-price.dialog';
+import { buildWeekRows, HolidaySegmentVm, precedingHolidayMultiplier, precedingMultipliers, todayIsoLocal, TimelineSegmentVm, WeekRowVm } from './ticket-price-timeline';
 
 type RoomTypeDTO = CinemaServiceAgent.RoomTypeDTO;
 type TimeSlotDTO = CinemaServiceAgent.TimeSlotDTO;
 type TicketPriceDTO = CinemaServiceAgent.TicketPriceDTO;
 type HolidayDTO = CinemaServiceAgent.HolidayDTO;
+type HolidayTimeSlotPriceDTO = CinemaServiceAgent.HolidayTimeSlotPriceDTO;
 type DayOfWeek = CinemaServiceAgent.DayOfWeek;
 
 /**
@@ -34,6 +36,7 @@ export class TheaterTicketPricesComponent implements OnInit {
 
   prices: TicketPriceDTO[] = [];
   holidays: HolidayDTO[] = [];
+  holidayPrices: HolidayTimeSlotPriceDTO[] = [];
   weekRows: WeekRowVm[] = [];
   invalidSlots: TimeSlotDTO[] = [];
   private _pricesLoading = false;
@@ -63,6 +66,7 @@ export class TheaterTicketPricesComponent implements OnInit {
       this._cd.markForCheck();
     });
     this._loadHolidays();
+    this._loadHolidayPrices();
   }
 
   selectRoomType(id: string): void {
@@ -94,6 +98,25 @@ export class TheaterTicketPricesComponent implements OnInit {
     }).afterClosed().subscribe(saved => { if (saved) { this._loadPrices(); } });
   }
 
+  openHolidayCell(row: WeekRowVm, segment: HolidaySegmentVm): void {
+    if (!row.holiday) {
+      return;
+    }
+    const existing = segment.rowId ? this.holidayPrices.find(p => p.id === segment.rowId) : undefined;
+    this._dialog.open(HolidaySlotPriceDialog, {
+      width: '480px',
+      maxWidth: '100vw',
+      data: {
+        theaterId: this.theaterId,
+        holiday: row.holiday,
+        holidayDate: row.holidayDate ?? '',
+        timeSlot: segment.timeSlot,
+        existing,
+        precedingMultiplier: precedingHolidayMultiplier(this.timeSlots, row.holiday, this.holidayPrices, segment.timeSlot),
+      },
+    }).afterClosed().subscribe(saved => { if (saved) { this._loadHolidayPrices(); } });
+  }
+
   toggleRegular(day: DayOfWeek): void {
     if (this.showRegularFor.has(day)) {
       this.showRegularFor.delete(day);
@@ -104,6 +127,7 @@ export class TheaterTicketPricesComponent implements OnInit {
 
   onHolidaysChanged(): void {
     this._loadHolidays();
+    this._loadHolidayPrices();
   }
 
   private _loadPrices(): void {
@@ -143,8 +167,21 @@ export class TheaterTicketPricesComponent implements OnInit {
     });
   }
 
+  private _loadHolidayPrices(): void {
+    this._svc.getHolidayTimeSlotPrices(CinemaServiceAgent.PagingSearchDTO.fromJS({
+      pageIndex: 1, pageSize: 500,
+      filters: { theaterId: this.theaterId },
+    })).subscribe({
+      next: r => {
+        this.holidayPrices = r.results ?? [];
+        this._rebuild();
+      },
+      error: error => this._store.dispatch(showException({ error })),
+    });
+  }
+
   private _rebuild(): void {
-    const { rows, invalidSlots } = buildWeekRows(this.timeSlots, this.prices, this.holidays, todayIsoLocal());
+    const { rows, invalidSlots } = buildWeekRows(this.timeSlots, this.prices, this.holidays, todayIsoLocal(), this.holidayPrices);
     this.weekRows = rows;
     this.invalidSlots = invalidSlots;
     this._cd.markForCheck();

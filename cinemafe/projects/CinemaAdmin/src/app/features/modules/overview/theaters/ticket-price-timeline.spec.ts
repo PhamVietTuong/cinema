@@ -1,9 +1,10 @@
 import { CinemaServiceAgent } from 'CinemaLib';
-import { buildWeekRows, exceedsPrecedingSlot, holidayIso, isLateNightSlot, precedingMultipliers, todayIsoLocal } from './ticket-price-timeline';
+import { buildWeekRows, exceedsPrecedingSlot, holidayIso, holidaySlotSegments, isLateNightSlot, precedingHolidayMultiplier, precedingMultipliers, todayIsoLocal } from './ticket-price-timeline';
 
 type TimeSlotDTO = CinemaServiceAgent.TimeSlotDTO;
 type TicketPriceDTO = CinemaServiceAgent.TicketPriceDTO;
 type HolidayDTO = CinemaServiceAgent.HolidayDTO;
+type HolidayTimeSlotPriceDTO = CinemaServiceAgent.HolidayTimeSlotPriceDTO;
 
 const ROOM_TYPE_ID = 'rt-1';
 const THEATER_ID = 'th-1';
@@ -92,6 +93,28 @@ describe('buildWeekRows', () => {
     expect(monday.holiday).toBeUndefined();
   });
 
+  it('gives a holiday row one segment per slot: its own factor, else the holiday default', () => {
+    const morning = slot('s-m', 'Sáng', '06:00', '12:00');
+    const evening = slot('s-e', 'Tối', '18:00', '22:00');
+    const h = holiday('Sample Holiday', '2026-10-11', 1.5);
+    const own = CinemaServiceAgent.HolidayTimeSlotPriceDTO.fromJS({ id: 'hp-1', holidayId: h.id, timeSlotId: 's-e', priceMultiplier: 2 }) as HolidayTimeSlotPriceDTO;
+    const { rows } = buildWeekRows([morning, evening], [], [h], '2026-10-06', [own]);
+    const sunday = rows.find(r => r.day === 0)!;
+    const [m, e] = sunday.holidaySegments;
+    expect([m.multiplier, m.isDefault, m.rowId]).toEqual([1.5, true, undefined]);
+    expect([e.multiplier, e.isDefault, e.rowId]).toEqual([2, false, 'hp-1']);
+    // A weekday without a holiday has no holiday segments.
+    expect(rows.find(r => r.day === 1)!.holidaySegments).toEqual([]);
+  });
+
+  it("ignores another holiday's slot override", () => {
+    const evening = slot('s-e', 'Tối', '18:00', '22:00');
+    const h = holiday('Sample Holiday', '2026-10-11', 1.5);
+    const other = CinemaServiceAgent.HolidayTimeSlotPriceDTO.fromJS({ id: 'hp-2', holidayId: 'h-other', timeSlotId: 's-e', priceMultiplier: 3 }) as HolidayTimeSlotPriceDTO;
+    const { rows } = buildWeekRows([evening], [], [h], '2026-10-06', [other]);
+    expect(rows.find(r => r.day === 0)!.holidaySegments[0].multiplier).toBe(1.5);
+  });
+
   it('leaves a holiday outside the 7-day window unattached to any row', () => {
     const h = holiday('Far Holiday', '2026-10-20', 1.8);
     const { rows } = buildWeekRows([morning], [], [h], '2026-10-06');
@@ -144,5 +167,31 @@ describe('late-night warning helpers', () => {
     const wrapping = slot('ts-w', 'Wrap', '20:00', '02:00');
     const p = precedingMultipliers([morning, evening, wrapping, late], [price('ts-e', Mon, 1.2), price('ts-w', Mon, 2)], late)!;
     expect(p[Mon]).toBe(1.2);
+  });
+});
+
+describe('holidaySlotSegments / precedingHolidayMultiplier', () => {
+  const evening = slot('s-e', 'Tối', '18:00', '22:00');
+  const late = slot('s-l', 'Khuya', '22:00', '23:59');
+  const h = holiday('Sample Holiday', '2026-12-25', 1.5);
+
+  it('builds segments for a holiday on any date, in time order', () => {
+    const segments = holidaySlotSegments([late, evening], h, []);
+    expect(segments.map(s => s.timeSlot.name)).toEqual(['Tối', 'Khuya']);
+    expect(segments.every(s => s.isDefault && s.multiplier === 1.5)).toBe(true);
+  });
+
+  it('returns null for a slot that is not late night', () => {
+    expect(precedingHolidayMultiplier([evening, late], h, [], evening)).toBeNull();
+  });
+
+  it("uses the preceding slot's own factor, else the holiday default", () => {
+    const own = CinemaServiceAgent.HolidayTimeSlotPriceDTO.fromJS({ id: 'hp-1', holidayId: h.id, timeSlotId: 's-e', priceMultiplier: 2 });
+    expect(precedingHolidayMultiplier([evening, late], h, [own], late)).toBe(2);
+    expect(precedingHolidayMultiplier([evening, late], h, [], late)).toBe(1.5);
+  });
+
+  it('returns null when a late-night slot has nothing before it', () => {
+    expect(precedingHolidayMultiplier([late], h, [], late)).toBeNull();
   });
 });

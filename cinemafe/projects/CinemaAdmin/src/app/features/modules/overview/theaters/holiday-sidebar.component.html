@@ -9,17 +9,31 @@
 </div>
 
 <div class="hs-list">
-  <div class="hs-row" *ngFor="let h of holidays">
-    <div class="hs-row-main">
-      <div class="hs-row-name">{{ h.name }}</div>
-      <div class="hs-row-date">{{ h.date | date:'mediumDate':'UTC' }}</div>
+  @for (r of rows; track r.holiday.id) {
+    <div class="hs-row">
+      <div class="hs-row-main">
+        <div class="hs-row-name">{{ r.holiday.name }}</div>
+        <div class="hs-row-date">{{ r.holiday.date | date:'mediumDate':'UTC' }}</div>
+      </div>
+      <span class="ad-pill ad-pill--warn" [matTooltip]="'theaters.ticketPrices.holidayDefault' | translate">{{ r.holiday.priceMultiplier | number:'1.1-2' }}×</span>
+      <div class="hs-row-actions">
+        <button mat-icon-button (click)="edit(r.holiday)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
+        <button mat-icon-button (click)="remove(r.holiday.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
+      </div>
+      @if (r.chips.length) {
+        <div class="hs-chips">
+          @for (c of r.chips; track c.timeSlot.id) {
+            <button
+              type="button" class="hs-chip" [class.hs-chip--own]="!c.isDefault"
+              [attr.aria-label]="r.holiday.name + ' ' + c.timeSlot.name + ' ' + (c.multiplier | number:'1.1-2') + '×'"
+              (click)="editSlot(r.holiday, c)">
+              {{ c.timeSlot.name }} {{ c.multiplier | number:'1.1-2' }}×
+            </button>
+          }
+        </div>
+      }
     </div>
-    <span class="ad-pill ad-pill--warn">{{ h.priceMultiplier | number:'1.1-2' }}×</span>
-    <div class="hs-row-actions">
-      <button mat-icon-button (click)="edit(h)" [matTooltip]="'common.edit' | translate"><mat-icon>edit</mat-icon></button>
-      <button mat-icon-button (click)="remove(h.id)" [matTooltip]="'common.delete' | translate"><mat-icon>delete</mat-icon></button>
-    </div>
-  </div>
+  }
 
   <div *ngIf="!holidays.length" class="ad-empty"><mat-icon>celebration</mat-icon><p>{{ 'theaters.ticketPrices.sidebar.empty' | translate }}</p></div>
 </div>
