@@ -1,3 +1,4 @@
+using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Services;
 using Microsoft.EntityFrameworkCore;
@@ -17,10 +18,22 @@ public class CinemaContext : DbContext
             .ToList();
     }
 
+    // Any added/changed/removed entity that feeds seat pricing invalidates the cached pricing contexts.
+    private bool TouchesPricing()
+    {
+        return ChangeTracker.Entries()
+            .Any(e => e.State != EntityState.Unchanged && e.State != EntityState.Detached && PricingCache.Affects(e.Entity.GetType()));
+    }
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         var changed = ChangedUserIds();
+        var pricing = TouchesPricing();
         var result = base.SaveChanges(acceptAllChangesOnSuccess);
+        if (pricing)
+        {
+            PricingCache.Invalidate();
+        }
         foreach (var id in changed)
         {
             UserSnapshotCache.Evict(id);
@@ -31,7 +44,12 @@ public class CinemaContext : DbContext
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         var changed = ChangedUserIds();
+        var pricing = TouchesPricing();
         var result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        if (pricing)
+        {
+            PricingCache.Invalidate();
+        }
         foreach (var id in changed)
         {
             UserSnapshotCache.Evict(id);

@@ -359,7 +359,15 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     }
 
     public async Task<int> ExecuteDeleteAsync(Expression<Func<Entity, bool>> whereExpression)
-        => await DbSet.Where(whereExpression).ExecuteDeleteAsync();
+    {
+        var rows = await DbSet.Where(whereExpression).ExecuteDeleteAsync();
+        // A set-based delete bypasses SaveChanges, so invalidate the pricing cache here for pricing entities.
+        if (rows > 0 && PricingCache.Affects(typeof(Entity)))
+        {
+            PricingCache.Invalidate();
+        }
+        return rows;
+    }
 
     #endregion
 

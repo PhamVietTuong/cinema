@@ -18,6 +18,7 @@ using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
 using Cinema.Foundation.Logging;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Managers;
@@ -94,11 +95,14 @@ public class BookingManager : IBookingManager
     private readonly IStaffNotificationService _staffNotifications;
     private readonly IConfiguration? _config;
     private readonly INotificationDispatcher? _dispatcher;
+    private readonly IMemoryCache? _cache;
+    private static readonly TimeSpan _pricingCacheTtl = TimeSpan.FromSeconds(45);
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null, IAuditLogger? auditLogger = null, INotificationDispatcher? dispatcher = null)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null, IAuditLogger? auditLogger = null, INotificationDispatcher? dispatcher = null, IMemoryCache? cache = null)
     {
         _config = config;
         _dispatcher = dispatcher;
+        _cache = cache;
         _uow = uow;
         _gateways = gateways;
         _notifications = notifications;
@@ -1472,12 +1476,33 @@ public class BookingManager : IBookingManager
     private static readonly SeatPricingContext _emptyPricingContext =
         new(new Dictionary<Guid, ResolvedCategory>(), new Dictionary<SeatKind, double>());
 
+    // Cached ~45s per (showtime, room). The key carries PricingCache.Version, which the data layer bumps on every
+    // save/delete of a pricing input (holiday, matrix, slot, categories, room type, seat type, room, showtime), so an
+    // admin change is visible at once; the TTL only bounds how long superseded entries linger. Callers treat the
+    // returned context as read-only.
     private async Task<SeatPricingContext> BuildSeatPricingContextAsync(ShowTimeRoom? showTimeRoom)
     {
         if (showTimeRoom is null)
         {
             return _emptyPricingContext;
         }
+        if (_cache is null)
+        {
+            return await BuildSeatPricingContextCoreAsync(showTimeRoom);
+        }
+
+        var key = $"pricing:{PricingCache.Version}:{showTimeRoom.ShowTimeId}:{showTimeRoom.RoomId}:{showTimeRoom.BasePrice}";
+        if (_cache.TryGetValue(key, out SeatPricingContext? cached) && cached is not null)
+        {
+            return cached;
+        }
+        var built = await BuildSeatPricingContextCoreAsync(showTimeRoom);
+        _cache.Set(key, built, _pricingCacheTtl);
+        return built;
+    }
+
+    private async Task<SeatPricingContext> BuildSeatPricingContextCoreAsync(ShowTimeRoom showTimeRoom)
+    {
 
         var room     = await _uow.RoomStore.GetByIdAsync(showTimeRoom.RoomId);
         var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeRoom.ShowTimeId);
