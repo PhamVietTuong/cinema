@@ -1437,6 +1437,70 @@ BEGIN
 END
 -- ===== end ShowTime.StartTime index =====
 
+-- ===== performance indexes + InvoiceTicket.QrCode bound (2026-11) =====
+-- Altering a table that carries a filtered index needs QUOTED_IDENTIFIER ON.
+SET QUOTED_IDENTIFIER ON;
+GO
+-- InvoiceTicket.QrCode: nvarchar(max) -> nvarchar(64) (the QR is a 32-char GUID) so it can be indexed for gate
+-- lookups. Skipped (with a notice) if any existing row is longer than 64 characters.
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.InvoiceTicket') AND name = 'QrCode' AND max_length = -1)
+BEGIN
+    IF EXISTS (SELECT 1 FROM [InvoiceTicket] WHERE LEN([QrCode]) > 64)
+    BEGIN
+        PRINT 'InvoiceTicket.QrCode has values longer than 64 characters - column left as nvarchar(max), QrCode index skipped.';
+    END
+    ELSE
+    BEGIN
+        ALTER TABLE [InvoiceTicket] ALTER COLUMN [QrCode] nvarchar(64) NULL;
+    END
+END
+
+-- Not unique: rows written before the GUID scheme are not guaranteed distinct.
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.InvoiceTicket') AND name = 'QrCode' AND max_length = 128)
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_InvoiceTicket_QrCode' AND object_id = OBJECT_ID('dbo.InvoiceTicket'))
+BEGIN
+    EXEC('CREATE INDEX [IX_InvoiceTicket_QrCode] ON [InvoiceTicket] ([QrCode]) WHERE [QrCode] IS NOT NULL');
+END
+
+-- IX_Invoice_UserId becomes (UserId, CreationTime DESC): "my invoices" newest-first without a sort. Replaces the
+-- old single-column index (same name) when it is still the single-column one.
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_UserId' AND object_id = OBJECT_ID('dbo.Invoice'))
+   AND NOT EXISTS (SELECT 1 FROM sys.index_columns ic JOIN sys.indexes i ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                   WHERE i.name = 'IX_Invoice_UserId' AND i.object_id = OBJECT_ID('dbo.Invoice') AND ic.key_ordinal = 2)
+BEGIN
+    DROP INDEX [IX_Invoice_UserId] ON [Invoice];
+END
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_UserId' AND object_id = OBJECT_ID('dbo.Invoice'))
+BEGIN
+    EXEC('CREATE INDEX [IX_Invoice_UserId] ON [Invoice] ([UserId], [CreationTime] DESC)');
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_Status_CreationTime' AND object_id = OBJECT_ID('dbo.Invoice'))
+BEGIN
+    EXEC('CREATE INDEX [IX_Invoice_Status_CreationTime] ON [Invoice] ([Status], [CreationTime])');
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Invoice_Status_PaidAt' AND object_id = OBJECT_ID('dbo.Invoice'))
+BEGIN
+    EXEC('CREATE INDEX [IX_Invoice_Status_PaidAt] ON [Invoice] ([Status], [PaidAt]) INCLUDE ([FinalAmount])');
+END
+
+-- (MovieId, StartTime) supersedes the MovieId-only index.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_ShowTime_MovieId_StartTime' AND object_id = OBJECT_ID('dbo.ShowTime'))
+BEGIN
+    EXEC('CREATE INDEX [IX_ShowTime_MovieId_StartTime] ON [ShowTime] ([MovieId], [StartTime])');
+END
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_ShowTime_MovieId' AND object_id = OBJECT_ID('dbo.ShowTime'))
+BEGIN
+    DROP INDEX [IX_ShowTime_MovieId] ON [ShowTime];
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Movie_IsActive_ReleaseDate' AND object_id = OBJECT_ID('dbo.Movie'))
+BEGIN
+    EXEC('CREATE INDEX [IX_Movie_IsActive_ReleaseDate] ON [Movie] ([IsActive], [ReleaseDate])');
+END
+-- ===== end performance indexes =====
+
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================

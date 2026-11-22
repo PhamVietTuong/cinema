@@ -22,6 +22,18 @@ public class MovieTypeDetailStore : IMovieTypeDetailStore
             .ToListAsync();
     }
 
+    public async Task<(IReadOnlyList<MovieTypeDetailRow> Items, int Total)> GetPagedAsync(int page, int pageSize)
+    {
+        var query = _db.Set<MovieTypeDetail>().AsNoTracking();
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderBy(x => x.Movie.Title).ThenBy(x => x.MovieType.Name).ThenBy(x => x.MovieId).ThenBy(x => x.MovieTypeId)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(x => new MovieTypeDetailRow(x.MovieId, x.MovieTypeId, x.Movie.Title, x.MovieType.Name))
+            .ToListAsync();
+        return (items, total);
+    }
+
     public async Task<bool> ExistsAsync(Guid movieId, Guid movieTypeId)
     {
         return await _db.Set<MovieTypeDetail>()

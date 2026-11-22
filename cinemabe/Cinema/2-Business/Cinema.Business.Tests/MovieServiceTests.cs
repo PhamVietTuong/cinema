@@ -334,13 +334,12 @@ public class MovieServiceTests
     {
         var userId  = Guid.NewGuid();
         var comment = new Comment { Id = Guid.NewGuid(), UserId = userId };
-        var reply   = new Comment { Id = Guid.NewGuid(), ParentId = comment.Id };
         _uowMock.Setup(u => u.CommentStore.GetByIdAsync(comment.Id)).ReturnsAsync(comment);
-        _uowMock.Setup(u => u.CommentStore.GetRepliesAsync(comment.Id)).ReturnsAsync(new List<Comment> { reply });
 
         await _sut.DeleteOwnCommentAsync(comment.Id, userId);
 
-        _uowMock.Verify(u => u.CommentStore.DeleteAsync(reply), Times.Once);
+        // Replies go in one set-based delete (not one DeleteAsync per reply), then the comment itself.
+        _uowMock.Verify(u => u.CommentStore.ExecuteDeleteAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Comment, bool>>>()), Times.Once);
         _uowMock.Verify(u => u.CommentStore.DeleteAsync(comment), Times.Once);
         _uowMock.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }

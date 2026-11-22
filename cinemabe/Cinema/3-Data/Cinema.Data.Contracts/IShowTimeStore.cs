@@ -5,7 +5,8 @@ namespace Cinema.Data.Contracts;
 
 public interface IShowTimeStore : IGenericStore<ShowTime>
 {
-    Task<IEnumerable<ShowTime>> GetByMovieAndDateAsync(Guid movieId, Guid theaterId, DateOnly date);
+    /// <summary>Active showtimes of a movie on <paramref name="date"/> that run in a room of the theater, with their rooms; projected and untracked.</summary>
+    Task<IReadOnlyList<ShowTimeListRow>> GetByMovieAndDateAsync(Guid movieId, Guid theaterId, DateOnly date);
     /// <summary>Flattened ShowTime x Room schedule of one movie inside [fromInclusive, toExclusive),
     /// ordered by StartTime. Backs the movie-detail date-tab strip (today + next 3 days).</summary>
     Task<IReadOnlyList<MovieScheduleRow>> GetMovieScheduleAsync(Guid movieId, DateTime fromInclusive, DateTime toExclusive);

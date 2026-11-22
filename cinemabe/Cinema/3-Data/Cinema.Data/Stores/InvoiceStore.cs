@@ -24,9 +24,33 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         }
     }
 
+    // Read paths below load the customer through this slim projection instead of Include(User): the full User row
+    // carries the password hash/salt and reset tokens, which no invoice screen or reminder needs.
+    private async Task AttachSlimUsersAsync(IEnumerable<Invoice> invoices)
+    {
+        var list = invoices as IReadOnlyCollection<Invoice> ?? invoices.ToList();
+        var ids = list.Where(i => i.UserId.HasValue).Select(i => i.UserId!.Value).Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return;
+        }
+        var users = await Context.User.AsNoTracking()
+            .Where(u => ids.Contains(u.Id))
+            .Select(u => new User { Id = u.Id, Name = u.Name, Email = u.Email, Phone = u.Phone, NotifyReminderEmails = u.NotifyReminderEmails })
+            .ToDictionaryAsync(u => u.Id);
+        foreach (var invoice in list)
+        {
+            if (invoice.UserId.HasValue && users.TryGetValue(invoice.UserId.Value, out var user))
+            {
+                invoice.User = user;
+            }
+        }
+    }
+
     public async Task<Invoice?> GetWithDetailsAsync(Guid id)
-        => await DbSet
-            .Include(i => i.User)
+    {
+        var invoice = await DbSet
+            .AsNoTracking()
             .Include(i => i.PromotionProgram)
             .Include(i => i.InvoiceTickets)
                 .ThenInclude(it => it.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
@@ -38,6 +62,12 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             // (6 seats x 4 snacks = 24 rows for a 10-row invoice).
             .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Id == id);
+        if (invoice != null)
+        {
+            await AttachSlimUsersAsync(new[] { invoice });
+        }
+        return invoice;
+    }
 
     public async Task<Invoice?> GetByCodeAsync(string code)
         => await DbSet.FirstOrDefaultAsync(i => i.Code == code);
@@ -46,6 +76,7 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         Guid userId, int page, int pageSize)
     {
         var q = DbSet
+            .AsNoTracking()
             .Include(i => i.InvoiceTickets).ThenInclude(it => it.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
             .Include(i => i.InvoiceTickets).ThenInclude(it => it.Seat)
             .Include(i => i.InvoiceFoodAndDrinks).ThenInclude(f => f.FoodAndDrink)
@@ -60,7 +91,7 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
     public async Task<(IEnumerable<Invoice> Items, int Total)> GetPagedAsync(
         InvoiceStatus? status, DateTime? from, DateTime? to, int page, int pageSize)
     {
-        var q = DbSet.Include(i => i.User).AsQueryable();
+        var q = DbSet.AsNoTracking().AsQueryable();
         if (status.HasValue)
         {
             q = q.Where(i => i.Status == status.Value);
@@ -73,9 +104,10 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         {
             q = q.Where(i => i.CreationTime <= to.Value);
         }
-        q = q.OrderByDescending(i => i.CreationTime);
+        q = q.OrderByDescending(i => i.CreationTime).ThenBy(i => i.Id);
         var total = await q.CountAsync();
         var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        await AttachSlimUsersAsync(items);
         return (items, total);
     }
 
@@ -95,14 +127,20 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
     }
 
     public async Task<IReadOnlyList<InvoiceTicket>> GetPaidTicketsForShowtimesAsync(DateTime from, DateTime to)
-        => await Context.InvoiceTicket
-            .Include(t => t.Invoice).ThenInclude(i => i.User)
+    {
+        var tickets = await Context.InvoiceTicket
+            .AsNoTracking()
+            .Include(t => t.Invoice)
             .Include(t => t.ShowTimeRoom).ThenInclude(sr => sr.ShowTime).ThenInclude(s => s.Movie)
             .Include(t => t.Seat)
             .Where(t => t.Invoice.Status == InvoiceStatus.Paid
                         && t.ShowTimeRoom.ShowTime.StartTime >= from
                         && t.ShowTimeRoom.ShowTime.StartTime < to)
             .ToListAsync();
+        // Tickets of one invoice share a single Invoice instance only when tracked; attach the slim customer to each.
+        await AttachSlimUsersAsync(tickets.Select(t => t.Invoice).Distinct());
+        return tickets;
+    }
 
     public async Task<IReadOnlyDictionary<string, double>> GetRevenueByMovieAsync(DateTime from, DateTime to)
     {

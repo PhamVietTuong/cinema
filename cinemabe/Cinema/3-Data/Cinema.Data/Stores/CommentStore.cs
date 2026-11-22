@@ -11,9 +11,9 @@ public class CommentStore : GenericStore<Comment>, ICommentStore
     {
     }
 
-    public async Task<(IEnumerable<Comment> Items, int Total)> GetForModerationAsync(bool? approved, Guid? movieId, int page, int pageSize)
+    public async Task<(IReadOnlyList<CommentModerationRow> Items, int Total)> GetForModerationAsync(bool? approved, Guid? movieId, int page, int pageSize)
     {
-        var query = DbSet.Include(c => c.Movie).Include(c => c.User).AsQueryable();
+        var query = DbSet.AsNoTracking().AsQueryable();
         if (approved.HasValue)
         {
             query = query.Where(c => c.IsApproved == approved.Value);
@@ -22,10 +22,13 @@ public class CommentStore : GenericStore<Comment>, ICommentStore
         {
             query = query.Where(c => c.MovieId == movieId.Value);
         }
-        query = query.OrderByDescending(c => c.CreationTime);
 
         var total = await query.CountAsync();
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var items = await query
+            .OrderByDescending(c => c.CreationTime).ThenBy(c => c.Id)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(c => new CommentModerationRow(c.Id, c.MovieId, c.Movie.Title, c.User.Name, c.Content, c.IsApproved, c.ParentId, c.CreationTime))
+            .ToListAsync();
         return (items, total);
     }
 

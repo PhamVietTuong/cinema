@@ -63,8 +63,7 @@ internal static class InvoiceLifecycle
             {
                 var (pointsPerUnit, _) = await LoyaltyRates.LoadAsync(uow, invoice.TheaterId);
                 user.Points += (int)(invoice.FinalAmount / pointsPerUnit);
-                var tiers = await uow.MemberShipStore.FindAsync(m => m.MinPoints <= user.Points);
-                var tier  = tiers.OrderByDescending(m => m.MinPoints).FirstOrDefault();
+                var tier = await uow.MemberShipStore.GetHighestTierForPointsAsync(user.Points);
                 if (tier is not null)
                 {
                     user.MemberShipId = tier.Id;

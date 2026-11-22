@@ -134,8 +134,20 @@ public class MovieManager : IMovieManager
 
     public async Task<DefaultSearchResults<MovieDTO>> GetComingSoonAsync(PagingSearchDTO search)
     {
-        var movies = (await _uow.MovieStore.GetComingSoonAsync()).Select(ToMovieDTO).ToList();
-        return Paginate(movies, search);
+        // Paged in SQL (same query as the "coming" status filter) instead of loading every upcoming movie. An
+        // unspecified page size keeps the old "everything" behaviour via an unbounded page.
+        var page    = search.PageIndex > 0 ? search.PageIndex : 1;
+        var hasSize = search.PageSize > 0;
+        var (items, total) = await _uow.MovieStore.GetPagedAsync(
+            new MovieSearchFilter(Status: "coming"), page, hasSize ? search.PageSize : int.MaxValue);
+
+        return new DefaultSearchResults<MovieDTO>
+        {
+            Results      = items.Select(ToMovieDTO).ToList(),
+            TotalCount   = total,
+            CountPerPage = hasSize ? search.PageSize : total,
+            Page         = page
+        };
     }
 
     public async Task<DefaultSearchResults<ShowTimeListDTO>> GetShowTimesAsync(PagingSearchDTO search)
@@ -152,13 +164,13 @@ public class MovieManager : IMovieManager
             EndTime        = s.EndTime,
             ProjectionForm = s.ProjectionForm,
             ShowTimeType   = s.ShowTimeType,
-            Rooms = s.ShowTimeRooms.Select(sr => new ShowTimeRoomDTO
+            Rooms = s.Rooms.Select(sr => new ShowTimeRoomDTO
             {
                 RoomId       = sr.RoomId,
-                RoomName     = sr.Room?.Name,
-                RoomTypeName = sr.Room?.RoomType?.Name,
-                TheaterName  = sr.Room?.Theater?.Name,
-                BasePrice   = sr.BasePrice
+                RoomName     = sr.RoomName,
+                RoomTypeName = sr.RoomTypeName,
+                TheaterName  = sr.TheaterName,
+                BasePrice    = sr.BasePrice
             }).ToList()
         }).ToList();
 
@@ -489,8 +501,8 @@ public class MovieManager : IMovieManager
             {
                 Id           = c.Id,
                 MovieId      = c.MovieId,
-                MovieTitle   = c.Movie?.Title ?? string.Empty,
-                UserName     = c.User?.Name ?? string.Empty,
+                MovieTitle   = c.MovieTitle,
+                UserName     = c.UserName,
                 Content      = c.Content,
                 IsApproved   = c.IsApproved,
                 ParentId     = c.ParentId,
@@ -531,14 +543,11 @@ public class MovieManager : IMovieManager
     /// leaving some replies deleted and the parent still standing.</summary>
     private async Task DeleteWithRepliesAsync(Comment comment)
     {
-        var replies = await _uow.CommentStore.GetRepliesAsync(comment.Id);
         await _uow.BeginTransactionAsync();
         try
         {
-            foreach (var reply in replies)
-            {
-                await _uow.CommentStore.DeleteAsync(reply);
-            }
+            // One set-based delete for all direct replies instead of loading and deleting them one by one.
+            await _uow.CommentStore.ExecuteDeleteAsync(c => c.ParentId == comment.Id);
             await _uow.CommentStore.DeleteAsync(comment);
             await _uow.SaveChangesAsync();
             await _uow.CommitTransactionAsync();
