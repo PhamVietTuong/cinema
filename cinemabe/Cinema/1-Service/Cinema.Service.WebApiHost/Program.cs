@@ -121,6 +121,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
         options.Events = new JwtBearerEvents
         {
+            // Re-check the account (status, role, theater, credentials) so a ban/demotion/password change
+            // takes effect immediately instead of when the token expires.
+            OnTokenValidated = TokenRevalidator.ValidateAsync,
             OnMessageReceived = ctx =>
             {
                 var token = ctx.Request.Query["access_token"];

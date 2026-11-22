@@ -308,7 +308,7 @@ Format: `As a <role>, I want to <capability>, so that <value>.` Each story maps 
 - **AC-29.2** (error) Given a theater-scoped role with no theater, or an unknown theater, when I save, then it fails with "A theater is required for the {role} role." or "Theater not found." Source: `AuthUserTheaterTests.CreateUser_TheaterRoleWithoutTheater_Throws`, `CreateUser_TheaterRoleWithUnknownTheater_Throws`; `AuthManager.cs:624`, `:630`.
 - **AC-29.3** (error) Given an email or phone already in use, when I create a user, then it fails. Source: `AuthManager.cs:537`, `:541`.
 - **AC-29.4** (boundary) Given the only active Admin, when I demote, deactivate or delete that account, then it fails with "Cannot remove, demote or deactivate the last active administrator."; when another active Admin exists, deletion soft-deletes (sets Inactive). Source: `AuthServiceTests.DeleteUser_LastActiveAdmin_Throws_AndStaysActive`, `UpdateUser_DemotingLastActiveAdmin_Throws`, `DeleteUser_AdminWhenAnotherAdminExists_SoftDeletes`; `AuthManager.cs:661`.
-- **AC-29.5** (boundary) Given an account was deactivated, when its old token is presented, then it still works until it expires (24 hours): there is no revocation list. Source: `business-rules.md` section 6 "Only Active accounts sign in"; `JwtTokenService.cs:50`.
+- **AC-29.5** (boundary) Given an account was deactivated, when its old token is presented, then it is rejected with 401 on the next request (`TokenRevalidator` re-checks status, role, theater and credential stamp). Source: `business-rules.md` section 6 "Only Active accounts sign in"; `TokenRevalidator.cs`.
 
 ## Explicitly out of scope (do not plan around these as if they exist)
 
