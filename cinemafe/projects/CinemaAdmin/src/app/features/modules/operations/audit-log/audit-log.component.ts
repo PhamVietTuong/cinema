@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -8,6 +8,7 @@ import {
   BaseTableComponent, TablePage, TableSearchCriteria,
   CinemaServiceAgent,
   FilterBarField,
+  LookupCacheService,
 } from 'CinemaLib';
 
 type Dto = CinemaServiceAgent.AuditLogDTO;
@@ -24,6 +25,7 @@ type Dto = CinemaServiceAgent.AuditLogDTO;
 })
 export class AuditLogManagementComponent extends BaseTableComponent<Dto> {
   override pageSize = 20;
+  private readonly _lookup = inject(LookupCacheService);
 
   filterFields: FilterBarField[] = [
     { key: 'theaterId', type: 'select', labelKey: 'auditLog.theater', options: [] },
@@ -42,7 +44,7 @@ export class AuditLogManagementComponent extends BaseTableComponent<Dto> {
 
   override ngOnInit(): void {
     super.ngOnInit();
-    this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
+    this._lookup.theaters()
       .subscribe(r => {
         const theaters = r.results ?? [];
         this.filterFields = [

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -6,6 +6,7 @@ import {
   CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException,
   PromotionMechanicValues, PromotionEligibilityValues, SalesChannel, SalesChannelValues, DayOfWeekValues,
   daysMaskToList, daysListToMask, channelsMaskToList, channelsListToMask,
+  LookupCacheService,
 } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
 import { toDateInput } from '../../../../shared/date-input';
@@ -161,10 +162,12 @@ export class PromotionProgramDialog implements OnInit {
     this._cdr.markForCheck();
   }
 
+  private readonly _lookup = inject(LookupCacheService);
+
   ngOnInit(): void {
-    this._svc.getMemberShips(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
+    this._lookup.memberships()
       .subscribe(r => { this.memberShips = r.results ?? []; this._cdr.markForCheck(); });
-    this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
+    this._lookup.theaters()
       .subscribe(r => { this.theaters = r.results ?? []; this._cdr.markForCheck(); });
     this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 }))
       .subscribe(r => { this.movies = r.results ?? []; this._cdr.markForCheck(); });

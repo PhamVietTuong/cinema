@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, inject } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, CreditTypeValues } from 'CinemaLib';
+import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, CreditTypeValues, LookupCacheService } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
 
 type Dto = CinemaServiceAgent.MovieDTO;
@@ -74,13 +74,15 @@ export class MovieDialog implements OnInit {
     });
   }
 
+  private readonly _lookup = inject(LookupCacheService);
+
   ngOnInit(): void {
     const wide = CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200 });
-    this._svc.getAgeRestrictions(wide).subscribe(r => {
+    this._lookup.ageRestrictions().subscribe(r => {
       this.ageRestrictions = r.results ?? [];
       this._cdr.markForCheck();
     });
-    this._svc.getMovieTypes(wide).subscribe(r => {
+    this._lookup.movieTypes().subscribe(r => {
       this.movieTypes = r.results ?? [];
       this._cdr.markForCheck();
     });

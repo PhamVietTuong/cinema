@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -9,6 +9,7 @@ import {
   BaseTableComponent, TablePage, TableSearchCriteria,
   DialogService,
   showLoading, hideLoading, showSuccess, showException,
+  LookupCacheService,
 } from 'CinemaLib';
 import { AgeRestrictionDialog } from './age-restriction.dialog';
 
@@ -20,6 +21,7 @@ type Dto = CinemaServiceAgent.AgeRestrictionDTO;
   templateUrl: './age-restrictions.component.html',
 })
 export class AgeRestrictionsManagementComponent extends BaseTableComponent {
+  private readonly _lookup = inject(LookupCacheService);
   constructor(
     cd: ChangeDetectorRef,
     fb: FormBuilder,
@@ -44,12 +46,12 @@ export class AgeRestrictionsManagementComponent extends BaseTableComponent {
 
   openCreate(): void {
     this._dialog.open(AgeRestrictionDialog, { width: '560px', maxWidth: '100vw', data: { ageRestriction: null } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('ageRestrictions'); this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
     this._dialog.open(AgeRestrictionDialog, { width: '560px', maxWidth: '100vw', data: { ageRestriction: item } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('ageRestrictions'); this.triggerSearch(); } });
   }
 
   delete(id?: string): void {
@@ -69,6 +71,7 @@ export class AgeRestrictionsManagementComponent extends BaseTableComponent {
     this._svc.deleteAgeRestriction(id).subscribe({
       next: () => {
         this._store.dispatch(showSuccess({}));
+        this._lookup.invalidate('ageRestrictions');
         this.triggerSearch();
       },
       error: error => this._store.dispatch(showException({ error })),

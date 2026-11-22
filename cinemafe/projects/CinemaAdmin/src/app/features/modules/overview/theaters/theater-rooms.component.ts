@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -8,6 +8,7 @@ import {
   CinemaServiceAgent,
   BaseTableComponent, TablePage, TableSearchCriteria,
   DialogService, RoomStatusValues,
+  LookupCacheService,
 } from 'CinemaLib';
 import { RoomDialog } from './room.dialog';
 import { SeatMapDialog } from './seat-map.dialog';
@@ -22,6 +23,7 @@ type Dto = CinemaServiceAgent.RoomDTO;
   styleUrl: './theater-rooms.component.scss',
 })
 export class TheaterRoomsComponent extends BaseTableComponent {
+  private readonly _lookup = inject(LookupCacheService);
   /** The theater whose rooms this list manages. */
   @Input({ required: true }) theaterId!: string;
 
@@ -66,17 +68,17 @@ export class TheaterRoomsComponent extends BaseTableComponent {
 
   openCreate(): void {
     this._dialog.open(RoomDialog, { width: '600px', maxWidth: '100vw', data: { theaterId: this.theaterId, room: null, roomTypes: this.roomTypes } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('rooms'); this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
     this._dialog.open(RoomDialog, { width: '600px', maxWidth: '100vw', data: { theaterId: this.theaterId, room: item, roomTypes: this.roomTypes } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('rooms'); this.triggerSearch(); } });
   }
 
   openSeatMap(room: Dto): void {
     this._dialog.open(SeatMapDialog, { width: '90vw', maxWidth: '1100px', data: { theaterId: this.theaterId, room } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('rooms'); this.triggerSearch(); } });
   }
 
   delete(id?: string): void {
@@ -92,7 +94,7 @@ export class TheaterRoomsComponent extends BaseTableComponent {
   }
 
   private _deleteConfirmed(id: string): void {
-    this._svc.deleteRoom(id).subscribe(() => this.triggerSearch());
+    this._svc.deleteRoom(id).subscribe(() => { this._lookup.invalidate('rooms'); this.triggerSearch(); });
   }
 
   roomTypeName(id?: string): string {

@@ -7,3 +7,4 @@ export * from './api-error';
 export * from './seat-lock-session.service';
 export * from './staff-hub.service';
 export * from './api-error-catalog';
+export * from './lookup-cache.service';

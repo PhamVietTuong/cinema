@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -9,6 +9,7 @@ import {
   BaseTableComponent, TablePage, TableSearchCriteria,
   DialogService,
   showLoading, hideLoading, showSuccess, showException,
+  LookupCacheService,
 } from 'CinemaLib';
 import { MembershipDialog } from './membership.dialog';
 
@@ -20,6 +21,7 @@ type Dto = CinemaServiceAgent.MemberShipDTO;
   templateUrl: './memberships.component.html',
 })
 export class MembershipsManagementComponent extends BaseTableComponent {
+  private readonly _lookup = inject(LookupCacheService);
   constructor(
     cd: ChangeDetectorRef,
     fb: FormBuilder,
@@ -44,12 +46,12 @@ export class MembershipsManagementComponent extends BaseTableComponent {
 
   openCreate(): void {
     this._dialog.open(MembershipDialog, { width: '560px', maxWidth: '100vw', data: { membership: null } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('memberships'); this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
     this._dialog.open(MembershipDialog, { width: '560px', maxWidth: '100vw', data: { membership: item } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('memberships'); this.triggerSearch(); } });
   }
 
   delete(id?: string): void {
@@ -69,6 +71,7 @@ export class MembershipsManagementComponent extends BaseTableComponent {
     this._svc.deleteMemberShip(id).subscribe({
       next: () => {
         this._store.dispatch(showSuccess({}));
+        this._lookup.invalidate('memberships');
         this.triggerSearch();
       },
       error: error => this._store.dispatch(showException({ error })),

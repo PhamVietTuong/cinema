@@ -8,6 +8,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import {
   SharedModule, loadMovies, MOVIE_PAGE_SIZE, FilterBarComponent, FilterBarField, FilterBarOption,
   selectPagedMovies, selectMoviesLoading, screeningFormatLabel, rawApiErrorMessage, CinemaServiceAgent,
+  LookupCacheService,
 } from 'CinemaLib';
 import { MovieCardComponent } from '../../../../../shared/movie-card/movie-card.component';
 import { SiteFooterComponent } from '../../../../../shared/site-footer/site-footer.component';
@@ -140,8 +141,10 @@ export class MovieListComponent implements OnInit, OnDestroy {
     return !!(this.searchCtrl.value ?? '').trim() || Object.values(this.filterForm.getRawValue()).some(v => !!v);
   }
 
+  private readonly _lookup = inject(LookupCacheService);
+
   private _loadFilterOptions(): void {
-    this._api.getMovieTypes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
+    this._lookup.movieTypes()
       .pipe(takeUntil(this._destroy$))
       .subscribe({
         next: r => {
@@ -150,7 +153,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
         },
         error: () => {},
       });
-    this._api.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
+    this._lookup.theaters()
       .pipe(takeUntil(this._destroy$))
       .subscribe({
         next: r => {
