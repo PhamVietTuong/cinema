@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
+import type { HubConnection } from '@microsoft/signalr';
 import { Store } from '@ngrx/store';
 import { BehaviorSubject, Subject, firstValueFrom } from 'rxjs';
 import { selectToken } from '../store/auth/auth.selectors';
@@ -27,7 +27,7 @@ export class StaffHubService implements OnDestroy {
 
   /** Connects once; later calls wait for the same connection. */
   start(): Promise<void> {
-    if (this._connection?.state === HubConnectionState.Connected) {
+    if (this._isConnected()) {
       return Promise.resolve();
     }
     if (!this._starting) {
@@ -45,20 +45,27 @@ export class StaffHubService implements OnDestroy {
       return;
     }
     this._theaterId = theaterId;
-    if (this._connection?.state !== HubConnectionState.Connected) {
+    const connection = this._connection;
+    if (!connection || !this._isConnected()) {
       return;
     }
     if (previous) {
-      await this._connection.invoke('LeaveTheater', previous);
+      await connection.invoke('LeaveTheater', previous);
     }
     if (theaterId) {
-      await this._connection.invoke('JoinTheater', theaterId);
+      await connection.invoke('JoinTheater', theaterId);
     }
   }
 
+  /** HubConnectionState.Connected, compared by value so the SignalR runtime isn't imported eagerly. */
+  private _isConnected(): boolean {
+    return (this._connection?.state as string | undefined) === 'Connected';
+  }
+
   async stop(): Promise<void> {
-    await this._connection?.stop();
+    const connection = this._connection;
     this._connection = null;
+    await connection?.stop();
     this.connected$.next(false);
   }
 
@@ -67,6 +74,8 @@ export class StaffHubService implements OnDestroy {
   }
 
   private async _connect(): Promise<void> {
+    // SignalR is loaded on first use (a staff screen opening the hub), not in the initial bundle.
+    const { HubConnectionBuilder, LogLevel } = await import('@microsoft/signalr');
     const connection = new HubConnectionBuilder()
       .withUrl(`${this._hubUrl}/staff`, {
         // Read at every (re)connect so a refreshed token is picked up.

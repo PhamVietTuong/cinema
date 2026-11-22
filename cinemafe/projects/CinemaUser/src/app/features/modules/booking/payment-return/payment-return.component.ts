@@ -1,8 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, uniqueSeatLabels } from 'CinemaLib';
+import { SharedModule, QrCodeComponent, PaymentServiceAgent, uniqueSeatLabels } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
-import * as QRCode from 'qrcode';
 
 type ReturnState = 'verifying' | 'success' | 'pending' | 'cancelled' | 'failed';
 
@@ -12,7 +11,7 @@ const VNPAY_SUCCESS_CODE = '00';
 @Component({
   selector: 'app-payment-return',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, QrCodeComponent],
   templateUrl: './payment-return.component.html',
   styleUrl: './payment-return.component.scss',
 })
@@ -27,7 +26,6 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
   invoiceId = '';
   invoice: PaymentServiceAgent.InvoiceDTO | null = null;
   bookingCode = '';
-  qrDataUrl = '';
 
   private _attempts = 0;
   private _timer: any = null;
@@ -114,11 +112,6 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
     this.state = 'success';
     this.bookingCode = inv.code ?? inv.id ?? '';
     this._cdr.markForCheck();
-    if (this.bookingCode) {
-      QRCode.toDataURL(this.bookingCode, { margin: 1, width: 200 })
-        .then(url => { this.qrDataUrl = url; this._cdr.markForCheck(); })
-        .catch(() => { /* keep the icon fallback */ });
-    }
   }
 
   get seatLabels(): string[] {

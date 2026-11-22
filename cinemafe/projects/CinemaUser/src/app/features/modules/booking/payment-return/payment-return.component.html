@@ -59,8 +59,7 @@
 
       <div class="ticket-qr-section">
         <div class="qr-box">
-          <img *ngIf="qrDataUrl" [src]="qrDataUrl" alt="E-ticket QR" width="160" height="160">
-          <mat-icon *ngIf="!qrDataUrl">qr_code_2</mat-icon>
+          <cl-qr-code [value]="bookingCode" [size]="160" alt="E-ticket QR" />
         </div>
         <p class="qr-instruction">{{ 'booking.success.qrInstruction' | translate }}</p>
       </div>

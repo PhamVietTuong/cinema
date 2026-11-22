@@ -145,8 +145,8 @@
                           <span class="pl-pill pl-pill--warn" *ngIf="t.isUsed">{{ 'profile.checkedIn' | translate }}</span>
                         </div>
                         <div class="pl-eticket-qr">
-                          <img *ngIf="t.qrCode && qrMap[t.qrCode]" [src]="qrMap[t.qrCode]" [alt]="'profile.qrAlt' | translate" width="120" height="120">
-                          <mat-icon *ngIf="!(t.qrCode && qrMap[t.qrCode])">qr_code_2</mat-icon>
+                          <cl-qr-code *ngIf="t.qrCode" [value]="t.qrCode" [size]="120" [alt]="'profile.qrAlt' | translate" />
+                          <mat-icon *ngIf="!t.qrCode">qr_code_2</mat-icon>
                         </div>
                       </div>
                       <div class="pl-eticket-foods" *ngIf="foodsOf(r.id).length">
@@ -207,7 +207,7 @@
                   <mat-icon>upload</mat-icon> {{ 'profile.uploadImage' | translate }}
                 </button>
                 <input #fileInput type="file" accept="image/*" hidden (change)="onPickAvatar($event)">
-                <img class="pl-avatar-preview" *ngIf="profileForm.value.avatar" [src]="profileForm.value.avatar" alt="">
+                <img loading="lazy" decoding="async" class="pl-avatar-preview" *ngIf="profileForm.value.avatar" [src]="profileForm.value.avatar" alt="">
                 <span class="pl-msg" *ngIf="avatarUploading">{{ 'profile.uploading' | translate }}</span>
                 <span class="pl-msg is-err" *ngIf="avatarErr">{{ avatarErr }}</span>
               </span>

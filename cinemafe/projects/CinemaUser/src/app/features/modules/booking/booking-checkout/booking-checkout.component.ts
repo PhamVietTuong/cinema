@@ -1,10 +1,9 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel, joinSeatLabels, translateApiError } from 'CinemaLib';
+import { SharedModule, QrCodeComponent, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel, joinSeatLabels, translateApiError } from 'CinemaLib';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, map, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import * as QRCode from 'qrcode';
 import { DiscountCodeDialog, DiscountCheckResult, DiscountCodeDialogResult } from './discount-code.dialog';
 import { PointsRedeemDialog } from './points-redeem.dialog';
 import { BookingCheckoutSeat, BookingCheckoutFood, BookingCheckoutState, takePendingCheckout } from './booking-checkout.state';
@@ -20,7 +19,7 @@ import { movieDetailUrl } from '../../../../shared/movie-route';
 @Component({
   selector: 'app-booking-checkout',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, QrCodeComponent],
   templateUrl: './booking-checkout.component.html',
   styleUrl: './booking-checkout.component.scss'
 })
@@ -61,7 +60,6 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   stockProblem = false;
   bookingSuccess = false;
   bookingCode = '';
-  qrDataUrl = '';
 
   /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
   readonly methods: { value: string; labelKey: string; app: string; svg?: string; icon?: string }[] = [
@@ -547,11 +545,6 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this.bookingSuccess = true;
     this.loading = false;
     this._cdr.markForCheck();
-    if (this.bookingCode) {
-      QRCode.toDataURL(this.bookingCode, { margin: 1, width: 200 })
-        .then(url => { this.qrDataUrl = url; this._cdr.markForCheck(); })
-        .catch(() => { /* keep the icon fallback */ });
-    }
   }
 
   private _err(e: any, fallback: string): string {

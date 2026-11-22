@@ -1,11 +1,11 @@
 import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { RouterModule } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
-import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 import {
   CinemaLibModule,
   authReducer, moviesReducer, searchReducer, loadingReducer,
@@ -25,14 +25,16 @@ import { App } from './app';
   declarations: [App],
   imports: [
     BrowserModule,
-    BrowserAnimationsModule,
     RouterModule.forRoot(routes),
     CinemaLibModule,
     StoreModule.forRoot({ auth: authReducer, movies: moviesReducer, searchState: searchReducer, loading: loadingReducer }),
     EffectsModule.forRoot([AuthEffects, MoviesEffects, NotificationEffects]),
-    StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: environment.production }),
   ],
   providers: [
+    // Animations engine loads lazily (a separate chunk) instead of in the initial bundle.
+    provideAnimationsAsync(),
+    // Devtools instrumentation only in dev builds — it keeps 25 state snapshots in memory.
+    ...(environment.production ? [] : [provideStoreDevtools({ maxAge: 25 })]),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideCinemaTranslation(),
     provideAppInitializer(() => inject(ThemeService).init()),

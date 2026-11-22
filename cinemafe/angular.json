@@ -24,6 +24,7 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": ["qrcode", "dijkstrajs"],
             "assets": [
               {
                 "glob": "**/*",
@@ -122,6 +123,7 @@
             "browser": "projects/CinemaAdmin/src/main.ts",
             "tsConfig": "projects/CinemaAdmin/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": ["qrcode", "dijkstrajs"],
             "stylePreprocessorOptions": {
               "includePaths": [
                 "projects/CinemaLib/src"
@@ -211,6 +213,7 @@
             "browser": "projects/CinemaStaff/src/main.ts",
             "tsConfig": "projects/CinemaStaff/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": ["qrcode", "dijkstrajs"],
             "stylePreprocessorOptions": {
               "includePaths": [
                 "projects/CinemaLib/src"
@@ -300,6 +303,7 @@
             "browser": "projects/CinemaUser/src/main.ts",
             "tsConfig": "projects/CinemaUser/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": ["qrcode", "dijkstrajs"],
             "stylePreprocessorOptions": {
               "includePaths": [
                 "projects/CinemaLib/src"

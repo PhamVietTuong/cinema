@@ -1,5 +1,5 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import type { HubConnection } from '@microsoft/signalr';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { HUB_BASE_URL } from '../tokens';
 import { Store } from '@ngrx/store';
@@ -33,36 +33,43 @@ export class BookingHubService implements OnDestroy {
   }
 
   async startConnection(showTimeId: string, roomId: string): Promise<void> {
+    // Never leave a previous connection running (its handlers and group membership would leak).
+    if (this.connection) {
+      await this.stopConnection();
+    }
+    // SignalR is loaded on first use (opening seat selection), not in the initial bundle.
+    const { HubConnectionBuilder, LogLevel } = await import('@microsoft/signalr');
     let token = '';
     this.store.select(selectToken).pipe(take(1)).subscribe(t => token = t ?? '');
 
-    this.connection = new HubConnectionBuilder()
+    const connection = new HubConnectionBuilder()
       .withUrl(`${this.hubUrl}/booking`, { accessTokenFactory: () => token })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)
       .build();
 
     // The server broadcasts SeatLocked to everyone EXCEPT the locker and never includes the locker's connection id.
-    this.connection.on('SeatLocked', (seatId: string) =>
+    connection.on('SeatLocked', (seatId: string) =>
       this.seatLocked$.next({ seatId }));
 
-    this.connection.on('SeatUnlocked', (seatId: string) =>
+    connection.on('SeatUnlocked', (seatId: string) =>
       this.seatUnlocked$.next(seatId));
 
-    this.connection.on('SeatLockFailed', (seatId: string, message: string) =>
+    connection.on('SeatLockFailed', (seatId: string, message: string) =>
       this.seatLockFailed$.next({ seatId, message }));
 
-    this.connection.on('SeatBooked', (seatIds: string[]) =>
+    connection.on('SeatBooked', (seatIds: string[]) =>
       this.seatBooked$.next(seatIds));
 
     // Re-join the room group after an automatic reconnect (a reconnect uses a new
     // connection that is no longer a member of the group).
-    this.connection.onreconnected(() => { this.connection?.invoke('JoinRoom', showTimeId, roomId); });
+    connection.onreconnected(() => { connection.invoke('JoinRoom', showTimeId, roomId); });
 
-    await this.connection.start();
+    this.connection = connection;
+    await connection.start();
     this.connected$.next(true);
     // Join the room group so we receive other viewers' lock events before our first lock.
-    await this.connection.invoke('JoinRoom', showTimeId, roomId);
+    await connection.invoke('JoinRoom', showTimeId, roomId);
   }
 
   async lockSeat(showTimeId: string, roomId: string, seatId: string): Promise<void> {
@@ -74,7 +81,9 @@ export class BookingHubService implements OnDestroy {
   }
 
   async stopConnection(): Promise<void> {
-    await this.connection?.stop();
+    const connection = this.connection;
+    this.connection = null;
+    await connection?.stop();
     this.connected$.next(false);
   }
 

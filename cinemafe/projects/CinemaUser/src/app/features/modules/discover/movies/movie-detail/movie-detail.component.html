@@ -161,7 +161,7 @@
         <ng-container *ngIf="hasCredits(movie); else legacyCast">
           <div class="cast-item" *ngFor="let c of creditDirectors(movie)">
             <div class="cast-avatar">
-              <img *ngIf="c.personPhotoUrl" [src]="c.personPhotoUrl" [alt]="c.personName">
+              <img loading="lazy" decoding="async" *ngIf="c.personPhotoUrl" [src]="c.personPhotoUrl" [alt]="c.personName">
               <span *ngIf="!c.personPhotoUrl">{{ getInitials(c.personName) }}</span>
             </div>
             <p class="cast-name">{{ c.personName }}</p>
@@ -169,7 +169,7 @@
           </div>
           <div class="cast-item" *ngFor="let c of creditActors(movie)">
             <div class="cast-avatar">
-              <img *ngIf="c.personPhotoUrl" [src]="c.personPhotoUrl" [alt]="c.personName">
+              <img loading="lazy" decoding="async" *ngIf="c.personPhotoUrl" [src]="c.personPhotoUrl" [alt]="c.personName">
               <span *ngIf="!c.personPhotoUrl">{{ getInitials(c.personName) }}</span>
             </div>
             <p class="cast-name">{{ c.personName }}</p>
@@ -179,7 +179,7 @@
         <ng-template #legacyCast>
           <div class="cast-item" *ngFor="let name of getDirectors(movie.director)">
             <div class="cast-avatar">
-              <img *ngIf="photoFor(name)" [src]="photoFor(name)" [alt]="name">
+              <img loading="lazy" decoding="async" *ngIf="photoFor(name)" [src]="photoFor(name)" [alt]="name">
               <span *ngIf="!photoFor(name)">{{ getInitials(name) }}</span>
             </div>
             <p class="cast-name">{{ name }}</p>
@@ -187,7 +187,7 @@
           </div>
           <div class="cast-item" *ngFor="let name of getCastMembers(movie.cast)">
             <div class="cast-avatar">
-              <img *ngIf="photoFor(name)" [src]="photoFor(name)" [alt]="name">
+              <img loading="lazy" decoding="async" *ngIf="photoFor(name)" [src]="photoFor(name)" [alt]="name">
               <span *ngIf="!photoFor(name)">{{ getInitials(name) }}</span>
             </div>
             <p class="cast-name">{{ name }}</p>
@@ -266,7 +266,7 @@
       <ng-template #commentTpl let-c let-isReply="isReply">
         <div class="comment-row" [class.is-reply]="isReply" [attr.data-comment-id]="c.id">
           <span class="comment-avatar">
-            <img *ngIf="c.userAvatar" [src]="c.userAvatar" alt="">
+            <img loading="lazy" decoding="async" *ngIf="c.userAvatar" [src]="c.userAvatar" alt="">
             <span *ngIf="!c.userAvatar">{{ getInitials(c.userName || 'U') }}</span>
           </span>
           <div class="comment-card" [class.is-mine]="c.isMine">

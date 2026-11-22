@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -15,7 +15,8 @@ export class AuthEffects {
   private actions$ = inject(Actions);
   private _identityService = inject(IdentityServiceAgent.HttpService);
   private _router = inject(Router);
-  private _staffHub = inject(StaffHubService);
+  // Resolved lazily on logout so the SignalR-backed hub is not created for every session.
+  private _injector = inject(Injector);
   private _translate = inject(TranslateService);
 
   login$ = createEffect(() =>
@@ -73,7 +74,7 @@ export class AuthEffects {
         // subsequent action (e.g. an Admin joining a theater group) is authorized against the OLD
         // user's claims, not the one now logged in. Stopping it here forces a fresh, correctly
         // authenticated connection on the next login. A no-op when no staff hub was ever started.
-        void this._staffHub.stop();
+        void this._injector.get(StaffHubService).stop();
         TokenStorage.clear();
         this._router.navigate(['/auth/login']);
       })
