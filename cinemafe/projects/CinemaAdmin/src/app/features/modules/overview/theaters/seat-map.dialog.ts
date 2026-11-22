@@ -4,6 +4,23 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { CinemaServiceAgent, DialogService, SeatCell, seatCellsByRow, showException } from 'CinemaLib';
 
+/** One drawn box of the editor grid with its colour/label/title precomputed once per seat-map change. */
+export interface SeatCellView {
+  key: string;
+  seat: CinemaServiceAgent.RoomSeatDTO;
+  isAisle: boolean;
+  isDouble: boolean;
+  paired: boolean;
+  label: string;
+  color: string | null;
+  name: string;
+}
+
+export interface SeatRowView {
+  name: string;
+  cells: SeatCellView[];
+}
+
 export interface SeatMapDialogData {
   theaterId: string;
   room: CinemaServiceAgent.RoomDTO;
@@ -26,8 +43,15 @@ type SeatTool = 'standard' | 'double' | 'aisle' | 'remove';
 })
 export class SeatMapDialog {
   room: CinemaServiceAgent.RoomDTO;
-  seats: CinemaServiceAgent.RoomSeatDTO[] = [];
-  seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
+  private _seats: CinemaServiceAgent.RoomSeatDTO[] = [];
+  private _seatTypes: CinemaServiceAgent.SeatTypeDTO[] = [];
+  private _rowViews: SeatRowView[] | null = null;
+  private _seatCount = 0;
+
+  get seats(): CinemaServiceAgent.RoomSeatDTO[] { return this._seats; }
+  set seats(value: CinemaServiceAgent.RoomSeatDTO[]) { this._seats = value; this._rowViews = null; }
+  get seatTypes(): CinemaServiceAgent.SeatTypeDTO[] { return this._seatTypes; }
+  set seatTypes(value: CinemaServiceAgent.SeatTypeDTO[]) { this._seatTypes = value; this._rowViews = null; }
   seatsLoading = false;
   saving = false;
   resizing = false;
@@ -95,7 +119,53 @@ export class SeatMapDialog {
 
   /** Seat count for the header, excluding aisle cells (they're not bookable seats). */
   get seatCount(): number {
-    return this.seats.filter(s => !s.isAisle).length;
+    void this.rowViews;
+    return this._seatCount;
+  }
+
+  /** Marks the memoized grid stale; call after any in-place edit of a seat (pairing, aisle). */
+  private invalidateView(): void {
+    this._rowViews = null;
+  }
+
+  /** The grid to draw, rebuilt only after the seats or seat types change. */
+  get rowViews(): SeatRowView[] {
+    if (this._rowViews) {
+      return this._rowViews;
+    }
+    const byRow = new Map<string, CinemaServiceAgent.RoomSeatDTO[]>();
+    let count = 0;
+    for (const s of this._seats) {
+      const name = s.rowName ?? '';
+      const list = byRow.get(name);
+      if (list) {
+        list.push(s);
+      } else {
+        byRow.set(name, [s]);
+      }
+      if (!s.isAisle) {
+        count++;
+      }
+    }
+    this._seatCount = count;
+    this._rowViews = [...byRow.entries()].map(([name, rowSeats]) => ({
+      name,
+      cells: seatCellsByRow(rowSeats, name).map(cell => ({
+        key: cell.key,
+        seat: cell.seats[0],
+        isAisle: cell.isAisle,
+        isDouble: cell.isDouble,
+        paired: !!cell.seats[0].seatGroupId,
+        label: this.cellLabel(cell),
+        color: cell.isAisle ? null : this.colorFor(cell.seats[0]),
+        name: this.nameFor(cell.seats[0]),
+      })),
+    }));
+    return this._rowViews;
+  }
+
+  trackRowView(_: number, row: SeatRowView): string {
+    return row.name;
   }
 
   /** The theater's actual SeatType name for a kind (e.g. renamed to "Ghế VIP"), not a hardcoded
@@ -154,6 +224,7 @@ export class SeatMapDialog {
       this.seats.filter(s => s.seatGroupId === gid).forEach(s => { s.seatGroupId = undefined; s.isDouble = false; });
     }
     seat.isAisle = true;
+    this.invalidateView();
   }
 
   /** Sets a seat's type. Setting Double auto-pairs the seat with an adjacent unpaired, non-aisle seat
@@ -167,6 +238,7 @@ export class SeatMapDialog {
         const gid = seat.seatGroupId;
         this.seats.filter(s => s.seatGroupId === gid).forEach(s => { s.seatGroupId = undefined; s.isDouble = false; });
       }
+      this.invalidateView();
       return;
     }
 
@@ -189,6 +261,7 @@ export class SeatMapDialog {
     seat.isDouble = true;
     partner.seatGroupId = gid;
     partner.isDouble = true;
+    this.invalidateView();
   }
 
   saveSeatMap(): void {
@@ -287,9 +360,6 @@ export class SeatMapDialog {
       });
   }
 
-  get seatRows(): string[] {
-    return [...new Set(this.seats.map(s => s.rowName ?? ''))];
-  }
   seatsInRow(row: string): CinemaServiceAgent.RoomSeatDTO[] {
     return this.seats.filter(s => s.rowName === row).sort((a, b) => (a.colIndex ?? 0) - (b.colIndex ?? 0));
   }
