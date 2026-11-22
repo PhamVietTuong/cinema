@@ -1553,6 +1553,10 @@ public class BookingManager : IBookingManager
         if (!string.IsNullOrWhiteSpace(code))
         {
             program = await FindUsableProgramByCodeAsync(code.Trim(), now, bookingTheaterId, showTime);
+            if (program is not null && !await PassesAudienceRulesAsync(program, userId, channel, showTime))
+            {
+                program = null;
+            }
             if (program is null)
             {
                 throw new InvalidOperationException(_invalidPromoMessage);
@@ -1762,6 +1766,48 @@ public class BookingManager : IBookingManager
         return program;
     }
 
+    // The audience rules an admin configured on a program must hold for a code exactly as they do for auto-apply
+    // (FindBestAutoApplyProgramAsync): sales channel, holiday exclusion and — for a Members program — the customer's
+    // tier. StudentOrTeacher / AgeLimit are not enforced online (the system cannot verify them; see the AutoApply
+    // restriction in PromotionProgramManager), so they stay a counter-side check.
+    private async Task<bool> PassesAudienceRulesAsync(PromotionProgram program, Guid? userId, SalesChannel channel, ShowTime? showTime)
+    {
+        if (program.AllowedChannelsMask is int mask && mask != 0 && (mask & (1 << (int)channel)) == 0)
+        {
+            return false;
+        }
+
+        if (program.ExcludeHolidays && showTime != null)
+        {
+            var showDate = DateOnly.FromDateTime(showTime.StartTime);
+            if ((await _uow.HolidayStore.FindAsync(h => h.Date == showDate)).Any())
+            {
+                return false;
+            }
+        }
+
+        if (program.Eligibility == PromotionEligibility.Members)
+        {
+            if (!userId.HasValue || program.MinMemberShipId is not Guid requiredTierId)
+            {
+                return false;
+            }
+            var user = await _uow.UserStore.GetByIdAsync(userId.Value);
+            if (user?.MemberShipId is not Guid userTierId)
+            {
+                return false;
+            }
+            var userTier = await _uow.MemberShipStore.GetByIdAsync(userTierId);
+            var requiredTier = await _uow.MemberShipStore.GetByIdAsync(requiredTierId);
+            if (userTier == null || requiredTier == null || userTier.MinPoints < requiredTier.MinPoints)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public async Task<DiscountCodeValidationDTO> ValidateDiscountCodeAsync(Guid userId, string code, Guid roomId, Guid showTimeId, double total, List<BookingSeatItem> seats)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -1772,6 +1818,10 @@ public class BookingManager : IBookingManager
         var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
         var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeId);
         var program = await FindUsableProgramByCodeAsync(code.Trim(), DateTime.UtcNow, bookingTheaterId, showTime);
+        if (program is not null && !await PassesAudienceRulesAsync(program, userId, SalesChannel.Online, showTime))
+        {
+            program = null;
+        }
         if (program is null)
         {
             return new DiscountCodeValidationDTO { Valid = false, Message = _invalidPromoMessage };

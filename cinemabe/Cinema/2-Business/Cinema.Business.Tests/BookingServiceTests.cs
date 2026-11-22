@@ -1397,6 +1397,83 @@ public class BookingServiceTests
         (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>())).Valid.Should().BeFalse();
     }
 
+    // A code is not a way around the audience rules an admin set on the program.
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_CounterOnlyProgram_IsInvalidOnline()
+    {
+        SetupCodeProgram(p => p.AllowedChannelsMask = 1 << (int)SalesChannel.Counter);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_OnlineAllowedProgram_StaysValid()
+    {
+        SetupCodeProgram(p => p.AllowedChannelsMask = 1 << (int)SalesChannel.Online);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_ExcludeHolidaysProgram_IsInvalidOnAHoliday()
+    {
+        SetupCodeProgram(p => p.ExcludeHolidays = true);
+        SetupHolidays(new List<Holiday> { new() { Date = DateOnly.FromDateTime(DateTime.UtcNow) } });
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_MembersProgram_RejectsAnonymousTierlessCustomer()
+    {
+        var goldTier = Guid.NewGuid();
+        SetupCodeProgram(p => { p.Eligibility = PromotionEligibility.Members; p.MinMemberShipId = goldTier; });
+
+        // SetupCodeProgram resolves every user to null, i.e. someone with no membership at all.
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_MembersProgram_AcceptsACustomerAtOrAboveTheRequiredTier()
+    {
+        var goldTier = Guid.NewGuid();
+        var platinumTier = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        SetupCodeProgram(p => { p.Eligibility = PromotionEligibility.Members; p.MinMemberShipId = goldTier; });
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(new User { Id = customerId, MemberShipId = platinumTier });
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(goldTier)).ReturnsAsync(new MemberShip { Id = goldTier, MinPoints = 1000 });
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(platinumTier)).ReturnsAsync(new MemberShip { Id = platinumTier, MinPoints = 5000 });
+
+        var result = await _sut.ValidateDiscountCodeAsync(customerId, "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_MembersProgram_RejectsALowerTier()
+    {
+        var goldTier = Guid.NewGuid();
+        var silverTier = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        SetupCodeProgram(p => { p.Eligibility = PromotionEligibility.Members; p.MinMemberShipId = goldTier; });
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(new User { Id = customerId, MemberShipId = silverTier });
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(goldTier)).ReturnsAsync(new MemberShip { Id = goldTier, MinPoints = 1000 });
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(silverTier)).ReturnsAsync(new MemberShip { Id = silverTier, MinPoints = 100 });
+
+        var result = await _sut.ValidateDiscountCodeAsync(customerId, "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeFalse();
+    }
+
     // ── Food stock: deduct at booking, restore on cancel / expire ──────
 
     private static readonly Guid FoodTheaterId = Guid.NewGuid();
