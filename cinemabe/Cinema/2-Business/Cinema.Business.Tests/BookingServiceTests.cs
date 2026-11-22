@@ -1165,6 +1165,61 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task CreateBookingAsync_ReplayingTheHoldersConnectionIdUnderAnotherAccount_IsRejected()
+    {
+        // The connection id is visible to every viewer of the room. Presenting the holder's id from a different
+        // account must neither pass the hold check nor release the victim's lock.
+        var victim   = Guid.NewGuid();
+        var attacker = Guid.NewGuid();
+        var heldSeat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, heldSeat, "victim-conn", victim);
+
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, ShowTime = OpenShowTime(ShowTimeId1, new DateTime(2026, 3, 2, 19, 0, 0), default), Room = new Room { Id = RoomId1, Status = RoomStatus.Active, Theater = new Theater { IsActive = true } } });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        SetupSeatsById(new Dictionary<Guid, Seat> { [heldSeat] = new() { Id = heldSeat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = heldSeat } },
+            ConnectionId  = "victim-conn",
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(attacker, request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*held by another user*");
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, heldSeat).Should().BeTrue("the victim's hold must survive");
+    }
+
+    [Fact]
+    public void IsSeatLocked_ExcludesTheHoldOnlyWhenConnectionAndUserBothMatch()
+    {
+        var owner = Guid.NewGuid();
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "conn", owner);
+
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, "conn", owner).Should().BeFalse();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, "conn", Guid.NewGuid()).Should().BeTrue();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, "conn", null).Should().BeTrue();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, "other", owner).Should().BeTrue();
+    }
+
+    [Fact]
+    public void UnlockSeat_BySameConnectionIdButAnotherUser_KeepsTheLock()
+    {
+        var owner = Guid.NewGuid();
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "conn", owner);
+
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, seat, "conn", Guid.NewGuid()).Should().BeFalse();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat).Should().BeTrue();
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, seat, "conn", owner).Should().BeTrue();
+    }
+
+    [Fact]
     public void UnlockSeat_ByOtherConnection_KeepsTheLockAndReportsNoRelease()
     {
         // A18: a non-owner's unlock must not release the seat, and must not be reported as a release.
@@ -1228,8 +1283,8 @@ public class BookingServiceTests
     }
 
     // The lock store is a private static dictionary; reach into it to read/age a lock without sleeping 5 minutes.
-    private static System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)> LockStore()
-        => (System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)>)
+    private static System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)> LockStore()
+        => (System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)>)
             typeof(BookingManager).GetField("_lockedSeats", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
                 .GetValue(null)!;
 
@@ -1244,7 +1299,7 @@ public class BookingServiceTests
     {
         var key = KeyFor(showTimeId, roomId, seatId);
         var existing = LockStore()[key];
-        LockStore()[key] = (existing.ConnectionId, DateTime.UtcNow - age);
+        LockStore()[key] = (existing.ConnectionId, existing.UserId, DateTime.UtcNow - age);
     }
 
     // ── Promo code validation (code-triggered PromotionProgram) ─────────────────

@@ -26,8 +26,8 @@ public class BookingManager : IBookingManager
 {
     private readonly IApplicationUnitOfWork _uow;
     private readonly IAuditLogger _auditLogger;
-    // connectionId -> (connectionId, lockedAt)
-    private static readonly ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)> _lockedSeats = new();
+    // seat key -> (owning connection, owning user, lockedAt)
+    private static readonly ConcurrentDictionary<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)> _lockedSeats = new();
     // Process-local booking gate keyed by {showTimeId}:{roomId}. Serializes the read-booked-then-insert
     // sequence so two concurrent requests can't both pass the "seat free" check and double-sell a seat.
     // Consistent with the process-local lock design above; a multi-instance deployment must additionally
@@ -158,6 +158,7 @@ public class BookingManager : IBookingManager
                 DiscountCode   = request.DiscountCode,
                 PointsToRedeem = request.PointsToRedeem,
                 ConnectionId   = request.ConnectionId,
+                BookerUserId   = userId,
                 AgeConfirmed   = request.AgeConfirmed,
             });
 
@@ -192,7 +193,7 @@ public class BookingManager : IBookingManager
             {
                 foreach (var seatItem in request.Seats)
                 {
-                    UnlockSeat(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId);
+                    UnlockSeat(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId, userId);
                 }
             }
             await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId, request.RoomId, request.Seats.Select(s => s.SeatId).ToList());
@@ -328,7 +329,7 @@ public class BookingManager : IBookingManager
                 {
                     foreach (var seatItem in request.Seats)
                     {
-                        UnlockSeat(request.ShowTimeId!.Value, request.RoomId!.Value, seatItem.SeatId, request.ConnectionId);
+                        UnlockSeat(request.ShowTimeId!.Value, request.RoomId!.Value, seatItem.SeatId, request.ConnectionId, context.StaffUserId);
                     }
                 }
                 await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId!.Value, request.RoomId!.Value, request.Seats.Select(s => s.SeatId).ToList());
@@ -393,6 +394,7 @@ public class BookingManager : IBookingManager
             DiscountCode       = request.DiscountCode,
             PointsToRedeem     = request.PointsToRedeem,
             ConnectionId       = request.ConnectionId,
+            BookerUserId       = context.StaffUserId,
             IsCounter          = true,
             DryRun             = dryRun,
             SeatPriceOverrides = request.Seats.Where(s => s.OverrideUnitPrice.HasValue).ToDictionary(s => s.SeatId, s => s.OverrideUnitPrice!.Value),
@@ -541,7 +543,7 @@ public class BookingManager : IBookingManager
                 // booker's own held seats still pass; without one (a direct API call) no live lock can be the
                 // caller's, so any live lock blocks. IsSeatLocked applies the lock expiry and owner exclusion.
                 var bookerConnection = string.IsNullOrEmpty(input.ConnectionId) ? null : input.ConnectionId;
-                if (IsSeatLocked(showTimeId, roomId, seatItem.SeatId, bookerConnection))
+                if (IsSeatLocked(showTimeId, roomId, seatItem.SeatId, bookerConnection, input.BookerUserId))
                 {
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
                 }
@@ -1910,36 +1912,38 @@ public class BookingManager : IBookingManager
     // How long an advisory seat lock lives before another viewer may take the seat.
     private static readonly TimeSpan _seatLockTtl = TimeSpan.FromMinutes(5);
 
-    public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
+    public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId, Guid? userId = null)
         => _lockedSeats.AddOrUpdate(
             SeatKey(showTimeId, roomId, seatId),
-            _ => (connectionId, DateTime.UtcNow),
+            _ => (connectionId, userId, DateTime.UtcNow),
             // Re-locking a seat the connection already holds must not renew it: otherwise one client could keep a
             // seat for as long as it keeps clicking, instead of the fixed hold window.
-            (_, existing) => existing.ConnectionId == connectionId && DateTime.UtcNow - existing.LockedAt <= _seatLockTtl
+            (_, existing) => existing.ConnectionId == connectionId && existing.UserId == userId && DateTime.UtcNow - existing.LockedAt <= _seatLockTtl
                 ? existing
-                : (connectionId, DateTime.UtcNow));
+                : (connectionId, userId, DateTime.UtcNow));
 
     /// <summary>Releases the lock only when it belongs to <paramref name="connectionId"/>. Returns true when a lock
     /// was actually removed, so callers broadcast SeatUnlocked only for a real release.</summary>
-    public bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
+    public bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId, Guid? userId = null)
     {
         var key = SeatKey(showTimeId, roomId, seatId);
-        if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId)
+        if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId && info.UserId == userId)
         {
             return _lockedSeats.TryRemove(key, out _);
         }
         return false;
     }
 
-    public bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null)
+    public bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null, Guid? excludeUserId = null)
     {
         var key = SeatKey(showTimeId, roomId, seatId);
         if (!_lockedSeats.TryGetValue(key, out var info))
         {
             return false;
         }
-        if (excludeConnectionId != null && info.ConnectionId == excludeConnectionId)
+        // The booker's own hold is ignored only when connection AND user match: the connection id can be learned
+        // by other viewers of the room, so on its own it would let anyone bypass another customer's hold.
+        if (excludeConnectionId != null && info.ConnectionId == excludeConnectionId && info.UserId == excludeUserId)
         {
             return false;
         }

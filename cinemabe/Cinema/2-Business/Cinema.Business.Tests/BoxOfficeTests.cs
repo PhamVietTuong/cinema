@@ -240,7 +240,7 @@ public class BoxOfficeTests
     {
         var held = Guid.NewGuid();   // unique id: the lock store is static
         SetSeats(new Seat { Id = held, RoomId = _roomId, RowName = "H", ColIndex = 1 });
-        _booking.LockSeat(_showTimeId, _roomId, held, "other-conn");
+        _booking.LockSeat(_showTimeId, _roomId, held, "other-conn", _staff.Id);
         var request = SeatSale(held);
         request.ConnectionId = "my-conn";
         request.Tenders = new List<TenderLine> { Card(100000) };

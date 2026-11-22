@@ -2,7 +2,7 @@ import { Subject } from 'rxjs';
 import { SeatLockSessionService } from './seat-lock-session.service';
 
 const makeHub = () => ({
-  seatLocked$: new Subject<{ seatId: string; connectionId: string }>(),
+  seatLocked$: new Subject<{ seatId: string }>(),
   seatUnlocked$: new Subject<string>(),
   seatLockFailed$: new Subject<{ seatId: string; message: string }>(),
   seatBooked$: new Subject<string[]>(),
@@ -36,12 +36,12 @@ describe('SeatLockSessionService', () => {
     expect(hub.unlockSeat).toHaveBeenCalledWith('st', 'room', 's1');
   });
 
-  it('republishes other connections locks but drops its own', () => {
+  it('republishes every SeatLocked from the hub (the server never echoes our own lock back)', () => {
     const seen: string[] = [];
     session.locked$.subscribe(id => seen.push(id));
-    hub.seatLocked$.next({ seatId: 'x', connectionId: 'mine' });
-    hub.seatLocked$.next({ seatId: 'y', connectionId: 'other' });
-    expect(seen).toEqual(['y']);
+    hub.seatLocked$.next({ seatId: 'x' });
+    hub.seatLocked$.next({ seatId: 'y' });
+    expect(seen).toEqual(['x', 'y']);
   });
 
   it('republishes unlock, failure and booked events', () => {

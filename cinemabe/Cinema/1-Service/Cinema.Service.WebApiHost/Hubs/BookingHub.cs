@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Cinema.Business.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -17,24 +18,35 @@ public class BookingHub : Hub
     public Task JoinRoom(Guid showTimeId, Guid roomId)
         => Groups.AddToGroupAsync(Context.ConnectionId, RoomGroup(showTimeId, roomId));
 
+    // The authenticated user behind this connection. A hold belongs to the (connection, user) pair — see
+    // IBookingManager.LockSeat — so a connection id learned from elsewhere cannot be replayed by another account.
+    private Guid? CurrentUserId()
+    {
+        var value = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Context.User?.FindFirst("sub")?.Value;
+        return Guid.TryParse(value, out var id) ? id : null;
+    }
+
     public async Task LockSeat(Guid showTimeId, Guid roomId, Guid seatId)
     {
-        if (_bookingManager.IsSeatLocked(showTimeId, roomId, seatId, Context.ConnectionId))
+        var userId = CurrentUserId();
+        if (_bookingManager.IsSeatLocked(showTimeId, roomId, seatId, Context.ConnectionId, userId))
         {
             await Clients.Caller.SendAsync("SeatLockFailed", seatId, "Seat is already locked.");
             return;
         }
 
-        _bookingManager.LockSeat(showTimeId, roomId, seatId, Context.ConnectionId);
+        _bookingManager.LockSeat(showTimeId, roomId, seatId, Context.ConnectionId, userId);
         await Groups.AddToGroupAsync(Context.ConnectionId, RoomGroup(showTimeId, roomId));
-        await Clients.Group(RoomGroup(showTimeId, roomId)).SendAsync("SeatLocked", seatId, Context.ConnectionId);
+        // Tell everyone ELSE the seat is taken. The locker's connection id is deliberately not sent: it must stay
+        // private to its owner, and the locker already knows (it ignored its own broadcast anyway).
+        await Clients.GroupExcept(RoomGroup(showTimeId, roomId), Context.ConnectionId).SendAsync("SeatLocked", seatId);
     }
 
     public async Task UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId)
     {
         // Broadcast only a real release: a non-owner's unlock changes nothing, and announcing it would make
         // other viewers show a still-held seat as free.
-        if (_bookingManager.UnlockSeat(showTimeId, roomId, seatId, Context.ConnectionId))
+        if (_bookingManager.UnlockSeat(showTimeId, roomId, seatId, Context.ConnectionId, CurrentUserId()))
         {
             await Clients.Group(RoomGroup(showTimeId, roomId)).SendAsync("SeatUnlocked", seatId);
         }

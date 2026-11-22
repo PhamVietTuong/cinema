@@ -34,7 +34,7 @@ describe('BookingSelectionComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn>; serializeUrl: ReturnType<typeof vi.fn>; createUrlTree: ReturnType<typeof vi.fn> };
   let authenticated = true;
   let hub: {
-    seatLocked$: Subject<{ seatId: string; connectionId: string }>;
+    seatLocked$: Subject<{ seatId: string }>;
     seatUnlocked$: Subject<string>;
     seatLockFailed$: Subject<{ seatId: string; message: string }>;
     seatBooked$: Subject<string[]>;
@@ -406,16 +406,10 @@ describe('BookingSelectionComponent', () => {
 
     it("another viewer's lock disables the seat and frees its slot", () => {
       component.toggleSeat(component.seats[0]);
-      hub.seatLocked$.next({ seatId: 's1', connectionId: 'someone-else' });
+      hub.seatLocked$.next({ seatId: 's1' });
 
       expect(component.seats[0].isLocked).toBe(true);
       expect(component.remainingTickets).toBe(1);
-    });
-
-    it('our own broadcast is ignored', () => {
-      hub.seatLocked$.next({ seatId: 's1', connectionId: 'my-connection' });
-
-      expect(component.seats[0].isLocked).toBeFalsy();
     });
 
     it('losing the lock race deselects the seat we optimistically took', () => {
@@ -429,7 +423,7 @@ describe('BookingSelectionComponent', () => {
     });
 
     it('an unlock re-enables the seat', () => {
-      hub.seatLocked$.next({ seatId: 's1', connectionId: 'someone-else' });
+      hub.seatLocked$.next({ seatId: 's1' });
 
       hub.seatUnlocked$.next('s1');
 

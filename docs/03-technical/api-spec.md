@@ -171,7 +171,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 
 | Hub | Route | Auth | Notes |
 |---|---|---|---|
-| `BookingHub` | `/hubs/booking` | `[Authorize]` | `JoinRoom`, `LockSeat`, `UnlockSeat` (client→hub); `SeatLockFailed` (caller-only), `SeatLocked`/`SeatUnlocked`/`SeatBooked` (group broadcast) |
+| `BookingHub` | `/hubs/booking` | `[Authorize]` | `JoinRoom`, `LockSeat`, `UnlockSeat` (client→hub); `SeatLockFailed` (caller-only), `SeatLocked` (room broadcast to everyone except the locker, payload = seat id only)/`SeatUnlocked`/`SeatBooked` (group broadcast) |
 | `StaffHub` | `/hubs/staff` | `[Authorize(Roles=RoleNames.StaffApp)]` | `IncidentRaised` is the only server-to-client event (`StaffHub.IncidentRaisedEvent`); `JoinTheater(theaterId)` (client-to-hub). It has no food-order or stock events |
 
 JWT for both is read from the `access_token` query string for any path starting with `/hubs` (configured in `Program.cs`), not the `Authorization` header.

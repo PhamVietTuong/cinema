@@ -14,6 +14,9 @@ internal sealed class ComposeInput
     public string? DiscountCode { get; init; }
     public int PointsToRedeem { get; init; }
     public string? ConnectionId { get; init; }
+    /// <summary>The authenticated user making the booking (online: the customer; counter: the staff member). Together with
+    /// <see cref="ConnectionId"/> it proves ownership of an advisory seat hold.</summary>
+    public Guid? BookerUserId { get; init; }
     /// <summary>Counter sale: whole-VND amounts, the showtime must be sellable and belong to <see cref="TheaterId"/>.</summary>
     public bool IsCounter { get; init; }
     /// <summary>Online only: the customer ticked the age confirmation.</summary>

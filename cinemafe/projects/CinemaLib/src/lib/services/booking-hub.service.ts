@@ -8,7 +8,6 @@ import { take } from 'rxjs/operators';
 
 export interface SeatLockEvent {
   seatId: string;
-  connectionId: string;
 }
 
 export interface SeatLockFailedEvent {
@@ -28,7 +27,7 @@ export class BookingHubService implements OnDestroy {
   seatBooked$ = new Subject<string[]>();
   connected$ = new BehaviorSubject<boolean>(false);
 
-  /** ConnectionId of the live hub connection, used to ignore our own broadcasts. */
+  /** ConnectionId of the live hub connection (sent with a booking so the API can match it to our seat holds). */
   get connectionId(): string | null {
     return this.connection?.connectionId ?? null;
   }
@@ -43,8 +42,9 @@ export class BookingHubService implements OnDestroy {
       .configureLogging(LogLevel.Warning)
       .build();
 
-    this.connection.on('SeatLocked', (seatId: string, connectionId: string) =>
-      this.seatLocked$.next({ seatId, connectionId }));
+    // The server broadcasts SeatLocked to everyone EXCEPT the locker and never includes the locker's connection id.
+    this.connection.on('SeatLocked', (seatId: string) =>
+      this.seatLocked$.next({ seatId }));
 
     this.connection.on('SeatUnlocked', (seatId: string) =>
       this.seatUnlocked$.next(seatId));

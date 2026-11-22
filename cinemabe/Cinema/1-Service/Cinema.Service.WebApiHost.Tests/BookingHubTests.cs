@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Cinema.Business.Contracts;
 using Cinema.Service.WebApiHost.Hubs;
 using Microsoft.AspNetCore.SignalR;
@@ -9,6 +10,7 @@ namespace Cinema.Service.WebApiHost.Tests;
 public class BookingHubTests
 {
     private const string Connection = "conn-1";
+    private readonly Guid _user = Guid.NewGuid();
     private readonly Guid _showTime = Guid.NewGuid();
     private readonly Guid _room = Guid.NewGuid();
     private readonly Guid _seat = Guid.NewGuid();
@@ -22,9 +24,11 @@ public class BookingHubTests
     {
         var context = new Mock<HubCallerContext>();
         context.SetupGet(c => c.ConnectionId).Returns(Connection);
+        context.SetupGet(c => c.User).Returns(new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, _user.ToString()) }, "test")));
         var clients = new Mock<IHubCallerClients>();
         clients.SetupGet(c => c.Caller).Returns(_caller.Object);
         clients.Setup(c => c.Group(BookingHub.RoomGroup(_showTime, _room))).Returns(_group.Object);
+        clients.Setup(c => c.GroupExcept(BookingHub.RoomGroup(_showTime, _room), It.Is<IReadOnlyList<string>>(l => l.SequenceEqual(new[] { Connection })))).Returns(_group.Object);
         _groups.Setup(g => g.AddToGroupAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         return new BookingHub(_manager.Object)
@@ -44,25 +48,27 @@ public class BookingHubTests
     [Fact]
     public async Task LockSeat_WhenAnotherConnectionHoldsIt_IsRefusedToTheCallerOnly()
     {
-        _manager.Setup(m => m.IsSeatLocked(_showTime, _room, _seat, Connection)).Returns(true);
+        _manager.Setup(m => m.IsSeatLocked(_showTime, _room, _seat, Connection, _user)).Returns(true);
 
         await CreateHub().LockSeat(_showTime, _room, _seat);
 
         VerifySent(_caller, "SeatLockFailed", Times.Once(), _seat, "Seat is already locked.");
-        VerifySent(_group, "SeatLocked", Times.Never(), _seat, Connection);
-        _manager.Verify(m => m.LockSeat(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>()), Times.Never);
+        VerifySent(_group, "SeatLocked", Times.Never(), _seat);
+        _manager.Verify(m => m.LockSeat(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Guid?>()), Times.Never);
     }
 
     [Trait("Req", "BR-SEAT-01")]
     [Fact]
     public async Task LockSeat_WhenFree_LocksAndBroadcastsToTheRoom()
     {
-        _manager.Setup(m => m.IsSeatLocked(_showTime, _room, _seat, Connection)).Returns(false);
+        _manager.Setup(m => m.IsSeatLocked(_showTime, _room, _seat, Connection, _user)).Returns(false);
 
         await CreateHub().LockSeat(_showTime, _room, _seat);
 
-        _manager.Verify(m => m.LockSeat(_showTime, _room, _seat, Connection), Times.Once);
-        VerifySent(_group, "SeatLocked", Times.Once(), _seat, Connection);
+        _manager.Verify(m => m.LockSeat(_showTime, _room, _seat, Connection, _user), Times.Once);
+        // Broadcast to the others without the locker's connection id (it must stay private to its owner).
+        VerifySent(_group, "SeatLocked", Times.Once(), _seat);
+        VerifySent(_group, "SeatLocked", Times.Never(), _seat, Connection);
         VerifySent(_caller, "SeatLockFailed", Times.Never(), _seat, "Seat is already locked.");
     }
 
@@ -70,7 +76,7 @@ public class BookingHubTests
     [Fact]
     public async Task UnlockSeat_ByANonOwner_BroadcastsNothing()
     {
-        _manager.Setup(m => m.UnlockSeat(_showTime, _room, _seat, Connection)).Returns(false);
+        _manager.Setup(m => m.UnlockSeat(_showTime, _room, _seat, Connection, _user)).Returns(false);
 
         await CreateHub().UnlockSeat(_showTime, _room, _seat);
 
@@ -81,7 +87,7 @@ public class BookingHubTests
     [Fact]
     public async Task UnlockSeat_ByTheOwner_BroadcastsTheRelease()
     {
-        _manager.Setup(m => m.UnlockSeat(_showTime, _room, _seat, Connection)).Returns(true);
+        _manager.Setup(m => m.UnlockSeat(_showTime, _room, _seat, Connection, _user)).Returns(true);
 
         await CreateHub().UnlockSeat(_showTime, _room, _seat);
 
