@@ -78,7 +78,21 @@ public class SmtpNotificationService : INotificationService
                 message.Body = body;
             }
 
-            await client.SendMailAsync(message);
+            try
+            {
+                await client.SendMailAsync(message);
+            }
+            catch (SmtpException)
+            {
+                // One retry on a fresh connection absorbs a transient SMTP hiccup (dropped connection, 4xx).
+                await Task.Delay(TimeSpan.FromSeconds(1));
+                using var retryClient = new SmtpClient(host, port) { EnableSsl = enableSsl, Timeout = _options.TimeoutSeconds * 1000 };
+                if (!string.IsNullOrWhiteSpace(user))
+                {
+                    retryClient.Credentials = new NetworkCredential(user, pass);
+                }
+                await retryClient.SendMailAsync(message);
+            }
             LogProvider.Current.Information($"[Notification:sent] To={to} | Subject={subject}");
         }
         catch (Exception e)

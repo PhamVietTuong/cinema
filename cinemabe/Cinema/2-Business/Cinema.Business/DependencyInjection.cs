@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddSingleton<INotificationService, DevLogNotificationService>();
         services.AddSingleton<ISmsNotificationService, DevLogSmsNotificationService>();
         services.AddSingleton<ISeatNotificationService, NoOpSeatNotificationService>();
+        services.AddSingleton<NotificationDispatcher>();
+        services.AddSingleton<INotificationDispatcher>(sp => sp.GetRequiredService<NotificationDispatcher>());
         services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddSingleton<IFacebookTokenValidator, FacebookTokenValidator>();
         services.AddMemoryCache();

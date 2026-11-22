@@ -137,6 +137,7 @@ public class CinemaController : ApiControllerBase
 
     [Authorize(Roles = _adminRole)]
     [HttpPost]
+    [RequestSizeLimit(_maxImageBytes + 1024 * 1024)] // image cap + multipart overhead; reject bigger bodies before buffering
     [ProducesResponseType(typeof(UploadResultDTO), 200)]
     public async Task<IActionResult> UploadImage(IFormFile file)
     {

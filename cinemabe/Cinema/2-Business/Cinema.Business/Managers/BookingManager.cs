@@ -93,10 +93,12 @@ public class BookingManager : IBookingManager
 
     private readonly IStaffNotificationService _staffNotifications;
     private readonly IConfiguration? _config;
+    private readonly INotificationDispatcher? _dispatcher;
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null, IAuditLogger? auditLogger = null)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null, IAuditLogger? auditLogger = null, INotificationDispatcher? dispatcher = null)
     {
         _config = config;
+        _dispatcher = dispatcher;
         _uow = uow;
         _gateways = gateways;
         _notifications = notifications;
@@ -1178,7 +1180,15 @@ public class BookingManager : IBookingManager
         // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
         if (user is not null)
         {
-            await SendConfirmationAsync(invoice, user);
+            try
+            {
+                await SendConfirmationAsync(invoice, user);
+            }
+            catch (Exception e)
+            {
+                // The payment is committed; a failed courtesy notification must never turn the IPN/confirm into an error.
+                LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(FinalizePaidInvoiceAsync)} confirmation failed for {invoice.Code}: {e.Message}");
+            }
         }
         return true;
     }
@@ -1277,15 +1287,39 @@ public class BookingManager : IBookingManager
             inlineImages = new List<EmailInlineImage>();
         }
 
-        if (hasEmail)
+        // Delivery is slow network I/O and must never fail or delay the payment/IPN path: it is queued to a
+        // background worker (inline with a try/catch when no dispatcher is wired, e.g. unit tests).
+        var email = hasEmail ? user.Email : null;
+        var phone = hasPhone ? user.Phone : null;
+        var notifications = _notifications;
+        var sms = _sms;
+        async Task DeliverAsync()
         {
-            await _notifications.SendAsync(user.Email, emailSubject, emailBody, inlineImages);
+            if (email is not null)
+            {
+                await notifications.SendAsync(email, emailSubject, emailBody, inlineImages);
+            }
+
+            // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
+            if (phone is not null)
+            {
+                await sms.SendSmsAsync(phone, smsBody);
+            }
         }
 
-        // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
-        if (hasPhone)
+        if (_dispatcher is not null)
         {
-            await _sms.SendSmsAsync(user.Phone, smsBody);
+            _dispatcher.Enqueue(DeliverAsync);
+            return;
+        }
+
+        try
+        {
+            await DeliverAsync();
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(SendConfirmationAsync)} delivery failed for {invoice.Code}: {e.Message}");
         }
     }
 

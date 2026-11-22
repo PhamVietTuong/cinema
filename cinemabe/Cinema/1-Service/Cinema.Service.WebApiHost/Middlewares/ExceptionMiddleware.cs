@@ -5,6 +5,8 @@ namespace Cinema.Service.WebApiHost.Middlewares;
 
 public class ExceptionMiddleware
 {
+    private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionMiddleware> _logger;
 
@@ -41,6 +43,6 @@ public class ExceptionMiddleware
         ctx.Response.StatusCode = (int)status;
 
         var response = new { error = message, statusCode = (int)status };
-        return ctx.Response.WriteAsync(JsonSerializer.Serialize(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+        return ctx.Response.WriteAsync(JsonSerializer.Serialize(response, _jsonOptions));
     }
 }
