@@ -5,6 +5,7 @@
 export * from './lib/tokens';
 export * from './lib/cinema-lib';
 export * from './lib/shared.module';
+export * from './lib/shared-core.module';
 export * from './lib/models';
 export * from './lib/interfaces/cinema.model';
 export * from './lib/services';

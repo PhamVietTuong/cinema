@@ -1,5 +1,6 @@
 import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { RouterModule } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -35,6 +36,9 @@ import { App } from './app';
     provideAnimationsAsync(),
     // Devtools instrumentation only in dev builds — it keeps 25 state snapshots in memory.
     ...(environment.production ? [] : [provideStoreDevtools({ maxAge: 25 })]),
+    // The root no longer pulls the whole SharedModule (and its MatNativeDateModule) in, so provide the date adapter
+    // that dialogs opened from root-level services and the lazy datepickers rely on.
+    provideNativeDateAdapter(),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideCinemaTranslation(),
     provideAppInitializer(() => inject(ThemeService).init()),

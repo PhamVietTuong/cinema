@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { SharedModule } from '../../shared.module';
+import { SharedCoreModule } from '../../shared-core.module';
 import { logout } from '../../store/auth/auth.actions';
 
 /** An extra link shown below the standard message, e.g. "Open the Staff app". */
@@ -20,7 +20,7 @@ export interface ForbiddenExtraLink {
 @Component({
   selector: 'cl-forbidden',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedCoreModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './forbidden-page.component.html',
   styleUrl: './forbidden-page.component.scss',

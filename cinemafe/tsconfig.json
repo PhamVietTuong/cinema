@@ -4,7 +4,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
-      "CinemaLib": ["./dist/CinemaLib"]
+      "CinemaLib": ["./projects/CinemaLib/src/public-api.ts"]
     },
     "strict": true,
     "noImplicitOverride": true,

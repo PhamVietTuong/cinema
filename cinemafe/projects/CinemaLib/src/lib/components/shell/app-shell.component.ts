@@ -3,7 +3,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs/operators';
-import { SharedModule } from '../../shared.module';
+import { SharedCoreModule } from '../../shared-core.module';
 import { ThemeService } from '../../theme/theme.service';
 import { NavItem, NavSection, filterNavByRole } from '../../models/nav.models';
 import { UserProfile } from '../../models/auth.models';
@@ -39,7 +39,7 @@ export interface ShellUserFallback {
 @Component({
   selector: 'cl-app-shell',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedCoreModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
