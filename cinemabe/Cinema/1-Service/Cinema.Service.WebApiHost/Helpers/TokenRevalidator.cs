@@ -61,15 +61,28 @@ public static class TokenRevalidator
             return;
         }
 
-        var db = context.HttpContext.RequestServices.GetRequiredService<CinemaContext>();
-        var row = await db.User.AsNoTracking()
-            .Where(u => u.Id == userId)
-            .Select(u => new { u.Status, Role = u.UserType.Name, u.TheaterId, u.PasswordHash, u.PasswordSalt })
-            .FirstOrDefaultAsync(context.HttpContext.RequestAborted);
+        UserSnapshot? snapshot;
+        if (UserSnapshotCache.TryGet(userId, out var cached) && cached is UserSnapshot hit)
+        {
+            snapshot = hit;
+        }
+        else
+        {
+            var db = context.HttpContext.RequestServices.GetRequiredService<CinemaContext>();
+            var row = await db.User.AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.Status, Role = u.UserType.Name, u.TheaterId, u.PasswordHash, u.PasswordSalt })
+                .FirstOrDefaultAsync(context.HttpContext.RequestAborted);
 
-        var snapshot = row == null
-            ? null
-            : new UserSnapshot(row.Status, row.Role, row.TheaterId, TokenStamp.Compute(row.PasswordHash, row.PasswordSalt));
+            snapshot = row == null
+                ? null
+                : new UserSnapshot(row.Status, row.Role, row.TheaterId, TokenStamp.Compute(row.PasswordHash, row.PasswordSalt));
+            if (snapshot != null)
+            {
+                // Missing accounts are not cached: a just-created account must be usable straight away.
+                UserSnapshotCache.Set(userId, snapshot);
+            }
+        }
 
         var reason = RejectionReason(principal, snapshot);
         if (reason != null)

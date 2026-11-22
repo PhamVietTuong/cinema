@@ -35,7 +35,11 @@ public class BookingHub : Hub
             return;
         }
 
-        _bookingManager.LockSeat(showTimeId, roomId, seatId, Context.ConnectionId, userId);
+        if (!_bookingManager.LockSeat(showTimeId, roomId, seatId, Context.ConnectionId, userId))
+        {
+            await Clients.Caller.SendAsync("SeatLockFailed", seatId, "Too many seats are held on this connection.");
+            return;
+        }
         await Groups.AddToGroupAsync(Context.ConnectionId, RoomGroup(showTimeId, roomId));
         // Tell everyone ELSE the seat is taken. The locker's connection id is deliberately not sent: it must stay
         // private to its owner, and the locker already knows (it ignored its own broadcast anyway).

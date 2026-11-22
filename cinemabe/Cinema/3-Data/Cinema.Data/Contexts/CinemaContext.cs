@@ -1,4 +1,5 @@
 using Cinema.Data.Entities;
+using Cinema.Data.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Data.Contexts;
@@ -6,6 +7,37 @@ namespace Cinema.Data.Contexts;
 public class CinemaContext : DbContext
 {
     public CinemaContext(DbContextOptions<CinemaContext> options) : base(options) { }
+
+    // A saved/deleted user row invalidates the cached auth snapshot (ban, role/theater change, password change).
+    private List<Guid> ChangedUserIds()
+    {
+        return ChangeTracker.Entries<User>()
+            .Where(e => e.State == EntityState.Modified || e.State == EntityState.Deleted)
+            .Select(e => e.Entity.Id)
+            .ToList();
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        var changed = ChangedUserIds();
+        var result = base.SaveChanges(acceptAllChangesOnSuccess);
+        foreach (var id in changed)
+        {
+            UserSnapshotCache.Evict(id);
+        }
+        return result;
+    }
+
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        var changed = ChangedUserIds();
+        var result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        foreach (var id in changed)
+        {
+            UserSnapshotCache.Evict(id);
+        }
+        return result;
+    }
 
     public DbSet<User> User => Set<User>();
     public DbSet<UserType> UserType => Set<UserType>();

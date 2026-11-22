@@ -32,9 +32,59 @@ public class BookingManager : IBookingManager
     // sequence so two concurrent requests can't both pass the "seat free" check and double-sell a seat.
     // Consistent with the process-local lock design above; a multi-instance deployment must additionally
     // enforce this at the DB (e.g. a unique constraint on active (ShowTimeId, RoomId, SeatId)).
-    private static readonly ConcurrentDictionary<string, SemaphoreSlim> _bookingGates = new();
-    private static SemaphoreSlim BookingGate(Guid showTimeId, Guid roomId)
-        => _bookingGates.GetOrAdd($"{showTimeId}:{roomId}", _ => new SemaphoreSlim(1, 1));
+    // Ref-counted so an idle gate is dropped from the dictionary instead of leaking one semaphore per showtime+room.
+    private static readonly Dictionary<string, BookingGateEntry> _bookingGates = new();
+    private static readonly object _bookingGatesLock = new();
+    private static BookingGateEntry BookingGate(Guid showTimeId, Guid roomId)
+    {
+        var key = $"{showTimeId}:{roomId}";
+        lock (_bookingGatesLock)
+        {
+            if (!_bookingGates.TryGetValue(key, out var entry))
+            {
+                entry = new BookingGateEntry(key);
+                _bookingGates[key] = entry;
+            }
+            entry.Users++;
+            return entry;
+        }
+    }
+
+    private sealed class BookingGateEntry
+    {
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
+        private readonly string _key;
+        public int Users;
+
+        public BookingGateEntry(string key)
+        {
+            _key = key;
+        }
+
+        public Task WaitAsync()
+        {
+            return _semaphore.WaitAsync();
+        }
+
+        public void Release()
+        {
+            _semaphore.Release();
+            lock (_bookingGatesLock)
+            {
+                Users--;
+                if (Users == 0)
+                {
+                    _bookingGates.Remove(_key);
+                }
+            }
+        }
+    }
+
+    // connection id -> seat keys it holds, so releasing a connection is O(its locks) instead of O(all locks).
+    // May hold stale keys (a lock that expired or was taken over); every use re-checks ownership in _lockedSeats.
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _locksByConnection = new();
+    // A single connection may hold at most this many advisory seat locks, so one client cannot lock a whole room.
+    private const int MaxLocksPerConnection = 20;
 
     private readonly IPaymentGatewayResolver _gateways;
     private readonly INotificationService _notifications;
@@ -92,9 +142,8 @@ public class BookingManager : IBookingManager
                 };
             }
 
-            var key      = SeatKey(showTimeId, roomId, s.Id);
             var isBooked = bookedIds.Contains(s.Id);
-            var isLocked = _lockedSeats.ContainsKey(key);
+            var isLocked = IsSeatLocked(showTimeId, roomId, s.Id);
             var kind     = s.EffectiveKind();
             return new SeatDTO
             {
@@ -258,7 +307,7 @@ public class BookingManager : IBookingManager
 
         // Same per-showtime+room gate as an online booking, so a counter sale and an online booking can never both
         // pass the "seat free" check. A food-only sale touches no seat and needs no gate.
-        SemaphoreSlim? gate = null;
+        BookingGateEntry? gate = null;
         if (hasSeats)
         {
             gate = BookingGate(request.ShowTimeId!.Value, request.RoomId!.Value);
@@ -1962,15 +2011,44 @@ public class BookingManager : IBookingManager
     // How long an advisory seat lock lives before another viewer may take the seat.
     private static readonly TimeSpan _seatLockTtl = TimeSpan.FromMinutes(5);
 
-    public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId, Guid? userId = null)
-        => _lockedSeats.AddOrUpdate(
-            SeatKey(showTimeId, roomId, seatId),
+    public bool LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId, Guid? userId = null)
+    {
+        var key = SeatKey(showTimeId, roomId, seatId);
+        var mine = _locksByConnection.GetOrAdd(connectionId, _ => new ConcurrentDictionary<string, byte>());
+        if (!mine.ContainsKey(key) && CountLiveLocks(connectionId, mine) >= MaxLocksPerConnection)
+        {
+            return false;
+        }
+
+        _lockedSeats.AddOrUpdate(
+            key,
             _ => (connectionId, userId, DateTime.UtcNow),
             // Re-locking a seat the connection already holds must not renew it: otherwise one client could keep a
             // seat for as long as it keeps clicking, instead of the fixed hold window.
             (_, existing) => existing.ConnectionId == connectionId && existing.UserId == userId && DateTime.UtcNow - existing.LockedAt <= _seatLockTtl
                 ? existing
                 : (connectionId, userId, DateTime.UtcNow));
+        mine[key] = 0;
+        return true;
+    }
+
+    // Live (unexpired, still owned) locks of a connection; prunes stale index entries as it goes.
+    private static int CountLiveLocks(string connectionId, ConcurrentDictionary<string, byte> mine)
+    {
+        var count = 0;
+        foreach (var key in mine.Keys)
+        {
+            if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId && DateTime.UtcNow - info.LockedAt <= _seatLockTtl)
+            {
+                count++;
+            }
+            else
+            {
+                mine.TryRemove(key, out _);
+            }
+        }
+        return count;
+    }
 
     /// <summary>Releases the lock only when it belongs to <paramref name="connectionId"/>. Returns true when a lock
     /// was actually removed, so callers broadcast SeatUnlocked only for a real release.</summary>
@@ -1979,7 +2057,14 @@ public class BookingManager : IBookingManager
         var key = SeatKey(showTimeId, roomId, seatId);
         if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId && info.UserId == userId)
         {
-            return _lockedSeats.TryRemove(key, out _);
+            if (_lockedSeats.TryRemove(new KeyValuePair<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)>(key, info)))
+            {
+                if (_locksByConnection.TryGetValue(connectionId, out var mine))
+                {
+                    mine.TryRemove(key, out _);
+                }
+                return true;
+            }
         }
         return false;
     }
@@ -2008,18 +2093,56 @@ public class BookingManager : IBookingManager
     public IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> ReleaseConnectionLocks(string connectionId)
     {
         var released = new List<(Guid ShowTimeId, Guid RoomId, Guid SeatId)>();
-        foreach (var entry in _lockedSeats)
+        if (!_locksByConnection.TryRemove(connectionId, out var mine))
         {
-            if (entry.Value.ConnectionId != connectionId)
-            {
-                continue;
-            }
-            if (_lockedSeats.TryRemove(entry.Key, out _) && TryParseSeatKey(entry.Key, out var ids))
+            return released;
+        }
+        foreach (var key in mine.Keys)
+        {
+            // Only remove a lock this connection still owns (the key may have expired and been re-taken).
+            if (_lockedSeats.TryGetValue(key, out var info)
+                && info.ConnectionId == connectionId
+                && _lockedSeats.TryRemove(new KeyValuePair<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)>(key, info))
+                && TryParseSeatKey(key, out var ids))
             {
                 released.Add(ids);
             }
         }
         return released;
+    }
+
+    /// <summary>Removes every expired lock and returns the seats freed so the caller can broadcast SeatUnlocked.</summary>
+    public IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> SweepExpiredLocks()
+    {
+        var freed = new List<(Guid ShowTimeId, Guid RoomId, Guid SeatId)>();
+        var now = DateTime.UtcNow;
+        foreach (var entry in _lockedSeats)
+        {
+            if (now - entry.Value.LockedAt <= _seatLockTtl)
+            {
+                continue;
+            }
+            if (_lockedSeats.TryRemove(entry))
+            {
+                if (_locksByConnection.TryGetValue(entry.Value.ConnectionId, out var mine))
+                {
+                    mine.TryRemove(entry.Key, out _);
+                }
+                if (TryParseSeatKey(entry.Key, out var ids))
+                {
+                    freed.Add(ids);
+                }
+            }
+        }
+        // Drop index buckets of connections that no longer hold anything.
+        foreach (var bucket in _locksByConnection)
+        {
+            if (bucket.Value.IsEmpty)
+            {
+                _locksByConnection.TryRemove(bucket);
+            }
+        }
+        return freed;
     }
 
     private static string SeatKey(Guid showTimeId, Guid roomId, Guid seatId)

@@ -62,6 +62,7 @@ public class BookingHubTests
     public async Task LockSeat_WhenFree_LocksAndBroadcastsToTheRoom()
     {
         _manager.Setup(m => m.IsSeatLocked(_showTime, _room, _seat, Connection, _user)).Returns(false);
+        _manager.Setup(m => m.LockSeat(_showTime, _room, _seat, Connection, _user)).Returns(true);
 
         await CreateHub().LockSeat(_showTime, _room, _seat);
 
