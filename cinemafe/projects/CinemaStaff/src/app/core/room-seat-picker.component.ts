@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -14,6 +14,7 @@ export function seatLabel(seat: { rowName?: string; colIndex?: number }): string
  * parent form group; the seat list reloads whenever the room changes.
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'staff-room-seat-picker',
   standalone: true,
   imports: [SharedModule],

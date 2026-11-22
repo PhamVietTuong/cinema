@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, takeUntil } from 'rxjs';
 import { CinemaServiceAgent, PaymentServiceAgent, BaseTableComponent, TablePage, TableSearchCriteria } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../../../environments/environment';
@@ -14,6 +14,7 @@ interface RevenueDay { date?: string; total?: number; }
 type Dto = PaymentServiceAgent.InvoiceDTO;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-dashboard',
   standalone: false,
   templateUrl: './dashboard.component.html',
@@ -51,26 +52,32 @@ export class DashboardComponent extends BaseTableComponent {
   override ngOnInit(): void {
     super.ngOnInit();
 
-    this._cinema.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1 }))
-      .subscribe(r => { this.stats.movies = r.totalCount ?? 0; this._cd.markForCheck(); });
-
-    this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1 }))
-      .subscribe(r => { this.stats.theaters = r.totalCount ?? 0; this._cd.markForCheck(); });
-
-    this._cinema.getNowShowingMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 5 }))
-      .subscribe(r => { this.topMovies = r.results ?? []; this._cd.markForCheck(); });
+    const count = (r: { totalCount?: number }) => r.totalCount ?? 0;
 
     // "Orders today" needs its own date-filtered count. Reading totalCount off the list above
     // reported every invoice ever created, and summing that page's Paid rows meant "revenue today"
     // only ever counted whatever happened to fall in the first 8 rows.
     const now = new Date();
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    this._payment.getInvoices(PaymentServiceAgent.PagingSearchDTO.fromJS({
-      pageIndex: 1,
-      pageSize: 1,
-      filters: { from: this._isoLocal(midnight), to: this._isoLocal(now) },
-    }))
-      .subscribe(r => { this.stats.invoicesToday = r.totalCount ?? 0; this._cd.markForCheck(); });
+    // One forkJoin: the four tiles and the top-movies list land together in a single render.
+    forkJoin({
+      movies: this._cinema.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1 })),
+      theaters: this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1 })),
+      top: this._cinema.getNowShowingMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 5 })),
+      today: this._payment.getInvoices(PaymentServiceAgent.PagingSearchDTO.fromJS({
+        pageIndex: 1,
+        pageSize: 1,
+        filters: { from: this._isoLocal(midnight), to: this._isoLocal(now) },
+      })),
+    }).pipe(takeUntil(this.ngDestroyed$)).subscribe({
+      next: r => {
+        // Replace, never mutate: the view is OnPush.
+        this.stats = { ...this.stats, movies: count(r.movies), theaters: count(r.theaters), invoicesToday: count(r.today) };
+        this.topMovies = r.top.results ?? [];
+        this._cd.markForCheck();
+      },
+      error: () => this._cd.markForCheck(),
+    });
 
     this.loadRevenue();
   }
@@ -83,13 +90,14 @@ export class DashboardComponent extends BaseTableComponent {
   private loadRevenue(): void {
     // Direct call; typed PaymentServiceAgent.getRevenueByDay lands after NSwag regen.
     this._http.get<RevenueDay[]>(`${environment.apiUrl}/api/Payment/GetRevenueByDay`, { params: { days: this.revenueDays } })
+      .pipe(takeUntil(this.ngDestroyed$))
       .subscribe({
         next: days => {
           const series = days ?? [];
           this.revenueTrend = this._toTrend(series);
           // The series always ends on today, so today's revenue comes from the server's own
           // Paid-invoice totals rather than being re-derived from a page of the invoice list.
-          this.stats.revenueToday = series.length ? (series[series.length - 1].total ?? 0) : 0;
+          this.stats = { ...this.stats, revenueToday: series.length ? (series[series.length - 1].total ?? 0) : 0 };
           this._cd.markForCheck();
         },
         error: () => { this.revenueTrend = []; this._cd.markForCheck(); },

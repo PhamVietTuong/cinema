@@ -1,4 +1,4 @@
-import { Subject, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { takePendingCheckout } from '../booking-checkout/booking-checkout.state';
 import { BookingSelectionComponent } from './booking-selection.component';
 import { PaymentServiceAgent } from 'CinemaLib';
@@ -643,7 +643,8 @@ describe('BookingSelectionComponent', () => {
         getSeats: vi.fn().mockImplementation(() => {
           callCount++;
           if (callCount === 1) {
-            return { subscribe: (observer: { next: (v: unknown) => void }) => { capturedObserver = observer; } };
+            // A real observable (the component pipes it through takeUntil) whose observer the test drives by hand.
+            return new Observable(subscriber => { capturedObserver = subscriber; });
           }
           return of({ results: [seat({ id: 'fresh-seat' })] });
         }),

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, AfterViewInit, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, AfterViewInit, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   EmptyStateComponent,
@@ -58,6 +58,8 @@ export class GateScanComponent implements AfterViewInit, OnDestroy {
       el.nativeElement.srcObject = this._stream;
     }
   }
+
+  private readonly _videoRef = viewChild<ElementRef<HTMLVideoElement>>('cameraVideo');
 
   readonly theaterId = this._theater.currentTheaterId;
   readonly busy = signal(false);
@@ -232,7 +234,7 @@ export class GateScanComponent implements AfterViewInit, OnDestroy {
       const detector = new Detector({ formats: ['qr_code'] });
       this.cameraOn.set(true);
       this._cameraTimer = setInterval(async () => {
-        const video = document.querySelector<HTMLVideoElement>('video.camera');
+        const video = this._videoRef()?.nativeElement;
         if (!video || this.busy() || this.result()) {
           return;
         }

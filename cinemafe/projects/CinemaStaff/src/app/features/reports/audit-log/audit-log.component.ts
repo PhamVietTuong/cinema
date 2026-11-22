@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, OnInit, effect, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, effect, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Subject } from 'rxjs';
@@ -37,6 +38,7 @@ export class AuditLogComponent implements OnInit {
 
   private readonly _theaterContext = inject(TheaterContextService);
   private readonly _filterChange$ = new Subject<void>();
+  private readonly _destroyRef = inject(DestroyRef);
 
   constructor(
     private _report: CinemaServiceAgent.HttpService,
@@ -55,7 +57,7 @@ export class AuditLogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this._filterChange$.pipe(debounceTime(300)).subscribe(() => {
+    this._filterChange$.pipe(debounceTime(300), takeUntilDestroyed(this._destroyRef)).subscribe(() => {
       this.pageIndex = 0;
       this.load();
     });
@@ -87,7 +89,7 @@ export class AuditLogComponent implements OnInit {
     this._store.dispatch(showLoading());
     this._report.getAuditLog(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: this.pageIndex + 1, pageSize: this.pageSize, filters,
-    })).subscribe({
+    })).pipe(takeUntilDestroyed(this._destroyRef)).subscribe({
       next: r => {
         this.rows = r.results ?? [];
         this.total = r.totalCount ?? 0;

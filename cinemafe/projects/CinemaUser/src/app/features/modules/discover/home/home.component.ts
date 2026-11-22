@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -14,6 +14,7 @@ import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.dir
 import { movieDetailCommands } from '../../../../shared/movie-route';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-home',
   standalone: true,
   imports: [SharedModule, MovieCardComponent, SiteFooterComponent, ScrollRowComponent, RevealOnScrollDirective],

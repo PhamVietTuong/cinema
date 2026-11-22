@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Subject } from 'rxjs';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { ActivatedRoute } from '@angular/router';
@@ -20,6 +20,7 @@ type Mode = 'all' | 'now' | 'coming' | 'showtimes';
 const SHOWTIME_PAGE_SIZE = 20;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-list',
   standalone: true,
   imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterBarComponent],
@@ -103,6 +104,10 @@ export class MovieListComponent implements OnInit, OnDestroy {
       this._cdr.markForCheck();
     });
 
+    merge(this.searchCtrl.valueChanges, this.filterForm.valueChanges)
+      .pipe(takeUntil(this._destroy$))
+      .subscribe(() => this._refreshHasActiveFilters());
+
     this._loadFilterOptions();
 
     const showing = this._route.snapshot.queryParamMap.get('showing');
@@ -122,6 +127,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
     this.searchCtrl.reset('', { emitEvent: false });
     this.filterForm.reset({ movieTypeId: '', language: '', theaterId: '', date: '', timeFrom: '', timeTo: '' }, { emitEvent: false });
     this._buildFilterFields();
+    this._refreshHasActiveFilters();
     this.page = 1;
     this._load();
   }
@@ -133,12 +139,18 @@ export class MovieListComponent implements OnInit, OnDestroy {
   clearFilters(): void {
     this.searchCtrl.reset('', { emitEvent: false });
     this.filterForm.reset({ movieTypeId: '', language: '', theaterId: '', date: '', timeFrom: '', timeTo: '' }, { emitEvent: false });
+    this._refreshHasActiveFilters();
     this.page = 1;
     this._load();
   }
 
-  get hasActiveFilters(): boolean {
-    return !!(this.searchCtrl.value ?? '').trim() || Object.values(this.filterForm.getRawValue()).some(v => !!v);
+  /** True when the search box or any filter is set. Recomputed when the controls change (and after a
+   * programmatic reset), not by a getter on every change-detection pass. */
+  hasActiveFilters = false;
+
+  private _refreshHasActiveFilters(): void {
+    this.hasActiveFilters = !!(this.searchCtrl.value ?? '').trim() || Object.values(this.filterForm.getRawValue()).some(v => !!v);
+    this._cdr.markForCheck();
   }
 
   private readonly _lookup = inject(LookupCacheService);

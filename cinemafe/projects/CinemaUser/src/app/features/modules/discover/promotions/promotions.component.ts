@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -14,6 +14,7 @@ type ProgramDTO = CinemaServiceAgent.PromotionProgramDTO;
 type CampaignFilter = 'all' | string;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-promotions',
   standalone: true,
   imports: [SharedModule, RouterLink],

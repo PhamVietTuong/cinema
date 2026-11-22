@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { SharedModule, QrCodeComponent, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase, joinSeatLabels } from 'CinemaLib';
@@ -8,6 +8,7 @@ const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
 const HISTORY_PAGE_SIZE = 10;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-profile',
   standalone: true,
   imports: [SharedModule, QrCodeComponent],

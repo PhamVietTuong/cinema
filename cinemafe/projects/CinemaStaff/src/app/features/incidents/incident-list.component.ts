@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, OnInit, effect, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, effect, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -44,6 +45,7 @@ export class IncidentListComponent implements OnInit {
   private readonly _dialog = inject(MatDialog);
   private readonly _cd = inject(ChangeDetectorRef);
   private readonly _filterChange$ = new Subject<void>();
+  private readonly _destroyRef = inject(DestroyRef);
 
   constructor(fb: FormBuilder) {
     this.searchForm = fb.group({ status: [''], category: [''], from: [''], to: [''] });
@@ -59,7 +61,7 @@ export class IncidentListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this._filterChange$.pipe(debounceTime(300)).subscribe(() => {
+    this._filterChange$.pipe(debounceTime(300), takeUntilDestroyed(this._destroyRef)).subscribe(() => {
       this.pageIndex = 0;
       this.load();
     });
@@ -94,7 +96,7 @@ export class IncidentListComponent implements OnInit {
     this._store.dispatch(showLoading());
     this._ops.getIncidents(CinemaServiceAgent.PagingSearchDTO.fromJS({
       pageIndex: this.pageIndex + 1, pageSize: this.pageSize, filters,
-    })).subscribe({
+    })).pipe(takeUntilDestroyed(this._destroyRef)).subscribe({
       next: result => {
         this.rows = result.results ?? [];
         this.total = result.totalCount ?? 0;
