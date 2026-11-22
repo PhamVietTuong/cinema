@@ -158,6 +158,19 @@ public class CinemaController : ApiControllerBase
                 return BadRequest("Only image files (jpg, png, webp, gif) are allowed.");
             }
 
+            // The extension and Content-Type are client-chosen, so also require the file's own leading bytes to be
+            // the image format the extension claims (a renamed HTML/script file must not be stored).
+            var header = new byte[ImageSignature.HeaderLength];
+            int headerRead;
+            await using (var probe = file.OpenReadStream())
+            {
+                headerRead = await probe.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false);
+            }
+            if (!ImageSignature.Matches(ext, header.AsSpan(0, headerRead)))
+            {
+                return BadRequest("The file content is not a valid image of the type its extension claims.");
+            }
+
             var uploadsDir = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
             Directory.CreateDirectory(uploadsDir);
 

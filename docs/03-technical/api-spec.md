@@ -95,7 +95,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 
 | Action | Verb | Auth | Request | Response | Notes |
 |---|---|---|---|---|---|
-| `UploadImage` | POST | Admin | `IFormFile` (jpg/png/webp/gif, ≤5MB) | `UploadResultDTO{Url}` | |
+| `UploadImage` | POST | Admin | `IFormFile` (jpg/png/webp/gif, ≤5MB) | `UploadResultDTO{Url}` | 400 when the extension/Content-Type is not an allowed image **or the file's leading bytes are not that image format** (`ImageSignature`; a renamed HTML/script/SVG file is refused) |
 | `GetRecommendedMovies` | POST | anonymous | `count` query (default 8) | `List<MovieDTO>` — personalized if signed in | |
 | `GetMovies` | POST | anonymous | `PagingSearchDTO` (filters `search`, `director`, `movieTypeId`, `language`, `theaterId`, `date`, `status` = `now`/`coming`) | `DefaultSearchResults<MovieDTO>` | |
 | `GetNowShowingMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsNowShowing` filter | |

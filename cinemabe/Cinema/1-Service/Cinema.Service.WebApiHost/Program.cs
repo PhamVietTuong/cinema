@@ -208,6 +208,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFrontend");
+// Baseline response hardening, before static files so /uploads gets it too: nosniff stops a browser from
+// treating an uploaded file as a script/HTML page, DENY stops the API being framed, and the referrer policy
+// keeps URLs (which can carry an access_token on the SignalR paths) out of cross-site Referer headers.
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    await next();
+});
 app.UseRateLimiter();
 // Serve uploaded images at /uploads/* from the on-disk uploads folder.
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "uploads");
@@ -228,6 +239,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 if (!app.Environment.IsDevelopment())
 {
+    app.UseHsts();
     app.UseHttpsRedirection();
 }
 app.UseAuthentication();
