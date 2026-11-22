@@ -11,56 +11,56 @@ public class MainLogger : ILog
 
     public void Verbose(string messageTemplate)
     {
-        try { Log.Logger.Verbose(messageTemplate); } catch { }
+        try { Log.Logger.Verbose(LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
     public void Verbose(Exception exception, string messageTemplate)
     {
-        try { Log.Logger.Verbose(exception, messageTemplate); } catch { }
+        try { Log.Logger.Verbose(exception, LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
 
     public void Debug(string messageTemplate)
     {
-        try { Log.Logger.Debug(messageTemplate); } catch { }
+        try { Log.Logger.Debug(LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
     public void Debug(Exception exception, string messageTemplate)
     {
-        try { Log.Logger.Debug(exception, messageTemplate); } catch { }
+        try { Log.Logger.Debug(exception, LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
 
     public void Information(string messageTemplate)
     {
-        try { Log.Logger.Information(messageTemplate); } catch { }
+        try { Log.Logger.Information(LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
     public void Information(Exception exception, string messageTemplate)
     {
-        try { Log.Logger.Information(exception, messageTemplate); } catch { }
+        try { Log.Logger.Information(exception, LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
 
     public void Warning(string messageTemplate)
     {
-        try { Log.Logger.Warning(messageTemplate); } catch { }
+        try { Log.Logger.Warning(LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
     public void Warning(Exception exception, string messageTemplate)
     {
-        try { Log.Logger.Warning(exception, messageTemplate); } catch { }
+        try { Log.Logger.Warning(exception, LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
 
     public void Error(string messageTemplate)
     {
-        try { Log.Logger.Error(messageTemplate); } catch { }
+        try { Log.Logger.Error(LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
     public void Error(Exception exception, string messageTemplate)
     {
-        try { Log.Logger.Error(exception, messageTemplate); } catch { }
+        try { Log.Logger.Error(exception, LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
 
     public void Fatal(string messageTemplate)
     {
-        try { Log.Logger.Fatal(messageTemplate); } catch { }
+        try { Log.Logger.Fatal(LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
     public void Fatal(Exception exception, string messageTemplate)
     {
-        try { Log.Logger.Fatal(exception, messageTemplate); } catch { }
+        try { Log.Logger.Fatal(exception, LogSanitizer.Neutralize(messageTemplate)); } catch { }
     }
 
     public void Write(LogEventLevel level, string messageTemplate)
@@ -68,7 +68,7 @@ public class MainLogger : ILog
         try
         {
             var serilogLevel = (Serilog.Events.LogEventLevel)Enum.Parse(typeof(Serilog.Events.LogEventLevel), level.ToString());
-            Log.Logger.Write(serilogLevel, messageTemplate);
+            Log.Logger.Write(serilogLevel, LogSanitizer.Neutralize(messageTemplate));
         }
         catch { }
     }
@@ -77,7 +77,7 @@ public class MainLogger : ILog
         try
         {
             var serilogLevel = (Serilog.Events.LogEventLevel)Enum.Parse(typeof(Serilog.Events.LogEventLevel), level.ToString());
-            Log.Logger.Write(serilogLevel, exception, messageTemplate);
+            Log.Logger.Write(serilogLevel, exception, LogSanitizer.Neutralize(messageTemplate));
         }
         catch { }
     }

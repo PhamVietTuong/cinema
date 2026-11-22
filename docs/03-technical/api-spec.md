@@ -141,7 +141,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 | `UserType` | **Admin-only even to list/get** | Admin | |
 | `MemberShip` | anonymous | Admin | |
 | `Holiday` | anonymous | Admin | |
-| `News` | anonymous | Admin | |
+| `News` | anonymous (`GetNewsList`, `GetNews`) — **published articles only**: a caller who is not an Admin never receives drafts, whatever `isPublished` filter they send (`GetNews` of a draft is 404); an Admin sees drafts too | Admin | |
 | `Person` | **Admin-only** for CRUD; `GetPeopleByNames` is `[AllowAnonymous]` | Admin | |
 | `PromotionCampaign` | `GetPromotionCampaigns` / `GetPromotionCampaign` (list is `[HttpPost]`) | Admin (`Create`/`Update`/`Delete`) | Campaign grouping for promotions (`#region PromotionCampaign`, `CinemaController.cs:1368`); standard CRUD, no extra actions |
 | `PromotionProgram` | `GetPublishedPromotionPrograms` `[AllowAnonymous]`; `GetPromotionPrograms`/`GetPromotionProgram` Admin | Admin | Single promotion/pricing entity; triggered by `Code` xor `AutoApply` |

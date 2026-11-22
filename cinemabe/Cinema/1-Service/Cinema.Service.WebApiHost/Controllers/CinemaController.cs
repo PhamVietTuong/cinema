@@ -1203,7 +1203,9 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(DefaultSearchResults<NewsDTO>), 200)]
     public Task<IActionResult> GetNewsList([FromBody] PagingSearchDTO search)
     {
-        return Run(nameof(GetNewsList), () => _news.GetAsync(search));
+        // Drafts are for admins only: everyone else (anonymous included) gets published articles whatever filter they send.
+        var publishedOnly = !User.IsAdmin();
+        return Run(nameof(GetNewsList), () => _news.GetAsync(search, publishedOnly));
     }
 
     [HttpGet]
@@ -1215,7 +1217,8 @@ public class CinemaController : ApiControllerBase
         {
             return notFound;
         }
-        return await Run(nameof(GetNews), () => _news.GetByIdAsync(id));
+        var publishedOnly = !User.IsAdmin();
+        return await Run(nameof(GetNews), () => _news.GetByIdAsync(id, publishedOnly));
     }
 
     [Authorize(Roles = _adminRole)]
