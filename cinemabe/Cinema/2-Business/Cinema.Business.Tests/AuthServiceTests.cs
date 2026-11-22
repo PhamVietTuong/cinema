@@ -215,7 +215,7 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task Register_NewEmail_CreatesUserAndReturnsToken()
+    public async Task Register_NewEmail_CreatesUserAndIssuesNoSession()
     {
         var createdUser = new User { Email = "new@test.com", Name = "New User", UserType = new UserType { Name = "User" } };
         _uowMock.Setup(u => u.UserStore.GetByEmailAsync("new@test.com")).ReturnsAsync((User?)null);
@@ -235,9 +235,86 @@ public class AuthServiceTests
             Phone = "0900000000"
         });
 
+        // The caller has not proven it owns the email, so no token may be issued (account pre-hijacking).
         result.Should().NotBeNull();
-        result.Token.Should().Be("jwt-token");
+        result.Token.Should().BeEmpty();
+        result.User.Should().NotBeNull();
+        _tokenMock.Verify(t => t.GenerateToken(It.IsAny<User>()), Times.Never);
         _uowMock.Verify(u => u.UserStore.CreateAsync(It.IsAny<User>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GoogleLogin_PreRegisteredUnconfirmedAccount_DropsThePreRegistrantsCredentials()
+    {
+        var user = ActiveUser("victim@gmail.com");
+        user.EmailConfirmed = false;
+        user.Phone = "0911111111";
+        user.EmailVerificationTokenHash = "abc";
+        var attackerHash = user.PasswordHash;
+        _googleMock.Setup(g => g.ValidateAsync("t")).ReturnsAsync(new GoogleUserInfo { Email = user.Email, Name = "V", EmailVerified = true, Subject = "g" });
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _tokenMock.Setup(t => t.GenerateToken(user)).Returns("jwt");
+        _tokenMock.Setup(t => t.GetTokenExpiry()).Returns(DateTime.UtcNow.AddHours(1));
+
+        await _sut.LoginWithGoogleAsync(new GoogleLoginRequest { IdToken = "t" });
+
+        user.EmailConfirmed.Should().BeTrue();
+        user.PasswordHash.Should().NotEqual(attackerHash);
+        user.Phone.Should().StartWith("g").And.NotBe("0911111111");
+        user.EmailVerificationTokenHash.Should().BeNull();
+        // The password the attacker chose no longer signs in.
+        await _sut.Invoking(s => s.LoginAsync(new LoginRequest { EmailOrPhone = user.Email, Password = "Password@1" }))
+            .Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task FacebookLogin_PreRegisteredUnconfirmedAccount_DropsThePreRegistrantsCredentials()
+    {
+        var user = ActiveUser("victim@fb.com");
+        user.EmailConfirmed = false;
+        var attackerHash = user.PasswordHash;
+        _facebookMock.Setup(f => f.ValidateAsync("t")).ReturnsAsync(new FacebookUserInfo { Email = user.Email, Name = "V" });
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _tokenMock.Setup(t => t.GenerateToken(user)).Returns("jwt");
+        _tokenMock.Setup(t => t.GetTokenExpiry()).Returns(DateTime.UtcNow.AddHours(1));
+
+        await _sut.LoginWithFacebookAsync(new FacebookLoginRequest { AccessToken = "t" });
+
+        user.EmailConfirmed.Should().BeTrue();
+        user.PasswordHash.Should().NotEqual(attackerHash);
+        user.Phone.Should().StartWith("f");
+    }
+
+    [Fact]
+    public async Task Login_TwoFactorAccount_PasswordLoginDoesNotResetTheFailureCounter()
+    {
+        var user = ActiveUser("2fa-count@test.com");
+        user.TwoFactorEnabled = true;
+        user.FailedLoginCount = 3;
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+
+        var result = await _sut.LoginAsync(new LoginRequest { EmailOrPhone = user.Email, Password = "Password@1" });
+
+        result.RequiresTwoFactor.Should().BeTrue();
+        user.FailedLoginCount.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task Login_PlainAccount_PasswordLoginResetsTheFailureCounter()
+    {
+        var user = ActiveUser("plain-count@test.com");
+        user.FailedLoginCount = 3;
+        _uowMock.Setup(u => u.UserStore.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+        _uowMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
+        _tokenMock.Setup(t => t.GenerateToken(user)).Returns("jwt");
+        _tokenMock.Setup(t => t.GetTokenExpiry()).Returns(DateTime.UtcNow.AddHours(1));
+
+        await _sut.LoginAsync(new LoginRequest { EmailOrPhone = user.Email, Password = "Password@1" });
+
+        user.FailedLoginCount.Should().Be(0);
     }
 
     [Fact]

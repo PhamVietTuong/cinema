@@ -35,7 +35,7 @@ No secret values are reproduced anywhere below — only key names, defaults as c
 |---|---|---|---|
 | `Google:ClientId` | Verifies Google ID tokens | optional — login returns 400 "Google login is not configured" if blank | `""` |
 | `Facebook:AppId` | Facebook login (not directly validated server-side; used in client flow) | optional | `""` |
-| `Facebook:AppSecret` | Enables `debug_token` app-id verification when present | optional — without it, token validation skips the app-id cross-check | `""` |
+| `Facebook:AppSecret` | Used for the `debug_token` app-id verification of every Facebook token | **required for Facebook login** — when blank, `FacebookLogin` is refused (fail closed) instead of skipping the app-id check | `""` |
 
 ### Email / SMS
 | Key | Purpose | Required | Default |

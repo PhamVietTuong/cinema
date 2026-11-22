@@ -50,6 +50,12 @@ export class AuthEffects {
       ofType(AuthActions.loginSuccess, AuthActions.registerSuccess),
       tap(action => {
         const response = (action as any).response;
+        // Registration no longer opens a session: the address is unverified, so send the user to the
+        // "check your email" screen (which also offers a resend) instead of storing a token that is not there.
+        if (!response.token) {
+          this._router.navigate(['/auth/verify-email'], { queryParams: { email: response.user?.email ?? '' } });
+          return;
+        }
         // Register (and a login without an explicit choice) defaults to persisting.
         const remember = 'rememberMe' in action ? (action as any).rememberMe !== false : true;
         TokenStorage.save(response.token, response.user, remember);

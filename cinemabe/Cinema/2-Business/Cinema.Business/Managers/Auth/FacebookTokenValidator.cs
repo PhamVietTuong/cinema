@@ -5,9 +5,9 @@ using Microsoft.Extensions.Configuration;
 namespace Cinema.Business.Managers.Auth;
 
 /// <summary>
-/// Validates a Facebook access token against the Graph API. When an app id + secret are
-/// configured, the token is first verified with <c>debug_token</c> to confirm it was
-/// issued for this app; then the user's profile is fetched from <c>/me</c>.
+/// Validates a Facebook access token against the Graph API. The app id AND secret are required: the token
+/// is first verified with <c>debug_token</c> to confirm it was issued for this app; then the user's profile
+/// is fetched from <c>/me</c>.
 /// </summary>
 public class FacebookTokenValidator : IFacebookTokenValidator
 {
@@ -34,26 +34,28 @@ public class FacebookTokenValidator : IFacebookTokenValidator
             throw new InvalidOperationException("Facebook login is not configured (Facebook:AppId is missing).");
         }
 
+        // Fail closed: without the app secret we cannot prove the token was issued to THIS app, and a token
+        // minted for any other Facebook app would then log in as whoever owns the email it returns.
         var appSecret = _config["Facebook:AppSecret"];
-
-        // If the app secret is configured, verify the token belongs to this app.
-        if (!string.IsNullOrWhiteSpace(appSecret))
+        if (string.IsNullOrWhiteSpace(appSecret))
         {
-            var appToken = $"{appId}|{appSecret}";
-            using var debug = await _http.GetAsync(
-                $"{GraphBase}/debug_token?input_token={Uri.EscapeDataString(accessToken)}&access_token={Uri.EscapeDataString(appToken)}");
-            if (!debug.IsSuccessStatusCode)
-            {
-                return null;
-            }
-            using var debugDoc = JsonDocument.Parse(await debug.Content.ReadAsStringAsync());
-            var data = debugDoc.RootElement.GetProperty("data");
-            var isValid = data.TryGetProperty("is_valid", out var v) && v.GetBoolean();
-            var tokenAppId = data.TryGetProperty("app_id", out var a) ? a.GetString() : null;
-            if (!isValid || tokenAppId != appId)
-            {
-                return null;
-            }
+            throw new InvalidOperationException("Facebook login is not configured (Facebook:AppSecret is missing).");
+        }
+
+        var appToken = $"{appId}|{appSecret}";
+        using var debug = await _http.GetAsync(
+            $"{GraphBase}/debug_token?input_token={Uri.EscapeDataString(accessToken)}&access_token={Uri.EscapeDataString(appToken)}");
+        if (!debug.IsSuccessStatusCode)
+        {
+            return null;
+        }
+        using var debugDoc = JsonDocument.Parse(await debug.Content.ReadAsStringAsync());
+        var data = debugDoc.RootElement.GetProperty("data");
+        var isValid = data.TryGetProperty("is_valid", out var v) && v.GetBoolean();
+        var tokenAppId = data.TryGetProperty("app_id", out var a) ? a.GetString() : null;
+        if (!isValid || tokenAppId != appId)
+        {
+            return null;
         }
 
         using var me = await _http.GetAsync(
