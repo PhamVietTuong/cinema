@@ -17,10 +17,10 @@ public class BoxOfficeManager : IBoxOfficeManager
         _booking = booking;
     }
 
-    public async Task<CounterQuoteDTO> QuoteAsync(Guid theaterId, CounterSaleRequest request)
+    public async Task<CounterQuoteDTO> QuoteAsync(Guid theaterId, Guid staffUserId, CounterSaleRequest request)
     {
         await ValidateRequestAsync(request);
-        return await _booking.QuoteCounterAsync(new CounterSaleContext { TheaterId = theaterId, Request = request });
+        return await _booking.QuoteCounterAsync(new CounterSaleContext { TheaterId = theaterId, StaffUserId = staffUserId, Request = request });
     }
 
     public async Task<CounterSaleResultDTO> SellAsync(Guid theaterId, Guid staffUserId, bool isApprover, CounterSaleRequest request)
