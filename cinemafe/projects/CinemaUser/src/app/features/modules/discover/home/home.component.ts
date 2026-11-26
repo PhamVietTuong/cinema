@@ -13,12 +13,13 @@ import { ScrollRowComponent } from '../../../../shared/scroll-row/scroll-row.com
 import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.directive';
 import { CountUpDirective } from '../../../../shared/count-up.directive';
 import { HeroMotionDirective } from '../../../../shared/hero-motion.directive';
+import { AmbientGlowDirective } from '../../../../shared/ambient-glow.directive';
 import { movieDetailCommands } from '../../../../shared/movie-route';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, ScrollRowComponent, RevealOnScrollDirective, CountUpDirective, HeroMotionDirective],
+  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, ScrollRowComponent, RevealOnScrollDirective, CountUpDirective, HeroMotionDirective, AmbientGlowDirective],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
