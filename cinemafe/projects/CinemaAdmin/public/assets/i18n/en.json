@@ -453,6 +453,13 @@
       "confirmReset": "Reset this day back to the default price (×1.0)?",
       "showRegular": "Show regular rates",
       "showHoliday": "Show holiday rate",
+      "holidayDefault": "Holiday default",
+      "holidayAllRoomTypes": "applies to every room type in this theater",
+      "editHolidayCellTitle": "Edit Holiday Rate",
+      "useHolidayDefault": "Use holiday default",
+      "confirmHolidayReset": "Remove this time slot's own rate and use the holiday's default factor?",
+      "decrease": "Decrease",
+      "increase": "Increase",
       "invalidSlots": "Not shown (wraps past midnight)",
       "bands": {
         "low": "Low",

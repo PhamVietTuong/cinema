@@ -492,3 +492,9 @@
   .hero-actions > * { min-height: 44px; justify-content: center; text-align: center; }
   .section-more { min-height: 44px; }
 }
+
+// Hero title: each word rises in turn after the block fades up.
+@media (prefers-reduced-motion: no-preference) {
+  .hw { display: inline-block; animation: hw-rise 0.6s var(--cx-ease, ease) backwards; animation-delay: calc(0.25s + var(--i, 0) * 0.09s); }
+}
+@keyframes hw-rise { from { opacity: 0; transform: translateY(0.45em); } to { opacity: 1; transform: none; } }

@@ -1466,8 +1466,9 @@ public class BookingManager : IBookingManager
     // RoomType-specific override if one exists for this room's RoomType) — PatronCategory.Price is an
     // absolute, independently-configured amount per seat kind (Standard/Double), never derived from
     // another row. On top of that: a single multiplier factor applies — if the showtime's date matches
-    // a Holiday, that holiday's PriceMultiplier wins outright (the weekday/TimeSlot row is not even
-    // queried); otherwise the TicketPrice matrix's (theater/roomType/timeSlot/dayOfWeek) row for that
+    // a Holiday, the holiday's factor wins outright — its HolidayTimeSlotPrice row for the showtime's
+    // TimeSlot if there is one, else the holiday's default PriceMultiplier — and the weekday matrix row
+    // is not even queried; otherwise the TicketPrice matrix's (theater/roomType/timeSlot/dayOfWeek) row for that
     // showtime's weekday applies, or 1.0 if no row matches. A 3D screening adds RoomType.ThreeDSurcharge;
     // and the showtime's own BasePrice is added last as a manual per-showtime surcharge (e.g. a premium
     // for a new release, 0 for a long-running title — NOT a multiplier, so it never interacts with the
@@ -1527,17 +1528,28 @@ public class BookingManager : IBookingManager
         var holidays = await _uow.HolidayStore.FindAsync(h => h.Date == date) ?? Enumerable.Empty<Holiday>();
         var holiday  = holidays.FirstOrDefault();
 
+        // The theater time slot whose [start, end) window contains the showtime's time-of-day. Needed on
+        // a holiday too, to pick the holiday's per-slot factor.
+        var slots = await _uow.TimeSlotStore.FindAsync(t => t.TheaterId == room.TheaterId) ?? Enumerable.Empty<TimeSlot>();
+        var slot  = slots.FirstOrDefault(s => TimeInSlot(timeOfDay, s));
+
         double priceFactor;
         if (holiday is not null)
         {
-            priceFactor = holiday.PriceMultiplier;
+            // The holiday's factor for this slot if it has one, else the holiday's default factor. Never
+            // layered on the weekday matrix below.
+            double? slotFactor = null;
+            if (slot is not null)
+            {
+                var slotRows = await _uow.HolidayTimeSlotPriceStore.FindAsync(h =>
+                                   h.HolidayId == holiday.Id && h.TimeSlotId == slot.Id)
+                               ?? Enumerable.Empty<HolidayTimeSlotPrice>();
+                slotFactor = slotRows.Select(r => (double?)r.PriceMultiplier).FirstOrDefault();
+            }
+            priceFactor = slotFactor ?? holiday.PriceMultiplier;
         }
         else
         {
-            // The theater time slot whose [start, end) window contains the showtime's time-of-day.
-            var slots = await _uow.TimeSlotStore.FindAsync(t => t.TheaterId == room.TheaterId) ?? Enumerable.Empty<TimeSlot>();
-            var slot  = slots.FirstOrDefault(s => TimeInSlot(timeOfDay, s));
-
             double? weekdayFactor = null;
             if (slot is not null)
             {

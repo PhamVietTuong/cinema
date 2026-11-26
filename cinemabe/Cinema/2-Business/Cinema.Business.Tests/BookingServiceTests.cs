@@ -220,8 +220,12 @@ public class BookingServiceTests
         IReadOnlyList<TicketPrice>? ticketPrices = null,
         RoomType? roomType = null,
         IReadOnlyList<PatronCategory>? categories = null,
-        IReadOnlyDictionary<SeatKind, Guid>? kindMap = null)
+        IReadOnlyDictionary<SeatKind, Guid>? kindMap = null,
+        IReadOnlyList<HolidayTimeSlotPrice>? holidaySlotPrices = null)
     {
+        var slotPriceRows = holidaySlotPrices ?? new List<HolidayTimeSlotPrice>();
+        _uowMock.Setup(u => u.HolidayTimeSlotPriceStore.FindAsync(It.IsAny<Expression<Func<HolidayTimeSlotPrice, bool>>>()))
+            .ReturnsAsync((Expression<Func<HolidayTimeSlotPrice, bool>> predicate) => slotPriceRows.Where(predicate.Compile()).ToList());
         _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(showTimeId, roomId))
             .ReturnsAsync(new ShowTimeRoom { ShowTimeId = showTimeId, RoomId = roomId, BasePrice = basePrice, ShowTime = OpenShowTime(showTimeId, startTime, projectionForm), Room = new Room { Id = roomId, TheaterId = theaterId, Status = RoomStatus.Active, Theater = new Theater { Id = theaterId, IsActive = true } } });
         _uowMock.Setup(u => u.RoomStore.GetByIdAsync(roomId))
@@ -299,6 +303,79 @@ public class BookingServiceTests
         // Holiday wins outright over the weekday matrix row: 100 x 1.5 = 150, NOT 100 x 2.
         result.Single().Price.Should().Be(150);
         _uowMock.Verify(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()), Times.Never);
+    }
+
+    // 2026-01-01 (Thursday) with an evening slot 18:00-22:00 and a late-night slot 22:00-24:00 (wrapping
+    // is not supported, so the late slot ends at 23:59). Holiday default 1.5.
+    private async Task<List<ShowTimePriceDTO>> PriceOnHolidayAsync(
+        int hour, IReadOnlyList<HolidayTimeSlotPrice> slotPrices, Guid holidayId, Guid eveningSlotId, Guid lateSlotId)
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var seatTypeId = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+
+        SetupPricingContext(
+            theaterId, roomTypeId, ShowTimeId1, RoomId1, basePrice: 0,
+            startTime: new DateTime(2026, 1, 1, hour, 0, 0), projectionForm: ProjectionForm.TwoD,
+            holidays: new List<Holiday> { new() { Id = holidayId, Name = "Tet", Date = new DateOnly(2026, 1, 1), PriceMultiplier = 1.5 } },
+            timeSlots: new List<TimeSlot>
+            {
+                new() { Id = eveningSlotId, TheaterId = theaterId, StartTime = "18:00", EndTime = "22:00" },
+                new() { Id = lateSlotId, TheaterId = theaterId, StartTime = "22:00", EndTime = "23:59" },
+            },
+            categories: new List<PatronCategory> { new() { Id = adultId, TheaterId = theaterId, SeatTypeId = seatTypeId, Name = "Adult", Price = 100, IsActive = true } },
+            kindMap: new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = seatTypeId },
+            holidaySlotPrices: slotPrices);
+
+        return await _sut.GetShowTimePricesAsync(ShowTimeId1, RoomId1);
+    }
+
+    [Fact]
+    public async Task GetShowTimePricesAsync_HolidaySlotRow_OverridesHolidayDefault()
+    {
+        var holidayId = Guid.NewGuid();
+        var evening   = Guid.NewGuid();
+        var late      = Guid.NewGuid();
+        var rows = new List<HolidayTimeSlotPrice>
+        {
+            new() { HolidayId = holidayId, TimeSlotId = evening, PriceMultiplier = 2 },
+            new() { HolidayId = holidayId, TimeSlotId = late, PriceMultiplier = 1.1 },
+        };
+
+        var evening19 = await PriceOnHolidayAsync(19, rows, holidayId, evening, late);
+        var late23    = await PriceOnHolidayAsync(23, rows, holidayId, evening, late);
+
+        // Each slot of the same holiday carries its own factor: 100 x 2 and 100 x 1.1, not 100 x 1.5.
+        evening19.Single().Price.Should().Be(200);
+        late23.Single().Price.Should().BeApproximately(110, 0.001);
+    }
+
+    [Fact]
+    public async Task GetShowTimePricesAsync_HolidaySlotWithoutRow_FallsBackToHolidayDefault()
+    {
+        var holidayId = Guid.NewGuid();
+        var evening   = Guid.NewGuid();
+        var late      = Guid.NewGuid();
+        // Only the evening slot is overridden; the late slot has no row.
+        var rows = new List<HolidayTimeSlotPrice> { new() { HolidayId = holidayId, TimeSlotId = evening, PriceMultiplier = 2 } };
+
+        var late23 = await PriceOnHolidayAsync(23, rows, holidayId, evening, late);
+
+        late23.Single().Price.Should().Be(150);
+    }
+
+    [Fact]
+    public async Task GetShowTimePricesAsync_HolidaySlotRowOfAnotherHoliday_IsIgnored()
+    {
+        var holidayId = Guid.NewGuid();
+        var evening   = Guid.NewGuid();
+        var late      = Guid.NewGuid();
+        var rows = new List<HolidayTimeSlotPrice> { new() { HolidayId = Guid.NewGuid(), TimeSlotId = evening, PriceMultiplier = 3 } };
+
+        var evening19 = await PriceOnHolidayAsync(19, rows, holidayId, evening, late);
+
+        evening19.Single().Price.Should().Be(150);
     }
 
     [Fact]

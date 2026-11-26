@@ -1,6 +1,7 @@
 <!-- ── HERO ─────────────────────────────────────────────────────────────── -->
 <section class="hero">
-  <ng-container *ngIf="featuredMovie$ | async as f; else heroDefault">
+  <ng-container *ngIf="featuredMovie$ | async as fm; else heroDefault">
+    @for (f of [fm]; track f.id) {
     <div class="hero-inner">
       <div class="hero-corner-badges">
         <span class="badge-pill badge-age hero-fade-up" style="animation-delay:0.05s" *ngIf="f.ageRestrictionCode">{{ f.ageRestrictionCode }}</span>
@@ -11,9 +12,9 @@
           <span class="badge-pill badge-imax">IMAX EXCLUSIVE</span>
           <span class="badge-pill badge-age">{{ f.ageRestrictionCode }}</span>
         </div>
-        <h1 class="hero-title hero-fade-up" style="animation-delay:0.2s">{{ f.title }}</h1>
+        <h1 class="hero-title hero-fade-up" style="animation-delay:0.2s">@for (w of f.title.split(' '); track $index) {<span class="hw" [style.--i]="$index">{{ w }}&#32;</span>}</h1>
         <div class="hero-meta hero-fade-up" style="animation-delay:0.3s">
-          <span class="meta-rating"><mat-icon>star</mat-icon> {{ f.averageRating | number:'1.1-1' }}</span>
+          <span class="meta-rating"><mat-icon>star</mat-icon> <span [appCountUp]="f.averageRating" [decimals]="1"></span></span>
           <span class="meta-dot">·</span>
           <span class="meta-duration">{{ 'home.movie.minutes' | translate:{ n: f.duration } }}</span>
           <ng-container *ngIf="f.genres?.length">
@@ -35,19 +36,20 @@
           </button>
         </div>
         <div class="hero-dots hero-fade-up" style="animation-delay:0.5s" aria-hidden="true">
-          <span class="hero-dot" *ngFor="let d of heroDots; let first = first" [class.is-active]="first"></span>
+          <span class="hero-dot" *ngFor="let d of heroDots" [class.is-active]="d === heroIndex"></span>
         </div>
       </div>
-      <div class="hero-visual">
+      <div class="hero-visual" appHeroMotion>
         <div class="poster-wrap">
           <img fetchpriority="high" decoding="async" [src]="f.posterUrl || 'assets/no-poster.jpg'" [alt]="f.title" class="poster-img" (error)="onImgError($event)">
           <div class="poster-rating">
             <mat-icon>star</mat-icon>
-            <span>{{ f.averageRating | number:'1.1-1' }}</span>
+            <span [appCountUp]="f.averageRating" [decimals]="1"></span>
           </div>
         </div>
       </div>
     </div>
+    }
   </ng-container>
   <ng-template #heroDefault>
     <div class="hero-inner hero-inner--default">
@@ -69,7 +71,7 @@
 
 <!-- ── RECOMMENDED FOR YOU ─────────────────────────────────────────────────── -->
 <section class="section" *ngIf="recommended.length">
-  <div class="section-header">
+  <div class="section-header cu-reveal" appRevealOnScroll>
     <div class="section-titlewrap">
       <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
       <h2 class="section-title">{{ 'home.sections.recommended' | translate }}</h2>
@@ -82,24 +84,29 @@
 
 <!-- ── NOW SHOWING ─────────────────────────────────────────────────────────── -->
 <section class="section">
-  <div class="section-header">
+  <div class="section-header cu-reveal" appRevealOnScroll>
     <div class="section-titlewrap">
       <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
       <h2 class="section-title">{{ 'home.sections.nowShowing' | translate }}</h2>
     </div>
     <a routerLink="/movies" class="section-more">{{ 'home.sections.viewAll' | translate }} <mat-icon>chevron_right</mat-icon></a>
   </div>
-  <div *ngIf="loading$ | async" class="spinner-wrap">
-    <mat-spinner diameter="36"></mat-spinner>
-  </div>
-  <app-scroll-row>
-    <app-movie-card *ngFor="let movie of nowShowing$ | async" [movie]="movie" [fixedWidth]="true" [actions]="true"></app-movie-card>
-  </app-scroll-row>
+  @if ((loading$ | async) && !(nowShowing$ | async)?.length) {
+    <app-scroll-row aria-busy="true">
+      @for (s of skeletons; track s) {
+        <div class="cu-skeleton-card"><i class="cu-sk cu-sk--poster"></i><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></div>
+      }
+    </app-scroll-row>
+  } @else {
+    <app-scroll-row>
+      <app-movie-card *ngFor="let movie of nowShowing$ | async" [movie]="movie" [fixedWidth]="true" [actions]="true"></app-movie-card>
+    </app-scroll-row>
+  }
 </section>
 
 <!-- ── COMING SOON ─────────────────────────────────────────────────────────── -->
 <section class="section section--dark">
-  <div class="section-header">
+  <div class="section-header cu-reveal" appRevealOnScroll>
     <div class="section-titlewrap">
       <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
       <h2 class="section-title">{{ 'home.sections.comingSoon' | translate }}</h2>
@@ -113,7 +120,7 @@
 
 <!-- ── PROMOTIONS ──────────────────────────────────────────────────────────── -->
 <section class="section" *ngIf="promotions.length">
-  <div class="section-header">
+  <div class="section-header cu-reveal" appRevealOnScroll>
     <div class="section-titlewrap">
       <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
       <h2 class="section-title">{{ 'home.sections.promotions' | translate }}</h2>

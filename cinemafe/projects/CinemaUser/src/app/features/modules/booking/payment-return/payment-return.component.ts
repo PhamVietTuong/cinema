@@ -22,6 +22,8 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
 
   readonly InvoiceStatus = PaymentServiceAgent.InvoiceStatus;
 
+  /** 12 confetti pieces fired in a ring around the success tick (pure CSS). */
+  readonly confetti = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   state: ReturnState = 'verifying';
   invoiceId = '';
   invoice: PaymentServiceAgent.InvoiceDTO | null = null;

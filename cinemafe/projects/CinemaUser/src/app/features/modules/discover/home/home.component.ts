@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, of, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import {
@@ -11,13 +11,15 @@ import { MovieCardComponent } from '../../../../shared/movie-card/movie-card.com
 import { SiteFooterComponent } from '../../../../shared/site-footer/site-footer.component';
 import { ScrollRowComponent } from '../../../../shared/scroll-row/scroll-row.component';
 import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.directive';
+import { CountUpDirective } from '../../../../shared/count-up.directive';
+import { HeroMotionDirective } from '../../../../shared/hero-motion.directive';
 import { movieDetailCommands } from '../../../../shared/movie-route';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-home',
   standalone: true,
-  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, ScrollRowComponent, RevealOnScrollDirective],
+  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, ScrollRowComponent, RevealOnScrollDirective, CountUpDirective, HeroMotionDirective],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
@@ -27,8 +29,11 @@ export class HomeComponent implements OnInit {
   private _dialogs = inject(DialogService);
 
   readonly movieDetailCommands = movieDetailCommands;
-  /** Decorative only — there is a single featured slide, so the dots never advance. */
-  readonly heroDots = [0, 1, 2, 3];
+  /** One dot per hero slide (up to 4); the active dot's sweep animation lasts HERO_INTERVAL_MS. */
+  heroDots: number[] = [0];
+  heroIndex = 0;
+  readonly skeletons = [0, 1, 2, 3, 4];
+  private static readonly HERO_INTERVAL_MS = 5000;
 
   nowShowing$: Observable<any[]>;
   comingSoon$: Observable<any[]>;
@@ -44,7 +49,18 @@ export class HomeComponent implements OnInit {
     this.nowShowing$ = this._store.select(selectNowShowing);
     this.comingSoon$ = this._store.select(selectComingSoon);
     this.loading$ = this._store.select(selectMoviesLoading);
-    this.featuredMovie$ = this.nowShowing$.pipe(map(movies => movies?.[0] ?? null));
+    // Cycles through the first four now-showing movies; reduced-motion visitors keep the first one.
+    const rotate = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? of(0)
+      : timer(HomeComponent.HERO_INTERVAL_MS, HomeComponent.HERO_INTERVAL_MS).pipe(map(n => n + 1));
+    this.featuredMovie$ = combineLatest([this.nowShowing$, rotate]).pipe(
+      map(([movies, tick]) => {
+        const slides = (movies ?? []).slice(0, 4);
+        this.heroDots = slides.length ? slides.map((_, i) => i) : [0];
+        this.heroIndex = slides.length ? tick % slides.length : 0;
+        return slides[this.heroIndex] ?? null;
+      }),
+    );
   }
 
   ngOnInit(): void {

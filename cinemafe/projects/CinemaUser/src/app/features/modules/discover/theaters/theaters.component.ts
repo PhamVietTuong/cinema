@@ -2,11 +2,13 @@ import { ChangeDetectorRef, Component, OnInit, inject, ChangeDetectionStrategy }
 import { TranslateService } from '@ngx-translate/core';
 import { SharedModule, CinemaServiceAgent, LookupCacheService } from 'CinemaLib';
 
+import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.directive';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-theaters',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, RevealOnScrollDirective],
   templateUrl: './theaters.component.html',
   styleUrl: './theaters.component.scss',
 })

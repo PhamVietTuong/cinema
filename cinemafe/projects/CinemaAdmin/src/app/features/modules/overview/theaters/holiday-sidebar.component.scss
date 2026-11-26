@@ -30,6 +30,7 @@
 
 .hs-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 10px;
@@ -44,6 +45,37 @@
 
 .hs-row-actions { display: flex; flex-shrink: 0; }
 
+.hs-chips {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+// A chip is the holiday's factor for one time slot; an outlined one is the slot's own price, a dashed one
+// still follows the holiday default.
+.hs-chip {
+  padding: 4px 10px;
+  border-radius: var(--ml-r-full);
+  border: 1px dashed var(--ml-rule);
+  background: var(--ml-panel-2);
+  color: var(--ml-ink-2);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  &--own {
+    border-style: solid;
+    border-color: var(--ml-action);
+    color: var(--ml-ink);
+    font-weight: 600;
+  }
+}
+
 @include m.tablet {
   :host { width: 100%; flex: 1 1 100%; }
+}
+
+@include m.tablet-small {
+  .hs-chip { min-height: 44px; }
 }

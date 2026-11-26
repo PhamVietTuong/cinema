@@ -1,5 +1,5 @@
-// Ticket-stub poster card — no shadow, no lift. Hover raises the border and
-// scales the poster only; a rating/age badge sits on a paper tint, never gold
+// Ticket-stub poster card. Hover raises the border, scales the poster and (on hover-capable
+// devices, motion allowed) lifts the whole card with a soft shadow; a rating/age badge sits on a paper tint, never gold
 // (gold is reserved for the one action — booking).
 @use 'lib/theme/mixins' as m;
 
@@ -285,4 +285,11 @@
 // 44px hit area for the one-line card title link without moving it: padding is cancelled by the negative top margin.
 @include m.tablet-small {
   .mc-title--link { padding-block: 10px; margin: -10px 0 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .mc-card--actions.is-revealed {
+    transition: opacity 0.6s ease, transform 0.3s var(--cx-ease, ease), box-shadow 0.3s ease, border-color var(--cx-dur) var(--cx-ease);
+    &:hover { transform: translateY(-6px); box-shadow: 0 14px 28px rgb(0 0 0 / 0.18); }
+  }
 }

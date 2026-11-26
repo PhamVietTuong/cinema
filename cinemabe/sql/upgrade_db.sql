@@ -1501,6 +1501,25 @@ BEGIN
 END
 -- ===== end performance indexes =====
 
+-- ===== Holiday per-time-slot prices =====
+IF OBJECT_ID('dbo.HolidayTimeSlotPrice', 'U') IS NULL
+BEGIN
+    CREATE TABLE [HolidayTimeSlotPrice] (
+        [Id] uniqueidentifier NOT NULL DEFAULT NEWID(),
+        [HolidayId] uniqueidentifier NOT NULL,
+        [TimeSlotId] uniqueidentifier NOT NULL,
+        [PriceMultiplier] float NOT NULL DEFAULT 1,
+        [CreationTime] datetime NOT NULL,
+        [LastUpdatedTime] datetime NULL,
+        CONSTRAINT [PK_HolidayTimeSlotPrice] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_HolidayTimeSlotPrice_Holiday_HolidayId] FOREIGN KEY ([HolidayId]) REFERENCES [Holiday] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_HolidayTimeSlotPrice_TimeSlot_TimeSlotId] FOREIGN KEY ([TimeSlotId]) REFERENCES [TimeSlot] ([Id]) ON DELETE CASCADE
+    );
+    CREATE INDEX [IX_HolidayTimeSlotPrice_TimeSlotId] ON [HolidayTimeSlotPrice] ([TimeSlotId]);
+    CREATE UNIQUE INDEX [IX_HolidayTimeSlotPrice_HolidayId_TimeSlotId] ON [HolidayTimeSlotPrice] ([HolidayId], [TimeSlotId]);
+END
+-- ===== end Holiday per-time-slot prices =====
+
 -- ============================================================
 -- EF Core migrations baseline
 -- ============================================================

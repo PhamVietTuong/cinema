@@ -8,6 +8,7 @@ import {
 } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import { BookingCheckoutState, stashPendingCheckout } from '../booking-checkout/booking-checkout.state';
+import { CountUpDirective } from '../../../../shared/count-up.directive';
 
 type ShowTimePriceDTO = PaymentServiceAgent.ShowTimePriceDTO;
 
@@ -31,7 +32,7 @@ interface TicketSlot {
 @Component({
   selector: 'app-booking-selection',
   standalone: true,
-  imports: [SharedModule, SeatMapComponent],
+  imports: [SharedModule, SeatMapComponent, CountUpDirective],
   templateUrl: './booking-selection.component.html',
   styleUrl: './booking-selection.component.scss'
 })

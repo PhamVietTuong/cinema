@@ -1,0 +1,50 @@
+<div mat-dialog-title class="dialog-title">{{ 'theaters.ticketPrices.editHolidayCellTitle' | translate }}</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="dlg-grid">
+      <p class="ad-sub tp-dialog-sub">
+        ★ {{ data.holiday.name }} · {{ data.holidayDate }}<br>
+        {{ data.timeSlot.name }} ({{ data.timeSlot.startTime }}–{{ data.timeSlot.endTime }})
+      </p>
+
+      <div class="dlg-row">
+        <div class="dlg-field">
+          <span class="dlg-label">{{ 'theaters.ticketPrices.multiplierLabel' | translate }}</span>
+          <div class="tp-stepper">
+            <button type="button" mat-icon-button [attr.aria-label]="'theaters.ticketPrices.decrease' | translate" (click)="adjustMultiplier(-0.05)"><mat-icon>remove</mat-icon></button>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tp-stepper-field">
+              <input matInput type="number" step="0.05" min="0.05" formControlName="priceMultiplier">
+            </mat-form-field>
+            <button type="button" mat-icon-button [attr.aria-label]="'theaters.ticketPrices.increase' | translate" (click)="adjustMultiplier(0.05)"><mat-icon>add</mat-icon></button>
+          </div>
+          <mat-hint class="tp-hint">
+            {{ 'theaters.ticketPrices.holidayDefault' | translate }} {{ data.holiday.priceMultiplier | number:'1.1-2' }}× —
+            {{ 'theaters.ticketPrices.holidayAllRoomTypes' | translate }}
+          </mat-hint>
+          @if (showLateNightWarning) {
+            <div class="tp-warning" role="status" data-testid="late-night-warning">
+              <mat-icon class="tp-warning-icon" aria-hidden="true">warning_amber</mat-icon>
+              <span>{{ 'theaters.ticketPrices.lateNightWarning' | translate }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <div mat-dialog-actions class="dialog-actions">
+    @if (data.existing) {
+      <button mat-button type="button" color="warn" (click)="useDefault()">
+        {{ 'theaters.ticketPrices.useHolidayDefault' | translate }}
+      </button>
+    }
+    <span class="tp-actions-spacer"></span>
+    <button mat-raised-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="submit">{{ 'common.save' | translate }}</button>
+  </div>
+</form>
+
+<button mat-icon-button type="button" class="dialog-close-btn" [attr.aria-label]="'common.close' | translate" (click)="cancel()">
+  <mat-icon>close</mat-icon>
+</button>
