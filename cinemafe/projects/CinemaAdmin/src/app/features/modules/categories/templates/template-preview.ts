@@ -1,4 +1,3 @@
-import * as QRCode from 'qrcode';
 
 /** Sample booking used to fill a template's tokens in the live preview. Mirrors the keys produced by
  * BookingManager.BuildConfirmationValues (cinemabe) — keep the two in sync. */
@@ -35,7 +34,7 @@ function escapeHtml(value: string): string {
  * and `QrImages` is trusted markup; `cid:` inline-image references are pointed at assets the browser can load. */
 export async function renderTemplatePreview(body: string, isEmail: boolean): Promise<string> {
   const qrDataUrl = isEmail && body.includes('{{QrImages}}')
-    ? await QRCode.toDataURL(SAMPLE_VALUES['QrCodes'], { margin: 0, width: 152 })
+    ? await (await import('qrcode')).toDataURL(SAMPLE_VALUES['QrCodes'], { margin: 0, width: 152 })
     : '';
   const qrImages = qrDataUrl
     ? `<div style="display:inline-block;margin:4px 6px;text-align:center;"><div style="background:#ffffff;border-radius:12px;padding:12px;">` +

@@ -1,11 +1,12 @@
 import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { RouterModule } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
-import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 import {
   CinemaLibModule,
   authReducer, moviesReducer,
@@ -20,21 +21,24 @@ import {
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { App } from './app';
-import { ChatbotComponent } from './shared/chatbot/chatbot.component';
 
 @NgModule({
   declarations: [App],
   imports: [
     BrowserModule,
-    BrowserAnimationsModule,
     RouterModule.forRoot(routes),
     CinemaLibModule,
-    ChatbotComponent,
     StoreModule.forRoot({ auth: authReducer, movies: moviesReducer }),
     EffectsModule.forRoot([AuthEffects, MoviesEffects]),
-    StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: environment.production }),
   ],
   providers: [
+    // Animations engine loads lazily (a separate chunk) instead of in the initial bundle.
+    provideAnimationsAsync(),
+    // Devtools instrumentation only in dev builds — it keeps 25 state snapshots in memory.
+    ...(environment.production ? [] : [provideStoreDevtools({ maxAge: 25 })]),
+    // The root no longer pulls the whole SharedModule (and its MatNativeDateModule) in, so provide the date adapter
+    // that dialogs opened from root-level services and the lazy datepickers rely on.
+    provideNativeDateAdapter(),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideCinemaTranslation(),
     ...provideCinemaSvgIcons(),

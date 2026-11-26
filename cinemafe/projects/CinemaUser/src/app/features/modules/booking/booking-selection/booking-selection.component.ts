@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Subscription, take } from 'rxjs';
+import { Subject, Subscription, take, takeUntil } from 'rxjs';
 import {
   SharedModule, PaymentServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, selectIsAuthenticated,
   SeatMapComponent, SeatLockSessionService, SelectableSeat, seatRows, seatsByRow, seatLabel, joinSeatLabels, seatGroupOf, isGroupBlocked, physicalSeatPrice, foodOrderCap,
@@ -37,6 +37,8 @@ interface TicketSlot {
   styleUrl: './booking-selection.component.scss'
 })
 export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
+  /** Completes on destroy so in-flight room/theater/seat lookups don't touch a dead view. */
+  private readonly _destroy$ = new Subject<void>();
   /** Fallback cap until the theater's own `maxSeatsPerBooking` has loaded. */
   static readonly MAX_TICKETS = 10;
   private _maxSeats = BookingSelectionComponent.MAX_TICKETS;
@@ -293,6 +295,8 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this._destroy$.next();
+    this._destroy$.complete();
     this._barObserver?.disconnect();
     this._clearBarHeight();
     this._subs.unsubscribe();
@@ -377,7 +381,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
 
     this._paymentService.getSeats(
       PaymentServiceAgent.PagingSearchDTO.fromJS({ filters: { showTimeId: this.showTimeId, roomId: this.roomId } })
-    ).subscribe({
+    ).pipe(takeUntil(this._destroy$)).subscribe({
       next: r => {
         if (seq !== this._loadSeq) { return; } // superseded by a later switch
         this.seats = r.results ?? [];
@@ -394,14 +398,14 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
     });
 
     if (this.roomId) {
-      this._cinemaService.getRoom(this.roomId).subscribe({
+      this._cinemaService.getRoom(this.roomId).pipe(takeUntil(this._destroy$)).subscribe({
         next: room => {
           if (seq !== this._loadSeq) { return; }
           this.roomName = room?.name ?? '';
           this._cdr.markForCheck();
           if (!room?.theaterId) { return; }
           this._theaterId = room.theaterId;
-          this._cinemaService.getTheater(room.theaterId).subscribe({
+          this._cinemaService.getTheater(room.theaterId).pipe(takeUntil(this._destroy$)).subscribe({
             next: t => {
               if (seq !== this._loadSeq) { return; }
               if (t?.maxSeatsPerBooking && t.maxSeatsPerBooking > 0) {
@@ -413,6 +417,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
           });
           this._cinemaService.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS(
             { pageIndex: 1, pageSize: 100, filters: { theaterId: room.theaterId } }))
+            .pipe(takeUntil(this._destroy$))
             .subscribe(r => {
               if (seq !== this._loadSeq) { return; }
               this.foods = (r.results ?? []).filter(f => f.isAvailable);
@@ -428,7 +433,7 @@ export class BookingSelectionComponent implements OnInit, OnChanges, OnDestroy {
       });
     }
 
-    this._paymentService.getShowTimePrices(this.showTimeId, this.roomId).subscribe({
+    this._paymentService.getShowTimePrices(this.showTimeId, this.roomId).pipe(takeUntil(this._destroy$)).subscribe({
       next: rows => {
         if (seq !== this._loadSeq) { return; }
         // ID-check categories (student, senior...) are counter-only: the server rejects them online, so they are not offered.

@@ -41,7 +41,7 @@
       </div>
       <div class="hero-visual" appHeroMotion>
         <div class="poster-wrap">
-          <img [src]="f.posterUrl || 'assets/no-poster.jpg'" [alt]="f.title" class="poster-img" (error)="onImgError($event)">
+          <img fetchpriority="high" decoding="async" [src]="f.posterUrl || 'assets/no-poster.jpg'" [alt]="f.title" class="poster-img" (error)="onImgError($event)">
           <div class="poster-rating">
             <mat-icon>star</mat-icon>
             <span [appCountUp]="f.averageRating" [decimals]="1"></span>
@@ -130,7 +130,7 @@
   <app-scroll-row>
     <a *ngFor="let p of promotions" class="promo-card" routerLink="/promotions" appRevealOnScroll>
       <div class="promo-card-img">
-        <img [src]="p.bannerUrl || 'assets/promo-banner.png'" [alt]="p.title">
+        <img loading="lazy" decoding="async" [src]="p.bannerUrl || 'assets/promo-banner.png'" [alt]="p.title">
         <span class="promo-card-badge">{{ eligibilityLabel(p) | translate }}</span>
       </div>
       <div class="promo-card-body">
@@ -166,7 +166,7 @@
       </a>
     </div>
     <div class="membership-visual">
-      <img class="membership-img" src="assets/gold-member.png" alt="">
+      <img loading="lazy" decoding="async" class="membership-img" src="assets/gold-member.png" alt="">
     </div>
   </div>
 </section>

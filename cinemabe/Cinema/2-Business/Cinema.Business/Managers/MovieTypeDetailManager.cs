@@ -18,24 +18,20 @@ public class MovieTypeDetailManager : IMovieTypeDetailManager
     public async Task<DefaultSearchResults<MovieTypeDetailDTO>> GetAsync(PagingSearchDTO search)
     {
         search ??= new PagingSearchDTO();
-        var all = (await _uow.MovieTypeDetailStore.GetAllAsync())
-            .Select(x => new MovieTypeDetailDTO
-            {
-                MovieId = x.MovieId,
-                MovieTypeId = x.MovieTypeId,
-                MovieTitle = x.Movie?.Title ?? string.Empty,
-                MovieTypeName = x.MovieType?.Name ?? string.Empty,
-            })
-            .ToList();
-
         var page = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize = search.PageSize > 0 ? search.PageSize : 20;
-        var paged = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        var (rows, total) = await _uow.MovieTypeDetailStore.GetPagedAsync(page, pageSize);
 
         return new DefaultSearchResults<MovieTypeDetailDTO>
         {
-            Results = paged,
-            TotalCount = all.Count,
+            Results = rows.Select(x => new MovieTypeDetailDTO
+            {
+                MovieId = x.MovieId,
+                MovieTypeId = x.MovieTypeId,
+                MovieTitle = x.MovieTitle,
+                MovieTypeName = x.MovieTypeName,
+            }).ToList(),
+            TotalCount = total,
             CountPerPage = pageSize,
             Page = page,
         };

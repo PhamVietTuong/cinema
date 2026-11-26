@@ -13,6 +13,9 @@ public class InvoiceTicketConfiguration : IEntityTypeConfiguration<InvoiceTicket
         b.Property(it => it.PatronCategoryName).HasMaxLength(100);
         b.Property(it => it.PatronDiscountPercent).HasColumnType("float");
         b.Property(it => it.SeatLabel).HasMaxLength(16);
+        // A ticket QR is a 32-char GUID ("N" format); bounded so it can be indexed for gate lookups.
+        b.Property(it => it.QrCode).HasMaxLength(64);
+        b.HasIndex(it => it.QrCode).HasDatabaseName("IX_InvoiceTicket_QrCode").HasFilter("[QrCode] IS NOT NULL");
         // DB-level guarantee that one seat can't be held by two active bookings across server instances.
         b.HasIndex(it => new { it.ShowTimeId, it.RoomId, it.SeatId })
             .IsUnique()

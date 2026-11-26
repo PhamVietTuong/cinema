@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,6 +7,7 @@ import { ImageUploadService } from '../../../../shared/image-upload.service';
 
 /** Theater detail page: info on top, per-theater management tabs below. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-theater-detail',
   standalone: false,
   templateUrl: './theater-detail.component.html',

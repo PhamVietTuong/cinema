@@ -14,7 +14,7 @@
         <button class="ad-icon-btn" type="button" (click)="nextWeek()" [title]="'showTimes.nextWeek' | translate"><mat-icon>chevron_right</mat-icon></button>
       </div>
       <mat-form-field appearance="outline" class="st-movie-filter" subscriptSizing="dynamic">
-        <mat-select [(ngModel)]="filterMovieId" (selectionChange)="onFilterChange()">
+        <mat-select [(ngModel)]="filterMovieId" (selectionChange)="onFilterChange()" (openedChange)="onMovieFilterOpened($event)">
           <mat-option value="">{{ 'showTimes.allMovies' | translate }}</mat-option>
           <mat-option *ngFor="let m of movies" [value]="m.id">{{ m.title }}</mat-option>
         </mat-select>

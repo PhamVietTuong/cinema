@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CinemaServiceAgent, ToastService } from 'CinemaLib';
@@ -7,6 +7,7 @@ import { CinemaServiceAgent, ToastService } from 'CinemaLib';
  * setting, or the built-in default of 1.000đ = 1 point / 100 points = 1.000đ) and lets an admin
  * change it or reset it to the default. There is no global setting. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-theater-loyalty',
   standalone: false,
   templateUrl: './theater-loyalty.component.html',

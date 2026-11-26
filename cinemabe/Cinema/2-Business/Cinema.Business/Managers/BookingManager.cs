@@ -18,6 +18,7 @@ using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 using Cinema.Data.Enums;
 using Cinema.Foundation.Logging;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Business.Managers;
@@ -26,15 +27,65 @@ public class BookingManager : IBookingManager
 {
     private readonly IApplicationUnitOfWork _uow;
     private readonly IAuditLogger _auditLogger;
-    // connectionId -> (connectionId, lockedAt)
-    private static readonly ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)> _lockedSeats = new();
+    // seat key -> (owning connection, owning user, lockedAt)
+    private static readonly ConcurrentDictionary<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)> _lockedSeats = new();
     // Process-local booking gate keyed by {showTimeId}:{roomId}. Serializes the read-booked-then-insert
     // sequence so two concurrent requests can't both pass the "seat free" check and double-sell a seat.
     // Consistent with the process-local lock design above; a multi-instance deployment must additionally
     // enforce this at the DB (e.g. a unique constraint on active (ShowTimeId, RoomId, SeatId)).
-    private static readonly ConcurrentDictionary<string, SemaphoreSlim> _bookingGates = new();
-    private static SemaphoreSlim BookingGate(Guid showTimeId, Guid roomId)
-        => _bookingGates.GetOrAdd($"{showTimeId}:{roomId}", _ => new SemaphoreSlim(1, 1));
+    // Ref-counted so an idle gate is dropped from the dictionary instead of leaking one semaphore per showtime+room.
+    private static readonly Dictionary<string, BookingGateEntry> _bookingGates = new();
+    private static readonly object _bookingGatesLock = new();
+    private static BookingGateEntry BookingGate(Guid showTimeId, Guid roomId)
+    {
+        var key = $"{showTimeId}:{roomId}";
+        lock (_bookingGatesLock)
+        {
+            if (!_bookingGates.TryGetValue(key, out var entry))
+            {
+                entry = new BookingGateEntry(key);
+                _bookingGates[key] = entry;
+            }
+            entry.Users++;
+            return entry;
+        }
+    }
+
+    private sealed class BookingGateEntry
+    {
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
+        private readonly string _key;
+        public int Users;
+
+        public BookingGateEntry(string key)
+        {
+            _key = key;
+        }
+
+        public Task WaitAsync()
+        {
+            return _semaphore.WaitAsync();
+        }
+
+        public void Release()
+        {
+            _semaphore.Release();
+            lock (_bookingGatesLock)
+            {
+                Users--;
+                if (Users == 0)
+                {
+                    _bookingGates.Remove(_key);
+                }
+            }
+        }
+    }
+
+    // connection id -> seat keys it holds, so releasing a connection is O(its locks) instead of O(all locks).
+    // May hold stale keys (a lock that expired or was taken over); every use re-checks ownership in _lockedSeats.
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _locksByConnection = new();
+    // A single connection may hold at most this many advisory seat locks, so one client cannot lock a whole room.
+    private const int MaxLocksPerConnection = 20;
 
     private readonly IPaymentGatewayResolver _gateways;
     private readonly INotificationService _notifications;
@@ -43,10 +94,15 @@ public class BookingManager : IBookingManager
 
     private readonly IStaffNotificationService _staffNotifications;
     private readonly IConfiguration? _config;
+    private readonly INotificationDispatcher? _dispatcher;
+    private readonly IMemoryCache? _cache;
+    private static readonly TimeSpan _pricingCacheTtl = TimeSpan.FromSeconds(45);
 
-    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null, IAuditLogger? auditLogger = null)
+    public BookingManager(IApplicationUnitOfWork uow, IPaymentGatewayResolver gateways, INotificationService notifications, ISmsNotificationService sms, ISeatNotificationService seatNotifications, IStaffNotificationService? staffNotifications = null, IConfiguration? config = null, IAuditLogger? auditLogger = null, INotificationDispatcher? dispatcher = null, IMemoryCache? cache = null)
     {
         _config = config;
+        _dispatcher = dispatcher;
+        _cache = cache;
         _uow = uow;
         _gateways = gateways;
         _notifications = notifications;
@@ -92,9 +148,8 @@ public class BookingManager : IBookingManager
                 };
             }
 
-            var key      = SeatKey(showTimeId, roomId, s.Id);
             var isBooked = bookedIds.Contains(s.Id);
-            var isLocked = _lockedSeats.ContainsKey(key);
+            var isLocked = IsSeatLocked(showTimeId, roomId, s.Id);
             var kind     = s.EffectiveKind();
             return new SeatDTO
             {
@@ -158,6 +213,7 @@ public class BookingManager : IBookingManager
                 DiscountCode   = request.DiscountCode,
                 PointsToRedeem = request.PointsToRedeem,
                 ConnectionId   = request.ConnectionId,
+                BookerUserId   = userId,
                 AgeConfirmed   = request.AgeConfirmed,
             });
 
@@ -192,7 +248,7 @@ public class BookingManager : IBookingManager
             {
                 foreach (var seatItem in request.Seats)
                 {
-                    UnlockSeat(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId);
+                    UnlockSeat(request.ShowTimeId, request.RoomId, seatItem.SeatId, request.ConnectionId, userId);
                 }
             }
             await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId, request.RoomId, request.Seats.Select(s => s.SeatId).ToList());
@@ -257,7 +313,7 @@ public class BookingManager : IBookingManager
 
         // Same per-showtime+room gate as an online booking, so a counter sale and an online booking can never both
         // pass the "seat free" check. A food-only sale touches no seat and needs no gate.
-        SemaphoreSlim? gate = null;
+        BookingGateEntry? gate = null;
         if (hasSeats)
         {
             gate = BookingGate(request.ShowTimeId!.Value, request.RoomId!.Value);
@@ -328,7 +384,7 @@ public class BookingManager : IBookingManager
                 {
                     foreach (var seatItem in request.Seats)
                     {
-                        UnlockSeat(request.ShowTimeId!.Value, request.RoomId!.Value, seatItem.SeatId, request.ConnectionId);
+                        UnlockSeat(request.ShowTimeId!.Value, request.RoomId!.Value, seatItem.SeatId, request.ConnectionId, context.StaffUserId);
                     }
                 }
                 await _seatNotifications.NotifySeatsBookedAsync(request.ShowTimeId!.Value, request.RoomId!.Value, request.Seats.Select(s => s.SeatId).ToList());
@@ -393,6 +449,7 @@ public class BookingManager : IBookingManager
             DiscountCode       = request.DiscountCode,
             PointsToRedeem     = request.PointsToRedeem,
             ConnectionId       = request.ConnectionId,
+            BookerUserId       = context.StaffUserId,
             IsCounter          = true,
             DryRun             = dryRun,
             SeatPriceOverrides = request.Seats.Where(s => s.OverrideUnitPrice.HasValue).ToDictionary(s => s.SeatId, s => s.OverrideUnitPrice!.Value),
@@ -541,7 +598,7 @@ public class BookingManager : IBookingManager
                 // booker's own held seats still pass; without one (a direct API call) no live lock can be the
                 // caller's, so any live lock blocks. IsSeatLocked applies the lock expiry and owner exclusion.
                 var bookerConnection = string.IsNullOrEmpty(input.ConnectionId) ? null : input.ConnectionId;
-                if (IsSeatLocked(showTimeId, roomId, seatItem.SeatId, bookerConnection))
+                if (IsSeatLocked(showTimeId, roomId, seatItem.SeatId, bookerConnection, input.BookerUserId))
                 {
                     throw new InvalidOperationException($"Seat {seatItem.SeatId} is being held by another user.");
                 }
@@ -1127,7 +1184,15 @@ public class BookingManager : IBookingManager
         // Booking confirmation (e-ticket). Dev sender logs it; a real sender emails/SMSes it.
         if (user is not null)
         {
-            await SendConfirmationAsync(invoice, user);
+            try
+            {
+                await SendConfirmationAsync(invoice, user);
+            }
+            catch (Exception e)
+            {
+                // The payment is committed; a failed courtesy notification must never turn the IPN/confirm into an error.
+                LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(FinalizePaidInvoiceAsync)} confirmation failed for {invoice.Code}: {e.Message}");
+            }
         }
         return true;
     }
@@ -1226,15 +1291,39 @@ public class BookingManager : IBookingManager
             inlineImages = new List<EmailInlineImage>();
         }
 
-        if (hasEmail)
+        // Delivery is slow network I/O and must never fail or delay the payment/IPN path: it is queued to a
+        // background worker (inline with a try/catch when no dispatcher is wired, e.g. unit tests).
+        var email = hasEmail ? user.Email : null;
+        var phone = hasPhone ? user.Phone : null;
+        var notifications = _notifications;
+        var sms = _sms;
+        async Task DeliverAsync()
         {
-            await _notifications.SendAsync(user.Email, emailSubject, emailBody, inlineImages);
+            if (email is not null)
+            {
+                await notifications.SendAsync(email, emailSubject, emailBody, inlineImages);
+            }
+
+            // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
+            if (phone is not null)
+            {
+                await sms.SendSmsAsync(phone, smsBody);
+            }
         }
 
-        // Also send an SMS confirmation when the user has a phone (dev-log unless Twilio is configured).
-        if (hasPhone)
+        if (_dispatcher is not null)
         {
-            await _sms.SendSmsAsync(user.Phone, smsBody);
+            _dispatcher.Enqueue(DeliverAsync);
+            return;
+        }
+
+        try
+        {
+            await DeliverAsync();
+        }
+        catch (Exception e)
+        {
+            LogProvider.Current.Warning(e, $"{nameof(BookingManager)}.{nameof(SendConfirmationAsync)} delivery failed for {invoice.Code}: {e.Message}");
         }
     }
 
@@ -1388,12 +1477,33 @@ public class BookingManager : IBookingManager
     private static readonly SeatPricingContext _emptyPricingContext =
         new(new Dictionary<Guid, ResolvedCategory>(), new Dictionary<SeatKind, double>());
 
+    // Cached ~45s per (showtime, room). The key carries PricingCache.Version, which the data layer bumps on every
+    // save/delete of a pricing input (holiday, matrix, slot, categories, room type, seat type, room, showtime), so an
+    // admin change is visible at once; the TTL only bounds how long superseded entries linger. Callers treat the
+    // returned context as read-only.
     private async Task<SeatPricingContext> BuildSeatPricingContextAsync(ShowTimeRoom? showTimeRoom)
     {
         if (showTimeRoom is null)
         {
             return _emptyPricingContext;
         }
+        if (_cache is null)
+        {
+            return await BuildSeatPricingContextCoreAsync(showTimeRoom);
+        }
+
+        var key = $"pricing:{PricingCache.Version}:{showTimeRoom.ShowTimeId}:{showTimeRoom.RoomId}:{showTimeRoom.BasePrice}";
+        if (_cache.TryGetValue(key, out SeatPricingContext? cached) && cached is not null)
+        {
+            return cached;
+        }
+        var built = await BuildSeatPricingContextCoreAsync(showTimeRoom);
+        _cache.Set(key, built, _pricingCacheTtl);
+        return built;
+    }
+
+    private async Task<SeatPricingContext> BuildSeatPricingContextCoreAsync(ShowTimeRoom showTimeRoom)
+    {
 
         var room     = await _uow.RoomStore.GetByIdAsync(showTimeRoom.RoomId);
         var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeRoom.ShowTimeId);
@@ -1563,6 +1673,10 @@ public class BookingManager : IBookingManager
         if (!string.IsNullOrWhiteSpace(code))
         {
             program = await FindUsableProgramByCodeAsync(code.Trim(), now, bookingTheaterId, showTime);
+            if (program is not null && !await PassesAudienceRulesAsync(program, userId, channel, showTime))
+            {
+                program = null;
+            }
             if (program is null)
             {
                 throw new InvalidOperationException(_invalidPromoMessage);
@@ -1772,6 +1886,48 @@ public class BookingManager : IBookingManager
         return program;
     }
 
+    // The audience rules an admin configured on a program must hold for a code exactly as they do for auto-apply
+    // (FindBestAutoApplyProgramAsync): sales channel, holiday exclusion and — for a Members program — the customer's
+    // tier. StudentOrTeacher / AgeLimit are not enforced online (the system cannot verify them; see the AutoApply
+    // restriction in PromotionProgramManager), so they stay a counter-side check.
+    private async Task<bool> PassesAudienceRulesAsync(PromotionProgram program, Guid? userId, SalesChannel channel, ShowTime? showTime)
+    {
+        if (program.AllowedChannelsMask is int mask && mask != 0 && (mask & (1 << (int)channel)) == 0)
+        {
+            return false;
+        }
+
+        if (program.ExcludeHolidays && showTime != null)
+        {
+            var showDate = DateOnly.FromDateTime(showTime.StartTime);
+            if ((await _uow.HolidayStore.FindAsync(h => h.Date == showDate)).Any())
+            {
+                return false;
+            }
+        }
+
+        if (program.Eligibility == PromotionEligibility.Members)
+        {
+            if (!userId.HasValue || program.MinMemberShipId is not Guid requiredTierId)
+            {
+                return false;
+            }
+            var user = await _uow.UserStore.GetByIdAsync(userId.Value);
+            if (user?.MemberShipId is not Guid userTierId)
+            {
+                return false;
+            }
+            var userTier = await _uow.MemberShipStore.GetByIdAsync(userTierId);
+            var requiredTier = await _uow.MemberShipStore.GetByIdAsync(requiredTierId);
+            if (userTier == null || requiredTier == null || userTier.MinPoints < requiredTier.MinPoints)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public async Task<DiscountCodeValidationDTO> ValidateDiscountCodeAsync(Guid userId, string code, Guid roomId, Guid showTimeId, double total, List<BookingSeatItem> seats)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -1782,6 +1938,10 @@ public class BookingManager : IBookingManager
         var bookingTheaterId = (await _uow.RoomStore.GetByIdAsync(roomId))?.TheaterId;
         var showTime = await _uow.ShowTimeStore.GetByIdAsync(showTimeId);
         var program = await FindUsableProgramByCodeAsync(code.Trim(), DateTime.UtcNow, bookingTheaterId, showTime);
+        if (program is not null && !await PassesAudienceRulesAsync(program, userId, SalesChannel.Online, showTime))
+        {
+            program = null;
+        }
         if (program is null)
         {
             return new DiscountCodeValidationDTO { Valid = false, Message = _invalidPromoMessage };
@@ -1922,36 +2082,74 @@ public class BookingManager : IBookingManager
     // How long an advisory seat lock lives before another viewer may take the seat.
     private static readonly TimeSpan _seatLockTtl = TimeSpan.FromMinutes(5);
 
-    public void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
-        => _lockedSeats.AddOrUpdate(
-            SeatKey(showTimeId, roomId, seatId),
-            _ => (connectionId, DateTime.UtcNow),
+    public bool LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId, Guid? userId = null)
+    {
+        var key = SeatKey(showTimeId, roomId, seatId);
+        var mine = _locksByConnection.GetOrAdd(connectionId, _ => new ConcurrentDictionary<string, byte>());
+        if (!mine.ContainsKey(key) && CountLiveLocks(connectionId, mine) >= MaxLocksPerConnection)
+        {
+            return false;
+        }
+
+        _lockedSeats.AddOrUpdate(
+            key,
+            _ => (connectionId, userId, DateTime.UtcNow),
             // Re-locking a seat the connection already holds must not renew it: otherwise one client could keep a
             // seat for as long as it keeps clicking, instead of the fixed hold window.
-            (_, existing) => existing.ConnectionId == connectionId && DateTime.UtcNow - existing.LockedAt <= _seatLockTtl
+            (_, existing) => existing.ConnectionId == connectionId && existing.UserId == userId && DateTime.UtcNow - existing.LockedAt <= _seatLockTtl
                 ? existing
-                : (connectionId, DateTime.UtcNow));
+                : (connectionId, userId, DateTime.UtcNow));
+        mine[key] = 0;
+        return true;
+    }
+
+    // Live (unexpired, still owned) locks of a connection; prunes stale index entries as it goes.
+    private static int CountLiveLocks(string connectionId, ConcurrentDictionary<string, byte> mine)
+    {
+        var count = 0;
+        foreach (var key in mine.Keys)
+        {
+            if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId && DateTime.UtcNow - info.LockedAt <= _seatLockTtl)
+            {
+                count++;
+            }
+            else
+            {
+                mine.TryRemove(key, out _);
+            }
+        }
+        return count;
+    }
 
     /// <summary>Releases the lock only when it belongs to <paramref name="connectionId"/>. Returns true when a lock
     /// was actually removed, so callers broadcast SeatUnlocked only for a real release.</summary>
-    public bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId)
+    public bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId, Guid? userId = null)
     {
         var key = SeatKey(showTimeId, roomId, seatId);
-        if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId)
+        if (_lockedSeats.TryGetValue(key, out var info) && info.ConnectionId == connectionId && info.UserId == userId)
         {
-            return _lockedSeats.TryRemove(key, out _);
+            if (_lockedSeats.TryRemove(new KeyValuePair<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)>(key, info)))
+            {
+                if (_locksByConnection.TryGetValue(connectionId, out var mine))
+                {
+                    mine.TryRemove(key, out _);
+                }
+                return true;
+            }
         }
         return false;
     }
 
-    public bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null)
+    public bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null, Guid? excludeUserId = null)
     {
         var key = SeatKey(showTimeId, roomId, seatId);
         if (!_lockedSeats.TryGetValue(key, out var info))
         {
             return false;
         }
-        if (excludeConnectionId != null && info.ConnectionId == excludeConnectionId)
+        // The booker's own hold is ignored only when connection AND user match: the connection id can be learned
+        // by other viewers of the room, so on its own it would let anyone bypass another customer's hold.
+        if (excludeConnectionId != null && info.ConnectionId == excludeConnectionId && info.UserId == excludeUserId)
         {
             return false;
         }
@@ -1966,18 +2164,56 @@ public class BookingManager : IBookingManager
     public IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> ReleaseConnectionLocks(string connectionId)
     {
         var released = new List<(Guid ShowTimeId, Guid RoomId, Guid SeatId)>();
-        foreach (var entry in _lockedSeats)
+        if (!_locksByConnection.TryRemove(connectionId, out var mine))
         {
-            if (entry.Value.ConnectionId != connectionId)
-            {
-                continue;
-            }
-            if (_lockedSeats.TryRemove(entry.Key, out _) && TryParseSeatKey(entry.Key, out var ids))
+            return released;
+        }
+        foreach (var key in mine.Keys)
+        {
+            // Only remove a lock this connection still owns (the key may have expired and been re-taken).
+            if (_lockedSeats.TryGetValue(key, out var info)
+                && info.ConnectionId == connectionId
+                && _lockedSeats.TryRemove(new KeyValuePair<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)>(key, info))
+                && TryParseSeatKey(key, out var ids))
             {
                 released.Add(ids);
             }
         }
         return released;
+    }
+
+    /// <summary>Removes every expired lock and returns the seats freed so the caller can broadcast SeatUnlocked.</summary>
+    public IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> SweepExpiredLocks()
+    {
+        var freed = new List<(Guid ShowTimeId, Guid RoomId, Guid SeatId)>();
+        var now = DateTime.UtcNow;
+        foreach (var entry in _lockedSeats)
+        {
+            if (now - entry.Value.LockedAt <= _seatLockTtl)
+            {
+                continue;
+            }
+            if (_lockedSeats.TryRemove(entry))
+            {
+                if (_locksByConnection.TryGetValue(entry.Value.ConnectionId, out var mine))
+                {
+                    mine.TryRemove(entry.Key, out _);
+                }
+                if (TryParseSeatKey(entry.Key, out var ids))
+                {
+                    freed.Add(ids);
+                }
+            }
+        }
+        // Drop index buckets of connections that no longer hold anything.
+        foreach (var bucket in _locksByConnection)
+        {
+            if (bucket.Value.IsEmpty)
+            {
+                _locksByConnection.TryRemove(bucket);
+            }
+        }
+        return freed;
     }
 
     private static string SeatKey(Guid showTimeId, Guid roomId, Guid seatId)

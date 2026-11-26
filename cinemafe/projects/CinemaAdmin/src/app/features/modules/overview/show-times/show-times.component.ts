@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Subject, merge, takeUntil } from 'rxjs';
-import { CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues, fetchAllPages } from 'CinemaLib';
+import { Observable, Subject, forkJoin, map, merge, shareReplay, takeUntil } from 'rxjs';
+import { CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues, LookupCacheService, fetchAllPages } from 'CinemaLib';
 import { ShowTimeDialog } from './show-time.dialog';
 
 /** Slim calendar row; the full record is fetched with `getShowTime` only when a block is opened. */
@@ -41,6 +41,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _dialog = inject(MatDialog);
   private _destroy$ = new Subject<void>();
   private _reload$ = new Subject<void>();
+  private _lookup = inject(LookupCacheService);
+  private _movies$: Observable<CinemaServiceAgent.MovieDTO[]> | null = null;
 
   // ── Grid geometry ───────────────────────────────────────────────────────────
   readonly startHour = 8;          // first row label
@@ -52,7 +54,6 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   // ── Lookups ─────────────────────────────────────────────────────────────────
   movies: CinemaServiceAgent.MovieDTO[] = [];
   private _movieTitles = new Map<string, string>();
-  rooms: CinemaServiceAgent.RoomDTO[] = [];
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
   readonly showTimeTypes = ShowTimeTypeValues;
   readonly projectionForms = ProjectionFormValues;
@@ -68,26 +69,11 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.weekStart = this._mondayOf(new Date());
-    const lookupPageSize = 200;
 
-    fetchAllPages<CinemaServiceAgent.MovieDTO>(
-      pageIndex => this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize: lookupPageSize })),
-      lookupPageSize,
-      m => m.id,
-    ).pipe(takeUntil(this._destroy$))
-      .subscribe(movies => {
-        this.movies = movies;
-        this._movieTitles = new Map(movies.filter(m => !!m.id).map(m => [m.id as string, m.title ?? ''] as const));
-        this._rebuild(); // block titles come from the movie lookup, which can land after the showtimes
-      });
-
-    fetchAllPages<CinemaServiceAgent.TheaterDTO>(
-      pageIndex => this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize: lookupPageSize })),
-      lookupPageSize,
-      t => t.id,
-    ).pipe(takeUntil(this._destroy$))
+    this._lookup.theaters().pipe(takeUntil(this._destroy$))
       .subscribe({
-        next: theaters => {
+        next: result => {
+          const theaters = result.results ?? [];
           this.theaters = theaters;
           // A whole week across every cinema is thousands of overlapping blocks nobody can read, so open
           // on one cinema; "All cinemas" stays selectable. The first load waits for this lookup so the
@@ -98,13 +84,55 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
         // Without the lookup there is nothing to default to; still show the week rather than a blank grid.
         error: () => this.load(),
       });
+  }
 
-    fetchAllPages<CinemaServiceAgent.RoomDTO>(
-      pageIndex => this._svc.getRooms(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize: lookupPageSize })),
-      lookupPageSize,
-      r => r.id,
-    ).pipe(takeUntil(this._destroy$))
-      .subscribe(rooms => { this.rooms = rooms; this._cdr.markForCheck(); });
+  /** The full movie list backs the filter dropdown and the create/edit dialog only, so it is fetched
+   * the first time either is opened rather than on every visit to the page. */
+  private _ensureMovies(): Observable<CinemaServiceAgent.MovieDTO[]> {
+    if (!this._movies$) {
+      const lookupPageSize = 200;
+      this._movies$ = fetchAllPages<CinemaServiceAgent.MovieDTO>(
+        pageIndex => this._svc.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex, pageSize: lookupPageSize })),
+        lookupPageSize,
+        m => m.id,
+      ).pipe(
+        map(movies => {
+          this.movies = movies;
+          for (const m of movies) {
+            if (m.id) {
+              this._movieTitles.set(m.id, m.title ?? '');
+            }
+          }
+          this._cdr.markForCheck();
+          return movies;
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+    }
+    return this._movies$;
+  }
+
+  /** Called when the movie filter opens. */
+  onMovieFilterOpened(opened: boolean): void {
+    if (opened) {
+      this._ensureMovies().pipe(takeUntil(this._destroy$)).subscribe({ error: () => { this._movies$ = null; } });
+    }
+  }
+
+  /** Block titles: fetch just the movies the visible week uses (a handful) instead of the whole catalogue. */
+  private _loadMissingTitles(): void {
+    const missing = [...new Set(this._showtimes.map(s => s.movieId).filter((id): id is string => !!id && !this._movieTitles.has(id)))];
+    if (missing.length === 0) {
+      return;
+    }
+    forkJoin(missing.map(id => this._svc.getMovie(id).pipe(map(m => ({ id, title: m.title ?? '' })))))
+      .pipe(takeUntil(merge(this._reload$, this._destroy$)))
+      .subscribe(movies => {
+        for (const m of movies) {
+          this._movieTitles.set(m.id, m.title);
+        }
+        this._rebuild();
+      });
   }
 
   ngOnDestroy(): void {
@@ -136,6 +164,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
       .subscribe(all => {
         this._showtimes = all;
         this._rebuild();
+        this._loadMissingTitles();
       });
   }
 
@@ -219,11 +248,13 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   }
 
   private _openDialog(showTime: CinemaServiceAgent.ShowTimeDTO | null): void {
-    this._dialog.open(ShowTimeDialog, {
-      width: '800px',
-      maxWidth: '100vw',
-      data: { showTime, weekStart: this.weekStart, movies: this.movies, theaters: this.theaters, rooms: this.rooms },
-    }).afterClosed().subscribe(changed => { if (changed) { this.load(); } });
+    this._ensureMovies().pipe(takeUntil(this._destroy$)).subscribe(movies => {
+      this._dialog.open(ShowTimeDialog, {
+        width: '800px',
+        maxWidth: '100vw',
+        data: { showTime, weekStart: this.weekStart, movies, theaters: this.theaters },
+      }).afterClosed().subscribe(changed => { if (changed) { this.load(); } });
+    });
   }
 
   // ── Labels ────────────────────────────────────────────────────────────────────

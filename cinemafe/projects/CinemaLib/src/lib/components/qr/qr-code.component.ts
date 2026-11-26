@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
-import * as QRCode from 'qrcode';
 
 /**
  * Renders `value` as a QR code image (data URL, so it also prints reliably).
@@ -36,7 +35,9 @@ export class QrCodeComponent {
         this.dataUrl.set('');
         return;
       }
-      QRCode.toDataURL(text, { margin, width })
+      // Lazy: the qrcode library (~25 kB) is only fetched when a QR is actually shown.
+      import('qrcode')
+        .then(QRCode => QRCode.toDataURL(text, { margin, width }))
         .then(url => {
           if (seq === this._seq) {
             this.dataUrl.set(url);

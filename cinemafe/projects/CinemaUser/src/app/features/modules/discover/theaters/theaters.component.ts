@@ -1,10 +1,11 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, LookupCacheService } from 'CinemaLib';
 
 import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.directive';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-theaters',
   standalone: true,
   imports: [SharedModule, RevealOnScrollDirective],
@@ -25,8 +26,10 @@ export class TheatersComponent implements OnInit {
   private _lat?: number;
   private _lng?: number;
 
+  private readonly _lookup = inject(LookupCacheService);
+
   ngOnInit(): void {
-    this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
+    this._lookup.theaters()
       .subscribe({
         next: r => { this.theaters = r.results ?? []; this.loading = false; this._cdr.markForCheck(); },
         error: () => { this.loading = false; this._cdr.markForCheck(); },

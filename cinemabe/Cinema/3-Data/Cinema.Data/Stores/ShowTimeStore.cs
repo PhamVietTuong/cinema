@@ -10,17 +10,33 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
 {
     public ShowTimeStore(CinemaContext db) : base(db) { }
 
-    public async Task<IEnumerable<ShowTime>> GetByMovieAndDateAsync(
+    public async Task<IReadOnlyList<ShowTimeListRow>> GetByMovieAndDateAsync(
         Guid movieId, Guid theaterId, DateOnly date)
-        => await DbSet
-            .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.Theater)
-            .Include(s => s.ShowTimeRooms).ThenInclude(sr => sr.Room).ThenInclude(r => r.RoomType)
+    {
+        // Half-open day range instead of DateOnly.FromDateTime(StartTime) == date, which wrapped the column in a
+        // function and defeated the (MovieId, StartTime) index.
+        var dayStart = date.ToDateTime(TimeOnly.MinValue);
+        var dayEnd = dayStart.AddDays(1);
+        var rows = await DbSet
+            .AsNoTracking()
             .Where(s => s.MovieId == movieId &&
                         s.IsActive &&
-                        DateOnly.FromDateTime(s.StartTime) == date &&
+                        s.StartTime >= dayStart && s.StartTime < dayEnd &&
                         s.ShowTimeRooms.Any(sr => sr.Room.TheaterId == theaterId))
             .OrderBy(s => s.StartTime)
+            .Select(s => new
+            {
+                s.Id,
+                s.StartTime,
+                s.EndTime,
+                s.ProjectionForm,
+                s.ShowTimeType,
+                Rooms = s.ShowTimeRooms.Select(sr => new ShowTimeListRoomRow(
+                    sr.RoomId, sr.Room.Name, sr.Room.RoomType.Name, sr.Room.Theater.Name, sr.BasePrice)).ToList(),
+            })
             .ToListAsync();
+        return rows.Select(r => new ShowTimeListRow(r.Id, r.StartTime, r.EndTime, r.ProjectionForm, r.ShowTimeType, r.Rooms)).ToList();
+    }
 
     public async Task<IReadOnlyList<MovieScheduleRow>> GetMovieScheduleAsync(Guid movieId, DateTime fromInclusive, DateTime toExclusive)
         => await Context.ShowTimeRoom

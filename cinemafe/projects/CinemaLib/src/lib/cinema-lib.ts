@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
-import { SharedModule } from './shared.module';
+import { SharedCoreModule } from './shared-core.module';
 import { ConfirmDialog } from './components/dialogs';
 import { AppShellComponent } from './components/shell';
-import { LoginFormComponent } from './components/auth';
 
 /**
  * Central hub NgModule for CinemaLib. Both CinemaAdmin and CinemaUser import
@@ -11,7 +10,7 @@ import { LoginFormComponent } from './components/auth';
  * pieces get added to this module's imports/exports as they're built.
  */
 @NgModule({
-  imports: [SharedModule, ConfirmDialog, AppShellComponent, LoginFormComponent],
-  exports: [SharedModule, ConfirmDialog, AppShellComponent, LoginFormComponent],
+  imports: [SharedCoreModule, ConfirmDialog, AppShellComponent],
+  exports: [SharedCoreModule, ConfirmDialog, AppShellComponent],
 })
 export class CinemaLibModule {}

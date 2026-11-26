@@ -15,6 +15,7 @@ import {
   hideLoading,
   showException,
   showLoading,
+  LookupCacheService,
 } from 'CinemaLib';
 import {
   RangeError,
@@ -44,6 +45,7 @@ export class SalesReportsComponent {
   private readonly _fb = inject(FormBuilder);
   private readonly _store = inject(Store);
   private readonly _cinema = inject(CinemaServiceAgent.HttpService);
+  private readonly _lookup = inject(LookupCacheService);
 
   readonly form = this._fb.group({
     from: [localDayString(new Date(), 6)],
@@ -76,7 +78,7 @@ export class SalesReportsComponent {
   readonly occupancyRows = computed(() => (this.occupancy()?.rows ?? []).slice(0, MAX_OCCUPANCY_ROWS));
 
   constructor() {
-    this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: {} })).subscribe({
+    this._lookup.theaters().subscribe({
       next: result => this._theaterOptions.set((result.results ?? []).map(t => ({ value: t.id ?? '', label: t.name ?? '' }))),
       error: error => this._store.dispatch(showException({ error })),
     });

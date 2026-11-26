@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -15,7 +15,8 @@ export class AuthEffects {
   private actions$ = inject(Actions);
   private _identityService = inject(IdentityServiceAgent.HttpService);
   private _router = inject(Router);
-  private _staffHub = inject(StaffHubService);
+  // Resolved lazily on logout so the SignalR-backed hub is not created for every session.
+  private _injector = inject(Injector);
   private _translate = inject(TranslateService);
 
   login$ = createEffect(() =>
@@ -50,6 +51,12 @@ export class AuthEffects {
       ofType(AuthActions.loginSuccess, AuthActions.registerSuccess),
       tap(action => {
         const response = (action as any).response;
+        // Registration no longer opens a session: the address is unverified, so send the user to the
+        // "check your email" screen (which also offers a resend) instead of storing a token that is not there.
+        if (!response.token) {
+          this._router.navigate(['/auth/verify-email'], { queryParams: { email: response.user?.email ?? '' } });
+          return;
+        }
         // Register (and a login without an explicit choice) defaults to persisting.
         const remember = 'rememberMe' in action ? (action as any).rememberMe !== false : true;
         TokenStorage.save(response.token, response.user, remember);
@@ -67,7 +74,7 @@ export class AuthEffects {
         // subsequent action (e.g. an Admin joining a theater group) is authorized against the OLD
         // user's claims, not the one now logged in. Stopping it here forces a fresh, correctly
         // authenticated connection on the next login. A no-op when no staff hub was ever started.
-        void this._staffHub.stop();
+        void this._injector.get(StaffHubService).stop();
         TokenStorage.clear();
         this._router.navigate(['/auth/login']);
       })

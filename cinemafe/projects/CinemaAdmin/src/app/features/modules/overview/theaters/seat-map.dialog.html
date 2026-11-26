@@ -46,18 +46,21 @@
     </div>
 
     <div class="seat-grid" cinemaDragScroll [class.is-removing]="activeTool === 'remove'" *ngIf="seats.length; else noSeats">
-      <div class="seat-row" *ngFor="let row of seatRows">
-        <div class="row-label">{{ row }}</div>
-        <div *ngFor="let cell of cellsInRow(row)"
-             class="seat editable"
-             [class.double-wide]="cell.isDouble"
-             [class.busy]="removing || resizing"
-             [class.aisle]="cell.isAisle"
-             [style.--sc]="cell.isAisle ? null : colorFor(cell.seats[0])"
-             [class.paired]="cell.seats[0].seatGroupId"
-             (click)="!(removing || resizing) && onSeatClick(cell.seats[0])"
-             [title]="cell.isAisle ? ('theaters.rooms.aisle' | translate) : (cellLabel(cell) + ' · ' + nameFor(cell.seats[0]) + (cell.seats[0].seatGroupId ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : ''))">{{ cellLabel(cell) }}<mat-icon *ngIf="cell.seats[0].seatGroupId" class="pair-badge">link</mat-icon></div>
-      </div>
+      @for (row of rowViews; track row.name) {
+        <div class="seat-row">
+          <div class="row-label">{{ row.name }}</div>
+          @for (cell of row.cells; track cell.key) {
+            <div class="seat editable"
+                 [class.double-wide]="cell.isDouble"
+                 [class.busy]="removing || resizing"
+                 [class.aisle]="cell.isAisle"
+                 [style.--sc]="cell.color"
+                 [class.paired]="cell.paired"
+                 (click)="!(removing || resizing) && onSeatClick(cell.seat)"
+                 [title]="cell.isAisle ? ('theaters.rooms.aisle' | translate) : (cell.label + ' · ' + cell.name + (cell.paired ? ' · ' + ('theaters.rooms.coupleSeat' | translate) : ''))">{{ cell.label }}@if (cell.paired) {<mat-icon class="pair-badge">link</mat-icon>}</div>
+          }
+        </div>
+      }
     </div>
     <ng-template #noSeats>
       <div class="ad-empty"><mat-icon>event_seat</mat-icon><p>{{ 'theaters.rooms.noSeats' | translate }}</p></div>

@@ -105,14 +105,15 @@ public class RoomTypeManager : IRoomTypeManager
         try
         {
             await _uow.RoomTypeStore.CreateAsync(entity);
-            foreach (var category in categories)
+            var defaults = categories.Select(category => new RoomTypePatronCategoryPrice
             {
-                await _uow.RoomTypePatronCategoryPriceStore.CreateAsync(new RoomTypePatronCategoryPrice
-                {
-                    RoomTypeId       = entity.Id,
-                    PatronCategoryId = category.Id,
-                    Price            = category.Price,
-                });
+                RoomTypeId       = entity.Id,
+                PatronCategoryId = category.Id,
+                Price            = category.Price,
+            }).ToList();
+            if (defaults.Count > 0)
+            {
+                await _uow.RoomTypePatronCategoryPriceStore.CreateRangeAsync(defaults);
             }
             await _uow.CommitTransactionAsync();
         }

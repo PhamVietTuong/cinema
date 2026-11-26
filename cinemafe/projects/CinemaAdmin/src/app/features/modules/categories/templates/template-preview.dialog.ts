@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CinemaServiceAgent } from 'CinemaLib';
@@ -10,6 +10,7 @@ export interface TemplatePreviewDialogData {
 
 /** Read-only preview of an email template rendered with sample booking data. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-template-preview-dialog',
   standalone: false,
   template: `

@@ -40,13 +40,17 @@ public class ShowtimeReminderService : BackgroundService
                 var to   = from.Add(_window);
                 var tickets = await uow.InvoiceStore.GetPaidTicketsForShowtimesAsync(from, to);
 
+                // Persisted dedup set for the whole scan band in one query (not one lookup per group).
+                var alreadySent = await uow.ReminderLogStore.GetSentAmongAsync(
+                    tickets.Select(t => t.ShowTimeRoom.ShowTimeId).Distinct().ToList());
+
                 foreach (var group in tickets.GroupBy(t => new { t.Invoice.UserId, t.ShowTimeRoom.ShowTimeId }))
                 {
                     // A walk-in counter sale has no account to remind.
                     if (group.Key.UserId is not Guid userId) { continue; }
                     var showTimeId = group.Key.ShowTimeId;
                     // Persisted dedup: survives restarts, and the unique index dedups across instances.
-                    if (await uow.ReminderLogStore.WasSentAsync(userId, showTimeId)) { continue; }
+                    if (alreadySent.Contains((userId, showTimeId))) { continue; }
 
                     var first = group.First();
                     var email = first.Invoice.User?.Email;

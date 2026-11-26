@@ -40,6 +40,16 @@ describe('authReducer', () => {
     expect(state.error).toBeNull();
   });
 
+  it('registerSuccess without a token (unverified email) does not sign the user in', () => {
+    const tokenless = { ...response, token: '' };
+
+    const state = authReducer(initialAuthState, AuthActions.registerSuccess({ response: tokenless }));
+
+    expect(state.token).toBeNull();
+    expect(state.user).toBeNull();
+    expect(state.loading).toBe(false);
+  });
+
   it('loginFailure records the error without setting a token', () => {
     const state = authReducer(initialAuthState, AuthActions.loginFailure({ error: 'Invalid credentials.' }));
 

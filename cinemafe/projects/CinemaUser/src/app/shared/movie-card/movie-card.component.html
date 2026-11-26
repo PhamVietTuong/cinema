@@ -1,7 +1,7 @@
 <ng-container *ngIf="!actions; else actionsCard">
   <div class="mc-card" [class.mc-card--fixed]="fixedWidth" [routerLink]="variant === 'showing' ? detailCommands : null">
     <div class="mc-poster">
-      <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
+      <img loading="lazy" decoding="async" [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
       <ng-container *ngIf="variant === 'showing'">
         <div class="mc-hover-overlay">
           <span class="mc-btn-book"><mat-icon>confirmation_number</mat-icon> {{ 'home.card.book' | translate }}</span>
@@ -25,7 +25,7 @@
 <ng-template #actionsCard>
   <div class="mc-card mc-card--actions" [class.mc-card--fixed]="fixedWidth" appRevealOnScroll>
     <div class="mc-poster" (click)="openTrailer($event)" [routerLink]="!hasTrailer ? detailCommands : null">
-      <img [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
+      <img loading="lazy" decoding="async" [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
       <span class="mc-badge mc-badge--age badge-fade" *ngIf="movie.ageRestrictionCode">{{ movie.ageRestrictionCode }}</span>
       <span class="mc-badge mc-badge--genre badge-fade" *ngIf="movie.genres?.length">{{ movie.genres[0] }}</span>
       <div class="mc-info-overlay">

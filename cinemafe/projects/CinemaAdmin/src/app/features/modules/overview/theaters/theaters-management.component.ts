@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   CinemaServiceAgent,
   BaseTableComponent, TablePage, TableSearchCriteria,
+  LookupCacheService,
 } from 'CinemaLib';
 import { TheaterDialog } from './theater.dialog';
 
@@ -18,6 +19,7 @@ type Dto = CinemaServiceAgent.TheaterDTO;
   templateUrl: './theaters-management.component.html',
 })
 export class TheatersManagementComponent extends BaseTableComponent {
+  private readonly _lookup = inject(LookupCacheService);
   constructor(
     cd: ChangeDetectorRef,
     fb: FormBuilder,
@@ -41,12 +43,12 @@ export class TheatersManagementComponent extends BaseTableComponent {
 
   openCreate(): void {
     this._dialog.open(TheaterDialog, { width: '560px', maxWidth: '100vw', data: { theater: null } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('theaters'); this.triggerSearch(); } });
   }
 
   edit(item: Dto): void {
     this._dialog.open(TheaterDialog, { width: '560px', maxWidth: '100vw', data: { theater: item } })
-      .afterClosed().subscribe(saved => { if (saved) { this.triggerSearch(); } });
+      .afterClosed().subscribe(saved => { if (saved) { this._lookup.invalidate('theaters'); this.triggerSearch(); } });
   }
 
   openDetail(item: Dto): void {

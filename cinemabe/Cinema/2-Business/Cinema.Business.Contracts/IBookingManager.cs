@@ -33,10 +33,17 @@ public interface IBookingManager
     Task<TicketValidationDTO>           ValidateTicketAsync(string qrCode, Guid adminUserId);
     /// <summary>Cancels Pending invoices older than <paramref name="age"/> (frees their held seats). Returns the count expired.</summary>
     Task<int>                           ExpireStalePendingBookingsAsync(TimeSpan age);
-    void LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
-    /// <summary>True when a lock held by <paramref name="connectionId"/> was removed; false if there was none or it is another connection's.</summary>
-    bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId);
-    bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null);
+    /// <summary>Takes an advisory hold. The hold belongs to the (connection, user) pair: a connection id alone is not
+    /// proof of ownership, because other clients can learn it and the booking API accepts it from the caller.</summary>
+    /// <summary>Returns false when the connection already holds the maximum number of locks.</summary>
+    bool LockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId, Guid? userId = null);
+    /// <summary>True when a lock held by <paramref name="connectionId"/> and <paramref name="userId"/> was removed; false if there was none or it belongs to someone else.</summary>
+    bool UnlockSeat(Guid showTimeId, Guid roomId, Guid seatId, string connectionId, Guid? userId = null);
+    /// <summary>True while a live lock blocks the seat. A lock is ignored only when BOTH <paramref name="excludeConnectionId"/>
+    /// and <paramref name="excludeUserId"/> match its owner, so replaying someone else's connection id does not bypass it.</summary>
+    bool IsSeatLocked(Guid showTimeId, Guid roomId, Guid seatId, string? excludeConnectionId = null, Guid? excludeUserId = null);
     /// <summary>Releases every seat still held by the given connection and returns the seats released.</summary>
     IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> ReleaseConnectionLocks(string connectionId);
+    /// <summary>Removes every expired seat lock and returns the seats freed (for SeatUnlocked broadcasts).</summary>
+    IReadOnlyList<(Guid ShowTimeId, Guid RoomId, Guid SeatId)> SweepExpiredLocks();
 }

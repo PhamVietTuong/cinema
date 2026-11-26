@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -16,6 +16,7 @@ type CampaignFilter = 'all' | string;
 import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.directive';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-promotions',
   standalone: true,
   imports: [SharedModule, RouterLink, RevealOnScrollDirective],

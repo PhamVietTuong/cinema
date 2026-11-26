@@ -137,6 +137,7 @@ public class CinemaController : ApiControllerBase
 
     [Authorize(Roles = _adminRole)]
     [HttpPost]
+    [RequestSizeLimit(_maxImageBytes + 1024 * 1024)] // image cap + multipart overhead; reject bigger bodies before buffering
     [ProducesResponseType(typeof(UploadResultDTO), 200)]
     public async Task<IActionResult> UploadImage(IFormFile file)
     {
@@ -156,6 +157,19 @@ public class CinemaController : ApiControllerBase
             if (!_allowedImageExtensions.Contains(ext) || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
             {
                 return BadRequest("Only image files (jpg, png, webp, gif) are allowed.");
+            }
+
+            // The extension and Content-Type are client-chosen, so also require the file's own leading bytes to be
+            // the image format the extension claims (a renamed HTML/script file must not be stored).
+            var header = new byte[ImageSignature.HeaderLength];
+            int headerRead;
+            await using (var probe = file.OpenReadStream())
+            {
+                headerRead = await probe.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false);
+            }
+            if (!ImageSignature.Matches(ext, header.AsSpan(0, headerRead)))
+            {
+                return BadRequest("The file content is not a valid image of the type its extension claims.");
             }
 
             var uploadsDir = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
@@ -1219,7 +1233,9 @@ public class CinemaController : ApiControllerBase
     [ProducesResponseType(typeof(DefaultSearchResults<NewsDTO>), 200)]
     public Task<IActionResult> GetNewsList([FromBody] PagingSearchDTO search)
     {
-        return Run(nameof(GetNewsList), () => _news.GetAsync(search));
+        // Drafts are for admins only: everyone else (anonymous included) gets published articles whatever filter they send.
+        var publishedOnly = !User.IsAdmin();
+        return Run(nameof(GetNewsList), () => _news.GetAsync(search, publishedOnly));
     }
 
     [HttpGet]
@@ -1231,7 +1247,8 @@ public class CinemaController : ApiControllerBase
         {
             return notFound;
         }
-        return await Run(nameof(GetNews), () => _news.GetByIdAsync(id));
+        var publishedOnly = !User.IsAdmin();
+        return await Run(nameof(GetNews), () => _news.GetByIdAsync(id, publishedOnly));
     }
 
     [Authorize(Roles = _adminRole)]

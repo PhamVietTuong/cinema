@@ -15,6 +15,7 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
             .AsNoTracking()
             .Include(m => m.AgeRestriction)
             .Include(m => m.MovieTypeDetails).ThenInclude(mt => mt.MovieType)
+            .AsSplitQuery() // the genre collection must not multiply the paged movie rows
             .Where(m => m.IsActive);
 
         var search = filter.Search;

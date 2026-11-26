@@ -73,7 +73,7 @@ Nav: `Users`. Also referenced by `PromotionProgram.MinMemberShipId` as a minimum
 | Field | Type | Notes |
 |---|---|---|
 | Title | string | max 300 |
-| Slug | string | max 320, **unique** (`IX_Movie_Slug`) |
+| Slug | string | max 320, **unique** (`IX_Movie_Slug`; also `IX_Movie_IsActive_ReleaseDate` (IsActive, ReleaseDate — now-showing/coming-soon filters)) |
 | Description | string | max 2000 |
 | Duration | int | minutes |
 | ReleaseDate, EndDate | DateOnly | |
@@ -135,7 +135,7 @@ RoomId (Cascade), RowName (max 5), ColIndex (int), IsActive, Kind (`SeatKind`, i
 TheaterId (Cascade), Kind (SeatKind enum — matched by Kind, never Name), Name (display only), Color (hex, default `#808080`). **Unique** (TheaterId, Kind). Nav `PatronCategories`.
 
 ### ShowTime
-MovieId (Cascade), StartTime/EndTime (DateTime, **theater-local GMT+7 wall-clock time**, not UTC — compared against `DateTime.Now`, so the server process must run in GMT+7; the Dockerfile sets `TZ=Asia/Ho_Chi_Minh`), ProjectionForm (TwoD=1/ThreeD=2 — property of the screening, not the room), ShowTimeType (Normal=0/Premiere=1/Special=2), IsActive. Nav `ShowTimeRooms`. Indexes: `IX_ShowTime_MovieId`, `IX_ShowTime_StartTime` (serves the admin week calendar's `StartTime` range filter + ordering).
+MovieId (Cascade), StartTime/EndTime (DateTime, **theater-local GMT+7 wall-clock time**, not UTC — compared against `DateTime.Now`, so the server process must run in GMT+7; the Dockerfile sets `TZ=Asia/Ho_Chi_Minh`), ProjectionForm (TwoD=1/ThreeD=2 — property of the screening, not the room), ShowTimeType (Normal=0/Premiere=1/Special=2), IsActive. Nav `ShowTimeRooms`. Indexes: `IX_ShowTime_MovieId_StartTime` (replaces the MovieId-only index; the movie's showtimes by date), `IX_ShowTime_StartTime` (serves the admin week calendar's `StartTime` range filter + ordering).
 
 ### ShowTimeRoom (join: a showtime assigned to a room)
 Composite PK (ShowTimeId, RoomId). BasePrice (int — flat per-showtime manual add-on, not the seat's base price). Nav `InvoiceTickets`.
@@ -241,12 +241,12 @@ TheaterId (Guid, required, **unique** — one row per theater; no global row), P
 | FoodHandedOverAt / FoodHandedOverByUserId | | Stamped on the counter-sale HandedOver transition only. |
 | ExchangedFromInvoiceId | Guid? | no FK |
 
-Index: (TheaterId, PaidAt). Nav `InvoiceTickets`, `InvoiceFoodAndDrinks`, `Payments`.
+Indexes: (TheaterId, PaidAt); `IX_Invoice_UserId` (UserId, CreationTime DESC — "my invoices"); `IX_Invoice_Status_CreationTime` (Status, CreationTime — reaper/admin list); `IX_Invoice_Status_PaidAt` (Status, PaidAt) INCLUDE (FinalAmount) — revenue reports. Nav `InvoiceTickets`, `InvoiceFoodAndDrinks`, `Payments`.
 
 **No refund entity exists.** A cancelled/expired invoice only reverses points/food-stock via `InvoiceStatus.Cancelled`, never a dedicated refund row. `InvoiceStatus` value 4 and `AuditAction` value 4 are reserved gaps (section 9). See `01-business/business-rules.md`.
 
 ### InvoiceTicket (one sold seat; no own Id)
-PK: composite (InvoiceId, ShowTimeId, RoomId, SeatId). Price (double), PatronCategoryId (Guid?, **no FK**, snapshot), PatronCategoryName (max 100, snapshot), PatronDiscountPercent (double), QrCode?, IsUsed (bool, default false) + UsedAt (DateTime?) + UsedByUserId (Guid?, no FK), IsActive (bool, default true), SeatLabel (max 16, frozen at sale time, never recomputed).
+PK: composite (InvoiceId, ShowTimeId, RoomId, SeatId). Price (double), PatronCategoryId (Guid?, **no FK**, snapshot), PatronCategoryName (max 100, snapshot), PatronDiscountPercent (double), QrCode? (nvarchar(64), a 32-char GUID; non-unique filtered index `IX_InvoiceTicket_QrCode` WHERE QrCode IS NOT NULL, because legacy rows are not guaranteed distinct), IsUsed (bool, default false) + UsedAt (DateTime?) + UsedByUserId (Guid?, no FK), IsActive (bool, default true), SeatLabel (max 16, frozen at sale time, never recomputed).
 
 **Key invariant**: filtered unique index on (ShowTimeId, RoomId, SeatId) `WHERE IsActive = 1` — the sole DB-level guard against double-booking across instances. Relationships: Invoice (Cascade), ShowTimeRoom (composite FK, Restrict), Seat (Restrict).
 

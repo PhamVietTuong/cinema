@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { IdentityServiceAgent, CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, THEATER_SCOPED_ROLES } from 'CinemaLib';
+import { IdentityServiceAgent, CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, THEATER_SCOPED_ROLES, LookupCacheService } from 'CinemaLib';
 
 const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
 
@@ -22,6 +22,7 @@ export interface UserDialogData {
   templateUrl: './user.dialog.html',
 })
 export class UserDialog {
+  private readonly _lookup = inject(LookupCacheService);
   readonly editingId: string | null;
   readonly lockedTheaterId: string | null;
   readonly statuses: { v: IdentityServiceAgent.UserStatus; label: string }[];
@@ -65,7 +66,7 @@ export class UserDialog {
         this._syncTheaterValidator();
         this._cd.markForCheck();
       });
-    this._cinema.getTheaters(paging)
+    this._lookup.theaters()
       .subscribe(r => { this.theaters = r.results ?? []; this._cd.markForCheck(); });
   }
 

@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, effect, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, effect, inject, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import {
@@ -21,6 +22,7 @@ interface BoardRoom {
 
 /** Per-room timeline of one day: showtime blocks, the turnover buffer after each, sold/capacity and the room status. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'staff-schedule-board',
   standalone: true,
   imports: [SharedModule, StatusPillComponent, EmptyStateComponent],
@@ -62,6 +64,8 @@ export class ScheduleBoardComponent {
     this.load();
   }
 
+  private readonly _destroyRef = inject(DestroyRef);
+
   load(): void {
     const theaterId = this.theaterId;
     const day = parseDateKey(this.dateControl.value);
@@ -75,7 +79,7 @@ export class ScheduleBoardComponent {
     this._store.dispatch(showLoading());
     this._ops.getScheduleBoard(CinemaServiceAgent.ScheduleBoardRequest.fromJS({
       theaterId, date: toWallClockUtc(day),
-    })).subscribe({
+    })).pipe(takeUntilDestroyed(this._destroyRef)).subscribe({
       next: board => {
         this._apply(board, day);
         this._cd.markForCheck();

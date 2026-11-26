@@ -1,17 +1,17 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { SharedModule, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase, joinSeatLabels } from 'CinemaLib';
-import * as QRCode from 'qrcode';
+import { SharedModule, QrCodeComponent, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase, joinSeatLabels } from 'CinemaLib';
 
 /** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
 const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
 const HISTORY_PAGE_SIZE = 10;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-profile',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, QrCodeComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })
@@ -40,7 +40,6 @@ export class ProfileComponent extends ProfileFormBase {
   invoicesLoading = false;
   expandedId: string | null = null;
   /** Per-ticket e-ticket QR data URLs, keyed by the ticket's QR token. */
-  qrMap: Record<string, string> = {};
 
   /** One page of the booking history table; separate from the `invoices` summary load. */
   historyInvoices: PaymentServiceAgent.InvoiceDTO[] = [];
@@ -104,7 +103,6 @@ export class ProfileComponent extends ProfileFormBase {
           this.historyInvoices = results;
           this.historyPage = target;
           this.historyLoading = false;
-          this._buildQrCodes(this.historyInvoices);
           this._cdr.markForCheck();
         },
         error: () => { this.historyLoading = false; this._cdr.markForCheck(); },
@@ -142,20 +140,6 @@ export class ProfileComponent extends ProfileFormBase {
     if (to < total - 1) { items.push(null); }
     items.push(total);
     return items;
-  }
-
-  /** Renders each paid ticket's QR token into a scannable image (one per seat). */
-  private _buildQrCodes(list: PaymentServiceAgent.InvoiceDTO[]): void {
-    for (const inv of list) {
-      if (inv.status !== this.InvoiceStatus.Paid) { continue; }
-      for (const t of inv.tickets ?? []) {
-        const code = t.qrCode;
-        if (!code || this.qrMap[code]) { continue; }
-        QRCode.toDataURL(code, { margin: 1, width: 140 })
-          .then(url => { this.qrMap[code] = url; this._cdr.markForCheck(); })
-          .catch(() => { /* leave unset */ });
-      }
-    }
   }
 
   /** The full ticket list for an invoice id (for the expanded e-ticket panel). */

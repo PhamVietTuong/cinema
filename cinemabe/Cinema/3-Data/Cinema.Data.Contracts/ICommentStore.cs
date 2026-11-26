@@ -6,7 +6,7 @@ public interface ICommentStore : IGenericStore<Comment>
 {
     /// <summary>Paged comments for admin moderation (with Movie + User), optionally filtered by
     /// approval state and movie, newest first.</summary>
-    Task<(IEnumerable<Comment> Items, int Total)> GetForModerationAsync(bool? approved, Guid? movieId, int page, int pageSize);
+    Task<(IReadOnlyList<CommentModerationRow> Items, int Total)> GetForModerationAsync(bool? approved, Guid? movieId, int page, int pageSize);
 
     /// <summary>All direct replies to a comment (used when deleting a parent so no reply is orphaned).</summary>
     Task<IEnumerable<Comment>> GetRepliesAsync(Guid parentId);
@@ -22,3 +22,6 @@ public interface ICommentStore : IGenericStore<Comment>
     /// <summary>Count of approved comments for a movie, replies included.</summary>
     Task<int> CountApprovedForMovieAsync(Guid movieId);
 }
+
+/// <summary>Projected comment row for the admin moderation list (no User entity, so no password hash is ever loaded).</summary>
+public record CommentModerationRow(Guid Id, Guid MovieId, string MovieTitle, string UserName, string Content, bool IsApproved, Guid? ParentId, DateTime CreationTime);

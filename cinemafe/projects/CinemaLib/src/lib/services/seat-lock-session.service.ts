@@ -31,12 +31,9 @@ export class SeatLockSessionService implements OnDestroy {
   private readonly _subs = new Subscription();
 
   constructor(private readonly _hub: BookingHubService) {
-    this._subs.add(this._hub.seatLocked$.subscribe(e => {
-      if (e.connectionId === this._hub.connectionId) {
-        return; // our own lock: ignore
-      }
-      this.locked$.next(e.seatId);
-    }));
+    // The server never echoes our own lock back (it broadcasts to the room except the locker), so every
+    // SeatLocked here is another viewer's.
+    this._subs.add(this._hub.seatLocked$.subscribe(e => this.locked$.next(e.seatId)));
     this._subs.add(this._hub.seatUnlocked$.subscribe(seatId => this.unlocked$.next(seatId)));
     this._subs.add(this._hub.seatLockFailed$.subscribe(e => this.lockFailed$.next(e.seatId)));
     this._subs.add(this._hub.seatBooked$.subscribe(seatIds => this.booked$.next(seatIds)));

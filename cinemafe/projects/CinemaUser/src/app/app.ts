@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, Type, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -16,6 +16,10 @@ export class App implements OnInit {
   isAuth$: Observable<boolean>;
   user$: Observable<any>;
 
+  /** The assistant widget, loaded in an idle slot after startup so it stays out of the initial bundle
+   * (an `@defer` block can't split it: this root component lives in an NgModule). */
+  readonly chatbot = signal<Type<unknown> | null>(null);
+
   /** Mobile nav menu open state. */
   menuOpen = false;
 
@@ -32,6 +36,7 @@ export class App implements OnInit {
   ngOnInit(): void {
     this._store.dispatch(loadUserFromStorage());
     this._splashBanner.init();
+    this._loadChatbotWhenIdle();
     // Compact topbar once scrolled. Toggles a class directly on the element (no change detection) —
     // the app is zoneless and this is purely visual.
     window.addEventListener('scroll', () => {
@@ -40,6 +45,16 @@ export class App implements OnInit {
       const max = document.documentElement.scrollHeight - window.innerHeight;
       bar?.style.setProperty('--cu-scroll', String(max > 0 ? Math.min(window.scrollY / max, 1) : 0));
     }, { passive: true });
+  }
+
+  private _loadChatbotWhenIdle(): void {
+    const load = () => import('./shared/chatbot/chatbot.component').then(m => this.chatbot.set(m.ChatbotComponent));
+    const idle = (window as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
+    if (idle) {
+      idle.call(window, () => { void load(); });
+    } else {
+      setTimeout(() => { void load(); }, 1500);
+    }
   }
 
   toggleMenu(): void { this.menuOpen = !this.menuOpen; }

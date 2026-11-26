@@ -40,7 +40,7 @@
 | `projects/CinemaAdmin/src/app/features/` | Admin app: auth, categories (reference-data CRUD: age-restrictions, holidays, memberships, movie-types, news, promotion-campaigns, templates, user-types), operations (audit-log, comments, invoices, promotion-programs, splash-banners), overview (dashboard, movies, theaters+tabs, showtimes, users, reports). |
 | `projects/CinemaStaff/src/app/features/` | Staff app: auth, gate (scan/lookup), home, incidents, pos (counter sale), profile, reports/audit-log, sales-reports, schedule. |
 | `projects/CinemaLib/src/lib/components/` | Shared UI used by 2+ apps: seat-map, shell, dialogs, table base, filter-bar, status-pill, ticket/qr, price, empty-state, forbidden, profile, bar-chart. |
-| `projects/CinemaLib/src/lib/services/` | NSwag-generated API service agents (cinema/identity/payment http services) + `seat-lock-session.service`, `booking-hub`/`staff-hub` (SignalR), `toast.service`, API error handling. |
+| `projects/CinemaLib/src/lib/services/` | NSwag-generated API service agents (cinema/identity/payment http services) + `seat-lock-session.service`, `booking-hub`/`staff-hub` (SignalR, loaded lazily via dynamic `import('@microsoft/signalr')`), `toast.service`, `lookup-cache.service` (`LookupCacheService`: 5-minute shared cache of theaters / memberships / movie types / age restrictions / a theater's rooms for dropdowns; call `invalidate('<key>')` after creating, editing or deleting one), API error handling. |
 | `projects/CinemaLib/src/lib/store/` | NgRx: `auth` and `movies` feature stores (mounted in all 3 apps), plus a legacy `reducers/actions/selectors` folder (search, loading, notification slices). |
 | `projects/CinemaLib/src/lib/guards/` | `authGuard`, `adminGuard`, `roleGuard`, `homeRedirectGuard`/`homeRedirectByRole`. |
 | `projects/CinemaLib/src/lib/interceptors/` | `authInterceptor`, `errorInterceptor`. |
@@ -48,7 +48,9 @@
 
 **To change X (frontend):**
 - A component used by 2+ apps → `CinemaLib/src/lib/components/`, never copy-paste per app.
-- Seat map UI → `CinemaLib` seat-map component + `seat-lock-session.service` + `booking-hub.service`.
+- Seat map UI → `CinemaLib` seat-map component + `seat-lock-session.service` + `booking-hub.service`. The map is OnPush with a precomputed row/cell view model: pass a new `seats` array or mutate seat flags in place and mark the owner for check (`ngDoCheck` fingerprints the flags and rebuilds only on a real change).
+- Root shell imports → `CinemaLibModule` exports the slim `SharedCoreModule` (sidenav, menu, icons, translate); feature components import the full `SharedModule`. Keep tables/tabs/datepicker/etc. out of anything the root module or eager routes import, or they land in the initial bundle.
+- Apps compile `CinemaLib` from source (`tsconfig.json` `paths` → `projects/CinemaLib/src/public-api.ts`), so esbuild can split it per file; unit tests of the apps still resolve `dist/CinemaLib` (`tsconfig.spec.json`), so run `ng build CinemaLib` before `ng test <app>`. `angular.json` initial budgets are a ratchet just above the measured sizes.
 - API client code → regenerate via NSwag (`Generator/GenerateNswag.ps1`), never hand-edit `*-http.service.ts`.
 - Role-based routing → `CinemaLib/src/lib/guards/`.
 - Responsive breakpoints → `CinemaLib/src/lib/theme/_mixins.scss` is the single source: `m.phone` (<=480), `m.tablet-small` (<=768, drawer nav + card lists), `m.tablet` (<=1024, icon-rail sidebar). Use `@use 'lib/theme/mixins' as m;` in app component SCSS (CinemaLib components use a relative `../../theme/mixins`). Shared admin responsive rules (fluid inputs, 44px touch targets, dialog max-width, `.dlg-row--2/3` collapse) live in `_marquee-ledger.scss` / `_dialog-ledger.scss`.

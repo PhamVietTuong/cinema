@@ -1,7 +1,10 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
 import { PaymentServiceAgent } from 'CinemaLib';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-reports',
   standalone: false,
   templateUrl: './reports.component.html',
@@ -10,6 +13,8 @@ import { PaymentServiceAgent } from 'CinemaLib';
 export class ReportsComponent implements OnInit {
   private _payment = inject(PaymentServiceAgent.HttpService);
   private _cdr = inject(ChangeDetectorRef);
+  private _destroyRef = inject(DestroyRef);
+  private _load$ = new Subject<{ from: Date; to: Date; days: number }>();
 
   from = '';
   to = '';
@@ -20,7 +25,38 @@ export class ReportsComponent implements OnInit {
   byMovie: PaymentServiceAgent.RevenueBreakdownDTO[] = [];
   byTheater: PaymentServiceAgent.RevenueBreakdownDTO[] = [];
 
+  // Derived once per load (not recomputed by template getters on every change-detection pass).
+  maxDay = 1;
+  maxMovie = 1;
+  maxTheater = 1;
+  ticketsTotal = 0;
+
   ngOnInit(): void {
+    // A newer load cancels an older in-flight one; the five requests land together in one render.
+    this._load$.pipe(
+      switchMap(({ from, to, days }) => {
+        this.loading = true;
+        this._cdr.markForCheck();
+        return forkJoin({
+          revenue: this._payment.getRevenue(from, to).pipe(catchError(() => of(null))),
+          byDay: this._payment.getRevenueByDay(days).pipe(catchError(() => of(null))),
+          byMovie: this._payment.getRevenueByMovie(from, to).pipe(catchError(() => of(null))),
+          byTheater: this._payment.getRevenueByTheater(from, to).pipe(catchError(() => of(null))),
+        }).pipe(finalize(() => { this.loading = false; this._cdr.markForCheck(); }));
+      }),
+      takeUntilDestroyed(this._destroyRef),
+    ).subscribe(r => {
+      this.total = (r.revenue as any)?.revenue ?? 0;
+      this.byDay = r.byDay ?? [];
+      this.byMovie = r.byMovie ?? [];
+      this.byTheater = r.byTheater ?? [];
+      this.maxDay = Math.max(1, ...this.byDay.map(d => d.total ?? 0));
+      this.maxMovie = Math.max(1, ...this.byMovie.map(d => d.total ?? 0));
+      this.maxTheater = Math.max(1, ...this.byTheater.map(d => d.total ?? 0));
+      this.ticketsTotal = this.byMovie.reduce((s, m) => s + (m.total ?? 0), 0);
+      this._cdr.markForCheck();
+    });
+
     const today = new Date();
     const start = new Date();
     start.setDate(today.getDate() - 29);
@@ -33,23 +69,8 @@ export class ReportsComponent implements OnInit {
     const from = new Date(this.from + 'T00:00:00');
     const to = new Date(this.to + 'T23:59:59');
     const days = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86400000) + 1);
-    this.loading = true;
-
-    this._payment.getRevenue(from, to).subscribe({
-      next: (r: any) => { this.total = r?.revenue ?? 0; this._cdr.markForCheck(); },
-      error: () => this._cdr.markForCheck(),
-    });
-    this._payment.getRevenueByDay(days).subscribe(r => { this.byDay = r ?? []; this._cdr.markForCheck(); });
-    this._payment.getRevenueByMovie(from, to).subscribe(r => { this.byMovie = r ?? []; this._cdr.markForCheck(); });
-    this._payment.getRevenueByTheater(from, to).subscribe(r => {
-      this.byTheater = r ?? []; this.loading = false; this._cdr.markForCheck();
-    });
+    this._load$.next({ from, to, days });
   }
-
-  get maxDay(): number { return Math.max(1, ...this.byDay.map(d => d.total ?? 0)); }
-  get maxMovie(): number { return Math.max(1, ...this.byMovie.map(d => d.total ?? 0)); }
-  get maxTheater(): number { return Math.max(1, ...this.byTheater.map(d => d.total ?? 0)); }
-  get ticketsTotal(): number { return this.byMovie.reduce((s, m) => s + (m.total ?? 0), 0); }
 
   pct(value: number | undefined, max: number): number {
     return Math.round(((value ?? 0) / max) * 100);

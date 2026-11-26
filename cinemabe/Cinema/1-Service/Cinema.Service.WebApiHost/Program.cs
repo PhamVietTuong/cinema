@@ -8,6 +8,7 @@ using Cinema.Service.WebApiHost.Helpers;
 using Cinema.Service.WebApiHost.Hubs;
 using Cinema.Service.WebApiHost.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using NSwag.AspNetCore;
@@ -67,6 +68,17 @@ builder.Services.AddSingleton<Cinema.Business.Contracts.Payments.IPaymentGateway
         sp.GetServices<Cinema.Business.Contracts.Payments.IPaymentGateway>(),
         builder.Configuration["Payments:Provider"]));
 
+// Response compression (Brotli preferred, Gzip fallback), also over HTTPS. Fastest level: the payloads are JSON
+// lists, where the CPU/latency trade-off beats the extra ratio of the default level.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Fastest);
+
 // Controllers
 builder.Services.AddControllers();
 
@@ -78,6 +90,8 @@ builder.Services.AddCinemaRateLimiting(builder.Configuration);
 
 // Background job: expire abandoned unpaid bookings and free their seats
 builder.Services.AddHostedService<Cinema.Service.WebApiHost.Services.PendingBookingReaper>();
+// Background worker: sends booking confirmation email/SMS off the payment/IPN request path
+builder.Services.AddHostedService<Cinema.Service.WebApiHost.Services.NotificationDispatchService>();
 // Background job: email showtime reminders ~1h before start
 builder.Services.AddHostedService<Cinema.Service.WebApiHost.Services.ShowtimeReminderService>();
 
@@ -121,6 +135,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
         options.Events = new JwtBearerEvents
         {
+            // Re-check the account (status, role, theater, credentials) so a ban/demotion/password change
+            // takes effect immediately instead of when the token expires.
+            OnTokenValidated = TokenRevalidator.ValidateAsync,
             OnMessageReceived = ctx =>
             {
                 var token = ctx.Request.Query["access_token"];
@@ -181,6 +198,10 @@ builder.Services.AddOpenApiDocument(cfg =>
 
 var app = builder.Build();
 
+// First in the pipeline so it also catches exceptions thrown by every later middleware.
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseResponseCompression();
+
 // Seed database
 using (var scope = app.Services.CreateScope())
 {
@@ -205,6 +226,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFrontend");
+// Baseline response hardening, before static files so /uploads gets it too: nosniff stops a browser from
+// treating an uploaded file as a script/HTML page, DENY stops the API being framed, and the referrer policy
+// keeps URLs (which can carry an access_token on the SignalR paths) out of cross-site Referer headers.
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    await next();
+});
 app.UseRateLimiter();
 // Serve uploaded images at /uploads/* from the on-disk uploads folder.
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "uploads");
@@ -212,7 +244,9 @@ Directory.CreateDirectory(uploadsPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
-    RequestPath = "/uploads"
+    RequestPath = "/uploads",
+    // Uploads are named by a fresh GUID and never overwritten, so the URL is a content version: cache forever.
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = "public,max-age=2592000,immutable"
 });
 // Serve committed demo/seed images (e.g. promotion program banners) at /seed-assets/* — unlike
 // wwwroot/uploads, this folder is checked into git so seed data resolves on every app, not just
@@ -221,15 +255,17 @@ var seedAssetsPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "s
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(seedAssetsPath),
-    RequestPath = "/seed-assets"
+    RequestPath = "/seed-assets",
+    // Committed demo images can change between deployments under the same name, so only a short cache.
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = "public,max-age=3600"
 });
 if (!app.Environment.IsDevelopment())
 {
+    app.UseHsts();
     app.UseHttpsRedirection();
 }
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllers();
 app.MapHub<BookingHub>("/hubs/booking");
 app.MapHub<StaffHub>("/hubs/staff");

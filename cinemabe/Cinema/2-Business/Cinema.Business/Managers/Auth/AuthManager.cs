@@ -102,10 +102,16 @@ public class AuthManager : IAuthManager
             throw new UnauthorizedAccessException("Please verify your email address before signing in.");
         }
 
-        // A successful login clears any accumulated failures / lockout.
+        // A successful password login clears any accumulated failures / lockout — except the failure counter of
+        // a 2FA account: it also counts wrong 2FA codes, and resetting it here would let an attacker who knows
+        // the password re-login every few guesses, get a fresh code and never reach the lockout. For those
+        // accounts only a successful 2FA verification resets the counter.
         if (user.FailedLoginCount != 0 || user.LockoutEndUtc != null)
         {
-            user.FailedLoginCount = 0;
+            if (!user.TwoFactorEnabled)
+            {
+                user.FailedLoginCount = 0;
+            }
             user.LockoutEndUtc = null;
             await _uow.UserStore.UpdateAsync(user);
             await _uow.SaveChangesAsync();
@@ -192,8 +198,30 @@ public class AuthManager : IAuthManager
         await _uow.UserStore.CreateAsync(user);
         await SendVerificationEmailAsync(user, rawToken);
 
+        // No session yet: the caller has not proven it owns the address. The client must confirm the email
+        // (the link we just sent) and then sign in. Returning a token here let anyone mint a working session
+        // for an email they do not control.
         user = await _uow.UserStore.GetByEmailAsync(request.Email) ?? user;
-        return BuildAuthResponse(user);
+        return new AuthResponse { User = ToUserDTO(user) };
+    }
+
+    // A social sign-in proves the caller owns the email. If the row was pre-registered by someone else
+    // (unconfirmed, with a password and phone THEY chose), drop everything they set before confirming it,
+    // otherwise their credentials keep working once the real owner signs in.
+    private static void ResetUnconfirmedAccountForSocialLogin(User user, string phonePrefix)
+    {
+        CreatePasswordHash(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), out var hash, out var salt);
+        user.PasswordHash = hash;
+        user.PasswordSalt = salt;
+        user.Phone = phonePrefix + Guid.NewGuid().ToString("N")[..15];
+        user.EmailConfirmed = true;
+        user.EmailVerificationTokenHash = null;
+        user.EmailVerificationExpiresAt = null;
+        user.TwoFactorEnabled = false;
+        user.TwoFactorCodeHash = null;
+        user.TwoFactorCodeExpiresAt = null;
+        user.FailedLoginCount = 0;
+        user.LockoutEndUtc = null;
     }
 
     private Task SendVerificationEmailAsync(User user, string rawToken)
@@ -374,8 +402,9 @@ public class AuthManager : IAuthManager
         }
         else if (!user.EmailConfirmed)
         {
-            // Signing in with Google proves ownership — confirm the existing account.
-            user.EmailConfirmed = true;
+            // Signing in with Google proves ownership — confirm the existing account, discarding whatever
+            // credentials the pre-registrant chose.
+            ResetUnconfirmedAccountForSocialLogin(user, "g");
             await _uow.UserStore.UpdateAsync(user);
             await _uow.SaveChangesAsync();
         }
@@ -422,7 +451,7 @@ public class AuthManager : IAuthManager
         }
         else if (!user.EmailConfirmed)
         {
-            user.EmailConfirmed = true;
+            ResetUnconfirmedAccountForSocialLogin(user, "f");
             await _uow.UserStore.UpdateAsync(user);
             await _uow.SaveChangesAsync();
         }

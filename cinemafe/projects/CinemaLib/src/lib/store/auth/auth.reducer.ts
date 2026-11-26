@@ -8,7 +8,8 @@ export const authReducer = createReducer(
   on(AuthActions.login, AuthActions.register, state => ({ ...state, loading: true, error: null, awaitingTwoFactor: false })),
   on(AuthActions.twoFactorRequired, state => ({ ...state, loading: false, awaitingTwoFactor: true })),
   on(AuthActions.loginSuccess, AuthActions.registerSuccess, (state, { response }) => ({
-    ...state, loading: false, token: response.token, user: response.user, error: null, awaitingTwoFactor: false
+    // A tokenless response (registration with an unverified email) must not sign the user in.
+    ...state, loading: false, token: response.token || null, user: response.token ? response.user : null, error: null, awaitingTwoFactor: false
   })),
   on(AuthActions.loginFailure, AuthActions.registerFailure, (state, { error }) => ({
     ...state, loading: false, error, awaitingTwoFactor: false

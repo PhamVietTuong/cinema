@@ -1,6 +1,6 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { CinemaServiceAgent, UserRoles, selectCurrentUser, showException } from 'CinemaLib';
+import { CinemaServiceAgent, UserRoles, selectCurrentUser, showException, LookupCacheService } from 'CinemaLib';
 
 /** localStorage key holding the theater an Admin picked in the topbar. */
 export const STAFF_THEATER_STORAGE_KEY = 'cinema_staff_theater';
@@ -78,8 +78,10 @@ export class TheaterContextService {
     });
   }
 
+  private readonly _lookup = inject(LookupCacheService);
+
   private _loadTheaters(): void {
-    this._svc.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 200, filters: {} })).subscribe({
+    this._lookup.theaters().subscribe({
       next: result => {
         const theaters = result.results ?? [];
         this.theaters.set(theaters);

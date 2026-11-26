@@ -24,7 +24,7 @@ No class-level `[Authorize]`; actions default to anonymous unless tagged.
 | Action | Route verb | Auth | Rate limit | Request (key fields) | Response | Notable errors |
 |---|---|---|---|---|---|---|
 | `Login` | POST | anonymous | `Auth` (10/min/IP by default, `RateLimiting:AuthPermitLimit`) | `LoginRequest{EmailOrPhone, Password}` | `AuthResponse{Token, ExpiresAt, RequiresTwoFactor, User}` — `Token=""` if 2FA required | 401 invalid credentials / locked out / unconfirmed email |
-| `Register` | POST | anonymous | `Auth` | `RegisterRequest{Name, Email, Phone, Password, ConfirmPassword}` | `AuthResponse` with usable JWT immediately (even if unconfirmed) | 400 email/phone in use, missing `Customer` UserType |
+| `Register` | POST | anonymous | `Auth` | `RegisterRequest{Name, Email, Phone, Password, ConfirmPassword}` | `AuthResponse` with `User` only and an empty `Token` — no session until the email is confirmed | 400 email/phone in use, missing `Customer` UserType |
 | `ForgotPassword` | POST | anonymous | `AuthEmail` (3/15min/IP) | `ForgotPasswordRequest{Email}` | 204 always (no enumeration) | — |
 | `ResetPassword` | POST | anonymous | `Auth` | `ResetPasswordRequest{Email, Token, NewPassword}` | 204 | 400 invalid/expired token |
 | `ConfirmEmail` | POST | anonymous | `Auth` | `ConfirmEmailRequest{Email, Token}` | 204 | 400 invalid/expired token |
@@ -95,7 +95,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 
 | Action | Verb | Auth | Request | Response | Notes |
 |---|---|---|---|---|---|
-| `UploadImage` | POST | Admin | `IFormFile` (jpg/png/webp/gif, ≤5MB) | `UploadResultDTO{Url}` | |
+| `UploadImage` | POST | Admin | `IFormFile` (jpg/png/webp/gif, ≤5MB) | `UploadResultDTO{Url}` | 400 when the extension/Content-Type is not an allowed image **or the file's leading bytes are not that image format** (`ImageSignature`; a renamed HTML/script/SVG file is refused) |
 | `GetRecommendedMovies` | POST | anonymous | `count` query (default 8) | `List<MovieDTO>` — personalized if signed in | |
 | `GetMovies` | POST | anonymous | `PagingSearchDTO` (filters `search`, `director`, `movieTypeId`, `language`, `theaterId`, `date`, `status` = `now`/`coming`) | `DefaultSearchResults<MovieDTO>` | |
 | `GetNowShowingMovies` | POST | anonymous | `PagingSearchDTO` | same — `IsNowShowing` filter | |
@@ -141,7 +141,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 | `UserType` | **Admin-only even to list/get** | Admin | |
 | `MemberShip` | anonymous | Admin | |
 | `Holiday` | anonymous | Admin | + `GetHolidayTimeSlotPrices` (`[HttpPost]` `PagingSearchDTO`, filters `holidayId` / `theaterId`) and `UpsertHolidayTimeSlotPrices` (batch for one holiday + theater; an item with a `null` `priceMultiplier` removes that slot's override). **Both Admin-only**, including the read. Rejects non-positive factors, duplicate slots in one request, and slots of another theater |
-| `News` | anonymous | Admin | |
+| `News` | anonymous (`GetNewsList`, `GetNews`) — **published articles only**: a caller who is not an Admin never receives drafts, whatever `isPublished` filter they send (`GetNews` of a draft is 404); an Admin sees drafts too | Admin | |
 | `Person` | **Admin-only** for CRUD; `GetPeopleByNames` is `[AllowAnonymous]` | Admin | |
 | `PromotionCampaign` | `GetPromotionCampaigns` / `GetPromotionCampaign` (list is `[HttpPost]`) | Admin (`Create`/`Update`/`Delete`) | Campaign grouping for promotions (`#region PromotionCampaign`, `CinemaController.cs:1368`); standard CRUD, no extra actions |
 | `PromotionProgram` | `GetPublishedPromotionPrograms` `[AllowAnonymous]`; `GetPromotionPrograms`/`GetPromotionProgram` Admin | Admin | Single promotion/pricing entity; triggered by `Code` xor `AutoApply` |
@@ -171,7 +171,7 @@ Overlap: `PaymentController`'s `GetRevenue*`/`GetInvoices` family overlaps in pu
 
 | Hub | Route | Auth | Notes |
 |---|---|---|---|
-| `BookingHub` | `/hubs/booking` | `[Authorize]` | `JoinRoom`, `LockSeat`, `UnlockSeat` (client→hub); `SeatLockFailed` (caller-only), `SeatLocked`/`SeatUnlocked`/`SeatBooked` (group broadcast) |
+| `BookingHub` | `/hubs/booking` | `[Authorize]` | `JoinRoom`, `LockSeat`, `UnlockSeat` (client→hub); `SeatLockFailed` (caller-only), `SeatLocked` (room broadcast to everyone except the locker, payload = seat id only)/`SeatUnlocked`/`SeatBooked` (group broadcast) |
 | `StaffHub` | `/hubs/staff` | `[Authorize(Roles=RoleNames.StaffApp)]` | `IncidentRaised` is the only server-to-client event (`StaffHub.IncidentRaisedEvent`); `JoinTheater(theaterId)` (client-to-hub). It has no food-order or stock events |
 
 JWT for both is read from the `access_token` query string for any path starting with `/hubs` (configured in `Program.cs`), not the `Authorization` header.

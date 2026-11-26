@@ -48,7 +48,7 @@
         <span class="notch notch--bottom" aria-hidden="true"></span>
 
         <ng-container *ngIf="p.bannerUrl; else noImage">
-          <img [src]="p.bannerUrl" alt="" class="stub-img">
+          <img loading="lazy" decoding="async" [src]="p.bannerUrl" alt="" class="stub-img">
           <span class="stub-chip">
             <span class="chip-val" *ngIf="stubValue(p) as sv; else chipIcon">{{ sv }}</span>
             <ng-template #chipIcon><mat-icon class="chip-icon">local_activity</mat-icon></ng-template>

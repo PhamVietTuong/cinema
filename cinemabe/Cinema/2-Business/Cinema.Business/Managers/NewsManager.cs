@@ -82,22 +82,27 @@ public class NewsManager : INewsManager
         };
     }
 
-    public async Task<DefaultSearchResults<NewsDTO>> GetAsync(PagingSearchDTO search)
+    public async Task<DefaultSearchResults<NewsDTO>> GetAsync(PagingSearchDTO search, bool publishedOnly = false)
     {
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
 
         var query = GetFilteredNewsQuery(search.Filters);
+        if (publishedOnly)
+        {
+            // Enforced here, not left to the caller's filter: an anonymous client controls the filter dictionary.
+            query = _uow.NewsStore.FilterQuery(query, e => e.IsPublished);
+        }
         query = ApplySort(query, search.Sort);
         var total = await _uow.NewsStore.CountAsync(query);
         var items = await _uow.NewsStore.AllPageAsync(query, page - 1, pageSize);
         return PagingHelper.ToPagedResult<News, NewsDTO>(items, total, page, pageSize);
     }
 
-    public async Task<NewsDTO> GetByIdAsync(Guid id)
+    public async Task<NewsDTO> GetByIdAsync(Guid id, bool publishedOnly = false)
     {
         var entity = await _uow.NewsStore.GetByIdAsync(id);
-        if (entity == null)
+        if (entity == null || (publishedOnly && !entity.IsPublished))
         {
             throw new KeyNotFoundException($"News {id} not found.");
         }

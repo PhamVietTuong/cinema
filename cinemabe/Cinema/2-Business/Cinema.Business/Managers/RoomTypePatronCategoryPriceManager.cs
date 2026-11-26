@@ -81,6 +81,10 @@ public class RoomTypePatronCategoryPriceManager : IRoomTypePatronCategoryPriceMa
         await _uow.BeginTransactionAsync();
         try
         {
+            // Batched: one set-based delete, one insert batch, one update batch — not one round trip per row.
+            var toDelete = new List<Guid>();
+            var toCreate = new List<RoomTypePatronCategoryPrice>();
+            var toUpdate = new List<RoomTypePatronCategoryPrice>();
             foreach (var item in request.Items)
             {
                 var hasExisting = existing.TryGetValue(item.PatronCategoryId, out var current);
@@ -88,7 +92,7 @@ public class RoomTypePatronCategoryPriceManager : IRoomTypePatronCategoryPriceMa
                 {
                     if (hasExisting)
                     {
-                        await _uow.RoomTypePatronCategoryPriceStore.DeleteAsync(current!);
+                        toDelete.Add(item.PatronCategoryId);
                     }
                     continue;
                 }
@@ -97,17 +101,30 @@ public class RoomTypePatronCategoryPriceManager : IRoomTypePatronCategoryPriceMa
                 if (hasExisting)
                 {
                     current!.Price = price;
-                    await _uow.RoomTypePatronCategoryPriceStore.UpdateAsync(current);
+                    toUpdate.Add(current);
                 }
                 else
                 {
-                    await _uow.RoomTypePatronCategoryPriceStore.CreateAsync(new RoomTypePatronCategoryPrice
+                    toCreate.Add(new RoomTypePatronCategoryPrice
                     {
                         RoomTypeId       = request.RoomTypeId,
                         PatronCategoryId = item.PatronCategoryId,
                         Price            = price,
                     });
                 }
+            }
+            if (toDelete.Count > 0)
+            {
+                await _uow.RoomTypePatronCategoryPriceStore.ExecuteDeleteAsync(
+                    x => x.RoomTypeId == request.RoomTypeId && toDelete.Contains(x.PatronCategoryId));
+            }
+            if (toCreate.Count > 0)
+            {
+                await _uow.RoomTypePatronCategoryPriceStore.CreateRangeAsync(toCreate);
+            }
+            if (toUpdate.Count > 0)
+            {
+                await _uow.RoomTypePatronCategoryPriceStore.UpdateRangeAsync(toUpdate);
             }
             await _uow.CommitTransactionAsync();
         }

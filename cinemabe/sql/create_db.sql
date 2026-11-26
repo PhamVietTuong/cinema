@@ -585,7 +585,7 @@ CREATE TABLE [InvoiceTicket] (
     [PatronCategoryId] uniqueidentifier NULL,
     [PatronCategoryName] nvarchar(100) NULL,
     [PatronDiscountPercent] float NOT NULL DEFAULT 0,
-    [QrCode] nvarchar(max) NULL,
+    [QrCode] nvarchar(64) NULL,
     [IsUsed] bit NOT NULL,
     [IsActive] bit NOT NULL DEFAULT 1,
     -- P3 gate: stamped atomically with IsUsed when a ticket is admitted at the gate.
@@ -711,12 +711,16 @@ CREATE INDEX [IX_Evaluation_UserId] ON [Evaluation] ([UserId]);
 CREATE INDEX [IX_FoodAndDrink_TheaterId] ON [FoodAndDrink] ([TheaterId]);
 CREATE INDEX [IX_InvoiceFoodAndDrink_FoodAndDrinkId] ON [InvoiceFoodAndDrink] ([FoodAndDrinkId]);
 CREATE UNIQUE INDEX [IX_Invoice_Code] ON [Invoice] ([Code]);
-CREATE INDEX [IX_Invoice_UserId] ON [Invoice] ([UserId]);
+CREATE INDEX [IX_Invoice_UserId] ON [Invoice] ([UserId], [CreationTime] DESC);
+CREATE INDEX [IX_Invoice_Status_CreationTime] ON [Invoice] ([Status], [CreationTime]);
+CREATE INDEX [IX_Invoice_Status_PaidAt] ON [Invoice] ([Status], [PaidAt]) INCLUDE ([FinalAmount]);
 CREATE INDEX [IX_InvoiceTicket_SeatId] ON [InvoiceTicket] ([SeatId]);
 CREATE INDEX [IX_InvoiceTicket_ShowTimeId_RoomId] ON [InvoiceTicket] ([ShowTimeId], [RoomId]);
 -- Cross-instance double-booking guard: at most one active ticket per (showtime, room, seat).
 CREATE UNIQUE INDEX [IX_InvoiceTicket_ActiveSeat] ON [InvoiceTicket] ([ShowTimeId], [RoomId], [SeatId]) WHERE [IsActive] = 1;
+CREATE INDEX [IX_InvoiceTicket_QrCode] ON [InvoiceTicket] ([QrCode]) WHERE [QrCode] IS NOT NULL;
 CREATE INDEX [IX_Movie_AgeRestrictionId] ON [Movie] ([AgeRestrictionId]);
+CREATE INDEX [IX_Movie_IsActive_ReleaseDate] ON [Movie] ([IsActive], [ReleaseDate]);
 CREATE INDEX [IX_MovieTypeDetail_MovieTypeId] ON [MovieTypeDetail] ([MovieTypeId]);
 CREATE INDEX [IX_Room_TheaterId] ON [Room] ([TheaterId]);
 CREATE UNIQUE INDEX [IX_Seat_RoomId_RowName_ColIndex] ON [Seat] ([RoomId], [RowName], [ColIndex]);
@@ -736,7 +740,7 @@ CREATE UNIQUE INDEX [IX_HolidayTimeSlotPrice_HolidayId_TimeSlotId] ON [HolidayTi
 CREATE INDEX [IX_RoomType_TheaterId] ON [RoomType] ([TheaterId]);
 CREATE INDEX [IX_Room_RoomTypeId] ON [Room] ([RoomTypeId]);
 CREATE INDEX [IX_ShowTimeRoom_RoomId] ON [ShowTimeRoom] ([RoomId]);
-CREATE INDEX [IX_ShowTime_MovieId] ON [ShowTime] ([MovieId]);
+CREATE INDEX [IX_ShowTime_MovieId_StartTime] ON [ShowTime] ([MovieId], [StartTime]);
 CREATE INDEX [IX_ShowTime_StartTime] ON [ShowTime] ([StartTime]);
 CREATE UNIQUE INDEX [IX_User_Email] ON [User] ([Email]);
 CREATE INDEX [IX_User_MemberShipId] ON [User] ([MemberShipId]);

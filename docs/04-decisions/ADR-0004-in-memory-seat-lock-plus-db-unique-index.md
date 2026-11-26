@@ -22,7 +22,7 @@ Author to confirm: why an in-memory lock was chosen over a shared store, and whe
 ## Consequences
 
 - Correctness does not depend on the lock; a lost lock only makes a booking fail late, with the "just booked" message.
-- A stale lock can keep showing a seat as held to other viewers until it is read again, because expiry is lazy (`business-rules.md` section 1).
+- An expired lock is dropped on read or by `PendingBookingReaper`'s one-minute sweep (which broadcasts `SeatUnlocked`), so a stale hold shows for at most about a minute (`business-rules.md` section 1).
 - In a multi-instance deployment the lock would not be shared, so viewers on different instances would not see each other's holds. The index would still prevent double sale.
 - An unpaid booking holds its seat for 15 minutes (30 once payment starts) until the reaper cancels it, a separate DB-backed timer (`PendingBookingReaper.cs:12-13`).
 - Defect `5901ccf` (see `docs/05-process/ai-usage-log.md`) fixed three holes in the lock itself: no enforcement without a `ConnectionId`, renewal by re-locking, and a wrong unlock broadcast.

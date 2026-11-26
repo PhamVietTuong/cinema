@@ -1242,6 +1242,61 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task CreateBookingAsync_ReplayingTheHoldersConnectionIdUnderAnotherAccount_IsRejected()
+    {
+        // The connection id is visible to every viewer of the room. Presenting the holder's id from a different
+        // account must neither pass the hold check nor release the victim's lock.
+        var victim   = Guid.NewGuid();
+        var attacker = Guid.NewGuid();
+        var heldSeat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, heldSeat, "victim-conn", victim);
+
+        _uowMock.Setup(u => u.ShowTimeStore.GetShowTimeRoomAsync(ShowTimeId1, RoomId1))
+            .ReturnsAsync(new ShowTimeRoom { ShowTimeId = ShowTimeId1, RoomId = RoomId1, BasePrice = 100, ShowTime = OpenShowTime(ShowTimeId1, new DateTime(2026, 3, 2, 19, 0, 0), default), Room = new Room { Id = RoomId1, Status = RoomStatus.Active, Theater = new Theater { IsActive = true } } });
+        _uowMock.Setup(u => u.RoomStore.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Room?)null);
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1)).ReturnsAsync(new List<Guid>());
+        SetupSeatsById(new Dictionary<Guid, Seat> { [heldSeat] = new() { Id = heldSeat, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+
+        var request = new CreateBookingRequest
+        {
+            ShowTimeId    = ShowTimeId1,
+            RoomId        = RoomId1,
+            Seats         = new List<BookingSeatItem> { new() { SeatId = heldSeat } },
+            ConnectionId  = "victim-conn",
+            PaymentMethod = "Sandbox",
+        };
+
+        await FluentActions.Awaiting(() => _sut.CreateBookingAsync(attacker, request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*held by another user*");
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, heldSeat).Should().BeTrue("the victim's hold must survive");
+    }
+
+    [Fact]
+    public void IsSeatLocked_ExcludesTheHoldOnlyWhenConnectionAndUserBothMatch()
+    {
+        var owner = Guid.NewGuid();
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "conn", owner);
+
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, "conn", owner).Should().BeFalse();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, "conn", Guid.NewGuid()).Should().BeTrue();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, "conn", null).Should().BeTrue();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat, "other", owner).Should().BeTrue();
+    }
+
+    [Fact]
+    public void UnlockSeat_BySameConnectionIdButAnotherUser_KeepsTheLock()
+    {
+        var owner = Guid.NewGuid();
+        var seat = Guid.NewGuid();
+        _sut.LockSeat(ShowTimeId1, RoomId1, seat, "conn", owner);
+
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, seat, "conn", Guid.NewGuid()).Should().BeFalse();
+        _sut.IsSeatLocked(ShowTimeId1, RoomId1, seat).Should().BeTrue();
+        _sut.UnlockSeat(ShowTimeId1, RoomId1, seat, "conn", owner).Should().BeTrue();
+    }
+
+    [Fact]
     public void UnlockSeat_ByOtherConnection_KeepsTheLockAndReportsNoRelease()
     {
         // A18: a non-owner's unlock must not release the seat, and must not be reported as a release.
@@ -1305,8 +1360,8 @@ public class BookingServiceTests
     }
 
     // The lock store is a private static dictionary; reach into it to read/age a lock without sleeping 5 minutes.
-    private static System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)> LockStore()
-        => (System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, DateTime LockedAt)>)
+    private static System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)> LockStore()
+        => (System.Collections.Concurrent.ConcurrentDictionary<string, (string ConnectionId, Guid? UserId, DateTime LockedAt)>)
             typeof(BookingManager).GetField("_lockedSeats", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
                 .GetValue(null)!;
 
@@ -1321,7 +1376,7 @@ public class BookingServiceTests
     {
         var key = KeyFor(showTimeId, roomId, seatId);
         var existing = LockStore()[key];
-        LockStore()[key] = (existing.ConnectionId, DateTime.UtcNow - age);
+        LockStore()[key] = (existing.ConnectionId, existing.UserId, DateTime.UtcNow - age);
     }
 
     // ── Promo code validation (code-triggered PromotionProgram) ─────────────────
@@ -1417,6 +1472,83 @@ public class BookingServiceTests
 
         SetupCodeProgram(p => { p.MaxUsage = 3; p.UsedCount = 3; });
         (await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>())).Valid.Should().BeFalse();
+    }
+
+    // A code is not a way around the audience rules an admin set on the program.
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_CounterOnlyProgram_IsInvalidOnline()
+    {
+        SetupCodeProgram(p => p.AllowedChannelsMask = 1 << (int)SalesChannel.Counter);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_OnlineAllowedProgram_StaysValid()
+    {
+        SetupCodeProgram(p => p.AllowedChannelsMask = 1 << (int)SalesChannel.Online);
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_ExcludeHolidaysProgram_IsInvalidOnAHoliday()
+    {
+        SetupCodeProgram(p => p.ExcludeHolidays = true);
+        SetupHolidays(new List<Holiday> { new() { Date = DateOnly.FromDateTime(DateTime.UtcNow) } });
+
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_MembersProgram_RejectsAnonymousTierlessCustomer()
+    {
+        var goldTier = Guid.NewGuid();
+        SetupCodeProgram(p => { p.Eligibility = PromotionEligibility.Members; p.MinMemberShipId = goldTier; });
+
+        // SetupCodeProgram resolves every user to null, i.e. someone with no membership at all.
+        var result = await _sut.ValidateDiscountCodeAsync(Guid.NewGuid(), "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_MembersProgram_AcceptsACustomerAtOrAboveTheRequiredTier()
+    {
+        var goldTier = Guid.NewGuid();
+        var platinumTier = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        SetupCodeProgram(p => { p.Eligibility = PromotionEligibility.Members; p.MinMemberShipId = goldTier; });
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(new User { Id = customerId, MemberShipId = platinumTier });
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(goldTier)).ReturnsAsync(new MemberShip { Id = goldTier, MinPoints = 1000 });
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(platinumTier)).ReturnsAsync(new MemberShip { Id = platinumTier, MinPoints = 5000 });
+
+        var result = await _sut.ValidateDiscountCodeAsync(customerId, "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateDiscountCodeAsync_MembersProgram_RejectsALowerTier()
+    {
+        var goldTier = Guid.NewGuid();
+        var silverTier = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        SetupCodeProgram(p => { p.Eligibility = PromotionEligibility.Members; p.MinMemberShipId = goldTier; });
+        _uowMock.Setup(u => u.UserStore.GetByIdAsync(customerId)).ReturnsAsync(new User { Id = customerId, MemberShipId = silverTier });
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(goldTier)).ReturnsAsync(new MemberShip { Id = goldTier, MinPoints = 1000 });
+        _uowMock.Setup(u => u.MemberShipStore.GetByIdAsync(silverTier)).ReturnsAsync(new MemberShip { Id = silverTier, MinPoints = 100 });
+
+        var result = await _sut.ValidateDiscountCodeAsync(customerId, "SUMMER25", RoomId1, ShowTimeId1, 200000, new List<BookingSeatItem>());
+
+        result.Valid.Should().BeFalse();
     }
 
     // ── Food stock: deduct at booking, restore on cancel / expire ──────

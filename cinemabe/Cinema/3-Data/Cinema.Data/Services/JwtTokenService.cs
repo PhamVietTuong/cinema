@@ -29,6 +29,8 @@ public class JwtTokenService : ITokenService
             new Claim(ClaimTypes.Name, user.Name),
             new Claim(ClaimTypes.Role, user.UserType?.Name ?? "Customer"),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            // Credential fingerprint: re-checked against the database on every request (see TokenRevalidator).
+            new Claim(TokenStamp.ClaimType, TokenStamp.Compute(user.PasswordHash, user.PasswordSalt)),
         };
         // Theater staff carry the theater they manage, so the API can scope their access.
         if (user.TheaterId is Guid theaterId)

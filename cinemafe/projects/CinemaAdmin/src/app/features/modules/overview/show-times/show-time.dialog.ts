@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { CinemaServiceAgent, DialogService, ProjectionFormValues, ShowTimeTypeValues, apiErrorMessage } from 'CinemaLib';
+import { CinemaServiceAgent, DialogService, LookupCacheService, ProjectionFormValues, ShowTimeTypeValues, apiErrorMessage } from 'CinemaLib';
 
 type Dto = CinemaServiceAgent.ShowTimeDTO;
 
@@ -11,7 +11,6 @@ export interface ShowTimeDialogData {
   weekStart: Date;
   movies: CinemaServiceAgent.MovieDTO[];
   theaters: CinemaServiceAgent.TheaterDTO[];
-  rooms: CinemaServiceAgent.RoomDTO[];
 }
 
 /** Create/edit form for a showtime, opened via MatDialog. Resolves `true` if saved or deleted, `false` on cancel. */
@@ -22,6 +21,7 @@ export interface ShowTimeDialogData {
   styleUrl: './show-time.dialog.scss',
 })
 export class ShowTimeDialog {
+  private readonly _lookup = inject(LookupCacheService);
   private _svc: CinemaServiceAgent.HttpService;
   private _translate: TranslateService;
   private _dialogService: DialogService;
@@ -77,14 +77,12 @@ export class ShowTimeDialog {
     let dateValue = '';
     let startValue = '';
     let endValue = '';
-    let theaterIdValue = '';
     if (st?.startTime && st?.endTime) {
       const start = new Date(st.startTime);
       const end = new Date(st.endTime);
       dateValue = this._ymd(start);
       startValue = this._hm(start);
       endValue = this._hm(end);
-      theaterIdValue = data.rooms.find(r => r.id === st.roomId)?.theaterId ?? '';
       // An existing showtime's end is an already-explicit value (possibly spanning midnight from
       // a prior edit) — treat it like the admin typed it, so picking a different movie later
       // doesn't silently overwrite it.
@@ -108,27 +106,57 @@ export class ShowTimeDialog {
       end: [endValue, Validators.required],
       projectionForm: [st?.projectionForm ?? CinemaServiceAgent.ProjectionForm.TwoD, Validators.required],
       showTimeType: [st?.showTimeType ?? CinemaServiceAgent.ShowTimeType.Normal, Validators.required],
-      theaterId: [theaterIdValue, Validators.required],
+      theaterId: ['', Validators.required],
       roomId: [st?.roomId ?? '', Validators.required],
       basePrice: [st?.basePrice ?? 75000, [Validators.required, Validators.min(0)]],
       isActive: [st?.isActive ?? true],
     });
     this._syncRoomEnabled();
+    if (st?.roomId) {
+      this._loadTheaterOfRoom(st.roomId);
+    }
+  }
+
+  /** Rooms of the picked theater, fetched on demand (not every room of every theater up front). */
+  private _rooms: CinemaServiceAgent.RoomDTO[] = [];
+
+  /** Editing: only the room id is known, so resolve its theater, then load that theater's rooms. */
+  private _loadTheaterOfRoom(roomId: string): void {
+    this._svc.getRoom(roomId).subscribe(room => {
+      const theaterId = room.theaterId ?? '';
+      if (!theaterId) {
+        return;
+      }
+      this.form.patchValue({ theaterId });
+      this._syncRoomEnabled();
+      this._loadRooms(theaterId);
+    });
+  }
+
+  private _loadRooms(theaterId: string): void {
+    this._lookup.rooms(theaterId).subscribe(r => {
+      if (this.form.value.theaterId === theaterId) {
+        this._rooms = r.results ?? [];
+        this._cdr.markForCheck();
+      }
+    });
   }
 
   /** Rooms of the picked theater. Empty until one is picked, so the two selects cascade. */
   get roomsForTheater(): CinemaServiceAgent.RoomDTO[] {
     const theaterId = this.form.value.theaterId;
-    return theaterId ? this.data.rooms.filter(r => r.theaterId === theaterId) : [];
+    return theaterId ? this._rooms.filter(r => r.theaterId === theaterId) : [];
   }
 
   /** A room belongs to exactly one theater, so switching theater invalidates the picked room. */
   onTheaterChange(): void {
-    const roomId = this.form.value.roomId;
-    if (roomId && !this.roomsForTheater.some(r => r.id === roomId)) {
-      this.form.patchValue({ roomId: '' });
-    }
+    this._rooms = [];
+    this.form.patchValue({ roomId: '' });
     this._syncRoomEnabled();
+    const theaterId = this.form.value.theaterId;
+    if (theaterId) {
+      this._loadRooms(theaterId);
+    }
   }
 
   /** The room select is enabled once a theater is picked (done on the control, not via [disabled] in the template). */
