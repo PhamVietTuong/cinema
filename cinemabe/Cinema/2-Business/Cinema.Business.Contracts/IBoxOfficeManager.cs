@@ -11,7 +11,9 @@ public interface IBoxOfficeManager
 {
     /// <summary>Prices a counter sale exactly like <see cref="SellAsync"/> but has no side effects
     /// (no stock, points or seat change, no invoice).</summary>
-    Task<CounterQuoteDTO> QuoteAsync(Guid theaterId, CounterSaleRequest request);
+    /// <param name="staffUserId">The quoting staff member: a seat hold is owned by (connection, user), so without it
+    /// the terminal's own holds would read as "held by another user".</param>
+    Task<CounterQuoteDTO> QuoteAsync(Guid theaterId, Guid staffUserId, CounterSaleRequest request);
 
     /// <summary>Rings up a counter sale: always creates a Paid invoice (never Pending) in one transaction.</summary>
     Task<CounterSaleResultDTO> SellAsync(Guid theaterId, Guid staffUserId, bool isApprover, CounterSaleRequest request);

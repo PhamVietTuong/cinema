@@ -422,7 +422,7 @@ public class BoxOfficeTests
         request.CustomerUserId = member.Id;
         request.PointsToRedeem = 500;   // default rate: 1 point = 10 VND
 
-        var quote = await _sut.QuoteAsync(_theaterId, request);
+        var quote = await _sut.QuoteAsync(_theaterId, _staff.Id, request);
 
         quote.TotalAmount.Should().Be(160000);
         quote.PointsValue.Should().Be(5000);
@@ -443,8 +443,26 @@ public class BoxOfficeTests
     {
         _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(_showTimeId, _roomId)).ReturnsAsync(new List<Guid> { _seatA });
 
-        await FluentActions.Awaiting(() => _sut.QuoteAsync(_theaterId, SeatSale(_seatA)))
+        await FluentActions.Awaiting(() => _sut.QuoteAsync(_theaterId, _staff.Id, SeatSale(_seatA)))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*already booked*");
+    }
+
+    [Fact]
+    public async Task Quote_SeatHeldByTheSameTerminal_IsNotReportedAsHeldByAnotherUser()
+    {
+        var held = Guid.NewGuid();   // unique id: the lock store is static
+        SetSeats(new Seat { Id = held, RoomId = _roomId, RowName = "H", ColIndex = 1 });
+        _booking.LockSeat(_showTimeId, _roomId, held, "my-conn", _staff.Id);
+        var request = SeatSale(held);
+        request.ConnectionId = "my-conn";
+
+        var quote = await _sut.QuoteAsync(_theaterId, _staff.Id, request);
+
+        quote.Lines.Should().NotBeEmpty();
+
+        request.ConnectionId = "other-conn";
+        await FluentActions.Awaiting(() => _sut.QuoteAsync(_theaterId, _staff.Id, request))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("*held by another user*");
     }
 
     // ── Online booking is unchanged ──────────────────────────────────────────────

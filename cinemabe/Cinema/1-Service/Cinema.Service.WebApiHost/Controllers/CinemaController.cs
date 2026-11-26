@@ -2022,7 +2022,7 @@ public class CinemaController : ApiControllerBase
                 return Forbid();
             }
             var theaterId = scope.Resolve(request.TheaterId);
-            return Ok(await _boxOffice.QuoteAsync(theaterId, request));
+            return Ok(await _boxOffice.QuoteAsync(theaterId, User.GetUserId(), request));
         }
         catch (Exception e)
         {
