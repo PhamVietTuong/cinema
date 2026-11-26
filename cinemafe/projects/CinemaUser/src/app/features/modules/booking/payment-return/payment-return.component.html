@@ -65,14 +65,16 @@
       <div class="ticket-qr-section">
         <!-- One QR per ticket: the gate scanner validates a ticket's own QR token, not the invoice code. -->
         <div class="qr-list">
-          <ng-container *ngFor="let t of invoice?.tickets">
-            <div class="qr-item" *ngIf="t.qrCode">
-              <div class="qr-box">
-                <cl-qr-code [value]="t.qrCode" [size]="160" alt="E-ticket QR" />
+          @for (t of invoice?.tickets; track $index) {
+            @if (t.qrCode) {
+              <div class="qr-item">
+                <div class="qr-box">
+                  <cl-qr-code [value]="t.qrCode" [size]="160" alt="E-ticket QR" />
+                </div>
+                <span class="qr-seat">{{ t.seatLabel }}</span>
               </div>
-              <span class="qr-seat">{{ t.seatLabel }}</span>
-            </div>
-          </ng-container>
+            }
+          }
         </div>
         <p class="qr-instruction">{{ 'booking.success.qrInstruction' | translate }}</p>
       </div>

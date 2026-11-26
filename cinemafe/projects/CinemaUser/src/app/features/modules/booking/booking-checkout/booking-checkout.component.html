@@ -248,12 +248,14 @@
 
       <div class="ticket-qr-section">
         <div class="qr-list">
-          <div class="qr-item" *ngFor="let t of ticketQrs">
-            <div class="qr-box">
-              <cl-qr-code [value]="t.qrCode" [size]="160" alt="E-ticket QR" />
+          @for (t of ticketQrs; track $index) {
+            <div class="qr-item">
+              <div class="qr-box">
+                <cl-qr-code [value]="t.qrCode" [size]="160" alt="E-ticket QR" />
+              </div>
+              <span class="qr-seat">{{ t.seatLabel }}</span>
             </div>
-            <span class="qr-seat">{{ t.seatLabel }}</span>
-          </div>
+          }
         </div>
         <p class="qr-instruction">{{ 'booking.success.qrInstruction' | translate }}</p>
       </div>

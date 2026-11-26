@@ -4,7 +4,7 @@ import { BookingCheckoutState } from './booking-checkout.state';
 
 describe('BookingCheckoutComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn>; navigateByUrl: ReturnType<typeof vi.fn> };
-  let payment: { createBooking: ReturnType<typeof vi.fn>; initiatePayment: ReturnType<typeof vi.fn>; confirmPayment: ReturnType<typeof vi.fn>; validateDiscountCode: ReturnType<typeof vi.fn> };
+  let payment: { createBooking: ReturnType<typeof vi.fn>; initiatePayment: ReturnType<typeof vi.fn>; confirmPayment: ReturnType<typeof vi.fn>; getInvoice: ReturnType<typeof vi.fn>; validateDiscountCode: ReturnType<typeof vi.fn> };
   let identity: { getProfile: ReturnType<typeof vi.fn> };
   let hub: { connectionId: string; stopConnection: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -28,6 +28,7 @@ describe('BookingCheckoutComponent', () => {
       createBooking: vi.fn().mockReturnValue(of({ invoiceId: 'inv-1', invoiceCode: 'CIN123' })),
       initiatePayment: vi.fn().mockReturnValue(of({ alreadyPaid: true })),
       confirmPayment: vi.fn(),
+      getInvoice: vi.fn().mockReturnValue(of({ tickets: [{ seatLabel: 'A3', qrCode: 'qr-a3' }, { seatLabel: 'A4' }] })),
       validateDiscountCode: vi.fn(),
     };
     dialog = { open: vi.fn() };
@@ -218,6 +219,15 @@ describe('BookingCheckoutComponent', () => {
     expect(c.error).toContain('out of stock');
     expect(c.stockProblem).toBe(true);
     expect(c.loading).toBe(false);
+  });
+
+  it('shows the per-ticket QR token after payment, never the invoice code', () => {
+    const c = build(state);
+
+    c.confirmBooking();
+
+    expect(payment.getInvoice).toHaveBeenCalledWith('inv-1');
+    expect(c.ticketQrs).toEqual([{ seatLabel: 'A3', qrCode: 'qr-a3' }]);
   });
 
   it('initiates payment with provider VNPay when VNPay is selected', () => {
