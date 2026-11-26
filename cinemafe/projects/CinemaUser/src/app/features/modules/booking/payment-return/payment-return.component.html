@@ -11,6 +11,11 @@
   <div class="return-state" *ngIf="state === 'success'">
     <div class="success-icon-wrap">
       <div class="success-icon"><mat-icon>check</mat-icon></div>
+      <span class="confetti" aria-hidden="true">
+        @for (c of confetti; track c) {
+          <i [style.--a]="c * 30 + 'deg'" [style.--d]="(c % 3) * 0.06 + 's'"></i>
+        }
+      </span>
     </div>
     <h2 class="return-title">{{ 'booking.success.title' | translate }}</h2>
     <p class="return-sub">{{ 'booking.success.subtitle' | translate }}</p>

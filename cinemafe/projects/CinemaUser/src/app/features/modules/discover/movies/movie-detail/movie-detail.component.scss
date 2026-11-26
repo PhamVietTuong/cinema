@@ -90,6 +90,7 @@
   background: var(--ml-panel); border: 1px solid var(--ml-rule); color: var(--ml-ink);
   transition: border-color 0.15s ease, background 0.15s ease;
   &:hover:not(.active) { border-color: var(--ml-rule-strong); }
+  @media (prefers-reduced-motion: no-preference) { &.active { animation: dt-pop 0.28s var(--cx-ease, ease); } }
   &.active { background: var(--ml-action); border-color: var(--ml-action); color: var(--ml-on-action);
     .date-tab-date, .date-tab-count { color: var(--ml-on-action); opacity: 0.8; } }
 }
@@ -241,3 +242,4 @@
 }
 .reply-form .composer-actions, .comment-card .composer-actions { gap: 14px; align-items: center; }
 .comment-more { display: flex; justify-content: center; margin-top: 18px; }
+@keyframes dt-pop { 0% { transform: scale(0.92); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }

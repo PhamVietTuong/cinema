@@ -121,3 +121,16 @@ $seat-gap: 7px;
   &.unavailable-category { background: var(--ml-seat-empty); opacity: 0.35; }
   &.double-wide { width: 28px; }
 }
+
+/* Motion: rows cascade in, a picked seat pops, the screen glow breathes. */
+@media (prefers-reduced-motion: no-preference) {
+  .seat-row { animation: sm-row-in 0.4s var(--cx-ease, ease) both; animation-delay: calc(var(--row, 0) * 45ms); }
+  .seat.selected { animation: sm-pop 0.32s var(--cx-ease, ease); }
+  .screen-arc { animation: sm-screen-glow 3.2s ease-in-out infinite; }
+}
+@keyframes sm-row-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes sm-pop { 0% { transform: scale(0.7); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes sm-screen-glow {
+  0%, 100% { filter: drop-shadow(0 -2px 4px transparent); }
+  50% { filter: drop-shadow(0 -6px 14px var(--ml-action-ring, var(--ml-action-soft))); }
+}

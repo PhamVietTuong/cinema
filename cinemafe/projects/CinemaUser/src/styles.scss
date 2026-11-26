@@ -504,3 +504,105 @@ a {
   .mat-button-toggle-button { min-height: 44px; }
   .auth-body .mat-mdc-icon-button.mat-mdc-button-base { width: 44px; height: 44px; padding: 10px; }
 }
+
+// ── Motion polish ───────────────────────────────────────────────────────────────
+// All decorative motion lives behind no-preference so reduced-motion visitors get static pages.
+@media (prefers-reduced-motion: no-preference) {
+  // Route change: the routed component is inserted as the sibling right after <router-outlet>.
+  // `backwards` (not `both`): a forwards-fill would leave a computed transform on the routed component,
+  // and any transform makes it the containing block of position:fixed children (e.g. the booking order bar
+  // with the seat-hold timer), so they would stop sticking to the viewport.
+  router-outlet + * { display: block; animation: cu-page-in 0.45s var(--cx-ease, ease) backwards; }
+
+  // Buttons: gentle lift on hover, press-in on click, light sweep across the gold CTA.
+  .mat-mdc-raised-button, .mat-mdc-outlined-button, .btn-primary-cta, .btn-ghost-cta {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    &:hover { transform: translateY(-2px); }
+    &:active { transform: translateY(0) scale(0.97); }
+  }
+  .mat-mdc-raised-button, .btn-primary-cta {
+    position: relative;
+    overflow: hidden;
+    // The sheen is a gradient whose background-position slides, so it never leaves the button box
+    // (a translated pseudo-element leaked outside: Material's button does not clip overflow).
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%) -150% 0 / 250% 100% no-repeat;
+      pointer-events: none;
+    }
+    &:hover::after { background-position: 150% 0; transition: background-position 0.7s ease; }
+  }
+
+  // Scroll-revealed section headers (see appRevealOnScroll) — title slides in, bulbs light up in turn.
+  .section-header.cu-reveal { opacity: 0; transform: translateX(-20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .section-header.cu-reveal.is-revealed { opacity: 1; transform: none; }
+  .section-header.cu-reveal.is-revealed .marquee-rule .bulb { animation: cu-bulb-on 0.5s ease both; }
+  .section-header.cu-reveal.is-revealed .marquee-rule .bulb:nth-child(2) { animation-delay: 0.1s; }
+  .section-header.cu-reveal.is-revealed .marquee-rule .bulb:nth-child(3) { animation-delay: 0.2s; }
+  .section-header.cu-reveal.is-revealed .marquee-rule .bulb:nth-child(4) { animation-delay: 0.3s; }
+  .section-header.cu-reveal.is-revealed .marquee-rule .bulb:nth-child(5) { animation-delay: 0.4s; }
+
+  // "View all" arrow nudges right on hover.
+  .section-more mat-icon { transition: transform 0.2s ease; }
+  .section-more:hover mat-icon { transform: translateX(4px); }
+
+  // Hero poster floats gently.
+  .poster-wrap { animation: cu-float 6s ease-in-out infinite; }
+}
+
+@keyframes cu-page-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes cu-bulb-on {
+  0% { opacity: 0.2; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.35); box-shadow: 0 0 8px 2px var(--ml-action-ring); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes cu-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+// ── Skeleton loaders (replace spinners on list pages) ───────────────────────────
+.cu-skeleton-card { width: 234px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
+.cu-skeleton-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px; padding: 8px 0 24px;
+  .cu-skeleton-card { width: auto; }
+}
+@include m.phone { .cu-skeleton-card { width: min(234px, 64vw); } .cu-skeleton-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+.cu-sk {
+  display: block; border-radius: var(--ml-r-sm); background: var(--ml-panel-2);
+  position: relative; overflow: hidden;
+  &--poster { aspect-ratio: 2/3; border-radius: var(--ml-r-md); }
+  &--line { height: 14px; }
+  &--short { width: 60%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cu-sk::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--ml-ink) 9%, transparent) 50%, transparent 70%);
+    transform: translateX(-100%); animation: cu-shimmer 1.3s ease-in-out infinite;
+  }
+}
+@keyframes cu-shimmer { to { transform: translateX(100%); } }
+
+// ── Topbar compacts + gains a shadow once the page is scrolled (class set in App) ─
+@media (prefers-reduced-motion: no-preference) {
+  .topbar, .topbar-inner { transition: height 0.25s ease, box-shadow 0.25s ease; }
+}
+.topbar.is-scrolled { box-shadow: 0 6px 18px rgb(0 0 0 / 0.35); .topbar-inner { height: 56px; } }
+
+// ── Toasts: slide in from the right with a draining timer line (ToastService: 4s) ─
+@media (prefers-reduced-motion: no-preference) {
+  .mat-mdc-snack-bar-container.toast-success, .mat-mdc-snack-bar-container.toast-error, .mat-mdc-snack-bar-container.toast-info {
+    position: relative; overflow: hidden; animation: cu-toast-in 0.35s var(--cx-ease, ease);
+    &::after { content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: currentColor; opacity: 0.45; transform-origin: left; animation: cu-toast-timer 4s linear forwards; }
+  }
+}
+@keyframes cu-toast-in { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes cu-toast-timer { to { transform: scaleX(0); } }
+
+// ── Scroll-revealed list items (appRevealOnScroll adds .is-revealed) ───────────
+@media (prefers-reduced-motion: no-preference) {
+  .cu-rise:not(.is-revealed) { opacity: 0; }
+  .cu-rise.is-revealed { animation: cu-rise-in 0.55s var(--cx-ease, ease) backwards; }
+}
+@keyframes cu-rise-in { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }

@@ -2,10 +2,12 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
 
+import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.directive';
+
 @Component({
   selector: 'app-theaters',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, RevealOnScrollDirective],
   templateUrl: './theaters.component.html',
   styleUrl: './theaters.component.scss',
 })

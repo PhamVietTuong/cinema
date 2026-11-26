@@ -66,7 +66,24 @@
   flex: none; text-align: center; padding: 6px 12px; border-radius: var(--ml-r-md);
   background: var(--ml-action-soft); border: 1px solid var(--ml-action-ring);
   &.expired { background: transparent; border-color: var(--ml-danger); color: var(--ml-danger); }
+  // Last minute: the box and the digits turn red and pulse so the countdown is hard to miss.
+  &.is-urgent {
+    border-color: var(--ml-danger);
+    background: color-mix(in srgb, var(--ml-danger) 12%, transparent);
+    .order-hold-time { color: var(--ml-danger); }
+  }
 }
+@media (prefers-reduced-motion: no-preference) {
+  .order-hold.is-urgent { animation: ob-urgent 1s ease-in-out infinite; }
+  // The bar slides up from the bottom edge the first time a ticket is picked. `backwards` (not `both`):
+  // nothing may keep a transform on it once it has landed.
+  .order-bar { animation: ob-slide-up 0.4s var(--cx-ease, ease) backwards; }
+}
+@keyframes ob-urgent {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--ml-danger) 30%, transparent); transform: scale(1.05); }
+}
+@keyframes ob-slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: none; opacity: 1; } }
 .order-hold-label { display: block; font-size: var(--cx-text-xs); color: var(--ml-ink-2); }
 .order-hold-time {
   font-family: var(--ml-font-data); font-size: var(--cx-text-lg); font-weight: var(--cx-weight-medium);

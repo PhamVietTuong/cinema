@@ -19,7 +19,13 @@
 </div>
 
 <div class="theaters-page">
-  <div *ngIf="loading" class="spinner-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+  @if (loading) {
+    <div class="cu-skeleton-grid" aria-busy="true">
+      @for (s of [0, 1, 2, 3, 4, 5]; track s) {
+        <div class="cu-skeleton-card"><i class="cu-sk cu-sk--poster"></i><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></div>
+      }
+    </div>
+  }
 
   <div *ngIf="!loading && !filtered.length" class="empty">
     <mat-icon>movie</mat-icon>
@@ -27,7 +33,7 @@
   </div>
 
   <div class="theater-grid">
-    <div class="theater-card" *ngFor="let t of filtered">
+    <div class="theater-card cu-rise" appRevealOnScroll *ngFor="let t of filtered">
       <div class="theater-photo">
         <img [src]="t.imageUrl || 'assets/no-poster.jpg'" [alt]="t.name">
         <span class="city-chip" *ngIf="t.city">{{ t.city }}</span>

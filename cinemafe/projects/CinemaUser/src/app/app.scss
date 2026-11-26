@@ -13,6 +13,20 @@
   z-index: 1000;
   background: var(--ml-chrome);
   border-bottom: 1px solid var(--ml-chrome-rule);
+
+  // Reading-progress line along the bottom edge (--cu-scroll is set in App on scroll).
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--ml-action);
+    transform: scaleX(var(--cu-scroll, 0));
+    transform-origin: left;
+    pointer-events: none;
+  }
 }
 
 .topbar-inner {
@@ -87,6 +101,22 @@
 
     &:hover { color: var(--ml-chrome-ink); }
 
+    // Underline slides in from the left on hover (active link keeps its full bar below).
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -2px;
+      height: 2px;
+      background: var(--ml-action);
+      border-radius: 2px;
+      transform: scaleX(0);
+      transform-origin: left;
+    }
+    &:hover::after { transform: scaleX(1); }
+    @media (prefers-reduced-motion: no-preference) { &::after { transition: transform 0.25s ease; } }
+
     &.active-link {
       color: var(--ml-chrome-ink);
       font-weight: 600;
@@ -100,6 +130,7 @@
         height: 2px;
         background: var(--ml-action);
         border-radius: 2px;
+        transform: none;
       }
     }
   }
