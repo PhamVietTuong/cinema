@@ -3,6 +3,7 @@ import { CinemaServiceAgent, DayOfWeekValues, MultiplierBand, multiplierBand } f
 type TimeSlotDTO = CinemaServiceAgent.TimeSlotDTO;
 type TicketPriceDTO = CinemaServiceAgent.TicketPriceDTO;
 type HolidayDTO = CinemaServiceAgent.HolidayDTO;
+type HolidayTimeSlotPriceDTO = CinemaServiceAgent.HolidayTimeSlotPriceDTO;
 type DayOfWeek = CinemaServiceAgent.DayOfWeek;
 
 /** One time-slot segment drawn on a weekday's timeline bar, positioned as a [0,100] percentage of the
@@ -17,14 +18,27 @@ export interface TimelineSegmentVm {
   band: Exclude<MultiplierBand, 'holiday'>;
 }
 
-/** One weekday row: either its segmented timeline, or (when a holiday falls on it within the display
- * window) a full-width holiday override banner instead. */
+/** A holiday's factor for one time slot: its own override row when it has one, else the holiday default. */
+export interface HolidaySegmentVm {
+  timeSlot: TimeSlotDTO;
+  leftPct: number;
+  widthPct: number;
+  multiplier: number;
+  /** Id of the HolidayTimeSlotPrice row, when this slot has its own override. */
+  rowId?: string;
+  isDefault: boolean;
+  band: Exclude<MultiplierBand, 'holiday'>;
+}
+
+/** One weekday row: its segmented timeline, or (when a holiday falls on it within the display window)
+ * the holiday's own segmented timeline instead — one segment per time slot, each editable. */
 export interface WeekRowVm {
   day: DayOfWeek;
   labelKey: string;
   segments: TimelineSegmentVm[];
   holiday?: HolidayDTO;
   holidayDate?: string;
+  holidaySegments: HolidaySegmentVm[];
 }
 
 const MINUTES_PER_DAY = 24 * 60;
@@ -67,6 +81,78 @@ function dayOfWeekOfIso(iso: string): DayOfWeek {
   return new Date(`${iso}T00:00:00Z`).getUTCDay() as DayOfWeek;
 }
 
+interface ValidSlot { slot: TimeSlotDTO; start: number; end: number }
+
+/** The holiday's factor for each valid slot: its own override row when it has one, else the default. */
+function holidaySegmentsFor(
+  validSlots: ValidSlot[],
+  holiday: HolidayDTO,
+  holidayPrices: HolidayTimeSlotPriceDTO[],
+): HolidaySegmentVm[] {
+  return validSlots.map(({ slot, start, end }) => {
+    const row = holidayPrices.find(p => p.holidayId === holiday.id && p.timeSlotId === slot.id);
+    const multiplier = row?.priceMultiplier ?? holiday.priceMultiplier ?? 1;
+    return {
+      timeSlot: slot,
+      leftPct: (start / MINUTES_PER_DAY) * 100,
+      widthPct: ((end - start) / MINUTES_PER_DAY) * 100,
+      multiplier,
+      rowId: row?.id,
+      isDefault: !row,
+      band: multiplierBand(multiplier),
+    };
+  });
+}
+
+/** The theater's non-wrapping slots (start < end) in time order. */
+function validSlotsOf(timeSlots: TimeSlotDTO[]): ValidSlot[] {
+  const valid: ValidSlot[] = [];
+  for (const slot of timeSlots) {
+    const start = parseMinutes(slot.startTime);
+    const end = parseMinutes(slot.endTime);
+    if (start !== null && end !== null && end > start) {
+      valid.push({ slot, start, end });
+    }
+  }
+  return valid.sort((a, b) => a.start - b.start);
+}
+
+/** One segment per valid slot for a single holiday, used by the holidays sidebar (any date, not only
+ * the rolling 7-day window the weekday rows cover). */
+export function holidaySlotSegments(
+  timeSlots: TimeSlotDTO[],
+  holiday: HolidayDTO,
+  holidayPrices: HolidayTimeSlotPriceDTO[],
+): HolidaySegmentVm[] {
+  return holidaySegmentsFor(validSlotsOf(timeSlots), holiday, holidayPrices);
+}
+
+/**
+ * For a late-night slot: the holiday's factor on the slot immediately before it (its own override, else
+ * the holiday default). Null when the slot is not late night or has no preceding slot, so the dialog
+ * never warns for it.
+ */
+export function precedingHolidayMultiplier(
+  timeSlots: TimeSlotDTO[],
+  holiday: HolidayDTO,
+  holidayPrices: HolidayTimeSlotPriceDTO[],
+  slot: TimeSlotDTO,
+): number | null {
+  if (!isLateNightSlot(slot)) {
+    return null;
+  }
+  const segments = holidaySlotSegments(timeSlots, holiday, holidayPrices);
+  const start = parseMinutes(slot.startTime)!;
+  let preceding: HolidaySegmentVm | undefined;
+  for (const seg of segments) {
+    const segStart = parseMinutes(seg.timeSlot.startTime)!;
+    if (seg.timeSlot.id !== slot.id && segStart < start) {
+      preceding = seg;
+    }
+  }
+  return preceding?.multiplier ?? null;
+}
+
 /**
  * Builds the week's timeline rows (Mon→Sun) from the theater's time slots, the current room type's
  * ticket-price rows, and upcoming holidays. A holiday attaches to a weekday row only when its date
@@ -78,19 +164,10 @@ export function buildWeekRows(
   prices: TicketPriceDTO[],
   holidays: HolidayDTO[],
   todayIso: string,
+  holidayPrices: HolidayTimeSlotPriceDTO[] = [],
 ): { rows: WeekRowVm[]; invalidSlots: TimeSlotDTO[] } {
-  const validSlots: { slot: TimeSlotDTO; start: number; end: number }[] = [];
-  const invalidSlots: TimeSlotDTO[] = [];
-  for (const slot of timeSlots) {
-    const start = parseMinutes(slot.startTime);
-    const end = parseMinutes(slot.endTime);
-    if (start === null || end === null || end <= start) {
-      invalidSlots.push(slot);
-      continue;
-    }
-    validSlots.push({ slot, start, end });
-  }
-  validSlots.sort((a, b) => a.start - b.start);
+  const validSlots = validSlotsOf(timeSlots);
+  const invalidSlots = timeSlots.filter(s => !validSlots.some(v => v.slot === s));
 
   const todayStart = new Date(`${todayIso}T00:00:00Z`).getTime();
   const windowHolidaysByDay = new Map<DayOfWeek, { holiday: HolidayDTO; iso: string }>();
@@ -124,12 +201,14 @@ export function buildWeekRows(
     });
 
     const windowHoliday = windowHolidaysByDay.get(d.value);
+    const holidaySegments = windowHoliday ? holidaySegmentsFor(validSlots, windowHoliday.holiday, holidayPrices) : [];
     return {
       day: d.value,
       labelKey: d.name,
       segments,
       holiday: windowHoliday?.holiday,
       holidayDate: windowHoliday?.iso,
+      holidaySegments,
     };
   });
 

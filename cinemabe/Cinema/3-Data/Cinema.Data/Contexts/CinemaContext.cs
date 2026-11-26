@@ -33,6 +33,7 @@ public class CinemaContext : DbContext
     public DbSet<PromotionProgramSchedule> PromotionProgramSchedule => Set<PromotionProgramSchedule>();
     public DbSet<SplashBanner> SplashBanner => Set<SplashBanner>();
     public DbSet<Holiday> Holiday => Set<Holiday>();
+    public DbSet<HolidayTimeSlotPrice> HolidayTimeSlotPrice => Set<HolidayTimeSlotPrice>();
     public DbSet<TimeSlot> TimeSlot => Set<TimeSlot>();
     public DbSet<TicketPrice> TicketPrice => Set<TicketPrice>();
     public DbSet<News> News => Set<News>();

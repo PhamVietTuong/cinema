@@ -24,18 +24,36 @@
     <div class="tp-row" *ngFor="let row of weekRows">
       <div class="tp-row-label">{{ row.labelKey | translate }}</div>
 
-      <ng-container *ngIf="row.holiday && !showRegularFor.has(row.day); else regularTrack">
-        <div class="tp-holiday-banner" [ngClass]="legend.holiday.cssClass">
-          <span class="tp-holiday-name">★ {{ row.holiday.name }}</span>
-          <span class="tp-holiday-date">{{ row.holidayDate }}</span>
-          <span class="tp-holiday-multiplier">{{ row.holiday.priceMultiplier | number:'1.1-2' }}×</span>
-          <button type="button" class="tp-show-regular" (click)="toggleRegular(row.day)">
-            {{ 'theaters.ticketPrices.showRegular' | translate }}
-          </button>
+      @if (row.holiday && !showRegularFor.has(row.day)) {
+        <div class="tp-holiday-wrap">
+          <div class="tp-holiday-head">
+            <span class="tp-holiday-name">★ {{ row.holiday.name }}</span>
+            <span class="tp-holiday-date">{{ row.holidayDate }}</span>
+            <span class="tp-holiday-default">
+              {{ 'theaters.ticketPrices.holidayDefault' | translate }} {{ row.holiday.priceMultiplier | number:'1.1-2' }}×
+            </span>
+            <button type="button" class="tp-show-regular" (click)="toggleRegular(row.day)">
+              {{ 'theaters.ticketPrices.showRegular' | translate }}
+            </button>
+          </div>
+          <div class="tp-track tp-track--holiday">
+            @for (seg of row.holidaySegments; track seg.timeSlot.id) {
+              <button
+                type="button" class="tp-segment tp-segment--holiday"
+                [ngClass]="legend[seg.band].cssClass"
+                [class.tp-segment--default]="seg.isDefault"
+                [style.left.%]="seg.leftPct"
+                [style.width.%]="seg.widthPct"
+                [matTooltip]="seg.timeSlot.name + ' ' + seg.timeSlot.startTime + '–' + seg.timeSlot.endTime"
+                [attr.aria-label]="row.holiday.name + ' ' + seg.timeSlot.name + ' ' + seg.timeSlot.startTime + '–' + seg.timeSlot.endTime + ' ' + (seg.multiplier | number:'1.1-2') + '×'"
+                (click)="openHolidayCell(row, seg)">
+                {{ seg.timeSlot.name }} {{ seg.multiplier | number:'1.1-2' }}×
+              </button>
+            }
+          </div>
         </div>
-      </ng-container>
+      } @else {
 
-      <ng-template #regularTrack>
         <div class="tp-track">
           <button
             type="button" class="tp-segment"
@@ -55,7 +73,7 @@
             {{ 'theaters.ticketPrices.showHoliday' | translate }}
           </button>
         </div>
-      </ng-template>
+      }
     </div>
 
     <div class="tp-legend">
@@ -70,5 +88,7 @@
     </p>
   </div>
 
-  <app-holiday-sidebar [holidays]="holidays" (changed)="onHolidaysChanged()"></app-holiday-sidebar>
+  <app-holiday-sidebar
+    [holidays]="holidays" [theaterId]="theaterId" [timeSlots]="timeSlots" [holidayPrices]="holidayPrices"
+    (changed)="onHolidaysChanged()"></app-holiday-sidebar>
 </div>

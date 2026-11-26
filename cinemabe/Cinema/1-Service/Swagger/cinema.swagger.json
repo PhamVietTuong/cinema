@@ -271,6 +271,45 @@
         ]
       }
     },
+    "/api/Cinema/SearchImdbMatches": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_SearchImdbMatches",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfImdbMatchDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
     "/api/Cinema/CreateMovie": {
       "post": {
         "tags": [
@@ -2862,6 +2901,87 @@
         "responses": {
           "204": {
             "description": ""
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/GetHolidayTimeSlotPrices": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_GetHolidayTimeSlotPrices",
+        "requestBody": {
+          "x-name": "search",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagingSearchDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultSearchResultsOfHolidayTimeSlotPriceDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [
+              "Admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/Cinema/UpsertHolidayTimeSlotPrices": {
+      "post": {
+        "tags": [
+          "Cinema"
+        ],
+        "operationId": "Cinema_UpsertHolidayTimeSlotPrices",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertHolidayTimeSlotPricesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HolidayTimeSlotPriceDTO"
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6406,6 +6526,61 @@
           }
         }
       },
+      "DefaultSearchResultsOfImdbMatchDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfImdbMatchDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfImdbMatchDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImdbMatchDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ImdbMatchDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "imdbId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
+          },
+          "posterUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CreateMovieRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -8289,6 +8464,99 @@
           "priceMultiplier": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "DefaultSearchResultsOfHolidayTimeSlotPriceDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseSearchResultsOfHolidayTimeSlotPriceDTO"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BaseSearchResultsOfHolidayTimeSlotPriceDTO": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HolidayTimeSlotPriceDTO"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countPerPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HolidayTimeSlotPriceDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "holidayId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "timeSlotId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "priceMultiplier": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "UpsertHolidayTimeSlotPricesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "holidayId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "theaterId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HolidayTimeSlotPriceItem"
+            }
+          }
+        }
+      },
+      "HolidayTimeSlotPriceItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "timeSlotId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "priceMultiplier": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       },
