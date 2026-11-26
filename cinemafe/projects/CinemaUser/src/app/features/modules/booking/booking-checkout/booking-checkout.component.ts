@@ -60,6 +60,8 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   stockProblem = false;
   bookingSuccess = false;
   bookingCode = '';
+  /** Per-ticket QR tokens shown after payment; the gate validates these, not the invoice code. */
+  ticketQrs: { seatLabel: string; qrCode: string }[] = [];
 
   /** Payment options in display order; `svg` picks a custom svg-icon, otherwise `icon` is a Material icon. */
   readonly methods: { value: string; labelKey: string; app: string; svg?: string; icon?: string }[] = [
@@ -519,7 +521,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
     this._paymentService.initiatePayment(request).subscribe({
       next: init => {
         if (init?.alreadyPaid) {
-          this._showSuccess(code);
+          this._showSuccess(code, invoiceId);
           return;
         }
         if (init?.redirectUrl) {
@@ -535,16 +537,28 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
   private _confirmSandbox(invoiceId: string, paymentReference: string, code: string): void {
     const request = PaymentServiceAgent.ConfirmPaymentRequest.fromJS({ invoiceId, paymentReference });
     this._paymentService.confirmPayment(request).subscribe({
-      next: () => { this._showSuccess(code); },
+      next: () => { this._showSuccess(code, invoiceId); },
       error: err => { this.error = this._err(err, this._translate.instant('booking.errors.paymentFailed')); this.loading = false; this._cdr.markForCheck(); },
     });
   }
 
-  private _showSuccess(code: string): void {
+  private _showSuccess(code: string, invoiceId?: string): void {
     this.bookingCode = code;
     this.bookingSuccess = true;
     this.loading = false;
     this._cdr.markForCheck();
+    if (!invoiceId) {
+      return;
+    }
+    this._paymentService.getInvoice(invoiceId).subscribe({
+      next: inv => {
+        this.ticketQrs = (inv?.tickets ?? [])
+          .filter(t => !!t.qrCode)
+          .map(t => ({ seatLabel: t.seatLabel ?? '', qrCode: t.qrCode as string }));
+        this._cdr.markForCheck();
+      },
+      error: () => { /* The ticket QRs are also in the e-mail and the profile page. */ },
+    });
   }
 
   private _err(e: any, fallback: string): string {
