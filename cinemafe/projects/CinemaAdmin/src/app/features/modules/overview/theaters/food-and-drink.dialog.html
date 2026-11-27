@@ -51,10 +51,12 @@
         <mat-slide-toggle formControlName="isAvailable" aria-labelledby="fd-isAvailable-lbl"></mat-slide-toggle>
       </div>
 
-      <div class="dlg-switch" *ngIf="!isCombo">
-        <span class="dlg-switch-label" id="fd-isDrink-lbl">{{ 'theaters.food.isDrink' | translate }}</span>
-        <mat-slide-toggle formControlName="isDrink" aria-labelledby="fd-isDrink-lbl"></mat-slide-toggle>
-      </div>
+      @if (!isCombo) {
+        <div class="dlg-switch">
+          <span class="dlg-switch-label" id="fd-isDrink-lbl">{{ 'theaters.food.isDrink' | translate }}</span>
+          <mat-slide-toggle formControlName="isDrink" aria-labelledby="fd-isDrink-lbl"></mat-slide-toggle>
+        </div>
+      }
 
       <ng-container *ngIf="showComboControls">
         <div class="dlg-switch">
