@@ -39,4 +39,15 @@ test.describe('CinemaAdmin: theater management', () => {
     await expect(page).toHaveURL(/\/theaters\/[^/]+/);
     await expect(page.locator('[role="tab"]').first()).toBeVisible();
   });
+
+  test('movie list opens the cast page with a save bar', async ({ page }) => {
+    await page.goto('/movies');
+    const link = page.locator('a[href^="/movies/"][href$="/cast"]').first();
+    await link.waitFor({ state: 'attached', timeout: 10000 }).catch(() => undefined);
+    test.skip((await link.count()) === 0, 'No movies seeded');
+    const href = await link.getAttribute('href');
+    await link.click();
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await expect(page.locator('.cast-savebar')).toBeVisible();
+  });
 });

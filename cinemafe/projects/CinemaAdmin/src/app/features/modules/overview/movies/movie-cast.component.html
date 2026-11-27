@@ -1,0 +1,143 @@
+<div class="ad-page cast-page">
+  <div class="ad-page-header">
+    <div>
+      <button type="button" class="ad-btn ad-btn--ghost cast-back" (click)="back()">
+        <mat-icon>arrow_back</mat-icon> {{ 'movies.cast.back' | translate }}
+      </button>
+      <h1 class="ad-h1">{{ 'movies.cast.title' | translate }}</h1>
+      @if (movie) {
+        <p class="ad-sub">{{ movie.title }}</p>
+      }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'movies.cast.loading' | translate }}</p></div>
+  } @else if (loadFailed) {
+    <div class="ad-empty cast-error" role="alert"><mat-icon>error_outline</mat-icon><p>{{ 'movies.cast.loadFailed' | translate }}</p></div>
+  } @else {
+    <p class="cast-hint">{{ 'movies.cast.hint' | translate }}</p>
+    <div class="cast-layout">
+      <div class="cast-groups">
+        @for (g of groups; track g.type) {
+          <section class="cast-group">
+            <h2 class="cast-group__title">{{ g.labelKey | translate }} <span class="cast-count">{{ rowsOf(g.type).length }}</span></h2>
+            @for (row of rowsOf(g.type); track row.key) {
+              <div class="cast-row" [class.cast-row--dirty]="isDirtyRow(row)">
+                <div class="cast-row__main">
+                  <span class="cast-avatar" [style.background-color]="'hsl(' + hue(row.name) + ' 35% 80%)'">
+                    @if (row.photoUrl) {
+                      <img [src]="row.photoUrl" alt="">
+                    } @else {
+                      {{ initials(row.name) }}
+                    }
+                  </span>
+                  <input class="cast-input cast-name" type="text" maxlength="200" [(ngModel)]="row.name"
+                         (ngModelChange)="onPersonEdited(row, 'name')" [attr.aria-label]="'movies.cast.newName' | translate">
+                  @if (!row.personId) {
+                    <span class="ad-chip cast-new">{{ 'movies.cast.newBadge' | translate }}</span>
+                  }
+                  <div class="cast-role" role="group" [attr.aria-label]="'movies.cast.newRole' | translate">
+                    @for (o of creditTypeOptions; track o.value) {
+                      <button type="button" class="cast-role__btn" [class.is-on]="row.creditType === o.value"
+                              [attr.aria-pressed]="row.creditType === o.value" (click)="setType(row, o.value)">{{ o.name | translate }}</button>
+                    }
+                  </div>
+                </div>
+                @if (row.creditType === CreditType.Actor) {
+                  <input class="cast-input cast-character" type="text" maxlength="200" [(ngModel)]="row.characterName"
+                         [placeholder]="'movies.cast.character' | translate" [attr.aria-label]="'movies.cast.character' | translate">
+                }
+                <div class="cast-row__actions">
+                  <button type="button" class="cast-icon" (click)="move(row, -1)" [disabled]="isFirst(row)" [attr.aria-label]="'movies.cast.moveUp' | translate" [title]="'movies.cast.moveUp' | translate"><mat-icon>arrow_upward</mat-icon></button>
+                  <button type="button" class="cast-icon" (click)="move(row, 1)" [disabled]="isLast(row)" [attr.aria-label]="'movies.cast.moveDown' | translate" [title]="'movies.cast.moveDown' | translate"><mat-icon>arrow_downward</mat-icon></button>
+                  <button type="button" class="cast-icon" (click)="row.expanded = !row.expanded" [attr.aria-expanded]="row.expanded" [attr.aria-label]="'movies.cast.edit' | translate" [title]="'movies.cast.edit' | translate"><mat-icon>{{ row.expanded ? 'expand_less' : 'edit' }}</mat-icon></button>
+                  <button type="button" class="cast-icon cast-icon--danger" (click)="remove(row)" [attr.aria-label]="'movies.cast.remove' | translate" [title]="'movies.cast.remove' | translate"><mat-icon>close</mat-icon></button>
+                </div>
+                @if (row.expanded) {
+                  <div class="cast-row__edit">
+                    <input class="cast-input" type="text" maxlength="500" [(ngModel)]="row.photoUrl"
+                           (ngModelChange)="onPersonEdited(row, 'photoUrl')" [placeholder]="'movies.cast.photoUrl' | translate">
+                    <label class="ad-btn ad-btn--ghost">
+                      <mat-icon>upload</mat-icon> {{ 'movies.cast.upload' | translate }}
+                      <input type="file" accept="image/*" hidden (change)="onPickRowPhoto($event, row)">
+                    </label>
+                    @if (row.uploading) {
+                      <span class="cast-status">{{ 'movies.cast.uploading' | translate }}</span>
+                    }
+                    @if (row.uploadError) {
+                      <span class="cast-status cast-status--err">{{ 'movies.cast.uploadFailed' | translate }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            } @empty {
+              <p class="cast-empty">{{ 'movies.cast.emptyGroup' | translate }}</p>
+            }
+          </section>
+        }
+      </div>
+
+      <aside class="cast-library">
+        <h2 class="cast-group__title">{{ 'movies.cast.library' | translate }} <span class="cast-count">{{ libraryTotal }}</span></h2>
+        <input class="cast-input" type="search" #q (input)="onSearch(q.value)" [placeholder]="'movies.cast.librarySearch' | translate"
+               [attr.aria-label]="'movies.cast.librarySearch' | translate">
+
+        @if (creating) {
+          <div class="cast-create">
+            <input class="cast-input" type="text" maxlength="200" [(ngModel)]="newName" [placeholder]="'movies.cast.newName' | translate" [attr.aria-label]="'movies.cast.newName' | translate">
+            <div class="cast-role" role="group" [attr.aria-label]="'movies.cast.newRole' | translate">
+              @for (o of creditTypeOptions; track o.value) {
+                <button type="button" class="cast-role__btn" [class.is-on]="newType === o.value" [attr.aria-pressed]="newType === o.value" (click)="newType = o.value">{{ o.name | translate }}</button>
+              }
+            </div>
+            <input class="cast-input" type="text" maxlength="500" [(ngModel)]="newPhotoUrl" [placeholder]="'movies.cast.photoUrl' | translate">
+            <label class="ad-btn ad-btn--ghost">
+              <mat-icon>upload</mat-icon> {{ 'movies.cast.upload' | translate }}
+              <input type="file" accept="image/*" hidden (change)="onPickNewPhoto($event)">
+            </label>
+            @if (newUploading) {
+              <span class="cast-status">{{ 'movies.cast.uploading' | translate }}</span>
+            }
+            @if (newUploadError) {
+              <span class="cast-status cast-status--err">{{ 'movies.cast.uploadFailed' | translate }}</span>
+            }
+            <div class="cast-create__actions">
+              <button type="button" class="ad-btn ad-btn--primary" [disabled]="!newName.trim() || newUploading" (click)="confirmCreate()">{{ 'movies.cast.confirm' | translate }}</button>
+              <button type="button" class="ad-btn ad-btn--ghost" (click)="cancelCreate()">{{ 'movies.cast.cancel' | translate }}</button>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="ad-btn ad-btn--ghost cast-create-btn" (click)="openCreate()"><mat-icon>person_add</mat-icon> {{ 'movies.cast.createPerson' | translate }}</button>
+        }
+
+        <ul class="cast-people">
+          @for (p of library; track p.id) {
+            <li class="cast-person">
+              <span class="cast-avatar cast-avatar--sm" [style.background-color]="'hsl(' + hue(p.name ?? '') + ' 35% 80%)'">
+                @if (p.photoUrl) {
+                  <img [src]="p.photoUrl" alt="">
+                } @else {
+                  {{ initials(p.name ?? '') }}
+                }
+              </span>
+              <span class="cast-person__name">{{ p.name }}</span>
+              @if (isInMovie(p.id)) {
+                <span class="ad-chip">{{ 'movies.cast.added' | translate }}</span>
+              }
+              <button type="button" class="ad-btn ad-btn--ghost cast-add" (click)="addFromLibrary(p)">+ {{ 'movies.cast.add' | translate }}</button>
+            </li>
+          } @empty {
+            <li class="cast-empty">{{ (libraryLoading ? 'movies.cast.libraryLoading' : 'movies.cast.libraryEmpty') | translate }}</li>
+          }
+        </ul>
+      </aside>
+    </div>
+
+    <div class="cast-savebar">
+      <span class="cast-savebar__info">{{ (dirty ? 'movies.cast.changes' : 'movies.cast.noChanges') | translate:{ n: changeCount } }}</span>
+      <button type="button" class="ad-btn ad-btn--ghost" [disabled]="!dirty" (click)="discard()">{{ 'movies.cast.discard' | translate }}</button>
+      <button type="button" class="ad-btn ad-btn--primary" [disabled]="!canSave" (click)="save()">{{ 'movies.cast.save' | translate }}</button>
+    </div>
+  }
+</div>
