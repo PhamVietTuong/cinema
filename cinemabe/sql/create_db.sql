@@ -272,6 +272,7 @@ CREATE TABLE [FoodAndDrink] (
     [LowStockThreshold] int NOT NULL DEFAULT 0,
     [TargetStockLevel] int NOT NULL DEFAULT 0,
     [IsCombo] bit NOT NULL DEFAULT 0,
+    [IsDrink] bit NOT NULL DEFAULT 0,
     [CreationTime] datetime NOT NULL,
     [LastUpdatedTime] datetime NULL,
     CONSTRAINT [PK_FoodAndDrink] PRIMARY KEY ([Id]),

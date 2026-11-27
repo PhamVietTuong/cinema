@@ -15184,6 +15184,7 @@ export class FoodAndDrinkDTO implements IFoodAndDrinkDTO {
     imageUrl?: string | undefined;
     description?: string | undefined;
     isAvailable?: boolean;
+    isDrink?: boolean;
     trackInventory?: boolean;
     isCombo?: boolean;
     availableQuantity?: number | undefined;
@@ -15207,6 +15208,7 @@ export class FoodAndDrinkDTO implements IFoodAndDrinkDTO {
             this.imageUrl = _data["imageUrl"];
             this.description = _data["description"];
             this.isAvailable = _data["isAvailable"];
+            this.isDrink = _data["isDrink"];
             this.trackInventory = _data["trackInventory"];
             this.isCombo = _data["isCombo"];
             this.availableQuantity = _data["availableQuantity"];
@@ -15230,6 +15232,7 @@ export class FoodAndDrinkDTO implements IFoodAndDrinkDTO {
         data["imageUrl"] = this.imageUrl;
         data["description"] = this.description;
         data["isAvailable"] = this.isAvailable;
+        data["isDrink"] = this.isDrink;
         data["trackInventory"] = this.trackInventory;
         data["isCombo"] = this.isCombo;
         data["availableQuantity"] = this.availableQuantity;
@@ -15246,6 +15249,7 @@ export interface IFoodAndDrinkDTO {
     imageUrl?: string | undefined;
     description?: string | undefined;
     isAvailable?: boolean;
+    isDrink?: boolean;
     trackInventory?: boolean;
     isCombo?: boolean;
     availableQuantity?: number | undefined;
@@ -15259,6 +15263,7 @@ export class CreateFoodAndDrinkRequest implements ICreateFoodAndDrinkRequest {
     imageUrl?: string | undefined;
     description?: string | undefined;
     isAvailable?: boolean;
+    isDrink?: boolean;
 
     constructor(data?: ICreateFoodAndDrinkRequest) {
         if (data) {
@@ -15277,6 +15282,7 @@ export class CreateFoodAndDrinkRequest implements ICreateFoodAndDrinkRequest {
             this.imageUrl = _data["imageUrl"];
             this.description = _data["description"];
             this.isAvailable = _data["isAvailable"];
+            this.isDrink = _data["isDrink"];
         }
     }
 
@@ -15295,6 +15301,7 @@ export class CreateFoodAndDrinkRequest implements ICreateFoodAndDrinkRequest {
         data["imageUrl"] = this.imageUrl;
         data["description"] = this.description;
         data["isAvailable"] = this.isAvailable;
+        data["isDrink"] = this.isDrink;
         return data;
     }
 }
@@ -15306,6 +15313,7 @@ export interface ICreateFoodAndDrinkRequest {
     imageUrl?: string | undefined;
     description?: string | undefined;
     isAvailable?: boolean;
+    isDrink?: boolean;
 }
 
 export class UpdateFoodAndDrinkRequest implements IUpdateFoodAndDrinkRequest {
@@ -15316,6 +15324,7 @@ export class UpdateFoodAndDrinkRequest implements IUpdateFoodAndDrinkRequest {
     imageUrl?: string | undefined;
     description?: string | undefined;
     isAvailable?: boolean;
+    isDrink?: boolean;
 
     constructor(data?: IUpdateFoodAndDrinkRequest) {
         if (data) {
@@ -15335,6 +15344,7 @@ export class UpdateFoodAndDrinkRequest implements IUpdateFoodAndDrinkRequest {
             this.imageUrl = _data["imageUrl"];
             this.description = _data["description"];
             this.isAvailable = _data["isAvailable"];
+            this.isDrink = _data["isDrink"];
         }
     }
 
@@ -15354,6 +15364,7 @@ export class UpdateFoodAndDrinkRequest implements IUpdateFoodAndDrinkRequest {
         data["imageUrl"] = this.imageUrl;
         data["description"] = this.description;
         data["isAvailable"] = this.isAvailable;
+        data["isDrink"] = this.isDrink;
         return data;
     }
 }
@@ -15366,6 +15377,7 @@ export interface IUpdateFoodAndDrinkRequest {
     imageUrl?: string | undefined;
     description?: string | undefined;
     isAvailable?: boolean;
+    isDrink?: boolean;
 }
 
 export abstract class BaseSearchResultsOfRoomDTO implements IBaseSearchResultsOfRoomDTO {

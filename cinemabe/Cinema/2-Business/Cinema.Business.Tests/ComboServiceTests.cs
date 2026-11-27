@@ -412,4 +412,36 @@ public class ComboServiceTests
         result.Single(r => r.Name == "Cola").Quantity.Should().Be(2);
         result.Single(r => r.Name == "Straw").QuantityOnHand.Should().BeNull();
     }
+
+    // ── IsDrink round-trip ──────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Create_CarriesIsDrinkToEntityAndDto()
+    {
+        FoodAndDrink? saved = null;
+        _uowMock.Setup(u => u.FoodAndDrinkStore.CreateAsync(It.IsAny<FoodAndDrink>()))
+            .Callback<FoodAndDrink>(e => saved = e)
+            .ReturnsAsync((FoodAndDrink e) => e);
+
+        var dto = await _foods.CreateAsync(new CreateFoodAndDrinkRequest { TheaterId = TheaterA, Name = "Cola", Price = 25000, IsDrink = true });
+
+        saved!.IsDrink.Should().BeTrue();
+        dto.IsDrink.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Update_PatchesIsDrink_AndComboStaysFood()
+    {
+        var cola = Food("Cola");
+        var combo = Food("Combo", isCombo: true);
+        Known(cola, combo);
+        _uowMock.Setup(u => u.FoodAndDrinkStore.UpdateAsync(It.IsAny<FoodAndDrink>())).ReturnsAsync((FoodAndDrink e) => e);
+
+        var toDrink = await _foods.UpdateAsync(new UpdateFoodAndDrinkRequest { Id = cola.Id, TheaterId = TheaterA, Name = "Cola", Price = 1, IsDrink = true });
+        var comboSaved = await _foods.UpdateAsync(new UpdateFoodAndDrinkRequest { Id = combo.Id, TheaterId = TheaterA, Name = "Combo", Price = 1, IsDrink = false });
+
+        toDrink.IsDrink.Should().BeTrue();
+        cola.IsDrink.Should().BeTrue();
+        comboSaved.IsDrink.Should().BeFalse();
+    }
 }
