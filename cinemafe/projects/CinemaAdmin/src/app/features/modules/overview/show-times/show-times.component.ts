@@ -45,7 +45,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _movies$: Observable<CinemaServiceAgent.MovieDTO[]> | null = null;
 
   // ── Grid geometry ───────────────────────────────────────────────────────────
-  readonly startHour = 0;          // first row label — full 24h day, late-night screenings run past midnight
+  readonly startHour = 8;          // first row label
   readonly endHour = 24;           // last row boundary (exclusive label at 24:00)
   readonly rowHeight = 60;         // px per hour
   readonly hours: number[] = Array.from({ length: this.endHour - this.startHour }, (_, i) => this.startHour + i);
@@ -199,9 +199,7 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
   private _place(st: Dto, start: Date, end: Date): PlacedBlock {
     const top = Math.max(0, (this._hoursFromStart(start)) * this.rowHeight);
     const rawHeight = (this._hoursFromStart(end) - this._hoursFromStart(start)) * this.rowHeight;
-    // A showtime crossing midnight is drawn only up to the end of its start day's column; its tail is
-    // not repeated on the next day, but the block must not spill below the grid.
-    const height = Math.min(Math.max(28, rawHeight), Math.max(28, this.gridHeight - top));
+    const height = Math.max(28, rawHeight);
 
     // rowHeight is 60px/hour, i.e. exactly 1px per minute, so the buffer's minute count doubles
     // as its pixel height. Anchored to the block's rendered bottom (top + height), not recomputed
