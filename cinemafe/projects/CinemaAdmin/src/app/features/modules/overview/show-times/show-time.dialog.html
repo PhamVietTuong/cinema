@@ -31,7 +31,7 @@
         <div class="dlg-field">
           <label class="dlg-label" for="sh-start">{{ 'showTimes.startTime' | translate }}</label>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <input matInput id="sh-start" type="time" formControlName="start" (change)="onMovieOrStartChange()">
+            <input matInput id="sh-start" type="time" formControlName="start" (input)="onMovieOrStartChange()" (change)="onMovieOrStartChange()">
           </mat-form-field>
         </div>
         <div class="dlg-field">
