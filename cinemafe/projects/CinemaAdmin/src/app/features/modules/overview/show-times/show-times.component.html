@@ -56,7 +56,7 @@
       <!-- Time axis -->
       <div class="st-axis" [style.height.px]="gridHeight">
         <div class="st-hour" *ngFor="let h of hours" [style.height.px]="rowHeight">
-          <span>{{ h }}:00</span>
+          <span>{{ h < 10 ? '0' + h : h }}:00</span>
         </div>
       </div>
 
