@@ -33,8 +33,8 @@ export class ShowTimeDialog {
   readonly showTimeTypes = ShowTimeTypeValues;
   formError: string | null = null;
 
-  /** Once the admin has typed an end time themselves (or one was loaded from an existing showtime),
-   * auto-fill must stop overwriting it on further movie/start changes. */
+  /** Once the admin has typed an end time themselves, auto-fill must stop overwriting it on
+   * further movie/start changes. */
   private _endTouchedByUser = false;
   /** How many days past the start date the end time lands on, e.g. 1 for a 23:00 start that runs
    * past midnight. The form only has a single date picker (for the start), so this is tracked
@@ -83,10 +83,8 @@ export class ShowTimeDialog {
       dateValue = this._ymd(start);
       startValue = this._hm(start);
       endValue = this._hm(end);
-      // An existing showtime's end is an already-explicit value (possibly spanning midnight from
-      // a prior edit) — treat it like the admin typed it, so picking a different movie later
-      // doesn't silently overwrite it.
-      this._endTouchedByUser = true;
+      // The stored end is kept as-is until the admin changes the movie or start; from then on it
+      // is auto-recomputed (start + runtime) like on create, unless they type an end themselves.
       this._endDayOffset = this._daysBetween(start, end);
     } else {
       // Anchor a new showtime on the visible week, but never before today — a new showtime
