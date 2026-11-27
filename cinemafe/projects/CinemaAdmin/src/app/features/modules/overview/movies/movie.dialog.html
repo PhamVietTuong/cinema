@@ -17,7 +17,9 @@
         <div class="dlg-field">
           <label class="dlg-label" id="mv-description-label">{{ 'movies.form.description' | translate }}</label>
           <app-rich-text-editor inputId="mv-description" formControlName="description" [placeholder]="'movies.form.descriptionPlaceholder' | translate"></app-rich-text-editor>
-          <div class="rte-error" *ngIf="form.controls['description'].touched && form.controls['description'].hasError('required')" role="alert">{{ 'common.required' | translate }}</div>
+          @if (form.controls['description'].touched && form.controls['description'].hasError('required')) {
+            <div class="rte-error" role="alert">{{ 'common.required' | translate }}</div>
+          }
         </div>
       </div>
 
