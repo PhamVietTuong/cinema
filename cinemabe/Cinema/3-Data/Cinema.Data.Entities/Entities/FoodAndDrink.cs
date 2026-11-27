@@ -21,6 +21,8 @@ public class FoodAndDrink : BaseEntity
     public int TargetStockLevel { get; set; }
     /// <summary>A combo holds no stock itself; selling it deducts its <see cref="ComboItems"/> components.</summary>
     public bool IsCombo { get; set; }
+    /// <summary>A single item sold as a drink (otherwise food). Meaningless for a combo, which is its own group at the counter.</summary>
+    public bool IsDrink { get; set; }
 
     public ICollection<InvoiceFoodAndDrink> InvoiceFoodAndDrinks { get; set; } = new List<InvoiceFoodAndDrink>();
     /// <summary>Components of this item when it is a combo.</summary>

@@ -9546,6 +9546,9 @@
           "isAvailable": {
             "type": "boolean"
           },
+          "isDrink": {
+            "type": "boolean"
+          },
           "trackInventory": {
             "type": "boolean"
           },
@@ -9587,6 +9590,9 @@
           },
           "isAvailable": {
             "type": "boolean"
+          },
+          "isDrink": {
+            "type": "boolean"
           }
         }
       },
@@ -9618,6 +9624,9 @@
             "nullable": true
           },
           "isAvailable": {
+            "type": "boolean"
+          },
+          "isDrink": {
             "type": "boolean"
           }
         }

@@ -10,6 +10,7 @@ public class FoodAndDrinkDTO
     public string? ImageUrl { get; set; }
     public string? Description { get; set; }
     public bool IsAvailable { get; set; }
+    public bool IsDrink { get; set; }
 
     // Read-only inventory/combo view. Deliberately absent from the Create/Update requests: UpdateAsync
     // patches the entity from every same-named property, so these must never be writable from there.

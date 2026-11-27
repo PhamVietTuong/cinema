@@ -11,4 +11,5 @@ public class UpdateFoodAndDrinkRequest : IHasId
     public string? ImageUrl { get; set; }
     public string? Description { get; set; }
     public bool IsAvailable { get; set; } = true;
+    public bool IsDrink { get; set; }
 }

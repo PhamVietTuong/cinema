@@ -215,6 +215,7 @@ CROSS JOIN (VALUES
 ) AS f(Name, Price, Description, ImageUrl, IsAvailable);
 
 -- ── Seeded combos: flag the combo items and give each a recipe (tracking stays off) ──
+UPDATE [FoodAndDrink] SET [IsDrink] = 1 WHERE [Name] IN (N'Coca-Cola', N'Pepsi', N'Trà Đào Cam Sả', N'Nước Suối', N'Trà Sữa Trân Châu');
 UPDATE [FoodAndDrink] SET [IsCombo] = 1 WHERE [Name] IN (N'Combo Bắp Nước', N'Combo Gia Đình', N'Combo Solo', N'Combo Đôi');
 
 INSERT INTO [ComboItem] ([Id], [ComboId], [ComponentId], [Quantity], [CreationTime])

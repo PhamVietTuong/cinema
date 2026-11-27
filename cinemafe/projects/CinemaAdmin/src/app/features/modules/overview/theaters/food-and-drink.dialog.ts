@@ -57,6 +57,7 @@ export class FoodAndDrinkDialog {
       imageUrl: [_data.foodAndDrink?.imageUrl ?? ''],
       description: [_data.foodAndDrink?.description ?? ''],
       isAvailable: [_data.foodAndDrink?.isAvailable ?? true],
+      isDrink: [_data.foodAndDrink?.isDrink ?? false],
       isCombo: [{
         value: _data.presetCombo ? true : (_data.foodAndDrink?.isCombo ?? false),
         disabled: !!_data.presetCombo || !!_data.foodAndDrink?.trackInventory,
@@ -163,8 +164,8 @@ export class FoodAndDrinkDialog {
       this.comboRowsError = true;
       return;
     }
-    const { name, price, imageUrl, description, isAvailable } = this.form.value;
-    const v = { name, price, imageUrl, description, isAvailable };
+    const { name, price, imageUrl, description, isAvailable, isDrink } = this.form.value;
+    const v = { name, price, imageUrl, description, isAvailable, isDrink: !this.isCombo && !!isDrink };
     const wasCombo = !!this._data.foodAndDrink?.isCombo;
     const isCombo = this.isCombo;
 

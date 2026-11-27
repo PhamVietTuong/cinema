@@ -169,6 +169,7 @@
     },
     "food": {
       "title": "Bắp nước & combo",
+      "group": { "food": "Đồ ăn", "drink": "Đồ uống", "combo": "Combo" },
       "empty": "Rạp chưa có món nào.",
       "combo": "Combo",
       "soldOut": "Hết hàng",

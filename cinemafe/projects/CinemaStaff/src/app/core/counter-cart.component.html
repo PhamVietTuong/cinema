@@ -89,8 +89,12 @@
   @if (cart.foods().length === 0) {
     <p class="pos-muted">{{ 'pos.food.empty' | translate }}</p>
   }
-  <div class="pos-foods">
-    @for (f of cart.foods(); track f.id) {
+  <div class="pos-food-groups">
+    @for (g of cart.foodGroups(); track g.key) {
+      <div class="pos-food-group">
+        <h3 class="pos-food-group-title">{{ 'pos.food.group.' + g.key | translate }} <span class="pos-badge">{{ g.foods.length }}</span></h3>
+      <div class="pos-foods">
+    @for (f of g.foods; track f.id) {
       <div class="pos-food" [class.is-sold-out]="cart.cap(f) === 0" [class.is-active]="cart.qtyOf(f) > 0">
         <div class="pos-food-img">
           @if (f.imageUrl) {
@@ -115,6 +119,9 @@
           <span>{{ cart.qtyOf(f) }}</span>
           <button mat-icon-button type="button" (click)="cart.incFood(f)" [disabled]="!cart.canIncFood(f)"><mat-icon>add</mat-icon></button>
         </div>
+      </div>
+    }
+  </div>
       </div>
     }
   </div>

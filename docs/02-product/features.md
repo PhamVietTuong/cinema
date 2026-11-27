@@ -62,7 +62,7 @@ The `CinemaStaff` app and the `TheaterStaff` role (the only staff role) are veri
 | Home | `features/home` | complete | Role-based landing page (all current roles → `/home`). |
 | Gate: ticket scan | `features/gate/gate-scan*` | complete | `CinemaController.Scan`: a refused scan is still HTTP 200 with `Outcome` carrying the reason (`NotFound`/`NotPaid`/`AlreadyUsed`/`WrongTheater`/`WrongShowTime`/`TooEarly`/`Expired`/`AgeCheckRequired`) — only an auth failure is a non-200 response. Age prompt from MinAge 13 (T13/T16/T18); a K-rated admit shows a "parent or guardian" banner (`GuardianRequired`) that stays on screen until dismissed; a ticket of an ID-check patron category (student, senior) shows a non-blocking "check the holder's ID" banner naming the category (`RequiresIdCheck`), also kept on screen when admitted. |
 | Gate: lookup | `features/gate/gate-lookup*` | complete | Find paid tickets by invoice code or phone. |
-| Counter sale (POS) | `features/pos` | complete | Quote/sell flow backed by `#region BoxOffice`. |
+| Counter sale (POS) | `features/pos` | complete | Quote/sell flow backed by `#region BoxOffice`. The food picker shows three side-by-side groups (food, drinks, combos; stacked <=768px); single items are classed by `FoodAndDrink.IsDrink`, set from the CinemaAdmin item dialog. |
 | Schedule board | `features/schedule` | complete | Rooms + today's showtimes + status. |
 | Incidents (report/list/detail, seat/room block) | `features/incidents` | complete | Block actions, and resolve-with-unblock, require the `Approvers` role (Admin only); there is no PIN-based alternate path. |
 | Sales reports | `features/sales-reports` | complete | Management-role gated (`REPORTING_ROLES`). |

@@ -41,6 +41,13 @@ BEGIN
     ALTER TABLE [FoodAndDrink] ADD [IsCombo] bit NOT NULL CONSTRAINT [DF_FoodAndDrink_IsCombo] DEFAULT 0;
 END
 
+IF COL_LENGTH('dbo.FoodAndDrink', 'IsDrink') IS NULL
+BEGIN
+    ALTER TABLE [FoodAndDrink] ADD [IsDrink] bit NOT NULL CONSTRAINT [DF_FoodAndDrink_IsDrink] DEFAULT 0;
+    -- One-time backfill of the known seeded drinks; admins classify anything else from the item dialog.
+    EXEC('UPDATE [FoodAndDrink] SET [IsDrink] = 1 WHERE [IsCombo] = 0 AND [Name] IN (N''Coca-Cola'', N''Pepsi'', N''Trà Đào Cam Sả'', N''Nước Suối'', N''Trà Sữa Trân Châu'')');
+END
+
 IF OBJECT_ID('dbo.CK_FoodAndDrink_QuantityOnHand', 'C') IS NULL
 BEGIN
     EXEC('ALTER TABLE [FoodAndDrink] ADD CONSTRAINT [CK_FoodAndDrink_QuantityOnHand] CHECK ([QuantityOnHand] >= 0)');

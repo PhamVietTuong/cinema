@@ -22,6 +22,10 @@
 .pos-cat { min-width: clamp(140px, 14vw, 220px); }
 .pos-row-actions { white-space: nowrap; text-align: right; }
 
+.pos-food-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: start; }
+.pos-food-group .pos-foods { grid-template-columns: minmax(0, 1fr); }
+.pos-food-group { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.pos-food-group-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1rem; }
 .pos-foods { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
 .pos-food {
   display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: var(--ml-r-sm);
@@ -61,12 +65,13 @@
 }
 
 @include m.tablet-small {
+  .pos-food-groups { grid-template-columns: minmax(0, 1fr); }
+  .pos-food-group .pos-foods { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
   .pos-qty button { width: 44px; height: 44px; }
   .pos-food-line { flex-wrap: wrap; }
 }
 
 @include m.phone {
-  .pos-foods { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .pos-qty { flex-wrap: wrap; justify-content: center; }
   // Seat map: smaller seats on phones only (default 34px stays for tablet/desktop).
   cl-seat-map { --cl-seat-size: 30px; }

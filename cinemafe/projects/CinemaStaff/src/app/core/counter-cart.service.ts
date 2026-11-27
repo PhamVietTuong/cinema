@@ -49,6 +49,16 @@ export class CounterCartService implements OnDestroy {
 
   // ---- food
   readonly foods = signal<CounterFood[]>([]);
+  /** The counter shows three groups side by side: food, drinks and combos. Empty groups are left out. */
+  readonly foodGroups = computed(() => {
+    const all = this.foods();
+    const groups = [
+      { key: 'food', foods: all.filter(f => !f.isCombo && !f.isDrink) },
+      { key: 'drink', foods: all.filter(f => !f.isCombo && f.isDrink) },
+      { key: 'combo', foods: all.filter(f => f.isCombo) },
+    ];
+    return groups.filter(g => g.foods.length > 0);
+  });
   readonly foodQty = signal<Record<string, number>>({});
   private readonly _foodOverrides = signal<Record<string, number>>({});
   readonly foodLines = computed<PosFoodLine[]>(() => {

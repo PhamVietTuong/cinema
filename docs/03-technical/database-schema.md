@@ -259,7 +259,7 @@ InvoiceId (Cascade), Method (PaymentTender: Cash=0/Card=1/QrWallet=2/Points=4/On
 ## 6. Catalog / Inventory
 
 ### FoodAndDrink
-TheaterId (Cascade), Name (200), Price (double), ImageUrl?, Description?, IsAvailable (bool, default true), TrackInventory (bool), QuantityOnHand (int, **check constraint `>= 0`**), LowStockThreshold (int), TargetStockLevel (int, 0=unset), IsCombo (bool). `LowStockThreshold`/`TargetStockLevel` are unused: no endpoint reads them (there are no low-stock alerts). Nav `InvoiceFoodAndDrinks`, `ComboItems`.
+TheaterId (Cascade), Name (200), Price (double), ImageUrl?, Description?, IsAvailable (bool, default true), TrackInventory (bool), QuantityOnHand (int, **check constraint `>= 0`**), LowStockThreshold (int), TargetStockLevel (int, 0=unset), IsCombo (bool), IsDrink (bool, default 0; a single item is a drink or food, the counter shows food, drinks and combos as three groups). `LowStockThreshold`/`TargetStockLevel` are unused: no endpoint reads them (there are no low-stock alerts). Nav `InvoiceFoodAndDrinks`, `ComboItems`.
 
 ### ComboItem
 ComboId (Cascade, FK → FoodAndDrink "Combo"), ComponentId (NoAction, FK → FoodAndDrink "Component"), Quantity (int, default 1). **Unique** (ComboId, ComponentId). Check constraints: `Quantity > 0`, `ComboId <> ComponentId`.
