@@ -169,6 +169,7 @@
     },
     "food": {
       "title": "Food & combos",
+      "group": { "food": "Food", "drink": "Drinks", "combo": "Combos" },
       "empty": "No food is available at this theater.",
       "combo": "Combo",
       "soldOut": "Sold out",
