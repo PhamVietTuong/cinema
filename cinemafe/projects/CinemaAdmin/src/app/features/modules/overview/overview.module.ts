@@ -7,6 +7,7 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { ReportsComponent } from './reports/reports.component';
 import { MoviesManagementComponent } from './movies/movies-management.component';
 import { MovieDialog } from './movies/movie.dialog';
+import { MovieCastComponent } from './movies/movie-cast.component';
 import { TheatersManagementComponent } from './theaters/theaters-management.component';
 import { TheaterDialog } from './theaters/theater.dialog';
 import { TheaterDetailComponent } from './theaters/theater-detail.component';
@@ -50,6 +51,7 @@ const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent },
   { path: 'reports', component: ReportsComponent },
   { path: 'movies', component: MoviesManagementComponent },
+  { path: 'movies/:id/cast', component: MovieCastComponent },
   { path: 'theaters', component: TheatersManagementComponent },
   { path: 'theaters/:id', component: TheaterDetailComponent },
   { path: 'showtimes', component: ShowTimesManagementComponent },
@@ -62,6 +64,7 @@ const routes: Routes = [
     ReportsComponent,
     MoviesManagementComponent,
     MovieDialog,
+    MovieCastComponent,
     TheatersManagementComponent,
     TheaterDialog,
     TheaterDetailComponent,
