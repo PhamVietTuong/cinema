@@ -27,3 +27,5 @@
 @include m.tablet-small {
   .imdb-find-row .ad-btn, .dlg-field .ad-btn { min-height: 44px; }
 }
+
+.rte-error { color: var(--mat-sys-error, #b3261e); font-size: 0.75rem; margin-top: 4px; }
