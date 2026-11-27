@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import {
   SharedModule, CinemaServiceAgent, DialogService, PromotionEligibilityValues,
-  loadNowShowing, loadComingSoon,
+  loadNowShowing, loadComingSoon, stripHtml,
   selectNowShowing, selectComingSoon, selectMoviesLoading,
 } from 'CinemaLib';
 import { MovieCardComponent } from '../../../../shared/movie-card/movie-card.component';
@@ -29,6 +29,8 @@ export class HomeComponent implements OnInit {
   private _dialogs = inject(DialogService);
 
   readonly movieDetailCommands = movieDetailCommands;
+  /** Movie descriptions are authored as rich-text HTML; the hero shows a clamped plain-text teaser. */
+  readonly plainText = stripHtml;
   /** One dot per hero slide (up to 4); the active dot's sweep animation lasts HERO_INTERVAL_MS. */
   heroDots: number[] = [0];
   heroIndex = 0;

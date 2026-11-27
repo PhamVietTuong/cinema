@@ -86,7 +86,7 @@
     <!-- Synopsis -->
     <section class="md-section">
       <h2 class="md-title">{{ 'movies.detail.synopsisTitle' | translate }}</h2>
-      <p class="md-text">{{ movie.description }}</p>
+      <div class="md-text md-rich" [innerHTML]="movie.description"></div>
       <div class="md-facts">
         <span><b>{{ 'movies.detail.director' | translate }}</b> {{ movie.director || '—' }}</span>
         <span><b>{{ 'movies.detail.releaseDate' | translate }}</b> {{ movie.releaseDate | date:'dd/MM/yyyy' }}</span>

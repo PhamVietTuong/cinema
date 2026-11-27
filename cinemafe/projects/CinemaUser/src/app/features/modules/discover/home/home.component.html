@@ -26,7 +26,7 @@
             </span>
           </ng-container>
         </div>
-        <p class="hero-desc hero-fade-up" style="animation-delay:0.3s">{{ f.description }}</p>
+        <p class="hero-desc hero-fade-up" style="animation-delay:0.3s">{{ plainText(f.description) }}</p>
         <div class="hero-actions hero-fade-up" style="animation-delay:0.4s">
           <a mat-raised-button [routerLink]="movieDetailCommands(f.slug)">
             <mat-icon>confirmation_number</mat-icon> {{ 'home.hero.bookNow' | translate }}

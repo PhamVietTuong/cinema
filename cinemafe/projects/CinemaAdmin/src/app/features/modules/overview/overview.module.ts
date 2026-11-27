@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { SharedModule } from 'CinemaLib';
+import { RichTextEditorComponent } from '../../../shared/rich-text-editor.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { DashboardComponent } from './dashboard/dashboard.component';
@@ -95,6 +96,7 @@ const routes: Routes = [
   ],
   imports: [
     SharedModule,
+    RichTextEditorComponent,
     NgxDatatableModule,
     RouterModule.forChild(routes),
   ],

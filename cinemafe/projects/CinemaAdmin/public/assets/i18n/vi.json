@@ -161,6 +161,13 @@
     "statusCancelled": "Đã Hủy",
     "statusFailed": "Thất Bại"
   },
+  "richText": {
+    "bold": "In đậm",
+    "italic": "In nghiêng",
+    "underline": "Gạch chân",
+    "bulletList": "Danh sách chấm",
+    "numberedList": "Danh sách số"
+  },
   "movies": {
     "confirmDelete": "Bạn có chắc muốn xóa phim này?",
     "form": {

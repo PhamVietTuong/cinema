@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { CinemaServiceAgent, LookupCacheService } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
 import { MovieDialog } from './movie.dialog';
+import { RichTextEditorComponent } from '../../../../shared/rich-text-editor.component';
 
 describe('MovieDialog', () => {
   it('does not send credits when updating, so the server leaves them untouched', () => {
@@ -15,7 +16,7 @@ describe('MovieDialog', () => {
       id: 'mv-1', title: 'T', description: 'D', duration: 90, releaseDate: new Date(2027, 0, 1), ageRestrictionId: 'age-1', movieTypeIds: [],
     });
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule],
+      imports: [ReactiveFormsModule, RichTextEditorComponent],
       declarations: [MovieDialog],
       providers: [
         provideTranslateService({ fallbackLang: 'vi' }),

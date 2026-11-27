@@ -161,6 +161,13 @@
     "statusCancelled": "Cancelled",
     "statusFailed": "Failed"
   },
+  "richText": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "bulletList": "Bulleted list",
+    "numberedList": "Numbered list"
+  },
   "movies": {
     "confirmDelete": "Are you sure you want to delete this movie?",
     "form": {

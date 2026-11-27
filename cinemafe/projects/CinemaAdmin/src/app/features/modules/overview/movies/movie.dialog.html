@@ -15,11 +15,11 @@
 
       <div class="dlg-row">
         <div class="dlg-field">
-          <label class="dlg-label" for="mv-description">{{ 'movies.form.description' | translate }}</label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <textarea matInput id="mv-description" formControlName="description" rows="3" [placeholder]="'movies.form.descriptionPlaceholder' | translate"></textarea>
-            <mat-error *ngIf="form.controls['description'].hasError('required')">{{ 'common.required' | translate }}</mat-error>
-          </mat-form-field>
+          <label class="dlg-label" id="mv-description-label">{{ 'movies.form.description' | translate }}</label>
+          <app-rich-text-editor inputId="mv-description" formControlName="description" [placeholder]="'movies.form.descriptionPlaceholder' | translate"></app-rich-text-editor>
+          @if (form.controls['description'].touched && form.controls['description'].hasError('required')) {
+            <div class="rte-error" role="alert">{{ 'common.required' | translate }}</div>
+          }
         </div>
       </div>
 
