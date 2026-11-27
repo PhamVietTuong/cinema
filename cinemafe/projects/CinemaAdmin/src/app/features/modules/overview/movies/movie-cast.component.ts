@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, CanDeactivateFn, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { EMPTY, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, startWith, switchMap, tap } from 'rxjs/operators';
 import { CinemaServiceAgent, CreditTypeValues, showLoading, hideLoading, showSuccess, showError, showException } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
 
@@ -25,6 +25,9 @@ interface CastGroup {
   labelKey: string;
 }
 
+/** Route guard: prompts before leaving with unsaved edits. */
+export const movieCastCanDeactivate: CanDeactivateFn<MovieCastComponent> = component => component.confirmLeave();
+
 /** Dedicated page for a movie's Cast & Crew: grouped rows edited in place, plus a library of
  * existing people to add from. Saves through updateMovie (credits are part of that request). */
 @Component({
@@ -45,6 +48,7 @@ export class MovieCastComponent implements OnInit, OnDestroy {
   rows: CastRow[] = [];
   loading = true;
   loadFailed = false;
+  saving = false;
 
   /** JSON of the saved state; the page is "dirty" whenever the current rows serialize differently. */
   private _baseline = '[]';
@@ -53,7 +57,7 @@ export class MovieCastComponent implements OnInit, OnDestroy {
   library: CinemaServiceAgent.PersonDTO[] = [];
   libraryLoading = false;
   libraryTotal = 0;
-  private readonly _libraryPageSize = 30;
+  private readonly _libraryPageSize = 100;
   private readonly _query$ = new Subject<string>();
   private _querySub?: Subscription;
   private _query = '';
@@ -64,6 +68,7 @@ export class MovieCastComponent implements OnInit, OnDestroy {
   newType: CinemaServiceAgent.CreditType = CinemaServiceAgent.CreditType.Actor;
   newUploading = false;
   newUploadError = false;
+  private _newUploadToken = 0;
 
   constructor(
     private _route: ActivatedRoute,
@@ -76,6 +81,26 @@ export class MovieCastComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this._loadMovie();
+    this._querySub = this._query$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      startWith(this._query),
+      tap(q => {
+        this._query = q;
+        this.libraryLoading = true;
+        this._cdr.markForCheck();
+      }),
+      switchMap(() => this._fetchLibrary()),
+    ).subscribe(r => {
+      this.library = r?.results ?? [];
+      this.libraryTotal = r?.totalCount ?? this.library.length;
+      this.libraryLoading = false;
+      this._cdr.markForCheck();
+    });
+  }
+
+  private _loadMovie(): void {
     const id = this._route.snapshot.paramMap.get('id');
     if (!id) {
       this.loadFailed = true;
@@ -102,12 +127,6 @@ export class MovieCastComponent implements OnInit, OnDestroy {
         this._cdr.markForCheck();
       },
     });
-
-    this._querySub = this._query$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(q => {
-      this._query = q;
-      this._loadLibrary();
-    });
-    this._loadLibrary();
   }
 
   ngOnDestroy(): void {
@@ -138,11 +157,11 @@ export class MovieCastComponent implements OnInit, OnDestroy {
   }
 
   get valid(): boolean {
-    return this.rows.every(r => r.name.trim().length > 0 && r.name.length <= 200 && r.photoUrl.length <= 500);
+    return this.rows.every(r => r.name.trim().length > 0 && r.name.length <= 200 && r.photoUrl.length <= 500 && r.characterName.length <= 200);
   }
 
   get canSave(): boolean {
-    return !!this.movie && this.dirty && this.valid;
+    return !!this.movie && !this.saving && this.dirty && this.valid && !this.newUploading && !this.rows.some(r => r.uploading);
   }
 
   isDirtyRow(row: CastRow): boolean {
@@ -151,25 +170,28 @@ export class MovieCastComponent implements OnInit, OnDestroy {
     return row.personId === null || !base.some(b => JSON.stringify(b) === mine);
   }
 
+  /** Added/removed rows versus the baseline (multiset diff); order-only changes count as 1. */
   get changeCount(): number {
-    const base = JSON.parse(this._baseline) as unknown[][];
-    const now = JSON.parse(this._snapshot()) as unknown[][];
-    let n = 0;
-    const max = Math.max(base.length, now.length);
-    for (let i = 0; i < max; i++) {
-      if (JSON.stringify(base[i]) !== JSON.stringify(now[i])) {
-        n++;
+    const base = (JSON.parse(this._baseline) as unknown[][]).map(b => JSON.stringify(b));
+    const now = (JSON.parse(this._snapshot()) as unknown[][]).map(b => JSON.stringify(b));
+    const remaining = [...base];
+    let added = 0;
+    for (const n of now) {
+      const idx = remaining.indexOf(n);
+      if (idx < 0) {
+        added++;
+      } else {
+        remaining.splice(idx, 1);
       }
     }
-    return n;
+    const n = Math.max(added, remaining.length);
+    return n === 0 && this.dirty ? 1 : n;
   }
 
   /** Already credited (in any role) — shown as "added" in the library. */
   isInMovie(personId?: string): boolean {
     return !!personId && this.rows.some(r => r.personId === personId);
   }
-
-  trackRow = (_: number, r: CastRow) => r.key;
 
   // ── Row actions ────────────────────────────────────────────────────────────
 
@@ -224,7 +246,9 @@ export class MovieCastComponent implements OnInit, OnDestroy {
   }
 
   onPickRowPhoto(event: Event, row: CastRow): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
     if (!file) {
       return;
     }
@@ -232,14 +256,18 @@ export class MovieCastComponent implements OnInit, OnDestroy {
     row.uploadError = false;
     this._upload.upload(file).subscribe({
       next: url => {
-        row.photoUrl = url;
         row.uploading = false;
-        this.onPersonEdited(row, 'photoUrl');
+        if (this.rows.includes(row)) {
+          row.photoUrl = url;
+          this.onPersonEdited(row, 'photoUrl');
+        }
         this._cdr.markForCheck();
       },
       error: () => {
         row.uploading = false;
-        row.uploadError = true;
+        if (this.rows.includes(row)) {
+          row.uploadError = true;
+        }
         this._cdr.markForCheck();
       },
     });
@@ -251,28 +279,26 @@ export class MovieCastComponent implements OnInit, OnDestroy {
     this._query$.next(value.trim());
   }
 
-  private _loadLibrary(): void {
-    this.libraryLoading = true;
+  private _fetchLibrary() {
     const filters: Record<string, string> = {};
     if (this._query) {
       filters['keyword'] = this._query;
     }
-    this._svc.getPeople(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: this._libraryPageSize, filters })).subscribe({
-      next: r => {
-        this.library = r.results ?? [];
-        this.libraryTotal = r.totalCount ?? this.library.length;
+    return this._svc.getPeople(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: this._libraryPageSize, filters })).pipe(
+      catchError(() => {
         this.libraryLoading = false;
         this._cdr.markForCheck();
-      },
-      error: () => {
-        this.libraryLoading = false;
-        this._cdr.markForCheck();
-      },
-    });
+        return EMPTY;
+      }),
+    );
   }
 
   addFromLibrary(person: CinemaServiceAgent.PersonDTO, type = CinemaServiceAgent.CreditType.Actor): void {
-    if (!person.id || this.rows.some(r => r.personId === person.id && r.creditType === type)) {
+    if (!person.id) {
+      return;
+    }
+    if (this.rows.some(r => r.personId === person.id && r.creditType === type)) {
+      this._store.dispatch(showError({ message: this._i18n.instant('movies.cast.alreadyHasRole') }));
       return;
     }
     // Reuse the name/photo another row already carries so unsaved edits stay consistent.
@@ -298,32 +324,46 @@ export class MovieCastComponent implements OnInit, OnDestroy {
     this.newPhotoUrl = '';
     this.newType = CinemaServiceAgent.CreditType.Actor;
     this.newUploadError = false;
+    this.newUploading = false;
+    this._newUploadToken++;
   }
 
   onPickNewPhoto(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
     if (!file) {
       return;
     }
+    const token = ++this._newUploadToken;
     this.newUploading = true;
     this.newUploadError = false;
     this._upload.upload(file).subscribe({
       next: url => {
-        this.newPhotoUrl = url;
-        this.newUploading = false;
-        this._cdr.markForCheck();
+        if (token === this._newUploadToken) {
+          this.newPhotoUrl = url;
+          this.newUploading = false;
+          this._cdr.markForCheck();
+        }
       },
       error: () => {
-        this.newUploading = false;
-        this.newUploadError = true;
-        this._cdr.markForCheck();
+        if (token === this._newUploadToken) {
+          this.newUploading = false;
+          this.newUploadError = true;
+          this._cdr.markForCheck();
+        }
       },
     });
   }
 
   confirmCreate(): void {
     const name = this.newName.trim();
-    if (!name) {
+    if (!name || this.newUploading) {
+      return;
+    }
+    const lower = name.toLowerCase();
+    if (this.rows.some(r => r.creditType === this.newType && r.name.trim().toLowerCase() === lower)) {
+      this._store.dispatch(showError({ message: this._i18n.instant('movies.cast.alreadyHasRole') }));
       return;
     }
     this.rows = [...this.rows, this._newRow({
@@ -365,6 +405,7 @@ export class MovieCastComponent implements OnInit, OnDestroy {
       movieTypeIds: m.movieTypeIds ?? [],
       credits,
     });
+    this.saving = true;
     this._store.dispatch(showLoading());
     this._svc.updateMovie(request).subscribe({
       next: () => {
@@ -372,13 +413,18 @@ export class MovieCastComponent implements OnInit, OnDestroy {
         this._reload();
       },
       error: error => this._store.dispatch(showException({ error })),
-    }).add(() => this._store.dispatch(hideLoading()));
+    }).add(() => {
+      this.saving = false;
+      this._store.dispatch(hideLoading());
+      this._cdr.markForCheck();
+    });
   }
 
   /** Re-fetch so new people get their real ids (and names/photos reflect what the server kept). */
   private _reload(): void {
-    this._querySub?.unsubscribe();
-    this.ngOnInit();
+    this.loading = true;
+    this.loadFailed = false;
+    this._loadMovie();
   }
 
   discard(): void {
@@ -387,14 +433,19 @@ export class MovieCastComponent implements OnInit, OnDestroy {
   }
 
   back(): void {
-    if (this.dirty && !window.confirm(this._leaveMessage())) {
-      return;
-    }
     void this._router.navigate(['/movies']);
   }
 
-  private _leaveMessage(): string {
-    return this._i18n.instant('movies.cast.leaveConfirm');
+  /** Used by the route guard: true when there is nothing to lose or the admin confirms. */
+  confirmLeave(): boolean {
+    return !this.dirty || window.confirm(this._i18n.instant('movies.cast.leaveConfirm'));
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.dirty) {
+      event.preventDefault();
+    }
   }
 
   // ── Presentation ───────────────────────────────────────────────────────────

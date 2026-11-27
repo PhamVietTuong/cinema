@@ -1,6 +1,7 @@
 @use 'lib/theme/mixins' as m;
 
 .cast-back { margin-bottom: 8px; }
+.cast-hint { margin: 0 0 14px; color: var(--ml-muted); font-size: 13px; }
 
 .cast-layout {
   display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start;

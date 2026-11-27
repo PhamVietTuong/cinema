@@ -179,7 +179,7 @@
           <div class="dlg-field dlg-field--full">
             <label class="dlg-label">{{ 'movies.form.creditsTitle' | translate }}</label>
             <p class="dlg-hint">{{ 'movies.cast.dialogHint' | translate }}</p>
-            <a class="ad-btn ad-btn--ghost" [routerLink]="['/movies', editingId, 'cast']" (click)="cancel()">
+            <a class="ad-btn ad-btn--ghost" [routerLink]="['/movies', editingId, 'cast']" (click)="onManageCast($event)">
               <mat-icon>groups</mat-icon> {{ 'movies.cast.manageLink' | translate }}
             </a>
           </div>

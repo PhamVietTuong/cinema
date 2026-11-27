@@ -16,6 +16,7 @@
   } @else if (loadFailed) {
     <div class="ad-empty cast-error" role="alert"><mat-icon>error_outline</mat-icon><p>{{ 'movies.cast.loadFailed' | translate }}</p></div>
   } @else {
+    <p class="cast-hint">{{ 'movies.cast.hint' | translate }}</p>
     <div class="cast-layout">
       <div class="cast-groups">
         @for (g of groups; track g.type) {
@@ -36,7 +37,7 @@
                   @if (!row.personId) {
                     <span class="ad-chip cast-new">{{ 'movies.cast.newBadge' | translate }}</span>
                   }
-                  <div class="cast-role" role="group">
+                  <div class="cast-role" role="group" [attr.aria-label]="'movies.cast.newRole' | translate">
                     @for (o of creditTypeOptions; track o.value) {
                       <button type="button" class="cast-role__btn" [class.is-on]="row.creditType === o.value"
                               [attr.aria-pressed]="row.creditType === o.value" (click)="setType(row, o.value)">{{ o.name | translate }}</button>
@@ -44,7 +45,7 @@
                   </div>
                 </div>
                 @if (row.creditType === CreditType.Actor) {
-                  <input class="cast-input cast-character" type="text" [(ngModel)]="row.characterName"
+                  <input class="cast-input cast-character" type="text" maxlength="200" [(ngModel)]="row.characterName"
                          [placeholder]="'movies.cast.character' | translate" [attr.aria-label]="'movies.cast.character' | translate">
                 }
                 <div class="cast-row__actions">
@@ -102,7 +103,7 @@
               <span class="cast-status cast-status--err">{{ 'movies.cast.uploadFailed' | translate }}</span>
             }
             <div class="cast-create__actions">
-              <button type="button" class="ad-btn ad-btn--primary" [disabled]="!newName.trim()" (click)="confirmCreate()">{{ 'movies.cast.confirm' | translate }}</button>
+              <button type="button" class="ad-btn ad-btn--primary" [disabled]="!newName.trim() || newUploading" (click)="confirmCreate()">{{ 'movies.cast.confirm' | translate }}</button>
               <button type="button" class="ad-btn ad-btn--ghost" (click)="cancelCreate()">{{ 'movies.cast.cancel' | translate }}</button>
             </div>
           </div>

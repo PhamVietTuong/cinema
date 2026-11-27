@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, Inject, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
+import { TranslateService } from '@ngx-translate/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, LookupCacheService } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
@@ -56,6 +57,7 @@ export class MovieDialog implements OnInit {
   }
 
   private readonly _lookup = inject(LookupCacheService);
+  private readonly _i18n = inject(TranslateService);
 
   ngOnInit(): void {
     this._lookup.ageRestrictions().subscribe(r => {
@@ -179,6 +181,15 @@ export class MovieDialog implements OnInit {
     const raw: string = this.form.value.releaseDate ?? '';
     const year = parseInt(raw.slice(0, 4), 10);
     return Number.isFinite(year) && year > 1800 ? year : null;
+  }
+
+  /** Leaving for the cast page closes the dialog, so unsaved dialog edits need an explicit OK. */
+  onManageCast(event: Event): void {
+    if (this.form.dirty && !window.confirm(this._i18n.instant('movies.cast.discardDialogConfirm'))) {
+      event.preventDefault();
+      return;
+    }
+    this.cancel();
   }
 
   cancel(): void {

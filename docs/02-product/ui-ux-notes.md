@@ -34,7 +34,7 @@ Movie detail uses a friendly slug (`shared/movie-route.ts`); a legacy `:legacyId
 /                  authGuard + adminGuard
   ''               homeRedirectGuard -> /dashboard (Admin) or /forbidden (everyone else)
   profile
-  (OverviewModule)    dashboard, reports, movies, theaters, theaters/:id, showtimes, users
+  (OverviewModule)    dashboard, reports, movies, movies/:id/cast, theaters, theaters/:id, showtimes, users
   (CatalogAdminModule) age-restrictions, holidays, memberships, movie-types, news, promotion-campaigns, templates, user-types
   (OperationsModule)   audit-log, comments, invoices, promotion-programs, splash-banners
 /**                -> /auth/login
