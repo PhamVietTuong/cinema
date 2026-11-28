@@ -1,0 +1,140 @@
+@use 'lib/theme/mixins' as m;
+
+// "Pill bar" (variant A1): one rounded row of four borderless segments split by dashed rules,
+// overlapping the hero's bottom edge. Native <select>s stay for accessibility.
+:host { display: block; padding: 0 40px; }
+
+.qb {
+  position: relative;
+  max-width: 1120px;
+  margin: -34px auto 0;
+  display: flex;
+  align-items: stretch;
+  padding: 6px;
+  background: var(--ml-panel);
+  border: 1px solid var(--ml-rule-strong);
+  border-radius: var(--ml-r-full);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  z-index: 2;
+}
+
+.qb-seg {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 20px;
+  border-radius: var(--ml-r-full);
+  cursor: pointer;
+  transition: background 0.15s;
+
+  & + &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    border-left: 1px dashed var(--ml-rule-strong);
+  }
+
+  &:hover:not(.is-off) { background: var(--ml-hover); }
+  &.is-off { opacity: 0.5; cursor: not-allowed; }
+  &:focus-within { box-shadow: 0 0 0 2px var(--ml-action) inset; }
+}
+
+.qb-ico { flex: none; color: var(--ml-action-strong); }
+
+.qb-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.qb-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ml-muted);
+}
+
+.qb-select {
+  width: 100%;
+  min-height: 28px;
+  padding: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ml-ink);
+  background: transparent;
+  border: 0;
+  text-overflow: ellipsis;
+  cursor: pointer;
+
+  option { background: var(--ml-panel); color: var(--ml-ink); }
+  &:disabled { cursor: not-allowed; }
+  &:focus-visible { outline: none; }
+}
+
+.qb-submit {
+  flex: none;
+  min-height: 52px;
+  padding: 0 30px;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ml-on-action);
+  background: var(--ml-action);
+  border: 0;
+  border-radius: var(--ml-r-full);
+  cursor: pointer;
+  transition: background 0.18s;
+
+  &:hover:not(:disabled) { background: var(--ml-action-strong); }
+  &:focus-visible { outline: 2px solid var(--ml-ink); outline-offset: 2px; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+.qb-error {
+  max-width: 1120px;
+  margin: 10px auto 0;
+  font-size: 0.85rem;
+  color: var(--ml-danger-ink, var(--ml-danger));
+}
+
+@include m.tablet {
+  :host { padding: 0 24px; }
+  .qb-seg { padding: 6px 12px; }
+}
+
+@include m.tablet-small {
+  :host { padding: 0 20px; }
+  .qb {
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    margin-top: 16px;
+    border-radius: var(--ml-r-xl);
+  }
+  .qb-seg {
+    min-height: 56px;
+    padding: 6px 14px;
+    border-radius: var(--ml-r-md);
+
+    & + &::before {
+      left: 14px;
+      right: 14px;
+      top: 0;
+      bottom: auto;
+      border-left: 0;
+      border-top: 1px dashed var(--ml-rule-strong);
+    }
+  }
+  .qb-select { min-height: 32px; }
+  .qb-submit { width: 100%; margin-top: 6px; border-radius: var(--ml-r-md); }
+}
+
+@include m.phone {
+  :host { padding: 0 16px; }
+  .qb { margin-top: 12px; }
+  .qb-submit { min-height: 48px; }
+}

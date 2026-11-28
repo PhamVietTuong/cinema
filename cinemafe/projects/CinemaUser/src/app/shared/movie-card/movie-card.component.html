@@ -10,6 +10,7 @@
         <span class="mc-age" *ngIf="movie.ageRestrictionCode">{{ movie.ageRestrictionCode }}</span>
       </ng-container>
       <div class="mc-coming-badge" *ngIf="variant === 'coming'">{{ 'home.card.comingSoonBadge' | translate }}</div>
+      <app-watch-toggle class="mc-watch" [movieId]="movie.id"></app-watch-toggle>
     </div>
     <div class="mc-body">
       <h3 class="mc-title">{{ movie.title }}</h3>
@@ -39,6 +40,7 @@
       <div class="mc-play-overlay" *ngIf="hasTrailer">
         <div class="mc-play-btn"><mat-icon>play_arrow</mat-icon></div>
       </div>
+      <app-watch-toggle class="mc-watch" [movieId]="movie.id"></app-watch-toggle>
     </div>
     <div class="mc-body">
       <a class="mc-title mc-title--link" [routerLink]="detailCommands">{{ movie.title }}</a>

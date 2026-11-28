@@ -1,0 +1,64 @@
+<div class="sb" [class.sb--bar]="variant === 'bar'" [class.sb--drawer]="variant === 'drawer'" [class.is-open]="isOpen" role="search">
+  @if (variant === 'bar') {
+    <button #toggle type="button" class="sb-toggle" [attr.aria-label]="'ux.search.open' | translate"
+            [title]="'ux.search.open' | translate" [attr.aria-expanded]="expanded()" (click)="open()">
+      <mat-icon>search</mat-icon>
+    </button>
+  }
+
+  @if (isOpen) {
+    <div class="sb-field">
+      <mat-icon class="sb-lead" aria-hidden="true">search</mat-icon>
+      <input #input class="sb-input" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search"
+             role="combobox" aria-autocomplete="list"
+             [attr.aria-expanded]="showPanel()" [attr.aria-controls]="uid + '-list'"
+             [attr.aria-activedescendant]="activeId()"
+             [attr.aria-label]="'ux.search.placeholder' | translate"
+             [placeholder]="'ux.search.placeholder' | translate"
+             [formControl]="query" (keydown)="onKeydown($event)">
+      @if (term()) {
+        <button type="button" class="sb-icon-btn" [attr.aria-label]="'ux.search.clear' | translate" (click)="clear()">
+          <mat-icon>backspace</mat-icon>
+        </button>
+      }
+      @if (variant === 'bar') {
+        <button type="button" class="sb-icon-btn" [attr.aria-label]="'ux.search.close' | translate" (click)="close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+
+    @if (showPanel()) {
+      <div class="sb-panel">
+        <ul class="sb-list" role="listbox" [id]="uid + '-list'" [attr.aria-label]="'ux.search.listLabel' | translate">
+          @for (m of results(); track m.id; let i = $index) {
+            <li role="option" class="sb-opt" [id]="uid + '-opt-' + i" [class.is-active]="active() === i"
+                [attr.aria-selected]="active() === i" tabindex="-1" (pointerenter)="hover(i)" (click)="openMovie(m)" (keydown.enter)="openMovie(m)">
+              <img class="sb-thumb" loading="lazy" decoding="async" [src]="m.posterUrl || 'assets/no-poster.jpg'" alt="" (error)="onImgError($event)">
+              <span class="sb-text">
+                <span class="sb-title">{{ m.title }}</span>
+                <span class="sb-meta">
+                  @if (m.releaseDate) { {{ m.releaseDate | date:'yyyy' }} }
+                  @if (m.genres?.length) { · {{ m.genres?.[0] }} }
+                </span>
+              </span>
+            </li>
+          }
+          @if (results().length > 0) {
+            <li role="option" class="sb-opt sb-opt--all" [id]="uid + '-opt-' + results().length"
+                [class.is-active]="active() === results().length" [attr.aria-selected]="active() === results().length"
+                tabindex="-1" (pointerenter)="hover(results().length)" (click)="active.set(-1); submit()" (keydown.enter)="active.set(-1); submit()">
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+              <span class="sb-title">{{ 'ux.search.viewAll' | translate:{ q: term() } }}</span>
+            </li>
+          }
+        </ul>
+        @if (loading() && results().length === 0) {
+          <div class="sb-state" aria-busy="true"><mat-spinner diameter="22"></mat-spinner></div>
+        } @else if (searched() && results().length === 0) {
+          <div class="sb-state" role="status">{{ 'ux.search.noResults' | translate:{ q: term() } }}</div>
+        }
+      </div>
+    }
+  }
+</div>

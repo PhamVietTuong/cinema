@@ -85,7 +85,8 @@
         </div>
       </div>
       <ng-template #noOv>
-        <div class="pl-empty"><mat-icon>confirmation_number</mat-icon><p>{{ 'profile.noTickets' | translate }}</p></div>
+        <app-empty-state icon="confirmation_number" titleKey="ux.empty.ticketsTitle" hintKey="ux.empty.ticketsHint"
+                         ctaKey="ux.empty.ticketsCta" ctaLink="/movies"></app-empty-state>
       </ng-template>
     </ng-container>
 
@@ -172,7 +173,8 @@
             </div>
           </nav>
         </div>
-        <ng-template #noBk><div class="pl-empty"><mat-icon>confirmation_number</mat-icon><p>{{ 'profile.noTickets' | translate }}</p></div></ng-template>
+        <ng-template #noBk><app-empty-state icon="confirmation_number" titleKey="ux.empty.ticketsTitle" hintKey="ux.empty.ticketsHint"
+                         ctaKey="ux.empty.ticketsCta" ctaLink="/movies"></app-empty-state></ng-template>
       </ng-container>
     </ng-container>
 

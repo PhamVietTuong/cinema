@@ -14,12 +14,13 @@ import { RevealOnScrollDirective } from '../../../../shared/reveal-on-scroll.dir
 import { CountUpDirective } from '../../../../shared/count-up.directive';
 import { HeroMotionDirective } from '../../../../shared/hero-motion.directive';
 import { movieDetailCommands } from '../../../../shared/movie-route';
+import { QuickBookingComponent } from '../../../../shared/quick-booking/quick-booking.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-home',
   standalone: true,
-  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, ScrollRowComponent, RevealOnScrollDirective, CountUpDirective, HeroMotionDirective],
+  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, ScrollRowComponent, RevealOnScrollDirective, CountUpDirective, HeroMotionDirective, QuickBookingComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
@@ -46,6 +47,9 @@ export class HomeComponent implements OnInit {
   recommended: any[] = [];
   promotions: CinemaServiceAgent.PromotionProgramDTO[] = [];
   tiers: CinemaServiceAgent.MemberShipDTO[] = [];
+  theaters: CinemaServiceAgent.TheaterDTO[] = [];
+  theatersLoading = true;
+  readonly theaterSkeletons = [0, 1, 2, 3];
 
   constructor(private _store: Store) {
     this.nowShowing$ = this._store.select(selectNowShowing);
@@ -85,6 +89,20 @@ export class HomeComponent implements OnInit {
         },
         error: () => this._cdr.markForCheck(),
       });
+    this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 50 }))
+      .subscribe({
+        next: r => {
+          this.theaters = (r.results ?? []).filter(t => t.isActive !== false);
+          this.theatersLoading = false;
+          this._cdr.markForCheck();
+        },
+        error: () => { this.theaters = []; this.theatersLoading = false; this._cdr.markForCheck(); },
+      });
+  }
+
+  /** Total rooms across the loaded theaters (a real figure for the stats strip). */
+  get roomCount(): number {
+    return this.theaters.reduce((sum, t) => sum + (t.roomCount ?? 0), 0);
   }
 
   /** Opens the trailer dialog for the hero's featured movie. */

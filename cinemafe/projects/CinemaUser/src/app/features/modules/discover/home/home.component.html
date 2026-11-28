@@ -69,6 +69,9 @@
   </ng-template>
 </section>
 
+<!-- ── QUICK BOOKING ───────────────────────────────────────────────────────── -->
+<app-quick-booking [movies]="nowShowing$ | async"></app-quick-booking>
+
 <!-- ── RECOMMENDED FOR YOU ─────────────────────────────────────────────────── -->
 <section class="section" *ngIf="recommended.length">
   <div class="section-header cu-reveal" appRevealOnScroll>
@@ -139,6 +142,70 @@
       </div>
     </a>
   </app-scroll-row>
+</section>
+
+<!-- ── OUR THEATERS ────────────────────────────────────────────────────────── -->
+@if (theatersLoading || theaters.length) {
+<section class="section">
+  <div class="section-header cu-reveal" appRevealOnScroll>
+    <div class="section-titlewrap">
+      <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
+      <h2 class="section-title">{{ 'home.sections.theaters' | translate }}</h2>
+    </div>
+    <a routerLink="/theaters" class="section-more">{{ 'home.sections.viewAll' | translate }} <mat-icon>chevron_right</mat-icon></a>
+  </div>
+  @if (theatersLoading) {
+    <div class="theater-grid" aria-busy="true">
+      @for (s of theaterSkeletons; track s) {
+        <div class="theater-card"><i class="cu-sk cu-sk--theater"></i><span class="theater-body"><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></span></div>
+      }
+    </div>
+  } @else {
+    <div class="theater-grid">
+      @for (t of theaters.slice(0, 6); track t.id) {
+        <a class="theater-card" routerLink="/theaters">
+          <span class="theater-img">
+            <img loading="lazy" decoding="async" [src]="t.imageUrl || 'assets/no-poster.jpg'" [alt]="t.name">
+            @if (t.city) {
+              <span class="theater-city"><mat-icon>location_on</mat-icon>{{ t.city }}</span>
+            }
+            @if (t.roomCount) {
+              <span class="theater-rooms">{{ 'home.theaters.rooms' | translate:{ n: t.roomCount } }}</span>
+            }
+          </span>
+          <span class="theater-body">
+            <h3 class="theater-name">{{ t.name }}</h3>
+            <p class="theater-addr">{{ t.address }}</p>
+            <span class="theater-link">{{ 'home.theaters.view' | translate }} <mat-icon>chevron_right</mat-icon></span>
+          </span>
+        </a>
+      }
+    </div>
+  }
+</section>
+}
+
+<!-- ── WHY US / STATS ──────────────────────────────────────────────────────── -->
+<section class="why">
+  <div class="why-inner">
+    <h2 class="why-title">{{ 'home.why.title' | translate }}</h2>
+    <div class="why-stats">
+      @if (theaters.length) {
+        <div class="why-stat"><span class="why-num" [appCountUp]="theaters.length"></span><span class="why-label">{{ 'home.why.theaters' | translate }}</span></div>
+      }
+      @if (roomCount) {
+        <div class="why-stat"><span class="why-num" [appCountUp]="roomCount"></span><span class="why-label">{{ 'home.why.rooms' | translate }}</span></div>
+      }
+      @if ((nowShowing$ | async)?.length; as n) {
+        <div class="why-stat"><span class="why-num" [appCountUp]="n"></span><span class="why-label">{{ 'home.why.movies' | translate }}</span></div>
+      }
+    </div>
+    <ul class="why-props">
+      <li><mat-icon>event_seat</mat-icon><div><strong>{{ 'home.why.p1Title' | translate }}</strong><span>{{ 'home.why.p1Desc' | translate }}</span></div></li>
+      <li><mat-icon>bolt</mat-icon><div><strong>{{ 'home.why.p2Title' | translate }}</strong><span>{{ 'home.why.p2Desc' | translate }}</span></div></li>
+      <li><mat-icon>local_activity</mat-icon><div><strong>{{ 'home.why.p3Title' | translate }}</strong><span>{{ 'home.why.p3Desc' | translate }}</span></div></li>
+    </ul>
+  </div>
 </section>
 
 <!-- ── MEMBERSHIP ──────────────────────────────────────────────────────────── -->

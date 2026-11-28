@@ -2,7 +2,7 @@ import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { RouterModule } from '@angular/router';
+import { RouteReuseStrategy, RouterModule } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
@@ -21,17 +21,23 @@ import {
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { App } from './app';
+import { CinemaRouteReuseStrategy } from './route-reuse';
+import { SearchBoxComponent } from './shared/search-box/search-box.component';
+import { BackToTopComponent } from './shared/back-to-top/back-to-top.component';
 
 @NgModule({
   declarations: [App],
   imports: [
     BrowserModule,
-    RouterModule.forRoot(routes),
+    RouterModule.forRoot(routes, { scrollPositionRestoration: 'enabled' }),
     CinemaLibModule,
+    SearchBoxComponent,
+    BackToTopComponent,
     StoreModule.forRoot({ auth: authReducer, movies: moviesReducer }),
     EffectsModule.forRoot([AuthEffects, MoviesEffects]),
   ],
   providers: [
+    { provide: RouteReuseStrategy, useClass: CinemaRouteReuseStrategy },
     // Animations engine loads lazily (a separate chunk) instead of in the initial bundle.
     provideAnimationsAsync(),
     // Devtools instrumentation only in dev builds — it keeps 25 state snapshots in memory.

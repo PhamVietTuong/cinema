@@ -1,0 +1,33 @@
+@use 'lib/theme/mixins' as m;
+
+// Chatbot FAB: 56px at right/bottom 22px (48px at 14px on small tablets) — stack 12px above it.
+:host {
+  position: fixed;
+  right: 22px;
+  bottom: calc(22px + 56px + 12px + var(--cx-order-bar-h, 0px));
+  z-index: 890;
+}
+
+.btt {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; padding: 0; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--ml-rule);
+  background: var(--ml-panel);
+  color: var(--ml-ink);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  opacity: 0; visibility: hidden; transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s, background 0.15s ease, color 0.15s ease;
+
+  mat-icon { font-size: 26px; width: 26px; height: 26px; line-height: 26px; }
+  &.is-visible { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+  &:hover { background: var(--ml-action); color: var(--ml-on-action); }
+  &:focus-visible { outline: 2px solid var(--ml-action); outline-offset: 2px; }
+}
+
+@include m.tablet-small {
+  :host { right: 14px; bottom: calc(14px + 48px + 10px + var(--cx-order-bar-h, 0px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btt { transition: none; transform: none; }
+}

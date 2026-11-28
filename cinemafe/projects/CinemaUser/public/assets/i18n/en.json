@@ -3,6 +3,33 @@
     "close": "Close",
     "imageAlt": "Promotion"
   },
+  "ux": {
+    "search": {
+      "open": "Search movies",
+      "close": "Close search",
+      "placeholder": "Search movies...",
+      "listLabel": "Movie suggestions",
+      "noResults": "No movies match \"{{ q }}\"",
+      "viewAll": "See all results for \"{{ q }}\"",
+      "clear": "Clear"
+    },
+    "backToTop": "Back to top",
+    "watchlist": {
+      "add": "Save to watch later",
+      "remove": "Remove from watch later"
+    },
+    "similar": { "title": "Similar movies" },
+    "empty": {
+      "moviesTitle": "No movies found",
+      "moviesHint": "Try a different keyword or clear the filters.",
+      "moviesClear": "Clear filters",
+      "showtimesTitle": "No showtimes found",
+      "showtimesHint": "Try another date, theater or time range.",
+      "ticketsTitle": "No tickets yet",
+      "ticketsHint": "Book your first movie and your tickets will show up here.",
+      "ticketsCta": "Browse movies"
+    }
+  },
   "nav": {
     "movies": "Movies",
     "theaters": "Theaters",
@@ -286,7 +313,39 @@
       "nowShowing": "Now Showing",
       "comingSoon": "Coming Soon",
       "promotions": "Promotions",
-      "viewAll": "View All"
+      "viewAll": "View All",
+      "theaters": "Our Theaters"
+    },
+    "quick": {
+      "title": "Quick booking",
+      "movie": "Movie",
+      "theater": "Theater",
+      "date": "Date",
+      "time": "Showtime",
+      "pickMovie": "Select movie",
+      "pickTheater": "Select theater",
+      "pickDate": "Select date",
+      "pickTime": "Select time",
+      "loading": "Loading…",
+      "noShowtimes": "No showtimes yet",
+      "book": "Book now",
+      "error": "Could not load showtimes. Please try again."
+    },
+    "theaters": {
+      "rooms": "{{n}} screens",
+      "view": "View theater"
+    },
+    "why": {
+      "title": "Why choose us",
+      "theaters": "Theaters",
+      "rooms": "Screens",
+      "movies": "Now showing",
+      "p1Title": "Pick your own seat",
+      "p1Desc": "See the seat map and hold your seats from your phone or computer.",
+      "p2Title": "Fast checkout",
+      "p2Desc": "Pay securely online and get your tickets right away.",
+      "p3Title": "Member perks",
+      "p3Desc": "Earn points, get promotions and great snack combo prices."
     },
     "card": {
       "book": "Book",

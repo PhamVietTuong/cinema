@@ -348,3 +348,19 @@
   .topbar-inner { padding: 0 16px; }
   .mobile-menu a, .mobile-menu button { min-height: 44px; display: flex; align-items: center; }
 }
+
+// The search overlay (app-search-box variant="bar") is absolutely positioned across the topbar.
+.topbar-inner { position: relative; }
+
+// Route transition: each routed page is inserted as a sibling after <router-outlet>, so a CSS
+// animation on it plays once per navigation. Opacity only — a transform would create a containing
+// block and break the fixed/sticky descendants (order bar, filters).
+@media (prefers-reduced-motion: no-preference) {
+  :host ::ng-deep mat-sidenav-content > router-outlet + * {
+    animation: cu-route-fade 0.26s ease-out both;
+  }
+}
+@keyframes cu-route-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

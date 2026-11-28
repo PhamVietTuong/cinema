@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Location } from '@angular/common';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -12,11 +12,13 @@ import { BookingSelectionComponent } from '../../../booking/booking-selection/bo
 import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
 import { movieDetailUrl, isLegacyMovieId } from '../../../../../shared/movie-route';
 import { ScrollRowComponent } from '../../../../../shared/scroll-row/scroll-row.component';
+import { MovieCardComponent } from '../../../../../shared/movie-card/movie-card.component';
+import { WatchToggleComponent } from '../../../../../shared/watchlist/watch-toggle.component';
 
 @Component({
   selector: 'app-movie-detail',
   standalone: true,
-  imports: [SharedModule, BookingSelectionComponent, ScrollRowComponent],
+  imports: [SharedModule, BookingSelectionComponent, ScrollRowComponent, MovieCardComponent, WatchToggleComponent],
   templateUrl: './movie-detail.component.html',
   styleUrl: './movie-detail.component.scss',
 })
@@ -153,6 +155,7 @@ export class MovieDetailComponent implements OnInit {
         }
         this._syncCanonicalUrl(movie);
         this._loadPhotos(movie);
+        this._loadSimilar(movie);
         if (restore && !restoreApplied) {
           restoreApplied = true;
           this._applyRestore(movie, restore);
@@ -558,6 +561,54 @@ export class MovieDetailComponent implements OnInit {
     return (movie?.credits ?? [])
       .filter((c: any) => c.creditType === CinemaServiceAgent.CreditType.Actor)
       .sort((a: any, b: any) => a.displayOrder - b.displayOrder);
+  }
+
+  /** Other now-showing / coming-soon movies sharing a genre with the current one, best match first. */
+  similarMovies: any[] = [];
+  private _similarForId = '';
+  private static readonly SIMILAR_LIMIT = 12;
+  private static readonly SIMILAR_POOL = 50;
+
+  /** Built client-side from the two existing list endpoints (no dedicated API); once per movie. */
+  private _loadSimilar(movie: any): void {
+    if (this._similarForId === movie.id) {
+      return;
+    }
+    this._similarForId = movie.id;
+    this.similarMovies = [];
+    const genres: string[] = movie.genres ?? [];
+    if (genres.length === 0) {
+      return;
+    }
+    const page = () => CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: MovieDetailComponent.SIMILAR_POOL });
+    forkJoin([this._cinemaSvc.getNowShowingMovies(page()), this._cinemaSvc.getComingSoonMovies(page())])
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe({
+        next: ([now, coming]) => {
+          const seen = new Set<string>([movie.id]);
+          const scored: { m: any; score: number }[] = [];
+          for (const m of [...(now.results ?? []), ...(coming.results ?? [])] as any[]) {
+            if (!m.id || seen.has(m.id)) {
+              continue;
+            }
+            seen.add(m.id);
+            const score = (m.genres ?? []).filter((g: string) => genres.includes(g)).length;
+            if (score > 0) {
+              scored.push({ m, score });
+            }
+          }
+          scored.sort((a, b) => b.score - a.score);
+          this.similarMovies = scored.slice(0, MovieDetailComponent.SIMILAR_LIMIT).map(s => s.m);
+          this._cdr.markForCheck();
+        },
+        // Purely additive section: a failed lookup just hides it.
+        error: () => {},
+      });
+  }
+
+  /** Card variant: coming-soon-only movies show their release date instead of the rating. */
+  similarVariant(m: any): 'showing' | 'coming' {
+    return m.isComingSoon && !m.isNowShowing ? 'coming' : 'showing';
   }
 
   /** Batch-resolves photos for this movie's director(s) + cast in a single request, once per

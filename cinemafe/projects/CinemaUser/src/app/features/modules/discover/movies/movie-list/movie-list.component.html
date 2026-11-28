@@ -40,10 +40,11 @@
     <app-movie-card *ngFor="let movie of displayed" [movie]="movie" [variant]="mode === 'coming' ? 'coming' : 'showing'" [actions]="true"></app-movie-card>
   </div>
 
-  <div *ngIf="!isShowtimes && displayed.length === 0 && !isLoading" class="empty">
-    <mat-icon>movie</mat-icon>
-    <p>{{ (hasActiveFilters ? 'movies.list.emptyFiltered' : 'movies.list.empty') | translate }}</p>
-  </div>
+  @if (!isShowtimes && displayed.length === 0 && !isLoading) {
+    <app-empty-state icon="movie" titleKey="ux.empty.moviesTitle"
+                     [hintKey]="hasActiveFilters ? 'ux.empty.moviesHint' : 'movies.list.empty'"
+                     [ctaKey]="hasActiveFilters ? 'ux.empty.moviesClear' : ''" (cta)="clearFilters()"></app-empty-state>
+  }
 
   <!-- Cross-movie showtime search -->
   <div class="st-list" *ngIf="isShowtimes">
@@ -61,10 +62,10 @@
     </a>
   </div>
 
-  <div *ngIf="isShowtimes && showtimes.length === 0 && !showtimesLoading" class="empty">
-    <mat-icon>schedule</mat-icon>
-    <p>{{ showtimesError || ('movies.list.emptyShowtimes' | translate) }}</p>
-  </div>
+  @if (isShowtimes && showtimes.length === 0 && !showtimesLoading) {
+    <app-empty-state icon="schedule" titleKey="ux.empty.showtimesTitle"
+                     [hintText]="showtimesError" [hintKey]="showtimesError ? '' : 'ux.empty.showtimesHint'"></app-empty-state>
+  }
 
   <div class="pager-loadmore" *ngIf="canLoadMore">
     <div class="lm-track"><div class="lm-fill" [style.width.%]="loadProgressPct"></div></div>

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, skip, takeUntil } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,6 +11,7 @@ import {
   LookupCacheService,
 } from 'CinemaLib';
 import { MovieCardComponent } from '../../../../../shared/movie-card/movie-card.component';
+import { EmptyStateComponent } from '../../../../../shared/empty-state/empty-state.component';
 import { SiteFooterComponent } from '../../../../../shared/site-footer/site-footer.component';
 import { movieDetailCommands } from '../../../../../shared/movie-route';
 
@@ -23,7 +24,7 @@ const SHOWTIME_PAGE_SIZE = 20;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-list',
   standalone: true,
-  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterBarComponent],
+  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterBarComponent, EmptyStateComponent],
   templateUrl: './movie-list.component.html',
   styleUrl: './movie-list.component.scss',
 })
@@ -35,6 +36,8 @@ export class MovieListComponent implements OnInit, OnDestroy {
   private _translate = inject(TranslateService);
   private _destroy$ = new Subject<void>();
   private _filterChange$ = new Subject<void>();
+  /** Query-string search text waiting to seed the search box on the next setMode(). */
+  private _pendingQuery = '';
 
   readonly tabs: { mode: Mode; label: string }[] = [
     { mode: 'all', label: 'movies.tabs.all' },
@@ -111,7 +114,20 @@ export class MovieListComponent implements OnInit, OnDestroy {
     this._loadFilterOptions();
 
     const showing = this._route.snapshot.queryParamMap.get('showing');
+    // /movies?q=<text> (from the topbar search): seed the search box so the first load is filtered.
+    this._pendingQuery = (this._route.snapshot.queryParamMap.get('q') ?? '').trim();
     this.setMode(showing === 'now' ? 'now' : showing === 'coming' ? 'coming' : showing === 'showtimes' ? 'showtimes' : 'all');
+
+    // Searching again from the topbar while already on this page only changes the query string.
+    this._route.queryParamMap.pipe(skip(1), takeUntil(this._destroy$)).subscribe(p => {
+      const q = (p.get('q') ?? '').trim();
+      if (this.isShowtimes) {
+        this._pendingQuery = q;
+        this.setMode('all');
+      } else if (q !== (this.searchCtrl.value ?? '').trim()) {
+        this.searchCtrl.setValue(q);
+      }
+    });
 
     this.searchCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this._destroy$))
       .subscribe(() => { if (!this.isShowtimes) { this.page = 1; this._load(); } });
@@ -124,7 +140,8 @@ export class MovieListComponent implements OnInit, OnDestroy {
 
   setMode(m: Mode): void {
     this.mode = m;
-    this.searchCtrl.reset('', { emitEvent: false });
+    this.searchCtrl.reset(this._pendingQuery, { emitEvent: false });
+    this._pendingQuery = '';
     this.filterForm.reset({ movieTypeId: '', language: '', theaterId: '', date: '', timeFrom: '', timeTo: '' }, { emitEvent: false });
     this._buildFilterFields();
     this._refreshHasActiveFilters();

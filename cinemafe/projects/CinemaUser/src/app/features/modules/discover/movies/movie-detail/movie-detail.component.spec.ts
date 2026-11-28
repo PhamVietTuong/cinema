@@ -30,7 +30,7 @@ describe('MovieDetailComponent', () => {
   let selectedMovie: unknown = null;
   let location: { replaceState: ReturnType<typeof vi.fn> };
   let routeParam = 'movie-1';
-  let cinemaSvc: { getPeopleByNames: ReturnType<typeof vi.fn> };
+  let cinemaSvc: { getPeopleByNames: ReturnType<typeof vi.fn>; getNowShowingMovies?: ReturnType<typeof vi.fn>; getComingSoonMovies?: ReturnType<typeof vi.fn> };
 
   const build = () => {
     store = {
@@ -48,7 +48,7 @@ describe('MovieDetailComponent', () => {
     const translate = { instant: (key: string) => key };
     toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
     const actions$ = NEVER;
-    cinemaSvc = { getPeopleByNames: vi.fn(() => of([])) };
+    cinemaSvc = { getPeopleByNames: vi.fn(() => of([])), getNowShowingMovies: vi.fn(() => of({ results: [] })), getComingSoonMovies: vi.fn(() => of({ results: [] })) };
     return new MovieDetailComponent(
       store as never, route as never, router as never, location as never, destroyRef as never, cdr as never, translate as never, toast as never,
       actions$ as never, cinemaSvc as never, {} as never,
@@ -424,6 +424,34 @@ describe('MovieDetailComponent', () => {
       expect(c.rtTier(undefined)).toBeNull();
       expect(c.rtTier(null)).toBeNull();
       expect(c.rtTier('N/A')).toBeNull();
+    });
+  });
+
+  describe('similar movies', () => {
+    it('lists other movies sharing a genre, best match first, excluding the current one', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', genres: ['Action', 'Drama'], showTimes: [] };
+      const c = build();
+      cinemaSvc.getNowShowingMovies!.mockReturnValue(of({ results: [
+        { id: 'movie-1', genres: ['Action'] },
+        { id: 'a', genres: ['Action'] },
+        { id: 'b', genres: ['Action', 'Drama'] },
+        { id: 'c', genres: ['Comedy'] },
+      ] }));
+      cinemaSvc.getComingSoonMovies!.mockReturnValue(of({ results: [{ id: 'a', genres: ['Action'] }, { id: 'd', genres: ['Drama'] }] }));
+
+      c.ngOnInit();
+
+      expect(c.similarMovies.map((m: any) => m.id)).toEqual(['b', 'a', 'd']);
+    });
+
+    it('stays empty and skips the requests when the movie has no genres', () => {
+      selectedMovie = { id: 'movie-1', slug: 'movie-1', showTimes: [] };
+      const c = build();
+
+      c.ngOnInit();
+
+      expect(c.similarMovies).toEqual([]);
+      expect(cinemaSvc.getNowShowingMovies).not.toHaveBeenCalled();
     });
   });
 });

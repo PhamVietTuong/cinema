@@ -13,6 +13,7 @@
       <li><a routerLink="/membership" routerLinkActive="active-link">{{ 'nav.membership' | translate }}</a></li>
     </ul>
     <div class="nav-actions">
+      <app-search-box variant="bar"></app-search-box>
       <div class="nav-cluster">
         <button mat-icon-button type="button" class="nav-theme-btn" (click)="toggleTheme()"
                 [attr.aria-label]="(theme.isDark() ? 'nav.lightMode' : 'nav.darkMode') | translate"
@@ -77,6 +78,7 @@
 <mat-sidenav-container class="app-shell">
   <!-- Mobile menu drawer -->
   <mat-sidenav class="mobile-menu" position="end" mode="over" [opened]="menuOpen" (openedChange)="onSidenavOpenedChange($event)">
+    <app-search-box variant="drawer" (navigated)="closeMenu()"></app-search-box>
     <a routerLink="/movies" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.movies' | translate }}</a>
     <a routerLink="/theaters" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.theaters' | translate }}</a>
     <a routerLink="/promotions" routerLinkActive="active-link" (click)="closeMenu()">{{ 'nav.promotions' | translate }}</a>
@@ -102,6 +104,7 @@
 
   <mat-sidenav-content>
     <router-outlet></router-outlet>
+    <app-back-to-top></app-back-to-top>
     @if (chatbot(); as chatbotCmp) {
       <ng-container *ngComponentOutlet="chatbotCmp" />
     }
