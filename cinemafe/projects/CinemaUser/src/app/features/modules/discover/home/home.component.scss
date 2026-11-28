@@ -470,6 +470,8 @@
   .hero-title { font-size: 2.4rem; }
   .hero-inner { padding: 48px 20px; flex-direction: column; gap: 32px; text-align: center; }
   .hero-content { max-width: 100%; }
+  // Stacked hero: the absolute top-right pills would sit on top of the centred IMAX/age pills.
+  .hero-corner-badges { position: static; justify-content: center; }
   .hero-actions { justify-content: center; }
   .hero-meta, .hero-badges { justify-content: center; }
   .section { padding: 40px 20px; }
@@ -509,6 +511,9 @@
   text-decoration: none;
   color: var(--ml-ink);
   width: 230px;
+
+  // The scroll-row chevron overhangs the row's left edge; keep the first numeral clear of it.
+  &:first-child { margin-left: 24px; }
 }
 
 .top-rank {
@@ -725,7 +730,7 @@
 
 @include m.tablet-small {
   .why { padding: 40px 20px; }
-  .top-card { width: 200px; grid-template-columns: auto 130px; }
+  .top-card { width: 200px; grid-template-columns: auto 130px; &:first-child { margin-left: 48px; } }
   .top-rank { font-size: 7.5rem; margin-right: -20px; }
   .theater-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 }
