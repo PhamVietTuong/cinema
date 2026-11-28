@@ -29,7 +29,7 @@ public class TheaterStore : GenericStore<Theater>, ITheaterStore
         IQueryable<Theater> paged = ordered;
         if (pageSize > 0)
         {
-            paged = ordered.Skip((page - 1) * pageSize).Take(pageSize);
+            paged = ordered.PageOneBased(page, pageSize);
         }
 
         // Projected so only a Room COUNT subquery runs — Room rows themselves are never loaded.

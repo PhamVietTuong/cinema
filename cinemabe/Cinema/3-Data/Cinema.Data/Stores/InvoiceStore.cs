@@ -84,7 +84,7 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
             .Where(i => i.UserId == userId)
             .OrderByDescending(i => i.CreationTime);
         var total = await q.CountAsync();
-        var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var items = await q.PageOneBased(page, pageSize).ToListAsync();
         return (items, total);
     }
 
@@ -106,7 +106,7 @@ public class InvoiceStore : GenericStore<Invoice>, IInvoiceStore
         }
         q = q.OrderByDescending(i => i.CreationTime).ThenBy(i => i.Id);
         var total = await q.CountAsync();
-        var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var items = await q.PageOneBased(page, pageSize).ToListAsync();
         await AttachSlimUsersAsync(items);
         return (items, total);
     }

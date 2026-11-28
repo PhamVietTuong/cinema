@@ -45,8 +45,7 @@ public class IncidentStore : GenericStore<Incident>, IIncidentStore
         var page = await query
             .OrderByDescending(i => i.CreationTime)
             .ThenByDescending(i => i.Id)
-            .Skip(criteria.PageIndex * criteria.PageSize)
-            .Take(criteria.PageSize)
+            .PageZeroBased(criteria.PageIndex, criteria.PageSize)
             .ToListAsync();
         return (await WithLabelsAsync(page), total);
     }

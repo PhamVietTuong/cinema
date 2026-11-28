@@ -48,7 +48,7 @@ public class UserStore : GenericStore<User>, IUserStore
             q = q.Where(u => u.TheaterId == theaterId.Value);
         }
         var total = await q.CountAsync();
-        var items = await q.OrderBy(u => u.Name).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var items = await q.OrderBy(u => u.Name).PageOneBased(page, pageSize).ToListAsync();
         return (items, total);
     }
 

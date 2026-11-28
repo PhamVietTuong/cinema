@@ -113,8 +113,7 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
             .OrderBy(sr => sr.ShowTime.StartTime)
             .ThenBy(sr => sr.ShowTime.Movie.Title)
             .ThenBy(sr => sr.RoomId)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .PageOneBased(page, pageSize)
             .Select(sr => new ShowTimeSearchRow(
                 sr.ShowTimeId,
                 sr.RoomId,
@@ -181,8 +180,7 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
         var items = await query
             .OrderBy(s => s.StartTime)
             .ThenBy(s => s.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .PageOneBased(page, pageSize)
             .ToListAsync();
 
         return (items, total);
@@ -203,8 +201,7 @@ public class ShowTimeStore : GenericStore<ShowTime>, IShowTimeStore
         var items = await query
             .OrderBy(s => s.StartTime)
             .ThenBy(s => s.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .PageOneBased(page, pageSize)
             .Select(s => new ShowTimeCalendarRow(
                 s.Id,
                 s.MovieId,
