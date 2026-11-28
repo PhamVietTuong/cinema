@@ -1,0 +1,111 @@
+<div class="cfp" role="group" [attr.aria-label]="'clFilterPills.groupLabel' | translate">
+  <div class="cfp-row">
+    @for (p of pills(); track p.id) {
+      <div class="cfp-item" [class.on]="!!p.text" [class.open]="openId() === p.id">
+        <button type="button" class="cfp-pill" [attr.data-pill]="p.id"
+                aria-haspopup="dialog" [attr.aria-expanded]="openId() === p.id" [attr.aria-controls]="openId() === p.id ? menuId : null"
+                (click)="toggle(p, $event)" (keydown)="onPillKey($event, p)">
+          <mat-icon class="cfp-ico" aria-hidden="true">{{ p.icon }}</mat-icon>
+          <span class="cfp-label">{{ p.labelKey | translate }}</span>
+          @if (p.text) {
+            <span class="cfp-value">{{ p.text }}</span>
+          } @else {
+            <mat-icon class="cfp-chev" aria-hidden="true">expand_more</mat-icon>
+          }
+        </button>
+        @if (p.text) {
+          <button type="button" class="cfp-x" [attr.aria-label]="'clFilterPills.removeFilter' | translate: { name: (p.labelKey | translate) }"
+                  (click)="clearPill(p)">
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        }
+
+        @if (openId() === p.id) {
+          @if (sheet()) {
+            <div class="cfp-backdrop" (click)="closeMenu(true)" aria-hidden="true"></div>
+          }
+          <div class="cfp-menu" [class.cfp-menu--right]="alignRight()" role="dialog" [id]="menuId"
+               [attr.aria-modal]="sheet() ? 'true' : null" [attr.aria-label]="p.labelKey | translate" (keydown)="onMenuKey($event)">
+            <div class="cfp-mhead">
+              <h3>{{ p.labelKey | translate }}</h3>
+              <button type="button" class="cfp-mclose" [attr.aria-label]="'common.close' | translate" (click)="closeMenu(true)">
+                <mat-icon aria-hidden="true">close</mat-icon>
+              </button>
+            </div>
+
+            @switch (p.kind) {
+              @case ('select') {
+                @if (searchable()) {
+                  <div class="cfp-msearch">
+                    <input class="cfp-input cfp-focusable" type="search" [value]="menuQuery()" (input)="onSearch($event)"
+                           [placeholder]="'clFilterPills.searchPlaceholder' | translate" [attr.aria-label]="'clFilterPills.searchPlaceholder' | translate">
+                  </div>
+                }
+                <div class="cfp-mbody" role="listbox" [attr.aria-label]="p.labelKey | translate">
+                  @for (o of options(); track o.value) {
+                    <button type="button" role="option" class="cfp-opt" [class.on]="isSelected(p, o.value)"
+                            [attr.aria-selected]="isSelected(p, o.value)" (click)="pick(p, o.value)">
+                      <span>{{ o.text }}</span>
+                      <mat-icon aria-hidden="true">check</mat-icon>
+                    </button>
+                  } @empty {
+                    <p class="cfp-none">{{ 'clFilterPills.noMatch' | translate }}</p>
+                  }
+                </div>
+              }
+              @case ('date') {
+                <div class="cfp-mbody" role="listbox" [attr.aria-label]="p.labelKey | translate">
+                  @for (o of dateOptions(); track o.value) {
+                    <button type="button" role="option" class="cfp-opt" [class.on]="isSelected(p, o.value)"
+                            [attr.aria-selected]="isSelected(p, o.value)" (click)="pick(p, o.value)">
+                      <span>{{ o.text }} <small>{{ o.hint }}</small></span>
+                      <mat-icon aria-hidden="true">check</mat-icon>
+                    </button>
+                  }
+                </div>
+                <div class="cfp-pad">
+                  <label class="cfp-fld">{{ 'clFilterPills.otherDate' | translate }}
+                    <input class="cfp-input cfp-focusable" type="date" [value]="valueOf(p.keys[0])" (change)="setCustom(p, $event)">
+                  </label>
+                </div>
+              }
+              @case ('time') {
+                <div class="cfp-pad">
+                  <div class="cfp-presets">
+                    @for (t of timePresets(); track t.labelKey) {
+                      <button type="button" class="cfp-chip cfp-focusable" [class.on]="isPreset(p, t)" [attr.aria-pressed]="isPreset(p, t)" (click)="applyPreset(p, t)">
+                        {{ t.labelKey | translate }} <span class="cfp-mono">{{ t.from }}&ndash;{{ t.to }}</span>
+                      </button>
+                    }
+                  </div>
+                  <div class="cfp-pair">
+                    @for (f of fields(); track f.key) {
+                      @if (f.type === 'time') {
+                        <label class="cfp-fld">{{ f.labelKey | translate }}
+                          <input class="cfp-input cfp-focusable" type="time" [value]="valueOf(f.key)" (change)="setTimePart(p, f.key, $event)">
+                        </label>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+            }
+
+            <div class="cfp-mfoot">
+              <button type="button" class="cfp-apply" (click)="closeMenu(true)">
+                @if (resultCount() !== null && resultCount() !== undefined) {
+                  {{ 'clFilterPills.applyCount' | translate: { count: resultCount() } }}
+                } @else {
+                  {{ 'clFilterPills.apply' | translate }}
+                }
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    @if (showClear()) {
+      <button type="button" class="cfp-clear" (click)="clear.emit()">{{ clearLabelKey() | translate }}</button>
+    }
+  </div>
+</div>

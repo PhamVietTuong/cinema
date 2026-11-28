@@ -1,0 +1,150 @@
+@use '../../theme/mixins' as m;
+
+// Pill filters. Colours come from the Marquee Ledger tokens (--ml-*) with neutral fallbacks.
+:host {
+  display: block;
+  // A page may set --cfp-bleed so the scrolling row runs edge to edge on phones.
+}
+
+.cfp-row {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 16px 0;
+}
+
+.cfp-item { position: relative; display: inline-flex; align-items: center; flex: none; }
+
+.cfp-pill, .cfp-x {
+  font: inherit; cursor: pointer; color: var(--ml-ink, #211a12);
+  border: 1px solid var(--ml-rule-strong, rgba(33, 26, 18, 0.28)); background: var(--ml-panel, #fff);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.cfp-pill {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 14px;
+  border-radius: 9999px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;
+  &:hover { border-color: var(--ml-action, #e3a53a); }
+}
+.cfp-ico, .cfp-chev {
+  font-size: 18px; width: 18px; height: 18px; line-height: 18px; color: var(--ml-muted, #8a7a63);
+}
+.cfp-chev { margin-right: -4px; }
+.cfp-value { font-weight: 700; max-width: 170px; overflow: hidden; text-overflow: ellipsis; }
+.cfp-label { color: inherit; }
+
+// Applied: the pill and its clear button read as one rounded shape.
+.cfp-item.on {
+  .cfp-pill { background: var(--ml-action-soft, rgba(227, 165, 58, 0.14)); border-color: var(--ml-action, #e3a53a); border-right: 0; border-radius: 9999px 0 0 9999px; padding-right: 8px; }
+  .cfp-label { color: var(--ml-muted, #8a7a63); font-weight: 500; &::after { content: ':'; } }
+}
+.cfp-x {
+  display: none; align-items: center; justify-content: center; min-height: 42px; min-width: 38px; padding: 0 8px 0 2px;
+  border-radius: 0 9999px 9999px 0; border-left: 0; color: var(--ml-action-strong, #a86d12);
+  background: var(--ml-action-soft, rgba(227, 165, 58, 0.14)); border-color: var(--ml-action, #e3a53a);
+  mat-icon { font-size: 16px; width: 16px; height: 16px; line-height: 16px; }
+  &:hover { background: var(--ml-action, #e3a53a); color: var(--ml-on-action, #1b1610); }
+}
+.cfp-item.on .cfp-x { display: inline-flex; }
+.cfp-item.open .cfp-pill { border-color: var(--ml-action, #e3a53a); box-shadow: 0 0 0 3px var(--ml-action-ring, rgba(227, 165, 58, 0.3)); }
+.cfp-pill:focus-visible, .cfp-x:focus-visible, .cfp-clear:focus-visible, .cfp-opt:focus-visible,
+.cfp-chip:focus-visible, .cfp-apply:focus-visible, .cfp-mclose:focus-visible {
+  outline: none; border-color: var(--ml-action, #e3a53a); box-shadow: 0 0 0 3px var(--ml-action-ring, rgba(227, 165, 58, 0.3));
+}
+
+.cfp-clear {
+  font: inherit; display: inline-flex; align-items: center; min-height: 32px; padding: 0 4px; margin-left: 4px; flex: none;
+  background: none; border: 0; cursor: pointer; white-space: nowrap;
+  color: var(--ml-action-strong, #a86d12); font-weight: 700; font-size: 0.8rem; text-decoration: underline; text-underline-offset: 3px;
+}
+
+// ── Menu: popover on desktop ─────────────────────────────────────────────
+.cfp-menu {
+  position: absolute; z-index: 90; top: calc(100% + 8px); left: 0; width: 320px; max-width: calc(100vw - 24px); max-height: 420px;
+  display: flex; flex-direction: column; background: var(--ml-panel, #fff); color: var(--ml-ink, #211a12);
+  border: 1px solid var(--ml-rule-strong, rgba(33, 26, 18, 0.28)); border-radius: var(--ml-r-lg, 8px);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  &.cfp-menu--right { left: auto; right: 0; }
+}
+.cfp-mhead, .cfp-mfoot, .cfp-backdrop { display: none; }
+.cfp-mbody { overflow: auto; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.cfp-msearch { padding: 10px 10px 4px; }
+.cfp-input {
+  width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; font: inherit; font-size: 0.9rem;
+  color: var(--ml-ink, #211a12); background: var(--ml-panel, #fff);
+  border: 1px solid var(--ml-rule-strong, rgba(33, 26, 18, 0.28)); border-radius: var(--ml-r-sm, 4px);
+  &:focus { outline: none; border-color: var(--ml-action, #e3a53a); box-shadow: 0 0 0 3px var(--ml-action-ring, rgba(227, 165, 58, 0.3)); }
+}
+.cfp-opt {
+  font: inherit; display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 40px;
+  padding: 0 12px; border: 0; background: transparent; color: inherit; text-align: left; font-size: 0.88rem;
+  border-radius: var(--ml-r-sm, 4px); cursor: pointer;
+  small { color: var(--ml-muted, #8a7a63); font-size: 0.74rem; margin-left: 6px; }
+  mat-icon { visibility: hidden; font-size: 18px; width: 18px; height: 18px; color: var(--ml-action-strong, #a86d12); }
+  &:hover { background: var(--ml-hover, rgba(33, 26, 18, 0.035)); }
+  &.on { background: var(--ml-action-soft, rgba(227, 165, 58, 0.14)); font-weight: 700; mat-icon { visibility: visible; } }
+}
+.cfp-none { margin: 0; padding: 12px; color: var(--ml-muted, #8a7a63); font-size: 0.85rem; }
+.cfp-pad { padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
+.cfp-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.cfp-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cfp-fld {
+  display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ml-muted, #8a7a63);
+  .cfp-input { text-transform: none; letter-spacing: 0; font-weight: 400; }
+}
+.cfp-chip {
+  font: inherit; display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 9999px;
+  border: 1px solid var(--ml-rule-strong, rgba(33, 26, 18, 0.28)); background: var(--ml-panel, #fff); color: inherit;
+  font-size: 0.82rem; font-weight: 500; white-space: nowrap; cursor: pointer;
+  &:hover { border-color: var(--ml-action, #e3a53a); }
+  &.on { background: var(--ml-action, #e3a53a); border-color: var(--ml-action, #e3a53a); color: var(--ml-on-action, #1b1610); font-weight: 700; }
+}
+.cfp-mono { font-family: var(--ml-font-data, monospace); font-size: 0.72rem; opacity: 0.7; margin-left: 6px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .cfp-menu { animation: cfp-pop 0.14s ease-out backwards; }
+}
+@keyframes cfp-pop { from { opacity: 0; transform: translateY(-4px); } }
+@keyframes cfp-sheet { from { transform: translateY(100%); } }
+@keyframes cfp-fade { from { opacity: 0; } }
+
+// ── Phones and small tablets: scrolling pill row + bottom-sheet menu ─────
+@include m.tablet-small {
+  .cfp-row {
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 14px 4px;
+    margin-inline: calc(-1 * var(--cfp-bleed, 0px)); padding-inline: calc(var(--cfp-bleed, 0px) + 4px);
+    &::-webkit-scrollbar { display: none; }
+  }
+  .cfp-pill, .cfp-x { min-height: 44px; }
+  .cfp-x { min-width: 44px; }
+  .cfp-clear { min-height: 44px; }
+
+  .cfp-backdrop { display: block; position: fixed; inset: 0; z-index: 949; // above the chatbot FAB (900) and back-to-top (890)
+    background: rgba(10, 8, 5, 0.55); }
+  .cfp-menu {
+    position: fixed; z-index: 950; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-width: none; max-height: 80vh;
+    border-width: 1px 0 0; border-radius: 16px 16px 0 0;
+    &.cfp-menu--right { left: 0; right: 0; }
+  }
+  .cfp-mhead {
+    display: flex; align-items: center; justify-content: space-between; position: relative;
+    padding: 10px 6px 8px 20px; border-bottom: 1px solid var(--ml-rule, rgba(33, 26, 18, 0.16));
+    &::before { content: ''; position: absolute; left: 50%; top: 6px; width: 40px; height: 4px; border-radius: 2px; transform: translateX(-50%); background: var(--ml-rule-strong, rgba(33, 26, 18, 0.28)); }
+    h3 { margin: 8px 0 0; font-family: var(--ml-font-head, inherit); font-size: 1.05rem; text-transform: uppercase; font-weight: 600; }
+  }
+  .cfp-mclose {
+    font: inherit; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
+    border: 0; background: transparent; color: inherit; cursor: pointer;
+  }
+  .cfp-opt { min-height: 48px; font-size: 0.95rem; }
+  .cfp-chip { min-height: 44px; }
+  .cfp-input { height: 44px; }
+  .cfp-mfoot {
+    display: flex; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 2px dashed var(--ml-rule-strong, rgba(33, 26, 18, 0.28));
+  }
+  .cfp-apply {
+    font: inherit; flex: 1; min-height: 46px; border-radius: var(--ml-r-sm, 4px); cursor: pointer; font-weight: 700; font-size: 0.9rem;
+    border: 1px solid var(--ml-action, #e3a53a); background: var(--ml-action, #e3a53a); color: var(--ml-on-action, #1b1610);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cfp-menu { animation: cfp-sheet 0.25s ease-out backwards; }
+    .cfp-backdrop { animation: cfp-fade 0.2s ease-out backwards; }
+  }
+}
