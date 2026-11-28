@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy } from '@
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { CinemaServiceAgent } from 'CinemaLib';
+import { CinemaServiceAgent, VN_PHONE_PATTERN } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
 
 /** Theater detail page: info on top, per-theater management tabs below. */
@@ -33,7 +33,7 @@ export class TheaterDetailComponent implements OnInit {
       name: ['', Validators.required],
       city: ['', Validators.required],
       address: ['', Validators.required],
-      phone: ['', Validators.pattern(/^(?:\+84|0)\d{9,10}$/)],
+      phone: ['', Validators.pattern(VN_PHONE_PATTERN)],
       email: ['', Validators.email],
       imageUrl: [''],
       latitude: [null, [Validators.min(-90), Validators.max(90)]],

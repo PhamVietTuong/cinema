@@ -2,10 +2,8 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
-import { SharedModule, QrCodeComponent, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase, joinSeatLabels } from 'CinemaLib';
+import { SharedModule, QrCodeComponent, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase, joinSeatLabels, VN_PHONE_PATTERN } from 'CinemaLib';
 
-/** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
-const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
 const HISTORY_PAGE_SIZE = 10;
 
 @Component({
@@ -57,7 +55,7 @@ export class ProfileComponent extends ProfileFormBase {
   }
 
   protected override _phoneValidators(): ValidatorFn[] {
-    return [Validators.pattern(PHONE_PATTERN)];
+    return [Validators.pattern(VN_PHONE_PATTERN)];
   }
 
   protected override _profileI18n(): { updateSuccess: string; updateFailed: string } {

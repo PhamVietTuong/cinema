@@ -3,9 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { IdentityServiceAgent, CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, THEATER_SCOPED_ROLES, LookupCacheService } from 'CinemaLib';
+import { IdentityServiceAgent, CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, THEATER_SCOPED_ROLES, LookupCacheService, VN_PHONE_PATTERN } from 'CinemaLib';
 
-const PHONE_PATTERN = /^(?:\+84|0)\d{9,10}$/;
 
 type Dto = IdentityServiceAgent.UserDTO;
 
@@ -50,7 +49,7 @@ export class UserDialog {
     this.form = this._fb.group({
       name: [data.user?.name ?? '', Validators.required],
       email: [{ value: data.user?.email ?? '', disabled: !!data.user }, [Validators.required, Validators.email]],
-      phone: [data.user?.phone ?? '', [Validators.required, Validators.pattern(PHONE_PATTERN)]],
+      phone: [data.user?.phone ?? '', [Validators.required, Validators.pattern(VN_PHONE_PATTERN)]],
       password: [{ value: '', disabled: !!data.user }, data.user ? [] : [Validators.required, Validators.minLength(6)]],
       userTypeId: [data.user?.userTypeId ?? '', Validators.required],
       status: [data.user?.status ?? IdentityServiceAgent.UserStatus.Active, Validators.required],
