@@ -1,4 +1,4 @@
-import { BarChartRow, CinemaServiceAgent } from 'CinemaLib';
+import { BarChartRow, CinemaServiceAgent, toDateKey } from 'CinemaLib';
 
 /** The API limit: a report range spans at most this many business dates, both ends included. */
 export const MAX_REPORT_DAYS = 92;
@@ -42,10 +42,7 @@ export function toDayString(date: Date): string {
 
 /** `yyyy-MM-dd` of the local calendar day `daysBack` days before `now` (the user's own "today"). */
 export function localDayString(now: Date, daysBack = 0): string {
-  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysBack);
-  const month = String(day.getMonth() + 1).padStart(2, '0');
-  const date = String(day.getDate()).padStart(2, '0');
-  return `${day.getFullYear()}-${month}-${date}`;
+  return toDateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysBack));
 }
 
 /** Request for the three report calls. A pinned theater manager always sends their own theater. */

@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
-import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, updateOwnComment, updateOwnCommentSuccess, updateOwnCommentFailure, deleteOwnComment, deleteOwnCommentSuccess, deleteOwnCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, rottenTomatoesTier, ToastService, DialogService, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, loadMovieDetail, loadMovieDetailBySlug, rateMovie, rateMovieSuccess, rateMovieFailure, addComment, addCommentSuccess, addCommentFailure, updateOwnComment, updateOwnCommentSuccess, updateOwnCommentFailure, deleteOwnComment, deleteOwnCommentSuccess, deleteOwnCommentFailure, selectSelectedMovie, selectMoviesLoading, selectIsAuthenticated, screeningFormatLabel, rottenTomatoesTier, ToastService, DialogService, CinemaServiceAgent, toDateKey, toTimeKey } from 'CinemaLib';
 import { BookingSelectionComponent } from '../../../booking/booking-selection/booking-selection.component';
 import { BookingCheckoutState } from '../../../booking/booking-checkout/booking-checkout.state';
 import { movieDetailUrl, isLegacyMovieId } from '../../../../../shared/movie-route';
@@ -244,11 +244,7 @@ export class MovieDetailComponent implements OnInit {
   /** Local (not UTC) yyyy-MM-dd — a showtime near midnight must bucket to the day it's shown on
    * the theater's wall clock, not shift a day via a UTC string conversion. */
   private toDateKey(value: string | Date): string {
-    const d = new Date(value);
-    const y = d.getFullYear();
-    const m = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    return toDateKey(new Date(value));
   }
 
   selectDate(key: string): void {
@@ -272,11 +268,8 @@ export class MovieDetailComponent implements OnInit {
   private _openShowTime(st: any): void {
     this.selectedShowTimeId = st.id;
     this.selectedRoomId = st.roomId;
-    const time = new Date(st.startTime);
-    const hh = time.getHours().toString().padStart(2, '0');
-    const mm = time.getMinutes().toString().padStart(2, '0');
     const format = screeningFormatLabel(st.roomTypeName, st.projectionForm);
-    this.selectedShowTimeLabel = `${st.theaterName} · ${hh}:${mm} · ${format}`;
+    this.selectedShowTimeLabel = `${st.theaterName} · ${toTimeKey(new Date(st.startTime))} · ${format}`;
   }
 
   /** Reopens the inline panel on the showtime carried back from checkout's "back to seats", on the

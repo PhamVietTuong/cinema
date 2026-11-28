@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, Subject, forkJoin, map, merge, shareReplay, takeUntil } from 'rxjs';
-import { CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues, LookupCacheService, fetchAllPages } from 'CinemaLib';
+import { CinemaServiceAgent, ProjectionFormValues, ShowTimeTypeValues, LookupCacheService, fetchAllPages, toDateKey, toTimeKey } from 'CinemaLib';
 import { ShowTimeDialog } from './show-time.dialog';
 
 /** Slim calendar row; the full record is fetched with `getShowTime` only when a block is opened. */
@@ -263,8 +263,8 @@ export class ShowTimesManagementComponent implements OnInit, OnDestroy {
 
   // ── Date helpers ──────────────────────────────────────────────────────────────
   private _pad(n: number): string { return `${n}`.padStart(2, '0'); }
-  private _hm(d: Date): string { return `${this._pad(d.getHours())}:${this._pad(d.getMinutes())}`; }
-  private _ymd(d: Date): string { return `${d.getFullYear()}-${this._pad(d.getMonth() + 1)}-${this._pad(d.getDate())}`; }
+  private _hm(d: Date): string { return toTimeKey(d); }
+  private _ymd(d: Date): string { return toDateKey(d); }
   private _hoursFromStart(d: Date): number { return (d.getHours() - this.startHour) + d.getMinutes() / 60; }
   /** Local-time ISO (no timezone suffix) so the server reads the same wall-clock week boundary we display. */
   private _isoLocal(d: Date): string { return `${this._ymd(d)}T${this._pad(d.getHours())}:${this._pad(d.getMinutes())}:00`; }

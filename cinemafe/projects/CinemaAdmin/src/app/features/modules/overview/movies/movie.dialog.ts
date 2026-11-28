@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, LookupCacheService } from 'CinemaLib';
+import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, LookupCacheService, toDateKey } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
 
 type Dto = CinemaServiceAgent.MovieDTO;
@@ -75,9 +75,7 @@ export class MovieDialog implements OnInit {
     if (!d) {
       return '';
     }
-    const dt = new Date(d);
-    const pad = (n: number) => `${n}`.padStart(2, '0');
-    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+    return toDateKey(new Date(d));
   }
 
   movieTypeName(id: string): string {

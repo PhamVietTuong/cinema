@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Input, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { SharedModule, CinemaServiceAgent } from 'CinemaLib';
+import { SharedModule, CinemaServiceAgent, toDateKey } from 'CinemaLib';
 
 interface TheaterOption { id: string; name: string; }
 interface DateOption { key: string; date: Date; }
@@ -132,7 +132,6 @@ export class QuickBookingComponent {
 
   /** Local (not UTC) yyyy-MM-dd, matching movie-detail's date bucketing. */
   private _dateKey(value: string | Date): string {
-    const d = new Date(value);
-    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+    return toDateKey(new Date(value));
   }
 }

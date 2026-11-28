@@ -1,3 +1,5 @@
+import { toDateKey } from 'CinemaLib';
+
 /** Builds the `yyyy-MM-dd` value an `<input type="date">` needs from a `DateTime` DTO field.
  *
  * NSwag parses a backend `DateTime` without a `Z` as local midnight, so the local calendar date is the
@@ -8,7 +10,5 @@ export function toDateInput(value: Date | string | null | undefined): string {
   if (!value) {
     return '';
   }
-  const date = new Date(value);
-  const pad = (n: number) => `${n}`.padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return toDateKey(new Date(value));
 }

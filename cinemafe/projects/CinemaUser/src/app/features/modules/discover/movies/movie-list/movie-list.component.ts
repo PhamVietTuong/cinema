@@ -8,7 +8,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import {
   SharedModule, loadMovies, MOVIE_PAGE_SIZE, FilterPillsComponent, FilterBarField, FilterBarOption,
   selectPagedMovies, selectMoviesLoading, screeningFormatLabel, rawApiErrorMessage, CinemaServiceAgent,
-  LookupCacheService,
+  LookupCacheService, toDateKey,
 } from 'CinemaLib';
 import { MovieCardComponent } from '../../../../../shared/movie-card/movie-card.component';
 import { EmptyStateComponent } from '../../../../../shared/empty-state/empty-state.component';
@@ -255,7 +255,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
       const d = new Date();
       d.setDate(d.getDate() + i);
       this.dateStrip.push({
-        value: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        value: toDateKey(d),
         label: i === 0 ? this._translate.instant('clFilterPills.today')
           : i === 1 ? this._translate.instant('clFilterPills.tomorrow')
           : new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(d),

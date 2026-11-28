@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
-import { PaymentServiceAgent } from 'CinemaLib';
+import { PaymentServiceAgent, toDateKey } from 'CinemaLib';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -104,6 +104,6 @@ export class ReportsComponent implements OnInit {
   }
 
   private _iso(d: Date): string {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return toDateKey(d);
   }
 }
