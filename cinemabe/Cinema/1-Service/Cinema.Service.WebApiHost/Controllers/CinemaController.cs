@@ -200,7 +200,7 @@ public class CinemaController : ApiControllerBase
         try
         {
             // Personalise for a signed-in user; anonymous callers get top-rated picks.
-            Guid? userId = User?.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+            Guid? userId = User.GetUserIdOrNull();
             var result = await _movieManager.GetRecommendedAsync(userId, count);
             return Ok(result);
         }
@@ -266,7 +266,7 @@ public class CinemaController : ApiControllerBase
         try
         {
             // Personalise CanReview for a signed-in user; anonymous callers always see false.
-            Guid? userId = User?.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+            Guid? userId = User.GetUserIdOrNull();
             var result = await _movieManager.GetDetailAsync(id, userId);
             return Ok(result);
         }
@@ -284,7 +284,7 @@ public class CinemaController : ApiControllerBase
         try
         {
             // Personalise CanReview for a signed-in user; anonymous callers always see false.
-            Guid? userId = User?.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+            Guid? userId = User.GetUserIdOrNull();
             var result = await _movieManager.GetDetailBySlugAsync(slug, userId);
             return Ok(result);
         }
@@ -405,7 +405,7 @@ public class CinemaController : ApiControllerBase
         LogProvider.Current.Information($"{GetType().Name}.GetMovieComments being awakened to process request...");
         try
         {
-            Guid? userId = User?.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+            Guid? userId = User.GetUserIdOrNull();
             var result = await _movieManager.GetCommentsAsync(movieId, userId, search);
             return Ok(result);
         }
