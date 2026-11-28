@@ -199,6 +199,57 @@ sequenceDiagram
 
 Checked against: `PaymentController.cs:74` (CreateBooking), `:297`/`:313` (GetInvoice family), `:166` (IPN reply built by `VnPayGateway.BuildIpnResponse`); `BookingManager.cs:1086` (atomic Pending to Paid claim) and `:1831`, `:1856` (reaper claim); the codes 00/01/02/04/97/99 in `business-rules.md` section 3; `BookingHub.cs:22-49` (`SeatLocked`/`SeatUnlocked`; `SeatBooked` is sent from `BookingManager` through `ISeatNotificationService`); `payment-return.component.ts:18-19` (2 s, 15 attempts); `VnPayGateway.cs:74` (15 minute expiry); `PendingBookingReaper.cs:12-13`. The unsuccessful-payment branch is `BookingManager.cs:1059-1061` (`PaymentFailedAcknowledged`); `InvoiceStatus.Failed` is reached only through `InvoiceAdminManager.UpdateStatusAsync` (`InvoiceAdminManager.cs:42-62`). Unresolved gateway outcomes (for example a payment confirmed after the invoice was cancelled) answer `RspCode` 02 and produce no ticket (`business-rules.md` section 2).
 
+## 3a. Two customers, one seat (concurrent booking)
+
+Three layers stop a double sale. Only the third holds when the API runs as more than one instance.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Customer A
+    actor B as Customer B
+    participant H as BookingHub (advisory lock, in memory)
+    participant G as BookingGate (SemaphoreSlim per showtime + room)
+    participant M as BookingManager
+    participant D as SQL Server
+
+    Note over A,D: Layer 1 - advisory lock (5 min, UX only)
+    A->>H: LockSeat A1
+    H-->>B: SeatLocked A1 (B's seat map shows it held)
+
+    Note over A,D: Layer 2 - gate serializes "read booked, validate, insert" in one process
+    par both press Pay at the same time
+        A->>G: CreateBooking {A1, A2}
+    and
+        B->>G: CreateBooking {A2, A3}
+    end
+    G->>M: A enters (B waits on the semaphore)
+    M->>D: begin transaction, read booked seats (none), insert tickets A1 + A2, commit
+    G->>M: A leaves, B enters
+    M->>D: read booked seats (A2 is booked)
+    M-->>B: InvalidOperationException "Seat ... is already booked." (nothing written, A3 stays free)
+
+    Note over A,D: Layer 3 - DB unique filtered index, the real guarantee across instances
+    opt B was served by another API instance (gate does not help)
+        M->>D: insert ticket A2 for B
+        D-->>M: IX_InvoiceTicket_ActiveSeat violated
+        M->>D: rollback (all-or-nothing)
+        M-->>B: "One or more selected seats were just booked by someone else."
+    end
+```
+
+| Layer | Where | Survives several instances? | What it protects |
+|---|---|---|---|
+| Advisory lock | `_lockedSeats` in `BookingManager`, broadcast by `BookingHub` | No | Tells other viewers a seat is being chosen; a UX hint, not a guarantee |
+| Booking gate | `_bookingGates`, `BookingManager.BookingGate` | No | Stops two requests in one process both passing the "seat free" check |
+| Unique filtered index | `IX_InvoiceTicket_ActiveSeat` on `(ShowTimeId, RoomId, SeatId) WHERE IsActive = 1` | Yes | A seat can be active on one ticket only, whichever instance writes it |
+
+All-or-nothing: the check and the ticket inserts share one transaction, so a booking that loses on any seat is rolled back whole and keeps none of its other seats.
+
+Known limit: with several API instances the loser of a race only finds out when the insert is rejected, not when picking the seat, because the advisory lock is not shared. Moving the hold into a DB table with an expiry would close that gap; it has not been built.
+
+Checked against: `BookingManager.cs:37-82` (gate), `:197-285` (`CreateBookingAsync`, including the `SeatUnavailableException` catch), `:590-595` (already-booked check), `create_db.sql:721` (index). Tests: `BookingServiceTests.CreateBookingAsync_TwoConcurrentBookingsForSameSeat_OnlyOneSucceeds` and `CreateBookingAsync_ConcurrentBookingsWithOverlappingSeatSets_AreAllOrNothing`. They use a mocked store, so they cover layer 2 only; layer 3 has no integration test yet.
+
 ## 4. Deployment
 
 What runs where today. There is no release or deploy pipeline: CI builds and tests only (`docs/05-process/deployment.md`). The compose file is a local demo stack.

@@ -92,7 +92,7 @@ tests that prove that rule. Filter by rule: `dotnet test --filter "Req=BR-PAY-03
 | `BR-PAY-04` | Amount cross-check (VNPay amount x100) | s3 | `VnPayGatewayTests` |
 | `BR-PAY-05` | Only a Pending invoice can be paid; expiry gives back points, seats | s2 | `PaymentCallbackTests`, `BookingServiceTests` |
 | `BR-SEAT-01` | Advisory seat lock: refused while held, only the owner unlocks, disconnect releases | s1 | `BookingHubTests`, `BookingServiceTests`, e2e `user-profile-booking.spec.ts` (seat map opens only) |
-| `BR-SEAT-02` | DB anti-double-booking: a lost insert race rolls back as "just booked"; spent points roll back | s1, s5 | `BookingServiceTests` |
+| `BR-SEAT-02` | DB anti-double-booking: a lost insert race rolls back as "just booked"; spent points roll back. Two parallel bookings of one seat, or of overlapping seat sets, leave exactly one winner and no partial booking (in-process gate only, mocked store; the DB unique index has no integration test yet) | s1, s5 | `BookingServiceTests` (`..._TwoConcurrentBookingsForSameSeat_OnlyOneSucceeds`, `..._ConcurrentBookingsWithOverlappingSeatSets_AreAllOrNothing`) |
 | `BR-AUTH-01` | Every endpoint is guarded or deliberately anonymous; role mismatch is 403 | s6 | `ControllerAuthorizationCoverageTests`, `StaffToolsetAuthorizationTests` |
 | `BR-AUTH-02` | Login lockout, account status, 2FA | s6 | `AuthServiceTests` |
 

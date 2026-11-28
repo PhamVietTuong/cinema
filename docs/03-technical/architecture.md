@@ -62,7 +62,7 @@ flowchart TB
     Data --> Foundation
 ```
 
-The system context, ERD, booking-to-payment sequence and deployment views are in [`diagrams.md`](diagrams.md).
+The system context, ERD, booking-to-payment sequence, concurrent-booking (two customers, one seat) and deployment views are in [`diagrams.md`](diagrams.md).
 
 ## 3. Request flow — controller → manager → store → EF Core → DB
 
