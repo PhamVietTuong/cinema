@@ -40,7 +40,7 @@ public class HolidayManager : IHolidayManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.HolidayStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
@@ -150,7 +150,7 @@ public class HolidayManager : IHolidayManager
             {
                 query = _uow.HolidayTimeSlotPriceStore.FilterQuery(query, e => e.HolidayId == holidayId);
             }
-            if (search.Filters.TryGetValue("theaterId", out var theaterRaw) && Guid.TryParse(theaterRaw, out var theaterId))
+            if (search.Filters.TryGetValue(FilterKeys.TheaterId, out var theaterRaw) && Guid.TryParse(theaterRaw, out var theaterId))
             {
                 query = _uow.HolidayTimeSlotPriceStore.FilterQuery(query, e => e.TimeSlot.TheaterId == theaterId);
             }

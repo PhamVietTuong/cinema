@@ -39,7 +39,7 @@ public class MemberShipManager : IMemberShipManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.MemberShipStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;

@@ -39,7 +39,7 @@ public class AgeRestrictionManager : IAgeRestrictionManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.AgeRestrictionStore.FilterQuery(query, e => e.Code.Contains(keyword) || e.Description.Contains(keyword));
                     break;

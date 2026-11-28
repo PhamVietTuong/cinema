@@ -39,7 +39,7 @@ public class NewsManager : INewsManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.NewsStore.FilterQuery(query, e => e.Title.Contains(keyword));
                     break;

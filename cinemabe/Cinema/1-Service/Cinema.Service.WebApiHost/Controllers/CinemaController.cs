@@ -22,7 +22,7 @@ namespace Cinema.Service.WebApiHost.Controllers;
 [ApiExplorerSettings(GroupName = "cinema")]
 public class CinemaController : ApiControllerBase
 {
-    private const string _theaterIdFilter = "theaterId";
+    private const string _theaterIdFilter = FilterKeys.TheaterId;
 
     private readonly IMovieManager   _movieManager;
     private readonly ITheaterManager _theaterManager;

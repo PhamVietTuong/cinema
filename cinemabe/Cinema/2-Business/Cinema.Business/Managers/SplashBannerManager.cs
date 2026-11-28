@@ -27,7 +27,7 @@ public class SplashBannerManager : ISplashBannerManager
     private IQueryable<SplashBanner> GetFilteredQuery(Dictionary<string, string>? filters)
     {
         var query = _uow.SplashBannerStore.GetQuery();
-        var keyword = filters.GetString("keyword");
+        var keyword = filters.GetString(FilterKeys.Keyword);
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             query = _uow.SplashBannerStore.FilterQuery(query, e => e.Title.Contains(keyword));

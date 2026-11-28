@@ -39,12 +39,12 @@ public class RoomTypeManager : IRoomTypeManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.RoomTypeStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
 
-                case "theaterId":
+                case FilterKeys.TheaterId:
                     if (Guid.TryParse(filters[key], out var theaterId))
                     {
                         query = _uow.RoomTypeStore.FilterQuery(query, e => e.TheaterId == theaterId);

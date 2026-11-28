@@ -41,7 +41,7 @@ public class TicketPriceManager : ITicketPriceManager
 
             switch (key)
             {
-                case "theaterId":
+                case FilterKeys.TheaterId:
                     if (Guid.TryParse(filters[key], out var theaterId))
                     {
                         query = _uow.TicketPriceStore.FilterQuery(query, e => e.TheaterId == theaterId);

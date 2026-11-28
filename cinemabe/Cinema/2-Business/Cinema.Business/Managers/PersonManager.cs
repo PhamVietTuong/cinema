@@ -41,7 +41,7 @@ public class PersonManager : IPersonManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.PersonStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;

@@ -39,7 +39,7 @@ public class MovieTypeManager : IMovieTypeManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.MovieTypeStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;

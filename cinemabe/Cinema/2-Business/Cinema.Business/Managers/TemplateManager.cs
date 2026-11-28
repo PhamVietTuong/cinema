@@ -40,7 +40,7 @@ public class TemplateManager : ITemplateManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.TemplateStore.FilterQuery(query, e => e.Code.Contains(keyword) || e.Name.Contains(keyword));
                     break;

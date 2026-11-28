@@ -25,7 +25,7 @@ public class PromotionCampaignManager : IPromotionCampaignManager
     private IQueryable<PromotionCampaign> GetFilteredQuery(Dictionary<string, string>? filters)
     {
         var query = _uow.PromotionCampaignStore.GetQuery();
-        var keyword = filters.GetString("keyword");
+        var keyword = filters.GetString(FilterKeys.Keyword);
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             query = _uow.PromotionCampaignStore.FilterQuery(query, e => e.Name.Contains(keyword));

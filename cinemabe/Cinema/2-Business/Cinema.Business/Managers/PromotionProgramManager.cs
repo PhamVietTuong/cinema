@@ -24,7 +24,7 @@ public class PromotionProgramManager : IPromotionProgramManager
     private IQueryable<PromotionProgram> GetFilteredQuery(Dictionary<string, string>? filters)
     {
         var query = _uow.PromotionProgramStore.GetQuery();
-        var keyword = filters.GetString("keyword");
+        var keyword = filters.GetString(FilterKeys.Keyword);
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             query = _uow.PromotionProgramStore.FilterQuery(query, e => e.Title.Contains(keyword));
@@ -54,7 +54,7 @@ public class PromotionProgramManager : IPromotionProgramManager
         search ??= new PagingSearchDTO();
         var (page, pageSize) = PagingHelper.ResolvePaging(search);
         var now = DateTime.UtcNow;
-        var theaterId = search.Filters.GetGuid("theaterId");
+        var theaterId = search.Filters.GetGuid(FilterKeys.TheaterId);
 
         var query = _uow.PromotionProgramStore.GetQuery().Where(p => p.IsPublished && p.EndDate >= now);
         if (theaterId is Guid tid)
