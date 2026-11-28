@@ -20,7 +20,7 @@ Author to confirm: why this rule was adopted (for example VNPay's own requiremen
 ## Consequences
 
 - A customer can see "payment pending" for a paid booking if VNPay cannot reach the server (the sandbox needs a public tunnel, `ngrok http 5102`, set in the VNPay portal each time it restarts).
-- A payment confirmed after the invoice was cancelled by the reaper gets `RspCode` 02 and no ticket, which is why the reaper adds a 15-minute grace once a payment has started (`BookingManager.cs:1831`).
+- A payment confirmed after the invoice was cancelled by the reaper gets `RspCode` 02 and no ticket, which is why the reaper adds a 15-minute grace once a payment has started (`BookingManager.cs:2038`).
 - Tests pin the contract: `PaymentControllerCallbackTests`, `VnPayGatewayTests.BuildIpnResponse_PinsTheExactRspCodeForEveryOutcome`, and the committed e2e spec `api-payment-callback.spec.ts` (`docs/05-process/testing.md`, rule BR-PAY-02).
 - Idempotency and concurrency are handled by ADR-0008.
 

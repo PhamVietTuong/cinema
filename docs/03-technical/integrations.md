@@ -32,7 +32,7 @@ Abstracted behind `IPaymentGateway` (`Cinema.Business.Contracts.Payments`), one 
 | Sandbox | `Cinema.Business.Payments.SandboxPaymentGateway` | Dev/test only, always "configured" | none | Synchronous confirm always succeeds; not for production. |
 | VNPay | `Cinema.Business.Payments.VnPayGateway` | Production-shaped | `Payments:VnPay:TmnCode`, `Payments:VnPay:HashSecret`, `Payments:VnPay:PayUrl`, `Payments:VnPay:ReturnUrl` | HMAC-SHA512 signed redirect + IPN. **Callback-authoritative** — `VerifyPaymentAsync` always returns false; only the signed server-to-server IPN (`PaymentController.PaymentCallback?provider=VNPay`) can mark an invoice Paid. Requires a public tunnel (ngrok) for local dev — see §5. |
 
-Selector config: `Payments:Provider` (default provider name when a client doesn't specify one). All four gateways are selectable per-invoice via the `provider` parameter on `PaymentController.InitiatePayment`.
+Selector config: `Payments:Provider` (default provider name when a client doesn't specify one). Both registered gateways (Sandbox, VNPay) are selectable per-invoice via the `provider` parameter on `PaymentController.InitiatePayment`.
 
 ## 2. OAuth / social login
 

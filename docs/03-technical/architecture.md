@@ -12,6 +12,7 @@ Dependency direction is enforced by folder prefix and by actual `ProjectReferenc
 |---|---|---|---|
 | 1 | `1-Service/` | `Cinema.Service.WebApiHost` | ASP.NET Core 9 Web API host. Controllers, SignalR hubs, middleware, background services, `Program.cs` composition root. |
 | 1 | `1-Service/` | `Cinema.Service.Clients` | NSwag-generated HTTP clients (C# + Angular). Not referenced by the host itself; consumed by other .NET clients and copied into `cinemafe`. Do not hand-edit. |
+| 1 | `1-Service/` | `Cinema.Service.WebApiHost.IntegrationTests` | In-process `WebApplicationFactory<Program>` tests against a real SQL Server; references the host. |
 | 1 | `1-Service/` | `Cinema.Service.WebApiHost.Tests` | xUnit tests against the host (e.g. `ControllerArchitectureTests.OnlyThreeControllersExist`). |
 | 2 | `2-Business/` | `Cinema.Business.Contracts` | One `I*Manager`/`ITokenService`/gateway interface per file. References `Cinema.Data.Contracts` + `Cinema.Business.DTO` only. |
 | 2 | `2-Business/` | `Cinema.Business.DTO` | DTOs grouped by domain (`Auth/`, `Booking/`, `BoxOffice/`, `Catalog/`, `Gate/`, `Invoices/`, `Loyalty/`, `Movies/`, `Operations/`, `Requests/`, `Staff/`, `Theaters/`, `Validation/`). References `Cinema.Data.Entities` only. |
@@ -22,7 +23,7 @@ Dependency direction is enforced by folder prefix and by actual `ProjectReferenc
 | 3 | `3-Data/` | `Cinema.Data` | `CinemaContext`, Fluent `Configurations/`, `Stores/`, `ApplicationUnitOfWork`, `JwtTokenService`. References `Cinema.Data.Contracts` **and** `Cinema.Business.Contracts` (for `ITokenService`) + `Cinema.Foundation`. |
 | 4 | `4-Foundation/` | `Cinema.Foundation` | Serilog-backed `ILog`/`LogProvider` abstraction. No references to any other Cinema project. |
 
-Notable wrinkle (not in CLAUDE.md's prose but real in the `.csproj`s): `Cinema.Data` references `Cinema.Business.Contracts` (to implement `ITokenService`), so layer 3 reaches one interface back into layer 2 — a deliberate, narrow exception rather than a strict one-way 3→2 ban. `Cinema.Service.WebApiHost` itself references `Cinema.Business`, `Cinema.Data`, and `Cinema.Foundation` directly (not just the "one tier deeper" convention) since it is the composition root.
+Notable wrinkle (not in AGENTS.md's prose but real in the `.csproj`s): `Cinema.Data` references `Cinema.Business.Contracts` (to implement `ITokenService`), so layer 3 reaches one interface back into layer 2 — a deliberate, narrow exception rather than a strict one-way 3→2 ban. `Cinema.Service.WebApiHost` itself references `Cinema.Business`, `Cinema.Data`, and `Cinema.Foundation` directly (not just the "one tier deeper" convention) since it is the composition root.
 
 ## 2. Layer dependency graph
 
@@ -70,7 +71,7 @@ The system context, ERD, booking-to-payment sequence, concurrent-booking (two cu
 2. Controller calls an injected `I*Manager` (from `Cinema.Business.Contracts`, resolved to its `Cinema.Business.Managers.*` implementation via `AddBusiness()`).
 3. The manager calls `IApplicationUnitOfWork` (DI singleton-per-scope `ApplicationUnitOfWork`, `cinemabe/Cinema/3-Data/Cinema.Data/ApplicationUnitOfWork.cs`), which exposes one typed `I*Store` property per entity (constructed eagerly in its constructor, e.g. `MovieStore = new MovieStore(db)`), plus `BeginTransactionAsync`/`CommitTransactionAsync`/`RollbackTransactionAsync`/`SaveChangesAsync`.
 4. Each store (`Cinema.Data/Stores/*`) wraps `GenericStore<T>` over the shared `CinemaContext` (EF Core `DbContext`), issuing LINQ-to-SQL Server queries.
-5. `CinemaContext.OnModelCreating` applies every `IEntityTypeConfiguration<T>` in the assembly (`Configurations/*.cs`) via `ApplyConfigurationsFromAssembly`, then globally rewrites every `DateTime`/`DateTime?` property's column type to `datetime` (not EF's default `datetime2`) — confirmed in `CinemaContext.cs` lines 61-71.
+5. `CinemaContext.OnModelCreating` applies every `IEntityTypeConfiguration<T>` in the assembly (`Configurations/*.cs`) via `ApplyConfigurationsFromAssembly`, then globally rewrites every `DateTime`/`DateTime?` property's column type to `datetime` (not EF's default `datetime2`) — confirmed in `CinemaContext.cs` lines 107-114.
 6. The manager maps entities to DTOs (`Cinema.Business.DTO`) and returns them to the controller, which returns them as the HTTP response body (always 200/4xx/5xx JSON; list endpoints return `DefaultSearchResults<T>`).
 
 Multi-step writes (e.g. booking creation, expiry) wrap steps 3-5 inside `BeginTransactionAsync`/`CommitTransactionAsync` for atomicity — see `BookingManager.CreateBookingAsync`/`ExpireStalePendingBookingsAsync` for the reference shape.
@@ -88,7 +89,7 @@ Two hubs, both mapped in `Program.cs` (`app.MapHub<BookingHub>("/hubs/booking")`
 
 ## 5. Controllers (exactly 3 — enforced, never add a 4th)
 
-`1-Service/Cinema.Service.WebApiHost/Controllers/`: `ApiControllerBase.cs` (shared `HandleException`), `CinemaController.cs` (catalog/booking/staff — 86 `[Authorize(Roles = _adminRole)]` actions (as of 2026-11-12) plus role-composite-gated `#region`s for Gate/BoxOffice/StaffReport/Operations; there is no Workforce region), `IdentityController.cs` (auth/profile), `PaymentController.cs` (gateway initiate/callback/admin). All routes: `api/[controller]/[action]`; list/search endpoints are POST with a `PagingSearchDTO` body, while by-id reads use GET and updates/deletes use PUT/DELETE. `ControllerArchitectureTests.OnlyThreeControllersExist` enforces the count. See `api-spec.md` for the full role/authorization matrix and `01-business/roles-permissions.md` for the role model.
+`1-Service/Cinema.Service.WebApiHost/Controllers/`: `ApiControllerBase.cs` (shared `HandleException`), `CinemaController.cs` (catalog/booking/staff — ~90 `[Authorize(Roles = _adminRole)]` actions (as of 2026-11-29) plus role-composite-gated `#region`s for Gate/BoxOffice/StaffReport/Operations; there is no Workforce region), `IdentityController.cs` (auth/profile), `PaymentController.cs` (gateway initiate/callback/admin). All routes: `api/[controller]/[action]`; list/search endpoints are POST with a `PagingSearchDTO` body, while by-id reads use GET and updates/deletes use PUT/DELETE. `ControllerArchitectureTests.OnlyThreeControllersExist` enforces the count. See `api-spec.md` for the full role/authorization matrix and `01-business/roles-permissions.md` for the role model.
 
 NSwag emits one OpenAPI document per `[ApiExplorerSettings(GroupName=...)]` group (`cinema`, `identity`, `payment` — configured in `Program.cs`), surfaced at `/swagger/{group}/swagger.json`; Swagger UI (`/swagger`) and ReDoc (`/redoc`) are dev-only (`app.Environment.IsDevelopment()`).
 
@@ -96,7 +97,7 @@ NSwag emits one OpenAPI document per `[ApiExplorerSettings(GroupName=...)]` grou
 
 See `01-business/roles-permissions.md` for the full login/role/claims model. Wiring in `Program.cs`:
 - `AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(...)` validates issuer/audience/lifetime/signing key from `JWT:Issuer`/`JWT:Audience`/`JWT:Secret`, `ClockSkew = TimeSpan.Zero`.
-- The host **refuses to start** if `JWT:Secret` is blank or equals the old committed insecure default (`Program.cs` lines 82-91).
+- The host **refuses to start** if `JWT:Secret` is blank or equals the old committed insecure default (`Program.cs` lines 112-120).
 - `OnMessageReceived`: for any request path starting with `/hubs`, a non-empty `access_token` query-string value is used as the bearer token (SignalR can't set custom headers on the handshake).
 - `ClaimsPrincipalExtensions.GetUserId()`/`GetUserRole()`/`GetTheaterId()` (`Helpers/ClaimsPrincipalExtensions.cs`) are the canonical claim readers used by controllers/managers.
 - Tokens are generated by `JwtTokenService` (`Cinema.Data/Services/JwtTokenService.cs`, registered via `AddData()` as `ITokenService`) — layer 3 implementing a layer-2-declared interface, the one cross-layer exception noted in §1.

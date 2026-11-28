@@ -18,7 +18,7 @@ Author to confirm: why the staff controllers were merged (for example one genera
 
 ## Consequences
 
-- `CinemaController.cs` is a very large file (86 admin-gated actions plus the role-composite regions, `docs/03-technical/architecture.md` section 5), with many `#region` blocks (the first is at `CinemaController.cs:369`).
+- `CinemaController.cs` is a very large file (~90 admin-gated actions plus the role-composite regions, `docs/03-technical/architecture.md` section 5), with many `#region` blocks (the first is at `CinemaController.cs:369`).
 - A single authorization-coverage test can check every action (`ControllerAuthorizationCoverageTests`).
 - The generated clients stay at three (`cinema`, `identity`, `payment`) and the frontend apps share the merged `CinemaServiceAgent` (`4bc7c3f`).
 - Author to confirm: whether a very large controller is an accepted cost or a known debt.

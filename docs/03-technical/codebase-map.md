@@ -1,7 +1,7 @@
 # Codebase Map
 
 > Purpose: Folder/module → responsibility, plus a "where to change X" guide.
-> Sources: cinemabe/Cinema/**, cinemafe/projects/**, CLAUDE.md
+> Sources: cinemabe/Cinema/**, cinemafe/projects/**, AGENTS.md
 > Last reviewed: 2026-11-14
 
 ## Backend (`cinemabe/`)
@@ -10,6 +10,7 @@
 |---|---|
 | `Cinema/1-Service/Cinema.Service.WebApiHost/` | ASP.NET Core 9 Web API host: 3 controllers (Cinema, Identity, Payment), SignalR hubs (`BookingHub` at `/hubs/booking`, `StaffHub` at `/hubs/staff`), `ExceptionMiddleware`, background services (`PendingBookingReaper`, `ShowtimeReminderService`), health checks (`/health`, `/health/ready`), static routes (`/uploads`, `/seed-assets`), composition root (`Program.cs`). |
 | `Cinema/1-Service/Cinema.Service.Clients/` | NSwag-generated HTTP clients (C# `*Client.cs` + Angular `*-http.service.ts`). **Never hand-edited** — regenerate via `Generator/GenerateNswag.ps1`. |
+| `Cinema/1-Service/Cinema.Service.WebApiHost.IntegrationTests/` | In-process `WebApplicationFactory<Program>` tests against a real SQL Server (`RequiresSqlServerFact`; in `Cinema.sln` and CI). |
 | `Cinema/1-Service/Cinema.Service.WebApiHost.Tests/` | xUnit tests against the host, including `ControllerArchitectureTests` (enforces the exactly-3-controllers rule). |
 | `Cinema/2-Business/Cinema.Business.Contracts/` | One interface per manager/service/gateway (`I*Manager`, `ITokenService`, payment/notification gateway interfaces). |
 | `Cinema/2-Business/Cinema.Business.DTO/` | Request/response DTOs grouped by domain folder (`Auth/`, `Booking/`, `Movies/`, `Theaters/`, `Invoices/`, `Requests/`). |
@@ -30,7 +31,7 @@
 - Payment callback handling → `PaymentController.PaymentCallback` + `Cinema.Business/Payments/*Gateway.cs` — see `integrations.md` §1 and `01-business/business-rules.md` for the callback-authoritative rule.
 - Auth/roles → `Cinema.Business/Managers/Auth/`, `RoleNames.cs`, `IdentityController` — see `01-business/roles-permissions.md`.
 - A new endpoint → `CinemaController` only, in the matching `#region`. Never a new controller.
-- Schema change → entity in `Cinema.Data.Entities`, Fluent config in `Cinema.Data/Configurations/`, then hand-edit `cinemabe/sql/create_db.sql` + `upgrade_db.sql` (no EF migrations — see [[../../feedback-schema-via-sql-scripts-not-ef-migrations.md|project convention]]).
+- Schema change → entity in `Cinema.Data.Entities`, Fluent config in `Cinema.Data/Configurations/`, then hand-edit `cinemabe/sql/create_db.sql` + `upgrade_db.sql` (no EF migrations — see [ADR-0003](../04-decisions/ADR-0003-hand-written-sql-instead-of-ef-migrations.md)).
 
 ## Frontend (`cinemafe/`)
 

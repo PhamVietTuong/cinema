@@ -11,7 +11,7 @@
 | Language/runtime | C# / .NET | 9 |
 | Web | ASP.NET Core | 9 |
 | Auth | Microsoft.AspNetCore.Authentication.JwtBearer | 9.0.0 |
-| Real-time | SignalR client package | 1.2.0 |
+| Real-time | `Microsoft.AspNetCore.SignalR` (server-side host package in `Cinema.Service.WebApiHost.csproj`; SignalR is built into ASP.NET Core 9, so this is an old compat package) | 1.2.0 |
 | API docs | NSwag.AspNetCore | 14.2.0 |
 | ORM | Microsoft.EntityFrameworkCore.SqlServer / .Design | 9.0.0 |
 | JWT | System.IdentityModel.Tokens.Jwt | 8.3.3 |
@@ -27,6 +27,8 @@
 
 No central `Directory.Packages.props` — versions are pinned per-`.csproj`.
 
+_Key libraries only. Also referenced: Newtonsoft.Json 13.0.3, Microsoft.Extensions.Http 9.0.0, Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore 9.0.0, Serilog.Settings.Configuration 9.0.0, and for tests Microsoft.AspNetCore.Mvc.Testing 9.0.0, Microsoft.NET.Test.Sdk 17.12.0, xunit.runner.visualstudio 2.8.2._
+
 ## Frontend (`cinemafe/`)
 
 | Area | Library | Version |
@@ -37,14 +39,16 @@ No central `Directory.Packages.props` — versions are pinned per-`.csproj`.
 | i18n | `@ngx-translate/core` + `@ngx-translate/http-loader` | 18.0.0 |
 | Tables | `@swimlane/ngx-datatable` | 25.1.0 |
 | Icons | `@ngneat/svg-icon` | 8.0.0 |
-| QR codes | `qrcode` + `@types/qrcode` | 1.5.4 |
+| QR codes | `qrcode` | ^1.5.4 |
+| QR code typings | `@types/qrcode` | ^1.5.6 |
 | Reactive | rxjs | ~7.8.0 |
 | Language | TypeScript | ~5.9.2 |
 | Testing | Vitest (`@angular/build:unit-test`) | 4.x |
 | Lint/format | ESLint 9 + angular-eslint 21, Prettier | 3.8 |
 | Library build | ng-packagr | 21 |
 
-Requires Node >= 22.12.0 (see `.nvmrc`; the system default Node is v14 — use `nvm use`).
+Requires Node >= 22.12.0 (see `.nvmrc`; the system default Node is v14 — put the `%APPDATA%
+vm22.12.0` folder on `PATH`; never run `nvm use` on Windows, it raises a UAC dialog).
 
 ## Cross-cutting
 

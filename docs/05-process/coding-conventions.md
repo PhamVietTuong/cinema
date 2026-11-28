@@ -4,27 +4,27 @@
 > Sources: E:\cinema\CLAUDE.md, E:\cinema\cinemabe\.editorconfig, E:\cinema\cinemafe\eslint.config.js, E:\cinema\cinemafe\.editorconfig, E:\cinema\cinemafe\.prettierrc
 > Last reviewed: 2026-11-12
 
-Most conventions in this repo are documented in `CLAUDE.md` at the repo root. This page cites
+Most conventions in this repo are documented in `AGENTS.md` at the repo root (imported by `CLAUDE.md`). This page cites
 those directly and adds what's enforced by config files that `CLAUDE.md` doesn't spell out.
 
 ## Already documented in CLAUDE.md (cited, not re-derived)
 
-| Rule | Where in CLAUDE.md |
+| Rule | Where in AGENTS.md |
 |---|---|
-| Always use block statements `{ }`, never one-liner control-flow bodies | "Working conventions to preserve" |
-| Never add a 4th controller — stay at `CinemaController`, `IdentityController`, `PaymentController` | "Working conventions to preserve" |
-| No partial controller files — one `CinemaController.cs` with `#region` blocks | "Working conventions to preserve" |
-| Layer dependency direction — higher-numbered layers (`1-Service` > `2-Business` > `3-Data` > `4-Foundation`) may only depend one tier deeper | "Architecture — 4 numbered layers" |
-| Controllers use try/catch + `LogProvider.Current` pattern (`{GetType().Name}.{Method} being awakened…` on entry, `Fatal` on exception, `StatusCode(500, e.Message)`) | "Working conventions to preserve" |
-| All list/search endpoints take `PagingSearchDTO` in the body via POST, return `DefaultSearchResults<T>`; filters via `search.Filters.GetGuid("key")` etc. | "Working conventions to preserve" |
-| Query efficiency: `AsNoTracking()` on reads, avoid N+1, project columns, filter/count/page at the DB | "Query Efficiency" section (5.1/5.2) |
-| Don't hand-edit NSwag-generated files (`Cinema.Service.Clients/**`, `*-http.service.ts`) | "Working conventions to preserve" |
-| Datetime mapping — new entities pick up SQL `datetime` (not `datetime2`) automatically | "Working conventions to preserve" / "EF Core quirk" |
+| Always use block statements `{ }`, never one-liner control-flow bodies | "Policy" / "Conventions that differ from defaults" |
+| Never add a 4th controller — stay at `CinemaController`, `IdentityController`, `PaymentController` | "Policy" / "Conventions that differ from defaults" |
+| No partial controller files — one `CinemaController.cs` with `#region` blocks | "Policy" / "Conventions that differ from defaults" |
+| Layer dependency direction — higher-numbered layers (`1-Service` > `2-Business` > `3-Data` > `4-Foundation`) must never reference a higher-numbered layer from a lower one (sole exception: `Cinema.Data` -> `Cinema.Business.Contracts` for `ITokenService`, ADR-0001) | "Policy" |
+| Controllers use try/catch + `LogProvider.Current` pattern (`{GetType().Name}.{Method} being awakened…` on entry, `Fatal` on exception, `StatusCode(500, e.Message)`) | "Policy" / "Conventions that differ from defaults" |
+| All list/search endpoints take `PagingSearchDTO` in the body via POST, return `DefaultSearchResults<T>`; filters via `search.Filters.GetGuid("key")` etc. | "Policy" / "Conventions that differ from defaults" |
+| Query efficiency: `AsNoTracking()` on reads, avoid N+1, project columns, filter/count/page at the DB | "Conventions that differ from defaults" |
+| Don't hand-edit NSwag-generated files (`Cinema.Service.Clients/**`, `*-http.service.ts`) | "Policy" / "Conventions that differ from defaults" |
+| Datetime mapping — new entities pick up SQL `datetime` (not `datetime2`) automatically | "Conventions that differ from defaults" |
 | Schema changes go through hand-edited `create_db.sql`/`upgrade_db.sql`, never `dotnet ef migrations add` (user memory rule, consistent with current repo practice) | — (memory rule; also noted in root `CLAUDE.md`) |
 | Use `nameof(X)` instead of a hand-typed string literal when the string is meant to match a type/class/method name (user memory rule) | — |
 | NSwag enum→label lookups belong in `CinemaLib`'s `cinema.model.ts`, never inline in a feature component (user memory rule) | — |
 | Shared UI used by 2+ Angular apps belongs in one configurable `CinemaLib` component, never copy-pasted (user memory rule) | — |
-| Single shared `AuditLog` table for all logging needs, never a new table per feature | "Working conventions to preserve" |
+| Single shared `AuditLog` table for all logging needs, never a new table per feature | "Policy" / "Conventions that differ from defaults" |
 
 ## From `.editorconfig` (`cinemabe/.editorconfig`) — not mentioned in CLAUDE.md
 
