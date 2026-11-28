@@ -498,3 +498,242 @@
   .hw { display: inline-block; animation: hw-rise 0.6s var(--cx-ease, ease) backwards; animation-delay: calc(0.25s + var(--i, 0) * 0.09s); }
 }
 @keyframes hw-rise { from { opacity: 0; transform: translateY(0.45em); } to { opacity: 1; transform: none; } }
+
+// ── Top 10 trending (outlined rank numeral beside the poster) ─────────────────
+.top-card {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: auto 150px;
+  grid-template-rows: auto auto;
+  align-items: end;
+  text-decoration: none;
+  color: var(--ml-ink);
+  width: 230px;
+}
+
+.top-rank {
+  grid-row: 1;
+  font-family: var(--ml-font-display);
+  font-size: 9.5rem;
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 3px var(--ml-action-strong);
+  margin-right: -26px;
+  padding-bottom: 6px;
+  z-index: 0;
+  user-select: none;
+}
+
+.top-poster {
+  grid-row: 1;
+  grid-column: 2;
+  position: relative;
+  z-index: 1;
+  display: block;
+  aspect-ratio: 2/3;
+  border-radius: var(--ml-r-md);
+  overflow: hidden;
+  border: 1px solid var(--ml-rule);
+  transition: border-color 0.18s ease;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+.top-card:hover .top-poster { border-color: var(--ml-action-strong); }
+.top-card:focus-visible { outline: 2px solid var(--ml-action); outline-offset: 4px; }
+
+.top-title {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ── Food & combos ─────────────────────────────────────────────────────────────
+.combo-card {
+  flex-shrink: 0;
+  width: 260px;
+  background: var(--ml-panel);
+  border: 1px solid var(--ml-rule);
+  border-radius: var(--ml-r-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.combo-img {
+  aspect-ratio: 4/3;
+  background: var(--ml-panel-3);
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+.combo-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+
+.combo-name {
+  margin: 0;
+  font-family: var(--ml-font-head);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ml-ink);
+}
+
+.combo-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--ml-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.combo-price {
+  margin-top: auto;
+  padding-top: 6px;
+  font-family: var(--ml-font-data);
+  font-weight: 700;
+  color: var(--ml-action-strong);
+}
+
+.combo-skeleton { width: 260px; }
+.cu-sk--combo { aspect-ratio: 4/3; border-radius: var(--ml-r-md); }
+
+// ── Our theaters ──────────────────────────────────────────────────────────────
+.theater-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.theater-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  text-decoration: none;
+  background: var(--ml-panel);
+  border: 1px solid var(--ml-rule);
+  border-radius: var(--ml-r-md);
+  transition: border-color 0.18s;
+
+  &:hover { border-color: var(--ml-action-strong); }
+  &:focus-visible { outline: 2px solid var(--ml-action); outline-offset: 2px; }
+}
+
+.theater-icon { color: var(--ml-action-strong); }
+
+.theater-name {
+  margin: 0;
+  font-family: var(--ml-font-head);
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ml-ink);
+}
+
+.theater-addr { margin: 0; font-size: 0.88rem; line-height: 1.5; color: var(--ml-muted); }
+
+.theater-link {
+  margin-top: auto;
+  padding-top: 6px;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ml-action-strong);
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+// ── Why us / stats strip ──────────────────────────────────────────────────────
+.why {
+  background: var(--ml-paper-2);
+  border-top: 1px dashed var(--ml-rule);
+  border-bottom: 1px dashed var(--ml-rule);
+  padding: 62px 40px;
+}
+
+.why-inner { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
+
+.why-title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--ml-font-head);
+  font-size: 1.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ml-ink);
+}
+
+.why-stats { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+
+.why-stat {
+  flex: 1 1 180px;
+  max-width: 280px;
+  text-align: center;
+  padding: 18px 12px;
+  border: 1px solid var(--ml-rule);
+  border-radius: var(--ml-r-md);
+  background: var(--ml-panel);
+}
+
+.why-num {
+  display: block;
+  font-family: var(--ml-font-display);
+  font-size: 3.2rem;
+  line-height: 1;
+  color: var(--ml-action-strong);
+}
+
+.why-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ml-muted);
+}
+
+.why-props {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+
+  li { display: flex; gap: 14px; align-items: flex-start; }
+  mat-icon { flex-shrink: 0; color: var(--ml-action-strong); }
+  strong { display: block; color: var(--ml-ink); margin-bottom: 4px; }
+  span { color: var(--ml-ink-2); font-size: 0.9rem; line-height: 1.5; }
+}
+
+@include m.tablet {
+  .why { padding: 48px 24px; }
+  .why-props { grid-template-columns: 1fr; }
+}
+
+@include m.tablet-small {
+  .why { padding: 40px 20px; }
+  .top-card { width: 200px; grid-template-columns: auto 130px; }
+  .top-rank { font-size: 7.5rem; margin-right: -20px; }
+  .theater-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+}
+
+@include m.phone {
+  .why { padding: 32px 16px; }
+  .why-title { font-size: 1.35rem; }
+  .why-stat { flex-basis: 100%; max-width: none; }
+  .combo-card, .combo-skeleton { width: min(260px, 72vw); }
+  .theater-grid { grid-template-columns: minmax(0, 1fr); }
+}

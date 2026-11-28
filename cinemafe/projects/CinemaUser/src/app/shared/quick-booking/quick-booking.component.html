@@ -1,0 +1,54 @@
+<form class="qb" (submit)="$event.preventDefault(); book()" [attr.aria-label]="'home.quick.title' | translate">
+  <div class="qb-title">
+    <mat-icon>confirmation_number</mat-icon>
+    <span>{{ 'home.quick.title' | translate }}</span>
+  </div>
+
+  <label class="qb-field">
+    <span class="qb-label">1 · {{ 'home.quick.movie' | translate }}</span>
+    <select class="qb-select" (change)="onMovie($any($event.target).value)">
+      <option value="" [selected]="!movieSlug">{{ 'home.quick.pickMovie' | translate }}</option>
+      @for (m of movies; track m.id) {
+        <option [value]="m.slug" [selected]="m.slug === movieSlug">{{ m.title }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="qb-field">
+    <span class="qb-label">2 · {{ 'home.quick.theater' | translate }}</span>
+    <select class="qb-select" [disabled]="!movieSlug || loadingShowTimes || !theaters.length" (change)="onTheater($any($event.target).value)">
+      <option value="" [selected]="!theaterId">{{ (loadingShowTimes ? 'home.quick.loading' : (movieSlug && !theaters.length ? 'home.quick.noShowtimes' : 'home.quick.pickTheater')) | translate }}</option>
+      @for (t of theaters; track t.id) {
+        <option [value]="t.id" [selected]="t.id === theaterId">{{ t.name }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="qb-field">
+    <span class="qb-label">3 · {{ 'home.quick.date' | translate }}</span>
+    <select class="qb-select" [disabled]="!theaterId" (change)="onDate($any($event.target).value)">
+      <option value="" [selected]="!dateKey">{{ 'home.quick.pickDate' | translate }}</option>
+      @for (d of dates; track d.key) {
+        <option [value]="d.key" [selected]="d.key === dateKey">{{ d.date | date:'EEE, dd/MM' }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="qb-field">
+    <span class="qb-label">4 · {{ 'home.quick.time' | translate }}</span>
+    <select class="qb-select" [disabled]="!dateKey" (change)="onTime($any($event.target).value)">
+      <option value="" [selected]="!showTimeId">{{ 'home.quick.pickTime' | translate }}</option>
+      @for (t of times; track t.id) {
+        <option [value]="t.id" [selected]="t.id === showTimeId">{{ t.startTime | date:'HH:mm' }}{{ t.roomTypeName ? ' · ' + t.roomTypeName : '' }}</option>
+      }
+    </select>
+  </label>
+
+  <button class="qb-submit" type="submit" [disabled]="!canBook">
+    {{ 'home.quick.book' | translate }}
+  </button>
+
+  @if (loadFailed) {
+    <p class="qb-error" role="alert">{{ 'home.quick.error' | translate }}</p>
+  }
+</form>
