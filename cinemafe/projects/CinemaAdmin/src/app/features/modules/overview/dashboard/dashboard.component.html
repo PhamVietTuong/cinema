@@ -65,7 +65,7 @@
         </div>
       </div>
       <ng-template #noRevenue>
-        <div class="ad-empty"><mat-icon>bar_chart</mat-icon><p>{{ 'dashboard.noRevenueData' | translate }}</p></div>
+        <cl-empty-state icon="bar_chart" messageKey="dashboard.noRevenueData"></cl-empty-state>
       </ng-template>
     </div>
 
@@ -87,7 +87,7 @@
         </li>
       </ul>
       <ng-template #noTop>
-        <div class="ad-empty"><mat-icon>movie</mat-icon><p>{{ 'dashboard.noMovieData' | translate }}</p></div>
+        <cl-empty-state icon="movie" messageKey="dashboard.noMovieData"></cl-empty-state>
       </ng-template>
     </div>
   </div>
@@ -160,7 +160,7 @@
           <div class="ad-mobile-card-row"><span>{{ 'common.date' | translate }}</span><span>{{ row.creationTime | date:'short' }}</span></div>
         </mat-card-content>
       </mat-card>
-      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>{{ 'dashboard.noInvoices' | translate }}</p></div>
+      <cl-empty-state *ngIf="!pageRows.length" icon="receipt_long" messageKey="dashboard.noInvoices"></cl-empty-state>
 
       <mat-paginator
         *ngIf="total > 0"

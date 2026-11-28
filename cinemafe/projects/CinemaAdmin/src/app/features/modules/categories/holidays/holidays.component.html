@@ -92,7 +92,7 @@
           </div>
         </mat-card-content>
       </mat-card>
-      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>celebration</mat-icon><p>{{ 'holidays.empty' | translate }}</p></div>
+      <cl-empty-state *ngIf="!pageRows.length" icon="celebration" messageKey="holidays.empty"></cl-empty-state>
 
       <mat-paginator
         *ngIf="total > 0"

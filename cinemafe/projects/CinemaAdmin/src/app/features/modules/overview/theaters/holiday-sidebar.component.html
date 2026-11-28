@@ -35,5 +35,5 @@
     </div>
   }
 
-  <div *ngIf="!holidays.length" class="ad-empty"><mat-icon>celebration</mat-icon><p>{{ 'theaters.ticketPrices.sidebar.empty' | translate }}</p></div>
+  <cl-empty-state *ngIf="!holidays.length" icon="celebration" messageKey="theaters.ticketPrices.sidebar.empty"></cl-empty-state>
 </div>

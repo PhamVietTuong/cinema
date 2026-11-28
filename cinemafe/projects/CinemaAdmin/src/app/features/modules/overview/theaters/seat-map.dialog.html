@@ -4,7 +4,7 @@
 </div>
 
 <mat-dialog-content>
-  <div *ngIf="seatsLoading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'theaters.rooms.loadingSeatMap' | translate }}</p></div>
+  <cl-empty-state *ngIf="seatsLoading" icon="hourglass_empty" messageKey="theaters.rooms.loadingSeatMap"></cl-empty-state>
 
   <ng-container *ngIf="!seatsLoading">
     <!-- Grid size: add / remove rows and columns (existing seats are preserved) -->
@@ -63,7 +63,7 @@
       }
     </div>
     <ng-template #noSeats>
-      <div class="ad-empty"><mat-icon>event_seat</mat-icon><p>{{ 'theaters.rooms.noSeats' | translate }}</p></div>
+      <cl-empty-state icon="event_seat" messageKey="theaters.rooms.noSeats"></cl-empty-state>
     </ng-template>
 
     <div class="legend" *ngIf="seatTypes.length">

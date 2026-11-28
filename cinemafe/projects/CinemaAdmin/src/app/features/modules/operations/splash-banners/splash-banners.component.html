@@ -110,7 +110,7 @@
           </div>
         </mat-card-content>
       </mat-card>
-      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>wallpaper</mat-icon><p>{{ 'splashBanners.empty' | translate }}</p></div>
+      <cl-empty-state *ngIf="!pageRows.length" icon="wallpaper" messageKey="splashBanners.empty"></cl-empty-state>
 
       <mat-paginator
         *ngIf="total > 0"

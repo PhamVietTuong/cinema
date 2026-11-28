@@ -109,7 +109,7 @@
         </div>
       </mat-card-content>
     </mat-card>
-    <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>lunch_dining</mat-icon><p>{{ 'comboTab.empty' | translate }}</p></div>
+    <cl-empty-state *ngIf="!pageRows.length" icon="lunch_dining" messageKey="comboTab.empty"></cl-empty-state>
 
     <mat-paginator
       *ngIf="total > 0"

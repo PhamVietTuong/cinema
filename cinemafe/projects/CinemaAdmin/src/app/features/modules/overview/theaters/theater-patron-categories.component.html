@@ -33,7 +33,7 @@
         </tr>
       </tbody>
     </table>
-    <div *ngIf="!rows.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
+    <cl-empty-state *ngIf="!rows.length && !loading" icon="groups" messageKey="theaters.patronCategories.empty"></cl-empty-state>
   </div>
 
   <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
@@ -51,6 +51,6 @@
         </div>
       </mat-card-content>
     </mat-card>
-    <div *ngIf="!rows.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
+    <cl-empty-state *ngIf="!rows.length && !loading" icon="groups" messageKey="theaters.patronCategories.empty"></cl-empty-state>
   </div>
 </mat-card>

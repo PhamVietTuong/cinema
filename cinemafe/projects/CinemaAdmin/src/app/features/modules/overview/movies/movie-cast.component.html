@@ -12,7 +12,7 @@
   </div>
 
   @if (loading) {
-    <div class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'movies.cast.loading' | translate }}</p></div>
+    <cl-empty-state icon="hourglass_empty" messageKey="movies.cast.loading"></cl-empty-state>
   } @else if (loadFailed) {
     <div class="ad-empty cast-error" role="alert"><mat-icon>error_outline</mat-icon><p>{{ 'movies.cast.loadFailed' | translate }}</p></div>
   } @else {

@@ -10,7 +10,7 @@
     <span>{{ 'theaters.roomTypePrices.noneIncludedWarning' | translate }}</span>
   </div>
 
-  <div *ngIf="loading" class="ad-empty"><mat-icon>hourglass_empty</mat-icon><p>{{ 'common.loading' | translate }}</p></div>
+  <cl-empty-state *ngIf="loading" icon="hourglass_empty" messageKey="common.loading"></cl-empty-state>
 
   <ng-container *ngIf="!loading">
     <div class="rtp-add-bar">
@@ -24,7 +24,7 @@
       </mat-menu>
     </div>
 
-    <div *ngIf="!includedRows.length" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.roomTypePrices.empty' | translate }}</p></div>
+    <cl-empty-state *ngIf="!includedRows.length" icon="groups" messageKey="theaters.roomTypePrices.empty"></cl-empty-state>
 
     <div class="rtp-item" *ngFor="let row of includedRows">
       <div class="rtp-item-name">

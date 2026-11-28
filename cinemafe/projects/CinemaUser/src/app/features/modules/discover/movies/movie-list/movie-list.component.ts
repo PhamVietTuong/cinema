@@ -11,7 +11,6 @@ import {
   LookupCacheService, toDateKey,
 } from 'CinemaLib';
 import { MovieCardComponent } from '../../../../../shared/movie-card/movie-card.component';
-import { EmptyStateComponent } from '../../../../../shared/empty-state/empty-state.component';
 import { SiteFooterComponent } from '../../../../../shared/site-footer/site-footer.component';
 import { movieDetailCommands } from '../../../../../shared/movie-route';
 
@@ -24,7 +23,7 @@ const SHOWTIME_PAGE_SIZE = 20;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-list',
   standalone: true,
-  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterPillsComponent, EmptyStateComponent],
+  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterPillsComponent],
   templateUrl: './movie-list.component.html',
   styleUrl: './movie-list.component.scss',
 })

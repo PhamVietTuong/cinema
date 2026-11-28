@@ -61,9 +61,9 @@
   </div>
 
   @if (!isShowtimes && displayed.length === 0 && !isLoading) {
-    <app-empty-state icon="movie" titleKey="ux.empty.moviesTitle"
+    <cl-empty-state illustrated icon="movie" messageKey="ux.empty.moviesTitle"
                      [hintKey]="hasActiveFilters ? 'ux.empty.moviesHint' : 'movies.list.empty'"
-                     [ctaKey]="hasActiveFilters ? 'ux.empty.moviesClear' : ''" (cta)="clearFilters()"></app-empty-state>
+                     [ctaKey]="hasActiveFilters ? 'ux.empty.moviesClear' : ''" (cta)="clearFilters()"></cl-empty-state>
   }
 
   <!-- Cross-movie showtime search -->
@@ -83,8 +83,8 @@
   </div>
 
   @if (isShowtimes && showtimes.length === 0 && !showtimesLoading) {
-    <app-empty-state icon="schedule" titleKey="ux.empty.showtimesTitle"
-                     [hintText]="showtimesError" [hintKey]="showtimesError ? '' : 'ux.empty.showtimesHint'"></app-empty-state>
+    <cl-empty-state illustrated icon="schedule" messageKey="ux.empty.showtimesTitle"
+                     [hintText]="showtimesError" [hintKey]="showtimesError ? '' : 'ux.empty.showtimesHint'"></cl-empty-state>
   }
 
   <div class="pager-loadmore" *ngIf="canLoadMore">
