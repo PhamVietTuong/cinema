@@ -1,3 +1,4 @@
+export * from './currency';
 export * from './form-validators';
 export * from './breakpoints';
 export * from './date-range';
