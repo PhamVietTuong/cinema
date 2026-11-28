@@ -1,0 +1,81 @@
+@use 'lib/theme/mixins' as m;
+
+// The topbar and mobile drawer are the fixed dark "chrome", so this uses the --ml-chrome-* tokens
+// for the field itself and the regular panel tokens for the dropdown (readable in light and dark).
+
+:host { display: block; }
+
+.sb-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; flex: none; padding: 0; cursor: pointer;
+  background: var(--ml-chrome-hover); border: 1px solid var(--ml-chrome-rule);
+  border-radius: var(--ml-r-full); color: var(--ml-chrome-ink-2);
+  transition: color 0.18s ease, background 0.18s ease;
+  mat-icon { font-size: 20px; width: 20px; height: 20px; line-height: 20px; }
+  &:hover { color: var(--ml-chrome-ink); background: var(--ml-chrome-rule); }
+  &:focus-visible { outline: 2px solid var(--ml-action); outline-offset: 2px; }
+}
+
+.sb-field {
+  display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 6px 0 12px;
+  background: var(--ml-chrome-hover); border: 1px solid var(--ml-chrome-rule);
+  border-radius: var(--ml-r-full); color: var(--ml-chrome-ink);
+  &:focus-within { border-color: var(--ml-action); box-shadow: 0 0 0 3px var(--ml-action-ring); }
+}
+.sb-lead { flex: none; color: var(--ml-chrome-ink-2); font-size: 20px; width: 20px; height: 20px; line-height: 20px; }
+.sb-input {
+  flex: 1; min-width: 0; height: 40px; background: none; border: none; outline: none;
+  color: var(--ml-chrome-ink); font: inherit; font-size: 0.95rem;
+  &::placeholder { color: var(--ml-chrome-ink-2); opacity: 0.8; }
+  &::-webkit-search-cancel-button { display: none; }
+}
+.sb-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 36px; height: 36px; padding: 0; border: none; border-radius: 50%; cursor: pointer;
+  background: none; color: var(--ml-chrome-ink-2);
+  mat-icon { font-size: 18px; width: 18px; height: 18px; line-height: 18px; }
+  &:hover { color: var(--ml-chrome-ink); background: var(--ml-chrome-rule); }
+  &:focus-visible { outline: 2px solid var(--ml-action); outline-offset: 0; }
+}
+
+// ── Dropdown ────────────────────────────────────────────────────────────────
+.sb-panel {
+  background: var(--ml-panel); color: var(--ml-ink);
+  border: 1px solid var(--ml-rule); border-radius: var(--ml-r-md, 10px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+.sb-list { list-style: none; margin: 0; padding: 4px; }
+.sb-opt {
+  display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 10px;
+  border-radius: var(--ml-r-sm); cursor: pointer;
+  &.is-active { background: var(--ml-action-soft); }
+}
+.sb-opt--all { min-height: 44px; color: var(--ml-action-strong); font-weight: 600; mat-icon { font-size: 20px; width: 20px; height: 20px; } }
+.sb-thumb { width: 36px; height: 54px; flex: none; object-fit: cover; border-radius: 4px; background: var(--ml-panel-3); }
+.sb-text { display: flex; flex-direction: column; min-width: 0; }
+.sb-title { font-size: 0.92rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-meta { font-size: 0.78rem; color: var(--ml-muted); }
+.sb-state { display: flex; align-items: center; justify-content: center; padding: 18px 12px; color: var(--ml-muted); font-size: 0.9rem; text-align: center; }
+
+// ── Bar variant: overlay across the whole topbar ────────────────────────────
+.sb--bar {
+  &.is-open { position: static; }
+  .sb-field, .sb-panel { position: absolute; z-index: 5; }
+  .sb-field { left: 32px; right: 32px; top: 12px; min-height: 44px; background: var(--ml-chrome); }
+  .sb-panel { left: 32px; right: 32px; top: 64px; max-width: 640px; margin: 0 auto; }
+  // Centre the field too, with the same cap, so the overlay reads as a search bar not a banner.
+  .sb-field { max-width: 640px; margin: 0 auto; }
+}
+
+// ── Drawer variant: inline block in the mobile menu ─────────────────────────
+.sb--drawer {
+  padding: 4px 0 8px;
+  .sb-panel { margin-top: 8px; box-shadow: none; }
+}
+
+@include m.tablet-small {
+  .sb-opt { min-height: 60px; }
+  .sb-icon-btn { width: 44px; height: 44px; }
+  .sb--bar .sb-field, .sb--bar .sb-panel { left: 16px; right: 16px; }
+}

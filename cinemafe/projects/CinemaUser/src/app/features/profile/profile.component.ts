@@ -1,6 +1,7 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 import { SharedModule, QrCodeComponent, IdentityServiceAgent, PaymentServiceAgent, CinemaServiceAgent, ToastService, ProfileFormBase, joinSeatLabels } from 'CinemaLib';
 
 /** Vietnamese phone number: leading 0 or +84 followed by 9–10 digits. */
@@ -11,7 +12,7 @@ const HISTORY_PAGE_SIZE = 10;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-profile',
   standalone: true,
-  imports: [SharedModule, QrCodeComponent],
+  imports: [SharedModule, QrCodeComponent, EmptyStateComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })

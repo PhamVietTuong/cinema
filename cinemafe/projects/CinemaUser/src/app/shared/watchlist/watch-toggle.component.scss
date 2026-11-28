@@ -1,0 +1,27 @@
+@use 'lib/theme/mixins' as m;
+
+:host { display: inline-flex; }
+
+.wt-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; padding: 0; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--ml-rule);
+  background: color-mix(in srgb, var(--ml-paper) 82%, transparent);
+  color: var(--ml-ink-2);
+  backdrop-filter: blur(6px);
+  transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+
+  mat-icon { font-size: 22px; width: 22px; height: 22px; line-height: 22px; }
+  &:hover { color: var(--ml-action-strong); transform: scale(1.06); }
+  &:focus-visible { outline: 2px solid var(--ml-action); outline-offset: 2px; }
+  &.is-saved { color: var(--ml-action-strong); background: var(--ml-action-soft); border-color: var(--ml-action); }
+}
+.wt-btn--hero { width: 48px; height: 48px; }
+
+@include m.tablet-small {
+  .wt-btn { width: 44px; height: 44px; }
+  .wt-btn--hero { width: 48px; height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wt-btn { transition: none; &:hover { transform: none; } }
+}

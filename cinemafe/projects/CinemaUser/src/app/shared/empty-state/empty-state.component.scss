@@ -1,0 +1,26 @@
+@use 'lib/theme/mixins' as m;
+
+:host { display: block; }
+
+.es { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 48px 20px; gap: 6px; }
+.es-art { position: relative; width: 120px; height: 120px; margin-bottom: 8px; }
+.es-svg { width: 100%; height: 100%; }
+.es-ring { fill: none; stroke: var(--ml-rule); stroke-width: 2; stroke-dasharray: 3 7; stroke-linecap: round; }
+.es-disc { fill: var(--ml-action-soft); }
+.es-spark { stroke: var(--ml-action); stroke-width: 2.5; stroke-linecap: round; opacity: 0.7; }
+.es-icon {
+  position: absolute; inset: 0; margin: auto;
+  font-size: 40px; width: 40px; height: 40px; color: var(--ml-action-strong);
+}
+.es-title { margin: 0; font-family: var(--ml-font-head); font-size: 1.25rem; font-weight: 600; color: var(--ml-ink); text-transform: uppercase; }
+.es-hint { margin: 0; max-width: 380px; color: var(--ml-muted); font-size: 0.92rem; line-height: 1.5; }
+.es-cta { margin-top: 14px; min-height: 40px; }
+
+@include m.tablet-small {
+  .es { padding: 36px 16px; }
+  .es-cta { min-height: 44px; }
+}
+@include m.phone {
+  .es-art { width: 96px; height: 96px; }
+  .es-icon { font-size: 32px; width: 32px; height: 32px; }
+}

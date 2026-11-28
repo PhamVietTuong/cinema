@@ -2,6 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { SharedModule, DialogService } from 'CinemaLib';
 import { movieDetailCommands } from '../movie-route';
 import { RevealOnScrollDirective } from '../reveal-on-scroll.directive';
+import { WatchToggleComponent } from '../watchlist/watch-toggle.component';
 
 /**
  * One movie poster card, shared by Home's carousels/grid and the Movies list —
@@ -10,7 +11,7 @@ import { RevealOnScrollDirective } from '../reveal-on-scroll.directive';
 @Component({
   selector: 'app-movie-card',
   standalone: true,
-  imports: [SharedModule, RevealOnScrollDirective],
+  imports: [SharedModule, RevealOnScrollDirective, WatchToggleComponent],
   templateUrl: './movie-card.component.html',
   styleUrl: './movie-card.component.scss',
 })

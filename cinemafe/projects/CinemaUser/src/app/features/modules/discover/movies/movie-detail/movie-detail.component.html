@@ -42,6 +42,7 @@
         <div class="hero-actions">
           <button mat-raised-button type="button" (click)="scrollToShowtimes()"><mat-icon>confirmation_number</mat-icon> {{ 'movies.detail.bookNow' | translate }}</button>
           <button mat-stroked-button type="button" *ngIf="movie.trailerUrl" (click)="openTrailer(movie)"><mat-icon>play_arrow</mat-icon> {{ 'movies.detail.watchTrailer' | translate }}</button>
+          <app-watch-toggle class="hero-watch" variant="hero" [movieId]="movie.id"></app-watch-toggle>
         </div>
       </div>
 
@@ -195,6 +196,18 @@
         </ng-template>
       </app-scroll-row>
     </section>
+
+    <!-- Similar movies -->
+    @if (similarMovies.length) {
+      <section class="md-section" aria-labelledby="similar-title">
+        <h2 class="md-title" id="similar-title">{{ 'ux.similar.title' | translate }}</h2>
+        <app-scroll-row>
+          @for (m of similarMovies; track m.id) {
+            <app-movie-card [movie]="m" [variant]="similarVariant(m)" [fixedWidth]="true" [actions]="true"></app-movie-card>
+          }
+        </app-scroll-row>
+      </section>
+    }
 
     <!-- Comments -->
     <section class="md-section">

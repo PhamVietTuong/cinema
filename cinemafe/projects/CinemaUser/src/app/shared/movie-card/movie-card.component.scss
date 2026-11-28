@@ -293,3 +293,6 @@
     &:hover { transform: translateY(-6px); box-shadow: 0 14px 28px rgb(0 0 0 / 0.18); }
   }
 }
+
+// "Watch later" heart, bottom-right of the poster (top corners are taken by the badges).
+.mc-watch { position: absolute; right: 10px; bottom: 10px; z-index: 4; }

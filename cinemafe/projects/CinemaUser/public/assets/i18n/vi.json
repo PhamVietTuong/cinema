@@ -3,6 +3,33 @@
     "close": "Đóng",
     "imageAlt": "Khuyến mãi"
   },
+  "ux": {
+    "search": {
+      "open": "Tìm phim",
+      "close": "Đóng tìm kiếm",
+      "placeholder": "Tìm phim...",
+      "listLabel": "Gợi ý phim",
+      "noResults": "Không có phim nào khớp \"{{ q }}\"",
+      "viewAll": "Xem tất cả kết quả cho \"{{ q }}\"",
+      "clear": "Xóa"
+    },
+    "backToTop": "Lên đầu trang",
+    "watchlist": {
+      "add": "Lưu xem sau",
+      "remove": "Bỏ khỏi danh sách xem sau"
+    },
+    "similar": { "title": "Phim tương tự" },
+    "empty": {
+      "moviesTitle": "Không tìm thấy phim",
+      "moviesHint": "Thử từ khóa khác hoặc xóa bộ lọc.",
+      "moviesClear": "Xóa bộ lọc",
+      "showtimesTitle": "Không tìm thấy suất chiếu",
+      "showtimesHint": "Thử ngày, rạp hoặc khung giờ khác.",
+      "ticketsTitle": "Chưa có vé nào",
+      "ticketsHint": "Đặt vé phim đầu tiên và vé của bạn sẽ hiển thị tại đây.",
+      "ticketsCta": "Xem phim"
+    }
+  },
   "nav": {
     "movies": "Phim",
     "theaters": "Rạp Chiếu",
@@ -286,7 +313,40 @@
       "nowShowing": "Phim Đang Chiếu",
       "comingSoon": "Phim Sắp Chiếu",
       "promotions": "Khuyến Mãi",
-      "viewAll": "Xem Tất Cả"
+      "viewAll": "Xem Tất Cả",
+      "top10": "Top 10 Phim Thịnh Hành",
+      "combos": "Bắp Nước & Combo",
+      "theaters": "Rạp Của Chúng Tôi"
+    },
+    "quick": {
+      "title": "Đặt vé nhanh",
+      "movie": "Phim",
+      "theater": "Rạp",
+      "date": "Ngày",
+      "time": "Suất chiếu",
+      "pickMovie": "Chọn phim",
+      "pickTheater": "Chọn rạp",
+      "pickDate": "Chọn ngày",
+      "pickTime": "Chọn suất",
+      "loading": "Đang tải…",
+      "noShowtimes": "Chưa có suất chiếu",
+      "book": "Đặt vé",
+      "error": "Không tải được suất chiếu. Vui lòng thử lại."
+    },
+    "theaters": {
+      "view": "Xem rạp"
+    },
+    "why": {
+      "title": "Vì sao chọn chúng tôi",
+      "theaters": "Rạp chiếu",
+      "rooms": "Phòng chiếu",
+      "movies": "Phim đang chiếu",
+      "p1Title": "Chọn ghế trực tiếp",
+      "p1Desc": "Xem sơ đồ ghế và giữ chỗ ngay trên điện thoại hoặc máy tính.",
+      "p2Title": "Thanh toán nhanh",
+      "p2Desc": "Thanh toán an toàn qua cổng điện tử, nhận vé ngay sau khi hoàn tất.",
+      "p3Title": "Ưu đãi thành viên",
+      "p3Desc": "Tích điểm, nhận khuyến mãi và combo bắp nước giá tốt."
     },
     "card": {
       "book": "Đặt Vé",
