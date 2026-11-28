@@ -28,6 +28,6 @@
   :host { right: 14px; bottom: calc(14px + 48px + 10px + var(--cx-order-bar-h, 0px)); }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@include m.motion-reduce {
   .btt { transition: none; transform: none; }
 }

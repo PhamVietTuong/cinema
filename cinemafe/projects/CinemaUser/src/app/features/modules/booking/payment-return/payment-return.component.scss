@@ -1,3 +1,4 @@
+@use 'lib/theme/mixins' as m;
 :host { display: block; }
 
 .return-page {
@@ -92,7 +93,7 @@
 .confetti i { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px; border-radius: 2px; background: var(--mp-gold-deep, #e6a82e); opacity: 0; }
 .confetti i:nth-child(3n) { background: #34c759; }
 .confetti i:nth-child(3n + 1) { background: var(--mp-red, #e5484d); }
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .success-icon { animation: pr-pop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) backwards; position: relative; }
   .success-icon::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid #34c759; animation: pr-ring 1s ease-out 0.3s backwards; }
   .success-icon mat-icon { animation: pr-tick 0.4s ease 0.25s backwards; }

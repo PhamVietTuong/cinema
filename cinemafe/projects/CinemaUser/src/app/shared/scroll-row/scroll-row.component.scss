@@ -46,7 +46,7 @@
 .sr-chevron--right { right: -18px; }
 
 // A single hint pulse ~1.3s after the row mounts, so first-time visitors notice it scrolls.
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .sr-chevron:not(:disabled) {
     animation: sr-chevron-hint 0.9s ease-in-out 1;
     animation-delay: 1.3s;

@@ -80,7 +80,7 @@
 .cb-input button:disabled { opacity: 0.5; cursor: default; }
 
 // Motion: the FAB sends out a soft ring now and then, the panel pops open, messages slide in.
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .cb-fab { position: relative; }
   .cb-fab::after {
     content: ''; position: absolute; inset: 0; border-radius: 50%;

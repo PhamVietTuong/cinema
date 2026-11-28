@@ -332,7 +332,7 @@
 
 // Last minute of the seat hold: the countdown chip turns red and pulses.
 .hold-chip.is-urgent b { background: var(--ml-danger); color: #fff; }
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .hold-chip.is-urgent b { animation: hc-urgent 1s ease-in-out infinite; }
 }
 @keyframes hc-urgent { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }

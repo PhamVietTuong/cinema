@@ -26,7 +26,7 @@
   padding: 0 2px 12px; border-bottom: 2px solid transparent; flex: 0 0 auto;
   position: relative;
   &.is-active { color: var(--mp-ink); border-color: var(--mp-red); }
-  @media (prefers-reduced-motion: no-preference) {
+  @include m.motion-ok {
     // The red underline grows in instead of snapping on.
     &.is-active { border-color: transparent; }
     &::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--mp-red); transform: scaleX(0); transition: transform 0.28s ease; }

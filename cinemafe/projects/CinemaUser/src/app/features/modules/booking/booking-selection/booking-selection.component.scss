@@ -73,7 +73,7 @@
     .order-hold-time { color: var(--ml-danger); }
   }
 }
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .order-hold.is-urgent { animation: ob-urgent 1s ease-in-out infinite; }
   // The bar slides up from the bottom edge the first time a ticket is picked. `backwards` (not `both`):
   // nothing may keep a transform on it once it has landed.

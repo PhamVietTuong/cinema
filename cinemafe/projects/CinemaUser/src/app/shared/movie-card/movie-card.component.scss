@@ -145,7 +145,7 @@
 
 // Hidden-until-revealed state only exists when motion is allowed, so a reduced-motion visitor
 // never waits on an IntersectionObserver callback to see content that's already on screen.
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .mc-card--actions {
     opacity: 0;
     transform: translateY(24px);
@@ -169,10 +169,10 @@
 
 .badge-fade { opacity: 0; }
 
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .mc-card--actions.is-revealed .badge-fade { animation: mc-badge-fade-in 0.4s ease 0.3s both; }
 }
-@media (prefers-reduced-motion: reduce) {
+@include m.motion-reduce {
   .badge-fade { opacity: 1; }
 }
 

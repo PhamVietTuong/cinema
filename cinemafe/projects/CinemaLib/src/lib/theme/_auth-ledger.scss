@@ -246,7 +246,7 @@
       border: 1px solid var(--ml-danger);
       color: var(--ml-danger-ink);
       // A failed sign-in shakes the alert once when it appears.
-      @media (prefers-reduced-motion: no-preference) { animation: auth-shake 0.45s ease; }
+      @include m.motion-ok { animation: auth-shake 0.45s ease; }
     }
     &.auth-alert--success {
       background: var(--ml-success-soft);
