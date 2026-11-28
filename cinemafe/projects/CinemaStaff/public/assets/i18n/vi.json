@@ -200,6 +200,7 @@
     },
     "pay": {
       "title": "Thanh toán",
+      "method": "Phương thức",
       "tendered": "Tiền khách đưa",
       "amount": "Số tiền",
       "reference": "Mã giao dịch / mã QR",

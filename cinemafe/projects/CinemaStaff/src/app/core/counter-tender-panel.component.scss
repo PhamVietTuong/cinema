@@ -1,26 +1,51 @@
 @use 'lib/theme/mixins' as m;
 @use './counter-shared';
 
-.pos-tender { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-.pos-tender-method { width: 120px; }
-.pos-tender-amount { width: 140px; }
-.pos-tender-ref { flex: 1; min-width: 120px; }
-.pos-tender-add { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+// Receipt-style tender panel: due line, one row per tender, received total, then the change / still-to-collect figure big.
+.pos-receipt-title { text-align: center; }
+.pos-dash { border: 0; border-top: 2px dashed var(--ml-rule); margin: 10px 0; }
 
-.pos-settle {
-  margin: 12px 0 0; display: grid; gap: 4px;
-  div { display: flex; justify-content: space-between; }
-  dt { color: var(--ml-muted); }
-  dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
-  .is-warn dd { color: var(--ml-warn-ink); }
-  .is-change dd { color: var(--ml-second); font-size: 1.2rem; }
+.pos-rl {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+}
+.pos-rl-label { color: var(--ml-muted); }
+.pos-rl-value { font-variant-numeric: tabular-nums; }
+.pos-rl--due .pos-rl-value { font-size: 1.3rem; }
+
+.pos-tender { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin-bottom: 10px; }
+.pos-tender .pos-rl { min-width: 0; }
+.pos-tender-method { flex: 0 0 120px; }
+.pos-tender-method, .pos-tender-amount { width: auto; }
+.pos-tender-amount { flex: 1 1 0; min-width: 0; }
+.pos-amount-input { text-align: right; font-variant-numeric: tabular-nums; }
+.pos-tender-ref { width: 100%; }
+
+.pos-fill {
+  display: inline-flex; align-items: center; gap: 4px; justify-self: start;
+  border: 0; background: none; padding: 0; min-height: 32px; cursor: pointer;
+  color: var(--ml-action-strong); font: inherit; font-size: 0.8rem; font-weight: 600;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  &:focus-visible { outline: 2px solid var(--ml-action-strong); outline-offset: 2px; }
+}
+
+.pos-tender-add { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0; }
+
+.pos-bigline {
+  display: grid; justify-items: center; padding: 8px 0 2px;
+  small { color: var(--ml-muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; }
+  b { font-size: 2.1rem; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  &.is-change b { color: var(--ml-second); }
+  &.is-warn b { color: var(--ml-warn-ink); }
 }
 
 @include m.tablet-small {
-  .pos-tender-method, .pos-tender-amount { flex: 1 1 120px; width: auto; }
   .pos-tender-add button { min-height: 44px; flex: 1 1 auto; }
+  .pos-fill { min-height: 44px; }
 }
 
 @include m.phone {
-  .pos-tender-method, .pos-tender-amount, .pos-tender-ref { flex: 1 1 100%; width: 100%; }
+  .pos-tender .pos-rl { flex-wrap: wrap; }
+  .pos-tender-method { flex: 1 1 0; min-width: 0; }
+  .pos-tender .pos-rl > button { order: 2; }
+  .pos-tender-amount { order: 3; flex: 1 1 100%; }
 }
