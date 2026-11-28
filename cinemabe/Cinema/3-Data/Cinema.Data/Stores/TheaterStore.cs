@@ -42,11 +42,7 @@ public class TheaterStore : GenericStore<Theater>, ITheaterStore
 
     public async Task<Dictionary<Guid, string>> GetNamesByIdsAsync(IReadOnlyCollection<Guid> ids)
     {
-        if (ids.Count == 0)
-        {
-            return new Dictionary<Guid, string>();
-        }
-        return await DbSet.AsNoTracking().Where(t => ids.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name);
+        return await DbSet.ProjectByIdsAsync(ids, t => t.Name);
     }
 
     public async Task<Theater?> GetDetailAsync(Guid id)

@@ -54,10 +54,6 @@ public class UserStore : GenericStore<User>, IUserStore
 
     public async Task<Dictionary<Guid, string>> GetNamesByIdsAsync(IReadOnlyCollection<Guid> ids)
     {
-        if (ids.Count == 0)
-        {
-            return new Dictionary<Guid, string>();
-        }
-        return await DbSet.AsNoTracking().Where(u => ids.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.Name);
+        return await DbSet.ProjectByIdsAsync(ids, u => u.Name);
     }
 }
