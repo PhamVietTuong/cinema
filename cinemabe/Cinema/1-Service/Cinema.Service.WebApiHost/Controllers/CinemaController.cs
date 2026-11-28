@@ -22,7 +22,6 @@ namespace Cinema.Service.WebApiHost.Controllers;
 [ApiExplorerSettings(GroupName = "cinema")]
 public class CinemaController : ApiControllerBase
 {
-    private const string _adminRole = "Admin";
     private const string _theaterIdFilter = "theaterId";
 
     private readonly IMovieManager   _movieManager;
@@ -135,7 +134,7 @@ public class CinemaController : ApiControllerBase
         new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
     private const long _maxImageBytes = 5 * 1024 * 1024; // 5 MB
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [RequestSizeLimit(_maxImageBytes + 1024 * 1024)] // image cap + multipart overhead; reject bigger bodies before buffering
     [ProducesResponseType(typeof(UploadResultDTO), 200)]
@@ -296,7 +295,7 @@ public class CinemaController : ApiControllerBase
     }
 
     /// <summary>Admin: candidate IMDb ids for a title (filters: title, year) to auto-fill the movie form.</summary>
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<ImdbMatchDTO>), 200)]
     public async Task<IActionResult> SearchImdbMatches([FromBody] PagingSearchDTO search)
@@ -313,7 +312,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(MovieDetailDTO), 200)]
     public async Task<IActionResult> CreateMovie([FromBody] CreateMovieRequest request)
@@ -330,7 +329,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(MovieDetailDTO), 200)]
     public async Task<IActionResult> UpdateMovie([FromBody] UpdateMovieRequest request)
@@ -347,7 +346,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteMovie([FromQuery] Guid id)
@@ -487,7 +486,7 @@ public class CinemaController : ApiControllerBase
 
     // ── Comment moderation (admin) ──────────────────────────────────────────────
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<CommentModerationDTO>), 200)]
     public async Task<IActionResult> GetCommentsForModeration([FromBody] PagingSearchDTO search)
@@ -504,7 +503,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
@@ -522,7 +521,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
@@ -590,7 +589,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(TheaterDTO), 200)]
     public async Task<IActionResult> CreateTheater([FromBody] CreateTheaterRequest request)
@@ -607,7 +606,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(TheaterDTO), 200)]
     public async Task<IActionResult> UpdateTheater([FromBody] UpdateTheaterRequest request)
@@ -624,7 +623,7 @@ public class CinemaController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteTheater([FromQuery] Guid id)
@@ -683,7 +682,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetAgeRestriction), () => _ageRestrictions.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(AgeRestrictionDTO), 200)]
     public Task<IActionResult> CreateAgeRestriction([FromBody] CreateAgeRestrictionRequest request)
@@ -691,7 +690,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateAgeRestriction), () => _ageRestrictions.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(AgeRestrictionDTO), 200)]
     public async Task<IActionResult> UpdateAgeRestriction([FromBody] UpdateAgeRestrictionRequest request)
@@ -704,7 +703,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateAgeRestriction), () => _ageRestrictions.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteAgeRestriction([FromQuery] Guid id)
@@ -738,7 +737,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetMovieType), () => _movieTypes.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(MovieTypeDTO), 200)]
     public Task<IActionResult> CreateMovieType([FromBody] CreateMovieTypeRequest request)
@@ -746,7 +745,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateMovieType), () => _movieTypes.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(MovieTypeDTO), 200)]
     public async Task<IActionResult> UpdateMovieType([FromBody] UpdateMovieTypeRequest request)
@@ -759,7 +758,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateMovieType), () => _movieTypes.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteMovieType([FromQuery] Guid id)
@@ -774,7 +773,7 @@ public class CinemaController : ApiControllerBase
     #endregion
 
     #region Template
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<TemplateDTO>), 200)]
     public Task<IActionResult> GetTemplates([FromBody] PagingSearchDTO search)
@@ -782,7 +781,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetTemplates), () => _templates.GetAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(TemplateDTO), 200)]
     public async Task<IActionResult> GetTemplate([FromQuery] Guid id)
@@ -795,7 +794,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetTemplate), () => _templates.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(TemplateDTO), 200)]
     public Task<IActionResult> CreateTemplate([FromBody] CreateTemplateRequest request)
@@ -803,7 +802,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateTemplate), () => _templates.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(TemplateDTO), 200)]
     public async Task<IActionResult> UpdateTemplate([FromBody] UpdateTemplateRequest request)
@@ -816,7 +815,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateTemplate), () => _templates.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteTemplate([FromQuery] Guid id)
@@ -852,7 +851,7 @@ public class CinemaController : ApiControllerBase
 
     // SeatType has no create/delete action — a theater always has exactly Standard + Double, seeded on
     // theater creation (ISeatTypeManager.EnsureDefaultsAsync). Only Name/Description/Color are editable.
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(SeatTypeDTO), 200)]
     public async Task<IActionResult> UpdateSeatType([FromBody] UpdateSeatTypeRequest request)
@@ -893,7 +892,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetPatronCategory), () => _patronCategories.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
     public Task<IActionResult> CreatePatronCategory([FromBody] CreatePatronCategoryRequest request)
@@ -901,7 +900,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreatePatronCategory), () => _patronCategories.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(PatronCategoryDTO), 200)]
     public async Task<IActionResult> UpdatePatronCategory([FromBody] UpdatePatronCategoryRequest request)
@@ -914,7 +913,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdatePatronCategory), () => _patronCategories.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeletePatronCategory([FromQuery] Guid id)
@@ -948,7 +947,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetTimeSlot), () => _timeSlots.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(TimeSlotDTO), 200)]
     public Task<IActionResult> CreateTimeSlot([FromBody] CreateTimeSlotRequest request)
@@ -956,7 +955,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateTimeSlot), () => _timeSlots.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(TimeSlotDTO), 200)]
     public async Task<IActionResult> UpdateTimeSlot([FromBody] UpdateTimeSlotRequest request)
@@ -969,7 +968,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateTimeSlot), () => _timeSlots.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteTimeSlot([FromQuery] Guid id)
@@ -1003,7 +1002,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetTicketPrice), () => _ticketPrices.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(TicketPriceDTO), 200)]
     public Task<IActionResult> CreateTicketPrice([FromBody] CreateTicketPriceRequest request)
@@ -1011,7 +1010,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateTicketPrice), () => _ticketPrices.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(TicketPriceDTO), 200)]
     public async Task<IActionResult> UpdateTicketPrice([FromBody] UpdateTicketPriceRequest request)
@@ -1024,7 +1023,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateTicketPrice), () => _ticketPrices.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteTicketPrice([FromQuery] Guid id)
@@ -1037,7 +1036,7 @@ public class CinemaController : ApiControllerBase
         return await RunNoContent(nameof(DeleteTicketPrice), () => _ticketPrices.DeleteAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(List<TicketPriceDTO>), 200)]
     public Task<IActionResult> UpsertTicketPrices([FromBody] UpsertTicketPricesRequest request)
@@ -1067,7 +1066,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetUserType), () => _userTypes.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(UserTypeDTO), 200)]
     public Task<IActionResult> CreateUserType([FromBody] CreateUserTypeRequest request)
@@ -1075,7 +1074,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateUserType), () => _userTypes.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(UserTypeDTO), 200)]
     public async Task<IActionResult> UpdateUserType([FromBody] UpdateUserTypeRequest request)
@@ -1088,7 +1087,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateUserType), () => _userTypes.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteUserType([FromQuery] Guid id)
@@ -1122,7 +1121,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetMemberShip), () => _memberShips.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(MemberShipDTO), 200)]
     public Task<IActionResult> CreateMemberShip([FromBody] CreateMemberShipRequest request)
@@ -1130,7 +1129,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateMemberShip), () => _memberShips.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(MemberShipDTO), 200)]
     public async Task<IActionResult> UpdateMemberShip([FromBody] UpdateMemberShipRequest request)
@@ -1143,7 +1142,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateMemberShip), () => _memberShips.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteMemberShip([FromQuery] Guid id)
@@ -1177,7 +1176,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetHoliday), () => _holidays.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(HolidayDTO), 200)]
     public Task<IActionResult> CreateHoliday([FromBody] CreateHolidayRequest request)
@@ -1185,7 +1184,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateHoliday), () => _holidays.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(HolidayDTO), 200)]
     public async Task<IActionResult> UpdateHoliday([FromBody] UpdateHolidayRequest request)
@@ -1198,7 +1197,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateHoliday), () => _holidays.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteHoliday([FromQuery] Guid id)
@@ -1211,7 +1210,7 @@ public class CinemaController : ApiControllerBase
         return await RunNoContent(nameof(DeleteHoliday), () => _holidays.DeleteAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<HolidayTimeSlotPriceDTO>), 200)]
     public Task<IActionResult> GetHolidayTimeSlotPrices([FromBody] PagingSearchDTO search)
@@ -1219,7 +1218,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetHolidayTimeSlotPrices), () => _holidays.GetTimeSlotPricesAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(List<HolidayTimeSlotPriceDTO>), 200)]
     public Task<IActionResult> UpsertHolidayTimeSlotPrices([FromBody] UpsertHolidayTimeSlotPricesRequest request)
@@ -1251,7 +1250,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetNews), () => _news.GetByIdAsync(id, publishedOnly));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(NewsDTO), 200)]
     public Task<IActionResult> CreateNews([FromBody] CreateNewsRequest request)
@@ -1259,7 +1258,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateNews), () => _news.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(NewsDTO), 200)]
     public async Task<IActionResult> UpdateNews([FromBody] UpdateNewsRequest request)
@@ -1272,7 +1271,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateNews), () => _news.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteNews([FromQuery] Guid id)
@@ -1287,7 +1286,7 @@ public class CinemaController : ApiControllerBase
     #endregion
 
     #region Person
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<PersonDTO>), 200)]
     public Task<IActionResult> GetPeople([FromBody] PagingSearchDTO search)
@@ -1295,7 +1294,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetPeople), () => _people.GetAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(PersonDTO), 200)]
     public async Task<IActionResult> GetPerson([FromQuery] Guid id)
@@ -1308,7 +1307,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetPerson), () => _people.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(PersonDTO), 200)]
     public Task<IActionResult> CreatePerson([FromBody] CreatePersonRequest request)
@@ -1316,7 +1315,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreatePerson), () => _people.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(PersonDTO), 200)]
     public async Task<IActionResult> UpdatePerson([FromBody] UpdatePersonRequest request)
@@ -1329,7 +1328,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdatePerson), () => _people.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeletePerson([FromQuery] Guid id)
@@ -1360,7 +1359,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetPublishedPromotionPrograms), () => _promotionPrograms.GetPublishedAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<PromotionProgramDTO>), 200)]
     public Task<IActionResult> GetPromotionPrograms([FromBody] PagingSearchDTO search)
@@ -1368,7 +1367,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetPromotionPrograms), () => _promotionPrograms.GetAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(PromotionProgramDTO), 200)]
     public async Task<IActionResult> GetPromotionProgram([FromQuery] Guid id)
@@ -1381,7 +1380,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetPromotionProgram), () => _promotionPrograms.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(PromotionProgramDTO), 200)]
     public Task<IActionResult> CreatePromotionProgram([FromBody] CreatePromotionProgramRequest request)
@@ -1389,7 +1388,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreatePromotionProgram), () => _promotionPrograms.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(PromotionProgramDTO), 200)]
     public async Task<IActionResult> UpdatePromotionProgram([FromBody] UpdatePromotionProgramRequest request)
@@ -1402,7 +1401,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdatePromotionProgram), () => _promotionPrograms.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeletePromotionProgram([FromQuery] Guid id)
@@ -1436,7 +1435,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetPromotionCampaign), () => _promotionCampaigns.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(PromotionCampaignDTO), 200)]
     public Task<IActionResult> CreatePromotionCampaign([FromBody] CreatePromotionCampaignRequest request)
@@ -1444,7 +1443,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreatePromotionCampaign), () => _promotionCampaigns.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(PromotionCampaignDTO), 200)]
     public async Task<IActionResult> UpdatePromotionCampaign([FromBody] UpdatePromotionCampaignRequest request)
@@ -1457,7 +1456,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdatePromotionCampaign), () => _promotionCampaigns.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeletePromotionCampaign([FromQuery] Guid id)
@@ -1480,7 +1479,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetActiveSplashBanner), () => _splashBanners.GetActiveAsync());
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<SplashBannerDTO>), 200)]
     public Task<IActionResult> GetSplashBanners([FromBody] PagingSearchDTO search)
@@ -1488,7 +1487,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetSplashBanners), () => _splashBanners.GetAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(SplashBannerDTO), 200)]
     public async Task<IActionResult> GetSplashBanner([FromQuery] Guid id)
@@ -1501,7 +1500,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetSplashBanner), () => _splashBanners.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(SplashBannerDTO), 200)]
     public Task<IActionResult> CreateSplashBanner([FromBody] CreateSplashBannerRequest request)
@@ -1509,7 +1508,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateSplashBanner), () => _splashBanners.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(SplashBannerDTO), 200)]
     public async Task<IActionResult> UpdateSplashBanner([FromBody] UpdateSplashBannerRequest request)
@@ -1522,7 +1521,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateSplashBanner), () => _splashBanners.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteSplashBanner([FromQuery] Guid id)
@@ -1556,7 +1555,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetFoodAndDrink), () => _foodAndDrinks.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(FoodAndDrinkDTO), 200)]
     public Task<IActionResult> CreateFoodAndDrink([FromBody] CreateFoodAndDrinkRequest request)
@@ -1564,7 +1563,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateFoodAndDrink), () => _foodAndDrinks.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(FoodAndDrinkDTO), 200)]
     public async Task<IActionResult> UpdateFoodAndDrink([FromBody] UpdateFoodAndDrinkRequest request)
@@ -1577,7 +1576,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateFoodAndDrink), () => _foodAndDrinks.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteFoodAndDrink([FromQuery] Guid id)
@@ -1611,7 +1610,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetRoom), () => _rooms.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(RoomDTO), 200)]
     public Task<IActionResult> CreateRoom([FromBody] CreateRoomRequest request)
@@ -1619,7 +1618,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateRoom), () => _rooms.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(RoomDTO), 200)]
     public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomRequest request)
@@ -1632,7 +1631,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateRoom), () => _rooms.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteRoom([FromQuery] Guid id)
@@ -1666,7 +1665,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetRoomType), () => _roomTypes.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(RoomTypeDTO), 200)]
     public Task<IActionResult> CreateRoomType([FromBody] CreateRoomTypeRequest request)
@@ -1674,7 +1673,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateRoomType), () => _roomTypes.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(RoomTypeDTO), 200)]
     public async Task<IActionResult> UpdateRoomType([FromBody] UpdateRoomTypeRequest request)
@@ -1687,7 +1686,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateRoomType), () => _roomTypes.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteRoomType([FromQuery] Guid id)
@@ -1700,7 +1699,7 @@ public class CinemaController : ApiControllerBase
         return await RunNoContent(nameof(DeleteRoomType), () => _roomTypes.DeleteAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(List<RoomTypePatronCategoryPriceDTO>), 200)]
     public Task<IActionResult> GetRoomTypePatronCategoryPrices([FromQuery] Guid roomTypeId)
@@ -1708,7 +1707,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetRoomTypePatronCategoryPrices), () => _roomTypePatronCategoryPrices.GetByRoomTypeAsync(roomTypeId));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(204)]
     public Task<IActionResult> SaveRoomTypePatronCategoryPrices([FromBody] SaveRoomTypePatronCategoryPricesRequest request)
@@ -1725,7 +1724,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetShowTimeList), () => _showTimes.GetAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<ShowTimeCalendarItemDTO>), 200)]
     public Task<IActionResult> GetShowTimeCalendar([FromBody] PagingSearchDTO search)
@@ -1745,7 +1744,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(GetShowTime), () => _showTimes.GetByIdAsync(id));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(ShowTimeDTO), 200)]
     public Task<IActionResult> CreateShowTime([FromBody] CreateShowTimeRequest request)
@@ -1753,7 +1752,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateShowTime), () => _showTimes.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(ShowTimeDTO), 200)]
     public async Task<IActionResult> UpdateShowTime([FromBody] UpdateShowTimeRequest request)
@@ -1766,7 +1765,7 @@ public class CinemaController : ApiControllerBase
         return await Run(nameof(UpdateShowTime), () => _showTimes.UpdateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteShowTime([FromQuery] Guid id)
@@ -1788,7 +1787,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetMovieTypeDetails), () => _movieTypeDetails.GetAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(MovieTypeDetailDTO), 200)]
     public Task<IActionResult> CreateMovieTypeDetail([FromBody] CreateMovieTypeDetailRequest request)
@@ -1796,7 +1795,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(CreateMovieTypeDetail), () => _movieTypeDetails.CreateAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public Task<IActionResult> DeleteMovieTypeDetail([FromQuery] Guid movieId, [FromQuery] Guid movieTypeId)
@@ -1815,7 +1814,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetRoomSeatMap), () => _rooms.GetSeatMapAsync(roomId));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(204)]
     public Task<IActionResult> SaveRoomSeatMap([FromBody] SaveSeatMapRequest request)
@@ -1823,7 +1822,7 @@ public class CinemaController : ApiControllerBase
         return RunNoContent(nameof(SaveRoomSeatMap), () => _rooms.SaveSeatMapAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(List<RoomSeatDTO>), 200)]
     public Task<IActionResult> ResizeRoomSeatGrid([FromBody] ResizeSeatGridRequest request)
@@ -1831,7 +1830,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(ResizeRoomSeatGrid), () => _rooms.ResizeSeatGridAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(List<RoomSeatDTO>), 200)]
     public Task<IActionResult> RemoveRoomSeat([FromBody] RemoveSeatRequest request)
@@ -1841,7 +1840,7 @@ public class CinemaController : ApiControllerBase
     #endregion
 
     #region Invoice (admin: list / status / delete)
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<InvoiceAdminDTO>), 200)]
     public Task<IActionResult> GetInvoices([FromBody] PagingSearchDTO search)
@@ -1849,7 +1848,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetInvoices), () => _invoices.GetAsync(search));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut]
     [ProducesResponseType(typeof(InvoiceAdminDTO), 200)]
     public Task<IActionResult> UpdateInvoiceStatus([FromBody] UpdateInvoiceStatusRequest request)
@@ -1857,7 +1856,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(UpdateInvoiceStatus), () => _invoices.UpdateStatusAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     public Task<IActionResult> DeleteInvoice([FromQuery] Guid id)
@@ -1874,7 +1873,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(GetEffectiveLoyaltyRate), () => _loyaltySettings.GetEffectiveAsync(theaterId));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(LoyaltySettingDTO), 200)]
     public Task<IActionResult> SaveLoyaltySetting([FromBody] SaveLoyaltySettingRequest request)
@@ -1882,7 +1881,7 @@ public class CinemaController : ApiControllerBase
         return Run(nameof(SaveLoyaltySetting), () => _loyaltySettings.SaveAsync(request));
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpDelete]
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
