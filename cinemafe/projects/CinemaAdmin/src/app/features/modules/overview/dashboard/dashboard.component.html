@@ -8,34 +8,10 @@
 
   <!-- KPI cards -->
   <div class="kpi-grid">
-    <div class="ad-card kpi">
-      <div class="kpi-head">
-        <span class="kpi-label">{{ 'dashboard.kpiMovies' | translate }}</span>
-        <span class="kpi-icon i-violet"><mat-icon>movie</mat-icon></span>
-      </div>
-      <span class="kpi-value">{{ stats.movies }}</span>
-    </div>
-    <div class="ad-card kpi">
-      <div class="kpi-head">
-        <span class="kpi-label">{{ 'dashboard.kpiTheaters' | translate }}</span>
-        <span class="kpi-icon i-blue"><mat-icon>theaters</mat-icon></span>
-      </div>
-      <span class="kpi-value">{{ stats.theaters }}</span>
-    </div>
-    <div class="ad-card kpi">
-      <div class="kpi-head">
-        <span class="kpi-label">{{ 'dashboard.kpiInvoicesToday' | translate }}</span>
-        <span class="kpi-icon i-orange"><mat-icon>receipt_long</mat-icon></span>
-      </div>
-      <span class="kpi-value">{{ stats.invoicesToday }}</span>
-    </div>
-    <div class="ad-card kpi">
-      <div class="kpi-head">
-        <span class="kpi-label">{{ 'dashboard.kpiRevenueToday' | translate }}</span>
-        <span class="kpi-icon i-green"><mat-icon>monetization_on</mat-icon></span>
-      </div>
-      <span class="kpi-value">{{ stats.revenueToday | currency:'VND':'symbol':'1.0-0' }}</span>
-    </div>
+    <cl-kpi-card variant="stub" [label]="'dashboard.kpiMovies' | translate" icon="movie" [value]="stats.movies"></cl-kpi-card>
+    <cl-kpi-card variant="stub" [label]="'dashboard.kpiTheaters' | translate" icon="theaters" [value]="stats.theaters"></cl-kpi-card>
+    <cl-kpi-card variant="stub" [label]="'dashboard.kpiInvoicesToday' | translate" icon="receipt_long" [value]="stats.invoicesToday"></cl-kpi-card>
+    <cl-kpi-card variant="stub" [label]="'dashboard.kpiRevenueToday' | translate" icon="monetization_on" [value]="stats.revenueToday | vnd"></cl-kpi-card>
   </div>
 
   <!-- Quick actions -->
@@ -65,7 +41,7 @@
         </div>
       </div>
       <ng-template #noRevenue>
-        <div class="ad-empty"><mat-icon>bar_chart</mat-icon><p>{{ 'dashboard.noRevenueData' | translate }}</p></div>
+        <cl-empty-state icon="bar_chart" messageKey="dashboard.noRevenueData"></cl-empty-state>
       </ng-template>
     </div>
 
@@ -87,7 +63,7 @@
         </li>
       </ul>
       <ng-template #noTop>
-        <div class="ad-empty"><mat-icon>movie</mat-icon><p>{{ 'dashboard.noMovieData' | translate }}</p></div>
+        <cl-empty-state icon="movie" messageKey="dashboard.noMovieData"></cl-empty-state>
       </ng-template>
     </div>
   </div>
@@ -124,7 +100,7 @@
         </ngx-datatable-column>
 
         <ngx-datatable-column [name]="'dashboard.colAmount' | translate" prop="finalAmount" [sortable]="false">
-          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.finalAmount | currency:'VND':'symbol':'1.0-0' }}</ng-template>
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.finalAmount | vnd }}</ng-template>
         </ngx-datatable-column>
 
         <ngx-datatable-column [name]="'common.status' | translate" prop="status" [sortable]="false">
@@ -152,7 +128,7 @@
         <mat-card-content>
           <div class="ad-mobile-card-title"><strong>{{ row.code || '—' }}</strong></div>
           <div class="ad-mobile-card-row"><span>{{ 'dashboard.colCustomer' | translate }}</span><span>{{ row.userName || row.userEmail || '—' }}</span></div>
-          <div class="ad-mobile-card-row"><span>{{ 'dashboard.colAmount' | translate }}</span><span>{{ row.finalAmount | currency:'VND':'symbol':'1.0-0' }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'dashboard.colAmount' | translate }}</span><span>{{ row.finalAmount | vnd }}</span></div>
           <div class="ad-mobile-card-row">
             <span>{{ 'common.status' | translate }}</span>
             <span class="ad-pill" [ngClass]="statusClass(row.status)">{{ statusLabel(row.status) }}</span>
@@ -160,7 +136,7 @@
           <div class="ad-mobile-card-row"><span>{{ 'common.date' | translate }}</span><span>{{ row.creationTime | date:'short' }}</span></div>
         </mat-card-content>
       </mat-card>
-      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>receipt_long</mat-icon><p>{{ 'dashboard.noInvoices' | translate }}</p></div>
+      <cl-empty-state *ngIf="!pageRows.length" icon="receipt_long" messageKey="dashboard.noInvoices"></cl-empty-state>
 
       <mat-paginator
         *ngIf="total > 0"

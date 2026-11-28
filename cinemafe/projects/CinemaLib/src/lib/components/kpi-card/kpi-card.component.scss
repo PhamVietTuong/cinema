@@ -1,0 +1,62 @@
+:host { display: block; min-width: 0; }
+
+.kpi { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.kpi-label { color: var(--ml-muted); font-size: 13px; }
+.kpi-value { font-family: var(--ml-font-head); font-size: 28px; font-weight: 700; color: var(--ml-ink); }
+
+// Compact: dense report pages.
+.kpi--compact {
+  gap: 4px;
+  padding: 12px 16px;
+  .kpi-label { font-size: 12px; }
+  .kpi-value { font-family: inherit; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 0; }
+}
+
+// Stub: dashboard tile that reads as a ticket stub (notched edges).
+.kpi--stub {
+  gap: var(--cx-space-3);
+  position: relative;
+  overflow: visible;
+
+  // The notches are cut-outs matching the page ground, not the card, so they read as punched through.
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--ml-paper);
+    border: 1px solid var(--ml-rule);
+    transform: translateY(-50%);
+    z-index: 1;
+  }
+  &::before { left: -8px; }
+  &::after { right: -8px; }
+
+  .kpi-head { display: flex; align-items: center; justify-content: space-between; gap: var(--cx-space-3); }
+  .kpi-label {
+    font-size: var(--cx-text-xs);
+    font-weight: var(--cx-weight-semibold);
+    letter-spacing: var(--cx-track-caps);
+    text-transform: uppercase;
+  }
+  // One neutral treatment: the icon labels the row, it does not classify it.
+  .kpi-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: var(--ml-r-sm);
+    background: var(--ml-panel-3);
+    color: var(--ml-muted);
+    flex: none;
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  }
+  .kpi-value {
+    font-family: var(--ml-font-display);
+    font-size: 34px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: var(--cx-leading-tight);
+    font-variant-numeric: tabular-nums;
+  }
+}

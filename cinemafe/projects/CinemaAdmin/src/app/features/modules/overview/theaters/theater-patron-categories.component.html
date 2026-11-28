@@ -21,7 +21,7 @@
         <tr *ngFor="let row of rows">
           <td><strong>{{ row.name }}</strong></td>
           <td>{{ row.seatTypeName }}</td>
-          <td>{{ row.price | number:'1.0-0' }}đ</td>
+          <td>{{ row.price | vnd }}</td>
           <td>{{ row.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</td>
           <td>{{ row.description || '—' }}</td>
           <td>
@@ -33,7 +33,7 @@
         </tr>
       </tbody>
     </table>
-    <div *ngIf="!rows.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
+    <cl-empty-state *ngIf="!rows.length && !loading" icon="groups" messageKey="theaters.patronCategories.empty"></cl-empty-state>
   </div>
 
   <!-- Phones: a table doesn't fit legibly, so each row becomes its own Material card. -->
@@ -42,7 +42,7 @@
       <mat-card-content>
         <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong></div>
         <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.seatKindLabel' | translate }}</span><span>{{ row.seatTypeName }}</span></div>
-        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.priceLabel' | translate }}</span><span>{{ row.price | number:'1.0-0' }}đ</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.priceLabel' | translate }}</span><span>{{ row.price | vnd }}</span></div>
         <div class="ad-mobile-card-row"><span>{{ 'theaters.patronCategories.activeLabel' | translate }}</span><span>{{ row.isActive ? ('common.yes' | translate) : ('common.no' | translate) }}</span></div>
         <div class="ad-mobile-card-row"><span>{{ 'common.description' | translate }}</span><span>{{ row.description || '—' }}</span></div>
         <div class="ad-mobile-card-actions">
@@ -51,6 +51,6 @@
         </div>
       </mat-card-content>
     </mat-card>
-    <div *ngIf="!rows.length && !loading" class="ad-empty"><mat-icon>groups</mat-icon><p>{{ 'theaters.patronCategories.empty' | translate }}</p></div>
+    <cl-empty-state *ngIf="!rows.length && !loading" icon="groups" messageKey="theaters.patronCategories.empty"></cl-empty-state>
   </div>
 </mat-card>

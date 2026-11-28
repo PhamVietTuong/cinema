@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
   SharedModule, CinemaServiceAgent, SalesChannel,
-  PromotionMechanicValues, PromotionEligibilityValues, daysMaskToList, channelsMaskToList,
+  PromotionMechanicValues, PromotionEligibilityValues, promotionStubCaptionKey, daysMaskToList, channelsMaskToList,
 } from 'CinemaLib';
 
 type ProgramDTO = CinemaServiceAgent.PromotionProgramDTO;
@@ -164,13 +164,7 @@ export class PromotionsComponent implements OnInit {
         return this.dayLabelsText(mask);
       }
     }
-    const key = {
-      [CinemaServiceAgent.PromotionEligibility.Everyone]: 'promotions.stubCaption.everyone',
-      [CinemaServiceAgent.PromotionEligibility.Members]: 'promotions.stubCaption.members',
-      [CinemaServiceAgent.PromotionEligibility.StudentOrTeacher]: 'promotions.stubCaption.studentOrTeacher',
-      [CinemaServiceAgent.PromotionEligibility.AgeLimit]: 'promotions.stubCaption.ageLimit',
-    }[p.eligibility ?? CinemaServiceAgent.PromotionEligibility.Everyone] ?? 'promotions.stubCaption.everyone';
-    return this._translate.instant(key);
+    return this._translate.instant(promotionStubCaptionKey(p.eligibility));
   }
 
   /** "HH:mm – HH:mm" when every schedule shares the same time window, else null (ledger row is hidden). */

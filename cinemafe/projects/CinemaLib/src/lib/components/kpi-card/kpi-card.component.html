@@ -1,0 +1,13 @@
+<div class="ad-card kpi" [class.kpi--stub]="variant() === 'stub'" [class.kpi--compact]="variant() === 'compact'">
+  @if (variant() === 'stub') {
+    <div class="kpi-head">
+      <span class="kpi-label">{{ label() }}</span>
+      @if (icon()) {
+        <span class="kpi-icon"><mat-icon>{{ icon() }}</mat-icon></span>
+      }
+    </div>
+  } @else {
+    <span class="kpi-label">{{ label() }}</span>
+  }
+  <span class="kpi-value">{{ value() }}</span>
+</div>

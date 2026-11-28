@@ -82,6 +82,16 @@ $bp-tablet: 1024px;
   @media (max-width: $bp-tablet) { @content; }
 }
 
+// Motion preferences. Wrap every animation/transition in `motion-ok`, or switch it off in `motion-reduce`;
+// never hand-type a prefers-reduced-motion query.
+@mixin motion-ok {
+  @media (prefers-reduced-motion: no-preference) { @content; }
+}
+
+@mixin motion-reduce {
+  @media (prefers-reduced-motion: reduce) { @content; }
+}
+
 // Rail range only: above tablet-small, up to tablet.
 @mixin tablet-only {
   @media (min-width: $bp-tablet-small + 1) and (max-width: $bp-tablet) { @content; }

@@ -359,6 +359,19 @@ export const PromotionEligibilityValues: { value: CinemaServiceAgent.PromotionEl
   { value: CinemaServiceAgent.PromotionEligibility.AgeLimit, name: 'promoProgram.eligibility.ageLimit' },
 ];
 
+const PROMOTION_STUB_CAPTION_KEYS: Record<CinemaServiceAgent.PromotionEligibility, string> = {
+  [CinemaServiceAgent.PromotionEligibility.Everyone]: 'promotions.stubCaption.everyone',
+  [CinemaServiceAgent.PromotionEligibility.Members]: 'promotions.stubCaption.members',
+  [CinemaServiceAgent.PromotionEligibility.StudentOrTeacher]: 'promotions.stubCaption.studentOrTeacher',
+  [CinemaServiceAgent.PromotionEligibility.AgeLimit]: 'promotions.stubCaption.ageLimit',
+};
+
+/** i18n key of the short eligibility caption on a promotion card (customer-facing); a missing value reads as "everyone". */
+export function promotionStubCaptionKey(eligibility?: CinemaServiceAgent.PromotionEligibility): string {
+  return PROMOTION_STUB_CAPTION_KEYS[eligibility ?? CinemaServiceAgent.PromotionEligibility.Everyone]
+    ?? PROMOTION_STUB_CAPTION_KEYS[CinemaServiceAgent.PromotionEligibility.Everyone];
+}
+
 /**
  * Where an invoice was sold. Mirrors `SalesChannel` in cinemabe/Cinema/3-Data/Cinema.Data.Entities/Enums
  * (never renumber). Not referenced via `CinemaServiceAgent.SalesChannel`: NSwag emits that enum outside the

@@ -106,7 +106,7 @@
           </div>
         </mat-card-content>
       </mat-card>
-      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>forum</mat-icon><p>{{ 'comments.empty' | translate }}</p></div>
+      <cl-empty-state *ngIf="!pageRows.length" icon="forum" messageKey="comments.empty"></cl-empty-state>
 
       <mat-paginator
         *ngIf="total > 0"

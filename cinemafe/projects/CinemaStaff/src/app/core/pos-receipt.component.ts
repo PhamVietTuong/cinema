@@ -1,10 +1,10 @@
 import { Component, ViewEncapsulation, computed, input, output, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { PriceBreakdownAdjustment, PriceBreakdownComponent, PriceBreakdownLine, CinemaServiceAgent, ServerUtcPipe, TicketCardComponent } from 'CinemaLib';
+import { PriceBreakdownAdjustment, PriceBreakdownComponent, PriceBreakdownLine, CinemaServiceAgent, ServerUtcPipe, TicketCardComponent, VndPipe } from 'CinemaLib';
 
 /** What the print view needs after a sale: the API result plus the showtime context captured at sale time. */
 export interface SaleReceipt {
@@ -23,7 +23,7 @@ export interface SaleReceipt {
   selector: 'staff-pos-receipt',
   standalone: true,
   encapsulation: ViewEncapsulation.None,
-  imports: [DatePipe, DecimalPipe, TranslatePipe, MatButtonModule, MatButtonToggleModule, MatIconModule, TicketCardComponent, PriceBreakdownComponent, ServerUtcPipe],
+  imports: [DatePipe, VndPipe, TranslatePipe, MatButtonModule, MatButtonToggleModule, MatIconModule, TicketCardComponent, PriceBreakdownComponent, ServerUtcPipe],
   templateUrl: './pos-receipt.component.html',
   styleUrl: './pos-receipt.component.scss',
 })

@@ -32,6 +32,9 @@ import { SvgIconComponent } from '@ngneat/svg-icon';
 import { TranslatePipe, TranslateDirective } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from './i18n/language-switcher.component';
 import { ServerUtcPipe } from './pipes/server-utc.pipe';
+import { VndPipe } from './pipes/vnd.pipe';
+import { EmptyStateComponent } from './components/empty-state/empty-state.component';
+import { KpiCardComponent } from './components/kpi-card/kpi-card.component';
 import { ThousandsInputDirective } from './directives/thousands-input.directive';
 import { DragScrollDirective } from './directives/drag-scroll.directive';
 
@@ -71,6 +74,9 @@ const SHARED = [
   TranslateDirective,
   LanguageSwitcherComponent,
   ServerUtcPipe,
+  VndPipe,
+  EmptyStateComponent,
+  KpiCardComponent,
   ThousandsInputDirective,
   DragScrollDirective,
 ];

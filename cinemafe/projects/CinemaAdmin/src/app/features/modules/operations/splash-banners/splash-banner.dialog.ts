@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException } from 'CinemaLib';
+import { CinemaServiceAgent, showLoading, hideLoading, showSuccess, showException, toDateKey } from 'CinemaLib';
 import { ImageUploadService } from '../../../../shared/image-upload.service';
 
 type Dto = CinemaServiceAgent.SplashBannerDTO;
@@ -122,8 +122,6 @@ export class SplashBannerDialog {
     if (!value) {
       return '';
     }
-    const date = new Date(value);
-    const pad = (n: number) => `${n}`.padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    return toDateKey(new Date(value));
   }
 }

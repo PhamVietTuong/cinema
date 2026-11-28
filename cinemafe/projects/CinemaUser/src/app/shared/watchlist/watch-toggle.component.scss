@@ -22,6 +22,6 @@
   .wt-btn { width: 44px; height: 44px; }
   .wt-btn--hero { width: 48px; height: 48px; }
 }
-@media (prefers-reduced-motion: reduce) {
+@include m.motion-reduce {
   .wt-btn { transition: none; &:hover { transform: none; } }
 }

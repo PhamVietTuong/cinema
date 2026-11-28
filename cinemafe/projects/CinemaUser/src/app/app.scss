@@ -65,7 +65,7 @@
 // Chase the logo's bulb strip like real marquee lights — skipped entirely
 // under prefers-reduced-motion, and scoped to the topbar logo only (the
 // same .bulb markup elsewhere — login/register/home — stays static).
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .logo-link .marquee-rule .bulb {
     animation: bulb-chase 1.6s ease-in-out infinite;
   }
@@ -115,7 +115,7 @@
       transform-origin: left;
     }
     &:hover::after { transform: scaleX(1); }
-    @media (prefers-reduced-motion: no-preference) { &::after { transition: transform 0.25s ease; } }
+    @include m.motion-ok { &::after { transition: transform 0.25s ease; } }
 
     &.active-link {
       color: var(--ml-chrome-ink);
@@ -355,7 +355,7 @@
 // Route transition: each routed page is inserted as a sibling after <router-outlet>, so a CSS
 // animation on it plays once per navigation. Opacity only — a transform would create a containing
 // block and break the fixed/sticky descendants (order bar, filters).
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   :host ::ng-deep mat-sidenav-content > router-outlet + * {
     animation: cu-route-fade 0.26s ease-out both;
   }

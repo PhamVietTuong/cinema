@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Inject, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { CinemaServiceAgent, DialogService, LookupCacheService, ProjectionFormValues, ShowTimeTypeValues, apiErrorMessage } from 'CinemaLib';
+import { CinemaServiceAgent, DialogService, LookupCacheService, ProjectionFormValues, ShowTimeTypeValues, apiErrorMessage, toDateKey, toTimeKey } from 'CinemaLib';
 
 type Dto = CinemaServiceAgent.ShowTimeDTO;
 
@@ -280,8 +280,8 @@ export class ShowTimeDialog {
   }
 
   private _pad(n: number): string { return `${n}`.padStart(2, '0'); }
-  private _hm(d: Date): string { return `${this._pad(d.getHours())}:${this._pad(d.getMinutes())}`; }
-  private _ymd(d: Date): string { return `${d.getFullYear()}-${this._pad(d.getMonth() + 1)}-${this._pad(d.getDate())}`; }
+  private _hm(d: Date): string { return toTimeKey(d); }
+  private _ymd(d: Date): string { return toDateKey(d); }
   private _addDays(d: Date, n: number): Date { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
   private _hmToMinutes(hm: string): number { const [h, m] = hm.split(':').map(Number); return h * 60 + m; }
   private _minutesToHm(minutes: number): string { return `${this._pad(Math.floor(minutes / 60))}:${this._pad(minutes % 60)}`; }

@@ -14,3 +14,4 @@ export * from './price';
 export * from './bar-chart';
 export * from './forbidden';
 export * from './profile';
+export * from './kpi-card';

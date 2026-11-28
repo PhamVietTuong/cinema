@@ -507,7 +507,7 @@ a {
 
 // ── Motion polish ───────────────────────────────────────────────────────────────
 // All decorative motion lives behind no-preference so reduced-motion visitors get static pages.
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   // Route change: the routed component is inserted as the sibling right after <router-outlet>.
   // `backwards` (not `both`): a forwards-fill would leave a computed transform on the routed component,
   // and any transform makes it the containing block of position:fixed children (e.g. the booking order bar
@@ -575,7 +575,7 @@ a {
   &--line { height: 14px; }
   &--short { width: 60%; }
 }
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .cu-sk::after {
     content: ''; position: absolute; inset: 0;
     background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--ml-ink) 9%, transparent) 50%, transparent 70%);
@@ -585,13 +585,13 @@ a {
 @keyframes cu-shimmer { to { transform: translateX(100%); } }
 
 // ── Topbar compacts + gains a shadow once the page is scrolled (class set in App) ─
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .topbar, .topbar-inner { transition: height 0.25s ease, box-shadow 0.25s ease; }
 }
 .topbar.is-scrolled { box-shadow: 0 6px 18px rgb(0 0 0 / 0.35); .topbar-inner { height: 56px; } }
 
 // ── Toasts: slide in from the right with a draining timer line (ToastService: 4s) ─
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .mat-mdc-snack-bar-container.toast-success, .mat-mdc-snack-bar-container.toast-error, .mat-mdc-snack-bar-container.toast-info {
     position: relative; overflow: hidden; animation: cu-toast-in 0.35s var(--cx-ease, ease);
     &::after { content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: currentColor; opacity: 0.45; transform-origin: left; animation: cu-toast-timer 4s linear forwards; }
@@ -601,7 +601,7 @@ a {
 @keyframes cu-toast-timer { to { transform: scaleX(0); } }
 
 // ── Scroll-revealed list items (appRevealOnScroll adds .is-revealed) ───────────
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .cu-rise:not(.is-revealed) { opacity: 0; }
   .cu-rise.is-revealed { animation: cu-rise-in 0.55s var(--cx-ease, ease) backwards; }
 }

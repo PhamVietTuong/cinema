@@ -8,10 +8,9 @@ import { FormControl, FormGroup } from '@angular/forms';
 import {
   SharedModule, loadMovies, MOVIE_PAGE_SIZE, FilterPillsComponent, FilterBarField, FilterBarOption,
   selectPagedMovies, selectMoviesLoading, screeningFormatLabel, rawApiErrorMessage, CinemaServiceAgent,
-  LookupCacheService,
+  LookupCacheService, toDateKey,
 } from 'CinemaLib';
 import { MovieCardComponent } from '../../../../../shared/movie-card/movie-card.component';
-import { EmptyStateComponent } from '../../../../../shared/empty-state/empty-state.component';
 import { SiteFooterComponent } from '../../../../../shared/site-footer/site-footer.component';
 import { movieDetailCommands } from '../../../../../shared/movie-route';
 
@@ -24,7 +23,7 @@ const SHOWTIME_PAGE_SIZE = 20;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-list',
   standalone: true,
-  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterPillsComponent, EmptyStateComponent],
+  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterPillsComponent],
   templateUrl: './movie-list.component.html',
   styleUrl: './movie-list.component.scss',
 })
@@ -255,7 +254,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
       const d = new Date();
       d.setDate(d.getDate() + i);
       this.dateStrip.push({
-        value: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        value: toDateKey(d),
         label: i === 0 ? this._translate.instant('clFilterPills.today')
           : i === 1 ? this._translate.instant('clFilterPills.tomorrow')
           : new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(d),

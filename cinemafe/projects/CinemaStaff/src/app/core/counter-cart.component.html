@@ -58,13 +58,13 @@
                 <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-cat">
                   <mat-select [attr.aria-label]="'ticket.category' | translate" [value]="t.patronCategoryId" (selectionChange)="cart.setCategory(t, $event.value)">
                     @for (row of cart.rowsFor(t.isDouble); track row.patronCategoryId) {
-                      <mat-option [value]="row.patronCategoryId">{{ row.patronCategoryName }} · {{ row.price | number:'1.0-0' }}đ</mat-option>
+                      <mat-option [value]="row.patronCategoryId">{{ row.patronCategoryName }} · {{ row.price | vnd }}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
               </td>
               <td class="num">
-                {{ cart.priceOf(t) | number:'1.0-0' }}đ
+                {{ cart.priceOf(t) | vnd }}
                 @if (t.overridePrice !== undefined) {
                   <mat-icon class="pos-flag" [matTooltip]="'pos.override.active' | translate">edit</mat-icon>
                 }
@@ -108,7 +108,7 @@
             <span class="pos-badge">{{ 'pos.food.combo' | translate }}</span>
           }
         </div>
-        <div class="pos-food-price">{{ f.price | number:'1.0-0' }}đ</div>
+        <div class="pos-food-price">{{ f.price | vnd }}</div>
         @if (cart.cap(f) === 0) {
           <span class="pos-badge pos-badge--danger">{{ 'pos.food.soldOut' | translate }}</span>
         } @else if (cart.cap(f) !== null) {
@@ -131,7 +131,7 @@
         <div class="pos-food-line">
           <span>{{ l.quantity }} × {{ l.name }}</span>
           <span>
-            {{ cart.foodPrice(l) * l.quantity | number:'1.0-0' }}đ
+            {{ cart.foodPrice(l) * l.quantity | vnd }}
             @if (l.overridePrice !== undefined) {
               <mat-icon class="pos-flag" [matTooltip]="'pos.override.active' | translate">edit</mat-icon>
             }

@@ -1,15 +1,8 @@
 import { Component } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { SharedModule, register, selectAuthLoading, selectAuthError } from 'CinemaLib';
-
-/** Group validator: password and confirmPassword must match. */
-function passwordsMatch(group: AbstractControl): ValidationErrors | null {
-  const p = group.get('password')?.value;
-  const c = group.get('confirmPassword')?.value;
-  return p && c && p !== c ? { passwordMismatch: true } : null;
-}
+import { SharedModule, register, selectAuthLoading, selectAuthError, VN_PHONE_PATTERN, passwordsMatch } from 'CinemaLib';
 
 @Component({
   selector: 'app-register',
@@ -32,10 +25,10 @@ export class RegisterComponent {
     this.form = this._fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required, Validators.pattern(/^(?:\+84|0)\d{9,10}$/)]],
+      phone: ['', [Validators.required, Validators.pattern(VN_PHONE_PATTERN)]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
-    }, { validators: passwordsMatch });
+    }, { validators: passwordsMatch() });
   }
 
   onSubmit(): void {

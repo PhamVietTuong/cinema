@@ -18,7 +18,7 @@
         <div class="option-info">
           <span class="option-name">{{ row.patronCategoryName }}</span>
           <span class="option-kind-badge">{{ seatKindLabel(row.isDouble) | translate }}</span>
-          <span class="option-price">{{ row.price | number:'1.0-0' }}đ</span>
+          <span class="option-price">{{ row.price | vnd }}</span>
         </div>
         <div class="option-qty">
           <button type="button" (click)="decTicket(row)" [disabled]="!ticketQty[row.patronCategoryId!]">−</button>
@@ -63,7 +63,7 @@
         <div class="food-body">
           <div class="option-info">
             <span class="option-name">{{ f.name }}</span>
-            <span class="option-price">{{ f.price | number:'1.0-0' }}đ</span>
+            <span class="option-price">{{ f.price | vnd }}</span>
             <span class="sold-out-badge" *ngIf="f.isOutOfStock">{{ 'booking.errors.soldOut' | translate }}</span>
           </div>
           <div class="option-qty">

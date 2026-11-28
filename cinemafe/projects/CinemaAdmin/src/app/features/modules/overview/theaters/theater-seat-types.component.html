@@ -61,7 +61,7 @@
         </div>
       </mat-card-content>
     </mat-card>
-    <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>event_seat</mat-icon><p>{{ 'theaters.seatTypes.empty' | translate }}</p></div>
+    <cl-empty-state *ngIf="!pageRows.length" icon="event_seat" messageKey="theaters.seatTypes.empty"></cl-empty-state>
 
     <mat-paginator
       *ngIf="total > 0"

@@ -1,3 +1,4 @@
+@use '../../theme/mixins' as m;
 :host { display: block; }
 
 // Seat edge length is configurable per app/breakpoint via --cl-seat-size (default 34px keeps
@@ -123,7 +124,7 @@ $seat-gap: 7px;
 }
 
 /* Motion: rows cascade in, a picked seat pops, the screen glow breathes. */
-@media (prefers-reduced-motion: no-preference) {
+@include m.motion-ok {
   .seat-row { animation: sm-row-in 0.4s var(--cx-ease, ease) both; animation-delay: calc(var(--row, 0) * 45ms); }
   .seat.selected { animation: sm-pop 0.32s var(--cx-ease, ease); }
   .screen-arc { animation: sm-screen-glow 3.2s ease-in-out infinite; }

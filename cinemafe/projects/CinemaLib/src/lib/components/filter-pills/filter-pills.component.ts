@@ -8,6 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { FilterBarField } from '../filter-bar/filter-bar.component';
+import { MEDIA_TABLET_SMALL } from '../../utils/breakpoints';
+import { toDateKey } from '../../utils/date-range';
 
 /** A one-tap fill for the time-range pill (both ends are 'HH:mm'). */
 export interface FilterPillsTimePreset {
@@ -37,8 +39,6 @@ interface MenuOption {
 }
 
 const pad = (n: number): string => String(n).padStart(2, '0');
-/** Local calendar date as `yyyy-MM-dd` (the format a date `<input>` and the API use). */
-const isoDate = (d: Date): string => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 /** Case- and accent-insensitive text for the in-menu search. */
 const fold = (s: string): string => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
@@ -46,8 +46,8 @@ const fold = (s: string): string => s.normalize('NFD').replace(/[̀-ͯ]/g, '').r
 const SEARCHABLE_FROM = 12;
 /** Width of the desktop popover (keep in sync with the scss). */
 const MENU_WIDTH = 320;
-/** Matches the shared `tablet-small` mixin boundary: at or below it menus become a bottom sheet. */
-const SHEET_QUERY = '(max-width: 768px)';
+/** At or below the shared `tablet-small` boundary menus become a bottom sheet. */
+const SHEET_QUERY = MEDIA_TABLET_SMALL;
 let nextId = 0;
 
 /**
@@ -162,7 +162,7 @@ export class FilterPillsComponent {
       } else {
         label = new Intl.DateTimeFormat(lang.startsWith('en') ? 'en-US' : 'vi-VN', { weekday: 'short' }).format(d);
       }
-      out.push({ value: isoDate(d), text: label, hint: `${pad(d.getDate())}/${pad(d.getMonth() + 1)}` });
+      out.push({ value: toDateKey(d), text: label, hint: `${pad(d.getDate())}/${pad(d.getMonth() + 1)}` });
     }
     return out;
   });
@@ -206,8 +206,8 @@ export class FilterPillsComponent {
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
-    if (v === isoDate(today)) { return this._translate.instant('clFilterPills.today'); }
-    if (v === isoDate(tomorrow)) { return this._translate.instant('clFilterPills.tomorrow'); }
+    if (v === toDateKey(today)) { return this._translate.instant('clFilterPills.today'); }
+    if (v === toDateKey(tomorrow)) { return this._translate.instant('clFilterPills.tomorrow'); }
     const [y, m, d] = v.split('-');
     return y && m && d ? `${d}/${m}/${y}` : v;
   }

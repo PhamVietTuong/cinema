@@ -7,9 +7,6 @@
 .rp-range .ad-field { display: flex; flex-direction: column; gap: 4px; }
 
 .rp-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
-.rp-kpi { display: flex; flex-direction: column; gap: 8px; }
-.rp-kpi-label { color: var(--ad-muted); font-size: 13px; }
-.rp-kpi-val { font-family: var(--ad-font-head); font-size: 28px; font-weight: 700; color: var(--ad-on); }
 
 /* Daily trend — column bars */
 .rp-trend { display: flex; align-items: flex-end; gap: 4px; height: 200px; overflow-x: auto; padding-top: 8px; }

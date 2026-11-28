@@ -217,7 +217,7 @@
       "subtotal": "Subtotal ({{count}} seats)",
       "comboTotal": "Total",
       "minutes": "{{count}} min",
-      "discountSaves": "{{code}} saves {{amount}}đ",
+      "discountSaves": "{{code}} saves {{amount}}",
       "discountInvalid": "This code is not valid for this order.",
       "discountRemove": "Remove",
       "pointsAvailableLabel": "points available",

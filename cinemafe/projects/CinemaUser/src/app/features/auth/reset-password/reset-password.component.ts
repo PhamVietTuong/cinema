@@ -1,16 +1,10 @@
 import { ChangeDetectorRef, Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule } from 'CinemaLib';
+import { SharedModule, passwordsMatch } from 'CinemaLib';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../../environments/environment';
-
-function passwordsMatch(group: AbstractControl): ValidationErrors | null {
-  const p = group.get('newPassword')?.value;
-  const c = group.get('confirmPassword')?.value;
-  return p && c && p !== c ? { passwordMismatch: true } : null;
-}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,7 +28,7 @@ export class ResetPasswordComponent {
   form: FormGroup = this._fb.group({
     newPassword: ['', [Validators.required, Validators.minLength(8)]],
     confirmPassword: ['', Validators.required],
-  }, { validators: passwordsMatch });
+  }, { validators: passwordsMatch('newPassword') });
   loading = false;
   error: string | null = null;
   invalidLink = !this._email || !this._token;

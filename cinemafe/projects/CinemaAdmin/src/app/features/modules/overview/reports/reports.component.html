@@ -19,18 +19,9 @@
 
   <!-- KPI cards -->
   <div class="rp-kpis">
-    <div class="ad-card rp-kpi">
-      <span class="rp-kpi-label">{{ 'reports.totalRevenue' | translate }}</span>
-      <span class="rp-kpi-val">{{ total | number:'1.0-0' }}đ</span>
-    </div>
-    <div class="ad-card rp-kpi">
-      <span class="rp-kpi-label">{{ 'reports.ticketRevenue' | translate }}</span>
-      <span class="rp-kpi-val">{{ ticketsTotal | number:'1.0-0' }}đ</span>
-    </div>
-    <div class="ad-card rp-kpi">
-      <span class="rp-kpi-label">{{ 'reports.moviesWithRevenue' | translate }}</span>
-      <span class="rp-kpi-val">{{ byMovie.length }}</span>
-    </div>
+    <cl-kpi-card [label]="'reports.totalRevenue' | translate" [value]="total | vnd"></cl-kpi-card>
+    <cl-kpi-card [label]="'reports.ticketRevenue' | translate" [value]="ticketsTotal | vnd"></cl-kpi-card>
+    <cl-kpi-card [label]="'reports.moviesWithRevenue' | translate" [value]="byMovie.length"></cl-kpi-card>
   </div>
 
   <!-- Trend by day -->
@@ -57,7 +48,7 @@
       <div class="rp-row" *ngFor="let m of byMovie">
         <span class="rp-row-name">{{ m.name }}</span>
         <span class="rp-row-track"><span class="rp-row-fill" [style.width.%]="pct(m.total, maxMovie)"></span></span>
-        <span class="rp-row-val">{{ m.total | number:'1.0-0' }}đ</span>
+        <span class="rp-row-val">{{ m.total | vnd }}</span>
       </div>
     </div>
   </div>
@@ -72,10 +63,10 @@
       <div class="rp-row" *ngFor="let t of byTheater">
         <span class="rp-row-name">{{ t.name }}</span>
         <span class="rp-row-track"><span class="rp-row-fill" [style.width.%]="pct(t.total, maxTheater)"></span></span>
-        <span class="rp-row-val">{{ t.total | number:'1.0-0' }}đ</span>
+        <span class="rp-row-val">{{ t.total | vnd }}</span>
       </div>
     </div>
   </div>
 
-  <ng-template #noData><div class="ad-empty"><mat-icon>bar_chart</mat-icon><p>{{ 'reports.noData' | translate }}</p></div></ng-template>
+  <ng-template #noData><cl-empty-state icon="bar_chart" messageKey="reports.noData"></cl-empty-state></ng-template>
 </div>

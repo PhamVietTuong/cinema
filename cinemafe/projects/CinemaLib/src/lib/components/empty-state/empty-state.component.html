@@ -1,0 +1,35 @@
+@if (illustrated()) {
+  <div class="es" role="status">
+    <div class="es-art" aria-hidden="true">
+      <svg viewBox="0 0 120 120" class="es-svg" focusable="false">
+        <circle cx="60" cy="60" r="52" class="es-ring"/>
+        <circle cx="60" cy="60" r="38" class="es-disc"/>
+        <path d="M10 92h8M102 92h8M16 28l5 5M104 28l-5 5" class="es-spark"/>
+      </svg>
+      <mat-icon class="es-icon">{{ icon() }}</mat-icon>
+    </div>
+    <h2 class="es-title">{{ messageKey() | translate }}</h2>
+    @if (hintText()) {
+      <p class="es-hint">{{ hintText() }}</p>
+    } @else if (hintKey()) {
+      <p class="es-hint">{{ hintKey()! | translate }}</p>
+    }
+    @if (ctaKey()) {
+      @if (ctaLink()) {
+        <a mat-stroked-button class="es-cta" [routerLink]="ctaLink()">{{ ctaKey()! | translate }}</a>
+      } @else {
+        <button mat-stroked-button type="button" class="es-cta" (click)="cta.emit()">{{ ctaKey()! | translate }}</button>
+      }
+    }
+  </div>
+} @else {
+  <div class="ad-empty">
+    <mat-icon>{{ icon() }}</mat-icon>
+    <p>{{ messageKey() | translate }}</p>
+    @if (hintText()) {
+      <p class="cl-empty-hint">{{ hintText() }}</p>
+    } @else if (hintKey()) {
+      <p class="cl-empty-hint">{{ hintKey()! | translate }}</p>
+    }
+  </div>
+}

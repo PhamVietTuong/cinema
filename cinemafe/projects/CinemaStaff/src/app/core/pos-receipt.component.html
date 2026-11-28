@@ -4,7 +4,7 @@
     <p class="pos-receipt-code">{{ receipt().result.invoiceCode }}</p>
     <ng-content />
     @if ((receipt().result.changeDue ?? 0) > 0) {
-      <p class="pos-receipt-change">{{ 'pos.receipt.changeDue' | translate }}: <strong>{{ receipt().result.changeDue | number:'1.0-0' }}đ</strong></p>
+      <p class="pos-receipt-change">{{ 'pos.receipt.changeDue' | translate }}: <strong>{{ receipt().result.changeDue | vnd }}</strong></p>
     }
   </div>
   <div class="pos-receipt-actions">
@@ -30,7 +30,7 @@
     </header>
     <cl-price-breakdown [lines]="lines()" [adjustments]="adjustments()" [total]="receipt().result.finalAmount ?? 0" />
     @if ((receipt().result.changeDue ?? 0) > 0) {
-      <p class="pos-print-change">{{ 'pos.receipt.changeDue' | translate }}: {{ receipt().result.changeDue | number:'1.0-0' }}đ</p>
+      <p class="pos-print-change">{{ 'pos.receipt.changeDue' | translate }}: {{ receipt().result.changeDue | vnd }}</p>
     }
   </section>
 

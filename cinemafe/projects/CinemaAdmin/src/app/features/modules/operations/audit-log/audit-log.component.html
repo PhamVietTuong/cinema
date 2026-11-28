@@ -77,7 +77,7 @@
           <div class="ad-mobile-card-row"><span>{{ 'auditLog.col.reason' | translate }}</span><span>{{ row.reason }}</span></div>
         </mat-card-content>
       </mat-card>
-      <div *ngIf="!pageRows.length" class="ad-empty"><mat-icon>fact_check</mat-icon><p>{{ 'auditLog.empty' | translate }}</p></div>
+      <cl-empty-state *ngIf="!pageRows.length" icon="fact_check" messageKey="auditLog.empty"></cl-empty-state>
 
       <mat-paginator
         *ngIf="total > 0"

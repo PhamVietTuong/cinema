@@ -1,3 +1,4 @@
+@use './mixins' as m;
 // ╔═══════════════════════════════════════════════════════════════════════════╗
 // ║  Shared scale                                                              ║
 // ║                                                                            ║
@@ -56,7 +57,7 @@
 }
 
 // Motion is decoration; never let it block someone who has opted out.
-@media (prefers-reduced-motion: reduce) {
+@include m.motion-reduce {
   :root {
     --cx-dur-fast: 0ms;
     --cx-dur:      0ms;

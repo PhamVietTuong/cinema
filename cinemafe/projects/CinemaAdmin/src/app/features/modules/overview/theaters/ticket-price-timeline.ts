@@ -1,4 +1,4 @@
-import { CinemaServiceAgent, DayOfWeekValues, MultiplierBand, multiplierBand } from 'CinemaLib';
+import { CinemaServiceAgent, DayOfWeekValues, MultiplierBand, multiplierBand, toDateKey } from 'CinemaLib';
 
 type TimeSlotDTO = CinemaServiceAgent.TimeSlotDTO;
 type TicketPriceDTO = CinemaServiceAgent.TicketPriceDTO;
@@ -63,11 +63,7 @@ function parseMinutes(hhmm: string | undefined): number | null {
 /** `yyyy-MM-dd` built from local date parts — never `toISOString()`, which can roll to the wrong
  * calendar day across a timezone offset. Used for "today" on the client. */
 export function todayIsoLocal(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return toDateKey(new Date());
 }
 
 /** `yyyy-MM-dd` for a NSwag-parsed DateOnly value: these parse as UTC midnight, so the UTC slice is the

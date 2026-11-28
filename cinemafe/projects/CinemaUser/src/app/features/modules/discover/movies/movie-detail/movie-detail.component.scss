@@ -90,7 +90,7 @@
   background: var(--ml-panel); border: 1px solid var(--ml-rule); color: var(--ml-ink);
   transition: border-color 0.15s ease, background 0.15s ease;
   &:hover:not(.active) { border-color: var(--ml-rule-strong); }
-  @media (prefers-reduced-motion: no-preference) { &.active { animation: dt-pop 0.28s var(--cx-ease, ease); } }
+  @include m.motion-ok { &.active { animation: dt-pop 0.28s var(--cx-ease, ease); } }
   &.active { background: var(--ml-action); border-color: var(--ml-action); color: var(--ml-on-action);
     .date-tab-date, .date-tab-count { color: var(--ml-on-action); opacity: 0.8; } }
 }
