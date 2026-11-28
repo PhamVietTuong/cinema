@@ -7,13 +7,15 @@ import { of } from 'rxjs';
 import { CinemaServiceAgent, SharedModule } from 'CinemaLib';
 import { App } from './app';
 import { ChatbotComponent } from './shared/chatbot/chatbot.component';
+import { SearchBoxComponent } from './shared/search-box/search-box.component';
+import { BackToTopComponent } from './shared/back-to-top/back-to-top.component';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [App],
-      // ChatbotComponent is standalone and used by the App template; app.module imports it too.
-      imports: [NoopAnimationsModule, SharedModule, ChatbotComponent],
+      // ChatbotComponent is standalone and used by the App template; app.module imports it (and the search box / back-to-top) too.
+      imports: [NoopAnimationsModule, SharedModule, ChatbotComponent, SearchBoxComponent, BackToTopComponent],
       providers: [
         provideRouter([]),
         provideMockStore(),
