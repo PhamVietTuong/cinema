@@ -21,10 +21,10 @@
   } @else {
     @if (kpis(); as k) {
       <div class="kpis">
-        <div class="ad-card kpi"><span class="kpi-label">{{ 'salesReports.kpi.paidInvoices' | translate }}</span><span class="kpi-val">{{ k.paidInvoices | number: '1.0-0' }}</span></div>
-        <div class="ad-card kpi"><span class="kpi-label">{{ 'salesReports.kpi.ticketsSold' | translate }}</span><span class="kpi-val">{{ k.ticketsSold | number: '1.0-0' }}</span></div>
-        <div class="ad-card kpi"><span class="kpi-label">{{ 'salesReports.kpi.attachRate' | translate }}</span><span class="kpi-val">{{ k.attachRate | percent: '1.0-1' }}</span></div>
-        <div class="ad-card kpi"><span class="kpi-label">{{ 'salesReports.kpi.averageSpend' | translate }}</span><span class="kpi-val">{{ k.averageSpendPerHead | vnd }}</span></div>
+        <cl-kpi-card variant="compact" [label]="'salesReports.kpi.paidInvoices' | translate" [value]="k.paidInvoices | number: '1.0-0'"></cl-kpi-card>
+        <cl-kpi-card variant="compact" [label]="'salesReports.kpi.ticketsSold' | translate" [value]="k.ticketsSold | number: '1.0-0'"></cl-kpi-card>
+        <cl-kpi-card variant="compact" [label]="'salesReports.kpi.attachRate' | translate" [value]="k.attachRate | percent: '1.0-1'"></cl-kpi-card>
+        <cl-kpi-card variant="compact" [label]="'salesReports.kpi.averageSpend' | translate" [value]="k.averageSpendPerHead | vnd"></cl-kpi-card>
       </div>
     }
 

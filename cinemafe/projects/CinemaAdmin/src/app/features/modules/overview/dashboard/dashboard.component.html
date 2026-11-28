@@ -8,34 +8,10 @@
 
   <!-- KPI cards -->
   <div class="kpi-grid">
-    <div class="ad-card kpi">
-      <div class="kpi-head">
-        <span class="kpi-label">{{ 'dashboard.kpiMovies' | translate }}</span>
-        <span class="kpi-icon i-violet"><mat-icon>movie</mat-icon></span>
-      </div>
-      <span class="kpi-value">{{ stats.movies }}</span>
-    </div>
-    <div class="ad-card kpi">
-      <div class="kpi-head">
-        <span class="kpi-label">{{ 'dashboard.kpiTheaters' | translate }}</span>
-        <span class="kpi-icon i-blue"><mat-icon>theaters</mat-icon></span>
-      </div>
-      <span class="kpi-value">{{ stats.theaters }}</span>
-    </div>
-    <div class="ad-card kpi">
-      <div class="kpi-head">
-        <span class="kpi-label">{{ 'dashboard.kpiInvoicesToday' | translate }}</span>
-        <span class="kpi-icon i-orange"><mat-icon>receipt_long</mat-icon></span>
-      </div>
-      <span class="kpi-value">{{ stats.invoicesToday }}</span>
-    </div>
-    <div class="ad-card kpi">
-      <div class="kpi-head">
-        <span class="kpi-label">{{ 'dashboard.kpiRevenueToday' | translate }}</span>
-        <span class="kpi-icon i-green"><mat-icon>monetization_on</mat-icon></span>
-      </div>
-      <span class="kpi-value">{{ stats.revenueToday | vnd }}</span>
-    </div>
+    <cl-kpi-card variant="stub" [label]="'dashboard.kpiMovies' | translate" icon="movie" [value]="stats.movies"></cl-kpi-card>
+    <cl-kpi-card variant="stub" [label]="'dashboard.kpiTheaters' | translate" icon="theaters" [value]="stats.theaters"></cl-kpi-card>
+    <cl-kpi-card variant="stub" [label]="'dashboard.kpiInvoicesToday' | translate" icon="receipt_long" [value]="stats.invoicesToday"></cl-kpi-card>
+    <cl-kpi-card variant="stub" [label]="'dashboard.kpiRevenueToday' | translate" icon="monetization_on" [value]="stats.revenueToday | vnd"></cl-kpi-card>
   </div>
 
   <!-- Quick actions -->

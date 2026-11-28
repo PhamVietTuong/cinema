@@ -19,18 +19,9 @@
 
   <!-- KPI cards -->
   <div class="rp-kpis">
-    <div class="ad-card rp-kpi">
-      <span class="rp-kpi-label">{{ 'reports.totalRevenue' | translate }}</span>
-      <span class="rp-kpi-val">{{ total | vnd }}</span>
-    </div>
-    <div class="ad-card rp-kpi">
-      <span class="rp-kpi-label">{{ 'reports.ticketRevenue' | translate }}</span>
-      <span class="rp-kpi-val">{{ ticketsTotal | vnd }}</span>
-    </div>
-    <div class="ad-card rp-kpi">
-      <span class="rp-kpi-label">{{ 'reports.moviesWithRevenue' | translate }}</span>
-      <span class="rp-kpi-val">{{ byMovie.length }}</span>
-    </div>
+    <cl-kpi-card [label]="'reports.totalRevenue' | translate" [value]="total | vnd"></cl-kpi-card>
+    <cl-kpi-card [label]="'reports.ticketRevenue' | translate" [value]="ticketsTotal | vnd"></cl-kpi-card>
+    <cl-kpi-card [label]="'reports.moviesWithRevenue' | translate" [value]="byMovie.length"></cl-kpi-card>
   </div>
 
   <!-- Trend by day -->
