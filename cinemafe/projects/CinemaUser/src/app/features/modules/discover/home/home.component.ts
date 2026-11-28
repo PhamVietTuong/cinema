@@ -42,30 +42,19 @@ export class HomeComponent implements OnInit {
   comingSoon$: Observable<any[]>;
   loading$: Observable<boolean>;
   featuredMovie$: Observable<any>;
-  /** Top 10 of the now-showing movies by rating count, then average rating (client-side, no endpoint). */
-  top10$: Observable<CinemaServiceAgent.MovieDTO[]>;
 
   /** Personalised picks (top-rated for anonymous visitors). */
   recommended: any[] = [];
   promotions: CinemaServiceAgent.PromotionProgramDTO[] = [];
   tiers: CinemaServiceAgent.MemberShipDTO[] = [];
-  /** Bắp nước & combo: distinct, orderable combos across theaters; the section hides when empty or on error. */
-  combos: CinemaServiceAgent.FoodAndDrinkDTO[] = [];
-  combosLoading = true;
   theaters: CinemaServiceAgent.TheaterDTO[] = [];
   theatersLoading = true;
-  readonly comboSkeletons = [0, 1, 2, 3];
-  readonly top10Ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  readonly theaterSkeletons = [0, 1, 2, 3];
 
   constructor(private _store: Store) {
     this.nowShowing$ = this._store.select(selectNowShowing);
     this.comingSoon$ = this._store.select(selectComingSoon);
     this.loading$ = this._store.select(selectMoviesLoading);
-    this.top10$ = this.nowShowing$.pipe(
-      map(movies => (movies ?? []).slice()
-        .sort((a, b) => (b.ratingCount ?? 0) - (a.ratingCount ?? 0) || (b.averageRating ?? 0) - (a.averageRating ?? 0))
-        .slice(0, 10)),
-    );
     // Cycles through the first four now-showing movies; reduced-motion visitors keep the first one.
     const rotate = window.matchMedia('(prefers-reduced-motion: reduce)').matches
       ? of(0)
@@ -99,26 +88,6 @@ export class HomeComponent implements OnInit {
           this._cdr.markForCheck();
         },
         error: () => this._cdr.markForCheck(),
-      });
-    this._cinema.getFoodAndDrinks(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 100 }))
-      .subscribe({
-        next: r => {
-          const seen = new Set<string>();
-          this.combos = (r.results ?? [])
-            .filter(f => f.isCombo && f.isAvailable && !f.isOutOfStock)
-            .filter(f => {
-              const key = (f.name ?? '').trim().toLowerCase();
-              if (seen.has(key)) {
-                return false;
-              }
-              seen.add(key);
-              return true;
-            })
-            .slice(0, 12);
-          this.combosLoading = false;
-          this._cdr.markForCheck();
-        },
-        error: () => { this.combos = []; this.combosLoading = false; this._cdr.markForCheck(); },
       });
     this._cinema.getTheaters(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 50 }))
       .subscribe({

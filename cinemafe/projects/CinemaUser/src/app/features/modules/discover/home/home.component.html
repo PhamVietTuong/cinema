@@ -107,32 +107,6 @@
   }
 </section>
 
-<!-- ── TOP 10 TRENDING ─────────────────────────────────────────────────────── -->
-@if ((top10$ | async); as top) {
-  @if (top.length) {
-<section class="section">
-  <div class="section-header cu-reveal" appRevealOnScroll>
-    <div class="section-titlewrap">
-      <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
-      <h2 class="section-title">{{ 'home.sections.top10' | translate }}</h2>
-    </div>
-    <a routerLink="/movies" class="section-more">{{ 'home.sections.viewAll' | translate }} <mat-icon>chevron_right</mat-icon></a>
-  </div>
-  <app-scroll-row>
-    @for (movie of top; track movie.id; let i = $index) {
-      <a class="top-card" [routerLink]="movieDetailCommands(movie.slug!)" [attr.aria-label]="(i + 1) + '. ' + movie.title">
-        <span class="top-rank" aria-hidden="true">{{ i + 1 }}</span>
-        <span class="top-poster">
-          <img loading="lazy" decoding="async" [src]="movie.posterUrl || 'assets/no-poster.jpg'" [alt]="movie.title" (error)="onImgError($event)">
-        </span>
-        <span class="top-title">{{ movie.title }}</span>
-      </a>
-    }
-  </app-scroll-row>
-</section>
-  }
-}
-
 <!-- ── COMING SOON ─────────────────────────────────────────────────────────── -->
 <section class="section section--dark">
   <div class="section-header cu-reveal" appRevealOnScroll>
@@ -146,42 +120,6 @@
     <app-movie-card *ngFor="let movie of comingSoon$ | async" [movie]="movie" variant="coming" [fixedWidth]="true" [actions]="true"></app-movie-card>
   </app-scroll-row>
 </section>
-
-<!-- ── FOOD & COMBOS ───────────────────────────────────────────────────────── -->
-@if (combosLoading || combos.length) {
-<section class="section">
-  <div class="section-header cu-reveal" appRevealOnScroll>
-    <div class="section-titlewrap">
-      <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
-      <h2 class="section-title">{{ 'home.sections.combos' | translate }}</h2>
-    </div>
-  </div>
-  @if (combosLoading) {
-    <app-scroll-row aria-busy="true">
-      @for (s of comboSkeletons; track s) {
-        <div class="cu-skeleton-card combo-skeleton"><i class="cu-sk cu-sk--combo"></i><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></div>
-      }
-    </app-scroll-row>
-  } @else {
-    <app-scroll-row>
-      @for (c of combos; track c.id) {
-        <article class="combo-card">
-          <div class="combo-img">
-            <img loading="lazy" decoding="async" [src]="c.imageUrl || 'assets/no-poster.jpg'" [alt]="c.name" (error)="onImgError($event)">
-          </div>
-          <div class="combo-body">
-            <h3 class="combo-name">{{ c.name }}</h3>
-            @if (c.description) {
-              <p class="combo-desc">{{ c.description }}</p>
-            }
-            <span class="combo-price">{{ c.price | number:'1.0-0' }}đ</span>
-          </div>
-        </article>
-      }
-    </app-scroll-row>
-  }
-</section>
-}
 
 <!-- ── PROMOTIONS ──────────────────────────────────────────────────────────── -->
 <section class="section" *ngIf="promotions.length">
@@ -218,7 +156,7 @@
   </div>
   @if (theatersLoading) {
     <div class="theater-grid" aria-busy="true">
-      @for (s of comboSkeletons; track s) {
+      @for (s of theaterSkeletons; track s) {
         <div class="theater-card"><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></div>
       }
     </div>
