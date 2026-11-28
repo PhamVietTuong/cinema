@@ -83,14 +83,7 @@ public class AgeRestrictionManager : IAgeRestrictionManager
 
     public async Task<DefaultSearchResults<AgeRestrictionDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredAgeRestrictionQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.AgeRestrictionStore.CountAsync(query);
-        var items = await _uow.AgeRestrictionStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<AgeRestriction, AgeRestrictionDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<AgeRestriction, AgeRestrictionDTO>(_uow.AgeRestrictionStore, search, GetFilteredAgeRestrictionQuery, ApplySort);
     }
 
     public async Task<AgeRestrictionDTO> GetByIdAsync(Guid id)

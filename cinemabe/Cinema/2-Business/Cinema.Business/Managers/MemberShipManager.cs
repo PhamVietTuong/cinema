@@ -78,14 +78,7 @@ public class MemberShipManager : IMemberShipManager
 
     public async Task<DefaultSearchResults<MemberShipDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredMemberShipQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.MemberShipStore.CountAsync(query);
-        var items = await _uow.MemberShipStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<MemberShip, MemberShipDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<MemberShip, MemberShipDTO>(_uow.MemberShipStore, search, GetFilteredMemberShipQuery, ApplySort);
     }
 
     public async Task<MemberShipDTO> GetByIdAsync(Guid id)

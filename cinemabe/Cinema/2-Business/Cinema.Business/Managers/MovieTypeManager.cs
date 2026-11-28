@@ -69,14 +69,7 @@ public class MovieTypeManager : IMovieTypeManager
 
     public async Task<DefaultSearchResults<MovieTypeDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredMovieTypeQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.MovieTypeStore.CountAsync(query);
-        var items = await _uow.MovieTypeStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<MovieType, MovieTypeDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<MovieType, MovieTypeDTO>(_uow.MovieTypeStore, search, GetFilteredMovieTypeQuery, ApplySort);
     }
 
     public async Task<MovieTypeDTO> GetByIdAsync(Guid id)

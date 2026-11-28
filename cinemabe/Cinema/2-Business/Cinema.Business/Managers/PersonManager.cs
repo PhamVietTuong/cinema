@@ -71,14 +71,7 @@ public class PersonManager : IPersonManager
 
     public async Task<DefaultSearchResults<PersonDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.PersonStore.CountAsync(query);
-        var items = await _uow.PersonStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<Person, PersonDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<Person, PersonDTO>(_uow.PersonStore, search, GetFilteredQuery, ApplySort);
     }
 
     public async Task<PersonDTO> GetByIdAsync(Guid id)

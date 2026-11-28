@@ -71,14 +71,7 @@ public class RoomTypeManager : IRoomTypeManager
 
     public async Task<DefaultSearchResults<RoomTypeDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredRoomTypeQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.RoomTypeStore.CountAsync(query);
-        var items = await _uow.RoomTypeStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<RoomType, RoomTypeDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<RoomType, RoomTypeDTO>(_uow.RoomTypeStore, search, GetFilteredRoomTypeQuery, ApplySort);
     }
 
     public async Task<RoomTypeDTO> GetByIdAsync(Guid id)

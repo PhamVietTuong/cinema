@@ -93,14 +93,7 @@ public class HolidayManager : IHolidayManager
 
     public async Task<DefaultSearchResults<HolidayDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredHolidayQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.HolidayStore.CountAsync(query);
-        var items = await _uow.HolidayStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<Holiday, HolidayDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<Holiday, HolidayDTO>(_uow.HolidayStore, search, GetFilteredHolidayQuery, ApplySort);
     }
 
     public async Task<HolidayDTO> GetByIdAsync(Guid id)

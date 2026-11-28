@@ -118,14 +118,7 @@ public class TicketPriceManager : ITicketPriceManager
 
     public async Task<DefaultSearchResults<TicketPriceDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredTicketPriceQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.TicketPriceStore.CountAsync(query);
-        var items = await _uow.TicketPriceStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<TicketPrice, TicketPriceDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<TicketPrice, TicketPriceDTO>(_uow.TicketPriceStore, search, GetFilteredTicketPriceQuery, ApplySort);
     }
 
     public async Task<TicketPriceDTO> GetByIdAsync(Guid id)
