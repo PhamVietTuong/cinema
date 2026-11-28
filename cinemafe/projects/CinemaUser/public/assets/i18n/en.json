@@ -332,6 +332,7 @@
       "error": "Could not load showtimes. Please try again."
     },
     "theaters": {
+      "rooms": "{{n}} screens",
       "view": "View theater"
     },
     "why": {

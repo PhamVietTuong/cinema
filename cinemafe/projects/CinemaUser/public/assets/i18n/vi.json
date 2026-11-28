@@ -332,6 +332,7 @@
       "error": "Không tải được suất chiếu. Vui lòng thử lại."
     },
     "theaters": {
+      "rooms": "{{n}} phòng chiếu",
       "view": "Xem rạp"
     },
     "why": {

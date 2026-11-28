@@ -157,17 +157,27 @@
   @if (theatersLoading) {
     <div class="theater-grid" aria-busy="true">
       @for (s of theaterSkeletons; track s) {
-        <div class="theater-card"><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></div>
+        <div class="theater-card"><i class="cu-sk cu-sk--theater"></i><span class="theater-body"><i class="cu-sk cu-sk--line"></i><i class="cu-sk cu-sk--line cu-sk--short"></i></span></div>
       }
     </div>
   } @else {
     <div class="theater-grid">
-      @for (t of theaters.slice(0, 8); track t.id) {
+      @for (t of theaters.slice(0, 6); track t.id) {
         <a class="theater-card" routerLink="/theaters">
-          <mat-icon class="theater-icon">location_city</mat-icon>
-          <h3 class="theater-name">{{ t.name }}</h3>
-          <p class="theater-addr">{{ t.address }}{{ t.city ? ', ' + t.city : '' }}</p>
-          <span class="theater-link">{{ 'home.theaters.view' | translate }} <mat-icon>chevron_right</mat-icon></span>
+          <span class="theater-img">
+            <img loading="lazy" decoding="async" [src]="t.imageUrl || 'assets/no-poster.jpg'" [alt]="t.name">
+            @if (t.city) {
+              <span class="theater-city"><mat-icon>location_on</mat-icon>{{ t.city }}</span>
+            }
+            @if (t.roomCount) {
+              <span class="theater-rooms">{{ 'home.theaters.rooms' | translate:{ n: t.roomCount } }}</span>
+            }
+          </span>
+          <span class="theater-body">
+            <h3 class="theater-name">{{ t.name }}</h3>
+            <p class="theater-addr">{{ t.address }}</p>
+            <span class="theater-link">{{ 'home.theaters.view' | translate }} <mat-icon>chevron_right</mat-icon></span>
+          </span>
         </a>
       }
     </div>

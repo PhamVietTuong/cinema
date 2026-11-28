@@ -504,26 +504,83 @@
 // ── Our theaters ──────────────────────────────────────────────────────────────
 .theater-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
 
+// Image-led card (variant B1): photo with a gold city badge and room count over it.
 .theater-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 20px;
   text-decoration: none;
   background: var(--ml-panel);
   border: 1px solid var(--ml-rule);
-  border-radius: var(--ml-r-md);
-  transition: border-color 0.18s;
+  border-radius: var(--ml-r-lg);
+  overflow: hidden;
+  transition: border-color 0.18s, transform 0.18s;
 
-  &:hover { border-color: var(--ml-action-strong); }
+  &:hover { border-color: var(--ml-action-strong); transform: translateY(-2px); }
   &:focus-visible { outline: 2px solid var(--ml-action); outline-offset: 2px; }
 }
 
-.theater-icon { color: var(--ml-action-strong); }
+@media (prefers-reduced-motion: reduce) {
+  .theater-card:hover { transform: none; }
+}
+
+.theater-img {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: var(--ml-paper-2);
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(20, 17, 13, 0.72), transparent 55%);
+    pointer-events: none;
+  }
+}
+
+.theater-city {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: var(--ml-action);
+  color: var(--ml-on-action);
+  border-radius: var(--ml-r-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+}
+
+.theater-rooms {
+  position: absolute;
+  z-index: 1;
+  bottom: 10px;
+  right: 12px;
+  color: #f4ead9;
+  font-family: var(--ml-font-data);
+  font-size: 0.76rem;
+}
+
+.theater-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  padding: 16px 18px 6px;
+  border-top: 3px solid var(--ml-action);
+}
 
 .theater-name {
   margin: 0;
@@ -534,20 +591,22 @@
   color: var(--ml-ink);
 }
 
-.theater-addr { margin: 0; font-size: 0.88rem; line-height: 1.5; color: var(--ml-muted); }
+.theater-addr { margin: 0; font-size: 0.86rem; line-height: 1.5; color: var(--ml-muted); }
 
 .theater-link {
   margin-top: auto;
-  padding-top: 6px;
   display: flex;
   align-items: center;
   min-height: 44px;
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--ml-action-strong);
+  border-top: 1px dashed var(--ml-rule-strong);
 
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
 }
+
+.cu-sk--theater { display: block; aspect-ratio: 16 / 9; }
 
 // ── Why us / stats strip ──────────────────────────────────────────────────────
 .why {
@@ -614,13 +673,14 @@
 }
 
 @include m.tablet {
+  .theater-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .why { padding: 48px 24px; }
   .why-props { grid-template-columns: 1fr; }
 }
 
 @include m.tablet-small {
   .why { padding: 40px 20px; }
-  .theater-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .theater-grid { gap: 14px; }
 }
 
 @include m.phone {

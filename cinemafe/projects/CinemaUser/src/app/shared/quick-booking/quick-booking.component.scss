@@ -1,67 +1,83 @@
 @use 'lib/theme/mixins' as m;
 
+// "Pill bar" (variant A1): one rounded row of four borderless segments split by dashed rules,
+// overlapping the hero's bottom edge. Native <select>s stay for accessibility.
 :host { display: block; padding: 0 40px; }
 
 .qb {
   position: relative;
-  max-width: 1200px;
-  margin: -28px auto 0;
-  padding: 18px 20px;
-  display: grid;
-  grid-template-columns: auto repeat(4, minmax(0, 1fr)) auto;
-  align-items: end;
-  gap: 14px;
+  max-width: 1120px;
+  margin: -34px auto 0;
+  display: flex;
+  align-items: stretch;
+  padding: 6px;
   background: var(--ml-panel);
-  border: 1px solid var(--ml-rule);
-  border-top: 3px solid var(--ml-action);
-  border-radius: var(--ml-r-lg);
+  border: 1px solid var(--ml-rule-strong);
+  border-radius: var(--ml-r-full);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   z-index: 2;
 }
 
-.qb-title {
-  align-self: center;
+.qb-seg {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--ml-font-head);
-  font-size: 1.05rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--ml-ink);
+  gap: 10px;
+  padding: 6px 20px;
+  border-radius: var(--ml-r-full);
+  cursor: pointer;
+  transition: background 0.15s;
 
-  mat-icon { color: var(--ml-action-strong); }
+  & + &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    border-left: 1px dashed var(--ml-rule-strong);
+  }
+
+  &:hover:not(.is-off) { background: var(--ml-hover); }
+  &.is-off { opacity: 0.5; cursor: not-allowed; }
+  &:focus-within { box-shadow: 0 0 0 2px var(--ml-action) inset; }
 }
 
-.qb-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.qb-ico { flex: none; color: var(--ml-action-strong); }
+
+.qb-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
 .qb-label {
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ml-muted);
 }
 
 .qb-select {
   width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
+  min-height: 28px;
+  padding: 0;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--ml-ink);
-  background: var(--ml-paper);
-  border: 1px solid var(--ml-rule-strong);
-  border-radius: var(--ml-r-md);
+  background: transparent;
+  border: 0;
   text-overflow: ellipsis;
+  cursor: pointer;
 
-  &:focus-visible { outline: 2px solid var(--ml-action); outline-offset: 1px; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  option { background: var(--ml-panel); color: var(--ml-ink); }
+  &:disabled { cursor: not-allowed; }
+  &:focus-visible { outline: none; }
 }
 
 .qb-submit {
-  min-height: 44px;
-  padding: 0 28px;
+  flex: none;
+  min-height: 52px;
+  padding: 0 30px;
   font: inherit;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -69,7 +85,7 @@
   color: var(--ml-on-action);
   background: var(--ml-action);
   border: 0;
-  border-radius: var(--ml-r-md);
+  border-radius: var(--ml-r-full);
   cursor: pointer;
   transition: background 0.18s;
 
@@ -79,25 +95,46 @@
 }
 
 .qb-error {
-  grid-column: 1 / -1;
-  margin: 0;
+  max-width: 1120px;
+  margin: 10px auto 0;
   font-size: 0.85rem;
   color: var(--ml-danger-ink, var(--ml-danger));
 }
 
 @include m.tablet {
   :host { padding: 0 24px; }
-  .qb { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .qb-title, .qb-submit { grid-column: 1 / -1; }
+  .qb-seg { padding: 6px 12px; }
 }
 
 @include m.tablet-small {
   :host { padding: 0 20px; }
-  .qb { margin-top: 16px; padding: 16px; }
+  .qb {
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    margin-top: 16px;
+    border-radius: var(--ml-r-xl);
+  }
+  .qb-seg {
+    min-height: 56px;
+    padding: 6px 14px;
+    border-radius: var(--ml-r-md);
+
+    & + &::before {
+      left: 14px;
+      right: 14px;
+      top: 0;
+      bottom: auto;
+      border-left: 0;
+      border-top: 1px dashed var(--ml-rule-strong);
+    }
+  }
+  .qb-select { min-height: 32px; }
+  .qb-submit { width: 100%; margin-top: 6px; border-radius: var(--ml-r-md); }
 }
 
 @include m.phone {
   :host { padding: 0 16px; }
-  .qb { margin-top: 12px; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .qb-select, .qb-submit { min-height: 48px; }
+  .qb { margin-top: 12px; }
+  .qb-submit { min-height: 48px; }
 }
