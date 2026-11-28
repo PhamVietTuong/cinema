@@ -19,7 +19,7 @@
         <div><dt>{{ 'ticket.category' | translate }}</dt><dd>{{ ticket().patronCategory }}</dd></div>
       }
       @if (ticket().price !== undefined && ticket().price !== null) {
-        <div><dt>{{ 'ticket.price' | translate }}</dt><dd>{{ ticket().price | number:'1.0-0' }}đ</dd></div>
+        <div><dt>{{ 'ticket.price' | translate }}</dt><dd>{{ ticket().price | vnd }}</dd></div>
       }
     </dl>
     @if (ticket().qrCode) {

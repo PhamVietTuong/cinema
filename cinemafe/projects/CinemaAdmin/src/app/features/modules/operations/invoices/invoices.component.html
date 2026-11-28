@@ -50,11 +50,11 @@
         </ngx-datatable-column>
 
         <ngx-datatable-column [name]="'invoices.total' | translate" prop="totalAmount" [sortable]="false">
-          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.totalAmount | number:'1.0-0' }}đ</ng-template>
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.totalAmount | vnd }}</ng-template>
         </ngx-datatable-column>
 
         <ngx-datatable-column [name]="'invoices.finalAmount' | translate" prop="finalAmount" [sortable]="false">
-          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.finalAmount | number:'1.0-0' }}đ</ng-template>
+          <ng-template let-row="row" ngx-datatable-cell-template>{{ row.finalAmount | vnd }}</ng-template>
         </ngx-datatable-column>
 
         <ngx-datatable-column [name]="'common.status' | translate" prop="status" [sortable]="false">
@@ -91,8 +91,8 @@
         <mat-card-content>
           <div class="ad-mobile-card-title"><strong>{{ row.code }}</strong></div>
           <div class="ad-mobile-card-row"><span>{{ 'invoices.customer' | translate }}</span><span>{{ row.userName || row.userEmail || '—' }}</span></div>
-          <div class="ad-mobile-card-row"><span>{{ 'invoices.total' | translate }}</span><span>{{ row.totalAmount | number:'1.0-0' }}đ</span></div>
-          <div class="ad-mobile-card-row"><span>{{ 'invoices.finalAmount' | translate }}</span><span>{{ row.finalAmount | number:'1.0-0' }}đ</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'invoices.total' | translate }}</span><span>{{ row.totalAmount | vnd }}</span></div>
+          <div class="ad-mobile-card-row"><span>{{ 'invoices.finalAmount' | translate }}</span><span>{{ row.finalAmount | vnd }}</span></div>
           <div class="ad-mobile-card-row">
             <span>{{ 'common.status' | translate }}</span>
             <cl-status-pill kind="invoice" [value]="row.status" />

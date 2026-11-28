@@ -100,7 +100,7 @@
         <div class="pl-stats pl-stats--4">
           <div class="pl-stat"><span class="pl-stat-val">{{ ticketCount }}</span><span class="pl-stat-label">{{ 'profile.totalTicketsBought' | translate }}</span></div>
           <div class="pl-stat"><span class="pl-stat-val">{{ upcomingCount }}</span><span class="pl-stat-label">{{ 'profile.upcoming' | translate }}</span></div>
-          <div class="pl-stat"><span class="pl-stat-val pl-mono">{{ totalSpent | number:'1.0-0' }}đ</span><span class="pl-stat-label">{{ 'profile.totalSpent' | translate }}</span></div>
+          <div class="pl-stat"><span class="pl-stat-val pl-mono">{{ totalSpent | vnd }}</span><span class="pl-stat-label">{{ 'profile.totalSpent' | translate }}</span></div>
           <div class="pl-stat"><span class="pl-stat-val pl-stat-val--gold">{{ user?.points ?? 0 | number }}</span><span class="pl-stat-label">{{ 'profile.pointsAccrued' | translate }}</span></div>
         </div>
       </ng-container>
@@ -129,7 +129,7 @@
                   <td>{{ r.date | date:'dd/MM/yy HH:mm' }}</td>
                   <td>{{ r.seats }}</td>
                   <td>{{ r.foods }}</td>
-                  <td>{{ r.total | number:'1.0-0' }}đ</td>
+                  <td>{{ r.total | vnd }}</td>
                   <td><span class="pl-pill" [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></td>
                   <td class="pl-td-actions">
                     <mat-icon *ngIf="isPaid(r.status)">{{ expandedId === r.id ? 'expand_less' : 'expand_more' }}</mat-icon>
@@ -152,7 +152,7 @@
                       </div>
                       <div class="pl-eticket-foods" *ngIf="foodsOf(r.id).length">
                         <div class="pl-eticket-movie">{{ 'profile.foodTitle' | translate }}</div>
-                        <div class="pl-eticket-meta" *ngFor="let f of foodsOf(r.id)">{{ f.quantity }} × {{ f.foodName }} · {{ f.totalPrice | number:'1.0-0' }}đ</div>
+                        <div class="pl-eticket-meta" *ngFor="let f of foodsOf(r.id)">{{ f.quantity }} × {{ f.foodName }} · {{ f.totalPrice | vnd }}</div>
                       </div>
                     </div>
                   </td>

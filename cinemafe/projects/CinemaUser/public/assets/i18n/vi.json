@@ -217,7 +217,7 @@
       "subtotal": "Tạm tính ({{count}} ghế)",
       "comboTotal": "Tổng cộng",
       "minutes": "{{count}} phút",
-      "discountSaves": "{{code}} giảm {{amount}}đ",
+      "discountSaves": "{{code}} giảm {{amount}}",
       "discountInvalid": "Mã này không dùng được cho đơn hàng này.",
       "discountRemove": "Xóa",
       "pointsAvailableLabel": "điểm khả dụng",

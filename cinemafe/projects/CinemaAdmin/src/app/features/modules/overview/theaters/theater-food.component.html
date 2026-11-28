@@ -33,7 +33,7 @@
       </ngx-datatable-column>
 
       <ngx-datatable-column [name]="'common.price' | translate" prop="price" [sortable]="false">
-        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.price | number:'1.0-0' }}đ</ng-template>
+        <ng-template let-row="row" ngx-datatable-cell-template>{{ row.price | vnd }}</ng-template>
       </ngx-datatable-column>
 
       <ngx-datatable-column [name]="'common.status' | translate" prop="isAvailable" [sortable]="false">
@@ -79,7 +79,7 @@
     <mat-card class="ad-mobile-card" *ngFor="let row of pageRows" appearance="outlined">
       <mat-card-content>
         <div class="ad-mobile-card-title"><strong>{{ row.name }}</strong> <span *ngIf="row.isCombo" class="ad-pill ad-pill--violet">{{ 'combo.badge' | translate }}</span></div>
-        <div class="ad-mobile-card-row"><span>{{ 'common.price' | translate }}</span><span>{{ row.price | number:'1.0-0' }}đ</span></div>
+        <div class="ad-mobile-card-row"><span>{{ 'common.price' | translate }}</span><span>{{ row.price | vnd }}</span></div>
         <div class="ad-mobile-card-row">
           <span>{{ 'common.status' | translate }}</span>
           <span class="ad-pill" [class.ad-pill--success]="row.isAvailable" [class.ad-pill--neutral]="!row.isAvailable">

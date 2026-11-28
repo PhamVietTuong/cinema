@@ -78,7 +78,7 @@
         <span class="st-movie">{{ st.movieTitle }}</span>
         <span class="st-meta">{{ st.theaterName }} · {{ st.roomName }} · {{ formatOf(st) }}<ng-container *ngIf="st.language"> · {{ st.language }}</ng-container></span>
       </div>
-      <span class="st-price">{{ st.basePrice | number:'1.0-0' }}đ</span>
+      <span class="st-price">{{ st.basePrice | vnd }}</span>
     </a>
   </div>
 

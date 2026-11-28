@@ -3,7 +3,7 @@
 
   <div class="pos-rl pos-rl--due">
     <span class="pos-rl-label">{{ dueLabelKey() | translate }}</span>
-    <b class="pos-rl-value">{{ settlement().due | number:'1.0-0' }}đ</b>
+    <b class="pos-rl-value">{{ settlement().due | vnd }}</b>
   </div>
   <hr class="pos-dash">
 
@@ -44,11 +44,11 @@
 
   <div class="pos-rl">
     <span class="pos-rl-label">{{ 'pos.pay.tenderedTotal' | translate }}</span>
-    <b class="pos-rl-value">{{ settlement().tendered | number:'1.0-0' }}đ</b>
+    <b class="pos-rl-value">{{ settlement().tendered | vnd }}</b>
   </div>
   <div class="pos-bigline" [class.is-warn]="settlement().remaining > 0" [class.is-change]="settlement().remaining === 0">
     <small>{{ (settlement().remaining > 0 ? 'pos.pay.remaining' : 'pos.pay.change') | translate }}</small>
-    <b>{{ (settlement().remaining > 0 ? settlement().remaining : settlement().changeDue) | number:'1.0-0' }}đ</b>
+    <b>{{ (settlement().remaining > 0 ? settlement().remaining : settlement().changeDue) | vnd }}</b>
   </div>
 
   @if (settlement().nonCashExcess) {

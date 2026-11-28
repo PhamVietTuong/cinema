@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { VndPipe } from '../../pipes/vnd.pipe';
 import { TranslatePipe } from '@ngx-translate/core';
 import { QrCodeComponent } from '../qr/qr-code.component';
 
@@ -21,7 +22,7 @@ export interface TicketCardData {
 @Component({
   selector: 'cl-ticket-card',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, TranslatePipe, QrCodeComponent],
+  imports: [DatePipe, VndPipe, TranslatePipe, QrCodeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ticket-card.component.html',
   styleUrl: './ticket-card.component.scss',

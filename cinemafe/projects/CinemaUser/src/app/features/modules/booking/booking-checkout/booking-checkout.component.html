@@ -44,7 +44,7 @@
             <span class="disc-title">{{ 'booking.summary.discountBannerTitle' | translate }}</span>
             <span class="disc-sub">{{ discountValid ? discountMessage : ('booking.summary.discountBannerSub' | translate) }}</span>
           </span>
-          <span class="disc-pill" *ngIf="discountValid">−{{ discountAmount | number:'1.0-0' }}đ</span>
+          <span class="disc-pill" *ngIf="discountValid">−{{ discountAmount | vnd }}</span>
           <mat-icon class="disc-chev">chevron_right</mat-icon>
         </button>
 
@@ -57,7 +57,7 @@
               <ng-container *ngIf="!(pointsToRedeem > 0)">{{ 'booking.summary.pointsBalance' | translate:{ points: pointsBalance } }}</ng-container>
             </span>
           </span>
-          <span class="disc-pill" *ngIf="pointsToRedeem > 0">−{{ pointsDiscount | number:'1.0-0' }}đ</span>
+          <span class="disc-pill" *ngIf="pointsToRedeem > 0">−{{ pointsDiscount | vnd }}</span>
           <mat-icon class="disc-chev">chevron_right</mat-icon>
         </button>
       </div>
@@ -151,19 +151,19 @@
         @if (discountValid && discountAmount > 0) {
           <div class="summary-row">
             <span>{{ 'booking.summary.promoDiscount' | translate }}</span>
-            <span>−{{ discountAmount | number:'1.0-0' }}đ</span>
+            <span>−{{ discountAmount | vnd }}</span>
           </div>
         }
 
         <div class="summary-row" *ngIf="pointsToRedeem > 0">
           <span>{{ 'booking.summary.pointsDiscount' | translate:{ points: pointsToRedeem } }}</span>
-          <span>−{{ pointsDiscount | number:'1.0-0' }}đ</span>
+          <span>−{{ pointsDiscount | vnd }}</span>
         </div>
 
         <div class="summary-divider"></div>
         <div class="total-block">
           <span class="total-label">{{ 'booking.summary.amountToPay' | translate }}</span>
-          <span class="total-amount">{{ finalTotal | number:'1.0-0' }}đ</span>
+          <span class="total-amount">{{ finalTotal | vnd }}</span>
         </div>
         <p class="points-earn-note" *ngIf="pointsPerUnit > 0 && pointValue > 0">{{ 'booking.summary.pointsRate' | translate:{ spend: (pointsPerUnit | number:'1.0-0'), points: ratePoints, amount: (ratePoints * pointValue | number:'1.0-0') } }}</p>
         <p class="points-earn-note" *ngIf="pointsToEarn > 0">{{ 'booking.summary.pointsToEarn' | translate:{ points: pointsToEarn } }}</p>
@@ -233,7 +233,7 @@
         </div>
         <div class="ticket-total-wrap">
           <div class="ticket-detail-label">{{ 'booking.success.totalLabel' | translate }}</div>
-          <div class="ticket-total-val">{{ finalTotal | number:'1.0-0' }}đ</div>
+          <div class="ticket-total-val">{{ finalTotal | vnd }}</div>
           <div class="ticket-points" *ngIf="pointsRedeemed > 0">
             {{ 'booking.success.pointsRedeemed' | translate:{ points: pointsRedeemed } }}
           </div>

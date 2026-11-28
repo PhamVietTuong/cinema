@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SharedModule, QrCodeComponent, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel, joinSeatLabels, translateApiError } from 'CinemaLib';
+import { SharedModule, QrCodeComponent, PaymentServiceAgent, IdentityServiceAgent, CinemaServiceAgent, BookingHubService, seatKindLabel, screeningFormatLabel, joinSeatLabels, translateApiError, formatVnd } from 'CinemaLib';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, map, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -240,7 +240,7 @@ export class BookingCheckoutComponent implements OnInit, OnDestroy {
           valid: !!res?.valid,
           discountAmount: amount,
           message: res?.valid
-            ? this._translate.instant('booking.summary.discountSaves', { code, amount: Math.round(amount).toLocaleString('en-US') })
+            ? this._translate.instant('booking.summary.discountSaves', { code, amount: formatVnd(amount) })
             : (res?.message ? translateApiError(res.message) : this._translate.instant('booking.summary.discountInvalid')),
         };
       }),

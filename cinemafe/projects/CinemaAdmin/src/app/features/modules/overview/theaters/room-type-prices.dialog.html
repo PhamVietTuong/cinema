@@ -29,7 +29,7 @@
     <div class="rtp-item" *ngFor="let row of includedRows">
       <div class="rtp-item-name">
         <div>{{ row.patronCategoryName }}</div>
-        <p class="ad-sub">{{ 'theaters.roomTypePrices.theaterPrice' | translate }}: {{ row.defaultPrice | number:'1.0-0' }}đ</p>
+        <p class="ad-sub">{{ 'theaters.roomTypePrices.theaterPrice' | translate }}: {{ row.defaultPrice | vnd }}</p>
       </div>
       <mat-form-field class="rtp-item-price" appearance="outline" subscriptSizing="dynamic">
         <input matInput type="number" step="1000" min="0" [(ngModel)]="row.price" [placeholder]="'theaters.roomTypePrices.overrideLabel' | translate">

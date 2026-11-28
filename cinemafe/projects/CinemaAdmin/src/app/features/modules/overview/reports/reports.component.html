@@ -21,11 +21,11 @@
   <div class="rp-kpis">
     <div class="ad-card rp-kpi">
       <span class="rp-kpi-label">{{ 'reports.totalRevenue' | translate }}</span>
-      <span class="rp-kpi-val">{{ total | number:'1.0-0' }}đ</span>
+      <span class="rp-kpi-val">{{ total | vnd }}</span>
     </div>
     <div class="ad-card rp-kpi">
       <span class="rp-kpi-label">{{ 'reports.ticketRevenue' | translate }}</span>
-      <span class="rp-kpi-val">{{ ticketsTotal | number:'1.0-0' }}đ</span>
+      <span class="rp-kpi-val">{{ ticketsTotal | vnd }}</span>
     </div>
     <div class="ad-card rp-kpi">
       <span class="rp-kpi-label">{{ 'reports.moviesWithRevenue' | translate }}</span>
@@ -57,7 +57,7 @@
       <div class="rp-row" *ngFor="let m of byMovie">
         <span class="rp-row-name">{{ m.name }}</span>
         <span class="rp-row-track"><span class="rp-row-fill" [style.width.%]="pct(m.total, maxMovie)"></span></span>
-        <span class="rp-row-val">{{ m.total | number:'1.0-0' }}đ</span>
+        <span class="rp-row-val">{{ m.total | vnd }}</span>
       </div>
     </div>
   </div>
@@ -72,7 +72,7 @@
       <div class="rp-row" *ngFor="let t of byTheater">
         <span class="rp-row-name">{{ t.name }}</span>
         <span class="rp-row-track"><span class="rp-row-fill" [style.width.%]="pct(t.total, maxTheater)"></span></span>
-        <span class="rp-row-val">{{ t.total | number:'1.0-0' }}đ</span>
+        <span class="rp-row-val">{{ t.total | vnd }}</span>
       </div>
     </div>
   </div>
