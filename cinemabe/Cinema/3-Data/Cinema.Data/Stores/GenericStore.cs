@@ -78,6 +78,11 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
         }
     }
 
+    public virtual Task<Dictionary<Guid, TValue>> GetProjectionByIdsAsync<TValue>(IReadOnlyCollection<Guid> ids, Expression<Func<Entity, TValue>> valueSelector)
+    {
+        return DbSet.ProjectByIdsAsync(ids, valueSelector);
+    }
+
     public virtual async Task<IEnumerable<Entity>> FindAsync(Expression<Func<Entity, bool>> predicate)
     {
         try

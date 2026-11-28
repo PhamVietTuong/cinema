@@ -353,24 +353,16 @@ public class PromotionProgramManager : IPromotionProgramManager
         var schedulesByProgram = (await _uow.PromotionProgramStore.GetSchedulesAsync(ids)).ToLookup(x => x.PromotionProgramId);
 
         var theaterIds = schedulesByProgram.SelectMany(g => g).Where(s => s.TheaterId.HasValue).Select(s => s.TheaterId!.Value).Distinct().ToList();
-        var theaterNames = theaterIds.Count > 0
-            ? (await _uow.TheaterStore.FindAsync(t => theaterIds.Contains(t.Id))).ToDictionary(t => t.Id, t => t.Name)
-            : new Dictionary<Guid, string>();
+        var theaterNames = await _uow.TheaterStore.GetProjectionByIdsAsync(theaterIds, t => t.Name);
 
         var tierIds = items.Where(p => p.MinMemberShipId.HasValue).Select(p => p.MinMemberShipId!.Value).Distinct().ToList();
-        var tierNames = tierIds.Count > 0
-            ? (await _uow.MemberShipStore.FindAsync(m => tierIds.Contains(m.Id))).ToDictionary(m => m.Id, m => m.Name)
-            : new Dictionary<Guid, string>();
+        var tierNames = await _uow.MemberShipStore.GetProjectionByIdsAsync(tierIds, m => m.Name);
 
         var movieIds = items.Where(p => p.MovieId.HasValue).Select(p => p.MovieId!.Value).Distinct().ToList();
-        var movieTitles = movieIds.Count > 0
-            ? (await _uow.MovieStore.FindAsync(m => movieIds.Contains(m.Id))).ToDictionary(m => m.Id, m => m.Title)
-            : new Dictionary<Guid, string>();
+        var movieTitles = await _uow.MovieStore.GetProjectionByIdsAsync(movieIds, m => m.Title);
 
         var campaignIds = items.Where(p => p.CampaignId.HasValue).Select(p => p.CampaignId!.Value).Distinct().ToList();
-        var campaignNames = campaignIds.Count > 0
-            ? (await _uow.PromotionCampaignStore.FindAsync(c => campaignIds.Contains(c.Id))).ToDictionary(c => c.Id, c => c.Name)
-            : new Dictionary<Guid, string>();
+        var campaignNames = await _uow.PromotionCampaignStore.GetProjectionByIdsAsync(campaignIds, c => c.Name);
 
         foreach (var dto in dtos)
         {

@@ -26,6 +26,15 @@ public class PromotionProgramServiceTests
             .ReturnsAsync(new List<PromotionProgramPrice>());
         _uowMock.Setup(u => u.PromotionProgramStore.GetSchedulesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
             .ReturnsAsync(new List<PromotionProgramSchedule>());
+        // Name lookups for the DTO mapping: nothing to resolve unless a test says otherwise.
+        _uowMock.Setup(u => u.TheaterStore.GetProjectionByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<Expression<Func<Theater, string>>>()))
+            .ReturnsAsync(new Dictionary<Guid, string>());
+        _uowMock.Setup(u => u.MemberShipStore.GetProjectionByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<Expression<Func<MemberShip, string>>>()))
+            .ReturnsAsync(new Dictionary<Guid, string>());
+        _uowMock.Setup(u => u.MovieStore.GetProjectionByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<Expression<Func<Movie, string>>>()))
+            .ReturnsAsync(new Dictionary<Guid, string>());
+        _uowMock.Setup(u => u.PromotionCampaignStore.GetProjectionByIdsAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<Expression<Func<PromotionCampaign, string>>>()))
+            .ReturnsAsync(new Dictionary<Guid, string>());
         _uowMock.Setup(u => u.MemberShipStore.ExistsAsync(It.IsAny<Expression<Func<MemberShip, bool>>>()))
             .ReturnsAsync(true);
         _uowMock.Setup(u => u.MovieStore.ExistsAsync(It.IsAny<Expression<Func<Movie, bool>>>()))
