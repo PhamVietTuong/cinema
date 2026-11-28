@@ -1724,7 +1724,7 @@ public class BookingManager : IBookingManager
             return (null, 0);
         }
 
-        var isHoliday = (await _uow.HolidayStore.FindAsync(h => h.Date == showDate)).Any();
+        var isHoliday = await IsHolidayAsync(showDate);
 
         int? userMinPoints = null;
         if (userId.HasValue && candidates.Any(c => c.Eligibility == PromotionEligibility.Members))
@@ -1890,6 +1890,12 @@ public class BookingManager : IBookingManager
     // (FindBestAutoApplyProgramAsync): sales channel, holiday exclusion and — for a Members program — the customer's
     // tier. StudentOrTeacher / AgeLimit are not enforced online (the system cannot verify them; see the AutoApply
     // restriction in PromotionProgramManager), so they stay a counter-side check.
+    /// <summary>True when any Holiday falls on <paramref name="date"/>; existence check only, no entity is loaded.</summary>
+    private Task<bool> IsHolidayAsync(DateOnly date)
+    {
+        return _uow.HolidayStore.ExistsAsync(h => h.Date == date);
+    }
+
     private async Task<bool> PassesAudienceRulesAsync(PromotionProgram program, Guid? userId, SalesChannel channel, ShowTime? showTime)
     {
         if (program.AllowedChannelsMask is int mask && mask != 0 && (mask & (1 << (int)channel)) == 0)
@@ -1900,7 +1906,7 @@ public class BookingManager : IBookingManager
         if (program.ExcludeHolidays && showTime != null)
         {
             var showDate = DateOnly.FromDateTime(showTime.StartTime);
-            if ((await _uow.HolidayStore.FindAsync(h => h.Date == showDate)).Any())
+            if (await IsHolidayAsync(showDate))
             {
                 return false;
             }
