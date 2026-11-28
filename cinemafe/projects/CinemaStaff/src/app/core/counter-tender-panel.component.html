@@ -1,44 +1,55 @@
-<section class="ad-card">
-  <h2 class="ad-card-title">{{ titleKey() | translate }}</h2>
+<section class="ad-card pos-receipt">
+  <h2 class="ad-card-title pos-receipt-title">{{ titleKey() | translate }}</h2>
+
+  <div class="pos-rl pos-rl--due">
+    <span class="pos-rl-label">{{ dueLabelKey() | translate }}</span>
+    <b class="pos-rl-value">{{ settlement().due | number:'1.0-0' }}đ</b>
+  </div>
+  <hr class="pos-dash">
+
   @for (t of tenders(); track $index; let i = $index) {
     <div class="pos-tender">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-tender-method">
-        <mat-select [value]="t.method" (selectionChange)="update(i, { method: $event.value })">
-          @for (o of tenderOptions; track o.value) {
-            <mat-option [value]="o.value">{{ o.name | translate }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-tender-amount">
-        <mat-label>{{ (isCash(t.method) ? 'pos.pay.tendered' : 'pos.pay.amount') | translate }}</mat-label>
-        <input matInput type="number" min="0" step="1000" [ngModel]="t.amount" (ngModelChange)="update(i, { amount: $event ?? 0 })">
-      </mat-form-field>
+      <div class="pos-rl">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-tender-method">
+          <mat-select [value]="t.method" (selectionChange)="update(i, { method: $event.value })" [attr.aria-label]="'pos.pay.method' | translate">
+            @for (o of tenderOptions; track o.value) {
+              <mat-option [value]="o.value">{{ o.name | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-tender-amount">
+          <mat-label>{{ (isCash(t.method) ? 'pos.pay.tendered' : 'pos.pay.amount') | translate }}</mat-label>
+          <input matInput type="number" min="0" step="1000" class="pos-amount-input" [ngModel]="t.amount" (ngModelChange)="update(i, { amount: $event ?? 0 })">
+        </mat-form-field>
+        <button mat-icon-button type="button" (click)="remove(i)" [matTooltip]="'common.remove' | translate" [attr.aria-label]="'common.remove' | translate"><mat-icon>close</mat-icon></button>
+      </div>
       @if (!isCash(t.method)) {
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pos-tender-ref">
           <mat-label>{{ 'pos.pay.reference' | translate }}</mat-label>
           <input matInput [ngModel]="t.reference" (ngModelChange)="update(i, { reference: $event ?? '' })">
         </mat-form-field>
       }
-      <button mat-icon-button type="button" (click)="fillRemaining(i)" [matTooltip]="'pos.pay.fill' | translate"><mat-icon>vertical_align_bottom</mat-icon></button>
-      <button mat-icon-button type="button" (click)="remove(i)" [matTooltip]="'common.remove' | translate"><mat-icon>close</mat-icon></button>
+      <button type="button" class="pos-fill" (click)="fillRemaining(i)">
+        <mat-icon>vertical_align_bottom</mat-icon> {{ 'pos.pay.fill' | translate }}
+      </button>
     </div>
   }
+
   <div class="pos-tender-add">
     @for (o of tenderOptions; track o.value) {
       <button mat-stroked-button type="button" (click)="add(o.value)" [disabled]="disabled()">+ {{ o.name | translate }}</button>
     }
   </div>
+  <hr class="pos-dash">
 
-  <dl class="pos-settle">
-    <div><dt>{{ dueLabelKey() | translate }}</dt><dd>{{ settlement().due | number:'1.0-0' }}đ</dd></div>
-    <div><dt>{{ 'pos.pay.tenderedTotal' | translate }}</dt><dd>{{ settlement().tendered | number:'1.0-0' }}đ</dd></div>
-    @if (settlement().remaining > 0) {
-      <div class="is-warn"><dt>{{ 'pos.pay.remaining' | translate }}</dt><dd>{{ settlement().remaining | number:'1.0-0' }}đ</dd></div>
-    }
-    @if (settlement().changeDue > 0) {
-      <div class="is-change"><dt>{{ 'pos.pay.change' | translate }}</dt><dd>{{ settlement().changeDue | number:'1.0-0' }}đ</dd></div>
-    }
-  </dl>
+  <div class="pos-rl">
+    <span class="pos-rl-label">{{ 'pos.pay.tenderedTotal' | translate }}</span>
+    <b class="pos-rl-value">{{ settlement().tendered | number:'1.0-0' }}đ</b>
+  </div>
+  <div class="pos-bigline" [class.is-warn]="settlement().remaining > 0" [class.is-change]="settlement().remaining === 0">
+    <small>{{ (settlement().remaining > 0 ? 'pos.pay.remaining' : 'pos.pay.change') | translate }}</small>
+    <b>{{ (settlement().remaining > 0 ? settlement().remaining : settlement().changeDue) | number:'1.0-0' }}đ</b>
+  </div>
 
   @if (settlement().nonCashExcess) {
     <p class="pos-warn">{{ 'pos.pay.nonCashExcess' | translate }}</p>

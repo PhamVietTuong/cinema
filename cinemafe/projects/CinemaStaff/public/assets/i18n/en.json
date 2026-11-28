@@ -200,6 +200,7 @@
     },
     "pay": {
       "title": "Payment",
+      "method": "Payment method",
       "tendered": "Cash received",
       "amount": "Amount",
       "reference": "Terminal / QR reference",
