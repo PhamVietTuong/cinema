@@ -33,6 +33,7 @@ import { TranslatePipe, TranslateDirective } from '@ngx-translate/core';
 import { LanguageSwitcherComponent } from './i18n/language-switcher.component';
 import { ServerUtcPipe } from './pipes/server-utc.pipe';
 import { VndPipe } from './pipes/vnd.pipe';
+import { EmptyStateComponent } from './components/empty-state/empty-state.component';
 import { ThousandsInputDirective } from './directives/thousands-input.directive';
 import { DragScrollDirective } from './directives/drag-scroll.directive';
 
@@ -73,6 +74,7 @@ const SHARED = [
   LanguageSwitcherComponent,
   ServerUtcPipe,
   VndPipe,
+  EmptyStateComponent,
   ThousandsInputDirective,
   DragScrollDirective,
 ];
