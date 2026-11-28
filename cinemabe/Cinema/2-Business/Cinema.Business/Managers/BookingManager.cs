@@ -362,7 +362,7 @@ public class BookingManager : IBookingManager
 
             if (composed.Overrides.Count > 0)
             {
-                _uow.AuditLogStore.Stage(new AuditLog
+                await _auditLogger.LogAsync(new AuditEntry
                 {
                     TheaterId      = context.TheaterId,
                     ActorUserId    = context.StaffUserId,
