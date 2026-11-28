@@ -23,7 +23,7 @@ dotnet test Cinema/2-Business/Cinema.Business.Tests --filter "FullyQualifiedName
 
 ### Test files present (as of this review)
 
-As of 2026-11-14 the business suite has 660 passing tests and the WebApiHost suite 46.
+As of 2026-11-14 the business suite had 660 passing tests and the WebApiHost suite 46 (a static count on 2026-11-29 found 652 `[Fact]`/`[Theory]` methods in Business.Tests and 55 in WebApiHost.Tests before theory-row expansion, so re-run `dotnet test` for current numbers). The integration project adds 13 `RequiresSqlServerFact` tests.
 
 Verified by listing `cinemabe/Cinema/2-Business/Cinema.Business.Tests/*.cs`:
 
@@ -121,7 +121,8 @@ ng test CinemaAdmin
 - CI (`.github/workflows/ci.yml`) runs `ng test CinemaLib` with coverage (`lcovonly` +
   `text-summary` reporters), then `ng test CinemaUser`, `ng test CinemaAdmin` and `ng test CinemaStaff`
   without coverage; `CinemaUser`, `CinemaAdmin` and `CinemaStaff` are all production-built.
-- Backend CI runs two test projects: `Cinema.Business.Tests` (with coverage) and
+- Backend CI runs three test projects: `Cinema.Business.Tests` (with coverage),
+  `Cinema.Service.WebApiHost.IntegrationTests` (against SQL Server, see below) and
   `Cinema.Service.WebApiHost.Tests` (controller architecture, role authorization, the endpoint-guard coverage
   check, the SignalR seat-lock hub contract, IPN contract). A coverage
   ratchet, `.github/scripts/check-coverage.py 60 Cinema.Business`, fails the build when the line coverage of
@@ -166,10 +167,7 @@ Two specs cannot pass by skipping:
 
 - No architecture test checks the direction of backend project references (`1-Service` to `2-Business` to `3-Data` to `4-Foundation`, `AGENTS.md`), unlike the controller count (`ControllerArchitectureTests`). The only upward reference is `Cinema.Data` to `Cinema.Business.Contracts` (ADR-0001). Also tracked in `_bmad-output/implementation-artifacts/deferred-work.md`.
 - The CI `db-upgrade` job (`cinemabe/sql/tests/`: `run-upgrade-harness.sh`, `seed-old-schema.sql`, `assert-after-upgrade.sql`) upgrades a database built from the old `create_db.sql` (commit `3656d73`) with the current `upgrade_db.sql`, twice, and asserts the purges, drops and defaults. Run it locally with `SQL_PASSWORD` (and `SQL_SERVER`, `SQL_USER`) set; it uses the scratch database `CinemaUpgradeHarness`.
-- No dedicated backend integration tests against a real database were found — the CI comment on
-  the `dotnet test` step states "xUnit tests use Moq — no database required," i.e. the backend
-  suite is unit-level only; database-dependent behavior is exercised only via the CI `e2e` job's
-  Playwright run (`e2e/`).
+- Business and WebApiHost unit tests use Moq and need no database; database-dependent behavior is covered by `Cinema.Service.WebApiHost.IntegrationTests` (13 `RequiresSqlServerFact` tests, run in CI) and the CI `e2e` job's Playwright run (`e2e/`). Not every table or flow has an integration test.
 
 ## Integration tests against a real SQL Server
 

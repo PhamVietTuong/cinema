@@ -1,7 +1,7 @@
 # Configuration Reference
 
 > Purpose: Every environment variable / config key used by the backend and frontend apps — purpose, required/optional, default.
-> Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/appsettings.json` (key names only — `appsettings.Development.json`/`appsettings.Production.json` exist but are git-ignored and were not read for values), `Program.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Contexts/CinemaContextDesignTimeFactory.cs`, `cinemafe/projects/*/src/environments/environment*.ts`
+> Sources: `cinemabe/Cinema/1-Service/Cinema.Service.WebApiHost/appsettings.json` (key names only — `appsettings.Development.json`/`appsettings.Production.json` exist but are git-ignored and were not read for values), `Program.cs`, `cinemabe/Cinema/3-Data/Cinema.Data/Contexts/CinemaContextDesignTimeFactory.cs`, `cinemafe/projects/*/src/environments/environment*.ts`, `docker-compose.yml`, `.github/workflows/ci.yml`
 > Last reviewed: 2026-11-12
 
 No secret values are reproduced anywhere below — only key names, defaults as committed in `appsettings.json`, and whether the app fails/falls back when a key is blank.
@@ -34,7 +34,7 @@ No secret values are reproduced anywhere below — only key names, defaults as c
 | Key | Purpose | Required | Default |
 |---|---|---|---|
 | `Google:ClientId` | Verifies Google ID tokens | optional — login returns 400 "Google login is not configured" if blank | `""` |
-| `Facebook:AppId` | Facebook login (not directly validated server-side; used in client flow) | optional | `""` |
+| `Facebook:AppId` | Facebook login; required for Facebook login — `FacebookTokenValidator` throws `InvalidOperationException` (mapped to 400) when blank | required for Facebook login | `""` |
 | `Facebook:AppSecret` | Used for the `debug_token` app-id verification of every Facebook token | **required for Facebook login** — when blank, `FacebookLogin` is refused (fail closed) instead of skipping the app-id check | `""` |
 
 ### Email / SMS
@@ -50,18 +50,24 @@ No secret values are reproduced anywhere below — only key names, defaults as c
 | `Sms:Twilio:AuthToken`, `Sms:Twilio:FromNumber` | Twilio credentials/sender number (required once `AccountSid` is set; `FromNumber` must be a valid number, normalised to E.164) | optional | `""` |
 | `Sms:Twilio:TimeoutSeconds` | Per-request timeout (1-120) | optional | `10` |
 
-Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program.cs` validates the whole section (`SmtpOptions`/`TwilioOptions`) and the host refuses to start with every problem listed (bad port, sender not an email, `User` without `Password`, missing `AuthToken`, invalid `FromNumber`...). A section with a credential/sender but no key field (`Smtp:User`/`Password`/`From` without `Smtp:Host`, or `Sms:Twilio:AuthToken`/`FromNumber` without `AccountSid`) fails too, so it cannot silently fall back to the dev-log sender. A fully empty section just keeps the dev-log senders. `Smtp:From` may include a display name (`Cinema <noreply@x.vn>`).
+Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program.cs` validates the whole section (`SmtpOptions`/`TwilioOptions`; `Sms:Twilio:AccountSid` must start with `AC`) and the host refuses to start with every problem listed (bad port, sender not an email, `User` without `Password`, missing `AuthToken`, invalid `FromNumber`...). A section with a credential/sender but no key field (`Smtp:User`/`Password`/`From` without `Smtp:Host`, or `Sms:Twilio:AuthToken`/`FromNumber` without `AccountSid`) fails too, so it cannot silently fall back to the dev-log sender. A fully empty section just keeps the dev-log senders. `Smtp:From` may include a display name (`Cinema <noreply@x.vn>`).
 
 ### Payments
 | Key | Purpose | Required | Default |
 |---|---|---|---|
 | `Payments:Provider` | Default gateway name when a client doesn't specify one | optional | `Sandbox` |
 | `Payments:EnableSandbox` | Registers the unsigned Sandbox gateway outside Development. Off by default; only CI e2e and the docker-compose demo set it to `true`. Never enable on a real deployment | optional | `false` |
-| `RateLimiting:AuthPermitLimit` | Requests per minute per client IP on the `Auth` rate-limit policy (Login, Register, ResetPassword, ConfirmEmail, GoogleLogin, FacebookLogin, VerifyTwoFactor). Only the CI e2e job raises it (the Playwright suite signs in about 16 times from one IP within minutes); a missing, non-numeric or non-positive value keeps the default, so a typo never disables the limiter | optional | `10` |
 | `Payments:VnPay:TmnCode` | VNPay terminal code | optional — gateway reports `IsConfigured=false` if blank | `""` |
 | `Payments:VnPay:HashSecret` | VNPay HMAC-SHA512 signing secret | optional (see above) | `""` |
 | `Payments:VnPay:PayUrl` | VNPay hosted payment page | optional | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html` |
 | `Payments:VnPay:ReturnUrl` | Browser redirect target after payment (display-only — VNPay is callback-authoritative, so this URL is never trusted to confirm payment; see `integrations.md` §1) | optional | `http://localhost:4202/booking/payment-return` |
+
+### Rate limiting
+
+| Key | Purpose | Required | Default |
+|---|---|---|---|
+| `RateLimiting:AuthPermitLimit` | Requests per minute per client IP on the `Auth` rate-limit policy (Login, Register, ResetPassword, ConfirmEmail, GoogleLogin, FacebookLogin, VerifyTwoFactor). Only the CI e2e job raises it (the Playwright suite signs in about 16 times from one IP within minutes); a missing, non-numeric or non-positive value keeps the default, so a typo never disables the limiter | optional | `10` |
+| _(no key)_ `AuthEmail` policy | Fixed window of 3 requests per 15 minutes per client IP on the email-sending auth endpoints (`RateLimitPolicies.cs:69-76`); not configurable | n/a | 3 / 15 min |
 
 ### Movie metadata
 | Key | Purpose | Required | Default |
@@ -81,6 +87,17 @@ Startup validation: when `Smtp:Host` or `Sms:Twilio:AccountSid` is set, `Program
 | `Serilog:MinimumLevel:Default` / `:Override:*` | Serilog log levels | optional | `Information`, with `Microsoft`/`Microsoft.EntityFrameworkCore` at `Warning` |
 | `Serilog:WriteTo` | Sinks (Console + rolling File) | optional | Console + File at `logs/cinema-.log`, daily rolling. The path is relative to the working directory: the WebApiHost project folder under `dotnet run`, `/app/logs` in the container (compose mounts the named volume `cinema-logs`). Override the file path with env var `Serilog__WriteTo__1__Args__path`; the `1` is the sink's index in the `WriteTo` array (Console is 0, File is 1), so it breaks if the sinks are reordered. |
 | `Logging:LogLevel:Default` / `:Microsoft.AspNetCore` | Standard ASP.NET logging config | optional | `Information` / `Warning` |
+
+### Deployment environment variables
+
+| Variable | Purpose |
+|---|---|
+| `__` override convention | Any appsettings key can be overridden with `Section__Key` env vars (e.g. `ConnectionStrings__CinemaDatabase`, `JWT__Secret`, `AllowedOrigins__0..2`, `Payments__VnPay__*`) as in `docker-compose.yml` and the CI e2e job |
+| `ASPNETCORE_ENVIRONMENT` | Gates the Sandbox gateway, Swagger/ReDoc and HSTS/HTTPS redirect |
+| `ASPNETCORE_URLS` | `8080` inside the container (`Dockerfile`); compose maps `5102:8080` |
+| `CINEMA_PUBLIC_URL` | Public base URL used in e-ticket links (`BookingManager`); default `http://localhost:4202` |
+| `CINEMA_DB_PASSWORD` | SQL Server password for `docker-compose.yml` |
+| `CINEMA_IT_SERVER_CONNECTION` | CI-only: connection string for `WebApiHost.IntegrationTests` |
 
 ## 2. Frontend — Angular `environment.ts` keys (per app)
 
@@ -114,4 +131,4 @@ Each of the three apps (`CinemaUser`, `CinemaAdmin`, `CinemaStaff`) has its own 
 | Tool | Purpose |
 |---|---|
 | ngrok | Public tunnel so VNPay's sandbox can reach the local IPN callback — see `integrations.md` §5. |
-| `dotnet user-secrets` | Recommended way to set `JWT:Secret` (and other secrets) in Development without committing them. |
+| `dotnet user-secrets` | Recommended way to set `JWT:Secret` (and other secrets) in Development without committing them (`UserSecretsId` `cinema-webapihost-secrets`, `Cinema.Service.WebApiHost.csproj`). |

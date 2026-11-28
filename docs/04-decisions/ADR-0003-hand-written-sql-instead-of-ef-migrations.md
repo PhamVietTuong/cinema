@@ -20,7 +20,7 @@ Author to confirm: why the project moved away from migrations after adopting the
 
 - `7065d9c` itself records a cost: the EF model snapshot no longer describes the two columns the scripts created, so a future `migrations add` would emit an `AddColumn` for columns that already exist and that diff would need deleting by hand.
 - Every schema change touches two scripts plus the entity and its configuration, and must be applied to the dev database by hand. Nothing in CI checks that the scripts and the model agree. Author to confirm whether a check is wanted.
-- Database-only features such as the seat-uniqueness filtered index are plain SQL in the scripts (`create_db.sql:717`).
+- Database-only features such as the seat-uniqueness filtered index are plain SQL in the scripts (`create_db.sql:721`).
 
 ## Alternatives considered
 

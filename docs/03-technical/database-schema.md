@@ -19,7 +19,7 @@ This applies automatically to new entities — do not override unless intentiona
 
 Every entity inherits `BaseEntity`: `Id` (`Guid`, client-generated, not DB-identity), `CreationTime` (`DateTime`), `LastUpdatedTime` (`DateTime?`). `Invoice` and `User` redeclare `Id` with `new Guid Id` — same type/semantics, just hides the base property.
 
-Schema changes are hand-written into `cinemabe/sql/create_db.sql` / `upgrade_db.sql` (see root `CLAUDE.md`), not generated via `dotnet ef migrations add` — the Fluent `Configurations/` below still describe the model EF expects, kept in sync by hand.
+Schema changes are hand-written into `cinemabe/sql/create_db.sql` / `upgrade_db.sql` (see root `CLAUDE.md`), not generated via `dotnet ef migrations add` — the Fluent `Configurations/` below still describe the model EF expects, kept in sync by hand. Known drift (2026-11-29 audit): `IX_ShowTime_StartTime` exists in the SQL scripts but is not declared in `ShowTimeConfiguration`; `create_db.sql` does not drop `PromotionCampaign` in its header, so re-running it on an existing DB fails at that `CREATE TABLE`. Plain FK-helper indexes on `StockMovement`, `InvoicePayment`, `ComboItem`, `MovieCredit` and `RoomTypePatronCategoryPrice` are defined in `create_db.sql` and not listed per table.
 
 `upgrade_db.sql` also holds two guarded, destructive purge blocks, the child-ticket one a one-shot (marker `purge_child_ticket_done`) and the gift-card one idempotent (guarded by `COL_LENGTH`/`OBJECT_ID`); they delete invoices together with their tickets, payments, food lines and `StockMovement` rows). Their scope, guards and what they do not reverse are recorded in [`../05-process/history.md`](../05-process/history.md). Apply `upgrade_db.sql` to the local dev database only; any other environment needs the owner's fresh confirmation and a verified backup first.
 
@@ -76,11 +76,12 @@ Nav: `Users`. Also referenced by `PromotionProgram.MinMemberShipId` as a minimum
 | Slug | string | max 320, **unique** (`IX_Movie_Slug`; also `IX_Movie_IsActive_ReleaseDate` (IsActive, ReleaseDate — now-showing/coming-soon filters)) |
 | Description | string | max 2000 |
 | Duration | int | minutes |
-| ReleaseDate, EndDate | DateOnly | |
+| ReleaseDate | DateOnly | |
+| EndDate | DateOnly? | |
 | PosterUrl, TrailerUrl | string? | |
-| Director | string | max 200 |
-| Cast | string | max 1000, legacy free-text; cast is also modeled relationally via `MovieCredit` |
-| Language, Subtitle | string | |
+| Director | string? | max 200 |
+| Cast | string? | max 1000, legacy free-text; cast is also modeled relationally via `MovieCredit` |
+| Language, Subtitle | string? | |
 | ImdbId | string? | max 20, used to match OMDb ratings; falls back to title+year. Admin can auto-fill it via the movie dialog's "Find IMDb ID" button (OMDb title search) |
 | IsActive | bool | |
 | AgeRestrictionId | Guid | FK → AgeRestriction, `Restrict` |
@@ -138,7 +139,7 @@ TheaterId (Cascade), Kind (SeatKind enum — matched by Kind, never Name), Name 
 MovieId (Cascade), StartTime/EndTime (DateTime, **theater-local GMT+7 wall-clock time**, not UTC — compared against `DateTime.Now`, so the server process must run in GMT+7; the Dockerfile sets `TZ=Asia/Ho_Chi_Minh`), ProjectionForm (TwoD=1/ThreeD=2 — property of the screening, not the room), ShowTimeType (Normal=0/Premiere=1/Special=2), IsActive. Nav `ShowTimeRooms`. Indexes: `IX_ShowTime_MovieId_StartTime` (replaces the MovieId-only index; the movie's showtimes by date), `IX_ShowTime_StartTime` (serves the admin week calendar's `StartTime` range filter + ordering).
 
 ### ShowTimeRoom (join: a showtime assigned to a room)
-Composite PK (ShowTimeId, RoomId). BasePrice (int — flat per-showtime manual add-on, not the seat's base price). Nav `InvoiceTickets`.
+Composite PK (ShowTimeId, RoomId). BasePrice (`int` in C#, stored as SQL `float` — flat per-showtime manual add-on, not the seat's base price). Nav `InvoiceTickets`.
 
 ## 3. Pricing
 
@@ -199,7 +200,7 @@ exactly one of `Code` (customer-entered) **xor** `AutoApply=true`, enforced in
 | MaxDiscountAmount? | double — caps the *summed* per-unit saving (post-`ComputeProgramSaving`, after the program is resolved) |
 | MovieId? | FK → Movie, **SetNull** — optional movie scope. Theater/day/time scope is expressed via `Schedules` instead (no separate fields here) |
 
-Index: (IsPublished, EndDate), MinMemberShipId, Code (filtered unique), MovieId. Nav `Prices`, `Schedules`.
+Index: (IsPublished, EndDate), MinMemberShipId, Code (filtered unique), MovieId, `IX_PromotionProgram_CampaignId` (CampaignId). `PromotionProgramSchedule` also has non-unique indexes on (PromotionProgramId) and (TheaterId). Nav `Prices`, `Schedules`.
 
 `Invoice.PromotionProgramId` is the only pricing-source column code writes (`Invoice.DiscountId` is an unused column, see the Invoice table).
 
@@ -213,7 +214,7 @@ PromotionProgramId (Cascade), ProjectionForm?/SeatKind? (null = "any"). Price (d
 PromotionProgramId (Cascade), TheaterId (Guid?, **Restrict**, null = all theaters), DaysOfWeekMask?, StartTimeOfDay/EndTimeOfDay?. Zero rows = applies everywhere/always.
 
 ### SplashBanner
-Title, ImageUrl (required), LinkUrl (optional), StartDate/EndDate (DateTime, date-only, inclusive), IsPublished (bool). No FKs, no nav. "Active" is computed against Vietnam local date, not stored.
+Title, ImageUrl (required), LinkUrl (optional), StartDate/EndDate (DateTime, date-only, inclusive), IsPublished (bool). Index `IX_SplashBanner_IsPublished_EndDate` (IsPublished, EndDate). No FKs, no nav. "Active" is computed against Vietnam local date, not stored.
 
 ### LoyaltySetting
 TheaterId (Guid, required, **unique** — one row per theater; no global row), PointsPerUnit (int, VND spent per 1 point earned), PointValueVnd (int, VND value of 1 point redeemed). A theater with no row uses the built-in default 1000 / 10 (1,000 VND = 1 point; 100 points = 1,000 VND).
@@ -241,7 +242,7 @@ TheaterId (Guid, required, **unique** — one row per theater; no global row), P
 | FoodHandedOverAt / FoodHandedOverByUserId | | Stamped on the counter-sale HandedOver transition only. |
 | ExchangedFromInvoiceId | Guid? | no FK |
 
-Indexes: (TheaterId, PaidAt); `IX_Invoice_UserId` (UserId, CreationTime DESC — "my invoices"); `IX_Invoice_Status_CreationTime` (Status, CreationTime — reaper/admin list); `IX_Invoice_Status_PaidAt` (Status, PaidAt) INCLUDE (FinalAmount) — revenue reports. Nav `InvoiceTickets`, `InvoiceFoodAndDrinks`, `Payments`.
+Indexes: (TheaterId, PaidAt); `IX_Invoice_UserId` (UserId, CreationTime DESC — "my invoices"); `IX_Invoice_Status_CreationTime` (Status, CreationTime — reaper/admin list); `IX_Invoice_Status_PaidAt` (Status, PaidAt) INCLUDE (FinalAmount) — revenue reports; `IX_Invoice_PromotionProgramId` (PromotionProgramId); `IX_Invoice_ExchangedFromInvoiceId` (ExchangedFromInvoiceId, filtered `IS NOT NULL`). Nav `InvoiceTickets`, `InvoiceFoodAndDrinks`, `Payments`.
 
 **No refund entity exists.** A cancelled/expired invoice only reverses points/food-stock via `InvoiceStatus.Cancelled`, never a dedicated refund row. `InvoiceStatus` value 4 and `AuditAction` value 4 are reserved gaps (section 9). See `01-business/business-rules.md`.
 
