@@ -62,7 +62,7 @@ public class VnPayGateway : IPaymentGateway
             ["vnp_Version"]   = "2.1.0",
             ["vnp_Command"]   = "pay",
             ["vnp_TmnCode"]   = TmnCode,
-            ["vnp_Amount"]    = ((long)Math.Round(amount) * 100).ToString(),   // VNPay expects amount * 100
+            ["vnp_Amount"]    = (PaymentAmounts.GatewayAmount(amount) * 100).ToString(),   // VNPay expects amount * 100
             ["vnp_CurrCode"]  = "VND",
             ["vnp_TxnRef"]    = txnRef,
             ["vnp_OrderInfo"] = $"Thanh toan don hang {invoiceId:N}",

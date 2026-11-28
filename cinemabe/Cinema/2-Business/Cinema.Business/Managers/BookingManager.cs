@@ -1120,9 +1120,9 @@ public class BookingManager : IBookingManager
             return new PaymentCallbackHandlingResult(gateway.Name, PaymentCallbackOutcome.OrderNotFound);
         }
 
-        // Matches VnPayGateway.CreatePaymentAsync's own rounding ((long)Math.Round(amount)) so a genuine
-        // payment can't be rejected by a decimal-vs-double rounding mismatch between the two sides.
-        var expectedAmount = (decimal)(long)Math.Round(invoice.FinalAmount);
+        // Same helper VnPayGateway.CreatePaymentAsync uses to build the request, so a genuine payment can't be
+        // rejected by a decimal-vs-double rounding mismatch between the two sides.
+        var expectedAmount = (decimal)PaymentAmounts.GatewayAmount(invoice.FinalAmount);
         if (result.ReceivedAmount.HasValue && result.ReceivedAmount.Value != expectedAmount)
         {
             LogProvider.Current.Warning($"{nameof(BookingManager)}.{nameof(HandlePaymentCallbackAsync)}: amount mismatch for invoice {invoice.Id}. Expected={invoice.FinalAmount}, Received={result.ReceivedAmount}");
