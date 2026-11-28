@@ -57,7 +57,7 @@ public class ShowTimeManager : IShowTimeManager
 
         var (items, total) = await _uow.ShowTimeStore.SearchCalendarAsync(
             search.Filters.GetGuid("movieId"),
-            search.Filters.GetGuid("theaterId"),
+            search.Filters.GetGuid(FilterKeys.TheaterId),
             search.Filters.GetEnum<ProjectionForm>("projectionForm"),
             search.Filters.GetDateTime("from"),
             search.Filters.GetDateTime("to"),

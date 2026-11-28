@@ -1,5 +1,6 @@
 using Cinema.Business.DTO.Requests;
 using Cinema.Business.Extensions;
+using Cinema.Data.Contracts;
 using Cinema.Data.Entities;
 
 namespace Cinema.Business.Helpers;
@@ -25,5 +26,27 @@ public static class PagingHelper
             CountPerPage = pageSize,
             Page = page
         };
+    }
+
+    /// <summary>
+    /// The catalog list pipeline in one place: default the request, build the filtered query, sort it, count it, read the
+    /// requested page and wrap it as DTOs. Each manager supplies only its own filter and sort (its sort whitelist stays
+    /// with the entity, so callers still cannot order by an arbitrary column).
+    /// </summary>
+    public static async Task<DefaultSearchResults<TDto>> SearchAsync<TEntity, TDto>(
+        IGenericStore<TEntity> store,
+        PagingSearchDTO? search,
+        Func<Dictionary<string, string>?, IQueryable<TEntity>> filter,
+        Func<IQueryable<TEntity>, SortDTO?, IQueryable<TEntity>> sort)
+        where TEntity : BaseEntity
+        where TDto : new()
+    {
+        search ??= new PagingSearchDTO();
+        var (page, pageSize) = ResolvePaging(search);
+
+        var query = sort(filter(search.Filters), search.Sort);
+        var total = await store.CountAsync(query);
+        var items = await store.AllPageAsync(query, page - 1, pageSize);
+        return ToPagedResult<TEntity, TDto>(items, total, page, pageSize);
     }
 }

@@ -39,7 +39,7 @@ public class MemberShipManager : IMemberShipManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.MemberShipStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
@@ -78,14 +78,7 @@ public class MemberShipManager : IMemberShipManager
 
     public async Task<DefaultSearchResults<MemberShipDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredMemberShipQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.MemberShipStore.CountAsync(query);
-        var items = await _uow.MemberShipStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<MemberShip, MemberShipDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<MemberShip, MemberShipDTO>(_uow.MemberShipStore, search, GetFilteredMemberShipQuery, ApplySort);
     }
 
     public async Task<MemberShipDTO> GetByIdAsync(Guid id)

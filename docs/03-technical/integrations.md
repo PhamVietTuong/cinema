@@ -12,7 +12,7 @@ Abstracted behind `IPaymentGateway` (`Cinema.Business.Contracts.Payments`), one 
 
 **Idempotency**: `HandlePaymentCallbackAsync` checks `invoice.Status == Paid` first and returns `AlreadyConfirmed` without re-finalizing (no double loyalty accrual, no duplicate `InvoicePayment` row) — see the outcome matrix below. A non-`Pending`/non-`Paid` status (e.g. `Cancelled`) returns `NotPending` and leaves the invoice untouched.
 
-**Amount validation**: each gateway's `ParseCallback` re-derives the paid amount from its own provider-signed fields; `HandlePaymentCallbackAsync` cross-checks the reported amount against `invoice.FinalAmount`, both rounded to whole VND, before finalizing — a mismatch yields `InvalidAmount` and the invoice is untouched. The whole system is implicitly VND-only (no currency field travels through the callback model).
+**Amount validation**: each gateway's `ParseCallback` re-derives the paid amount from its own provider-signed fields; `HandlePaymentCallbackAsync` cross-checks the reported amount against `invoice.FinalAmount`, both rounded to whole VND by the single helper `PaymentAmounts.GatewayAmount` (round-to-even, the same value `VnPayGateway` sends as `vnp_Amount` ÷ 100, pinned by `PaymentAmountsTests`), before finalizing — a mismatch yields `InvalidAmount` and the invoice is untouched. The whole system is implicitly VND-only (no currency field travels through the callback model).
 
 | `ParseCallback` status / condition | Outcome | Invoice touched? |
 |---|---|---|

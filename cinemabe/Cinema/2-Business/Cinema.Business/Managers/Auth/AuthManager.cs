@@ -570,7 +570,7 @@ public class AuthManager : IAuthManager
     public async Task<DefaultSearchResults<UserDTO>> GetUsersAsync(PagingSearchDTO search)
     {
         var searchText = search.Filters.GetString("search");
-        var theaterId  = search.Filters.GetGuid("theaterId");
+        var theaterId  = search.Filters.GetGuid(FilterKeys.TheaterId);
         var page       = search.PageIndex > 0 ? search.PageIndex : 1;
         var pageSize   = search.PageSize  > 0 ? search.PageSize  : 20;
 

@@ -78,6 +78,11 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
         }
     }
 
+    public virtual Task<Dictionary<Guid, TValue>> GetProjectionByIdsAsync<TValue>(IReadOnlyCollection<Guid> ids, Expression<Func<Entity, TValue>> valueSelector)
+    {
+        return DbSet.ProjectByIdsAsync(ids, valueSelector);
+    }
+
     public virtual async Task<IEnumerable<Entity>> FindAsync(Expression<Func<Entity, bool>> predicate)
     {
         try
@@ -211,13 +216,13 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
     #region Additional query methods
 
     public async Task<List<Entity>> AllPageAsync(int pageIndex, int pageSize)
-        => await DbSet.Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+        => await DbSet.PageZeroBased(pageIndex, pageSize).ToListAsync();
 
     // Read-only paged list path; callers map results to DTOs and never save through them. A write
     // always re-fetches a tracked instance via GetByIdAsync, so this can stay untracked.
     public async Task<List<Entity>> AllPageAsync(IQueryable<Entity> query, int pageIndex, int pageSize)
     {
-        return await query.AsNoTracking().Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+        return await query.AsNoTracking().PageZeroBased(pageIndex, pageSize).ToListAsync();
     }
 
     public async Task<int> CountAsync(Expression<Func<Entity, bool>> whereExpression)
@@ -249,7 +254,7 @@ public class GenericStore<Entity> : IGenericStore<Entity> where Entity : BaseEnt
         => await DbSet.Where(whereExpression).ToListAsync();
 
     public async Task<List<Entity>> FindAllPageAsync(int pageIndex, int pageSize, Expression<Func<Entity, bool>> whereExpression)
-        => await DbSet.Where(whereExpression).Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+        => await DbSet.Where(whereExpression).PageZeroBased(pageIndex, pageSize).ToListAsync();
 
     public async Task<IEnumerable<Class>> AllIncludeAsync<Class>(string navigationPath) where Class : class
         => await DbSet.Include(navigationPath).Cast<Class>().ToListAsync();

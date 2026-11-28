@@ -67,7 +67,7 @@ public class MovieStore : GenericStore<Movie>, IMovieStore
         var total = await q.CountAsync();
         var ordered = coming ? q.OrderBy(m => m.ReleaseDate) : q.OrderByDescending(m => m.ReleaseDate);
         var items = await ordered.ThenBy(m => m.Id)
-            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            .PageOneBased(page, pageSize).ToListAsync();
         return (items, total);
     }
 

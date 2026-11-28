@@ -217,20 +217,12 @@ public class StaffReportStore : IStaffReportStore
 
     public async Task<Dictionary<Guid, string>> GetMovieTitlesAsync(IReadOnlyCollection<Guid> ids)
     {
-        if (ids.Count == 0)
-        {
-            return new Dictionary<Guid, string>();
-        }
-        return await _db.Movie.AsNoTracking().Where(m => ids.Contains(m.Id)).ToDictionaryAsync(m => m.Id, m => m.Title);
+        return await _db.Movie.ProjectByIdsAsync(ids, m => m.Title);
     }
 
     public async Task<Dictionary<Guid, string>> GetTheaterNamesAsync(IReadOnlyCollection<Guid> ids)
     {
-        if (ids.Count == 0)
-        {
-            return new Dictionary<Guid, string>();
-        }
-        return await _db.Theater.AsNoTracking().Where(t => ids.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name);
+        return await _db.Theater.ProjectByIdsAsync(ids, t => t.Name);
     }
 
     public async Task<List<OccupancyRow>> GetOccupancyAsync(OccupancyQuery query)

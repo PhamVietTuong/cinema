@@ -39,7 +39,7 @@ public class UserTypeManager : IUserTypeManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.UserTypeStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
@@ -69,14 +69,7 @@ public class UserTypeManager : IUserTypeManager
 
     public async Task<DefaultSearchResults<UserTypeDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredUserTypeQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.UserTypeStore.CountAsync(query);
-        var items = await _uow.UserTypeStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<UserType, UserTypeDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<UserType, UserTypeDTO>(_uow.UserTypeStore, search, GetFilteredUserTypeQuery, ApplySort);
     }
 
     public async Task<UserTypeDTO> GetByIdAsync(Guid id)

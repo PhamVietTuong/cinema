@@ -238,6 +238,7 @@ public class BookingServiceTests
         }
         _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<Expression<Func<Holiday, bool>>>()))
             .ReturnsAsync(holidays ?? new List<Holiday>());
+        SetupHolidayExists(holidays ?? new List<Holiday>());
         _uowMock.Setup(u => u.TimeSlotStore.FindAsync(It.IsAny<Expression<Func<TimeSlot, bool>>>()))
             .ReturnsAsync(timeSlots ?? new List<TimeSlot>());
         _uowMock.Setup(u => u.TicketPriceStore.FindAsync(It.IsAny<Expression<Func<TicketPrice, bool>>>()))
@@ -1873,6 +1874,14 @@ public class BookingServiceTests
     {
         _uowMock.Setup(u => u.HolidayStore.FindAsync(It.IsAny<Expression<Func<Holiday, bool>>>()))
             .ReturnsAsync((Expression<Func<Holiday, bool>> predicate) => holidays.Where(predicate.Compile()).ToList());
+        SetupHolidayExists(holidays);
+    }
+
+    // Existence lookup used by the program-eligibility checks; evaluates the same predicate against the same rows.
+    private void SetupHolidayExists(IReadOnlyList<Holiday> holidays)
+    {
+        _uowMock.Setup(u => u.HolidayStore.ExistsAsync(It.IsAny<Expression<Func<Holiday, bool>>>()))
+            .ReturnsAsync((Expression<Func<Holiday, bool>> predicate) => holidays.Any(predicate.Compile()));
     }
 
     // ── Promotion saving is not limited by the theater ──────────────────────────

@@ -16,6 +16,19 @@ public static class ClaimsPrincipalExtensions
         return Guid.Parse(value);
     }
 
+    /// <summary>
+    /// The caller's user id on endpoints that also allow anonymous access: null when the request is not
+    /// authenticated, otherwise the same value as <see cref="GetUserId"/>.
+    /// </summary>
+    public static Guid? GetUserIdOrNull(this ClaimsPrincipal? principal)
+    {
+        if (principal?.Identity?.IsAuthenticated == true)
+        {
+            return principal.GetUserId();
+        }
+        return null;
+    }
+
     public static string GetUserRole(this ClaimsPrincipal principal)
         => principal.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 

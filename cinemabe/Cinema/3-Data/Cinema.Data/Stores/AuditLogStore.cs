@@ -49,8 +49,7 @@ public class AuditLogStore : GenericStore<AuditLog>, IAuditLogStore
         var items = await query
             .OrderByDescending(a => a.CreationTime)
             .ThenByDescending(a => a.Id)
-            .Skip(criteria.PageIndex * criteria.PageSize)
-            .Take(criteria.PageSize)
+            .PageZeroBased(criteria.PageIndex, criteria.PageSize)
             .ToListAsync();
         return (items, total);
     }

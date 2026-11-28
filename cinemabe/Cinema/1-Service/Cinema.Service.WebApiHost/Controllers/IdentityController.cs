@@ -16,7 +16,6 @@ namespace Cinema.Service.WebApiHost.Controllers;
 [ApiExplorerSettings(GroupName = "identity")]
 public class IdentityController : ApiControllerBase
 {
-    private const string _adminRole = "Admin";
     private const string _userRole  = "User";
 
     private readonly IAuthManager _authManager;
@@ -270,7 +269,7 @@ public class IdentityController : ApiControllerBase
 
     // ── Admin ───────────────────────────────────────────────────────────────────
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<UserDTO>), 200)]
     public async Task<IActionResult> GetUsers([FromBody] PagingSearchDTO search)
@@ -287,7 +286,7 @@ public class IdentityController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(UserDTO), 200)]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
@@ -304,7 +303,7 @@ public class IdentityController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(UserDTO), 200)]
     public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
@@ -321,7 +320,7 @@ public class IdentityController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteUser([FromQuery] Guid id)

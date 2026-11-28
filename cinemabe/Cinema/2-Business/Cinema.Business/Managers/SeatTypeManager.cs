@@ -39,12 +39,12 @@ public class SeatTypeManager : ISeatTypeManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.SeatTypeStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
 
-                case "theaterId":
+                case FilterKeys.TheaterId:
                     if (Guid.TryParse(filters[key], out var theaterId))
                     {
                         query = _uow.SeatTypeStore.FilterQuery(query, e => e.TheaterId == theaterId);
@@ -72,14 +72,7 @@ public class SeatTypeManager : ISeatTypeManager
 
     public async Task<DefaultSearchResults<SeatTypeDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredSeatTypeQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.SeatTypeStore.CountAsync(query);
-        var items = await _uow.SeatTypeStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<SeatType, SeatTypeDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<SeatType, SeatTypeDTO>(_uow.SeatTypeStore, search, GetFilteredSeatTypeQuery, ApplySort);
     }
 
     public async Task<SeatTypeDTO> GetByIdAsync(Guid id)

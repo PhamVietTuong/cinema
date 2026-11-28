@@ -26,7 +26,7 @@ public class CommentStore : GenericStore<Comment>, ICommentStore
         var total = await query.CountAsync();
         var items = await query
             .OrderByDescending(c => c.CreationTime).ThenBy(c => c.Id)
-            .Skip((page - 1) * pageSize).Take(pageSize)
+            .PageOneBased(page, pageSize)
             .Select(c => new CommentModerationRow(c.Id, c.MovieId, c.Movie.Title, c.User.Name, c.Content, c.IsApproved, c.ParentId, c.CreationTime))
             .ToListAsync();
         return (items, total);
@@ -49,8 +49,7 @@ public class CommentStore : GenericStore<Comment>, ICommentStore
         var items = await query
             .OrderByDescending(c => c.CreationTime)
             .ThenBy(c => c.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .PageOneBased(page, pageSize)
             .Select(ToView)
             .ToListAsync();
         return (items, total);

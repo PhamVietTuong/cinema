@@ -40,12 +40,12 @@ public class TimeSlotManager : ITimeSlotManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.TimeSlotStore.FilterQuery(query, e => e.Name.Contains(keyword));
                     break;
 
-                case "theaterId":
+                case FilterKeys.TheaterId:
                     if (Guid.TryParse(filters[key], out var theaterId))
                     {
                         query = _uow.TimeSlotStore.FilterQuery(query, e => e.TheaterId == theaterId);
@@ -72,14 +72,7 @@ public class TimeSlotManager : ITimeSlotManager
 
     public async Task<DefaultSearchResults<TimeSlotDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredTimeSlotQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.TimeSlotStore.CountAsync(query);
-        var items = await _uow.TimeSlotStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<TimeSlot, TimeSlotDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<TimeSlot, TimeSlotDTO>(_uow.TimeSlotStore, search, GetFilteredTimeSlotQuery, ApplySort);
     }
 
     public async Task<TimeSlotDTO> GetByIdAsync(Guid id)

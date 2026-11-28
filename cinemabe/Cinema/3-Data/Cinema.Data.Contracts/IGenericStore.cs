@@ -24,6 +24,12 @@ public interface IGenericStore<Entity> where Entity : BaseEntity
     Task<Entity> DeleteAsync(Entity entity);
     Task<bool> ExistsAsync(Expression<Func<Entity, bool>> predicate);
 
+    /// <summary>
+    /// Read-only lookup of one projected column (a name, a title...) for a set of ids, keyed by id; ids without a row are
+    /// absent. Use instead of FindAsync when only a column is needed: no tracked entities are loaded.
+    /// </summary>
+    Task<Dictionary<Guid, TValue>> GetProjectionByIdsAsync<TValue>(IReadOnlyCollection<Guid> ids, Expression<Func<Entity, TValue>> valueSelector);
+
     // ── Paged / count ─────────────────────────────────────────────────────────
 
     Task<List<Entity>> AllPageAsync(int pageIndex, int pageSize);

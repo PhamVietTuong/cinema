@@ -40,7 +40,7 @@ public class TemplateManager : ITemplateManager
 
             switch (key)
             {
-                case "keyword":
+                case FilterKeys.Keyword:
                     var keyword = filters[key];
                     query = _uow.TemplateStore.FilterQuery(query, e => e.Code.Contains(keyword) || e.Name.Contains(keyword));
                     break;
@@ -80,14 +80,7 @@ public class TemplateManager : ITemplateManager
 
     public async Task<DefaultSearchResults<TemplateDTO>> GetAsync(PagingSearchDTO search)
     {
-        search ??= new PagingSearchDTO();
-        var (page, pageSize) = PagingHelper.ResolvePaging(search);
-
-        var query = GetFilteredTemplateQuery(search.Filters);
-        query = ApplySort(query, search.Sort);
-        var total = await _uow.TemplateStore.CountAsync(query);
-        var items = await _uow.TemplateStore.AllPageAsync(query, page - 1, pageSize);
-        return PagingHelper.ToPagedResult<Template, TemplateDTO>(items, total, page, pageSize);
+        return await PagingHelper.SearchAsync<Template, TemplateDTO>(_uow.TemplateStore, search, GetFilteredTemplateQuery, ApplySort);
     }
 
     public async Task<TemplateDTO> GetByIdAsync(Guid id)

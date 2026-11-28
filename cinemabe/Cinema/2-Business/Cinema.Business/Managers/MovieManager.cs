@@ -69,7 +69,7 @@ public class MovieManager : IMovieManager
         // Date alone means "any theater showing it that day"; theater alone means "from now on".
         // Screenings that already started never count, so today (or a past date) is clamped to now.
         var date = search.Filters.GetDateOnly("date");
-        var theaterId = search.Filters.GetGuid("theaterId");
+        var theaterId = search.Filters.GetGuid(FilterKeys.TheaterId);
         DateTime? showFrom = null;
         DateTime? showTo = null;
         if (date is DateOnly d)
@@ -153,7 +153,7 @@ public class MovieManager : IMovieManager
     public async Task<DefaultSearchResults<ShowTimeListDTO>> GetShowTimesAsync(PagingSearchDTO search)
     {
         var movieId   = search.Filters.GetGuid("movieId")   ?? Guid.Empty;
-        var theaterId = search.Filters.GetGuid("theaterId") ?? Guid.Empty;
+        var theaterId = search.Filters.GetGuid(FilterKeys.TheaterId) ?? Guid.Empty;
         var date      = search.Filters.GetDateOnly("date")  ?? DateOnly.FromDateTime(DateTime.Today);
 
         var showTimes = await _uow.ShowTimeStore.GetByMovieAndDateAsync(movieId, theaterId, date);
@@ -204,7 +204,7 @@ public class MovieManager : IMovieManager
 
         var filter = new ShowTimeSearchFilter(
             MovieId: search.Filters.GetGuid("movieId"),
-            TheaterId: search.Filters.GetGuid("theaterId"),
+            TheaterId: search.Filters.GetGuid(FilterKeys.TheaterId),
             MovieTypeId: search.Filters.GetGuid("movieTypeId"),
             Language: search.Filters.GetString("language"),
             From: from,

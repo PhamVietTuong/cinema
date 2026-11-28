@@ -1,5 +1,6 @@
 using Cinema.Business.Contracts;
 using Cinema.Business.Contracts.Payments;
+using Cinema.Business.DTO.Auth;
 using Cinema.Business.DTO.Booking;
 using Cinema.Business.DTO.Invoices;
 using Cinema.Business.DTO.Requests;
@@ -18,8 +19,6 @@ namespace Cinema.Service.WebApiHost.Controllers;
 [ApiExplorerSettings(GroupName = "payment")]
 public class PaymentController : ApiControllerBase
 {
-    private const string _adminRole = "Admin";
-
     private readonly IBookingManager _bookingManager;
     private readonly IInvoiceManager _invoiceManager;
     private readonly IPaymentGatewayResolver _gateways;
@@ -196,7 +195,7 @@ public class PaymentController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(TicketValidationDTO), 200)]
     public async Task<IActionResult> ValidateTicket([FromBody] ValidateTicketRequest request)
@@ -238,7 +237,7 @@ public class PaymentController : ApiControllerBase
         LogProvider.Current.Information($"{GetType().Name}.GetInvoice being awakened to process request...");
         try
         {
-            var result = await _invoiceManager.GetByIdAsync(id, User.GetUserId(), User.IsInRole(_adminRole));
+            var result = await _invoiceManager.GetByIdAsync(id, User.GetUserId(), User.IsInRole(RoleNames.Admin));
             return Ok(result);
         }
         catch (UnauthorizedAccessException)
@@ -251,7 +250,7 @@ public class PaymentController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(DefaultSearchResults<InvoiceDTO>), 200)]
     public async Task<IActionResult> GetInvoices([FromBody] PagingSearchDTO search)
@@ -268,7 +267,7 @@ public class PaymentController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(object), 200)]
     public async Task<IActionResult> GetRevenue([FromQuery] DateTime from, [FromQuery] DateTime to)
@@ -285,7 +284,7 @@ public class PaymentController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(List<RevenueByDayDTO>), 200)]
     public async Task<IActionResult> GetRevenueByDay([FromQuery] int days = 7)
@@ -305,7 +304,7 @@ public class PaymentController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(List<RevenueBreakdownDTO>), 200)]
     public async Task<IActionResult> GetRevenueByMovie([FromQuery] DateTime from, [FromQuery] DateTime to)
@@ -322,7 +321,7 @@ public class PaymentController : ApiControllerBase
         }
     }
 
-    [Authorize(Roles = _adminRole)]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
     [ProducesResponseType(typeof(List<RevenueBreakdownDTO>), 200)]
     public async Task<IActionResult> GetRevenueByTheater([FromQuery] DateTime from, [FromQuery] DateTime to)

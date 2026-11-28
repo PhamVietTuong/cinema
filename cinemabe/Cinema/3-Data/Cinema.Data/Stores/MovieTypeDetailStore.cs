@@ -28,7 +28,7 @@ public class MovieTypeDetailStore : IMovieTypeDetailStore
         var total = await query.CountAsync();
         var items = await query
             .OrderBy(x => x.Movie.Title).ThenBy(x => x.MovieType.Name).ThenBy(x => x.MovieId).ThenBy(x => x.MovieTypeId)
-            .Skip((page - 1) * pageSize).Take(pageSize)
+            .PageOneBased(page, pageSize)
             .Select(x => new MovieTypeDetailRow(x.MovieId, x.MovieTypeId, x.Movie.Title, x.MovieType.Name))
             .ToListAsync();
         return (items, total);

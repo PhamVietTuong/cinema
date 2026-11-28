@@ -102,7 +102,7 @@ public class InvoiceAdminManager : IInvoiceAdminManager
                 {
                     // Nothing was paid, so what the booking reserved (points, the promotion use) goes back.
                     await InvoiceLifecycle.ReleaseReservationsAsync(_uow, invoice);
-                    await FoodStockRestorer.RestoreAsync(_uow, new[] { invoice.Id }, "Cancelled", null);
+                    await FoodStockRestorer.RestoreAsync(_uow, new[] { invoice.Id }, nameof(InvoiceStatus.Cancelled), null);
                 }
             }
 
