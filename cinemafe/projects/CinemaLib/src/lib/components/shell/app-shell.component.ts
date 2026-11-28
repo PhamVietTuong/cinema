@@ -7,9 +7,10 @@ import { SharedCoreModule } from '../../shared-core.module';
 import { ThemeService } from '../../theme/theme.service';
 import { NavItem, NavSection, filterNavByRole } from '../../models/nav.models';
 import { UserProfile } from '../../models/auth.models';
+import { MEDIA_TABLET_SMALL } from '../../utils/breakpoints';
 
 /** Sidebar becomes an off-canvas mat-sidenav drawer below this width; matches the shell stylesheet's own breakpoint. */
-const MOBILE_QUERY = '(max-width: 768px)';
+const MOBILE_QUERY = MEDIA_TABLET_SMALL;
 
 /** Wordmark and logo shown at the top of the sidebar. Rendered as `{name}<strong>{strong}</strong>`. */
 export interface ShellBrand {

@@ -1,3 +1,4 @@
+export * from './breakpoints';
 export * from './date-range';
 export * from './paging';
 export * from './server-time';

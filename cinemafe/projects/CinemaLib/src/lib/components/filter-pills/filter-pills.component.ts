@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { FilterBarField } from '../filter-bar/filter-bar.component';
+import { MEDIA_TABLET_SMALL } from '../../utils/breakpoints';
 
 /** A one-tap fill for the time-range pill (both ends are 'HH:mm'). */
 export interface FilterPillsTimePreset {
@@ -46,8 +47,8 @@ const fold = (s: string): string => s.normalize('NFD').replace(/[̀-ͯ]/g, '').r
 const SEARCHABLE_FROM = 12;
 /** Width of the desktop popover (keep in sync with the scss). */
 const MENU_WIDTH = 320;
-/** Matches the shared `tablet-small` mixin boundary: at or below it menus become a bottom sheet. */
-const SHEET_QUERY = '(max-width: 768px)';
+/** At or below the shared `tablet-small` boundary menus become a bottom sheet. */
+const SHEET_QUERY = MEDIA_TABLET_SMALL;
 let nextId = 0;
 
 /**
