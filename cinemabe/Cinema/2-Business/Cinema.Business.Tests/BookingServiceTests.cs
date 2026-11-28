@@ -812,6 +812,179 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task CreateBookingAsync_TwoConcurrentBookingsForSameSeat_OnlyOneSucceeds()
+    {
+        var theaterId  = Guid.NewGuid();
+        var roomTypeId = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var seatA      = Guid.NewGuid();
+        var adultId    = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult", Price = 100, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        SetupSeatsById(new Dictionary<Guid, Seat> { [seatA] = new() { Id = seatA, RoomId = RoomId1, RowName = "A", ColIndex = 1 } });
+
+        // Stateful "DB": the booked-seat read reflects earlier inserts. The delay after the read widens the
+        // check-then-insert window, so without the per-showtime+room gate both requests would pass the check.
+        var bookedSeats = new List<Guid>();
+        var bookedLock = new object();
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1))
+            .Returns(async () =>
+            {
+                List<Guid> snapshot;
+                lock (bookedLock)
+                {
+                    snapshot = bookedSeats.ToList();
+                }
+                await Task.Delay(100);
+                return snapshot;
+            });
+        _uowMock.Setup(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()))
+            .ReturnsAsync((Invoice i) =>
+            {
+                lock (bookedLock)
+                {
+                    foreach (var t in i.InvoiceTickets)
+                    {
+                        bookedSeats.Add(t.SeatId);
+                    }
+                }
+                return i;
+            });
+
+        CreateBookingRequest NewRequest()
+        {
+            return new CreateBookingRequest
+            {
+                ShowTimeId    = ShowTimeId1,
+                RoomId        = RoomId1,
+                Seats         = new List<BookingSeatItem> { new() { SeatId = seatA, PatronCategoryId = adultId } },
+                PaymentMethod = "Sandbox",
+            };
+        }
+
+        var attempts = await Task.WhenAll(
+            Task.Run(async () => await Attempt(Guid.NewGuid(), NewRequest())),
+            Task.Run(async () => await Attempt(Guid.NewGuid(), NewRequest())));
+
+        attempts.Count(a => a == null).Should().Be(1, "exactly one booking may win the seat");
+        var loser = attempts.Single(a => a != null);
+        loser.Should().BeOfType<InvalidOperationException>().Which.Message.Should().Contain("already booked");
+        bookedSeats.Should().ContainSingle().Which.Should().Be(seatA);
+
+        async Task<Exception?> Attempt(Guid userId, CreateBookingRequest request)
+        {
+            try
+            {
+                await _sut.CreateBookingAsync(userId, request);
+                return null;
+            }
+            catch (Exception e)
+            {
+                return e;
+            }
+        }
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ConcurrentBookingsWithOverlappingSeatSets_AreAllOrNothing()
+    {
+        var theaterId    = Guid.NewGuid();
+        var roomTypeId   = Guid.NewGuid();
+        var standardType = Guid.NewGuid();
+        var adultId      = Guid.NewGuid();
+        var seat1 = Guid.NewGuid();
+        var seat2 = Guid.NewGuid();
+        var seat3 = Guid.NewGuid();
+
+        SetupBaselineBookingMocks(theaterId, roomTypeId, ShowTimeId1, RoomId1, 0);
+        _uowMock.Setup(u => u.SeatTypeStore.GetKindMapAsync(theaterId))
+            .ReturnsAsync(new Dictionary<SeatKind, Guid> { [SeatKind.Standard] = standardType });
+        var categories = new List<PatronCategory>
+        {
+            new() { Id = adultId, TheaterId = theaterId, SeatTypeId = standardType, Name = "Adult", Price = 100, IsActive = true },
+        };
+        _uowMock.Setup(u => u.PatronCategoryStore.FindAsync(It.IsAny<Expression<Func<PatronCategory, bool>>>()))
+            .ReturnsAsync(categories);
+        AllowAllCategories(roomTypeId, categories);
+        SetupSeatsById(new Dictionary<Guid, Seat>
+        {
+            [seat1] = new() { Id = seat1, RoomId = RoomId1, RowName = "A", ColIndex = 1 },
+            [seat2] = new() { Id = seat2, RoomId = RoomId1, RowName = "A", ColIndex = 2 },
+            [seat3] = new() { Id = seat3, RoomId = RoomId1, RowName = "A", ColIndex = 3 },
+        });
+
+        var bookedSeats = new List<Guid>();
+        var bookedLock = new object();
+        _uowMock.Setup(u => u.SeatStore.GetBookedSeatIdsAsync(ShowTimeId1, RoomId1))
+            .Returns(async () =>
+            {
+                List<Guid> snapshot;
+                lock (bookedLock)
+                {
+                    snapshot = bookedSeats.ToList();
+                }
+                await Task.Delay(100);
+                return snapshot;
+            });
+        _uowMock.Setup(u => u.InvoiceStore.CreateAsync(It.IsAny<Invoice>()))
+            .ReturnsAsync((Invoice i) =>
+            {
+                lock (bookedLock)
+                {
+                    foreach (var t in i.InvoiceTickets)
+                    {
+                        bookedSeats.Add(t.SeatId);
+                    }
+                }
+                return i;
+            });
+
+        CreateBookingRequest RequestFor(params Guid[] seatIds)
+        {
+            return new CreateBookingRequest
+            {
+                ShowTimeId    = ShowTimeId1,
+                RoomId        = RoomId1,
+                Seats         = seatIds.Select(id => new BookingSeatItem { SeatId = id, PatronCategoryId = adultId }).ToList(),
+                PaymentMethod = "Sandbox",
+            };
+        }
+
+        async Task<Exception?> Attempt(CreateBookingRequest request)
+        {
+            try
+            {
+                await _sut.CreateBookingAsync(Guid.NewGuid(), request);
+                return null;
+            }
+            catch (Exception e)
+            {
+                return e;
+            }
+        }
+
+        // A takes {1,2}, B takes {2,3}: they collide on seat 2.
+        var results = await Task.WhenAll(
+            Task.Run(() => Attempt(RequestFor(seat1, seat2))),
+            Task.Run(() => Attempt(RequestFor(seat2, seat3))));
+
+        results.Count(r => r == null).Should().Be(1, "exactly one of the overlapping bookings may win");
+        // All-or-nothing: the winner holds both of its seats; the loser holds none (seat 3 or seat 1 stays free).
+        bookedSeats.Should().HaveCount(2);
+        bookedSeats.Should().OnlyHaveUniqueItems();
+        bookedSeats.Should().Contain(seat2);
+    }
+
+    [Fact]
     public async Task CreateBookingAsync_RedeemsPoints_UsesTheaterLoyaltyOverrideRate()
     {
         var theaterId    = Guid.NewGuid();
