@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Subject, merge } from 'rxjs';
-import { debounceTime, distinctUntilChanged, skip, takeUntil } from 'rxjs/operators';
+import { Observable, Subject, forkJoin, merge, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, skip, switchMap, takeUntil } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import {
-  SharedModule, loadMovies, MOVIE_PAGE_SIZE, FilterBarComponent, FilterBarField, FilterBarOption,
+  SharedModule, loadMovies, MOVIE_PAGE_SIZE, FilterPillsComponent, FilterBarField, FilterBarOption,
   selectPagedMovies, selectMoviesLoading, screeningFormatLabel, rawApiErrorMessage, CinemaServiceAgent,
   LookupCacheService,
 } from 'CinemaLib';
@@ -15,7 +15,7 @@ import { EmptyStateComponent } from '../../../../../shared/empty-state/empty-sta
 import { SiteFooterComponent } from '../../../../../shared/site-footer/site-footer.component';
 import { movieDetailCommands } from '../../../../../shared/movie-route';
 
-type Mode = 'all' | 'now' | 'coming' | 'showtimes';
+export type Mode = 'all' | 'now' | 'coming' | 'showtimes';
 
 /** Page size of the showtime search results. */
 const SHOWTIME_PAGE_SIZE = 20;
@@ -24,7 +24,7 @@ const SHOWTIME_PAGE_SIZE = 20;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-movie-list',
   standalone: true,
-  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterBarComponent, EmptyStateComponent],
+  imports: [SharedModule, MovieCardComponent, SiteFooterComponent, FilterPillsComponent, EmptyStateComponent],
   templateUrl: './movie-list.component.html',
   styleUrl: './movie-list.component.scss',
 })
@@ -36,8 +36,7 @@ export class MovieListComponent implements OnInit, OnDestroy {
   private _translate = inject(TranslateService);
   private _destroy$ = new Subject<void>();
   private _filterChange$ = new Subject<void>();
-  /** Query-string search text waiting to seed the search box on the next setMode(). */
-  private _pendingQuery = '';
+  private readonly _counts$ = new Subject<void>();
 
   readonly tabs: { mode: Mode; label: string }[] = [
     { mode: 'all', label: 'movies.tabs.all' },
@@ -79,6 +78,15 @@ export class MovieListComponent implements OnInit, OnDestroy {
   showtimesError = '';
   private _showtimesRequest = 0;
 
+  /** Result totals per tab for the current search + filters; a missing entry (not loaded yet / request failed) hides its badge. */
+  counts: Partial<Record<Mode, number>> = {};
+  /** Number of applied conditions (search counts, the time range counts once); drives "filtered by N conditions". */
+  activeCount = 0;
+  /** Quick-pick days of the showtimes date strip. */
+  dateStrip: { value: string; label: string; sub: string }[] = [];
+  /** Material icon per filter pill. */
+  readonly pillIcons: Record<string, string> = { movieTypeId: 'sell', language: 'language', theaterId: 'place', date: 'event', time: 'schedule' };
+
   get isShowtimes(): boolean { return this.mode === 'showtimes'; }
   get title(): string {
     return this.mode === 'now' ? 'movies.list.titleNow'
@@ -113,40 +121,71 @@ export class MovieListComponent implements OnInit, OnDestroy {
 
     this._loadFilterOptions();
 
+    this._buildDateStrip();
+    // Tab totals: one count-only request per tab (pageSize 1), restarted (switchMap) whenever search/filters/tab change.
+    this._counts$.pipe(
+      switchMap(() => forkJoin({
+        all: this._count('all'), now: this._count('now'), coming: this._count('coming'), showtimes: this._count('showtimes'),
+      })),
+      takeUntil(this._destroy$),
+    ).subscribe(c => {
+      this.counts = c;
+      this._cdr.markForCheck();
+    });
+
     const showing = this._route.snapshot.queryParamMap.get('showing');
     // /movies?q=<text> (from the topbar search): seed the search box so the first load is filtered.
-    this._pendingQuery = (this._route.snapshot.queryParamMap.get('q') ?? '').trim();
-    this.setMode(showing === 'now' ? 'now' : showing === 'coming' ? 'coming' : showing === 'showtimes' ? 'showtimes' : 'all');
+    const initialQuery = (this._route.snapshot.queryParamMap.get('q') ?? '').trim();
+    this.setMode(showing === 'now' ? 'now' : showing === 'coming' ? 'coming' : showing === 'showtimes' ? 'showtimes' : 'all', initialQuery);
 
     // Searching again from the topbar while already on this page only changes the query string.
     this._route.queryParamMap.pipe(skip(1), takeUntil(this._destroy$)).subscribe(p => {
       const q = (p.get('q') ?? '').trim();
       if (this.isShowtimes) {
-        this._pendingQuery = q;
-        this.setMode('all');
+        this.setMode('all', q);
       } else if (q !== (this.searchCtrl.value ?? '').trim()) {
         this.searchCtrl.setValue(q);
       }
     });
 
     this.searchCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this._destroy$))
-      .subscribe(() => { if (!this.isShowtimes) { this.page = 1; this._load(); } });
+      .subscribe(() => { if (!this.isShowtimes) { this._reload(); } });
 
     this._filterChange$.pipe(debounceTime(250), takeUntil(this._destroy$))
-      .subscribe(() => { this.page = 1; this._load(); });
+      .subscribe(() => this._reload());
   }
 
   ngOnDestroy(): void { this._destroy$.next(); this._destroy$.complete(); }
 
-  setMode(m: Mode): void {
+  /** Switches tab. Search and filters stay; only the showtimes-only time range is dropped when leaving "showtimes".
+   * `seedQuery` (from `?q=`) replaces the search text when given. */
+  setMode(m: Mode, seedQuery?: string): void {
     this.mode = m;
-    this.searchCtrl.reset(this._pendingQuery, { emitEvent: false });
-    this._pendingQuery = '';
-    this.filterForm.reset({ movieTypeId: '', language: '', theaterId: '', date: '', timeFrom: '', timeTo: '' }, { emitEvent: false });
+    if (seedQuery !== undefined) {
+      this.searchCtrl.setValue(seedQuery, { emitEvent: false });
+    }
+    if (m !== 'showtimes') {
+      this.filterForm.patchValue({ timeFrom: '', timeTo: '' });
+    }
     this._buildFilterFields();
     this._refreshHasActiveFilters();
-    this.page = 1;
-    this._load();
+    this._reload();
+  }
+
+  /** Arrow/Home/End move between tabs (roving tabindex) and activate the focused one. */
+  onTabKey(ev: KeyboardEvent): void {
+    const modes = this.tabs.map(t => t.mode);
+    const i = modes.indexOf(this.mode);
+    let next = i;
+    if (ev.key === 'ArrowRight') { next = (i + 1) % modes.length; }
+    else if (ev.key === 'ArrowLeft') { next = (i - 1 + modes.length) % modes.length; }
+    else if (ev.key === 'Home') { next = 0; }
+    else if (ev.key === 'End') { next = modes.length - 1; }
+    else { return; }
+    ev.preventDefault();
+    this.setMode(modes[next]);
+    const tablist = (ev.currentTarget as HTMLElement).parentElement;
+    setTimeout(() => tablist?.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus());
   }
 
   onFilterChange(): void {
@@ -155,10 +194,16 @@ export class MovieListComponent implements OnInit, OnDestroy {
 
   clearFilters(): void {
     this.searchCtrl.reset('', { emitEvent: false });
-    this.filterForm.reset({ movieTypeId: '', language: '', theaterId: '', date: '', timeFrom: '', timeTo: '' }, { emitEvent: false });
+    this.filterForm.reset({ movieTypeId: '', language: '', theaterId: '', date: '', timeFrom: '', timeTo: '' });
     this._refreshHasActiveFilters();
-    this.page = 1;
-    this._load();
+    this._reload();
+  }
+
+  /** Picks a day on the showtimes date strip (picking the applied day again clears it). */
+  pickDate(value: string): void {
+    const ctrl = this.filterForm.controls.date;
+    ctrl.setValue(ctrl.value === value ? '' : value);
+    this.onFilterChange();
   }
 
   /** True when the search box or any filter is set. Recomputed when the controls change (and after a
@@ -166,8 +211,57 @@ export class MovieListComponent implements OnInit, OnDestroy {
   hasActiveFilters = false;
 
   private _refreshHasActiveFilters(): void {
-    this.hasActiveFilters = !!(this.searchCtrl.value ?? '').trim() || Object.values(this.filterForm.getRawValue()).some(v => !!v);
+    // The search box is hidden on the showtimes tab (it does not apply there), so its text is not an active condition.
+    const searchOn = !this.isShowtimes && !!(this.searchCtrl.value ?? '').trim();
+    const v = this.filterForm.getRawValue();
+    this.activeCount = (searchOn ? 1 : 0) + [v.movieTypeId, v.language, v.theaterId, v.date].filter(x => !!x).length
+      + (v.timeFrom || v.timeTo ? 1 : 0);
+    this.hasActiveFilters = this.activeCount > 0;
     this._cdr.markForCheck();
+  }
+
+  /** Back to page 1 with the current search/filters, and refresh the tab counts. */
+  private _reload(): void {
+    this.page = 1;
+    this._load();
+    this._counts$.next();
+  }
+
+  /** Total of one tab for the current search + filters, via the ordinary list endpoints with pageSize 1.
+   * Emits undefined (badge hidden) on error or for an invalid time range. */
+  private _count(mode: Mode): Observable<number | undefined> {
+    const filters = this._filterValues();
+    if (mode === 'showtimes') {
+      if (filters['timeFrom'] && filters['timeTo'] && filters['timeFrom'] > filters['timeTo']) { return of(undefined); }
+      return this._api.searchShowTimes(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1, filters }))
+        .pipe(map(r => r.totalCount ?? 0), catchError(() => of(undefined)));
+    }
+    // Time-of-day only exists on the showtimes tab.
+    delete filters['timeFrom'];
+    delete filters['timeTo'];
+    const search = this.searchCtrl.value ?? '';
+    if (search.trim()) { filters['search'] = search; }
+    if (mode !== 'all') { filters['status'] = mode; }
+    return this._api.getMovies(CinemaServiceAgent.PagingSearchDTO.fromJS({ pageIndex: 1, pageSize: 1, filters }))
+      .pipe(map(r => r.totalCount ?? 0), catchError(() => of(undefined)));
+  }
+
+  private _buildDateStrip(): void {
+    const lang = this._translate.currentLang() || 'vi';
+    const locale = lang.startsWith('en') ? 'en-US' : 'vi-VN';
+    const pad = (n: number): string => String(n).padStart(2, '0');
+    this.dateStrip = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      this.dateStrip.push({
+        value: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        label: i === 0 ? this._translate.instant('clFilterPills.today')
+          : i === 1 ? this._translate.instant('clFilterPills.tomorrow')
+          : new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(d),
+        sub: `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`,
+      });
+    }
   }
 
   private readonly _lookup = inject(LookupCacheService);

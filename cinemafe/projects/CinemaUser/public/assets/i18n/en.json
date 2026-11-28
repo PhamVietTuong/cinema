@@ -411,6 +411,22 @@
     "perkBirthday": "Birthday offers & exclusive events",
     "perkEarlyBooking": "Early booking for premiere showtimes"
   },
+  "clFilterPills": {
+    "groupLabel": "Filters",
+    "time": "Time of day",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "otherDate": "Pick another date",
+    "searchPlaceholder": "Search...",
+    "noMatch": "No matching option.",
+    "removeFilter": "Remove {{name}} filter",
+    "clearAll": "Clear filters",
+    "apply": "Done",
+    "applyCount": "Apply ({{count}} results)"
+  },
   "movies": {
     "list": {
       "subtitle": "Discover the latest cinematic masterpieces with top-tier sound and picture quality.",
@@ -420,12 +436,18 @@
       "titleNow": "Now Showing",
       "titleComing": "Coming Soon",
       "shownCount": "{{shown}} / {{total}} shown",
+      "resultsMovies": "Showing {{shown}} / {{total}} movies",
+      "resultsShowtimes": "Showing {{shown}} / {{total}} showtimes",
+      "conditions": "filtered by {{count}} conditions",
+      "searchLabel": "Search movies",
+      "datesLabel": "Pick a screening day",
       "loadMore": "Load more",
       "titleShowtimes": "Find Showtimes",
       "emptyFiltered": "No movies match these filters.",
       "emptyShowtimes": "No showtimes match these filters."
     },
     "tabs": {
+      "label": "View mode",
       "all": "All",
       "now": "Now Showing",
       "coming": "Coming Soon",

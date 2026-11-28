@@ -6,6 +6,7 @@ export * from './auth';
 export * from './status-pill';
 export * from './empty-state';
 export * from './filter-bar';
+export * from './filter-pills';
 export * from './seat-map';
 export * from './qr';
 export * from './ticket';

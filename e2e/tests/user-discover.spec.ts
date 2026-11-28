@@ -22,9 +22,9 @@ test.describe('CinemaUser: public discovery pages', () => {
 });
 
 test.describe('CinemaUser: movies browse and detail', () => {
-  test('movie list shows the shared filter bar', async ({ page }) => {
+  test('movie list shows the pill filters', async ({ page }) => {
     await page.goto('/movies');
-    await expect(page.locator('cl-filter-bar').first()).toBeVisible();
+    await expect(page.locator('cl-filter-pills').first()).toBeVisible();
   });
 
   test('opening a movie navigates to its slug detail page', async ({ page }) => {

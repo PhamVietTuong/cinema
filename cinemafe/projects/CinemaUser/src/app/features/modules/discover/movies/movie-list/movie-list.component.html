@@ -1,31 +1,51 @@
 <div class="page-header">
   <div class="page-header-inner">
-    <div class="header-top">
-      <div>
-        <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
-        <h1 class="page-title">{{ title | translate }}</h1>
-        <p class="page-sub">{{ 'movies.list.subtitle' | translate }}</p>
+    <span class="marquee-rule"><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i><i class="bulb"></i></span>
+    <h1 class="page-title">{{ title | translate }}</h1>
+    <p class="page-sub">{{ 'movies.list.subtitle' | translate }}</p>
+
+    @if (!isShowtimes) {
+      <label class="v2-search">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <input type="search" [formControl]="searchCtrl" [placeholder]="'movies.list.searchPlaceholder' | translate"
+               [attr.aria-label]="'movies.list.searchLabel' | translate">
+      </label>
+    } @else {
+      <div class="v2-dates" role="group" [attr.aria-label]="'movies.list.datesLabel' | translate">
+        @for (d of dateStrip; track d.value) {
+          <button type="button" class="v2-date" [class.on]="filterForm.controls.date.value === d.value"
+                  [attr.aria-pressed]="filterForm.controls.date.value === d.value" (click)="pickDate(d.value)">
+            <b>{{ d.label }}</b><span>{{ d.sub }}</span>
+          </button>
+        }
       </div>
-      <mat-form-field appearance="outline" class="search-box" *ngIf="!isShowtimes">
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput [formControl]="searchCtrl" [placeholder]="'movies.list.searchPlaceholder' | translate">
-      </mat-form-field>
+    }
+
+    <div class="v2-tabs" role="tablist" [attr.aria-label]="'movies.tabs.label' | translate">
+      @for (t of tabs; track t.mode) {
+        <button type="button" role="tab" class="v2-tab" [class.on]="mode === t.mode" [attr.aria-selected]="mode === t.mode"
+                [attr.tabindex]="mode === t.mode ? 0 : -1" (click)="setMode(t.mode)" (keydown)="onTabKey($event)">
+          {{ t.label | translate }}
+          @if (counts[t.mode] !== undefined) { <span class="tc">{{ counts[t.mode] }}</span> }
+        </button>
+      }
     </div>
 
-    <div class="filter-row">
-      <mat-button-toggle-group class="tabs" [value]="mode" (change)="setMode($event.value)">
-        <mat-button-toggle *ngFor="let t of tabs" class="tab" [value]="t.mode">{{ t.label | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
-      <button type="button" class="clear-filters" *ngIf="hasActiveFilters" (click)="clearFilters()">
-        <mat-icon>filter_alt_off</mat-icon> {{ 'movies.filters.clear' | translate }}
-      </button>
-    </div>
+    <cl-filter-pills class="v2-pills" [form]="filterForm" [fields]="filterFields" [icons]="pillIcons"
+                     [resultCount]="isLoading ? null : total" [showClear]="hasActiveFilters"
+                     (filtersChange)="onFilterChange()" (clear)="clearFilters()" />
   </div>
 </div>
 
-<div class="movies-page">
-  <cl-filter-bar class="movie-filters" titleKey="movies.filters.title"
-                 [form]="filterForm" [fields]="filterFields" (filtersChange)="onFilterChange()" />
+<div class="movies-page" role="tabpanel">
+  <div class="v2-resbar" aria-live="polite">
+    @if (!isLoading || loadedCount > 0) {
+      <span class="res-count">{{ (isShowtimes ? 'movies.list.resultsShowtimes' : 'movies.list.resultsMovies') | translate: { shown: loadedCount, total: total } }}</span>
+    }
+    @if (activeCount > 0) {
+      <span class="cond">&middot; {{ 'movies.list.conditions' | translate: { count: activeCount } }}</span>
+    }
+  </div>
 
   @if (isLoading && loadedCount === 0) {
     <div class="cu-skeleton-grid" aria-busy="true">

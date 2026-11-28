@@ -411,6 +411,22 @@
     "perkBirthday": "Ưu đãi sinh nhật & sự kiện độc quyền",
     "perkEarlyBooking": "Đặt vé sớm cho các suất công chiếu"
   },
+  "clFilterPills": {
+    "groupLabel": "Bộ lọc",
+    "time": "Khung giờ",
+    "morning": "Sáng",
+    "afternoon": "Chiều",
+    "evening": "Tối",
+    "today": "Hôm nay",
+    "tomorrow": "Ngày mai",
+    "otherDate": "Chọn ngày khác",
+    "searchPlaceholder": "Tìm...",
+    "noMatch": "Không có lựa chọn phù hợp.",
+    "removeFilter": "Bỏ lọc {{name}}",
+    "clearAll": "Xóa bộ lọc",
+    "apply": "Xong",
+    "applyCount": "Áp dụng ({{count}} kết quả)"
+  },
   "movies": {
     "list": {
       "subtitle": "Khám phá những siêu phẩm điện ảnh mới nhất với chất lượng âm thanh và hình ảnh đỉnh cao.",
@@ -420,12 +436,18 @@
       "titleNow": "Phim Đang Chiếu",
       "titleComing": "Phim Sắp Chiếu",
       "shownCount": "Đã hiển thị {{shown}} / {{total}}",
+      "resultsMovies": "Hiển thị {{shown}} / {{total}} phim",
+      "resultsShowtimes": "Hiển thị {{shown}} / {{total}} suất chiếu",
+      "conditions": "lọc theo {{count}} điều kiện",
+      "searchLabel": "Tìm phim",
+      "datesLabel": "Chọn ngày chiếu",
       "loadMore": "Xem thêm",
       "titleShowtimes": "Tìm Suất Chiếu",
       "emptyFiltered": "Không có phim nào phù hợp với bộ lọc.",
       "emptyShowtimes": "Không có suất chiếu nào phù hợp với bộ lọc."
     },
     "tabs": {
+      "label": "Chế độ xem",
       "all": "Tất Cả",
       "now": "Đang Chiếu",
       "coming": "Sắp Chiếu",

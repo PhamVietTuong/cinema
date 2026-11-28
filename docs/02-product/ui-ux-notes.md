@@ -91,6 +91,7 @@ Per root `CLAUDE.md`'s rule ("menus/shell/topbar/pills/dialogs/tables/seat map u
 | Dialogs | `dialogs/` — `confirm.dialog`, `reason.dialog`, `trailer.dialog`, `dialog.service.ts` | Shared across apps |
 | Table base | `table/base-table.component.ts`, `base-reactive.component.ts` | CinemaAdmin + CinemaStaff list pages |
 | Filter bar | `filter-bar/filter-bar.component.ts` (+ `audit-log-filter-fields.ts`) | Admin audit-log + Staff audit-log views |
+| Filter pills | `filter-pills/filter-pills.component.ts` (same `FilterBarField[]` + FormGroup as the filter bar; popover on desktop, bottom sheet <=768px; adds `html.cfp-sheet-open`) | CinemaUser movie list |
 | Status pill | `status-pill/status-pill.component.ts` | Admin + Staff status badges (invoice/incident states) |
 | Ticket card / QR | `ticket/ticket-card.component.ts`, `qr/qr-code.component.ts` | CinemaUser (e-ticket display) and CinemaStaff (gate scan reference) |
 | Price formatting | `price/` | Admin + User currency display |
